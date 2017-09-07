@@ -225,4 +225,7 @@ setuptools.setup(
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=test_requires,
+    author='bddppq',
+    author_email='jbai@fb.com',
+    url='https://github.com/onnx/onnx',
 )
