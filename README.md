@@ -22,20 +22,22 @@ evolve ONNX.
 
 # Installation
 
-Currently ONNX can only be built from source:
+## Binaries
+
+A binary build of ONNX is available from Conda:
+
+```
+conda install -c ezyang onnx
+```
+
+## Source
+
+You can build ONNX from source with PIP:
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
 pip install onnx/
 ```
-
-After installation, do
-
-```
-python -c 'import onnx'
-```
-
-to verify it works.
 
 # Testing
 
