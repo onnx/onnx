@@ -66,4 +66,4 @@ build_*
 # setup.py intermediates
 .eggs
 dist
-onnx_caffe2.egg-info
+onnx.egg-info
