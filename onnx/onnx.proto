@@ -1,0 +1,216 @@
+// Copyright (c) Facebook Inc. and Microsoft Corporation.
+// Licensed under the MIT license.
+
+syntax = "proto2";
+
+package onnx;
+
+// Note [Release]
+// We are still in the very early stage of defining ONNX. The current
+// version of ONNX is a starting point. While we are actively working
+// towards a complete spec, we would like to get the community involved
+// by sharing our working version of ONNX.
+
+// Note [Protobuf compatibility]
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Based on experience working with downstream vendors, we generally can't
+// assume recent versions of protobufs. This means that we do not use any
+// protobuf features that are only available in proto3.
+//
+// Here are the most notable contortions we have to carry out to work around
+// these limitations:
+//
+//   - No 'map' (added protobuf 3.0). We instead represent mappings as lists
+//     of key-value pairs, where order does not matter and duplicates
+//     are not allowed.
+
+// Note [Namespaces]
+// ~~~~~~~~~~~~~~~~~
+// ONNX gives explicit names to graphs, intermediate values and
+// serialized tensors.  To make it easier to generate names, we organize
+// these into separate namespaces (so, e.g., a graph can have the same
+// name as a serialized tensor.)  The namespaces are as follows:
+//
+// - Node: These names identify specific nodes in the graph (but not, necessarily
+//   any particular input or output of the node.
+// - Graph: These names identify graphs in the protobuf.
+// - Attribute: These names identify attribute names for extra attributes that
+//   are passed to operators.
+// - Operator: These names identify particular operators.
+// - Tensor: These names identify intermediate tensor values flowing through
+//   the computation of a graph.
+//
+// We specify the namespace of a name in ONNX as comments in the form
+// of "namespace {Node,Graph,Attribute,Tensor}". Framework is responsible
+// for supporting the namespaces.
+
+// A named attribute containing either singular float, integer, string
+// and tensor values, or repeated float, integer, string and tensor values.
+// An AttributeProto should contain the name field, and *only one* of the
+// following content fields, effectively enforcing a C/C++ union equivalent.
+message AttributeProto {
+  optional string name = 1;           // namespace Attribute
+  optional float f = 2;               // float
+  optional int64 i = 3;               // int
+  optional bytes s = 4;               // UTF-8 string
+  optional TensorProto t = 5;         // tensor value
+  optional GraphProto g = 6;          // graph
+
+  repeated float floats = 7;          // list of floats 
+  repeated int64 ints = 8;            // list of ints
+  repeated bytes strings = 9;         // list of UTF-8 strings
+  repeated TensorProto tensors = 10;  // list of tensors
+  repeated GraphProto graphs = 11;    // list of graph
+}
+
+// NodeProto stores a node that is similar to the notion of "layer"
+// or "operator" in many deep learning frameworks. For example, it can be a
+// node of type "Conv" that takes in an image, a filter tensor and a bias
+// tensor, and produces the convolved output.
+message NodeProto {
+  repeated string input = 1;   // namespace Tensor
+  repeated string output = 2;  // namespace Tensor
+  optional string name = 3;    // namespace Node
+  optional string op_type = 4; // namespace Operator
+
+  // Additional named attributes.
+  repeated AttributeProto attribute = 5;
+
+  // A human-readable documentation for this graph.
+  optional string doc_string = 6;
+}
+
+// GraphProto defines a series of nodes to form a directed acyclic graph.
+// This is the equivalent of the "network" and "graph" in many deep learning
+// frameworks.
+message GraphProto {
+  // The nodes in the graph.
+  repeated NodeProto node = 1;
+
+  // The name of the graph.
+  optional string name = 2;   // namespace Graph
+
+  // The inputs and outputs of the graph.
+  repeated string input = 3;  // namespace Tensor
+  repeated string output = 4; // namespace Tensor
+
+  // An optional list of initial values for tensors in the list of input above.
+  // Used to pass serialized parameters for networks.
+  // Each entry specifies a value for the input whose TensorProto.name matches
+  // a name in the input. This list is not required to be the same length of as
+  // input since many tensors might not have initial values.
+  repeated TensorProto initializer = 5;
+
+  // The version of the IR this graph targets. See Version enum below.
+  optional int64 ir_version = 6;
+
+  // The version of the framework runtime that generates this graph.
+  // This producer_version has the same format as ir_version. 
+  optional int64 producer_version = 7;
+
+  // The name of the framework used to generate this graph in the form
+  // "framework_name[-tag]". Tag is optional and provides additional
+  // information such as `alpha` or `beta` or `rc3`.
+  optional string producer_tag = 8;
+
+  // Domain of the graph.
+  // We use reverse domain names as name space indicators. For example:
+  // `com.facebook.fair` or `com.microsoft.cognitiveservices`
+  //
+  // Together with `name` and `version`, this forms the unique identity of
+  // the graph.
+  optional string domain = 9;
+
+  // A human-readable documentation for this graph.
+  optional string doc_string = 10;
+};
+
+// To be compatible with both proto2 and proto3, we will use a version number
+// that is not defined by the default value but an explicit enum number.
+enum Version {
+  // The version field is always serialized and we will use it to store the
+  // version that the  graph is generated from. This helps us set up version
+  // control. We should use version as
+  //     xx(major) - xx(minor) - xxxx(bugfix)
+  // and we are starting with 00000001.
+  IR_VERSION = 00000001;
+}
+
+// A message defined to store a tensor in its serialized format.
+message TensorProto {
+  enum DataType {
+    UNDEFINED = 0;
+    // Basic types.
+    FLOAT = 1;   // float
+    UINT8 = 2;   // uint8_t
+    INT8 = 3;    // int8_t
+    UINT16 = 4;  // uint16_t
+    INT16 = 5;   // int16_t
+    INT32 = 6;   // int32_t
+    INT64 = 7;   // int64_t
+    STRING = 8;  // string
+    BOOL = 9;    // bool
+
+    // Advanced types
+    FLOAT16 = 10;
+
+    // Future extensions go here.
+  }
+
+  // The shape of the tensor.
+  repeated int64 dims = 1;
+
+  // The data type of the tensor.
+  optional DataType data_type = 2;
+
+  // For very large tensors, we may want to store them in chunks, in which
+  // case the following fields will specify the segment that is stored in
+  // the current TensorProto.
+  message Segment {
+    optional int64 begin = 1;
+    optional int64 end = 2;
+  }
+  optional Segment segment = 3;
+
+  // Tensor content must be in the row major order.
+  // For float
+  repeated float float_data = 4 [packed = true];
+
+  // For int32, uint8, int8, uint16, int16, bool, and float16
+  // Note about float16: in storage we will basically convert float16 byte-wise
+  // to unsigned short and then store them in the int32_data field.
+  repeated int32 int32_data = 5 [packed = true];
+
+  // For strings.
+  repeated bytes string_data = 6;
+
+  // For int64.
+  repeated int64 int64_data = 7 [packed = true];
+
+  // Optionally, a name for the tensor.
+  optional string name = 8; // namespace Tensor
+
+  // Serializations can either use one of the fields above, or use this
+  // raw bytes field. The only exception is the string case, where one is
+  // required to store the content in the repeated bytes string_data field.
+  //
+  // When this raw_data field is used to store tensor value, it is expected
+  // to use the little-endian order. For floating data types, they should
+  // be of the IEEE 754 format. Boolean type is stored as bytes.
+  //
+  // Note: the advantage of specific field rather than the raw_data field is
+  // that in some cases (e.g. int data), protobuf does a better packing via
+  // variable length storage, and may lead to smaller binary footprint.
+  optional bytes raw_data = 9;
+}
+
+// A sparse tensor must be stored as three dense tensors:
+//  1. dims: The shape of the original dense tensor.
+//  2. indices: A 2-D tensor specifying the indices of the nonzero elements.
+//  3. values: A 1-D tensor containing the values of the nonzero elements.
+message SparseTensorProto {
+  // The dimensions in the tensor.
+  repeated int64 dims = 1;
+  optional TensorProto indices = 2;
+  optional TensorProto values = 3;
+}

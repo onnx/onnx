@@ -1,0 +1,19 @@
+os: linux
+dist: trusty
+sudo: required
+language: python
+
+install:
+  - ./.travis/install.sh
+
+script:
+  - ./.travis/build.sh
+
+cache:
+  - directories:
+    - $HOME/.build_cache
+    - $HOME/.ccache
+
+env:
+  global:
+    - PB_VERSION=2.6.1
