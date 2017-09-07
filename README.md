@@ -22,11 +22,8 @@ evolve ONNX.
 
 # Installation
 
-Currently ONNX can only be built from source:
-
 ```
-git clone --recursive https://github.com/onnx/onnx.git
-pip install onnx/
+pip install onnx
 ```
 
 After installation, do
