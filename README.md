@@ -24,21 +24,18 @@ evolve ONNX.
 
 ## Binaries
 
-A binary build of ONNX is available from Conda:
+A binary build of ONNX is available from [Conda](https://conda.io):
 
 ```
 conda install -c ezyang onnx
 ```
 
-```
-
 ## Source
 
-You can build ONNX from source with PIP:
+You can also install ONNX from source with [pip](https://pip.pypa.io):
 
 ```
-git clone --recursive https://github.com/onnx/onnx.git
-pip install onnx/
+pip install onnx
 ```
 
 # Testing
