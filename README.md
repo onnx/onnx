@@ -38,6 +38,14 @@ You can also install ONNX from source with [pip](https://pip.pypa.io):
 pip install onnx
 ```
 
+After installation, do
+
+```
+python -c 'import onnx'
+```
+
+to verify it works.
+
 # Testing
 
 ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, first you need to install pytest:
