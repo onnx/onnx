@@ -20,7 +20,7 @@ SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 PROTOC = find_executable('protoc')
 
-install_requires = set()
+install_requires = {'six'}
 setup_requires = set()
 test_requires = set()
 

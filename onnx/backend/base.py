@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 
+import six
+
 import onnx.checker
 
 
@@ -33,7 +35,7 @@ def namedtupledict(typename, field_names, *args, **kwargs):
     kwargs.setdefault('rename', True)
     data = namedtuple(typename, field_names, *args, **kwargs)
     def getitem(self, key):
-        if isinstance(key, basestring):
+        if isinstance(key, six.string_types):
             key = field_names_map[key]
         return super(type(self), self).__getitem__(key)
     data.__getitem__ = getitem
