@@ -76,6 +76,7 @@ OPERATOR_SCHEMA(Constant)
             "Output tensor containing the same value of the provided tensor.");
 
 OPERATOR_SCHEMA(Caffe2ConvTranspose)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(3)
     .NumOutputs(1)
     .SetDoc(R"DOC(
