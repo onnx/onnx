@@ -32,19 +32,35 @@ conda install -c ezyang onnx
 
 ## Source
 
-You can also install ONNX from source with [pip](https://pip.pypa.io):
+You will need an install of protobuf and numpy to build ONNX.  One easy
+way to get these dependencies is via
+[Anaconda](https://www.anaconda.com/download/):
+
+```
+# Use conda-forge protobuf, as defaults doesn't come with protoc
+conda install -c conda-forge protobuf numpy
+```
+
+You can then install ONNX from PyPi:
 
 ```
 pip install onnx
 ```
 
-After installation, do
+After installation, run
 
 ```
 python -c 'import onnx'
 ```
 
-to verify it works.
+to verify it works.  Note that this command does not work from
+a source checkout directory; in this case you'll see:
+
+```
+ModuleNotFoundError: No module named 'onnx.onnx_cpp2py_export'
+```
+
+Change into another directory to fix this error.
 
 # Testing
 
@@ -72,7 +88,7 @@ pip install -e onnx/
 ```
 Then, after you have made changes to
 
-- Python files, the changes are immediatly effective in your installation, you do not need to install again.
+- Python files, the changes are immediately effective in your installation, you do not need to install again.
 - C++ files, you need to do install again to trigger the native extension build.
 
 # License
