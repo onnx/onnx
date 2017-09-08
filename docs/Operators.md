@@ -516,7 +516,7 @@
     </dl>
 
 
-* **GlobalMaxPooll**
+* **GlobalMaxPool**
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across the
    the values in the same channel. This is equivalent to MaxPool with kernel size

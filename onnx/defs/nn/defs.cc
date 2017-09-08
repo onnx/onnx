@@ -216,7 +216,7 @@ namespace onnx {
     }
   OPERATOR_SCHEMA(GlobalAveragePool)
   .FillUsing(GlobalPoolingOpSchemaGenerator("AveragePool", "average"));
-  OPERATOR_SCHEMA(GlobalMaxPooll)
+  OPERATOR_SCHEMA(GlobalMaxPool)
   .FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max"));
 } // namespace onnx
 
