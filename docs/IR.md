@@ -79,6 +79,6 @@ The following data types are supported by ONNX. Additional data types can be sup
 |Unsigned Integer Types|__uint8,uint16__| Unsigned integers of 8 or 16 bits are supported.|
 |Complex Types|__complex64,complex128__|A complex number with either 32- or 64-bit real and imaginary parts.|
 |Other|__string__|Strings represent textual data. All strings are encoded using UTF-8.|
-|Ohter|__bool__|Boolean value represent data with only two values, typically _true_ and _false_.|
+|Other|__bool__|Boolean value represent data with only two values, typically _true_ and _false_.|
 |Other|__handle__|Handles are opaque types holding a 64-bit integer.|
 |Collections|__sparse and dense tensor__|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimenstions, including zero. A zero-dimensional tensor is equivalent to a scalar.|
