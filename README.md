@@ -38,7 +38,7 @@ A docker image with ONNX, PyTorch, and Caffe2 is availiable for quickly trying [
 docker run -i -t houseroad/onnx-docker /bin/bash
 ```
 
-Currently the image only supports CPU computation with GPU support comming soon.
+Currently the image only supports CPU computation with GPU support coming soon.
 
 ## Source
 
