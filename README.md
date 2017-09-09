@@ -30,6 +30,16 @@ A binary build of ONNX is available from [Conda](https://conda.io):
 conda install -c ezyang onnx
 ```
 
+## Docker
+
+A docker image with ONNX, PyTorch, and Caffe2 is availiable for quickly trying [tutorials that use ONNX](http://pytorch.org/tutorials/advanced/super_resolution_with_caffe2.html). Simply run:
+
+```
+docker run -i -t houseroad/onnx-docker /bin/bash
+```
+
+Currently the image only supports CPU computation with GPU support comming soon.
+
 ## Source
 
 You will need an install of protobuf and numpy to build ONNX.  One easy
