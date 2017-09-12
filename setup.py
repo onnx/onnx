@@ -10,10 +10,12 @@ import setuptools.command.build_py
 import setuptools.command.build_ext
 
 import fnmatch
+from collections import namedtuple
 import os
 import subprocess
 import sys
 import tempfile
+from textwrap import dedent
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, 'onnx')
@@ -23,6 +25,14 @@ PROTOC = find_executable('protoc')
 install_requires = {'six'}
 setup_requires = set()
 test_requires = set()
+
+################################################################################
+# Version
+################################################################################
+
+VersionInfo = namedtuple('VersionInfo', ['version'])(
+    version='0.1'
+)
 
 ################################################################################
 # Utilities
@@ -113,8 +123,17 @@ class build_proto(ONNXCommand):
                 ])
 
 
+class create_version(ONNXCommand):
+    def run(self):
+        with open(os.path.join(SRC_DIR, 'version.py'), 'w') as f:
+            f.write(dedent('''
+            version = '{version}'
+            '''.format(**dict(VersionInfo._asdict()))))
+
+
 class build_py(setuptools.command.build_py.build_py):
     def run(self):
+        self.run_command('create_version')
         self.run_command('build_proto')
         setuptools.command.build_py.build_py.run(self)
 
@@ -129,6 +148,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
 
 cmdclass={
     'build_proto': build_proto,
+    'create_version': create_version,
     'build_py': build_py,
     'build_ext': build_ext,
 }
@@ -217,7 +237,7 @@ test_requires.add('pytest-cov')
 
 setuptools.setup(
     name="onnx",
-    version='0.1',
+    version=VersionInfo.version,
     description="Open Neural Network Exchange",
     ext_modules=ext_modules,
     cmdclass=cmdclass,
