@@ -30,8 +30,14 @@ test_requires = set()
 # Version
 ################################################################################
 
-VersionInfo = namedtuple('VersionInfo', ['version'])(
-    version='0.1'
+try:
+    git_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=TOP_DIR).decode('ascii').strip()
+except subprocess.CalledProcessError:
+    git_version = None
+
+VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
+    version='0.1',
+    git_version=git_version
 )
 
 ################################################################################
@@ -128,6 +134,7 @@ class create_version(ONNXCommand):
         with open(os.path.join(SRC_DIR, 'version.py'), 'w') as f:
             f.write(dedent('''
             version = '{version}'
+            git_version = '{git_version}'
             '''.format(**dict(VersionInfo._asdict()))))
 
 
