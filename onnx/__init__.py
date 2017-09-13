@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from .onnx_pb2 import *
 from . import checker, helper
 from . import defs
+from .version import version as __version__
 
 import sys
 
