@@ -10,10 +10,3 @@ wget -qO- "https://github.com/google/protobuf/releases/download/v$PB_VERSION/pro
 ccache -z
 cd "$pb_dir" && ./configure && make && make check && sudo make install && sudo ldconfig
 ccache -s
-
-if ! hash python 2>/dev/null; then
-   sudo apt-get install python
-fi
-if ! hash pip 2>/dev/null; then
-   sudo apt-get install python-pip
-fi
