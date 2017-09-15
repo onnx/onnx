@@ -39,26 +39,35 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph.initializer.extend(initializer)
     return graph
 
-def make_tensor(name, data_type, dims, vals):
+
+def make_tensor(name, data_type, dims, vals, raw=False):
     tensor = TensorProto()
     tensor.data_type = data_type
     tensor.name = name
-    if data_type == TensorProto.FLOAT:
-        tensor.float_data.extend(vals)
+
+    if data_type == TensorProto.STRING:
+        assert not raw, "Can not use raw_data to store string type"
+        tensor.string_data.extend(vals)
     elif data_type in [TensorProto.UINT8,
                        TensorProto.INT8,
                        TensorProto.UINT16,
                        TensorProto.INT16,
                        TensorProto.INT32,
                        TensorProto.FLOAT16,
-                       TensorProto.BOOL]:
-        tensor.int32_data.extend(vals)
-    elif data_type == TensorProto.INT64:
-        tensor.int64_data.extend(vals)
-    elif data_type == TensorProto.STRING:
-        tensor.string_data.extend(vals)
+                       TensorProto.BOOL,
+                       TensorProto.FLOAT]:
+        if raw:
+            tensor.raw_data = vals
+        else:
+            if data_type == TensorProto.FLOAT:
+                tensor.float_data.extend(vals)
+            elif data_type == TensorProto.INT64:
+                tensor.int64_data.extend(vals)
+            else:
+                tensor.int32_data.extend(vals)
     tensor.dims.extend(dims)
     return tensor
+
 
 def _to_bytes_or_false(val):
     """An internal graph to convert the input to a bytes or to False.
