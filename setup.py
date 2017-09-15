@@ -7,6 +7,7 @@ from distutils.spawn import find_executable
 from distutils import sysconfig
 import setuptools
 import setuptools.command.build_py
+import setuptools.command.develop
 import setuptools.command.build_ext
 
 import fnmatch
@@ -145,6 +146,12 @@ class build_py(setuptools.command.build_py.build_py):
         setuptools.command.build_py.build_py.run(self)
 
 
+class develop(setuptools.command.develop.develop):
+    def run(self):
+        self.run_command('create_version')
+        setuptools.command.develop.develop.run(self)
+
+
 class build_ext(setuptools.command.build_ext.build_ext):
     def run(self):
         self.run_command('build_proto')
@@ -157,6 +164,7 @@ cmdclass={
     'build_proto': build_proto,
     'create_version': create_version,
     'build_py': build_py,
+    'develop': develop,
     'build_ext': build_ext,
 }
 
