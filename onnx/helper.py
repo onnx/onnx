@@ -65,6 +65,8 @@ def make_tensor(name, data_type, dims, vals, raw=False):
                 tensor.int64_data.extend(vals)
             else:
                 tensor.int32_data.extend(vals)
+    else:
+        raise RuntimeError('Unrecognized data_type: {}'.format(data_type))
     tensor.dims.extend(dims)
     return tensor
 
