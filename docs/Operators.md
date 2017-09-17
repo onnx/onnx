@@ -126,7 +126,7 @@
   * **input**:
     <dl>
       <dt>X</dt>
-      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x D1 x D2 ... Dn), where N is the batch size.</dd>
+      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
@@ -259,12 +259,12 @@
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
-  * **input**:2 - 3
+  * **input**:
     <dl>
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
-      <dt>filter</dt>
-      <dd>The filter blob that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel.</dd>
+      <dt>weights</dt>
+      <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimenstion of the kernel</dd>
     </dl>
   * **output**:
     <dl>
@@ -294,8 +294,8 @@
     <dl>
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
-      <dt>filter</dt>
-      <dd>The filter blob that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel.</dd>
+      <dt>weights</dt>
+      <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimenstion of the kernel</dd>
     </dl>
   * **output**:
     <dl>
@@ -507,7 +507,7 @@
   * **input**:
     <dl>
       <dt>X</dt>
-      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x D1 x D2 ... Dn), where N is the batch size.</dd>
+      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
@@ -524,7 +524,7 @@
   * **input**:
     <dl>
       <dt>X</dt>
-      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x D1 x D2 ... Dn), where N is the batch size.</dd>
+      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
@@ -611,7 +611,7 @@
   * **input**:
     <dl>
       <dt>X</dt>
-      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x D1 x D2 ... Dn), where N is the batch size.</dd>
+      <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
