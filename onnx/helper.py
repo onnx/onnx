@@ -41,6 +41,13 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
 
 
 def make_tensor(name, data_type, dims, vals, raw=False):
+    '''
+    Make a TensorProto with specified arguments.  If raw is False, this
+    function will choose the corresponding proto field to store the
+    values based on data_type. If raw is True, use "raw_data" proto
+    field to store the values, and values should be of type bytes in
+    this case.
+    '''
     tensor = TensorProto()
     tensor.data_type = data_type
     tensor.name = name
