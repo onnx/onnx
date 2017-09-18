@@ -62,19 +62,6 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
             "Output tensor of constant values specified by 'value'"
             "argument and its type is specified by the 'dtype' argument");
 
-OPERATOR_SCHEMA(Constant)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(0)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(A constant tensor.)DOC")
-    .Attr("value",
-          "The value for the elements of the output tensor.",
-          AttrType::TENSOR)
-    .Output(
-            0,
-            "output",
-            "Output tensor containing the same value of the provided tensor.");
-
 OPERATOR_SCHEMA(Caffe2ConvTranspose)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(3)
