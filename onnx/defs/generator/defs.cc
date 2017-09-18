@@ -5,6 +5,18 @@
 
 using AttrType = onnx::OpSchema::AttrType;
 
+OPERATOR_SCHEMA(Constant)
+    .NumInputs(0)
+    .NumOutputs(1)
+    .SetDoc(R"DOC(A constant tensor.)DOC")
+    .Attr(
+          "value",
+          "The value for the elements of the output tensor.",
+          AttrType::TENSOR)
+    .Output(
+            0,
+            "output",
+            "Output tensor containing the same value of the provided tensor.");
 
 OPERATOR_SCHEMA(RandomUniform)
     .NumInputs(0)
