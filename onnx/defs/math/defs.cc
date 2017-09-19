@@ -201,8 +201,10 @@ OPERATOR_SCHEMA(Elu)
     .NumInputs(1)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
+    .Attr("alpha",
+          "Coefficient of ELU default to 1.0.",
+          AttrType::FLOAT)
     .SetDoc(R"DOC(
-
 Elu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
 0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
@@ -279,7 +281,7 @@ Apply dot product between 2 tensors. Similar to numpy implementation:
 https://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
 )DOC")
     .Input(0, "X", "Input tensor of any shape")
-    .Input(1, "Y", "Input tensor of any shape")    
+    .Input(1, "Y", "Input tensor of any shape")
     .Output(0, "Z", "Output tensor the dot product between X and Y.");
 
 OPERATOR_SCHEMA(PRelu)
