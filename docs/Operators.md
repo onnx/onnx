@@ -19,22 +19,22 @@
 * **Add**
 
   Performs element-wise binary addition (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of size 1 (a scalar value), or having its shape as a
   contiguous subset of the first tensor's shape. The starting of the mutually
   equal shape is specified by the argument "axis", and if it is not set, suffix
   matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
   * **attribute**:
     <dl>
@@ -59,9 +59,9 @@
 
 * **ArgMax**
 
-  Computes the indices of the max elements of the input tensor's element along the 
-  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  Computes the indices of the max elements of the input tensor's element along the
+  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1.
+  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
   The type of the output tensor is integer.
   * **attribute**:
     <dl>
@@ -84,9 +84,9 @@
 
 * **ArgMin**
 
-  Computes the indices of the min elements of the input tensor's element along the 
-  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1. 
-  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+  Computes the indices of the min elements of the input tensor's element along the
+  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1.
+  If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
   The type of the output tensor is integer.
   * **attribute**:
     <dl>
@@ -140,7 +140,7 @@
   Carries out batch normalization as described in the paper
   https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
   there are multiple cases for the number of outputs, which we list below:
-  
+
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
   * **attribute**:
@@ -190,7 +190,7 @@
   in the 'DataType' enum field in the TensorProto message. If the 'to' argument
   is not provided or is not one of the enumerated types in DataType, Caffe2
   throws an Enforce error.
-  
+
   NOTE: Casting to and from strings is not supported yet.
   * **attribute**:
     <dl>
@@ -323,22 +323,22 @@
 * **Div**
 
   Performs element-wise binary division (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of size 1 (a scalar value), or having its shape as a
   contiguous subset of the first tensor's shape. The starting of the mutually
   equal shape is specified by the argument "axis", and if it is not set, suffix
   matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
   * **attribute**:
     <dl>
@@ -412,7 +412,7 @@
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
-  
+
   * **attribute**:
     <dl>
       <dt>alpha</dt>
@@ -485,7 +485,7 @@
   Given DATA tensor of rank r >= 1, and INDICES tensor of rank q, gather
   entries of the outer-most dimension of DATA indexed by INDICES, and concatenate
   them in an output tensor of rank q + (r - 1).
-  
+
   Example:
     DATA  = [
         [1.0, 1.2],
@@ -662,22 +662,22 @@
 * **Mul**
 
   Performs element-wise binary multiplication (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of size 1 (a scalar value), or having its shape as a
   contiguous subset of the first tensor's shape. The starting of the mutually
   equal shape is specified by the argument "axis", and if it is not set, suffix
   matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
   * **attribute**:
     <dl>
@@ -722,7 +722,7 @@
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-  
+
   * **input**:
     <dl>
       <dt>X</dt>
@@ -764,7 +764,7 @@
   Generate a tensor with random values drawn from a normal distribution. The shape
   of the tensor is specified by the `shape` argument and the parameter of the normal distribution
   specified by `mean` and `scale`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -794,7 +794,7 @@
   Generate a tensor with random values drawn from a normal distribution. The shape
   of the tensor is computed from the input argument and the parameter of the normal distribution
   specified by `mean` and `scale`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -825,7 +825,7 @@
 
   Generate a tensor with random values drawn from a uniform distribution. The shape
   of the tensor is specified by the `shape` argument and the range by `low` and `high`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -854,7 +854,7 @@
 
   Generate a tensor with random values drawn from a uniform distribution. The shape
   of the tensor is computed from the input argument and the range by `low` and `high`.
-  
+
   The data type is specified by the 'dtype' argument. The 'dtype' argument must
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
@@ -901,9 +901,9 @@
 * **ReduceLogSumExp**
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
   * **attribute**:
@@ -928,9 +928,9 @@
 * **ReduceMax**
 
   Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
   * **attribute**:
@@ -955,9 +955,9 @@
 * **ReduceMean**
 
   Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
   * **attribute**:
@@ -982,9 +982,9 @@
 * **ReduceMin**
 
   Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
   * **attribute**:
@@ -1009,9 +1009,9 @@
 * **ReduceProd**
 
   Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
   * **attribute**:
@@ -1036,9 +1036,9 @@
 * **ReduceSum**
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
-  
+
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
   * **attribute**:
@@ -1080,9 +1080,9 @@
 * **Reshape**
 
   Reshape the input tensor similar to numpy.reshape.
-      
+
   It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
-      
+
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is going to be copied
@@ -1149,14 +1149,14 @@
 * **Slice**
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
-  
-  Slices are passed as two keyword argument lists with starting and end indices 
-  for each dimension of the input `data` tensor. If a negative value is passed 
-  for any of the start or end indices, it represent number of elements before 
+  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+
+  Slices are passed as two keyword argument lists with starting and end indices
+  for each dimension of the input `data` tensor. If a negative value is passed
+  for any of the start or end indices, it represent number of elements before
   the end of that dimension.
-  
-  `strides` is the  step sizes when applying slicing, negative value means in 
+
+  `strides` is the  step sizes when applying slicing, negative value means in
   reverse order.
   * **attribute**:
     <dl>
@@ -1183,7 +1183,7 @@
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax normalized values of the corresponding input.
-  
+
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
   X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -1275,22 +1275,22 @@
 * **Sub**
 
   Performs element-wise binary subtraction (with limited broadcast support).
-  
+
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
   tensor can either be of size 1 (a scalar value), or having its shape as a
   contiguous subset of the first tensor's shape. The starting of the mutually
   equal shape is specified by the argument "axis", and if it is not set, suffix
   matching is assumed. 1-dim expansion doesn't work yet.
-  
+
   For example, the following tensor shapes are supported (with broadcast=1):
-  
+
     shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
     shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
+
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
   * **attribute**:
     <dl>

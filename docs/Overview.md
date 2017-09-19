@@ -19,23 +19,23 @@ Today each framework has its own proprietary representation of the
 graph, though they all provide similar capabilities. This means each
 framework is a siloed stack of API, graph, and runtime. Furthermore,
 each framework has optimized for some characteristic such as fast
-training, supporting complicated network architecture, inferencing 
-on mobile devices, etc. Developers have to choose the characteristic 
-that matters most to them and pick a framework. Many times, the 
-characteristic most important during research and development is 
-different than the one most important for shipping to production. 
-This leads to significant delays between completion of development 
+training, supporting complicated network architecture, inferencing
+on mobile devices, etc. Developers have to choose the characteristic
+that matters most to them and pick a framework. Many times, the
+characteristic most important during research and development is
+different than the one most important for shipping to production.
+This leads to significant delays between completion of development
 and start of shipping because the solution needs to be converted.
 
-With the goal of democratizing AI, we envision developers being 
-empowered to choose the framework that works best for the stage they 
-are at and easily switching between frameworks as needed. We propose 
-the Open Neural Network Exchange (ONNX) format as a common IR to help 
+With the goal of democratizing AI, we envision developers being
+empowered to choose the framework that works best for the stage they
+are at and easily switching between frameworks as needed. We propose
+the Open Neural Network Exchange (ONNX) format as a common IR to help
 establish this powerful ecosystem.
 
-By providing a common representation of the computation graph, ONNX 
-helps developers choose the right framework for their task, framework 
-authors to focus on innovative enhancements, and hardware vendors to 
-streamline optimizations. 
+By providing a common representation of the computation graph, ONNX
+helps developers choose the right framework for their task, framework
+authors to focus on innovative enhancements, and hardware vendors to
+streamline optimizations.
 
-ONNX is designed to be an open format.  We welcome contributions from the community and encourge everyone to adopt ONNX in their ecosystem. 
+ONNX is designed to be an open format. We welcome contributions from the community and encourage everyone to adopt ONNX in their ecosystem.
