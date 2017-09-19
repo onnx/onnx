@@ -76,7 +76,7 @@ message NodeProto {
   // Additional named attributes.
   repeated AttributeProto attribute = 5;
 
-  // A human-readable documentation for this graph.
+  // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
 }
 
@@ -121,7 +121,7 @@ message GraphProto {
   // the graph.
   optional string domain = 9;
 
-  // A human-readable documentation for this graph.
+  // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
 };
 
