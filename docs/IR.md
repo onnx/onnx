@@ -34,7 +34,7 @@ The following are the metadata properties of a model graph:
 |name|string|Valid C identifier|A name for the model.|
 |domain|string|Valid DNS name|A namespace for the model, following the style of package names, that is, reverse DNS domain name.|
 |ir_version|int64||The version of the IR format specification|
-|doc_string|string|Free form|A human-readable documentation string intended to summarize the purpose of the model.|
+|doc_string|string|Free form|A human-readable documentation string intended to summarize the purpose of the model. Markdown is allowed.|
 
 
 #### Names Within a Graph
