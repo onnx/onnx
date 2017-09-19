@@ -169,19 +169,34 @@ def printable_attribute(attr):
     content = []
     content.append(attr.name)
     content.append("=")
+    def str_float(f):
+        # NB: Different Python versions print different numbers of trailing
+        # decimals, specifying this explicitly keeps it consistent for all
+        # versions
+        return '{:.15g}'.format(f)
+    def str_int(i):
+        # NB: In Python 2, longs will repr() as '2L', which is ugly and
+        # unnecessary.  Explicitly format it to keep it consistent.
+        return '{:d}'.format(i)
+    def str_str(s):
+        return repr(s)
+    def str_list(str_elem, xs):
+        return '[' + ', '.join(map(str_elem, xs)) + ']'
     if attr.HasField("f"):
-        content.append(str(attr.f))
+        content.append(str_float(attr.f))
     elif attr.HasField("i"):
-        content.append('{}'.format(attr.i))
+        content.append(str_int(attr.i))
     elif attr.HasField("s"):
-        content.append(_sanitize_str(attr.s))
+        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
+        content.append(repr(_sanitize_str(attr.s)))
     elif attr.HasField("t"):
         content.append("<Tensor>")
     elif attr.floats:
-        content.append(str(list(attr.floats)))
+        content.append(str_list(str_float, attr.floats))
     elif attr.ints:
-        content.append('[' + ', '.join(map(lambda i: '{}'.format(i), attr.ints)) + ']')
+        content.append(str_list(str_int, attr.ints))
     elif attr.strings:
+        # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
