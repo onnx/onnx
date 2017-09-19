@@ -413,6 +413,11 @@
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
   
+  * **attribute**:
+    <dl>
+      <dt>alpha</dt>
+      <dd>Coefficient of ELU default to 1.0.</dd>
+    </dl>
   * **input**:
     <dl>
       <dt>X</dt>
