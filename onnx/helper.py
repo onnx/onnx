@@ -113,8 +113,10 @@ def make_attribute(key, value):
     # string
     elif bytes_or_false:
         attr.s = bytes_or_false
+    elif isinstance(value, TensorProto):
+        attr.t.CopyFrom(value)
     elif isinstance(value, GraphProto):
-        attr.graph.CopyFrom(value)
+        attr.g.CopyFrom(value)
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
@@ -134,8 +136,7 @@ def make_attribute(key, value):
                 "its applicable type.")
     else:
         raise ValueError(
-            "Your attribute {}:{} is not float, integer or string type, and is not"
-            "iterable.".format(key, str(value)))
+            'Value "{}" is not valid attribute data type.'.format(value))
     return attr
 
 
