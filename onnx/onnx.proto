@@ -46,9 +46,10 @@ package onnx;
 
 // A named attribute containing either singular float, integer, string
 // and tensor values, or repeated float, integer, string and tensor values.
-// An AttributeProto should contain the name field, and *only one* of the
+// An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
 message AttributeProto {
+  // The name field MUST be present for this version of the IR.
   optional string name = 1;           // namespace Attribute
   optional float f = 2;               // float
   optional int64 i = 3;               // int
