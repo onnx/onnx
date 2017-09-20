@@ -280,7 +280,7 @@
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
-      <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimenstion of the kernel</dd>
+      <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
     </dl>
   * **output**:
     <dl>
@@ -311,7 +311,7 @@
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
-      <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimenstion of the kernel</dd>
+      <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
     </dl>
   * **output**:
     <dl>
@@ -459,7 +459,7 @@
   * **output**:
     <dl>
       <dt>output</dt>
-      <dd>A tensor of rank 2 with the contents of the input tensor, with first dimension equal first dimension of input, and remaining input dimensions flatenned into the inner dimension of the output.</dd>
+      <dd>A tensor of rank 2 with the contents of the input tensor, with first dimension equal first dimension of input, and remaining input dimensions flattened into the inner dimension of the output.</dd>
     </dl>
 
 
@@ -621,7 +621,7 @@
   * **attribute**:
     <dl>
       <dt>dilations</dt>
-      <dd>Dilaton along each axis, 1 mean no dilation.</dd>
+      <dd>Dilation along each axis, 1 mean no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
@@ -728,7 +728,7 @@
       <dt>X</dt>
       <dd>Input tensor</dd>
       <dt>Slope</dt>
-      <dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
+      <dd>Slope tensor. If `Slope` is of size 1, the value is shared across different channels</dd>
     </dl>
   * **output**:
     <dl>
