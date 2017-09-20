@@ -112,7 +112,7 @@ computes the output.)DOC";
                          "has size (M x C x kH x kW), where C is the number of channels, "
                          "and kH and kW are the height and width of the kernel, and M is the number "
                          "of feature maps. For more than 2 dimensions, the kernel shape will be "
-                         "(M x C x k1 x k2 x ... x kn), where is the dimenstion of the kernel");
+                         "(M x C x k1 x k2 x ... x kn), where is the dimension of the kernel");
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the convolution. The "
@@ -163,7 +163,7 @@ and computes the output.)DOC";
                          "has size (C x M x kH x kW), where C is the number of channels, "
                          "and kH and kW are the height and width of the kernel, and M is the number "
                          "of feature maps. For more than 2 dimensions, the kernel shape will be "
-                         "(C x M x k1 x k2 x ... x kn), where is the dimenstion of the kernel");
+                         "(C x M x k1 x k2 x ... x kn), where is the dimension of the kernel");
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the convolution. The "
@@ -323,4 +323,4 @@ unchanged.
         "output",
         "A tensor of rank 2 with the contents of the input tensor, "
         "with first dimension equal first dimension of input, and remaining "
-        "input dimensions flatenned into the inner dimension of the output.");
+        "input dimensions flattened into the inner dimension of the output.");
