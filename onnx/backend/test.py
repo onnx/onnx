@@ -106,7 +106,7 @@ class BackendTest(object):
             prepared_graph = self.backend.prepare(graph)
 
             for test_data_npz in glob.glob(os.path.join(model_dir, 'test_data_*.npz')):
-                test_data = np.load(test_data_npz)
+                test_data = np.load(test_data_npz, encoding='bytes')
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_graph.run(inputs))
                 ref_outputs = test_data['outputs']
