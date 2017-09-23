@@ -37,11 +37,12 @@ package onnx;
 // - Attribute: These names identify attribute names for extra attributes that
 //   are passed to operators.
 // - Operator: These names identify particular operators.
-// - Tensor: These names identify intermediate tensor values flowing through
+// - Value: These names identify intermediate values (typically tensors) flowing through
 //   the computation of a graph.
+// - Shape: These names represent parameters for unknown shape dimensions.
 //
 // We specify the namespace of a name in ONNX as comments in the form
-// of "namespace {Node,Graph,Attribute,Tensor}". Framework is responsible
+// of "namespace {Node,Graph,Operator,Attribute,Value,Shape}". Framework is responsible
 // for supporting the namespaces.
 
 // A named attribute containing either singular float, integer, string
@@ -64,21 +65,34 @@ message AttributeProto {
   repeated GraphProto graphs = 11;    // list of graph
 }
 
+// Defines argument information set, except argument name.
+// The argument could be an input or an output of a graph or node.
+message ArgInfoProto {
+  // This field MUST be present in this version of the IR.  
+  optional TypeProto type = 1;
+  optional TensorShapeProto shape = 2;
+}
+
 // NodeProto stores a node that is similar to the notion of "layer"
 // or "operator" in many deep learning frameworks. For example, it can be a
 // node of type "Conv" that takes in an image, a filter tensor and a bias
 // tensor, and produces the convolved output.
 message NodeProto {
-  repeated string input = 1;   // namespace Tensor
-  repeated string output = 2;  // namespace Tensor
-  optional string name = 3;    // namespace Node
-  optional string op_type = 4; // namespace Operator
+  repeated string input = 1;    // namespace Value
+  repeated string output = 2;   // namespace Value
+  optional string name = 3;     // namespace Node
+  optional string op_type = 4;  // namespace Operator
 
   // Additional named attributes.
   repeated AttributeProto attribute = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
+
+  // Information including type and shape for each input and output of
+  // the operator/function called by the node.
+  repeated ArgInfoProto input_arg_info = 7;
+  repeated ArgInfoProto output_arg_info = 8;
 }
 
 // GraphProto defines a series of nodes to form a directed acyclic graph.
@@ -92,8 +106,8 @@ message GraphProto {
   optional string name = 2;   // namespace Graph
 
   // The inputs and outputs of the graph.
-  repeated string input = 3;  // namespace Tensor
-  repeated string output = 4; // namespace Tensor
+  repeated string input = 3;  // namespace Value
+  repeated string output = 4; // namespace Value
 
   // An optional list of initial values for tensors in the list of input above.
   // Used to pass serialized parameters for networks.
@@ -103,6 +117,7 @@ message GraphProto {
   repeated TensorProto initializer = 5;
 
   // The version of the IR this graph targets. See Version enum below.
+  // This field MUST be present this version of the IR.
   optional int64 ir_version = 6;
 
   // The version of the framework runtime that generates this graph.
@@ -124,7 +139,17 @@ message GraphProto {
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
-};
+
+  // Argument information for input/output of this graph.
+  // Each ArgInfoProto corresponds one-to-one by position with the 
+  // input or output value of the graph.
+  // The number of elements in input_arg_info MUST match the number 
+  // of elements in the input field.
+  // The number of elements in output_arg_info MUST match the number 
+  // of elements in the output field.
+  repeated ArgInfoProto input_arg_info = 11;
+  repeated ArgInfoProto output_arg_info = 12;
+}
 
 // To be compatible with both proto2 and proto3, we will use a version number
 // that is not defined by the default value but an explicit enum number.
@@ -212,6 +237,44 @@ message TensorProto {
 message SparseTensorProto {
   // The dimensions in the tensor.
   repeated int64 dims = 1;
+  // This field MUST be present this version of the IR.
   optional TensorProto indices = 2;
+  // This field MUST be present this version of the IR.  
   optional TensorProto values = 3;
+}
+
+// Define the types.
+message TypeProto {
+  message TensorTypeProto {
+  // This field MUST NOT have the value of UNDEFINED
+  // This field MUST be present for this version of the IR.
+    optional TensorProto.DataType elem_type = 1;
+  }
+
+  message SparseTensorTypeProto {
+  // This field MUST NOT have the value of UNDEFINED
+  // This field MUST be present for this version of the IR.
+    optional TensorProto.DataType elem_type = 1;
+  }
+
+  oneof value {
+    // The type of a tensor.
+    TensorTypeProto tensor_type = 1;
+
+    // The type of a sparse tensor.
+    SparseTensorTypeProto sparse_tensor_type = 2;
+  }
+}
+
+// Defines a tensor shape. A dimension can be either an integer value
+// or a symbolic variable. A symbolic variable represents an unknown
+// dimension.
+message TensorShapeProto {
+  message Dimension {
+    oneof value {
+      int64 dim_value = 1;
+      string dim_param = 2;   // namespace Shape
+    };
+  };
+  repeated Dimension dim = 1;
 }
