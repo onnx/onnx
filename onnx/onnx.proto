@@ -95,11 +95,9 @@ message GraphProto {
   repeated string input = 3;  // namespace Tensor
   repeated string output = 4; // namespace Tensor
 
-  // An optional list of initial values for tensors in the list of input above.
+  // An optional list of named tensor values (constants).
   // Used to pass serialized parameters for networks.
-  // Each entry specifies a value for the input whose TensorProto.name matches
-  // a name in the input. This list is not required to be the same length of as
-  // input since many tensors might not have initial values.
+  // Each TensorProto entry must have a name (unique in the tensor name space).
   repeated TensorProto initializer = 5;
 
   // The version of the IR this graph targets. See Version enum below.
