@@ -291,7 +291,7 @@ message TypeProto {
     ScalarTypeProto scalar_type = 3;
 
     // The type of a sequence value.
-    SequenceTypeProto scalar_type = 4;
+    SequenceTypeProto sequence_type = 4;
   }
 }
 
