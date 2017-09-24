@@ -37,11 +37,12 @@ package onnx;
 // - Attribute: These names identify attribute names for extra attributes that
 //   are passed to operators.
 // - Operator: These names identify particular operators.
-// - Tensor: These names identify intermediate tensor values flowing through
+// - Value: These names identify intermediate values (typically tensors) flowing through
 //   the computation of a graph.
+// - Shape: These names represent parameters for unknown shape dimensions.
 //
 // We specify the namespace of a name in ONNX as comments in the form
-// of "namespace {Node,Graph,Attribute,Tensor}". Framework is responsible
+// of "namespace {Node,Graph,Operator,Attribute,Value,Shape}". Framework is responsible
 // for supporting the namespaces.
 
 // A named attribute containing either singular float, integer, string
@@ -64,21 +65,34 @@ message AttributeProto {
   repeated GraphProto graphs = 11;    // list of graph
 }
 
+// Defines argument information set, except argument name.
+// The argument could be an input or an output of a graph or node.
+message ArgInfoProto {
+  // This field MUST be present in this version of the IR.  
+  optional TypeProto type = 1;
+  optional TensorShapeProto shape = 2;
+}
+
 // NodeProto stores a node that is similar to the notion of "layer"
 // or "operator" in many deep learning frameworks. For example, it can be a
 // node of type "Conv" that takes in an image, a filter tensor and a bias
 // tensor, and produces the convolved output.
 message NodeProto {
-  repeated string input = 1;   // namespace Tensor
-  repeated string output = 2;  // namespace Tensor
-  optional string name = 3;    // namespace Node
-  optional string op_type = 4; // namespace Operator
+  repeated string input = 1;    // namespace Value
+  repeated string output = 2;   // namespace Value
+  optional string name = 3;     // namespace Node
+  optional string op_type = 4;  // namespace Operator
 
   // Additional named attributes.
   repeated AttributeProto attribute = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
+
+  // Information including type and shape for each input and output of
+  // the operator/function called by the node.
+  repeated ArgInfoProto input_arg_info = 7;
+  repeated ArgInfoProto output_arg_info = 8;
 }
 
 // GraphProto defines a series of nodes to form a directed acyclic graph.
@@ -92,8 +106,8 @@ message GraphProto {
   optional string name = 2;   // namespace Graph
 
   // The inputs and outputs of the graph.
-  repeated string input = 3;  // namespace Tensor
-  repeated string output = 4; // namespace Tensor
+  repeated string input = 3;  // namespace Value
+  repeated string output = 4; // namespace Value
 
   // An optional list of initial values for tensors in the list of input above.
   // Used to pass serialized parameters for networks.
@@ -103,6 +117,7 @@ message GraphProto {
   repeated TensorProto initializer = 5;
 
   // The version of the IR this graph targets. See Version enum below.
+  // This field MUST be present this version of the IR.
   optional int64 ir_version = 6;
 
   // The version of the framework runtime that generates this graph.
@@ -124,7 +139,23 @@ message GraphProto {
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
-};
+
+  // Argument information for input/output of this graph.
+  // Each ArgInfoProto corresponds one-to-one by position with the 
+  // input or output value of the graph.
+  // The number of elements in input_arg_info MUST match the number 
+  // of elements in the input field.
+  // The number of elements in output_arg_info MUST match the number 
+  // of elements in the output field.
+  repeated ArgInfoProto input_arg_info = 11;
+  repeated ArgInfoProto output_arg_info = 12;
+
+  // Imported libraries are referenced as a collection of strings in the form of absolute
+  // URIs or relative paths. Where such relative paths are rooted is defined by tools and
+  // runtime implementations.
+  repeated string imported_libraries = 13;  
+  
+}
 
 // To be compatible with both proto2 and proto3, we will use a version number
 // that is not defined by the default value but an explicit enum number.
@@ -154,7 +185,9 @@ message TensorProto {
 
     // Advanced types
     FLOAT16 = 10;
-
+    DOUBLE = 11;
+    COMPLEX64 = 12;     // complex with float32 real and imaginary components
+    COMPLEX128 = 13;    // complex with float64 real and imaginary components
     // Future extensions go here.
   }
 
@@ -173,19 +206,34 @@ message TensorProto {
   }
   optional Segment segment = 3;
 
-  // Tensor content must be in the row major order.
-  // For float
+  // Tensor content must be in the row major order. Depending on the data_type
+  // field, exactly one of the following fields is used to store the elements of the tensor:
+  //    float_data
+  //    int32_data
+  //    int64_data
+  //    string_data
+  //    raw_data
+
+  // For float values
+  // When this field is present, the data_type field MUST be FLOAT
   repeated float float_data = 4 [packed = true];
 
-  // For int32, uint8, int8, uint16, int16, bool, and float16
-  // Note about float16: in storage we will basically convert float16 byte-wise
-  // to unsigned short and then store them in the int32_data field.
+  // For int32, uint8, int8, uint16, int16, bool, and float16 values
+  // float16 values must be bit-wise converted to an uint16_t prior 
+  // to writing to the buffer.
+  // When this field is present, the data_type field MUST be 
+  // INT32, INT16, INT8, UINT16, INT8, BOOL, or FLOAT32
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.
+  // Each element of string_data is a UTF-8 encoded Unicode
+  // string. No trailing null, no leading BOM. The protobuf "string"
+  // scalar type is not used to match ML community conventions.
+  // When this field is present, the data_type field MUST be STRING
   repeated bytes string_data = 6;
 
   // For int64.
+  // When this field is present, the data_type field MUST be INT64
   repeated int64 int64_data = 7 [packed = true];
 
   // Optionally, a name for the tensor.
@@ -195,14 +243,23 @@ message TensorProto {
   // raw bytes field. The only exception is the string case, where one is
   // required to store the content in the repeated bytes string_data field.
   //
-  // When this raw_data field is used to store tensor value, it is expected
-  // to use the little-endian order. For floating data types, they should
-  // be of the IEEE 754 format. Boolean type is stored as bytes.
+  // When this raw_data field is used to store tensor value, elements MUST 
+  // be stored in as fixed-width, little-endian order. 
+  // Floating-point data types MUST be stored in IEEE 754 format. 
+  // Complex64 elements must be written as two consecutive FLOAT values, real component first.
+  // Complex128 elements must be written as two consecutive DOUBLE values, real component first.
+  // Boolean type MUST be written one byte per tensor element (00000001 for true, 00000000 for false).
   //
   // Note: the advantage of specific field rather than the raw_data field is
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
+  // When this field is present, the data_type field MUST NOT be STRING or UNDEFINED
   optional bytes raw_data = 9;
+
+  // For double
+  // When this field is present, the data_type field MUST be DOUBLE
+  repeated double double_data = 10 [packed = true];
+  
 }
 
 // A sparse tensor must be stored as three dense tensors:
@@ -212,6 +269,165 @@ message TensorProto {
 message SparseTensorProto {
   // The dimensions in the tensor.
   repeated int64 dims = 1;
+  // This field MUST be present this version of the IR.
   optional TensorProto indices = 2;
+  // This field MUST be present this version of the IR.  
   optional TensorProto values = 3;
 }
+
+// Define the types.
+message TypeProto {
+  message TensorTypeProto {
+  // This field MUST NOT have the value of UNDEFINED
+  // This field MUST be present for this version of the IR.
+    optional TensorProto.DataType elem_type = 1;
+  }
+
+  message SparseTensorTypeProto {
+  // This field MUST NOT have the value of UNDEFINED
+  // This field MUST be present for this version of the IR.
+    optional TensorProto.DataType elem_type = 1;
+  }
+
+  // ScalarType is needed to describe (at a minimum) scalar attribute values.
+  // When used in an attribute declaration, use the i|s|f fields a la the
+  // same encoding rules used by TensorProto.
+  message ScalarTypeProto {
+    // This field MUST NOT have the value of UNDEFINED
+    // This field MUST be present for this version of the IR.
+      optional TensorProto.DataType data_type = 1;
+  } 
+
+  // SequenceType is needed to describe (at a minimum) repeated attribute values.
+  // When used in an attribute declaration, use the ints|strings|floats fields a la the
+  // same encoding rules used by TensorProto.
+  message SequenceTypeProto {
+  // This field MUST be present for this version of the IR.
+    optional TypeProto elem_type = 1;
+  };
+
+  oneof value {
+    // The type of a tensor.
+    TensorTypeProto tensor_type = 1;
+
+    // The type of a sparse tensor.
+    SparseTensorTypeProto sparse_tensor_type = 2;
+
+    // The type of a scalar value.
+    ScalarTypeProto scalar_type = 3;
+
+    // The type of a sequence value.
+    SequenceTypeProto sequence_type = 4;
+  }
+}
+
+// Defines a tensor shape. A dimension can be either an integer value
+// or a symbolic variable. A symbolic variable represents an unknown
+// dimension.
+message TensorShapeProto {
+  message Dimension {
+    oneof value {
+      int64 dim_value = 1;
+      string dim_param = 2;   // namespace Shape
+    };
+  };
+  repeated Dimension dim = 1;
+}
+
+// A library is a top-level format that contains the declaration
+// of operators and the definition of functions. 
+message LibraryProto {
+  // The version of the IR this graph targets. See Version enum below.
+  // This field MUST be present this version of the IR.  
+  optional int64 ir_version = 1;
+
+  // The optional version of the framework runtime that generates this graph.
+  // This producer_version has the same format as ir_version. 
+  optional int64 producer_version = 2;
+
+  // The optional name of the framework used to generate this graph in the form
+  // "framework_name[-tag]". Tag is optional and provides additional
+  // information such as `alpha` or `beta` or `rc3`.
+  optional string producer_tag = 3;
+
+  // An optional version identifier used to track evolution of this library.
+  // This model_version has the same format as ir_version. 
+  optional int64 model_version = 4;
+
+  // The optional name of the author who created the library.
+  optional string model_author = 5;
+
+  // Optional licensing information concerning use or origination of the library.
+  optional string model_license = 6;
+
+  // The name of the library.
+  optional string name = 7;   // namespace Library
+
+  // Domain of the library.
+  // We use reverse domain names as name space indicators. For example:
+  // `com.facebook.fair` or `com.microsoft.cognitiveservices`
+  //
+  // Together with `name` and `model_version`, this forms the unique identity of
+  // the library.
+  optional string domain = 8;
+
+  // An optional human-readable documentation for this graph.
+  // This string MAY contain markdown syntax in GFM form.
+  optional string doc_string = 9;
+
+  // The operators declared by this library. 
+  repeated OperatorDeclProto operator = 10;
+
+  // A given name may appear at most once in operator.
+  // When refering to an operator from outside of this library, the op_type
+  // field must equal:
+  //      LibraryProto.domain + "." + LibraryProto.name + "." OperatorDeclProto.name  
+  // or
+  //      LibraryProto.domain + "." + LibraryProto.name + "." FunctionDefProto.name  
+
+  // Imported libraries are referenced as a collection of strings in the form of absolute
+  // URIs or relative paths. Where such relative paths are rooted is defined by tools and
+  // runtime implementations.
+  repeated string imported_libraries = 12;  
+};
+
+
+// ParameterDeclProto is used to declare the expected type/shape
+// of a given attribute or input/output parameter.
+message ParameterDeclProto {
+  optional string name = 1;
+  optional TypeProto type = 2;
+  optional TensorShapeProto shape = 3;
+// An optional human-readable documentation for this parameter.
+  optional string doc_string = 4;
+};
+
+// SignatureDeclProto describes the expected attributes and input/output parameters
+// for a given operator.
+message SignatureDeclProto {
+// The formal input parameters to the operation or function 
+  repeated ParameterDeclProto input_params = 1;
+// The formal output parameters to the operation or function 
+  repeated ParameterDeclProto output_params = 2;
+// The declaration of expected attributes to the operation or function 
+  repeated ParameterDeclProto input_attributes = 3; 
+// An optional human-readable documentation for this signature.
+  optional string doc_string = 4;
+};
+
+// OperatorDeclProto describes the expected attributes and input/output
+// parameters of a given operator who's implementation is provided by
+// the framework or runtime that evaluates the graph/node. 
+message OperatorDeclProto {
+// This field MUST be present for this version of the IR.
+  optional string name = 1;
+
+// This field MUST contain at least one SignatureDeclProto.
+// This field MAY contain multiple SignatureDeclProtos, one 
+// per type signature supported by this operator.
+  repeated SignatureDeclProto signature = 2;
+
+// An optional human-readable documentation for this operator.
+  optional string doc_string = 3;
+};
+
