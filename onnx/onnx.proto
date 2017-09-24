@@ -149,6 +149,12 @@ message GraphProto {
   // of elements in the output field.
   repeated ArgInfoProto input_arg_info = 11;
   repeated ArgInfoProto output_arg_info = 12;
+
+  // Imported libraries are referenced as a collection of strings in the form of absolute
+  // URIs or relative paths. Where such relative paths are rooted is defined by tools and
+  // runtime implementations.
+  repeated string imported_libraries = 13;  
+  
 }
 
 // To be compatible with both proto2 and proto3, we will use a version number
@@ -257,12 +263,35 @@ message TypeProto {
     optional TensorProto.DataType elem_type = 1;
   }
 
+  // ScalarType is needed to describe (at a minimum) scalar attribute values.
+  // When used in an attribute declaration, use the i|s|f fields a la the
+  // same encoding rules used by TensorProto.
+  message ScalarTypeProto {
+    // This field MUST NOT have the value of UNDEFINED
+    // This field MUST be present for this version of the IR.
+      optional TensorProto.DataType data_type = 1;
+  } 
+
+  // SequenceType is needed to describe (at a minimum) repeated attribute values.
+  // When used in an attribute declaration, use the ints|strings|floats fields a la the
+  // same encoding rules used by TensorProto.
+  message SequenceTypeProto {
+  // This field MUST be present for this version of the IR.
+    optional TypeProto elem_type = 1;
+  };
+
   oneof value {
     // The type of a tensor.
     TensorTypeProto tensor_type = 1;
 
     // The type of a sparse tensor.
     SparseTensorTypeProto sparse_tensor_type = 2;
+
+    // The type of a scalar value.
+    ScalarTypeProto scalar_type = 3;
+
+    // The type of a sequence value.
+    SequenceTypeProto scalar_type = 4;
   }
 }
 
@@ -278,3 +307,101 @@ message TensorShapeProto {
   };
   repeated Dimension dim = 1;
 }
+
+// A library is a top-level format that contains the declaration
+// of operators and the definition of functions. 
+message LibraryProto {
+  // The version of the IR this graph targets. See Version enum below.
+  // This field MUST be present this version of the IR.  
+  optional int64 ir_version = 1;
+
+  // The optional version of the framework runtime that generates this graph.
+  // This producer_version has the same format as ir_version. 
+  optional int64 producer_version = 2;
+
+  // The optional name of the framework used to generate this graph in the form
+  // "framework_name[-tag]". Tag is optional and provides additional
+  // information such as `alpha` or `beta` or `rc3`.
+  optional string producer_tag = 3;
+
+  // An optional version identifier used to track evolution of this library.
+  // This model_version has the same format as ir_version. 
+  optional int64 model_version = 4;
+
+  // The optional name of the author who created the library.
+  optional string model_author = 5;
+
+  // Optional licensing information concerning use or origination of the library.
+  optional string model_license = 6;
+
+  // The name of the library.
+  optional string name = 7;   // namespace Library
+
+  // Domain of the library.
+  // We use reverse domain names as name space indicators. For example:
+  // `com.facebook.fair` or `com.microsoft.cognitiveservices`
+  //
+  // Together with `name` and `model_version`, this forms the unique identity of
+  // the library.
+  optional string domain = 8;
+
+  // An optional human-readable documentation for this graph.
+  // This string MAY contain markdown syntax in GFM form.
+  optional string doc_string = 9;
+
+  // The operators declared by this library. 
+  repeated OperatorDeclProto operator = 10;
+
+  // A given name may appear at most once in either operator.
+  // When refering to an operator or function from outside of this library, the op_type
+  // field must equal:
+  //      LibraryProto.domain + "." + LibraryProto.name + "." OperatorDeclProto.name  
+  // or
+  //      LibraryProto.domain + "." + LibraryProto.name + "." FunctionDefProto.name  
+
+  // Imported libraries are referenced as a collection of strings in the form of absolute
+  // URIs or relative paths. Where such relative paths are rooted is defined by tools and
+  // runtime implementations.
+  repeated string imported_libraries = 12;  
+};
+
+
+// ParameterDeclProto is used to declare the expected type/shape
+// of a given attribute or input/output parameter.
+message ParameterDeclProto {
+  optional string name = 1;
+  optional TypeProto type = 2;
+  optional TensorShapeProto shape = 3;
+// An optional human-readable documentation for this parameter.
+  optional string doc_string = 4;
+};
+
+// SignatureDeclProto describes the expected attributes and input/output parameters
+// for a given operator.
+message SignatureDeclProto {
+// The formal input parameters to the operation or function 
+  repeated ParameterDeclProto input_params = 1;
+// The formal output parameters to the operation or function 
+  repeated ParameterDeclProto output_params = 2;
+// The declaration of expected attributes to the operation or function 
+  repeated ParameterDeclProto input_attributes = 3; 
+// An optional human-readable documentation for this signature.
+  optional string doc_string = 4;
+};
+
+// OperatorDeclProto describes the expected attributes and input/output
+// parameters of a given operator who's implementation is provided by
+// the framework or runtime that evaluates the graph/node. 
+message OperatorDeclProto {
+// This field MUST be present for this version of the IR.
+  optional string name = 1;
+
+// This field MUST contain at least one SignatureDeclProto.
+// This field MAY contain multiple SignatureDeclProtos, one 
+// per type signature supported by this operator.
+  repeated SignatureDeclProto signature = 2;
+
+// An optional human-readable documentation for this operator.
+  optional string doc_string = 3;
+};
+
