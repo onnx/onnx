@@ -214,8 +214,13 @@ message TensorProto {
   //    string_data
   //    raw_data
 
-  // For float values
-  // When this field is present, the data_type field MUST be FLOAT
+  // For float and complex64 values
+  // Complex64 tensors are encoded as a single array of floats,
+  // with the real components appearing in odd numbered positions, 
+  // and the corresponding imaginary component apparing in the 
+  // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
+  // is encoded as [1.0, 2.0 ,3.0 ,4.0]  
+  // When this field is present, the data_type field MUST be FLOAT or COMPLEX64.
   repeated float float_data = 4 [packed = true];
 
   // For int32, uint8, int8, uint16, int16, bool, and float16 values
@@ -257,7 +262,12 @@ message TensorProto {
   optional bytes raw_data = 9;
 
   // For double
-  // When this field is present, the data_type field MUST be DOUBLE
+  // Complex64 tensors are encoded as a single array of doubles,
+  // with the real components appearing in odd numbered positions, 
+  // and the corresponding imaginary component apparing in the 
+  // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
+  // is encoded as [1.0, 2.0 ,3.0 ,4.0]  
+  // When this field is present, the data_type field MUST be DOUBLE or COMPLEX128
   repeated double double_data = 10 [packed = true];
   
 }
