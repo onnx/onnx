@@ -89,17 +89,12 @@ message GraphProto {
   // This field MUST be present. 
   optional int64 ir_version = 1;
   
-  // The name of the framework used to generate this graph in the form
-  // "framework_name[-tag]". Tag is optional and provides additional
-  // information such as `alpha` or `beta` or `rc3`.
+  // The name of the framework or tool used to generate this graph.
   // This field SHOULD be present to indicate which implementation/tool/framework 
   // emitted the graph. 
-  optional string producer_tag = 2;
+  optional string producer_name = 2;
   
-  // The version of the framework runtime that generates this graph.
-  // Because there is no universally supported format or semantics for version #'s 
-  // the producer_version is encoded as a string. Implementations MAY use the SemVer
-  // format encoded as a string. 
+  // The name of the framework or tool used to generate this graph.
   // This field SHOULD be present to indicate which implementation/tool/framework 
   // emitted the graph. 
   optional string producer_version = 3;
