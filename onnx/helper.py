@@ -34,6 +34,7 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph.ir_version = IR_VERSION
     graph.node.extend(nodes)
     graph.name = name
+    print(node.input, type(node.input))
     graph.input.extend(inputs)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
