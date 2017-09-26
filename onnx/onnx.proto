@@ -65,12 +65,14 @@ message AttributeProto {
   repeated GraphProto graphs = 11;    // list of graph
 }
 
-// Defines argument information set, except argument name.
-// The argument could be an input or an output of a graph or node.
-message ArgInfoProto {
+// Defines information on value, including the name, the type, and
+// the shape of the value.
+message ValueInfoProto {
   // This field MUST be present in this version of the IR.  
-  optional TypeProto type = 1;
-  optional TensorShapeProto shape = 2;
+  optional string name = 1;     // namespace Value
+  // This field MUST be present in this version of the IR.  
+  optional TypeProto type = 2;
+  optional TensorShapeProto shape = 3;
 }
 
 // NodeProto stores a node that is similar to the notion of "layer"
@@ -88,11 +90,6 @@ message NodeProto {
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
-
-  // Information including type and shape for each input and output of
-  // the operator/function called by the node.
-  repeated ArgInfoProto input_arg_info = 7;
-  repeated ArgInfoProto output_arg_info = 8;
 }
 
 // GraphProto defines a series of nodes to form a directed acyclic graph.
@@ -106,8 +103,8 @@ message GraphProto {
   optional string name = 2;   // namespace Graph
 
   // The inputs and outputs of the graph.
-  repeated string input = 3;  // namespace Value
-  repeated string output = 4; // namespace Value
+  repeated ValueInfoProto input = 3;  // namespace Value
+  repeated ValueInfoProto output = 4; // namespace Value
 
   // An optional list of initial values for tensors in the list of input above.
   // Used to pass serialized parameters for networks.
@@ -140,15 +137,9 @@ message GraphProto {
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
 
-  // Argument information for input/output of this graph.
-  // Each ArgInfoProto corresponds one-to-one by position with the 
-  // input or output value of the graph.
-  // The number of elements in input_arg_info MUST match the number 
-  // of elements in the input field.
-  // The number of elements in output_arg_info MUST match the number 
-  // of elements in the output field.
-  repeated ArgInfoProto input_arg_info = 11;
-  repeated ArgInfoProto output_arg_info = 12;
+  // Information for the values in the graph. The ValueInfoProto.name's
+  // must be distinct.
+  repeated ValueInfoProto value_info = 11;
 }
 
 // To be compatible with both proto2 and proto3, we will use a version number
