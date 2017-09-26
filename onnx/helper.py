@@ -8,7 +8,7 @@ import numbers
 import sys
 
 from onnx.onnx_pb2 import \
-    AttributeProto, TensorProto, NodeProto, GraphProto, IR_VERSION
+    AttributeProto, TensorProto, NodeProto, GraphProto, ValueInfoProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 
 def make_node(
@@ -34,8 +34,10 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph.ir_version = IR_VERSION
     graph.node.extend(nodes)
     graph.name = name
-    print(node.input, type(node.input))
-    graph.input.extend(inputs)
+    for x in inputs:
+      val = ValueInfoProto()
+      val.name = x
+      graph.input.append(val)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
     return graph
