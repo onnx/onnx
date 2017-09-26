@@ -36,7 +36,8 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph.name = name
     for x in inputs:
       graph.input.add().name = x
-    graph.output.extend(outputs)
+    for x in outputs:
+      graph.output.add().name = x
     graph.initializer.extend(initializer)
     return graph
 
