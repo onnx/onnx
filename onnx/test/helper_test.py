@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import random
 
 from onnx import helper, defs
-from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto,ModelProto IR_VERSION
+from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto,ModelProto, IR_VERSION
 
 import unittest
 
