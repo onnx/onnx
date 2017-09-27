@@ -327,28 +327,3 @@ OPERATOR_SCHEMA(ATen)
 Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
 and op)DOC");
-
-OPERATOR_SCHEMA(Gemm)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(3)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(General Matrix multiplication: https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K), input tensor B has dimension (K X N), input tensor C and output tensor Y have dimension (M X N). Input tensor C can be used inplace as the output tensor Y. A can be transposed before doing the computation if attribute transA is non-zero, same for B and transB.
-)DOC")
-    .Input(0, "A", "Input tensor A")
-    .Input(1, "B", "Input tensor B")
-    .Input(2, "C", "Input tensor C, can be inplace.")
-    .AllowConsumed({{2, 0}})
-    .Output(0, "Y", "Output tensor.")
-    .Attr("transA",
-          "Whether A should be transposed",
-          AttrType::INT)
-    .Attr("transB",
-          "Whether B should be transposed",
-          AttrType::INT)
-    .Attr("alpha",
-          "Scalar multiplier for the product of input tensors A * B",
-          AttrType::FLOAT)
-    .Attr("beta",
-          "Scalar multiplier for input tensor C",
-          AttrType::FLOAT);
