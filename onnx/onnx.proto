@@ -126,7 +126,7 @@ message ModelProto {
   optional string doc_string = 6;
   
   // The parameterized graph that is evaluated to execute the model.
-  optional GraphProto graph = 8; 
+  optional GraphProto graph = 7; 
 };
 
 // GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
