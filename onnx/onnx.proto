@@ -249,37 +249,48 @@ message SparseTensorProto {
   optional TensorProto values = 3;
 }
 
-// Define the types.
-message TypeProto {
-  message TensorTypeProto {
+// Define the types that can be used as parameters and/or attributes.
+
+// valid for parameters and attributes
+message TensorTypeProto {
+// This field MUST NOT have the value of UNDEFINED
+// This field MUST be present for this version of the IR.
+  optional TensorProto.DataType elem_type = 1;
+}
+
+// valid for parameters
+message SparseTensorTypeProto {
+// This field MUST NOT have the value of UNDEFINED
+// This field MUST be present for this version of the IR.
+  optional TensorProto.DataType elem_type = 1;
+}
+
+// valid for attributes, specifically the i|d|s fields
+message ScalarTypeProto {
   // This field MUST NOT have the value of UNDEFINED
   // This field MUST be present for this version of the IR.
-    optional TensorProto.DataType elem_type = 1;
+    optional TensorProto.DataType data_type = 1;
+} 
+
+// valid for attributes, specifically the ints|doubles|strings fields
+message SequenceTypeProto {
+// This field MUST be present for this version of the IR.
+  optional TypeProto elem_type = 1;
+};
+
+message ParameterTypeProto {
+  oneof value {
+  // The type of a tensor.
+  TensorTypeProto tensor_type = 1;
+
+  // The type of a sparse tensor.
+  SparseTensorTypeProto sparse_tensor_type = 2;
+
+  //TODO: add additional paramteer types (at a minimum, map) to support CoreML.
   }
+}
 
-  message SparseTensorTypeProto {
-  // This field MUST NOT have the value of UNDEFINED
-  // This field MUST be present for this version of the IR.
-    optional TensorProto.DataType elem_type = 1;
-  }
-
-  // ScalarType is needed to describe (at a minimum) scalar attribute values.
-  // When used in an attribute declaration, use the i|s|f fields a la the
-  // same encoding rules used by TensorProto.
-  message ScalarTypeProto {
-    // This field MUST NOT have the value of UNDEFINED
-    // This field MUST be present for this version of the IR.
-      optional TensorProto.DataType data_type = 1;
-  } 
-
-  // SequenceType is needed to describe (at a minimum) repeated attribute values.
-  // When used in an attribute declaration, use the ints|strings|floats fields a la the
-  // same encoding rules used by TensorProto.
-  message SequenceTypeProto {
-  // This field MUST be present for this version of the IR.
-    optional TypeProto elem_type = 1;
-  };
-
+message AttributeTypeProto {
   oneof value {
     // The type of a tensor.
     TensorTypeProto tensor_type = 1;
@@ -292,6 +303,8 @@ message TypeProto {
 
     // The type of a sequence value.
     SequenceTypeProto sequence_type = 4;
+
+    //TODO: add tuple/record and map type for CoreML compat
   }
 }
 
@@ -367,10 +380,20 @@ message LibraryProto {
 
 
 // ParameterDeclProto is used to declare the expected type/shape
-// of a given attribute or input/output parameter.
+// of a given input/output parameter.
 message ParameterDeclProto {
   optional string name = 1;
-  optional TypeProto type = 2;
+  optional ParameterTypeProto type = 2;
+  optional TensorShapeProto shape = 3;
+// An optional human-readable documentation for this parameter.
+  optional string doc_string = 4;
+};
+
+// ParameterDeclProto is used to declare the expected type/shape
+// of a given attribute or input/output parameter.
+message AttributeDeclProto {
+  optional string name = 1;
+  optional AttributeTypeProto type = 2;
   optional TensorShapeProto shape = 3;
 // An optional human-readable documentation for this parameter.
   optional string doc_string = 4;
@@ -384,7 +407,7 @@ message SignatureDeclProto {
 // The formal output parameters to the operation or function 
   repeated ParameterDeclProto output_params = 2;
 // The declaration of expected attributes to the operation or function 
-  repeated ParameterDeclProto input_attributes = 3; 
+  repeated AttributeDeclProto input_attributes = 3; 
 // An optional human-readable documentation for this signature.
   optional string doc_string = 4;
 };
