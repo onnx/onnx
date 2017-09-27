@@ -17,12 +17,12 @@ def load(obj):
     @params
     Takes a file-like object (has to implement fileno that returns a file descriptor)
     or a string containing a file name
-    @return ONNX GraphProto object
+    @return ONNX ModelProto object
     '''
-    graph = GraphProto()
+    model = ModelProto()
     if isinstance(obj, str) or (sys.version_info[0] == 2 and isinstance(obj, unicode)):
         with open(obj, 'rb') as f:
-            graph.ParseFromString(f.read())
+            model.ParseFromString(f.read())
     else:
-        graph.ParseFromString(obj.read())
-    return graph
+        model.ParseFromString(obj.read())
+    return model

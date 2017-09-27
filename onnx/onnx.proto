@@ -45,6 +45,17 @@ package onnx;
 // of "namespace {Node,Graph,Operator,Attribute,Value,Shape}". Framework is responsible
 // for supporting the namespaces.
 
+// To be compatible with both proto2 and proto3, we will use a version number
+// that is not defined by the default value but an explicit enum number.
+enum Version {
+  // The version field is always serialized and we will use it to store the
+  // version that the  graph is generated from. This helps us set up version
+  // control. We should use version as
+  //     xx(major) - xx(minor) - xxxx(bugfix)
+  // and we are starting with 00000001.
+  IR_VERSION = 00000001;
+}
+
 // A named attribute containing either singular float, integer, string
 // and tensor values, or repeated float, integer, string and tensor values.
 // An AttributeProto MUST contain the name field, and *only one* of the
@@ -92,7 +103,44 @@ message NodeProto {
   optional string doc_string = 6;
 }
 
-// GraphProto defines a series of nodes to form a directed acyclic graph.
+// ModelProto is a top-level file/container format for bundling a ML model.
+// The semantics of the model are described by the GraphProto that represents
+// a parameterized computation graph against a set of named operators that are 
+// defined independently from the graph. 
+message ModelProto {
+  // The version of the IR this model targets. See Version enum above.
+  // This field MUST be present. 
+  optional int64 ir_version = 1;
+  
+  // The name of the framework or tool used to generate this model.
+  // This field SHOULD be present to indicate which implementation/tool/framework 
+  // emitted the model. 
+  optional string producer_name = 2;
+  
+  // The version of the framework or tool used to generate this model.
+  // This field SHOULD be present to indicate which implementation/tool/framework 
+  // emitted the model. 
+  optional string producer_version = 3;
+
+  // Domain name of the model.
+  // We use reverse domain names as name space indicators. For example:
+  // `com.facebook.fair` or `com.microsoft.cognitiveservices`
+  //
+  // Together with `model_version` and GraphProto.name, this forms the unique identity of
+  // the graph.
+  optional string domain = 4;
+
+  // The version of the graph encoded. See Version enum below.
+  optional int64 model_version = 5;
+  
+  // A human-readable documentation for this model. Markdown is allowed.
+  optional string doc_string = 6;
+  
+  // The parameterized graph that is evaluated to execute the model.
+  optional GraphProto graph = 7; 
+};
+
+// GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
 // This is the equivalent of the "network" and "graph" in many deep learning
 // frameworks.
 message GraphProto {
@@ -102,33 +150,14 @@ message GraphProto {
   // The name of the graph.
   optional string name = 2;   // namespace Graph
 
-  // An optional list of initial values for tensors in the list of input above.
-  // Used to pass serialized parameters for networks.
-  // Each entry specifies a value for the input whose TensorProto.name matches
-  // a name in the input. This list is not required to be the same length of as
-  // input since many tensors might not have initial values.
+  // A list of named tensor values (constants), used to specify default
+  // values for some of the inputs of the graph.
+  // Each TensorProto entry must have a distinct name (within the list) that
+  // also appears in the input list.
+  // In an evaluation, the default value specified here is used if and only if
+  // user specifies no value for the corresponding input parameter.
+  // May be used to pass serialized parameters for networks.
   repeated TensorProto initializer = 5;
-
-  // The version of the IR this graph targets. See Version enum below.
-  // This field MUST be present this version of the IR.
-  optional int64 ir_version = 6;
-
-  // The version of the framework runtime that generates this graph.
-  // This producer_version has the same format as ir_version. 
-  optional int64 producer_version = 7;
-
-  // The name of the framework used to generate this graph in the form
-  // "framework_name[-tag]". Tag is optional and provides additional
-  // information such as `alpha` or `beta` or `rc3`.
-  optional string producer_tag = 8;
-
-  // Domain of the graph.
-  // We use reverse domain names as name space indicators. For example:
-  // `com.facebook.fair` or `com.microsoft.cognitiveservices`
-  //
-  // Together with `name` and `version`, this forms the unique identity of
-  // the graph.
-  optional string domain = 9;
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
@@ -140,17 +169,14 @@ message GraphProto {
   // Information for the values in the graph. The ValueInfoProto.name's
   // must be distinct. It is optional for a value to appear in value_info list.
   repeated ValueInfoProto value_info = 13;
-}
 
-// To be compatible with both proto2 and proto3, we will use a version number
-// that is not defined by the default value but an explicit enum number.
-enum Version {
-  // The version field is always serialized and we will use it to store the
-  // version that the graph is generated from. This helps us set up version
-  // control. We should use version as
-  //     xx(major) - xx(minor) - xxxx(bugfix)
-  // and we are starting with 00000001.
-  IR_VERSION = 00000002;
+  // DO NOT USE the following fields, they were deprecated before
+  // repeated string input = 3;
+  // repeated string output = 4;
+  // optional int64 ir_version = 6;
+  // optional int64 producer_version = 7;
+  // optional string producer_tag = 8;
+  // optional string domain = 9;
 }
 
 // A message defined to store a tensor in its serialized format.
