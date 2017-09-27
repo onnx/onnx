@@ -10,7 +10,7 @@ from __future__ import unicode_literals
 
 import logging
 
-from onnx.onnx_pb2 import AttributeProto, NodeProto, GraphProto, IR_VERSION
+from onnx.onnx_pb2 import AttributeProto, NodeProto, GraphProto, ModelProto IR_VERSION
 from onnx import defs
 
 
@@ -48,14 +48,28 @@ def check_graph(graph):
     """
     if not isinstance(graph, GraphProto):
         raise RuntimeError('You cannot pass an object that is not GraphProto.')
-    if not graph.HasField('ir_version'):
-        raise ValueError('The graph does not have an ir_version set properly.')
-    if graph.ir_version > IR_VERSION:
-        logging.warning(
-            'Your graph ir_version is higher than the checker\'s, so it might '
-            'not interpret the higher version correctly.')
     if not graph.name:
         raise NameError(
             'The graph does not have a proper name set.')
     for node in graph.node:
         check_node(node)
+
+
+def check_model(model):
+    """Checks if a ModelProto is legal.
+
+    Inputs:
+        model: a ModelProto object.
+    Returns:
+        None
+    An exception is thrown if it does not pass the test.
+    """
+    if not isinstance(model, ModelProto):
+        raise RuntimeError('You cannot pass an object that is not ModelProto.')
+    if not graph.HasField('ir_version'):
+        raise ValueError('The model does not have an ir_version set properly.')
+    if graph.ir_version > IR_VERSION:
+        logging.warning(
+            'Your graph ir_version is higher than the checker\'s, so it might '
+            'not interpret the higher version correctly.')
+    check_graph(model.graph)

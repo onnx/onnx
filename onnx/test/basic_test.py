@@ -1,5 +1,5 @@
 import onnx
-from onnx.onnx_pb2 import AttributeProto, NodeProto, GraphProto, IR_VERSION
+from onnx.onnx_pb2 import AttributeProto, NodeProto, GraphProto, ModelProto IR_VERSION
 import unittest
 
 
@@ -10,23 +10,24 @@ class TestProtobufExists(unittest.TestCase):
             AttributeProto
             NodeProto
             GraphProto
+            ModelProto
         except Exception as e:
             self.fail(
                 'Did not find proper onnx protobufs. Error is: {}'
                 .format(e))
 
     def test_version_exists(self):
-        graph = GraphProto()
+        model = ModelProto()
         # When we create it, graph should not have a version string.
-        self.assertFalse(graph.HasField('ir_version'))
+        self.assertFalse(model.HasField('ir_version'))
         # We should touch the version so it is annotated with the current
         # ir version of the running ONNX
-        graph.ir_version = IR_VERSION
-        graph_string = graph.SerializeToString()
-        graph.ParseFromString(graph_string)
-        self.assertTrue(graph.HasField('ir_version'))
+        model.ir_version = IR_VERSION
+        model_string = model.SerializeToString()
+        model.ParseFromString(model_string)
+        self.assertTrue(model.HasField('ir_version'))
         # Check if the version is correct.
-        self.assertEqual(graph.ir_version, IR_VERSION)
+        self.assertEqual(model.ir_version, IR_VERSION)
 
 
 if __name__ == '__main__':

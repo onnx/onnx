@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import random
 
 from onnx import helper, defs
-from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto, IR_VERSION
+from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto,ModelProto IR_VERSION
 
 import unittest
 
@@ -183,8 +183,6 @@ class TestHelperNodeFunctions(unittest.TestCase):
             "test",
             ["X"],
             ["Y"])
-        self.assertTrue(graph.HasField("ir_version"))
-        self.assertEqual(graph.ir_version, IR_VERSION)
         self.assertEqual(len(graph.node), 1)
         self.assertEqual(graph.node[0], node_def)
 
