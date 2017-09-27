@@ -106,8 +106,8 @@ message GraphProto {
   optional string name = 2;   // namespace Graph
 
   // The inputs and outputs of the graph.
-  repeated string input = 3;  // namespace Value
-  repeated string output = 4; // namespace Value
+  repeated ParameterDeclProto input = 3;  // namespace Value
+  repeated ParameterDeclProto output = 4; // namespace Value
 
   // An optional list of initial values for tensors in the list of input above.
   // Used to pass serialized parameters for networks.
@@ -139,16 +139,6 @@ message GraphProto {
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
-
-  // Argument information for input/output of this graph.
-  // Each ArgInfoProto corresponds one-to-one by position with the 
-  // input or output value of the graph.
-  // The number of elements in input_arg_info MUST match the number 
-  // of elements in the input field.
-  // The number of elements in output_arg_info MUST match the number 
-  // of elements in the output field.
-  repeated ArgInfoProto input_arg_info = 11;
-  repeated ArgInfoProto output_arg_info = 12;
 
   // Imported libraries are referenced as a collection of strings in the form of absolute
   // URIs or relative paths. Where such relative paths are rooted is defined by tools and
@@ -389,7 +379,7 @@ message ParameterDeclProto {
   optional string doc_string = 4;
 };
 
-// ParameterDeclProto is used to declare the expected type/shape
+// AttributeDeclProto is used to declare the expected type/shape
 // of a given attribute or input/output parameter.
 message AttributeDeclProto {
   optional string name = 1;
