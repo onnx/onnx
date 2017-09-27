@@ -385,8 +385,9 @@ message AttributeDeclProto {
   optional string name = 1;
   optional AttributeTypeProto type = 2;
   optional TensorShapeProto shape = 3;
-// An optional human-readable documentation for this parameter.
-  optional string doc_string = 4;
+  optional bool required = 4;
+  // An optional human-readable documentation for this parameter.
+  optional string doc_string = 5;
 };
 
 // SignatureDeclProto describes the expected attributes and input/output parameters
@@ -402,19 +403,29 @@ message SignatureDeclProto {
   optional string doc_string = 4;
 };
 
+
+
 // OperatorDeclProto describes the expected attributes and input/output
 // parameters of a given operator who's implementation is provided by
 // the framework or runtime that evaluates the graph/node. 
 message OperatorDeclProto {
+  enum SupportType {
+    COMMON = 0;
+    EXPERIMENTAL = 1;
+  }
+
 // This field MUST be present for this version of the IR.
   optional string name = 1;
+
+// This field MUST be present for this version of the IR.
+  optional SupportType support_type = 2;
 
 // This field MUST contain at least one SignatureDeclProto.
 // This field MAY contain multiple SignatureDeclProtos, one 
 // per type signature supported by this operator.
-  repeated SignatureDeclProto signature = 2;
+  repeated SignatureDeclProto signature = 3;
 
 // An optional human-readable documentation for this operator.
-  optional string doc_string = 3;
+  optional string doc_string = 4;
 };
 
