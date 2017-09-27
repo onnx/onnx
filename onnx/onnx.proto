@@ -102,10 +102,6 @@ message GraphProto {
   // The name of the graph.
   optional string name = 2;   // namespace Graph
 
-  // The inputs and outputs of the graph.
-  repeated ValueInfoProto input = 3;  // namespace Value
-  repeated ValueInfoProto output = 4; // namespace Value
-
   // An optional list of initial values for tensors in the list of input above.
   // Used to pass serialized parameters for networks.
   // Each entry specifies a value for the input whose TensorProto.name matches
@@ -137,20 +133,24 @@ message GraphProto {
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 10;
 
+  // The inputs and outputs of the graph.
+  repeated ValueInfoProto input = 11;
+  repeated ValueInfoProto output = 12;
+
   // Information for the values in the graph. The ValueInfoProto.name's
-  // must be distinct.
-  repeated ValueInfoProto value_info = 11;
+  // must be distinct. It is optional for a value to appear in value_info list.
+  repeated ValueInfoProto value_info = 13;
 }
 
 // To be compatible with both proto2 and proto3, we will use a version number
 // that is not defined by the default value but an explicit enum number.
 enum Version {
   // The version field is always serialized and we will use it to store the
-  // version that the  graph is generated from. This helps us set up version
+  // version that the graph is generated from. This helps us set up version
   // control. We should use version as
   //     xx(major) - xx(minor) - xxxx(bugfix)
   // and we are starting with 00000001.
-  IR_VERSION = 00000001;
+  IR_VERSION = 00000002;
 }
 
 // A message defined to store a tensor in its serialized format.
@@ -237,14 +237,14 @@ message SparseTensorProto {
 // Define the types.
 message TypeProto {
   message TensorTypeProto {
-  // This field MUST NOT have the value of UNDEFINED
-  // This field MUST be present for this version of the IR.
+    // This field MUST NOT have the value of UNDEFINED
+    // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
   }
 
   message SparseTensorTypeProto {
-  // This field MUST NOT have the value of UNDEFINED
-  // This field MUST be present for this version of the IR.
+    // This field MUST NOT have the value of UNDEFINED
+    // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
   }
 
