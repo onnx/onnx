@@ -133,11 +133,11 @@ message ModelProto {
 // This is the equivalent of the "network" and "graph" in many deep learning
 // frameworks.
 message GraphProto {
-  // The name of the graph.
-  optional string name = 1;   // namespace Graph
+  // The nodes in the graph.
+  repeated NodeProto node = 1;
 
-  // A human-readable documentation for this graph. Markdown is allowed.
-  optional string doc_string = 2;
+  // The name of the graph.
+  optional string name = 2;   // namespace Graph
 
   // The inputs and outputs of the graph.
   repeated string input = 3;  // namespace Tensor
@@ -152,8 +152,14 @@ message GraphProto {
   // May be used to pass serialized parameters for networks.
   repeated TensorProto initializer = 5;
 
-  // The nodes in the graph.
-  repeated NodeProto node = 6;
+  // A human-readable documentation for this graph. Markdown is allowed.
+  optional string doc_string = 10;
+
+  // DO NOT USE the following fields, they were deprecated before
+  // optional int64 ir_version = 6;
+  // optional int64 producer_version = 7;
+  // optional string producer_tag = 8;
+  // optional string domain = 9;
 };
 
 // A message defined to store a tensor in its serialized format.
