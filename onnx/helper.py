@@ -29,9 +29,6 @@ def make_node(
 
 def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph = GraphProto()
-    # Touch graph.ir_version so it is stored as the version from which it is
-    # generated.
-    graph.ir_version = IR_VERSION
     graph.node.extend(nodes)
     graph.name = name
     graph.input.extend(inputs)
@@ -41,6 +38,9 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
 
 def make_model(graph, domain, model_version):
     model = ModelProto()
+    # Touch model.ir_version so it is stored as the version from which it is
+    # generated.
+    model.ir_version = IR_VERSION
     model.graph = graph
     model.domain = domain
     model.model_version = model_version

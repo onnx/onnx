@@ -66,10 +66,10 @@ def check_model(model):
     """
     if not isinstance(model, ModelProto):
         raise RuntimeError('You cannot pass an object that is not ModelProto.')
-    if not graph.HasField('ir_version'):
+    if not model.HasField('ir_version'):
         raise ValueError('The model does not have an ir_version set properly.')
-    if graph.ir_version > IR_VERSION:
+    if model.ir_version > IR_VERSION:
         logging.warning(
-            'Your graph ir_version is higher than the checker\'s, so it might '
+            'Your model ir_version is higher than the checker\'s, so it might '
             'not interpret the higher version correctly.')
     check_graph(model.graph)
