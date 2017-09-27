@@ -8,7 +8,7 @@ import numbers
 import sys
 
 from onnx.onnx_pb2 import \
-    AttributeProto, TensorProto, NodeProto, GraphProto, ModelProto IR_VERSION
+    AttributeProto, TensorProto, NodeProto, GraphProto, ModelProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 
 def make_node(
