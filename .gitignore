@@ -67,3 +67,6 @@ build_*
 .eggs
 dist
 onnx.egg-info
+
+# generated files
+onnx/version.py
