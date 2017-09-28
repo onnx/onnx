@@ -35,12 +35,12 @@ conda install -c ezyang onnx
 Docker images (CPU-only and GPU versions) with ONNX, PyTorch, and Caffe2 are availiable for quickly trying [tutorials that use ONNX](http://pytorch.org/tutorials/advanced/super_resolution_with_caffe2.html). To quickly try CPU-only version, simply run:
 
 ```
-docker run -it --rm houseroad/onnx-docker /bin/bash
+docker run -it --rm onnx/onnx-docker:cpu /bin/bash
 ```
 
 To run the version with GPU support, [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) is needed. Execute:
 ```
-nvidia-docker run -it --rm houseroad/onnx-docker:gpu /bin/bash
+nvidia-docker run -it --rm onnx/onnx-docker:gpu /bin/bash
 ```
 
 ## Source
