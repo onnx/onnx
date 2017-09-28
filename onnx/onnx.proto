@@ -196,6 +196,9 @@ message TensorProto {
 
     // Advanced types
     FLOAT16 = 10;
+    DOUBLE = 11;        // double
+    UINT32 = 12;        // uint32_t
+    UINT64 = 13;        // uint64_t;
 
     // Future extensions go here.
   }
@@ -245,6 +248,14 @@ message TensorProto {
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
   optional bytes raw_data = 9;
+
+  // For double
+  // When this field is present, the data_type field MUST be DOUBLE
+  repeated double double_data = 10 [packed = true];
+
+  // For uint64
+  // When this field is present, the data_type field MUST be UINT64 or UINT32
+  repeated double uint64_data = 11 [packed = true];
 }
 
 // A sparse tensor must be stored as three dense tensors:
