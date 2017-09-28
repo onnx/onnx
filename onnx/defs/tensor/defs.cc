@@ -74,7 +74,7 @@ to equal sized parts.
 )DOC");
 
 OPERATOR_SCHEMA(Slice)
-    .NumInputs(1, 3)
+    .NumInputs(1)
     .NumOutputs(1)
     .SetDoc(R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
@@ -89,6 +89,9 @@ the end of that dimension.
 reverse order.
 )DOC")
     .Input(0, "data", "Tensor of data to extract slices from.")
+    .Attr("axes",
+          "Axes list in which starts and ends apply to.",
+          AttrType::INTS)
     .Attr("starts",
           "List of starting indices",
           AttrType::INTS)

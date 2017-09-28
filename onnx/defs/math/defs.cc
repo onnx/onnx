@@ -259,19 +259,17 @@ and output blobs.
                "computed element-wise");
 
 OPERATOR_SCHEMA(Pow)
-    .NumInputs(1)
+    .NumInputs(2)
     .NumOutputs(1)
-    .Attr("exponent",
-          "The exponent of the power function.",
-          AttrType::FLOAT)
-    .AllowConsumed({{0, 0}})
+    .AllowConsumed({{0, 0}, {1, 0}})
     .SetDoc(R"DOC(
-Pow takes input data (Tensor<T>) and an argument exponent, and
+Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor of any shape")
-    .Output(0, "Y", "Output tensor (same size as X)");
+    .Input(0, "X", "Input tensor of any shape, base of the exponent.")
+    .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, the exponent component.")    
+    .Output(0, "Z", "Output tensor (same size as X)");
 
 OPERATOR_SCHEMA(Dot)
     .NumInputs(2)
