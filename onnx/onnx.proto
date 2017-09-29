@@ -56,26 +56,6 @@ enum Version {
   IR_VERSION = 00000001;
 }
 
-// A named attribute containing either singular float, integer, string
-// and tensor values, or repeated float, integer, string and tensor values.
-// An AttributeProto MUST contain the name field, and *only one* of the
-// following content fields, effectively enforcing a C/C++ union equivalent.
-message AttributeProto {
-  // The name field MUST be present for this version of the IR.
-  optional string name = 1;           // namespace Attribute
-  optional float f = 2;               // float
-  optional int64 i = 3;               // int
-  optional bytes s = 4;               // UTF-8 string
-  optional TensorProto t = 5;         // tensor value
-  optional GraphProto g = 6;          // graph
-
-  repeated float floats = 7;          // list of floats 
-  repeated int64 ints = 8;            // list of ints
-  repeated bytes strings = 9;         // list of UTF-8 strings
-  repeated TensorProto tensors = 10;  // list of tensors
-  repeated GraphProto graphs = 11;    // list of graph
-}
-
 // Defines information on value, including the name, the type, and
 // the shape of the value.
 message ValueInfoProto {
@@ -97,7 +77,7 @@ message NodeProto {
   optional string op_type = 4;  // namespace Operator
 
   // Additional named attributes.
-  repeated AttributeProto attribute = 5;
+  repeated NameValuePairProto attribute = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
@@ -271,6 +251,86 @@ message SparseTensorProto {
   optional TensorProto values = 3;
 }
 
+// A ValueProto represents a value that may be serialized into a model.
+message ValueProto {
+
+  message KeyValuePairProto {
+    oneof key {
+      string s = 1;
+      int32 i32 = 2;
+      int64 i64 = 3;
+      uint64 ui64 = 4;
+    };
+    optional ValueProto value = 100;
+  }
+
+  message NameValuePairProto {
+    optional string key = 1;
+    optional ValueProto value = 100;
+  }
+
+  // Defines a record in its serialized format.
+  // A record is a sequence of one or more distinctly
+  // typed uniquely named values. 
+  message RecordProto {
+    repeated NameValuePairProto fields = 1;
+  }
+
+  // Defines a union value  in its serialized format.
+  // The name is the discriminator from the union type.
+  message UnionProto {
+    optional NamedValueProto choice = 1;
+  }
+  
+  // Defines a map in its serialized format.
+  // A record is a sequence of zero or more 
+  // key/value pairs all of which have unique
+  // keys
+  message MapProto {
+    repeated KeyValuePairProto key_value_pairs = 1;
+  }
+
+  // Alternate space-efficient encoding of map that MAY be used
+  // for maps whose value type is a scalar. 
+  message ScalarMapProto {
+    // keys.DataType must be an integral type or string
+    repeated TensorProto keys = 1;
+
+    // No restriction on data type, keys.length must equal values.length
+    repeated TensorProto values = 2;
+  }
+
+  // Defines a sequence in its serialized format.
+  // A sequence is a list of zero or more 
+  // tensors, maps, records, or subsequences.
+  message SequenceProto {
+    repeated ValueProto elems = 1;
+  }
+
+  oneof value {
+    // A dense tensor (or scalar).
+    optional TensorProto dense_tensor = 1;
+
+    // A sparse tensor.
+    optional SparseTensorProto sparse_tensor = 2;  
+
+    // A tuple.
+    optional RecordProto record = 3;
+
+    // A sequence.
+    optional SequenceProto seq = 4;
+
+    // A union.
+    optional UnionProto union = 5;
+
+    // A map.
+    optional MapProto map = 6;
+
+    // A map.
+    optional ScalarMapProto scalar_map = 7;
+  }
+}
+
 // Define the types.
 message TypeProto {
   message TensorTypeProto {
@@ -285,12 +345,60 @@ message TypeProto {
     optional TensorProto.DataType elem_type = 1;
   }
 
+  // message T { ... }
+  message RecordTypeProto {
+  // The type and optional shape of each field 
+  // is described by a ValueInfoProto. The field
+  // names must be unique.     
+  // This field MUST be present for this version of the IR.
+    repeated ValueInfoProto field = 1;
+  };
+
+  // repeated T 
+  message SequenceTypeProto {
+  // The type and optional shape of each element of the sequence.
+  // This field MUST be present for this version of the IR.
+    optional TypeProto elem_type = 1;
+    optional TensorShapeProto elem_shape = 2;
+  };
+
+  // map<K,V>
+  message MapTypeProto {
+  // This field MUST be present for this version of the IR.
+  // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
+    optional TensorProto.DataType key_type = 1;
+  // This field MUST be present for this version of the IR.
+    optional TypeProto value_type = 2;
+    optional TensorShapeProto value_shape = 2;
+  };
+        
+  // oneof { ... }
+  message UnionTypeProto {
+  // The type and optional shape of each alternative  
+  // is described by a ValueInfoProto. The alternative
+  // names must be unique.     
+  // This field MUST be present for this version of the IR.
+    repeated ValueInfoProto choice = 1;
+  };
+
   oneof value {
     // The type of a tensor.
     TensorTypeProto tensor_type = 1;
 
     // The type of a sparse tensor.
     SparseTensorTypeProto sparse_tensor_type = 2;
+
+    // The type of a record.
+    RecordTypeProto record_type = 2;
+
+    // The type of a sequence.
+    SequenceTypeProto sequence_type = 2;
+
+    // The type of a map.
+    MapTypeProto map_type = 2;
+
+    // The type of a union.
+    UnionTypeProto union_type = 2;
   }
 }
 
