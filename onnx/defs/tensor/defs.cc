@@ -80,10 +80,10 @@ OPERATOR_SCHEMA(Slice)
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
 
-Slices are passed as two keyword argument lists with starting and end indices 
-for each dimension of the input `data` tensor. If a negative value is passed 
-for any of the start or end indices, it represent number of elements before 
-the end of that dimension.
+Slices uses `axes`, `starts` and `ends` list to specify the start and end dimension 
+for each axis in the list of axes, it uses this information to slice the input `data` 
+tensor. If a negative value is passed for any of the start or end indices, it represent 
+number of elements before the end of that dimension.
 
 `strides` is the  step sizes when applying slicing, negative value means in 
 reverse order.
