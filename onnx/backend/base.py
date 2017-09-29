@@ -49,13 +49,13 @@ class BackendRep(object):
 
 class Backend(object):
     @classmethod
+    def prepare(cls, model, device, **kwargs):
+        onnx.checker.check_model(model)
+
+    @classmethod
+    def run_model(cls, model, inputs, device, **kwargs):
+        cls.prepare(model, device, **kwargs).run(inputs)
+
+    @classmethod
     def run_node(cls, node, inputs):
         onnx.checker.check_node(node)
-
-    @classmethod
-    def prepare(cls, predict_graph, device, **kwargs):
-        onnx.checker.check_graph(predict_graph)
-
-    @classmethod
-    def run_graph(cls, predict_graph, inputs, device, **kwargs):
-        pass
