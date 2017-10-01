@@ -77,7 +77,7 @@ message NodeProto {
   optional string op_type = 4;  // namespace Operator
 
   // Additional named attributes.
-  repeated NameValuePairProto attribute = 5;
+  repeated ValueProto.NameValuePairProto attribute = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
