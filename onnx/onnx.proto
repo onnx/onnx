@@ -279,7 +279,7 @@ message ValueProto {
   // Defines a union value  in its serialized format.
   // The name is the discriminator from the union type.
   message UnionProto {
-    optional NamedValueProto choice = 1;
+    optional NameValuePairProto choice = 1;
   }
   
   // Defines a map in its serialized format.
