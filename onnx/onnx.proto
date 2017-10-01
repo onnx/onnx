@@ -309,25 +309,25 @@ message ValueProto {
 
   oneof value {
     // A dense tensor (or scalar).
-    optional TensorProto dense_tensor = 1;
+    TensorProto dense_tensor = 1;
 
     // A sparse tensor.
-    optional SparseTensorProto sparse_tensor = 2;  
+    SparseTensorProto sparse_tensor = 2;  
 
     // A tuple.
-    optional RecordProto record = 3;
+    RecordProto record = 3;
 
     // A sequence.
-    optional SequenceProto seq = 4;
+    SequenceProto seq = 4;
 
     // A union.
-    optional UnionProto union = 5;
+    UnionProto union = 5;
 
     // A map.
-    optional MapProto map = 6;
+    MapProto map = 6;
 
     // A map.
-    optional ScalarMapProto scalar_map = 7;
+    ScalarMapProto scalar_map = 7;
   }
 }
 
