@@ -45,6 +45,27 @@ package onnx;
 // of "namespace {Node,Graph,Operator,Attribute,Value,Shape}". Framework is responsible
 // for supporting the namespaces.
 
+// A named attribute containing either singular float, integer, string
+// and tensor values, or repeated float, integer, string and tensor values.
+// An AttributeProto MUST contain the name field, and *only one* of the
+// following content fields, effectively enforcing a C/C++ union equivalent.
+message AttributeProto {
+  // The name field MUST be present for this version of the IR.
+  optional string name = 1;           // namespace Attribute
+  optional float f = 2;               // float
+  optional int64 i = 3;               // int
+  optional bytes s = 4;               // UTF-8 string
+  optional TensorProto t = 5;         // tensor value
+  optional GraphProto g = 6;          // graph
+  optional ValueProto v = 12;         // value - subsumes everything but graph
+  
+  repeated float floats = 7;          // list of floats 
+  repeated int64 ints = 8;            // list of ints
+  repeated bytes strings = 9;         // list of UTF-8 strings
+  repeated TensorProto tensors = 10;  // list of tensors
+  repeated GraphProto graphs = 11;    // list of graph
+}
+
 // To be compatible with both proto2 and proto3, we will use a version number
 // that is not defined by the default value but an explicit enum number.
 enum Version {
@@ -77,7 +98,9 @@ message NodeProto {
   optional string op_type = 4;  // namespace Operator
 
   // Additional named attributes.
-  repeated ValueProto.NameValuePairProto attribute = 5;
+  // NOTE: Simply using ValueProto.NameValuePairProto is the most general
+  //       solution.  I kept AttributeProto to minimize churn on CI results.
+  repeated AttributeProto attribute = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
