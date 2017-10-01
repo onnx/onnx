@@ -369,7 +369,7 @@ message TypeProto {
     optional TensorProto.DataType key_type = 1;
   // This field MUST be present for this version of the IR.
     optional TypeProto value_type = 2;
-    optional TensorShapeProto value_shape = 2;
+    optional TensorShapeProto value_shape = 3;
   };
         
   // oneof { ... }
@@ -389,16 +389,16 @@ message TypeProto {
     SparseTensorTypeProto sparse_tensor_type = 2;
 
     // The type of a record.
-    RecordTypeProto record_type = 2;
+    RecordTypeProto record_type = 3;
 
     // The type of a sequence.
-    SequenceTypeProto sequence_type = 2;
+    SequenceTypeProto sequence_type = 4;
 
     // The type of a map.
-    MapTypeProto map_type = 2;
+    MapTypeProto map_type = 5;
 
     // The type of a union.
-    UnionTypeProto union_type = 2;
+    UnionTypeProto union_type = 6;
   }
 }
 
