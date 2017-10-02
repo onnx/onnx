@@ -272,7 +272,7 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
-    optional TensorShapeProto elem_shape = 2;    
+    optional TensorShapeProto elem_shape = 2;
   }
 
   oneof value {
