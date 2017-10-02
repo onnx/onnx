@@ -411,6 +411,11 @@ message TypeProto {
     // The type of a sparse tensor.
     SparseTensorTypeProto sparse_tensor_type = 2;
 
+    // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
+    //        as input and output to graphs and nodes. These types are needed to naturally
+    //        support classical ML operators.  DNN operators SHOULD restrict their input
+    //        and output types to tensors. 
+
     // The type of a record.
     RecordTypeProto record_type = 3;
 
