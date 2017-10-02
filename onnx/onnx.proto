@@ -293,8 +293,8 @@ message ValueProto {
   }
 
   // Defines a record in its serialized format.
-  // A record is a sequence of one or more distinctly
-  // typed uniquely named values. 
+  // A record is a sequence of one or more
+  // typed uniquely named values, which may be of different types. 
   message RecordProto {
     repeated NameValuePairProto fields = 1;
   }
