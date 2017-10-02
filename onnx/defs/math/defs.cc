@@ -261,11 +261,8 @@ and output blobs.
 OPERATOR_SCHEMA(Pow)
     .NumInputs(2)
     .NumOutputs(1)
-    .Attr("exponent",
-          "The exponent of the power function.",
-          AttrType::FLOAT)    
     .SetDoc(R"DOC(
-Pow takes input data (Tensor<T>) and exponent Tensor or attribute, and
+Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC")
