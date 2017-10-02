@@ -74,7 +74,7 @@ to equal sized parts.
 )DOC");
 
 OPERATOR_SCHEMA(Slice)
-    .NumInputs(1)
+    .NumInputs(1, 4)
     .NumOutputs(1)
     .SetDoc(R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:

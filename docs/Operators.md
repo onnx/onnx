@@ -1198,7 +1198,7 @@
       <dt>starts</dt>
       <dd>List of starting indices</dd>
     </dl>
-  * **input**:
+  * **input**:1 - 4
     <dl>
       <dt>data</dt>
       <dd>Tensor of data to extract slices from.</dd>
