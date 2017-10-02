@@ -382,7 +382,6 @@ message TypeProto {
   // The type and optional shape of each element of the sequence.
   // This field MUST be present for this version of the IR.
     optional TypeProto elem_type = 1;
-    optional TensorShapeProto elem_shape = 2;
   };
 
   // map<K,V>
@@ -392,7 +391,6 @@ message TypeProto {
     optional TensorProto.DataType key_type = 1;
   // This field MUST be present for this version of the IR.
     optional TypeProto value_type = 2;
-    optional TensorShapeProto value_shape = 3;
   };
         
   // oneof { ... }
