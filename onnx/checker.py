@@ -28,7 +28,7 @@ def check_node(node):
         raise RuntimeError('You cannot pass an object that is not NodeProto.')
     if not node.op_type:
         raise NameError('NodeProto does not have a proper op_type set.')
-    if not (len(node.input) + len(node.output)):
+    if not node.input and not node.output:
         raise ValueError('NodeProto has zero input and zero output.')
     if not defs.has(node.op_type):
         raise NameError(
@@ -36,6 +36,7 @@ def check_node(node):
     if not defs.get_schema(node.op_type).verify(node.SerializeToString()):
         raise ValueError(
             'NodeProto of type {} did not pass defs schema check.'.format(str(node.op_type)))
+
 
 def check_graph(graph):
     """Checks if a GraphProto is legal.

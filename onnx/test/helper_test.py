@@ -186,5 +186,18 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertEqual(len(graph.node), 1)
         self.assertEqual(graph.node[0], node_def)
 
+    def test_model(self):
+        node_def = helper.make_node(
+            "Relu", ["X"], ["Y"])
+        graph_def = helper.make_graph(
+            [node_def],
+            "test",
+            ["X"],
+            ["Y"])
+        self.assertRaises(AttributeError, helper.make_model, graph_def, xxx=1)
+        model_def = helper.make_model(graph_def, producer_name='test')
+        self.assertEqual(model_def.producer_name, 'test')
+
+
 if __name__ == '__main__':
     unittest.main()

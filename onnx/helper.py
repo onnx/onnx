@@ -38,14 +38,16 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph.initializer.extend(initializer)
     return graph
 
-def make_model(graph, domain, model_version):
+
+def make_model(graph, **kwargs):
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
     model.ir_version = IR_VERSION
-    model.graph = graph
-    model.domain = domain
-    model.model_version = model_version
+    model.graph.CopyFrom(graph)
+
+    for k, v in kwargs.items():
+        setattr(model, k, v)
     return model
 
 
