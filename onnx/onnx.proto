@@ -83,7 +83,6 @@ message ValueInfoProto {
   optional string name = 1;     // namespace Value
   // This field MUST be present in this version of the IR.  
   optional TypeProto type = 2;
-  optional TensorShapeProto shape = 3;
 }
 
 // NodeProto stores a node that is similar to the notion of "layer"
@@ -266,12 +265,14 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
+    optional TensorShapeProto elem_shape = 2;    
   }
 
   message SparseTensorTypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
+    optional TensorShapeProto elem_shape = 2;    
   }
 
   oneof value {
