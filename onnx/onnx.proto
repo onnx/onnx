@@ -45,6 +45,17 @@ package onnx;
 // of "namespace {Node,Graph,Operator,Attribute,Value,Shape}". Framework is responsible
 // for supporting the namespaces.
 
+// To be compatible with both proto2 and proto3, we will use a version number
+// that is not defined by the default value but an explicit enum number.
+enum Version {
+  // The version field is always serialized and we will use it to store the
+  // version that the  graph is generated from. This helps us set up version
+  // control. We should use version as
+  //     xx(major) - xx(minor) - xxxx(bugfix)
+  // and we are starting with 00000001.
+  IR_VERSION = 00000001;
+}
+
 // A named attribute containing either singular float, integer, string
 // and tensor values, or repeated float, integer, string and tensor values.
 // An AttributeProto MUST contain the name field, and *only one* of the
