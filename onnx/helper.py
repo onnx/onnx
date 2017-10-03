@@ -153,7 +153,7 @@ def make_value_info(name, data_type, shape):
     """Makes a TypeProto based on the data type and shape."""
     tensor_shape = TensorShapeProto()
     for x in shape:
-      dim = tensor_shape.add()
+      dim = tensor_shape.dim.add()
       if isinstance(x, int):
         dim.dim_value = x
       elif isinstance(x, text_type):
