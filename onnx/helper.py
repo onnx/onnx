@@ -151,9 +151,9 @@ def make_attribute(key, value):
 
 def make_value_info(name, data_type, shape):
     """Makes a TypeProto based on the data type and shape."""
-    elem_shape = TensorShapeProto()
+    tensor_shape = TensorShapeProto()
     for x in shape:
-      dim = elem_shape.add()
+      dim = tensor_shape.add()
       if isinstance(x, int):
         dim.dim_value = x
       elif isinstance(x, text_type):
@@ -167,7 +167,7 @@ def make_value_info(name, data_type, shape):
     value_info.type = TypeProto()
     value_info.type.tensor_type = TypeProto.TensorTypeProto()
     value_info.type.tensor_type.elem_type = data_type
-    value_info.type.tensor_type.elem_shape = elem_shape
+    value_info.type.tensor_type.shape = tensor_shape
     return value_info
 
 
