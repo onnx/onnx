@@ -8,7 +8,7 @@ import numbers
 import sys
 
 from onnx.onnx_pb2 import \
-    AttributeProto, TensorProto, NodeProto, GraphProto, ModelProto, IR_VERSION
+    AttributeProto, TensorProto, NodeProto, GraphProto, ModelProto, TypeProto, TensorShapeProto, ValueInfoProto, TensorTypeProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 
 def make_node(
@@ -31,10 +31,8 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph = GraphProto()
     graph.node.extend(nodes)
     graph.name = name
-    for x in inputs:
-      graph.input.add().name = x
-    for x in outputs:
-      graph.output.add().name = x
+    graph.input.extend(inputs)
+    graph.output.extend(outputs)
     graph.initializer.extend(initializer)
     return graph
 
@@ -149,6 +147,28 @@ def make_attribute(key, value):
         raise ValueError(
             'Value "{}" is not valid attribute data type.'.format(value))
     return attr
+
+
+def make_value_info(name, data_type, shape):
+    """Makes a TypeProto based on the data type and shape."""
+    elem_shape = TensorShapeProto()
+    for x in shape:
+      dim = elem_shape.add()
+      if isinstance(x, int):
+        dim.dim_value = x
+      elif isinstance(x, text_type):
+        dim.dim_param = x
+      else:
+        raise ValueError(
+            'shape "{}" is not valid shape.'.format(shape))
+
+    value_info = ValueInfoProto()
+    value_info.name = name
+    value_info.type = TypeProto()
+    value_info.type.tensor_type = TensorTypeProto()
+    value_info.type.tensor_type.elem_type = data_type
+    value_info.type.tensor_type.elem_shape = elem_shape
+    return value_info
 
 
 def is_attribute_legal(attr):
