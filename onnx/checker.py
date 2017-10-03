@@ -51,17 +51,17 @@ def check_tensor_value_info(value_info,
         return
     if not value_info.HasField('type'):
         raise ValueError('type field of ValueInfoProto is missing')
-
     value = value_info.type.WhichOneof('value')
+
     if value == 'tensor_type':
-        if not value_info.type.tensor_type.HasField('elem_type'):
+        if type_required and not value_info.type.tensor_type.HasField('elem_type'):
             raise ValueError('elem_type field of TensorTypeProto is missing')
-        if not value_info.type.tensor_type.HasField('shape'):
+        if shape_required and not value_info.type.tensor_type.HasField('shape'):
             raise ValueError('shape field of TensorTypeProto is missing')
     elif value == 'sparse_tensor_type':
-        if not value_info.type.sparse_tensor_type.HasField('elem_type'):
+        if type_required and not value_info.type.sparse_tensor_type.HasField('elem_type'):
             raise ValueError('elem_type field of SparseTensorTypeProto is missing')
-        if not value_info.type.sparse_tensor_type.HasField('shape'):
+        if shape_required and not value_info.type.sparse_tensor_type.HasField('shape'):
             raise ValueError('shape field of SparseTensorTypeProto is missing')
     else:
         raise ValueError(
@@ -83,6 +83,8 @@ def check_graph(graph):
         raise NameError(
             'The graph does not have a proper name set.')
     for value_info in itertools.chain(graph.input, graph.output):
+        check_tensor_value_info(value_info)
+    for value_info in graph.value_info:
         check_tensor_value_info(value_info)
     for node in graph.node:
         check_node(node)
