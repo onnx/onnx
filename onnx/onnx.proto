@@ -100,11 +100,6 @@ message NodeProto {
 
   // A human-readable documentation for this graph. Markdown is allowed.
   optional string doc_string = 6;
-
-  // Information including type and shape for each input and output of
-  // the operator/function called by the node.
-  repeated ArgInfoProto input_arg_info = 7;
-  repeated ArgInfoProto output_arg_info = 8;
 }
 
 // ModelProto is a top-level file/container format for bundling a ML model.
