@@ -68,12 +68,16 @@ message AttributeProto {
   optional bytes s = 4;               // UTF-8 string
   optional TensorProto t = 5;         // tensor value
   optional GraphProto g = 6;          // graph
-
+  optional uint64 ui = 12;            // uint
+  optional double d = 13;             // double
+  
   repeated float floats = 7;          // list of floats 
   repeated int64 ints = 8;            // list of ints
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
+  repeated uint64 uints = 14;         // uint
+  repeated double doubles = 15;       // double
 }
 
 // Defines information on value, including the name, the type, and
@@ -196,8 +200,10 @@ message TensorProto {
     // Advanced types
     FLOAT16 = 10;
     DOUBLE = 11;
-    COMPLEX64 = 12;     // complex with float32 real and imaginary components
-    COMPLEX128 = 13;    // complex with float64 real and imaginary components
+    UINT32 = 12;
+    UINT64 = 13;
+    COMPLEX64 = 14;     // complex with float32 real and imaginary components
+    COMPLEX128 = 15;    // complex with float64 real and imaginary components
     // Future extensions go here.
   }
 
@@ -280,6 +286,10 @@ message TensorProto {
   // When this field is present, the data_type field MUST be DOUBLE or COMPLEX128
   repeated double double_data = 10 [packed = true];
   
+  // For uint64 and uint32 values
+  // When this field is present, the data_type field MUST be 
+  // UINT32 or UINT64
+  repeated uint64 uint64_data = 11 [packed = true];
 }
 
 // A sparse tensor must be stored as three dense tensors:
