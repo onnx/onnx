@@ -8,9 +8,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import itertools
 import logging
 
-from onnx.onnx_pb2 import AttributeProto, NodeProto, GraphProto, ModelProto, IR_VERSION
+from onnx.onnx_pb2 import *
 from onnx import defs
 
 
@@ -38,6 +39,35 @@ def check_node(node):
             'NodeProto of type {} did not pass defs schema check.'.format(str(node.op_type)))
 
 
+def check_tensor_value_info(value_info,
+                            type_required=True,
+                            shape_required=True):
+    if not isinstance(value_info, ValueInfoProto):
+        raise RuntimeError('You cannot pass an object that is not ValueInfoProto.')
+    if not value_info.name:
+        raise NameError('ValueInfoProto must have its name set.')
+
+    if not type_required and not shape_required:
+        return
+    if not value_info.HasField('type'):
+        raise ValueError('type field of ValueInfoProto is missing')
+
+    value = value_info.type.WhichOneof('value')
+    if value == 'tensor_type':
+        if not value_info.type.tensor_type.HasField('elem_type'):
+            raise ValueError('elem_type field of TensorTypeProto is missing')
+        if not value_info.type.tensor_type.HasField('shape'):
+            raise ValueError('shape field of TensorTypeProto is missing')
+    elif value == 'sparse_tensor_type':
+        if not value_info.type.sparse_tensor_type.HasField('elem_type'):
+            raise ValueError('elem_type field of SparseTensorTypeProto is missing')
+        if not value_info.type.sparse_tensor_type.HasField('shape'):
+            raise ValueError('shape field of SparseTensorTypeProto is missing')
+    else:
+        raise ValueError(
+            'TypeProto.value should be either tensor_type or sparse_tensor_type')
+
+
 def check_graph(graph):
     """Checks if a GraphProto is legal.
 
@@ -52,6 +82,8 @@ def check_graph(graph):
     if not graph.name:
         raise NameError(
             'The graph does not have a proper name set.')
+    for value_info in itertools.chain(graph.input, graph.output):
+        check_tensor_value_info(value_info)
     for node in graph.node:
         check_node(node)
 
