@@ -164,10 +164,11 @@ def make_value_info(name, data_type, shape):
 
     value_info = ValueInfoProto()
     value_info.name = name
-    value_info.type = TypeProto()
-    value_info.type.tensor_type = TypeProto.TensorTypeProto()
-    value_info.type.tensor_type.elem_type = data_type
-    value_info.type.tensor_type.shape = tensor_shape
+    tensor_type = TypeProto()
+    tensor_type.tensor_type = TypeProto.TensorTypeProto()
+    tensor_type.tensor_type.elem_type = data_type
+    tensor_type.tensor_type.shape = tensor_shape
+    value_info.type = tensor_type
     return value_info
 
 
