@@ -222,13 +222,10 @@ message TensorProto {
   }
   optional Segment segment = 3;
 
-  // Tensor content must be in the row major order. Depending on the data_type
-  // field, exactly one of the following fields is used to store the elements of the tensor:
-  //    float_data
-  //    int32_data
-  //    int64_data
-  //    string_data
-  //    raw_data
+  // Tensor content must be in the row major order.
+  //
+  // Depending on the data_type field, exactly one of the fields below with
+  // name ending in _data is used to store the elements of the tensor.
 
   // For float and complex64 values
   // Complex64 tensors are encoded as a single array of floats,
