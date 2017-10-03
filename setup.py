@@ -10,6 +10,7 @@ import setuptools.command.build_py
 import setuptools.command.develop
 import setuptools.command.build_ext
 
+import platform
 import fnmatch
 from collections import namedtuple
 import os
@@ -203,7 +204,7 @@ cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
 cpp2py_extra_objects = []
 build_for_release = os.getenv('ONNX_BINARY_BUILD')
-if build_for_release:
+if build_for_release and platform.system() == 'Linux':
     # Cribbed from PyTorch
     # get path of libstdc++ and link manually.
     # for reasons unknown, -static-libstdc++ doesn't fully link some symbols
