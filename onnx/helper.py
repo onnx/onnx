@@ -7,8 +7,9 @@ import collections
 import numbers
 import sys
 
-from onnx.onnx_pb2 import \
-    AttributeProto, TensorProto, NodeProto, GraphProto, IR_VERSION
+from six import text_type, integer_types
+
+from onnx.onnx_pb2 import *
 import onnx.onnx_cpp2py_export as C
 
 def make_node(
@@ -29,15 +30,24 @@ def make_node(
 
 def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph = GraphProto()
-    # Touch graph.ir_version so it is stored as the version from which it is
-    # generated.
-    graph.ir_version = IR_VERSION
     graph.node.extend(nodes)
     graph.name = name
     graph.input.extend(inputs)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
     return graph
+
+
+def make_model(graph, **kwargs):
+    model = ModelProto()
+    # Touch model.ir_version so it is stored as the version from which it is
+    # generated.
+    model.ir_version = IR_VERSION
+    model.graph.CopyFrom(graph)
+
+    for k, v in kwargs.items():
+        setattr(model, k, v)
+    return model
 
 
 def make_tensor(name, data_type, dims, vals, raw=False):
@@ -138,6 +148,29 @@ def make_attribute(key, value):
         raise ValueError(
             'Value "{}" is not valid attribute data type.'.format(value))
     return attr
+
+
+def make_tensor_value_info(name, elem_type, shape):
+    """Makes a TypeProto based on the data type and shape."""
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+
+    tensor_type_proto = value_info_proto.type.tensor_type
+    tensor_type_proto.elem_type = elem_type
+
+    tensor_shape_proto = tensor_type_proto.shape.dim
+    for d in shape:
+        dim = tensor_shape_proto.add()
+        if isinstance(d, integer_types):
+            dim.dim_value = d
+        elif isinstance(d, text_type):
+            dim.dim_param = d
+        else:
+            raise ValueError(
+                'Invalid item in shape: {}. '
+                'Needs to of integer_types or text_type.'.format(d))
+
+    return value_info_proto
 
 
 def is_attribute_legal(attr):
