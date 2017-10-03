@@ -8,7 +8,7 @@ import numbers
 import sys
 
 from onnx.onnx_pb2 import \
-    AttributeProto, TensorProto, NodeProto, GraphProto, ModelProto, TypeProto, TensorShapeProto, ValueInfoProto, TensorTypeProto, IR_VERSION
+    AttributeProto, TensorProto, NodeProto, GraphProto, ModelProto, TypeProto, TensorShapeProto, ValueInfoProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 
 def make_node(
@@ -165,7 +165,7 @@ def make_value_info(name, data_type, shape):
     value_info = ValueInfoProto()
     value_info.name = name
     value_info.type = TypeProto()
-    value_info.type.tensor_type = TensorTypeProto()
+    value_info.type.tensor_type = TypeProto.TensorTypeProto()
     value_info.type.tensor_type.elem_type = data_type
     value_info.type.tensor_type.elem_shape = elem_shape
     return value_info
