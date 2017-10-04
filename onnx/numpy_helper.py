@@ -14,7 +14,7 @@ if sys.byteorder != 'little':
         'Numpy helper for tensor/ndarray is not available on big endian '
         'systems yet.')
 
-def combine_pairs_to_complex(fa)
+def combine_pairs_to_complex(fa):
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa)//2)]
 
 def to_array(tensor):

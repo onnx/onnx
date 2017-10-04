@@ -49,7 +49,7 @@ def make_model(graph, **kwargs):
         setattr(model, k, v)
     return model
 
-def split_complex_to_pairs(ca)
+def split_complex_to_pairs(ca):
     return [(ca[i//2].real if (i % 2 == 0) else ca[i//2].imag) for i in range(len(ca) * 2)]
 
 
