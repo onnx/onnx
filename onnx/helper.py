@@ -94,7 +94,7 @@ def make_tensor(name, data_type, dims, vals, raw=False):
                 tensor.double_data.extend(split_complex_to_pairs(vals))
             elif data_type == TensorProto.INT64:
                 tensor.int64_data.extend(vals)
-            elif data_type == TensorProto.UINT32 || data_type == TensorProto.UINT64:
+            elif data_type == TensorProto.UINT32 or data_type == TensorProto.UINT64:
                 tensor.uint64_data.extend(vals)
             else:
                 tensor.int32_data.extend(vals)
