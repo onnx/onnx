@@ -49,6 +49,9 @@ def make_model(graph, **kwargs):
         setattr(model, k, v)
     return model
 
+def split_complex_to_pairs(ca):
+    return [(ca[i//2].real if (i % 2 == 0) else ca[i//2].imag) for i in range(len(ca) * 2)]
+
 
 def make_tensor(name, data_type, dims, vals, raw=False):
     '''
@@ -72,14 +75,27 @@ def make_tensor(name, data_type, dims, vals, raw=False):
                        TensorProto.INT32,
                        TensorProto.FLOAT16,
                        TensorProto.BOOL,
-                       TensorProto.FLOAT]:
+                       TensorProto.FLOAT,
+                       TensorProto.DOUBLE,
+                       TensorProto.UINT32,
+                       TensorProto.UINT64,
+                       TensorProto.COMPLEX64,
+                       TensorProto.COMPLEX128]:
         if raw:
             tensor.raw_data = vals
         else:
             if data_type == TensorProto.FLOAT:
                 tensor.float_data.extend(vals)
+            elif data_type == TensorProto.DOUBLE:
+                tensor.double_data.extend(vals)
+            elif data_type == TensorProto.COMPLEX64:
+                tensor.float_data.extend(split_complex_to_pairs(vals))
+            elif data_type == TensorProto.COMPLEX128:
+                tensor.double_data.extend(split_complex_to_pairs(vals))
             elif data_type == TensorProto.INT64:
                 tensor.int64_data.extend(vals)
+            elif data_type == TensorProto.UINT32 or data_type == TensorProto.UINT64:
+                tensor.uint64_data.extend(vals)
             else:
                 tensor.int32_data.extend(vals)
     else:
