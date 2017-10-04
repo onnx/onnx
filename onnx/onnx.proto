@@ -68,16 +68,12 @@ message AttributeProto {
   optional bytes s = 4;               // UTF-8 string
   optional TensorProto t = 5;         // tensor value
   optional GraphProto g = 6;          // graph
-  optional uint64 ui = 12;            // uint
-  optional double d = 13;             // double
   
   repeated float floats = 7;          // list of floats 
   repeated int64 ints = 8;            // list of ints
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
-  repeated uint64 uints = 14;         // uint
-  repeated double doubles = 15;       // double
 }
 
 // Defines information on value, including the name, the type, and
