@@ -137,10 +137,10 @@ message ModelProto {
   
   oneof model {
   // The parameterized graph that is evaluated to execute the model.
-    optional GraphProto graph = 7; 
+    GraphProto graph = 7; 
 
   // A set of operator declarations and function definitions
-    optional OperatorsAndFunctionsProto library = 20;
+    OperatorsAndFunctionsProto library = 20;
   }
 
   // Imported libraries are referenced as a collection of strings in the form of absolute
