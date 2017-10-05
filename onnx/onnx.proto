@@ -360,6 +360,35 @@ message TensorShapeProto {
   repeated Dimension dim = 1;
 }
 
+// Define the types for attributes.
+message AttributeTypeProto {
+  message ScalarAttributeTypeProto {
+    // This field MUST be present in this version of the IR.
+    // The value MUST be FLOAT, STRING, or INT64
+    optional TensorProto.DataType data_type = 1;
+  }
+  message SequenceAttributeTypeProto {
+    // This field MUST be present in this version of the IR.
+    // The value MUST be FLOAT, STRING, or INT64
+    optional TensorProto.DataType data_type = 1;
+  }
+  oneof value {
+    // The type of a tensor.
+    TensorTypeProto tensor_type = 1;
+
+    // The type of a sparse tensor.
+    SparseTensorTypeProto sparse_tensor_type = 2;
+
+    // The type of a single scalar.
+    ScalarAttributeTypeProto scalar_type = 3;
+
+    // The type of a sequence of scalars.
+    SequenceAttributeTypeProto sequence_type = 4;
+  }
+}
+
+
+
 // A collection of (extern) operator declaration
 // function definitions. 
 message OperatorsAndFunctionsProto {
