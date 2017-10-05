@@ -5,7 +5,9 @@ from __future__ import unicode_literals
 
 import random
 
-from onnx import helper, defs
+import numpy as np
+
+from onnx import helper, defs, numpy_helper
 from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto,ModelProto, IR_VERSION
 
 import unittest
@@ -189,6 +191,31 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(AttributeError, helper.make_model, graph_def, xxx=1)
         model_def = helper.make_model(graph_def, producer_name='test')
         self.assertEqual(model_def.producer_name, 'test')
+
+
+class TestHelperTensorFunctions(unittest.TestCase):
+
+    def test_make_tensor(self):
+        np_array = np.random.randn(2, 3).astype(np.float32)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(2, 3),
+            vals=np_array.reshape(6).tolist()
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+        # use raw_data field to store the data
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(2, 3),
+            vals=np_array.reshape(6).tobytes(),
+            raw=True,
+        )
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
 
 if __name__ == '__main__':
