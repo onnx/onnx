@@ -32,10 +32,8 @@ def make_graph(nodes, name, inputs, outputs, initializer=[]):
     graph = GraphProto()
     graph.node.extend(nodes)
     graph.name = name
-    for x in inputs:
-      graph.input.add().name = x
-    for x in outputs:
-      graph.output.add().name = x
+    graph.input.extend(inputs)
+    graph.output.extend(outputs)
     graph.initializer.extend(initializer)
     return graph
 
