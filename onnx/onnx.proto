@@ -400,12 +400,14 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
+    optional TensorShapeProto shape = 2;    
   }
 
   message SparseTensorTypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
+    optional TensorShapeProto shape = 2;    
   }
 
   // message T { ... }
