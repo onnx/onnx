@@ -771,6 +771,48 @@
     </dl>
 
 
+* **Pad**
+
+  Given DATA tensor, paddings, mode, and value.
+  
+  Example:
+    Insert 0 paddings to the beginning of the second dimension.
+  
+    DATA  = [
+        [1.0, 1.2],
+        [2.3, 3.4],
+        [4.5, 5.7],
+    ]
+    paddings = [0, 0, 2, 0]
+  
+    OUTPUT = [
+        [
+            [0.0, 0.0, 1.0, 1.2],
+            [0.0, 0.0, 2.3, 3.4],
+            [0.0, 0.0, 4.5, 5.7],
+        ],
+    ]
+  * **attribute**:
+    <dl>
+      <dt>mode</dt>
+      <dd>Three modes: constant(default), reflect, edge</dd>
+      <dt>paddings</dt>
+      <dd>List of integers indicate the padding sizes, paddings's length should be the double of input's dimension. The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, axis_n_end, n is input's dimension.</dd>
+      <dt>value</dt>
+      <dd>One float, indicates the value to be filled, default is 0</dd>
+    </dl>
+  * **input**:
+    <dl>
+      <dt>DATA</dt>
+      <dd>Input tensor.</dd>
+    </dl>
+  * **output**:
+    <dl>
+      <dt>OUTPUT</dt>
+      <dd>Tensor after padding.</dd>
+    </dl>
+
+
 * **Pow**
 
   Pow takes input data (Tensor<T>) and an argument exponent, and

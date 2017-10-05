@@ -158,3 +158,43 @@ Takes a  parameter `axes` with a list of axes to squeeze.
 )DOC")
     .Input(0, "data", "Tensors with at least max(dims) dimensions.")
     .Output(0, "squeezed", "Reshaped tensor with same data as input.");
+
+OPERATOR_SCHEMA(Pad)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr("paddings",
+          "List of integers indicate the padding sizes, paddings's length"
+          " should be the double of input's dimension. "
+          "The order should be axis_0_begin, axis_0_end, axis_1_begin, ...,"
+          " axis_n_begin, axis_n_end, n is input's dimension.",
+          AttrType::INTS,
+          true)
+    .Attr("mode",
+          "Three modes: constant(default), reflect, edge",
+          AttrType::STRING)
+    .Attr("value",
+          "One float, indicates the value to be filled, default is 0",
+          AttrType::FLOAT)
+    .SetDoc(R"DOC(
+Given DATA tensor, paddings, mode, and value.
+
+Example:
+  Insert 0 paddings to the beginning of the second dimension.
+
+  DATA  = [
+      [1.0, 1.2],
+      [2.3, 3.4],
+      [4.5, 5.7],
+  ]
+  paddings = [0, 0, 2, 0]
+
+  OUTPUT = [
+      [
+          [0.0, 0.0, 1.0, 1.2],
+          [0.0, 0.0, 2.3, 3.4],
+          [0.0, 0.0, 4.5, 5.7],
+      ],
+  ]
+)DOC")
+    .Input(0, "DATA", "Input tensor.")
+    .Output(0, "OUTPUT", "Tensor after padding.");

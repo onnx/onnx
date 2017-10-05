@@ -198,10 +198,11 @@ message TensorProto {
 
     // Advanced types
     FLOAT16 = 10;
-    DOUBLE = 11;        // double
-    UINT32 = 12;        // uint32_t
-    UINT64 = 13;        // uint64_t;
-
+    DOUBLE = 11;
+    UINT32 = 12;
+    UINT64 = 13;
+    COMPLEX64 = 14;     // complex with float32 real and imaginary components
+    COMPLEX128 = 15;    // complex with float64 real and imaginary components
     // Future extensions go here.
   }
 
@@ -221,18 +222,35 @@ message TensorProto {
   optional Segment segment = 3;
 
   // Tensor content must be in the row major order.
-  // For float
+  //
+  // Depending on the data_type field, exactly one of the fields below with
+  // name ending in _data is used to store the elements of the tensor.
+
+  // For float and complex64 values
+  // Complex64 tensors are encoded as a single array of floats,
+  // with the real components appearing in odd numbered positions, 
+  // and the corresponding imaginary component apparing in the 
+  // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
+  // is encoded as [1.0, 2.0 ,3.0 ,4.0]  
+  // When this field is present, the data_type field MUST be FLOAT or COMPLEX64.
   repeated float float_data = 4 [packed = true];
 
-  // For int32, uint8, int8, uint16, int16, bool, and float16
-  // Note about float16: in storage we will basically convert float16 byte-wise
-  // to unsigned short and then store them in the int32_data field.
+  // For int32, uint8, int8, uint16, int16, bool, and float16 values
+  // float16 values must be bit-wise converted to an uint16_t prior 
+  // to writing to the buffer.
+  // When this field is present, the data_type field MUST be 
+  // INT32, INT16, INT8, UINT16, INT8, BOOL, or FLOAT32
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.
+  // Each element of string_data is a UTF-8 encoded Unicode
+  // string. No trailing null, no leading BOM. The protobuf "string"
+  // scalar type is not used to match ML community conventions.
+  // When this field is present, the data_type field MUST be STRING
   repeated bytes string_data = 6;
 
   // For int64.
+  // When this field is present, the data_type field MUST be INT64
   repeated int64 int64_data = 7 [packed = true];
 
   // Optionally, a name for the tensor.
@@ -242,22 +260,32 @@ message TensorProto {
   // raw bytes field. The only exception is the string case, where one is
   // required to store the content in the repeated bytes string_data field.
   //
-  // When this raw_data field is used to store tensor value, it is expected
-  // to use the little-endian order. For floating data types, they should
-  // be of the IEEE 754 format. Boolean type is stored as bytes.
+  // When this raw_data field is used to store tensor value, elements MUST 
+  // be stored in as fixed-width, little-endian order. 
+  // Floating-point data types MUST be stored in IEEE 754 format. 
+  // Complex64 elements must be written as two consecutive FLOAT values, real component first.
+  // Complex128 elements must be written as two consecutive DOUBLE values, real component first.
+  // Boolean type MUST be written one byte per tensor element (00000001 for true, 00000000 for false).
   //
   // Note: the advantage of specific field rather than the raw_data field is
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
+  // When this field is present, the data_type field MUST NOT be STRING or UNDEFINED
   optional bytes raw_data = 9;
 
   // For double
-  // When this field is present, the data_type field MUST be DOUBLE
+  // Complex64 tensors are encoded as a single array of doubles,
+  // with the real components appearing in odd numbered positions, 
+  // and the corresponding imaginary component apparing in the 
+  // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
+  // is encoded as [1.0, 2.0 ,3.0 ,4.0]  
+  // When this field is present, the data_type field MUST be DOUBLE or COMPLEX128
   repeated double double_data = 10 [packed = true];
-
-  // For uint64
-  // When this field is present, the data_type field MUST be UINT64 or UINT32
-  repeated double uint64_data = 11 [packed = true];
+  
+  // For uint64 and uint32 values
+  // When this field is present, the data_type field MUST be 
+  // UINT32 or UINT64
+  repeated uint64 uint64_data = 11 [packed = true];
 }
 
 // A sparse tensor must be stored as three dense tensors:
