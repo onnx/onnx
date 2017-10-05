@@ -1,5 +1,6 @@
 Open Neural Network Exchange (ONNX)
 ========
+[![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx)
 
 Open Neural Network Exchange (ONNX) is the first step toward an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
