@@ -170,7 +170,7 @@ OPERATOR_SCHEMA(Pad)
           AttrType::INTS,
           true)
     .Attr("mode",
-          "Three modes: constant(default), reflect, replicate",
+          "Three modes: constant(default), reflect, edge",
           AttrType::STRING)
     .Attr("value",
           "One float, indicates the value to be filled, default is 0",

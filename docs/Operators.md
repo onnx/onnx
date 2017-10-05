@@ -795,7 +795,7 @@
   * **attribute**:
     <dl>
       <dt>mode</dt>
-      <dd>Three modes: constant(default), reflect, replicate</dd>
+      <dd>Three modes: constant(default), reflect, edge</dd>
       <dt>paddings</dt>
       <dd>List of integers indicate the padding sizes, paddings's length should be the double of input's dimension. The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, axis_n_end, n is input's dimension.</dd>
       <dt>value</dt>
