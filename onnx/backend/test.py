@@ -28,15 +28,34 @@ const2_onnx = onnx.helper.make_tensor("const2",
 # TODO: These Numpy specs will be generally useful to backend implementations,
 # so they should get moved out of here at some point
 node_tests = [
-  ("test_abs", N("Abs"), np.abs, [(S, S, S)]),
-  ("test_add", N("Add"), np.add, [(S, S, S), (S, S, S)]),
-  ("test_add_bcast", N("Add", broadcast=1), np.add, [(S, M), (M,)]),
-  ("test_constant", N("Constant", value=const2_onnx), lambda: const2_np, []),
-  # TODO: Are we actually supporting other dot modes?  In that case, some fancy
-  # footwork is necessary...
-  ("test_dot", N("Dot"), np.dot, [(S, M), (M, L)]),
-  ("test_relu", N("Relu"), lambda x: np.clip(x, 0, np.inf), [(S, S, S)]),
-  # TODO: Add all the other operators
+    ("test_abs", N("Abs"), np.abs, [(S, S, S)]),
+    ("test_add", N("Add"), np.add, [(S, S, S), (S, S, S)]),
+    ("test_add_bcast", N("Add", broadcast=1), np.add, [(S, M), (M,)]),
+    ("test_constant", N("Constant", value=const2_onnx), lambda: const2_np, []),
+    # TODO: Are we actually supporting other dot modes?  In that case, some fancy
+    # footwork is necessary...
+    ("test_dot", N("Dot"), np.dot, [(S, M), (M, L)]),
+    ("test_relu", N("Relu"), lambda x: np.clip(x, 0, np.inf), [(S, S, S)]),
+    ("test_constant_pad",
+     N("Pad", mode='constant', value=1.2, paddings=[1, 1, 1, 1]),
+     lambda x: np.pad(x,
+                      pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+                      mode='constant',
+                      constant_values=1.2),
+     [(1, 3, L, M)]),
+    ("test_refelction_pad",
+     N("Pad", mode='reflect', paddings=[1, 1, 1, 1]),
+     lambda x: np.pad(x,
+                      pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+                      mode='reflect'),
+     [(1, 3, L, M)]),
+    ("test_edge_pad",
+     N("Pad", mode='edge', paddings=[1, 1, 1, 1]),
+     lambda x: np.pad(x,
+                      pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+                      mode='edge'),
+     [(1, 3, L, M)]),
+    # TODO: Add all the other operators
 ]
 
 model_tests = [
