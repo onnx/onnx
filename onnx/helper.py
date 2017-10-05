@@ -43,7 +43,7 @@ def make_model(graph, **kwargs):
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
     model.ir_version = IR_VERSION
-    model.graph.CopyFrom(graph)
+    model.model.graph.CopyFrom(graph)
 
     for k, v in kwargs.items():
         setattr(model, k, v)

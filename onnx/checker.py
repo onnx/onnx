@@ -107,4 +107,4 @@ def check_model(model):
         logging.warning(
             'Your model ir_version is higher than the checker\'s, so it might '
             'not interpret the higher version correctly.')
-    check_graph(model.graph)
+    check_graph(model.model.graph)

@@ -135,8 +135,18 @@ message ModelProto {
   // A human-readable documentation for this model. Markdown is allowed.
   optional string doc_string = 6;
   
+  oneof model {
   // The parameterized graph that is evaluated to execute the model.
-  optional GraphProto graph = 7; 
+    GraphProto graph = 7; 
+
+  // A set of operator declarations and function definitions
+    OperatorsAndFunctionsProto library = 20;
+  }
+
+  // Imported libraries are referenced as a collection of strings in the form of absolute
+  // URIs or relative paths. Where such relative paths are rooted is defined by tools and
+  // runtime implementations.
+  repeated string imported_libraries = 13;  
 };
 
 // GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
@@ -148,7 +158,7 @@ message GraphProto {
 
   // The name of the graph.
   optional string name = 2;   // namespace Graph
-
+  
   // A list of named tensor values (constants), used to specify default
   // values for some of the inputs of the graph.
   // Each TensorProto entry must have a distinct name (within the list) that
@@ -333,5 +343,121 @@ message TypeProto {
 
     // The type of a sparse tensor.
     SparseTensorTypeProto sparse_tensor_type = 2;
+    //TODO: add tuple/record and map type for CoreML compat
   }
 }
+
+// Defines a tensor shape. A dimension can be either an integer value
+// or a symbolic variable. A symbolic variable represents an unknown
+// dimension.
+message TensorShapeProto {
+  message Dimension {
+    oneof value {
+      int64 dim_value = 1;
+      string dim_param = 2;   // namespace Shape
+    };
+  };
+  repeated Dimension dim = 1;
+}
+
+// Define the types for attributes.
+message AttributeTypeProto {
+  message ScalarAttributeTypeProto {
+    // This field MUST be present in this version of the IR.
+    // The value MUST be FLOAT, STRING, or INT64
+    optional TensorProto.DataType data_type = 1;
+  }
+  message SequenceAttributeTypeProto {
+    // This field MUST be present in this version of the IR.
+    // The value MUST be FLOAT, STRING, or INT64
+    optional TensorProto.DataType data_type = 1;
+  }
+
+  message GraphAttributeTypeProto {
+    // This field MUST be present in this version of the IR.
+    // The value describes the expected signature of the graph's
+    // inputs and outputs
+    optional SignatureDeclProto signature = 1;
+  }
+
+  oneof value {
+    // The type of a tensor.
+    TensorTypeProto tensor_type = 1;
+
+    // The type of a sparse tensor.
+    SparseTensorTypeProto sparse_tensor_type = 2;
+
+    // The type of a single scalar.
+    ScalarAttributeTypeProto scalar_type = 3;
+
+    // The type of a sequence of scalars.
+    SequenceAttributeTypeProto sequence_type = 4;
+
+    // The type of a graph value.
+    GraphAttributeTypeProto graph_type = 5;
+  }
+}
+
+
+
+// A collection of (extern) operator declaration
+// function definitions. 
+message OperatorsAndFunctionsProto {
+
+  // The operators declared by this library. 
+  repeated OperatorDeclProto operator = 10;
+
+  // The functions defined by this library. 
+  repeated GraphProto function = 11;
+};
+
+
+// AttributeDeclProto is used to declare the expected type/shape
+// of a given attribute or input/output parameter.
+message AttributeDeclProto {
+  optional string name = 1;
+  optional AttributeTypeProto type = 2;
+  optional bool required = 4;
+  // An optional human-readable documentation for this parameter.
+  optional string doc_string = 5;
+};
+
+// SignatureDeclProto describes the expected attributes and input/output parameters
+// for a given operator.
+message SignatureDeclProto {
+// The formal input parameters to the operation or function 
+  repeated ValueInfoProto input_params = 1;
+// The formal output parameters to the operation or function 
+  repeated ValueInfoProto output_params = 2;
+// The declaration of expected attributes to the operation or function 
+  repeated AttributeDeclProto input_attributes = 3; 
+// An optional human-readable documentation for this signature.
+  optional string doc_string = 4;
+};
+
+
+
+// OperatorDeclProto describes the expected attributes and input/output
+// parameters of a given operator who's implementation is provided by
+// the framework or runtime that evaluates the graph/node. 
+message OperatorDeclProto {
+  enum SupportType {
+    COMMON = 0;
+    EXPERIMENTAL = 1;
+  }
+
+// This field MUST be present for this version of the IR.
+  optional string name = 1;
+
+// This field MUST be present for this version of the IR.
+  optional SupportType support_type = 2;
+
+// This field MUST contain at least one SignatureDeclProto.
+// This field MAY contain multiple SignatureDeclProtos, one 
+// per type signature supported by this operator.
+  repeated SignatureDeclProto signature = 3;
+
+// An optional human-readable documentation for this operator.
+  optional string doc_string = 4;
+};
+
