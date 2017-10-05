@@ -68,8 +68,8 @@ message AttributeProto {
   optional bytes s = 4;               // UTF-8 string
   optional TensorProto t = 5;         // tensor value
   optional GraphProto g = 6;          // graph
-  
-  repeated float floats = 7;          // list of floats 
+
+  repeated float floats = 7;          // list of floats
   repeated int64 ints = 8;            // list of ints
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
@@ -79,9 +79,9 @@ message AttributeProto {
 // Defines information on value, including the name, the type, and
 // the shape of the value.
 message ValueInfoProto {
-  // This field MUST be present in this version of the IR.  
+  // This field MUST be present in this version of the IR.
   optional string name = 1;     // namespace Value
-  // This field MUST be present in this version of the IR.  
+  // This field MUST be present in this version of the IR.
   optional TypeProto type = 2;
 }
 
@@ -104,21 +104,21 @@ message NodeProto {
 
 // ModelProto is a top-level file/container format for bundling a ML model.
 // The semantics of the model are described by the GraphProto that represents
-// a parameterized computation graph against a set of named operators that are 
-// defined independently from the graph. 
+// a parameterized computation graph against a set of named operators that are
+// defined independently from the graph.
 message ModelProto {
   // The version of the IR this model targets. See Version enum above.
-  // This field MUST be present. 
+  // This field MUST be present.
   optional int64 ir_version = 1;
-  
+
   // The name of the framework or tool used to generate this model.
-  // This field SHOULD be present to indicate which implementation/tool/framework 
-  // emitted the model. 
+  // This field SHOULD be present to indicate which implementation/tool/framework
+  // emitted the model.
   optional string producer_name = 2;
-  
+
   // The version of the framework or tool used to generate this model.
-  // This field SHOULD be present to indicate which implementation/tool/framework 
-  // emitted the model. 
+  // This field SHOULD be present to indicate which implementation/tool/framework
+  // emitted the model.
   optional string producer_version = 3;
 
   // Domain name of the model.
@@ -131,12 +131,12 @@ message ModelProto {
 
   // The version of the graph encoded. See Version enum below.
   optional int64 model_version = 5;
-  
+
   // A human-readable documentation for this model. Markdown is allowed.
   optional string doc_string = 6;
-  
+
   // The parameterized graph that is evaluated to execute the model.
-  optional GraphProto graph = 7; 
+  optional GraphProto graph = 7;
 };
 
 // GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
@@ -225,17 +225,17 @@ message TensorProto {
 
   // For float and complex64 values
   // Complex64 tensors are encoded as a single array of floats,
-  // with the real components appearing in odd numbered positions, 
-  // and the corresponding imaginary component apparing in the 
+  // with the real components appearing in odd numbered positions,
+  // and the corresponding imaginary component apparing in the
   // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
-  // is encoded as [1.0, 2.0 ,3.0 ,4.0]  
+  // is encoded as [1.0, 2.0 ,3.0 ,4.0]
   // When this field is present, the data_type field MUST be FLOAT or COMPLEX64.
   repeated float float_data = 4 [packed = true];
 
   // For int32, uint8, int8, uint16, int16, bool, and float16 values
-  // float16 values must be bit-wise converted to an uint16_t prior 
+  // float16 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
-  // When this field is present, the data_type field MUST be 
+  // When this field is present, the data_type field MUST be
   // INT32, INT16, INT8, UINT16, INT8, BOOL, or FLOAT32
   repeated int32 int32_data = 5 [packed = true];
 
@@ -257,9 +257,9 @@ message TensorProto {
   // raw bytes field. The only exception is the string case, where one is
   // required to store the content in the repeated bytes string_data field.
   //
-  // When this raw_data field is used to store tensor value, elements MUST 
-  // be stored in as fixed-width, little-endian order. 
-  // Floating-point data types MUST be stored in IEEE 754 format. 
+  // When this raw_data field is used to store tensor value, elements MUST
+  // be stored in as fixed-width, little-endian order.
+  // Floating-point data types MUST be stored in IEEE 754 format.
   // Complex64 elements must be written as two consecutive FLOAT values, real component first.
   // Complex128 elements must be written as two consecutive DOUBLE values, real component first.
   // Boolean type MUST be written one byte per tensor element (00000001 for true, 00000000 for false).
@@ -272,15 +272,15 @@ message TensorProto {
 
   // For double
   // Complex64 tensors are encoded as a single array of doubles,
-  // with the real components appearing in odd numbered positions, 
-  // and the corresponding imaginary component apparing in the 
+  // with the real components appearing in odd numbered positions,
+  // and the corresponding imaginary component apparing in the
   // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
-  // is encoded as [1.0, 2.0 ,3.0 ,4.0]  
+  // is encoded as [1.0, 2.0 ,3.0 ,4.0]
   // When this field is present, the data_type field MUST be DOUBLE or COMPLEX128
   repeated double double_data = 10 [packed = true];
-  
+
   // For uint64 and uint32 values
-  // When this field is present, the data_type field MUST be 
+  // When this field is present, the data_type field MUST be
   // UINT32 or UINT64
   repeated uint64 uint64_data = 11 [packed = true];
 }
@@ -294,7 +294,7 @@ message SparseTensorProto {
   repeated int64 dims = 1;
   // This field MUST be present this version of the IR.
   optional TensorProto indices = 2;
-  // This field MUST be present this version of the IR.  
+  // This field MUST be present this version of the IR.
   optional TensorProto values = 3;
 }
 
@@ -317,7 +317,7 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
-    optional TensorShapeProto shape = 2;    
+    optional TensorShapeProto shape = 2;
   }
 
   message SparseTensorTypeProto {
