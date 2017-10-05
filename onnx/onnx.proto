@@ -372,6 +372,14 @@ message AttributeTypeProto {
     // The value MUST be FLOAT, STRING, or INT64
     optional TensorProto.DataType data_type = 1;
   }
+
+  message GraphAttributeTypeProto {
+    // This field MUST be present in this version of the IR.
+    // The value describes the expected signature of the graph's
+    // inputs and outputs
+    optional SignatureDeclProto signature = 1;
+  }
+
   oneof value {
     // The type of a tensor.
     TensorTypeProto tensor_type = 1;
@@ -384,6 +392,9 @@ message AttributeTypeProto {
 
     // The type of a sequence of scalars.
     SequenceAttributeTypeProto sequence_type = 4;
+
+    // The type of a graph value.
+    GraphAttributeTypeProto graph_type = 5;
   }
 }
 
