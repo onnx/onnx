@@ -135,9 +135,13 @@ message ModelProto {
   // A human-readable documentation for this model. Markdown is allowed.
   optional string doc_string = 6;
   
+  oneof model {
   // The parameterized graph that is evaluated to execute the model.
-  optional GraphProto graph = 7; 
+    optional GraphProto graph = 7; 
 
+  // A set of operator declarations and function definitions
+    optional OperatorsAndFunctionsProto library = 20;
+  }
 
   // Imported libraries are referenced as a collection of strings in the form of absolute
   // URIs or relative paths. Where such relative paths are rooted is defined by tools and
@@ -356,61 +360,15 @@ message TensorShapeProto {
   repeated Dimension dim = 1;
 }
 
-// A library is a top-level format that contains the declaration
-// of operators and the definition of functions. 
-message LibraryProto {
-  // The version of the IR this graph targets. See Version enum below.
-  // This field MUST be present this version of the IR.  
-  optional int64 ir_version = 1;
-
-  // The optional version of the framework runtime that generates this graph.
-  // This producer_version has the same format as ir_version. 
-  optional int64 producer_version = 2;
-
-  // The optional name of the framework used to generate this graph in the form
-  // "framework_name[-tag]". Tag is optional and provides additional
-  // information such as `alpha` or `beta` or `rc3`.
-  optional string producer_tag = 3;
-
-  // An optional version identifier used to track evolution of this library.
-  // This model_version has the same format as ir_version. 
-  optional int64 model_version = 4;
-
-  // The optional name of the author who created the library.
-  optional string model_author = 5;
-
-  // Optional licensing information concerning use or origination of the library.
-  optional string model_license = 6;
-
-  // The name of the library.
-  optional string name = 7;   // namespace Library
-
-  // Domain of the library.
-  // We use reverse domain names as name space indicators. For example:
-  // `com.facebook.fair` or `com.microsoft.cognitiveservices`
-  //
-  // Together with `name` and `model_version`, this forms the unique identity of
-  // the library.
-  optional string domain = 8;
-
-  // An optional human-readable documentation for this graph.
-  // This string MAY contain markdown syntax in GFM form.
-  optional string doc_string = 9;
+// A collection of (extern) operator declaration
+// function definitions. 
+message OperatorsAndFunctionsProto {
 
   // The operators declared by this library. 
   repeated OperatorDeclProto operator = 10;
 
-  // A given name may appear at most once in operator.
-  // When refering to an operator from outside of this library, the op_type
-  // field must equal:
-  //      LibraryProto.domain + "." + LibraryProto.name + "." OperatorDeclProto.name  
-  // or
-  //      LibraryProto.domain + "." + LibraryProto.name + "." FunctionDefProto.name  
-
-  // Imported libraries are referenced as a collection of strings in the form of absolute
-  // URIs or relative paths. Where such relative paths are rooted is defined by tools and
-  // runtime implementations.
-  repeated string imported_libraries = 12;  
+  // The functions defined by this library. 
+  repeated GraphProto function = 11;
 };
 
 
