@@ -28,18 +28,37 @@ const2_onnx = onnx.helper.make_tensor("const2",
 # TODO: These Numpy specs will be generally useful to backend implementations,
 # so they should get moved out of here at some point
 node_tests = [
-  ("test_abs", N("Abs"), np.abs, [(S, S, S)]),
-  ("test_add", N("Add"), np.add, [(S, S, S), (S, S, S)]),
-  ("test_add_bcast", N("Add", broadcast=1), np.add, [(S, M), (M,)]),
-  ("test_constant", N("Constant", value=const2_onnx), lambda: const2_np, []),
-  # TODO: Are we actually supporting other dot modes?  In that case, some fancy
-  # footwork is necessary...
-  ("test_dot", N("Dot"), np.dot, [(S, M), (M, L)]),
-  ("test_relu", N("Relu"), lambda x: np.clip(x, 0, np.inf), [(S, S, S)]),
-  # TODO: Add all the other operators
+    ("test_abs", N("Abs"), np.abs, [(S, S, S)]),
+    ("test_add", N("Add"), np.add, [(S, S, S), (S, S, S)]),
+    ("test_add_bcast", N("Add", broadcast=1), np.add, [(S, M), (M,)]),
+    ("test_constant", N("Constant", value=const2_onnx), lambda: const2_np, []),
+    # TODO: Are we actually supporting other dot modes?  In that case, some fancy
+    # footwork is necessary...
+    ("test_dot", N("Dot"), np.dot, [(S, M), (M, L)]),
+    ("test_relu", N("Relu"), lambda x: np.clip(x, 0, np.inf), [(S, S, S)]),
+    ("test_constant_pad",
+     N("Pad", mode='constant', value=1.2, paddings=[1, 1, 1, 1]),
+     lambda x: np.pad(x,
+                      pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+                      mode='constant',
+                      constant_values=1.2),
+     [(1, 3, L, M)]),
+    ("test_refelction_pad",
+     N("Pad", mode='reflect', paddings=[1, 1, 1, 1]),
+     lambda x: np.pad(x,
+                      pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+                      mode='reflect'),
+     [(1, 3, L, M)]),
+    ("test_edge_pad",
+     N("Pad", mode='edge', paddings=[1, 1, 1, 1]),
+     lambda x: np.pad(x,
+                      pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+                      mode='edge'),
+     [(1, 3, L, M)]),
+    # TODO: Add all the other operators
 ]
 
-graph_tests = [
+model_tests = [
     ('test_bvlc_alexnet', 'bvlc_alexnet'),
     ('test_densenet121', 'densenet121'),
     ('test_inception_v1', 'inception_v1'),
@@ -63,8 +82,8 @@ class BackendTest(object):
         for nt in node_tests:
             self._add_node_test(*nt)
 
-        for gt in graph_tests:
-            self._add_graph_test(*gt)
+        for gt in model_tests:
+            self._add_model_test(*gt)
 
     def _prepare_model(self, model_name):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', '~/.onnx'))
@@ -90,7 +109,7 @@ class BackendTest(object):
             raise ValueError('Duplicated test name: {}'.format(name))
         setattr(self.tests, name, test_func)
 
-    def _add_graph_test(self, test_name, model_name):
+    def _add_model_test(self, test_name, model_name):
         """
         Add A test for a single ONNX model against a reference implementation.
             test_name (string): Eventual name of the test.  Must be prefixed
@@ -101,14 +120,14 @@ class BackendTest(object):
         """
         def run(test_self):
             model_dir = self._prepare_model(model_name)
-            graph_pb_path = os.path.join(model_dir, 'graph.pb')
-            graph = onnx.load(graph_pb_path)
-            prepared_graph = self.backend.prepare(graph)
+            model_pb_path = os.path.join(model_dir, 'model.pb')
+            model = onnx.load(model_pb_path)
+            prepared_model = self.backend.prepare(model)
 
             for test_data_npz in glob.glob(os.path.join(model_dir, 'test_data_*.npz')):
                 test_data = np.load(test_data_npz, encoding='bytes')
                 inputs = list(test_data['inputs'])
-                outputs = list(prepared_graph.run(inputs))
+                outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
                 test_self.assertEqual(len(ref_outputs), len(outputs))
                 for i in range(len(outputs)):
