@@ -27,7 +27,8 @@ def main(args):
             continue
 
         # op_type
-        s = '* <a name="{}"></a>**{}**\n'.format(op_type, op_type)
+        s = '* <a name="{}"></a><a name="{}"></a>**{}**\n'.format(
+            op_type, op_type.lower(), op_type)
 
         # doc
         if schema.doc:
