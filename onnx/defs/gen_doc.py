@@ -10,6 +10,7 @@ import os
 from onnx import defs
 from onnx.defs import OpSchema
 
+
 def display_number(v):
     if defs.OpSchema.is_infinite(v):
         return '&#8734;'
@@ -26,7 +27,8 @@ def main(args):
             continue
 
         # op_type
-        s = '* **{}**\n'.format(op_type)
+        s = '* <a name="{}"></a><a name="{}"></a>**{}**\n'.format(
+            op_type, op_type.lower(), op_type)
 
         # doc
         if schema.doc:
