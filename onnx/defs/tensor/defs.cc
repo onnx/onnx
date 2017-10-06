@@ -49,7 +49,7 @@ from the shape argument.)DOC")
 
 OPERATOR_SCHEMA(Concat)
     .NumInputs(1, INT_MAX)
-    .NumOutputs(2)
+    .NumOutputs(1)
     .Attr("axis",
           "Which axis to concat on",
           AttrType::INT)
