@@ -289,7 +289,7 @@ Output case #2: Y (test mode)
 
 OPERATOR_SCHEMA(Dropout)
     .NumInputs(1)
-    .NumOutputs(2)
+    .NumOutputs(1,2)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
