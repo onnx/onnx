@@ -250,17 +250,6 @@ Scale takes one input data (Tensor<float>) and produces one output data
           "(float, default 1.0) the scale to apply.",
           AttrType::FLOAT);
 
-OPERATOR_SCHEMA(ChannelShuffle)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
-    .Attr("kernel_shape",
-          "The size of the kernel along each axis",
-          AttrType::INTS)
-    .Attr("group",
-          "Number of channel groups",
-          AttrType::INT);
-
 OPERATOR_SCHEMA(RecurrentNetwork)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1, INT_MAX)

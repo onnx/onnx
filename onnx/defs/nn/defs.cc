@@ -335,3 +335,16 @@ OPERATOR_SCHEMA(LRN)
     .Input(0, "X", "Input tensor")
     .Output(0, "Y", "Output tensor")
     .SetDoc(R"DOC(Local Response Normalization)DOC");
+
+OPERATOR_SCHEMA(ChannelShuffle)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr("kernel_shape",
+          "The size of the kernel along each axis",
+          AttrType::INTS)
+    .Attr("group",
+          "Number of channel groups",
+          AttrType::INT)
+    .Input(0, "X", "Input tensor")
+    .Output(0, "Y", "Output tensor")
+    .SetDoc(R"DOC(Channel Shuffle operation described in the paper https://arxiv.org/abs/1707.01083)DOC");
