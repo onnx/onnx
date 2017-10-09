@@ -341,9 +341,10 @@ OPERATOR_SCHEMA(ChannelShuffle)
     .NumOutputs(1)
     .Attr("kernel_shape",
           "The size of the kernel along each axis",
-          AttrType::INTS)
+          AttrType::INTS,
+          true)
     .Attr("group",
-          "Number of channel groups",
+          "Number of channel groups. Default to 1",
           AttrType::INT)
     .Input(0, "X", "Input tensor")
     .Output(0, "Y", "Output tensor")
