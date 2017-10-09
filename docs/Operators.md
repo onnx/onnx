@@ -227,6 +227,28 @@
     </dl>
 
 
+* <a name="ChannelShuffle"></a><a name="channelshuffle"></a>**ChannelShuffle**
+
+  Channel Shuffle operation described in the paper https://arxiv.org/abs/1707.01083
+  * **attribute**:
+    <dl>
+      <dt>group</dt>
+      <dd>Number of channel groups. Default to 1</dd>
+      <dt>kernel_shape</dt>
+      <dd>The size of the kernel along each axis</dd>
+    </dl>
+  * **input**:
+    <dl>
+      <dt>X</dt>
+      <dd>Input tensor</dd>
+    </dl>
+  * **output**:
+    <dl>
+      <dt>Y</dt>
+      <dd>Output tensor</dd>
+    </dl>
+
+
 * <a name="Concat"></a><a name="concat"></a>**Concat**
 
   Concatenate a list of tensors into a single tensor
@@ -585,6 +607,32 @@
     <dl>
       <dt>Y</dt>
       <dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+    </dl>
+
+
+* <a name="LRN"></a><a name="lrn"></a>**LRN**
+
+  Local Response Normalization
+  * **attribute**:
+    <dl>
+      <dt>alpha</dt>
+      <dd></dd>
+      <dt>beta</dt>
+      <dd></dd>
+      <dt>bias</dt>
+      <dd>Default to 1</dd>
+      <dt>size</dt>
+      <dd></dd>
+    </dl>
+  * **input**:
+    <dl>
+      <dt>X</dt>
+      <dd>Input tensor</dd>
+    </dl>
+  * **output**:
+    <dl>
+      <dt>Y</dt>
+      <dd>Output tensor</dd>
     </dl>
 
 
