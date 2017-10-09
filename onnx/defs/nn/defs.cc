@@ -324,3 +324,14 @@ unchanged.
         "A tensor of rank 2 with the contents of the input tensor, "
         "with first dimension equal first dimension of input, and remaining "
         "input dimensions flattened into the inner dimension of the output.");
+
+OPERATOR_SCHEMA(LRN)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr("size", "", AttrType::INT, true)
+    .Attr("alpha", "", AttrType::FLOAT, true)
+    .Attr("beta", "", AttrType::FLOAT, true)
+    .Attr("bias", "Default to 1", AttrType::FLOAT)
+    .Input(0, "X", "Input tensor")
+    .Output(0, "Y", "Output tensor")
+    .SetDoc(R"DOC(Local Response Normalization)DOC");

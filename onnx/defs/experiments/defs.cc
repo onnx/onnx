@@ -169,15 +169,6 @@ Output case #2: Y (test mode)
             "Saved variance used during training to speed up "
             "gradient computation. Should not be used for testing.");
 
-OPERATOR_SCHEMA(LRN)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1,2)
-    .Attr("size", "", AttrType::INT)
-    .Attr("alpha", "", AttrType::FLOAT)
-    .Attr("beta", "", AttrType::FLOAT)
-    .Attr("bias", "", AttrType::FLOAT);
-
 OPERATOR_SCHEMA(GivenTensorFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(0, 1)
