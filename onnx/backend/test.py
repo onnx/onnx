@@ -77,13 +77,29 @@ class BackendTest(object):
                 np.random.seed(seed=0)
 
         self.backend = backend
-        self.tests = TestsContainer
+        self._base_case = TestsContainer
+        # List of test cases to be applied on the parent scope
+        # Example usage: globals().update(BackendTest(backend).test_cases)
+        self.test_cases = {}
 
         for nt in node_tests:
             self._add_node_test(*nt)
 
         for gt in model_tests:
             self._add_model_test(*gt)
+
+        # For backward compatibility - create a suite to aggregate them all
+        self.tests = type(str('OnnxBackendTest'), (self._base_case,), {})
+        for case in self.test_cases.values():
+            for name, func in case.__dict__.items():
+                if name.startswith('test_'):
+                    setattr(self.tests, name, func)
+
+    def _get_test_case(self, category):
+        name = 'OnnxBackend{}Test'.format(category)
+        if name not in self.test_cases:
+            self.test_cases[name] = type(str(name), (self._base_case,), {})
+        return self.test_cases[name]
 
     def _prepare_model(self, model_name):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', '~/.onnx'))
@@ -101,15 +117,16 @@ class BackendTest(object):
                 t.extractall(models_dir)
         return model_dir
 
-    def _add_test(self, name, test_func):
+    def _add_test(self, test_case, name, test_func):
         # We don't prepend the 'test_' prefix to improve greppability
         if not name.startswith('test_'):
             raise ValueError('Test name must start with test_: {}'.format(name))
-        if hasattr(self.tests, name):
+        s = self._get_test_case(test_case)
+        if hasattr(s, name):
             raise ValueError('Duplicated test name: {}'.format(name))
-        setattr(self.tests, name, test_func)
+        setattr(s, name, test_func)
 
-    def _add_model_test(self, test_name, model_name):
+    def _add_model_test(self, test_name, model_name, device='CPU'):
         """
         Add A test for a single ONNX model against a reference implementation.
             test_name (string): Eventual name of the test.  Must be prefixed
@@ -122,7 +139,7 @@ class BackendTest(object):
             model_dir = self._prepare_model(model_name)
             model_pb_path = os.path.join(model_dir, 'model.pb')
             model = onnx.load(model_pb_path)
-            prepared_model = self.backend.prepare(model)
+            prepared_model = self.backend.prepare(model, device)
 
             for test_data_npz in glob.glob(os.path.join(model_dir, 'test_data_*.npz')):
                 test_data = np.load(test_data_npz, encoding='bytes')
@@ -136,9 +153,9 @@ class BackendTest(object):
                         outputs[i],
                         decimal=4)
 
-        self._add_test(test_name, run)
+        self._add_test('Model', test_name, run)
 
-    def _add_node_test(self, test_name, node_spec, ref, inputs):
+    def _add_node_test(self, test_name, node_spec, ref, inputs, device='CPU'):
         """
         Add A test for a single ONNX node against a reference implementation.
 
@@ -167,7 +184,7 @@ class BackendTest(object):
                 input_names,
                 output_names,
                 **node_spec.kwargs)
-            outputs = self.backend.run_node(node_def, args)
+            outputs = self.backend.run_node(node_def, args, device)
             test_self.assertEqual(len(ref_outputs), len(outputs))
             for i in range(len(output_names)):
                 np.testing.assert_almost_equal(
@@ -175,4 +192,4 @@ class BackendTest(object):
                     outputs[i],
                     decimal=4)
 
-        self._add_test(test_name, run)
+        self._add_test('Node', test_name, run)
