@@ -70,7 +70,7 @@ model_tests = [
 ]
 
 # Running vgg19 on Travis with Python 2 keeps getting OOM!
-if not os.env.get('TRAVIS'):
+if not os.environ.get('TRAVIS'):
     model_tests.append(('test_vgg19', 'vgg19'))
 
 class BackendTest(object):
