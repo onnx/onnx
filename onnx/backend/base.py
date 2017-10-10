@@ -54,7 +54,7 @@ class Backend(object):
 
     @classmethod
     def run_model(cls, model, inputs, device, **kwargs):
-        cls.prepare(model, device, **kwargs).run(inputs)
+        return cls.prepare(model, device, **kwargs).run(inputs)
 
     @classmethod
     def run_node(cls, node, inputs):
