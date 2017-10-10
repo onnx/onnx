@@ -67,8 +67,11 @@ model_tests = [
     ('test_shufflenet', 'shufflenet'),
     ('test_squeezenet', 'squeezenet'),
     ('test_vgg16', 'vgg16'),
-    ('test_vgg19', 'vgg19'),
 ]
+
+# Running vgg19 on Travis with Python 2 keeps getting OOM!
+if not os.env.get('TRAVIS'):
+    model_tests.append(('test_vgg19', 'vgg19'))
 
 class BackendTest(object):
     def __init__(self, backend):
