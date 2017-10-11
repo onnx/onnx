@@ -63,11 +63,11 @@ class TestChecker(unittest.TestCase):
     def test_check_string_tensor(self):
         tensor = TensorProto()
         tensor.data_type = TensorProto.STRING
-        tensor.string_data.append('Test')
+        tensor.string_data.append('Test'.encode('utf-8'))
         checker.check_tensor(tensor)
 
         del tensor.string_data[:]
-        tensor.raw_data = 'Test'
+        tensor.raw_data = 'Test'.encode('utf-8')
         # string data should not be stored in raw_data field
         self.assertRaises(ValueError, checker.check_tensor, tensor)
 
