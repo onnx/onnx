@@ -40,9 +40,8 @@ def check_node(node):
     for attr in node.attribute:
         if attr.HasField('t'):
             check_tensor(attr.t)
-        elif attr.HasField('tensors'):
-            for tensor in attr.tensors:
-                check_tensor(tensor)
+        for tensor in attr.tensors:
+            check_tensor(tensor)
 
 
 def check_tensor_value_info(value_info,
