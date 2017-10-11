@@ -14,6 +14,7 @@ import numpy as np
 import onnx
 from onnx import helper
 from .test_util import create_input, N
+from . import test_rnn
 from six.moves.urllib.request import urlretrieve
 
 L = 20
@@ -56,7 +57,7 @@ node_tests = [
                       mode='edge'),
      [(1, 3, L, M)]),
     # TODO: Add all the other operators
-]
+] + test_rnn.node_tests
 
 model_tests = [
     ('test_bvlc_alexnet', 'bvlc_alexnet'),
