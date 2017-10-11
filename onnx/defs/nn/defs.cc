@@ -69,7 +69,7 @@ namespace onnx {
                         "Padding along each axis, can take the value 0 (False) or non 0 (True)",
                         AttrType::INTS);
             schema.Attr("dilations",
-                        "Dilaton along each axis, 1 mean no dilation.",
+                        "Dilation along each axis, 1 means no dilation.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
