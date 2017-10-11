@@ -12,7 +12,7 @@ import itertools
 import logging
 
 from onnx.onnx_pb2 import *
-from onnx import defs
+from onnx import defs, mapping
 
 
 def check_node(node):
@@ -37,6 +37,12 @@ def check_node(node):
     if not defs.get_schema(node.op_type).verify(node.SerializeToString()):
         raise ValueError(
             'NodeProto of type {} did not pass defs schema check.'.format(str(node.op_type)))
+    for attr in node.attribute:
+        if attr.HasField('t'):
+            check_tensor(attr.t)
+        elif attr.HasField('tensors'):
+            for tensor in attr.tensors:
+                check_tensor(tensor)
 
 
 def check_tensor_value_info(value_info,
@@ -68,6 +74,36 @@ def check_tensor_value_info(value_info,
             'TypeProto.value should be either tensor_type or sparse_tensor_type')
 
 
+def check_tensor(tensor):
+    if not isinstance(tensor, TensorProto):
+        raise RuntimeError('You cannot pass an object that is not TensorProto.')
+
+    fields = [field
+              for field in set(mapping.STORAGE_TENSOR_TYPE_TO_FIELD.values())
+              if getattr(tensor, field)]
+    has_raw_field = tensor.HasField('raw_data')
+    if has_raw_field:
+        fields.append('raw_data')
+
+    if len(fields) != 1:
+        raise ValueError(
+            'There should be exactly one data field set: {}'.format(
+                ', '.join(fields)))
+
+    if has_raw_field:
+        if tensor.data_type == TensorProto.STRING:
+            raise ValueError(
+                'STRING data should not be stored in "raw_data" field')
+    else:
+        field = fields[0]
+        if field != mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
+                mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[tensor.data_type]]:
+            raise ValueError(
+                'Mismatched data type ({}) and field ({})'.format(
+                    tensor.data_type, field
+                ))
+
+
 def check_graph(graph):
     """Checks if a GraphProto is legal.
 
@@ -88,6 +124,13 @@ def check_graph(graph):
         check_tensor_value_info(value_info)
     for node in graph.node:
         check_node(node)
+
+    input_names = {value_info.name for value_info in graph.input}
+    for init in graph.initializer:
+        if init.name not in input_names:
+            raise ValueError(
+                '{} in initializer but not in graph input'.format(init.name))
+        check_tensor(init)
 
 
 def check_model(model):
