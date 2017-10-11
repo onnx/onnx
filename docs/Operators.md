@@ -655,7 +655,7 @@
   * **attribute**:
     <dl>
       <dt>dilations</dt>
-      <dd>Dilaton along each axis, 1 mean no dilation.</dd>
+      <dd>Dilation along each axis, 1 mean no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
@@ -869,7 +869,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
       <dt>X</dt>
       <dd>Input tensor</dd>
       <dt>Slope</dt>
-      <dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
+      <dd>Slope tensor. If `Slope` is of size 1, the value is shared across different channels</dd>
     </dl>
   * **output**:
     <dl>
@@ -984,7 +984,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>dtype</dt>
-      <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
+      <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use the data type of the input tensor.</dd>
       <dt>mean</dt>
       <dd>The mean of the normal distribution.</dd>
       <dt>scale</dt>
@@ -1044,7 +1044,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>dtype</dt>
-      <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
+      <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use the data type of the input tensor.</dd>
       <dt>high</dt>
       <dd>Upper boundary of the output values.</dd>
       <dt>low</dt>
