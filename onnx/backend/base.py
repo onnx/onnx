@@ -59,3 +59,11 @@ class Backend(object):
     @classmethod
     def run_node(cls, node, inputs, device='CPU'):
         onnx.checker.check_node(node)
+
+    @classmethod
+    def supports_device(device):
+        """
+        Checks whether the backend is compiled with particular device support.
+        In particular it's used in the testing suite.
+        """
+        return True
