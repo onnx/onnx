@@ -328,24 +328,12 @@ unchanged.
 OPERATOR_SCHEMA(LRN)
     .NumInputs(1)
     .NumOutputs(1)
-    .Attr("size", "", AttrType::INT, true)
-    .Attr("alpha", "", AttrType::FLOAT, true)
-    .Attr("beta", "", AttrType::FLOAT, true)
-    .Attr("bias", "Default to 1", AttrType::FLOAT)
+    .Attr("size", "The number of channels to sum over", AttrType::INT, true)
+    .Attr("alpha", "Scaling parameter", AttrType::FLOAT, true)
+    .Attr("beta", "The exponent", AttrType::FLOAT, true)
     .Input(0, "X", "Input tensor")
     .Output(0, "Y", "Output tensor")
-    .SetDoc(R"DOC(Local Response Normalization)DOC");
-
-OPERATOR_SCHEMA(ChannelShuffle)
-    .NumInputs(1)
-    .NumOutputs(1)
-    .Attr("kernel_shape",
-          "The size of the kernel along each axis",
-          AttrType::INTS,
-          true)
-    .Attr("group",
-          "Number of channel groups. Default to 1",
-          AttrType::INT)
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor")
-    .SetDoc(R"DOC(Channel Shuffle operation described in the paper https://arxiv.org/abs/1707.01083)DOC");
+    .SetDoc(R"DOC(
+Local Response Normalization. It normalizes over local input regions. Each input value is divided by
+ (1+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+)DOC");

@@ -227,28 +227,6 @@
     </dl>
 
 
-* <a name="ChannelShuffle"></a><a name="channelshuffle"></a>**ChannelShuffle**
-
-  Channel Shuffle operation described in the paper https://arxiv.org/abs/1707.01083
-  * **attribute**:
-    <dl>
-      <dt>group</dt>
-      <dd>Number of channel groups. Default to 1</dd>
-      <dt>kernel_shape</dt>
-      <dd>The size of the kernel along each axis</dd>
-    </dl>
-  * **input**:
-    <dl>
-      <dt>X</dt>
-      <dd>Input tensor</dd>
-    </dl>
-  * **output**:
-    <dl>
-      <dt>Y</dt>
-      <dd>Output tensor</dd>
-    </dl>
-
-
 * <a name="Concat"></a><a name="concat"></a>**Concat**
 
   Concatenate a list of tensors into a single tensor
@@ -612,17 +590,16 @@
 
 * <a name="LRN"></a><a name="lrn"></a>**LRN**
 
-  Local Response Normalization
+  Local Response Normalization. It normalizes over local input regions. Each input value is divided by
+   (1+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
   * **attribute**:
     <dl>
       <dt>alpha</dt>
-      <dd></dd>
+      <dd>Scaling parameter</dd>
       <dt>beta</dt>
-      <dd></dd>
-      <dt>bias</dt>
-      <dd>Default to 1</dd>
+      <dd>The exponent</dd>
       <dt>size</dt>
-      <dd></dd>
+      <dd>The number of channels to sum over</dd>
     </dl>
   * **input**:
     <dl>
@@ -703,7 +680,7 @@
   * **attribute**:
     <dl>
       <dt>dilations</dt>
-      <dd>Dilaton along each axis, 1 mean no dilation.</dd>
+      <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
