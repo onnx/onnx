@@ -38,7 +38,7 @@ except subprocess.CalledProcessError:
     git_version = None
 
 VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
-    version='0.1',
+    version='0.2',
     git_version=git_version
 )
 

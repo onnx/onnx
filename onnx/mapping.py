@@ -35,6 +35,7 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     TensorProto.COMPLEX128: TensorProto.FLOAT,
     TensorProto.UINT32: TensorProto.UINT32,
     TensorProto.UINT64: TensorProto.UINT64,
+    TensorProto.STRING: TensorProto.STRING,
 }
 
 STORAGE_TENSOR_TYPE_TO_FIELD = {
@@ -47,4 +48,5 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     TensorProto.COMPLEX128: 'float_data',
     TensorProto.UINT32: 'uint64_data',
     TensorProto.UINT64: 'uint64_data',
+    TensorProto.STRING: 'string_data',
 }
