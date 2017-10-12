@@ -120,7 +120,7 @@
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>The number of zeros padding added each axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -261,8 +261,7 @@
 
 * <a name="Conv"></a><a name="conv"></a>**Conv**
 
-  The convolution operator consumes an input tensor and a filter, and
-  computes the output.
+  Compute N-Dimensional convolution on the input.
   * **attribute**:
     <dl>
       <dt>dilations</dt>
@@ -272,7 +271,7 @@
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>The number of zeros padding added each axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -292,8 +291,7 @@
 
 * <a name="ConvTranspose"></a><a name="convtranspose"></a>**ConvTranspose**
 
-  The convolution transpose operator consumes an input tensor and a filter,
-  and computes the output.
+  Compute N-Dimensional transposed convolution on the input.
   * **attribute**:
     <dl>
       <dt>dilations</dt>
@@ -303,7 +301,7 @@
       <dt>output_shape</dt>
       <dd>The shape of the output.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>The number of zeros padding added each axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -655,11 +653,11 @@
   * **attribute**:
     <dl>
       <dt>dilations</dt>
-      <dd>Dilaton along each axis, 1 mean no dilation.</dd>
+      <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>The number of zeros padding added each axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
