@@ -120,7 +120,7 @@
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>The number of zeros padding added each axis.</dd>
+      <dd>The number of zeros padding added to each axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -271,7 +271,7 @@
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>pads</dt>
-      <dd>The number of zeros padding added each axis.</dd>
+      <dd>The number of zeros padding added to each axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -301,7 +301,7 @@
       <dt>output_shape</dt>
       <dd>The shape of the output.</dd>
       <dt>pads</dt>
-      <dd>The number of zeros padding added each axis.</dd>
+      <dd>The number of zeros padding added to each axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -657,7 +657,7 @@
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>The number of zeros padding added each axis.</dd>
+      <dd>The number of zeros padding added to each axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>

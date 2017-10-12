@@ -25,7 +25,7 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "The number of zeros padding added each axis.",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -66,7 +66,7 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "The number of zeros padding added each axis.",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
             schema.Attr("dilations",
                         "Dilation along each axis, 1 means no dilation.",
@@ -125,7 +125,7 @@ namespace onnx {
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "The number of zeros padding added each axis.",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -176,7 +176,7 @@ namespace onnx {
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "The number of zeros padding added each axis.",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
         };
     }
