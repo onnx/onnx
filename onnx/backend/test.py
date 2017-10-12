@@ -140,6 +140,9 @@ class BackendTest(object):
             outputs (list of ndarrays): outputs to the model
         """
         def run(test_self):
+            if not self.backend.supports_device(device):
+                raise unittest.SkipTest(
+                    "Backend doesn't support device {}".format(device))
             model_dir = self._prepare_model(model_name)
             model_pb_path = os.path.join(model_dir, 'model.pb')
             model = onnx.load(model_pb_path)
@@ -175,6 +178,9 @@ class BackendTest(object):
                 the input to the operator.
         """
         def run(test_self):
+            if not self.backend.supports_device(device):
+                raise unittest.SkipTest(
+                    "Backend doesn't support device {}".format(device))
             # TODO: In some cases we should generate multiple random inputs
             # and test (ala Hypothesis)
             args = create_input(inputs)
