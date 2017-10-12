@@ -1,13 +1,15 @@
 # Provides reference implementation of CuDNN-style RNNs in numpy
 
-import numpy as np
-from itertools import chain, izip
 from collections import defaultdict
+from itertools import chain
+
+import numpy as np
+from six.moves import zip
+
 from .test_util import N
 
-
 def interleave(x, y):
-    return list(chain.from_iterable(izip(x, y)))
+    return list(chain.from_iterable(zip(x, y)))
 
 
 class RNNBase(object):
