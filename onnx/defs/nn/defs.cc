@@ -318,7 +318,7 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
 )DOC")
-    .Input(0, "input", "A tensor of rank > axis.")
+    .Input(0, "input", "A tensor of rank >= axis.")
     .Output(
         0,
         "output",
