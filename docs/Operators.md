@@ -461,7 +461,7 @@
   * **input**:
     <dl>
       <dt>input</dt>
-      <dd>A tensor of rank > axis.</dd>
+      <dd>A tensor of rank >= axis.</dd>
     </dl>
   * **output**:
     <dl>
