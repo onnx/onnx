@@ -591,13 +591,15 @@
 * <a name="LRN"></a><a name="lrn"></a>**LRN**
 
   Local Response Normalization. It normalizes over local input regions. Each input value is divided by
-   (1+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+   (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
   * **attribute**:
     <dl>
       <dt>alpha</dt>
       <dd>Scaling parameter</dd>
       <dt>beta</dt>
       <dd>The exponent</dd>
+      <dt>bias</dt>
+      <dd>Default to 1</dd>
       <dt>size</dt>
       <dd>The number of channels to sum over</dd>
     </dl>

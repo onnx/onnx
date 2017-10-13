@@ -331,9 +331,10 @@ OPERATOR_SCHEMA(LRN)
     .Attr("size", "The number of channels to sum over", AttrType::INT, true)
     .Attr("alpha", "Scaling parameter", AttrType::FLOAT, true)
     .Attr("beta", "The exponent", AttrType::FLOAT, true)
+    .Attr("bias", "Default to 1", AttrType::FLOAT)
     .Input(0, "X", "Input tensor")
     .Output(0, "Y", "Output tensor")
     .SetDoc(R"DOC(
 Local Response Normalization. It normalizes over local input regions. Each input value is divided by
- (1+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+ (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
 )DOC");
