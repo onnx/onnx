@@ -655,7 +655,7 @@
   * **attribute**:
     <dl>
       <dt>dilations</dt>
-      <dd>Dilation along each axis, 1 mean no dilation.</dd>
+      <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
