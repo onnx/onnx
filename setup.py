@@ -193,7 +193,7 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         extra_compile_args=extra_compile_args,
         extra_objects=extra_objects,
         extra_link_args=extra_link_args,
-        language='c++',
+        language='c++11',
     )
 
 class ONNXCpp2PyExtension(setuptools.Extension):
