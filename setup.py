@@ -93,7 +93,9 @@ class Protobuf(Dependency):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
         # and environment variables
-        self.libraries = ['protobuf']
+        assert os.getenv('PROTOBUF_LIB')
+        self.libraries = [os.path.join(os.getenv('PROTOBUF_LIB'), "lib\\libprotobuf")]
+        self.include_dirs = [os.path.join(os.getenv('PROTOBUF_LIB'), "include")]
 
 
 class Pybind11(Dependency):
@@ -185,6 +187,8 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         extra_compile_args.append('-stdlib=libc++')
     if os.getenv('CONDA_PREFIX'):
         include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
+    if platform.system() == 'Windows':
+        extra_compile_args.append('/MT')
     return ExtType(
         name=name,
         sources=sources,
