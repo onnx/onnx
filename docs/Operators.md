@@ -1362,22 +1362,16 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   for each axis in the list of axes, it uses this information to slice the input `data` 
   tensor. If a negative value is passed for any of the start or end indices, it represent 
   number of elements before the end of that dimension.
-  
-  `strides` is the  step sizes when applying slicing, negative value means in 
-  reverse order.
-  * **attribute**:
-    <dl>
-      <dt>axes</dt>
-      <dd>Axes list in which starts and ends apply to.</dd>
-      <dt>ends</dt>
-      <dd>List of ending indices</dd>
-      <dt>starts</dt>
-      <dd>List of starting indices</dd>
-    </dl>
-  * **input**:1 - 4
+  * **input**:
     <dl>
       <dt>data</dt>
       <dd>Tensor of data to extract slices from.</dd>
+      <dt>axes</dt>
+      <dd>1D Tensor contains the list of axes in which starts and ends apply to.</dd>
+      <dt>starts</dt>
+      <dd>1D Tensor contains the list of indices starting values corresponding to each axes in the axes input.</dd>
+      <dt>ends</dt>
+      <dd>1D Tensor contains the list of indices end values corresponding to each axes in the axes input.</dd>
     </dl>
   * **output**:
     <dl>
