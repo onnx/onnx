@@ -345,4 +345,3 @@ OPERATOR_SCHEMA(LRN)
 Local Response Normalization. It normalizes over local input regions. Each input value is divided by
  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
 )DOC");
->>>>>>> master
