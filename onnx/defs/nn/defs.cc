@@ -331,3 +331,18 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         "(Default to 1) Indicate up to which input dimensions "
         "(exclusive) should be flattened to the outer dimension of the output",
         AttrType::INT);
+
+OPERATOR_SCHEMA(LRN)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr("size", "The number of channels to sum over", AttrType::INT, true)
+    .Attr("alpha", "Scaling parameter", AttrType::FLOAT, true)
+    .Attr("beta", "The exponent", AttrType::FLOAT, true)
+    .Attr("bias", "Default to 1", AttrType::FLOAT)
+    .Input(0, "X", "Input tensor")
+    .Output(0, "Y", "Output tensor")
+    .SetDoc(R"DOC(
+Local Response Normalization. It normalizes over local input regions. Each input value is divided by
+ (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+)DOC");
+>>>>>>> master
