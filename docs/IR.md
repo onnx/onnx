@@ -16,13 +16,13 @@ __Some notes on language in this and all related documents__:
 Extensible computation graph model
 ----------------------------------
 
-ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and 
-manipulate internally. For example, a framework may keep the graph in memory in another format that it finds more efficient to 
+ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and
+manipulate internally. For example, a framework may keep the graph in memory in another format that it finds more efficient to
 manipulate for optimization passes. We make use of protobuf2 (with oneof, added in protobuf 2.6.1) for the serialized format.
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph, which MUST be free of cycles. 
+Each computation dataflow graph is structured as a list of nodes that form a graph, which MUST be free of cycles.
 Nodes have one or more inputs and one or more outputs. Each node is a call to an operator.
 
 #### Metadata
@@ -39,7 +39,7 @@ The following are the metadata properties of a model graph:
 
 #### Names Within a Graph
 
-We organize names into separate namespaces. Names must be unique within a namespace. 
+We organize names into separate namespaces. Names must be unique within a namespace.
 The namespaces are as follows:
  - Node: These names identify specific nodes in the graph but not necessarily any particular input or output of the node.
  - Graph: These names identify graphs in the protobuf.
@@ -53,10 +53,10 @@ All names MUST adhere to C identifier syntax rules.
 
 Computation nodes are comprised of a name, a list of named inputs, a list of named outputs, and a list of attributes.
 
-Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a 
-subsequent node. 
+Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a
+subsequent node.
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K 
+The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K
 follows node N in the graph, none of the data inputs of N may refer to outputs of K; further, no control input of N may refer to K.
 
 
