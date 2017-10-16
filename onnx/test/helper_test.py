@@ -5,7 +5,9 @@ from __future__ import unicode_literals
 
 import random
 
-from onnx import helper, defs
+import numpy as np
+
+from onnx import helper, defs, numpy_helper
 from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto,ModelProto, IR_VERSION
 
 import unittest
@@ -141,14 +143,6 @@ class TestHelperAttributeFunctions(unittest.TestCase):
                 func(attr)
             self.assertFalse(helper.is_attribute_legal(attr))
 
-
-
-
-
-
-
-
-
 class TestHelperNodeFunctions(unittest.TestCase):
 
     def test_node_no_arg(self):
@@ -181,8 +175,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         graph = helper.make_graph(
             [node_def],
             "test",
-            ["X"],
-            ["Y"])
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
         self.assertEqual(len(graph.node), 1)
         self.assertEqual(graph.node[0], node_def)
 
@@ -192,11 +186,36 @@ class TestHelperNodeFunctions(unittest.TestCase):
         graph_def = helper.make_graph(
             [node_def],
             "test",
-            ["X"],
-            ["Y"])
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
         self.assertRaises(AttributeError, helper.make_model, graph_def, xxx=1)
         model_def = helper.make_model(graph_def, producer_name='test')
         self.assertEqual(model_def.producer_name, 'test')
+
+
+class TestHelperTensorFunctions(unittest.TestCase):
+
+    def test_make_tensor(self):
+        np_array = np.random.randn(2, 3).astype(np.float32)
+
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(2, 3),
+            vals=np_array.reshape(6).tolist()
+        )
+        self.assertEqual(tensor.name, 'test')
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+        # use raw_data field to store the data
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(2, 3),
+            vals=np_array.reshape(6).tobytes(),
+            raw=True,
+        )
+        np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
 
 if __name__ == '__main__':

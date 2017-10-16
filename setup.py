@@ -10,6 +10,7 @@ import setuptools.command.build_py
 import setuptools.command.develop
 import setuptools.command.build_ext
 
+import platform
 import fnmatch
 from collections import namedtuple
 import os
@@ -37,7 +38,7 @@ except subprocess.CalledProcessError:
     git_version = None
 
 VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
-    version='0.1',
+    version='0.2',
     git_version=git_version
 )
 
@@ -192,7 +193,7 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         extra_compile_args=extra_compile_args,
         extra_objects=extra_objects,
         extra_link_args=extra_link_args,
-        language='c++11',
+        language='c++',
     )
 
 class ONNXCpp2PyExtension(setuptools.Extension):
@@ -203,7 +204,7 @@ cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
 cpp2py_extra_objects = []
 build_for_release = os.getenv('ONNX_BINARY_BUILD')
-if build_for_release:
+if build_for_release and platform.system() == 'Linux':
     # Cribbed from PyTorch
     # get path of libstdc++ and link manually.
     # for reasons unknown, -static-libstdc++ doesn't fully link some symbols

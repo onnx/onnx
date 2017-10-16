@@ -69,7 +69,7 @@ namespace onnx {
                         "Padding along each axis, can take the value 0 (False) or non 0 (True)",
                         AttrType::INTS);
             schema.Attr("dilations",
-                        "Dilaton along each axis, 1 mean no dilation.",
+                        "Dilation along each axis, 1 means no dilation.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -289,7 +289,7 @@ Output case #2: Y (test mode)
 
 OPERATOR_SCHEMA(Dropout)
     .NumInputs(1)
-    .NumOutputs(2)
+    .NumOutputs(1,2)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -324,3 +324,17 @@ unchanged.
         "A tensor of rank 2 with the contents of the input tensor, "
         "with first dimension equal first dimension of input, and remaining "
         "input dimensions flattened into the inner dimension of the output.");
+
+OPERATOR_SCHEMA(LRN)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr("size", "The number of channels to sum over", AttrType::INT, true)
+    .Attr("alpha", "Scaling parameter", AttrType::FLOAT, true)
+    .Attr("beta", "The exponent", AttrType::FLOAT, true)
+    .Attr("bias", "Default to 1", AttrType::FLOAT)
+    .Input(0, "X", "Input tensor")
+    .Output(0, "Y", "Output tensor")
+    .SetDoc(R"DOC(
+Local Response Normalization. It normalizes over local input regions. Each input value is divided by
+ (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+)DOC");

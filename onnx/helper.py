@@ -7,9 +7,11 @@ import collections
 import numbers
 import sys
 
-from onnx.onnx_pb2 import \
-    AttributeProto, TensorProto, NodeProto, GraphProto, ModelProto, IR_VERSION
+from six import text_type, integer_types
+
+from onnx.onnx_pb2 import *
 import onnx.onnx_cpp2py_export as C
+from onnx import mapping
 
 def make_node(
         op_type, inputs, outputs,
@@ -48,6 +50,9 @@ def make_model(graph, **kwargs):
         setattr(model, k, v)
     return model
 
+def split_complex_to_pairs(ca):
+    return [(ca[i//2].real if (i % 2 == 0) else ca[i//2].imag) for i in range(len(ca) * 2)]
+
 
 def make_tensor(name, data_type, dims, vals, raw=False):
     '''
@@ -64,25 +69,17 @@ def make_tensor(name, data_type, dims, vals, raw=False):
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
         tensor.string_data.extend(vals)
-    elif data_type in [TensorProto.UINT8,
-                       TensorProto.INT8,
-                       TensorProto.UINT16,
-                       TensorProto.INT16,
-                       TensorProto.INT32,
-                       TensorProto.FLOAT16,
-                       TensorProto.BOOL,
-                       TensorProto.FLOAT]:
-        if raw:
-            tensor.raw_data = vals
-        else:
-            if data_type == TensorProto.FLOAT:
-                tensor.float_data.extend(vals)
-            elif data_type == TensorProto.INT64:
-                tensor.int64_data.extend(vals)
-            else:
-                tensor.int32_data.extend(vals)
+
+    if (data_type == TensorProto.COMPLEX64 or
+        data_type == TensorProto.COMPLEX128):
+        vals = split_complex_to_pairs(vals)
+    if raw:
+        tensor.raw_data = vals
     else:
-        raise RuntimeError('Unrecognized data_type: {}'.format(data_type))
+        field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
+            mapping.TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE[data_type]]
+        getattr(tensor, field).extend(vals)
+
     tensor.dims.extend(dims)
     return tensor
 
@@ -147,6 +144,29 @@ def make_attribute(key, value):
         raise ValueError(
             'Value "{}" is not valid attribute data type.'.format(value))
     return attr
+
+
+def make_tensor_value_info(name, elem_type, shape):
+    """Makes a TypeProto based on the data type and shape."""
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+
+    tensor_type_proto = value_info_proto.type.tensor_type
+    tensor_type_proto.elem_type = elem_type
+
+    tensor_shape_proto = tensor_type_proto.shape.dim
+    for d in shape:
+        dim = tensor_shape_proto.add()
+        if isinstance(d, integer_types):
+            dim.dim_value = d
+        elif isinstance(d, text_type):
+            dim.dim_param = d
+        else:
+            raise ValueError(
+                'Invalid item in shape: {}. '
+                'Needs to of integer_types or text_type.'.format(d))
+
+    return value_info_proto
 
 
 def is_attribute_legal(attr):
