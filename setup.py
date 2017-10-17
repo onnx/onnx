@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from distutils.spawn import find_executable
 from distutils import sysconfig
+import pkg_resources
 import setuptools
 import setuptools.command.build_py
 import setuptools.command.develop
@@ -93,11 +94,10 @@ class Protobuf(Dependency):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
         # and environment variables
-        assert os.getenv('PROTOBUF_LIB')
-        self.libraries = [os.path.join(os.getenv('PROTOBUF_LIB'), "lib\\libprotobuf")]
-        self.include_dirs = [os.path.join(os.getenv('PROTOBUF_LIB'), "include")]
+        assert os.getenv('CONDA_PREFIX')
+        self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf")]
 
-
+        
 class Pybind11(Dependency):
     def __init__(self):
         super(Pybind11, self).__init__()
@@ -147,8 +147,7 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('create_version')
         self.run_command('build_proto')
         setuptools.command.build_py.build_py.run(self)
-
-
+        
 class develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command('create_version')
@@ -187,6 +186,7 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         extra_compile_args.append('-stdlib=libc++')
     if os.getenv('CONDA_PREFIX'):
         include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
+        include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
     if platform.system() == 'Windows':
         extra_compile_args.append('/MT')
     return ExtType(
