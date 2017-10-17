@@ -588,6 +588,33 @@
     </dl>
 
 
+* <a name="LRN"></a><a name="lrn"></a>**LRN**
+
+  Local Response Normalization. It normalizes over local input regions. Each input value is divided by
+   (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+  * **attribute**:
+    <dl>
+      <dt>alpha</dt>
+      <dd>Scaling parameter</dd>
+      <dt>beta</dt>
+      <dd>The exponent</dd>
+      <dt>bias</dt>
+      <dd>Default to 1</dd>
+      <dt>size</dt>
+      <dd>The number of channels to sum over</dd>
+    </dl>
+  * **input**:
+    <dl>
+      <dt>X</dt>
+      <dd>Input tensor</dd>
+    </dl>
+  * **output**:
+    <dl>
+      <dt>Y</dt>
+      <dd>Output tensor</dd>
+    </dl>
+
+
 * <a name="LeakyRelu"></a><a name="leakyrelu"></a>**LeakyRelu**
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one

@@ -169,15 +169,6 @@ Output case #2: Y (test mode)
             "Saved variance used during training to speed up "
             "gradient computation. Should not be used for testing.");
 
-OPERATOR_SCHEMA(LRN)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1,2)
-    .Attr("size", "", AttrType::INT)
-    .Attr("alpha", "", AttrType::FLOAT)
-    .Attr("beta", "", AttrType::FLOAT)
-    .Attr("bias", "", AttrType::FLOAT);
-
 OPERATOR_SCHEMA(GivenTensorFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(0, 1)
@@ -258,17 +249,6 @@ Scale takes one input data (Tensor<float>) and produces one output data
     .Attr("scale",
           "(float, default 1.0) the scale to apply.",
           AttrType::FLOAT);
-
-OPERATOR_SCHEMA(ChannelShuffle)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
-    .Attr("kernel_shape",
-          "The size of the kernel along each axis",
-          AttrType::INTS)
-    .Attr("group",
-          "Number of channel groups",
-          AttrType::INT);
 
 OPERATOR_SCHEMA(RecurrentNetwork)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
