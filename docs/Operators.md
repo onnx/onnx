@@ -450,17 +450,23 @@
 
 * <a name="Flatten"></a><a name="flatten"></a>**Flatten**
 
-  Flattens the input tensor into a 2D matrix, keeping the first dimension
-  unchanged.
+  Flattens the input tensor into a 2D matrix. If input tensor has shape
+  (d_0, d_1, ... d_n) then the output will have shape
+  (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
+  * **attribute**:
+    <dl>
+      <dt>axis</dt>
+      <dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output</dd>
+    </dl>
   * **input**:
     <dl>
       <dt>input</dt>
-      <dd>A tensor of rank >= 2.</dd>
+      <dd>A tensor of rank >= axis.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
-      <dd>A tensor of rank 2 with the contents of the input tensor, with first dimension equal first dimension of input, and remaining input dimensions flattened into the inner dimension of the output.</dd>
+      <dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
     </dl>
 
 
