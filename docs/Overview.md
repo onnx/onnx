@@ -38,4 +38,4 @@ helps developers choose the right framework for their task, framework
 authors to focus on innovative enhancements, and hardware vendors to 
 streamline optimizations. 
 
-ONNX is designed to be an open format.  We welcome contributions from the community and encourge everyone to adopt ONNX in their ecosystem. 
+ONNX is designed to be an open format.  We welcome contributions from the community and encourage everyone to adopt ONNX in their ecosystem. 

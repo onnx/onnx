@@ -450,17 +450,23 @@
 
 * <a name="Flatten"></a><a name="flatten"></a>**Flatten**
 
-  Flattens the input tensor into a 2D matrix, keeping the first dimension
-  unchanged.
+  Flattens the input tensor into a 2D matrix. If input tensor has shape
+  (d_0, d_1, ... d_n) then the output will have shape
+  (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
+  * **attribute**:
+    <dl>
+      <dt>axis</dt>
+      <dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output</dd>
+    </dl>
   * **input**:
     <dl>
       <dt>input</dt>
-      <dd>A tensor of rank >= 2.</dd>
+      <dd>A tensor of rank >= axis.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
-      <dd>A tensor of rank 2 with the contents of the input tensor, with first dimension equal first dimension of input, and remaining input dimensions flattened into the inner dimension of the output.</dd>
+      <dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
     </dl>
 
 
@@ -949,22 +955,19 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 
 * <a name="Pow"></a><a name="pow"></a>**Pow**
 
-  Pow takes input data (Tensor<T>) and an argument exponent, and
+  Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
-  * **attribute**:
-    <dl>
-      <dt>exponent</dt>
-      <dd>The exponent of the power function.</dd>
-    </dl>
   * **input**:
     <dl>
       <dt>X</dt>
-      <dd>Input tensor of any shape</dd>
+      <dd>Input tensor of any shape, base of the exponent.</dd>
+      <dt>Y</dt>
+      <dd>Input tensor of any shape broadcastable to X shape, the exponent component.</dd>
     </dl>
   * **output**:
     <dl>
-      <dt>Y</dt>
+      <dt>Z</dt>
       <dd>Output tensor (same size as X)</dd>
     </dl>
 
@@ -1361,24 +1364,20 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
   
-  Slices are passed as two keyword argument lists with starting and end indices 
-  for each dimension of the input `data` tensor. If a negative value is passed 
-  for any of the start or end indices, it represent number of elements before 
-  the end of that dimension.
-  
-  `strides` is the  step sizes when applying slicing, negative value means in 
-  reverse order.
-  * **attribute**:
-    <dl>
-      <dt>ends</dt>
-      <dd>List of ending indices</dd>
-      <dt>starts</dt>
-      <dd>List of starting indices</dd>
-    </dl>
-  * **input**:1 - 3
+  Slices uses `axes`, `starts` and `ends` list to specify the start and end dimension 
+  for each axis in the list of axes, it uses this information to slice the input `data` 
+  tensor. If a negative value is passed for any of the start or end indices, it represent 
+  number of elements before the end of that dimension.
+  * **input**:
     <dl>
       <dt>data</dt>
       <dd>Tensor of data to extract slices from.</dd>
+      <dt>axes</dt>
+      <dd>1D Tensor contains the list of axes in which starts and ends apply to.</dd>
+      <dt>starts</dt>
+      <dd>1D Tensor contains the list of indices starting values corresponding to each axes in the axes input.</dd>
+      <dt>ends</dt>
+      <dd>1D Tensor contains the list of indices end values corresponding to each axes in the axes input.</dd>
     </dl>
   * **output**:
     <dl>
