@@ -11,7 +11,7 @@ __Some notes on language in this and all related documents__:
 
 1. The use of SHOULD, MUST, MAY and so on in this document is consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
-2. The use of 'list' shall denote an ordered collection of items, 'set' shall denote an unordered collection of unique elements, and 'bag' an unordered colletion of possibly non-unique elements.
+2. The use of 'list' shall denote an ordered collection of items, 'set' shall denote an unordered collection of unique elements, and 'bag' an unordered collection of possibly non-unique elements.
 
 Extensible computation graph model
 ----------------------------------
@@ -81,4 +81,4 @@ The following data types are supported by ONNX. Additional data types can be sup
 |Other|__string__|Strings represent textual data. All strings are encoded using UTF-8.|
 |Other|__bool__|Boolean value represent data with only two values, typically _true_ and _false_.|
 |Other|__handle__|Handles are opaque types holding a 64-bit integer.|
-|Collections|__sparse and dense tensor__|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimenstions, including zero. A zero-dimensional tensor is equivalent to a scalar.|
+|Collections|__sparse and dense tensor__|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is equivalent to a scalar.|
