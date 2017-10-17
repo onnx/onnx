@@ -955,22 +955,19 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 
 * <a name="Pow"></a><a name="pow"></a>**Pow**
 
-  Pow takes input data (Tensor<T>) and an argument exponent, and
+  Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
-  * **attribute**:
-    <dl>
-      <dt>exponent</dt>
-      <dd>The exponent of the power function.</dd>
-    </dl>
   * **input**:
     <dl>
       <dt>X</dt>
-      <dd>Input tensor of any shape</dd>
+      <dd>Input tensor of any shape, base of the exponent.</dd>
+      <dt>Y</dt>
+      <dd>Input tensor of any shape broadcastable to X shape, the exponent component.</dd>
     </dl>
   * **output**:
     <dl>
-      <dt>Y</dt>
+      <dt>Z</dt>
       <dd>Output tensor (same size as X)</dd>
     </dl>
 
@@ -1367,24 +1364,20 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
   
-  Slices are passed as two keyword argument lists with starting and end indices 
-  for each dimension of the input `data` tensor. If a negative value is passed 
-  for any of the start or end indices, it represent number of elements before 
-  the end of that dimension.
-  
-  `strides` is the  step sizes when applying slicing, negative value means in 
-  reverse order.
-  * **attribute**:
-    <dl>
-      <dt>ends</dt>
-      <dd>List of ending indices</dd>
-      <dt>starts</dt>
-      <dd>List of starting indices</dd>
-    </dl>
-  * **input**:1 - 3
+  Slices uses `axes`, `starts` and `ends` list to specify the start and end dimension 
+  for each axis in the list of axes, it uses this information to slice the input `data` 
+  tensor. If a negative value is passed for any of the start or end indices, it represent 
+  number of elements before the end of that dimension.
+  * **input**:
     <dl>
       <dt>data</dt>
       <dd>Tensor of data to extract slices from.</dd>
+      <dt>axes</dt>
+      <dd>1D Tensor contains the list of axes in which starts and ends apply to.</dd>
+      <dt>starts</dt>
+      <dd>1D Tensor contains the list of indices starting values corresponding to each axes in the axes input.</dd>
+      <dt>ends</dt>
+      <dd>1D Tensor contains the list of indices end values corresponding to each axes in the axes input.</dd>
     </dl>
   * **output**:
     <dl>
