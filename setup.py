@@ -94,10 +94,12 @@ class Protobuf(Dependency):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
         # and environment variables
-        assert os.getenv('CONDA_PREFIX')
-        self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf")]
+        if os.getenv('CONDA_PREFIX'):
+            self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf")]
+        else:
+            self.libraries = ['protobuf'] 
 
-        
+
 class Pybind11(Dependency):
     def __init__(self):
         super(Pybind11, self).__init__()
