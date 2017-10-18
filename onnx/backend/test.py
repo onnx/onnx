@@ -94,8 +94,8 @@ class BackendTest(object):
 
         # For backward compatibility - create a suite to aggregate them all
         self.tests = type(str('OnnxBackendTest'), (self._base_case,), {})
-        for case in self.test_cases.values():
-            for name, func in case.__dict__.items():
+        for _, case in sorted(self.test_cases.items()):
+            for name, func in sorted(case.__dict__.items()):
                 if name.startswith('test_'):
                     setattr(self.tests, name, func)
 
