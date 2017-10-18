@@ -12,7 +12,7 @@ std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         std::string doc = R"DOC(
 Computes the {name} of the input tensor's element along the provided axes. The resulted
-tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
 the resulted tensor have the reduced dimension pruned.
 
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -20,7 +20,7 @@ False instead of True.)DOC";
         ReplaceAll(doc, "{name}", name);
         schema.SetDoc(doc);
         schema.Attr("axes",
-                    "A list of integers, along which to reduce max.",
+                    "A list of integers, along which to reduce.",
                     AttrType::INTS);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
@@ -68,14 +68,14 @@ std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         std::string doc = R"DOC(
 Computes the indices of the {name} elements of the input tensor's element along the 
-provided axes. The resulted tensor has the same shape as the input if keepdims equal 1. 
+provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
 If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
 The type of the output tensor is integer.)DOC";
         ReplaceAll(doc, "{name}", name);
         schema.SetDoc(doc);
-        schema.Attr("axes",
-                    "A list of integers, along which to reduce max.",
-                    AttrType::INTS);
+        schema.Attr("axis",
+                    "The axis in which to compute the arg indices",
+                    AttrType::INT);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
                     AttrType::INT);

@@ -61,13 +61,13 @@
 * <a name="ArgMax"></a><a name="argmax"></a>**ArgMax**
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1. 
+  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
   * **attribute**:
     <dl>
-      <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dt>axis</dt>
+      <dd>The axis in which to compute the arg indices</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -86,13 +86,13 @@
 * <a name="ArgMin"></a><a name="argmin"></a>**ArgMin**
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1. 
+  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
   * **attribute**:
     <dl>
-      <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dt>axis</dt>
+      <dd>The axis in which to compute the arg indices</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1114,7 +1114,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 * <a name="ReduceLogSumExp"></a><a name="reducelogsumexp"></a>**ReduceLogSumExp**
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1122,7 +1122,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1141,7 +1141,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 * <a name="ReduceMax"></a><a name="reducemax"></a>**ReduceMax**
 
   Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1149,7 +1149,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1168,7 +1168,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 * <a name="ReduceMean"></a><a name="reducemean"></a>**ReduceMean**
 
   Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1176,7 +1176,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1195,7 +1195,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 * <a name="ReduceMin"></a><a name="reducemin"></a>**ReduceMin**
 
   Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1203,7 +1203,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1222,7 +1222,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 * <a name="ReduceProd"></a><a name="reduceprod"></a>**ReduceProd**
 
   Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1230,7 +1230,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1249,7 +1249,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 * <a name="ReduceSum"></a><a name="reducesum"></a>**ReduceSum**
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1257,7 +1257,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
