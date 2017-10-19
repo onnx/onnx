@@ -1,5 +1,6 @@
 Open Neural Network Exchange (ONNX)
 ========
+[![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx)
 
 Open Neural Network Exchange (ONNX) is the first step toward an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
@@ -103,6 +104,16 @@ Then, after you have made changes to
 
 - Python files, the changes are immediately effective in your installation, you do not need to install again.
 - C++ files, you need to do install again to trigger the native extension build.
+
+## Generated operator documentation
+
+[Operator docs in Operators.md](docs/Operators.md) are auto-generated based on C++ operator definitions. In order to refresh them run the following command from the repo root and commit the results:
+
+```
+python onnx/defs/gen_doc.py
+```
+
+
 
 # License
 

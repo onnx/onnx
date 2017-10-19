@@ -49,13 +49,21 @@ class BackendRep(object):
 
 class Backend(object):
     @classmethod
-    def prepare(cls, model, device, **kwargs):
+    def prepare(cls, model, device='CPU', **kwargs):
         onnx.checker.check_model(model)
 
     @classmethod
-    def run_model(cls, model, inputs, device, **kwargs):
+    def run_model(cls, model, inputs, device='CPU', **kwargs):
         cls.prepare(model, device, **kwargs).run(inputs)
 
     @classmethod
-    def run_node(cls, node, inputs):
+    def run_node(cls, node, inputs, device='CPU'):
         onnx.checker.check_node(node)
+
+    @classmethod
+    def supports_device(device):
+        """
+        Checks whether the backend is compiled with particular device support.
+        In particular it's used in the testing suite.
+        """
+        return True
