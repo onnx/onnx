@@ -14,6 +14,7 @@ import numpy as np
 import onnx
 from onnx import helper
 from .test_util import create_input, N
+from . import test_rnn
 from six.moves.urllib.request import urlretrieve
 
 L = 20
@@ -37,26 +38,26 @@ node_tests = [
     ("test_dot", N("Dot"), np.dot, [(S, M), (M, L)]),
     ("test_relu", N("Relu"), lambda x: np.clip(x, 0, np.inf), [(S, S, S)]),
     ("test_constant_pad",
-     N("Pad", mode='constant', value=1.2, paddings=[1, 1, 1, 1]),
+     N("Pad", mode='constant', value=1.2, paddings=[0, 0, 0, 0, 1, 2, 3, 4]),
      lambda x: np.pad(x,
-                      pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+                      pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
                       mode='constant',
                       constant_values=1.2),
      [(1, 3, L, M)]),
     ("test_refelction_pad",
-     N("Pad", mode='reflect', paddings=[1, 1, 1, 1]),
+     N("Pad", mode='reflect', paddings=[0, 0, 0, 0, 1, 1, 1, 1]),
      lambda x: np.pad(x,
                       pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
                       mode='reflect'),
      [(1, 3, L, M)]),
     ("test_edge_pad",
-     N("Pad", mode='edge', paddings=[1, 1, 1, 1]),
+     N("Pad", mode='edge', paddings=[0, 0, 0, 0, 1, 1, 1, 1]),
      lambda x: np.pad(x,
                       pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
                       mode='edge'),
      [(1, 3, L, M)]),
     # TODO: Add all the other operators
-]
+] + test_rnn.node_tests
 
 model_tests = [
     ('test_bvlc_alexnet', 'bvlc_alexnet'),
@@ -67,8 +68,11 @@ model_tests = [
     ('test_shufflenet', 'shufflenet'),
     ('test_squeezenet', 'squeezenet'),
     ('test_vgg16', 'vgg16'),
-    ('test_vgg19', 'vgg19'),
 ]
+
+# Running vgg19 on Travis with Python 2 keeps getting OOM!
+if not os.environ.get('TRAVIS'):
+    model_tests.append(('test_vgg19', 'vgg19'))
 
 class BackendTest(object):
     def __init__(self, backend):
@@ -77,13 +81,29 @@ class BackendTest(object):
                 np.random.seed(seed=0)
 
         self.backend = backend
-        self.tests = TestsContainer
+        self._base_case = TestsContainer
+        # List of test cases to be applied on the parent scope
+        # Example usage: globals().update(BackendTest(backend).test_cases)
+        self.test_cases = {}
 
         for nt in node_tests:
             self._add_node_test(*nt)
 
         for gt in model_tests:
             self._add_model_test(*gt)
+
+        # For backward compatibility - create a suite to aggregate them all
+        self.tests = type(str('OnnxBackendTest'), (self._base_case,), {})
+        for _, case in sorted(self.test_cases.items()):
+            for name, func in sorted(case.__dict__.items()):
+                if name.startswith('test_'):
+                    setattr(self.tests, name, func)
+
+    def _get_test_case(self, category):
+        name = 'OnnxBackend{}Test'.format(category)
+        if name not in self.test_cases:
+            self.test_cases[name] = type(str(name), (self._base_case,), {})
+        return self.test_cases[name]
 
     def _prepare_model(self, model_name):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', '~/.onnx'))
@@ -101,15 +121,16 @@ class BackendTest(object):
                 t.extractall(models_dir)
         return model_dir
 
-    def _add_test(self, name, test_func):
+    def _add_test(self, test_case, name, test_func):
         # We don't prepend the 'test_' prefix to improve greppability
         if not name.startswith('test_'):
             raise ValueError('Test name must start with test_: {}'.format(name))
-        if hasattr(self.tests, name):
+        s = self._get_test_case(test_case)
+        if hasattr(s, name):
             raise ValueError('Duplicated test name: {}'.format(name))
-        setattr(self.tests, name, test_func)
+        setattr(s, name, test_func)
 
-    def _add_model_test(self, test_name, model_name):
+    def _add_model_test(self, test_name, model_name, device='CPU'):
         """
         Add A test for a single ONNX model against a reference implementation.
             test_name (string): Eventual name of the test.  Must be prefixed
@@ -119,10 +140,13 @@ class BackendTest(object):
             outputs (list of ndarrays): outputs to the model
         """
         def run(test_self):
+            if not self.backend.supports_device(device):
+                raise unittest.SkipTest(
+                    "Backend doesn't support device {}".format(device))
             model_dir = self._prepare_model(model_name)
             model_pb_path = os.path.join(model_dir, 'model.pb')
             model = onnx.load(model_pb_path)
-            prepared_model = self.backend.prepare(model)
+            prepared_model = self.backend.prepare(model, device)
 
             for test_data_npz in glob.glob(os.path.join(model_dir, 'test_data_*.npz')):
                 test_data = np.load(test_data_npz, encoding='bytes')
@@ -136,9 +160,9 @@ class BackendTest(object):
                         outputs[i],
                         decimal=4)
 
-        self._add_test(test_name, run)
+        self._add_test('Model', test_name, run)
 
-    def _add_node_test(self, test_name, node_spec, ref, inputs):
+    def _add_node_test(self, test_name, node_spec, ref, inputs, device='CPU'):
         """
         Add A test for a single ONNX node against a reference implementation.
 
@@ -154,6 +178,9 @@ class BackendTest(object):
                 the input to the operator.
         """
         def run(test_self):
+            if not self.backend.supports_device(device):
+                raise unittest.SkipTest(
+                    "Backend doesn't support device {}".format(device))
             # TODO: In some cases we should generate multiple random inputs
             # and test (ala Hypothesis)
             args = create_input(inputs)
@@ -167,7 +194,7 @@ class BackendTest(object):
                 input_names,
                 output_names,
                 **node_spec.kwargs)
-            outputs = self.backend.run_node(node_def, args)
+            outputs = self.backend.run_node(node_def, args, device)
             test_self.assertEqual(len(ref_outputs), len(outputs))
             for i in range(len(output_names)):
                 np.testing.assert_almost_equal(
@@ -175,4 +202,4 @@ class BackendTest(object):
                     outputs[i],
                     decimal=4)
 
-        self._add_test(test_name, run)
+        self._add_test('Node', test_name, run)

@@ -64,6 +64,11 @@ class TestNumpyHelper(unittest.TestCase):
     def test_float16(self):
         self._test_numpy_helper_float_type(np.float32)
 
+    def test_complex64(self):
+        self._test_numpy_helper_float_type(np.complex64)
+
+    def test_complex128(self):
+        self._test_numpy_helper_float_type(np.complex128)
 
 
 if __name__ == '__main__':

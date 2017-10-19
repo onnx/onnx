@@ -38,7 +38,7 @@ except subprocess.CalledProcessError:
     git_version = None
 
 VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
-    version='0.1',
+    version='0.2',
     git_version=git_version
 )
 
@@ -93,7 +93,11 @@ class Protobuf(Dependency):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
         # and environment variables
-        self.libraries = ['protobuf']
+        if os.getenv('CONDA_PREFIX') and platform.system() == 'Windows':
+            self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf")]
+            self.include_dirs = [os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include")]
+        else:
+            self.libraries = ['protobuf'] 
 
 
 class Pybind11(Dependency):
@@ -145,8 +149,7 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('create_version')
         self.run_command('build_proto')
         setuptools.command.build_py.build_py.run(self)
-
-
+        
 class develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command('create_version')
@@ -185,6 +188,8 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         extra_compile_args.append('-stdlib=libc++')
     if os.getenv('CONDA_PREFIX'):
         include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
+    if platform.system() == 'Windows':
+        extra_compile_args.append('/MT')
     return ExtType(
         name=name,
         sources=sources,
@@ -193,7 +198,7 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         extra_compile_args=extra_compile_args,
         extra_objects=extra_objects,
         extra_link_args=extra_link_args,
-        language='c++11',
+        language='c++',
     )
 
 class ONNXCpp2PyExtension(setuptools.Extension):
