@@ -118,11 +118,11 @@
   * **attribute**:
     <dl>
       <dt>auto_pad</dt>
-      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
+      <dd>If specified, this will override the attribute pads value. auto_pad must be either VALID or SAME. VALID means don't pad and SAME means pad so that the output has same spatial size as the input.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0. Represents the number of pixels added to the lower and upper part of the corresponding axis. All added pixels will be 0.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -268,7 +268,7 @@
   * **attribute**:
     <dl>
       <dt>auto_pad</dt>
-      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
+      <dd>If specified, this will override the attribute pads value. auto_pad must be either VALID or SAME. VALID means don't pad and SAME means pad so that the output has same spatial size as the input.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
       <dt>group</dt>
@@ -276,7 +276,7 @@
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0. Represents the number of pixels added to the lower and upper part of the corresponding axis. All added pixels will be 0.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -301,7 +301,7 @@
   * **attribute**:
     <dl>
       <dt>auto_pad</dt>
-      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
+      <dd>If specified, this will override the attribute pads value. auto_pad must be either VALID or SAME. VALID means don't pad and SAME means pad so that the output has same spatial size as the input.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
       <dt>kernel_shape</dt>
@@ -309,7 +309,7 @@
       <dt>output_shape</dt>
       <dd>The shape of the output.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0. Represents the number of pixels added to the lower and upper part of the corresponding axis. All added pixels will be 0.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -694,13 +694,13 @@
   * **attribute**:
     <dl>
       <dt>auto_pad</dt>
-      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
+      <dd>If specified, this will override the attribute pads value. auto_pad must be either VALID or SAME. VALID means don't pad and SAME means pad so that the output has same spatial size as the input.</dd>
       <dt>dilations</dt>
       <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0. Represents the number of pixels added to the lower and upper part of the corresponding axis. All added pixels will be 0.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>

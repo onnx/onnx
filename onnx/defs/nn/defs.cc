@@ -25,14 +25,14 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "If specified, it will overrides pads attribute values."
-                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
-                        "pad by matching the input spatial size.",
+                        "If specified, this will override the attribute pads value. "
+                        "auto_pad must be either VALID or SAME. VALID means don't pad and SAME means "
+                        "pad so that the output has same spatial size as the input.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take any value greater than or equal to 0."
-                        "The number represent the added pixels in the lower and upper part of the"
-                        "corresponding  axis.",
+                        "Padding along each axis, can take any value greater than or equal to 0. "
+                        "Represents the number of pixels added to the lower and upper part of the "
+                        "corresponding axis. All added pixels will be 0.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -73,14 +73,14 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "If specified, it will overrides pads attribute values."
-                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
-                        "pad by matching the input spatial size.",
+                        "If specified, this will override the attribute pads value. "
+                        "auto_pad must be either VALID or SAME. VALID means don't pad and SAME means "
+                        "pad so that the output has same spatial size as the input.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take any value greater than or equal to 0."
-                        "The number represent the added pixels in the lower and upper part of the"
-                        "corresponding  axis.",
+                        "Padding along each axis, can take any value greater than or equal to 0. "
+                        "Represents the number of pixels added to the lower and upper part of the "
+                        "corresponding axis. All added pixels will be 0.",
                         AttrType::INTS);
            schema.Attr("dilations",
                         "Dilation along each axis, 1 means no dilation.",
@@ -142,14 +142,14 @@ computes the output.)DOC";
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "If specified, it will overrides pads attribute values."
-                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
-                        "pad by matching the input spatial size.",
+                        "If specified, this will override the attribute pads value. "
+                        "auto_pad must be either VALID or SAME. VALID means don't pad and SAME means "
+                        "pad so that the output has same spatial size as the input.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take any value greater than or equal to 0."
-                        "The number represent the added pixels in the lower and upper part of the"
-                        "corresponding  axis.",
+                        "Padding along each axis, can take any value greater than or equal to 0. "
+                        "Represents the number of pixels added to the lower and upper part of the "
+                        "corresponding axis. All added pixels will be 0.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -203,14 +203,14 @@ and computes the output.)DOC";
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "If specified, it will overrides pads attribute values."
-                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
-                        "pad by matching the input spatial size.",
+                        "If specified, this will override the attribute pads value. "
+                        "auto_pad must be either VALID or SAME. VALID means don't pad and SAME means "
+                        "pad so that the output has same spatial size as the input.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take any value greater than or equal to 0."
-                        "The number represent the added pixels in the lower and upper part of the"
-                        "corresponding  axis.",
+                        "Padding along each axis, can take any value greater than or equal to 0. "
+                        "Represents the number of pixels added to the lower and upper part of the "
+                        "corresponding axis. All added pixels will be 0.",
                         AttrType::INTS);
         };
     }
