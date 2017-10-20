@@ -24,8 +24,15 @@ namespace onnx {
             schema.Attr("strides",
                         "Stride along each axis.",
                         AttrType::INTS);
+            schema.Attr("auto_pad",
+                        "If specified, it will overrides pads attribute values."
+                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
+                        "pad by matching the input spatial size.",
+                        AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "Padding along each axis, can take any value greater than or equal to 0."
+                        "The number represent the added pixels in the lower and upper part of the"
+                        "corresponding  axis.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -65,10 +72,17 @@ namespace onnx {
             schema.Attr("strides",
                         "Stride along each axis.",
                         AttrType::INTS);
+            schema.Attr("auto_pad",
+                        "If specified, it will overrides pads attribute values."
+                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
+                        "pad by matching the input spatial size.",
+                        AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "Padding along each axis, can take any value greater than or equal to 0."
+                        "The number represent the added pixels in the lower and upper part of the"
+                        "corresponding  axis.",
                         AttrType::INTS);
-            schema.Attr("dilations",
+           schema.Attr("dilations",
                         "Dilation along each axis, 1 means no dilation.",
                         AttrType::INTS);
             schema.Input(0,
@@ -98,7 +112,7 @@ The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.NumInputs(2, 3);
+            schema.NumInputs(2);
             schema.NumOutputs(1);
             schema.Input(0,
                          "X",
@@ -127,8 +141,15 @@ computes the output.)DOC";
             schema.Attr("strides",
                         "stride along each axis.",
                         AttrType::INTS);
+            schema.Attr("auto_pad",
+                        "If specified, it will overrides pads attribute values."
+                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
+                        "pad by matching the input spatial size.",
+                        AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "Padding along each axis, can take any value greater than or equal to 0."
+                        "The number represent the added pixels in the lower and upper part of the"
+                        "corresponding  axis.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -181,8 +202,15 @@ and computes the output.)DOC";
             schema.Attr("strides",
                         "stride along each axis.",
                         AttrType::INTS);
+            schema.Attr("auto_pad",
+                        "If specified, it will overrides pads attribute values."
+                        "auto_pad takes VALID or SAME, VALID means don't pad and same means"
+                        "pad by matching the input spatial size.",
+                        AttrType::STRING);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "Padding along each axis, can take any value greater than or equal to 0."
+                        "The number represent the added pixels in the lower and upper part of the"
+                        "corresponding  axis.",
                         AttrType::INTS);
         };
     }

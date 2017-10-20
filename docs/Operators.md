@@ -117,10 +117,12 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -265,6 +267,8 @@
   computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
       <dt>group</dt>
@@ -272,11 +276,11 @@
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
-  * **input**:2 - 3
+  * **input**:
     <dl>
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
@@ -296,6 +300,8 @@
   and computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
       <dt>kernel_shape</dt>
@@ -303,7 +309,7 @@
       <dt>output_shape</dt>
       <dd>The shape of the output.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -687,12 +693,14 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>If specified, it will overrides pads attribute values.auto_pad takes VALID or SAME, VALID means don't pad and same meanspad by matching the input spatial size.</dd>
       <dt>dilations</dt>
       <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding along each axis, can take any value greater than or equal to 0.The number represent the added pixels in the lower and upper part of thecorresponding  axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
