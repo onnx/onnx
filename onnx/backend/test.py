@@ -56,6 +56,15 @@ node_tests = [
                       pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
                       mode='edge'),
      [(1, 3, L, M)]),
+    ("test_slice",
+     N("Slice"),
+     lambda x, axes, starts, ends: x[
+         [(slice(starts[i], ends[i]) if i in axes else slice(None))
+          for i in range(x.ndim)]
+     ], [(L, M, S),
+         np.array([0, 1]), # axes
+         np.array([0, 0]), # starts
+         np.array([3, M])]), # ends
     # TODO: Add all the other operators
 ] + test_rnn.node_tests
 
