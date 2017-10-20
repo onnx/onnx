@@ -119,13 +119,21 @@ class ONNXCommand(setuptools.Command):
         pass
 
 
+class build_proto_in(ONNXCommand):
+    def run(self):
+        log('compiling onnx.proto.in')
+        subprocess.check_call([os.path.join(SRC_DIR, "gen_proto.py")])
+
+
 class build_proto(ONNXCommand):
     def run(self):
+        self.run_command('build_proto_in')
+
         proto_files = recursive_glob(SRC_DIR, '*.proto')
 
-        if not self.dry_run:
-            for proto_file in proto_files:
-                log('compiling {}'.format(proto_file))
+        for proto_file in proto_files:
+            log('compiling {}'.format(proto_file))
+            if not self.dry_run:
                 subprocess.check_call([
                     PROTOC,
                     '--proto_path', SRC_DIR,
@@ -149,7 +157,7 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('create_version')
         self.run_command('build_proto')
         setuptools.command.build_py.build_py.run(self)
-        
+
 class develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command('create_version')
@@ -166,6 +174,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
 
 cmdclass={
     'build_proto': build_proto,
+    'build_proto_in': build_proto_in,
     'create_version': create_version,
     'build_py': build_py,
     'develop': develop,
