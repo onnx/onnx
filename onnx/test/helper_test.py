@@ -8,7 +8,7 @@ import random
 import numpy as np
 
 from onnx import helper, defs, numpy_helper
-from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto,ModelProto, IR_VERSION
+from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto
 
 import unittest
 
@@ -93,7 +93,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         self.assertTrue(helper.is_attribute_legal(attr))
 
-    def test_attr_repeated_tensor_proto(self):
+    def test_attr_repeated_graph_proto(self):
         graphs = [GraphProto(), GraphProto()]
         graphs[0].name = "a"
         graphs[1].name = "b"
@@ -130,13 +130,13 @@ class TestHelperAttributeFunctions(unittest.TestCase):
             (lambda attr: attr.graphs.extend([GraphProto(), GraphProto()])),
         ]
         # Randomly set one field, and the result should be legal.
-        for i in range(100):
+        for _i in range(100):
             attr = AttributeProto()
             attr.name = "test"
             random.choice(ATTR_FUNCTIONS)(attr)
             self.assertTrue(helper.is_attribute_legal(attr))
         # Randomly set two fields, and then ensure helper function catches it.
-        for i in range(100):
+        for _i in range(100):
             attr = AttributeProto()
             attr.name = "test"
             for func in random.sample(ATTR_FUNCTIONS, 2):

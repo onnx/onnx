@@ -11,7 +11,8 @@ from __future__ import unicode_literals
 import itertools
 import logging
 
-from onnx.onnx_pb2 import *
+from onnx.onnx_pb2 import TensorProto, ValueInfoProto, NodeProto, \
+    GraphProto, ModelProto, IR_VERSION
 from onnx import defs, mapping
 
 
@@ -64,7 +65,8 @@ def check_tensor_value_info(value_info,
         if shape_required and not value_info.type.tensor_type.HasField('shape'):
             raise ValueError('shape field of TensorTypeProto is missing')
     elif value == 'sparse_tensor_type':
-        if type_required and not value_info.type.sparse_tensor_type.HasField('elem_type'):
+        if type_required and \
+           not value_info.type.sparse_tensor_type.HasField('elem_type'):
             raise ValueError('elem_type field of SparseTensorTypeProto is missing')
         if shape_required and not value_info.type.sparse_tensor_type.HasField('shape'):
             raise ValueError('shape field of SparseTensorTypeProto is missing')
