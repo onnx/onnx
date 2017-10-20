@@ -59,7 +59,7 @@ node_tests = [
     ("test_slice",
      N("Slice"),
      lambda x, axes, starts, ends: x[
-         [(slice(starts[i], ends[i]) if i in axes else slice(0, None))
+         [(slice(starts[i], ends[i]) if i in axes else slice(None))
           for i in range(x.ndim)]
      ], [(L, M, S),
          np.array([0, 1]), # axes
