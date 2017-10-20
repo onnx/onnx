@@ -298,7 +298,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
         "Slope",
         "Slope tensor. If `Slope` is of size 1, the value is shared"
         "across different channels")
-    .Output(0, "Y", "Input tensor");
+    .Output(0, "Y", "Output tensor");
 
 OPERATOR_SCHEMA(Sigmoid)
   .NumInputs(1)
