@@ -25,7 +25,7 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -66,7 +66,7 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
             schema.Attr("dilations",
                         "Dilation along each axis, 1 means no dilation.",
@@ -91,12 +91,9 @@ namespace onnx {
 } // namespace onnx
 
 namespace onnx {
-    std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
+    std::function<void(OpSchema&)> ConvOpSchemaGenerator() {
         return [=](OpSchema& schema) {
-            std::string doc = R"DOC(
-The convolution operator consumes an input tensor and {filter_desc}, and
-computes the output.)DOC";
-            ReplaceAll(doc, "{filter_desc}", filter_desc);
+            std::string doc = R"DOC(Compute N-Dimensional convolution on the input.)DOC";
             schema.SetDoc(doc);
             schema.NumInputs(2, 3);
             schema.NumOutputs(1);
@@ -128,7 +125,7 @@ computes the output.)DOC";
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -137,17 +134,14 @@ computes the output.)DOC";
     }
 
     OPERATOR_SCHEMA(Conv)
-        .FillUsing(ConvOpSchemaGenerator("a filter"));
+        .FillUsing(ConvOpSchemaGenerator());
 
 } // namespace onnx
 
 namespace onnx {
-    std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(const char* filter_desc) {
+    std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator() {
         return [=](OpSchema& schema) {
-            std::string doc = R"DOC(
-The convolution transpose operator consumes an input tensor and {filter_desc},
-and computes the output.)DOC";
-            ReplaceAll(doc, "{filter_desc}", filter_desc);
+            std::string doc = R"DOC(Compute N-Dimensional transposed convolution on the input.)DOC";
             schema.SetDoc(doc);
             schema.NumInputs(2);
             schema.NumOutputs(1);
@@ -182,13 +176,13 @@ and computes the output.)DOC";
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "The number of zeros padding added to each axis.",
                         AttrType::INTS);
         };
     }
 
     OPERATOR_SCHEMA(ConvTranspose)
-        .FillUsing(ConvTransposeOpSchemaGenerator("a filter"));
+        .FillUsing(ConvTransposeOpSchemaGenerator());
 
 } // namespace onnx
 
