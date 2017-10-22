@@ -980,7 +980,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **output**:
     <dl>
       <dt>Y</dt>
-      <dd>Input tensor</dd>
+      <dd>Output tensor</dd>
     </dl>
 
 
