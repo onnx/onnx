@@ -393,7 +393,7 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
   return *this;
 }
 
-OpSchema& OpSchema::Input(const int n, const char* name, const char* description) {
+OpSchema& OpSchema::Input(const int n, const char* name, const char* description, const char* typeStr) {
   if (int(input_desc_.size()) <= n) {
     input_desc_.resize(n + 1);
   }
@@ -401,7 +401,7 @@ OpSchema& OpSchema::Input(const int n, const char* name, const char* description
   return *this;
 }
 
-OpSchema& OpSchema::Output(const int n, const char* name, const char* description) {
+OpSchema& OpSchema::Output(const int n, const char* name, const char* description, const char* typeStr) {
   if (int(output_desc_.size()) <= n) {
     output_desc_.resize(n + 1);
   }

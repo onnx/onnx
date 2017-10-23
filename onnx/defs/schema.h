@@ -190,8 +190,18 @@ class OpSchema {
                  bool required = false);
   OpSchema& AllowUncheckedAttributes();
 
-  OpSchema& Input(const int n, const char* name, const char* description);
-  OpSchema& Output(const int n, const char* name, const char* description);
+  // Grammar for type strings used in Input(), Output().
+  // <type> ::= <data_type> | tensor(<data_type>) | sparse(<data_type>) | <type_parameter>
+  // <data_type> :: = "float" | "int32" | "string" | "bool" | "uint8"
+  //                | "int8" | "uint16" | "int16" | "int64" | "float16"
+  //                | "double"
+  // <type_parameter> is specified more with TypeConstraints. For exmaple, it could be "T",
+  // which may be one of {"float", "int32", "double"}.
+  OpSchema& Input(const int n, const char* name, const char* description, const char* typeStr = "");
+  OpSchema& Output(const int n, const char* name, const char* description, const char* typeStr = "");
+  OpSchema& TypeConstraint(const char* typeStr,
+                           const std::vector<const char*>& constraints,
+                           const char* description);
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
