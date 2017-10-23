@@ -74,22 +74,22 @@ TensorProto message.
           "scale",
           "The standard deviation of the normal distribution.",
            AttrType::FLOAT)
-          .Attr(
-                "seed",
-                "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-                AttrType::FLOAT)
-          .Attr(
-                "dtype",
-                "The data type for the elements of the output tensor.",
-                AttrType::INT)
-          .Attr(
-                "shape",
-                "The shape of the output tensor.",
-                AttrType::INTS)
-          .Output(
-                  0,
-                  "output",
-                  "Output tensor of random values drawn from normal distribution");
+    .Attr(
+          "seed",
+          "(Optional) Seed to the random generator, if not specified we will auto generate one.",
+          AttrType::FLOAT)
+    .Attr(
+          "dtype",
+          "The data type for the elements of the output tensor.",
+          AttrType::INT)
+    .Attr(
+          "shape",
+          "The shape of the output tensor.",
+          AttrType::INTS)
+    .Output(
+            0,
+            "output",
+            "Output tensor of random values drawn from normal distribution");
 
 OPERATOR_SCHEMA(RandomUniformLike)
     .NumInputs(1)
