@@ -64,7 +64,7 @@ pip install onnx
 After installation, run
 
 ```
-python -c 'import onnx'
+python -c "import onnx"
 ```
 
 to verify it works.  Note that this command does not work from
