@@ -96,6 +96,10 @@ to run tests.
 
 During development it's convenient to install ONNX in development mode:
 
+You will need an install of protobuf and numpy to build ONNX.  One easy
+way to get these dependencies is via
+[Anaconda](https://www.anaconda.com/download/):
+
 ```
 # Use conda-forge protobuf.
 conda install -c conda-forge protobuf numpy
