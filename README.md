@@ -97,6 +97,8 @@ to run tests.
 During development it's convenient to install ONNX in development mode:
 
 ```
+# Use conda-forge protobuf.
+conda install -c conda-forge protobuf numpy
 git clone --recursive https://github.com/onnx/onnx.git
 pip install -e onnx/
 ```
