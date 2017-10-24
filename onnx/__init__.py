@@ -3,10 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .onnx_pb2 import *
-from . import checker, helper
-from . import defs
-from .version import version as __version__
+from .onnx_pb2 import ModelProto
 
 import sys
 
@@ -20,7 +17,8 @@ def load(obj):
     @return ONNX ModelProto object
     '''
     model = ModelProto()
-    if isinstance(obj, str) or (sys.version_info[0] == 2 and isinstance(obj, unicode)):
+    if isinstance(obj, str) or (sys.version_info[0] == 2 and
+                                isinstance(obj, unicode_literals.unicode_or_str)):
         with open(obj, 'rb') as f:
             model.ParseFromString(f.read())
     else:

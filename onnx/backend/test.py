@@ -83,6 +83,7 @@ model_tests = [
 if not os.environ.get('TRAVIS'):
     model_tests.append(('test_vgg19', 'vgg19'))
 
+
 class BackendTest(object):
     def __init__(self, backend):
         class TestsContainer(unittest.TestCase):
@@ -122,12 +123,12 @@ class BackendTest(object):
             os.makedirs(model_dir)
             url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
                 model_name)
-            download_file = tempfile.NamedTemporaryFile(delete=True)
-            print('Start downloading model {} from {}'.format(model_name, url))
-            urlretrieve(url, download_file.name)
-            print('Done')
-            with tarfile.open(download_file.name) as t:
-                t.extractall(models_dir)
+            with tempfile.NamedTemporaryFile(delete=True) as download_file:
+                print('Start downloading model {} from {}'.format(model_name, url))
+                urlretrieve(url, download_file.name)
+                print('Done')
+                with tarfile.open(download_file.name) as t:
+                    t.extractall(models_dir)
         return model_dir
 
     def _add_test(self, test_case, name, test_func):
