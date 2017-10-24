@@ -30,4 +30,5 @@ class NodeSpec(object):
         self.name = name
         self.kwargs = kwargs
 
+
 N = NodeSpec

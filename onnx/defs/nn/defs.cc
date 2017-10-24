@@ -25,19 +25,24 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "Padding along each axis, can take the value "
+                        "0 (False) or non 0 (True)",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
-                         "Input data tensor from the previous operator; dimensions for image case "
-                         "are (N x C x H x W), where N is the batch size, C is the number of channels, "
-                         "and H and W are the height and the width of the data. For non image case, the "
-                         "dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.");
+                         "Input data tensor from the previous operator; "
+                         "dimensions for image case are (N x C x H x W), "
+                         "where N is the batch size, C is the number of "
+                         "channels, and H and W are the height and the "
+                         "width of the data. For non image case, the "
+                         "dimension are in the form of "
+                         "(N x C x D1 x D2 ... Dn), where N is the batch "
+                         "size.");
             schema.Output(0,
                           "Y",
-                          "Output data tensor from average pooling across the input "
-                          "tensor. Dimensions will vary based on various kernel, stride, and pad "
-                          "sizes.");
+                          "Output data tensor from average pooling across "
+                          "the input tensor. Dimensions will vary based "
+                          "on various kernel, stride, and pad sizes.");
         };
     }
 
@@ -66,17 +71,22 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("pads",
-                        "Padding along each axis, can take the value 0 (False) or non 0 (True)",
+                        "Padding along each axis, can take the value 0 "
+                        "(False) or non 0 (True)",
                         AttrType::INTS);
             schema.Attr("dilations",
                         "Dilation along each axis, 1 means no dilation.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
-                         "Input data tensor from the previous operator; dimensions for image case "
-                         "are (N x C x H x W), where N is the batch size, C is the number of channels, "
-                         "and H and W are the height and the width of the data. For non image case, the "
-                         "dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.");
+                         "Input data tensor from the previous operator; "
+                         "dimensions for image case are (N x C x H x W), "
+                         "where N is the batch size, C is the number of "
+                         "channels, and H and W are the height and the "
+                         "width of the data. For non image case, the "
+                         "dimension are in the form of "
+                         "(N x C x D1 x D2 ... Dn), where N is the "
+                         "batch size.");
             schema.Output(0,
                           "Y",
                           "Output data tensor from max pooling across the input "
@@ -102,22 +112,25 @@ computes the output.)DOC";
             schema.NumOutputs(1);
             schema.Input(0,
                          "X",
-                         "Input data tensor from previous layer; has size (N x C x H x W)"
-                         ", where N is the batch size, C is the number of channels, and"
-                         " H and W are the height and width. Note that this is for the 2D image."
+                         "Input data tensor from previous layer; "
+                         "has size (N x C x H x W), where N is the batch size, "
+                         "C is the number of channels, and H and W are the "
+                         "height and width. Note that this is for the 2D image."
                          "Otherwise the size is (N x D1 x D2 ... x Dn)");
             schema.Input(1,
                          "weights",
-                         "The weight tensor that will be used in the convolutions; "
-                         "has size (M x C x kH x kW), where C is the number of channels, "
-                         "and kH and kW are the height and width of the kernel, and M is the number "
-                         "of feature maps. For more than 2 dimensions, the kernel shape will be "
-                         "(M x C x k1 x k2 x ... x kn), where is the dimension of the kernel");
+                         "The weight tensor that will be used in the "
+                         "convolutions; has size (M x C x kH x kW), where C "
+                         "is the number of channels, and kH and kW are the "
+                         "height and width of the kernel, and M is the number "
+                         "of feature maps. For more than 2 dimensions, the "
+                         "kernel shape will be (M x C x k1 x k2 x ... x kn), "
+                         "where is the dimension of the kernel");
             schema.Output(0,
                           "Y",
-                          "Output data tensor that contains the result of the convolution. The "
-                          "output dimensions are functions of the kernel size, stride size, "
-                          "and pad lengths.");
+                          "Output data tensor that contains the result of the "
+                          "convolution. The output dimensions are functions "
+                          "of the kernel size, stride size, and pad lengths.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
                          AttrType::INTS);
@@ -159,11 +172,13 @@ and computes the output.)DOC";
                          "Otherwise the size is (N x D1 x D2 ... x Dn)");
             schema.Input(1,
                          "weights",
-                         "The weight tensor that will be used in the convolutions; "
-                         "has size (C x M x kH x kW), where C is the number of channels, "
-                         "and kH and kW are the height and width of the kernel, and M is the number "
-                         "of feature maps. For more than 2 dimensions, the kernel shape will be "
-                         "(C x M x k1 x k2 x ... x kn), where is the dimension of the kernel");
+                         "The weight tensor that will be used in the "
+                         "convolutions; has size (C x M x kH x kW), where C "
+                         "is the number of channels, and kH and kW are the "
+                         "height and width of the kernel, and M is the number "
+                         "of feature maps. For more than 2 dimensions, the "
+                         "kernel shape will be (C x M x k1 x k2 x ... x kn), "
+                         "where is the dimension of the kernel");
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the convolution. The "
@@ -207,10 +222,13 @@ namespace onnx {
             schema.NumOutputs(1);
             schema.Input(0,
                          "X",
-                         "Input data tensor from the previous operator; dimensions for image case "
-                         "are (N x C x H x W), where N is the batch size, C is the number of channels, "
-                         "and H and W are the height and the width of the data. For non image case, the "
-                         "dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.");
+                         "Input data tensor from the previous operator; "
+                         "dimensions for image case are (N x C x H x W), "
+                         "where N is the batch size, C is the number of "
+                         "channels, and H and W are the height and the width "
+                         "of the data. For non image case, the dimension are "
+                         "in the form of (N x C x D1 x D2 ... Dn), "
+                         "where N is the batch size.");
             schema.Output(0,
                           "Y",
                           "Output data tensor from pooling across the input "
@@ -342,6 +360,7 @@ OPERATOR_SCHEMA(LRN)
     .Input(0, "X", "Input tensor")
     .Output(0, "Y", "Output tensor")
     .SetDoc(R"DOC(
-Local Response Normalization. It normalizes over local input regions. Each input value is divided by
- (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+Local Response Normalization. It normalizes over local input regions.
+Each input value is divided by
+(bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
 )DOC");

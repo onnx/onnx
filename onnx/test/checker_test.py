@@ -1,8 +1,11 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 import unittest
 
 import numpy as np
 
-import onnx
 from onnx import checker, helper
 from onnx.onnx_pb2 import TensorProto
 
@@ -17,6 +20,7 @@ class TestChecker(unittest.TestCase):
             dims=(2, 3),
             vals=np_array.reshape(6).tolist()
         )
+
     def test_check_node(self):
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
