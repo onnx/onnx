@@ -12,15 +12,14 @@ def load(obj):
     Loads a binary protobuf that stores onnx graph
 
     @params
-    Takes a file-like object (has to implement fileno that returns a file descriptor)
+    Takes a file-like object (has "read" function)
     or a string containing a file name
     @return ONNX ModelProto object
     '''
     model = ModelProto()
-    if isinstance(obj, str) or (sys.version_info[0] == 2 and
-                                isinstance(obj, unicode_literals.unicode_or_str)):
+    if hasattr(obj, 'read') and callable(obj.read):
+        model.ParseFromString(obj.read())
+    else:
         with open(obj, 'rb') as f:
             model.ParseFromString(f.read())
-    else:
-        model.ParseFromString(obj.read())
     return model
