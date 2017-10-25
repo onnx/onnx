@@ -61,7 +61,8 @@ enum Version {
   // control. We should use version as
   //     xx(major) - xx(minor) - xxxx(bugfix)
   // and we are starting with 00000001.
-  IR_VERSION = 00000001;
+  IR_VERSION = 00000101;
+  IR_VERSION_2017_10_10 = 00000001;
 }
 
 
