@@ -56,24 +56,45 @@ enum Version {
   IR_VERSION = 00000001;
 }
 
+
+
 // A named attribute containing either singular float, integer, string
 // and tensor values, or repeated float, integer, string and tensor values.
 // An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
+
+enum AttributeType {
+  STRING = 0;
+  FLOAT = 1;
+  INT = 2;
+  TENSOR = 3;
+  GRAPH = 4;
+
+  STRINGS = 5;
+  FLOATS = 6;
+  INTS = 7;
+  TENSORS = 8;
+  GRAPHS = 9;
+}
+
 message AttributeProto {
   // The name field MUST be present for this version of the IR.
   optional string name = 1;           // namespace Attribute
-  optional float f = 2;               // float
-  optional int64 i = 3;               // int
-  optional bytes s = 4;               // UTF-8 string
-  optional TensorProto t = 5;         // tensor value
-  optional GraphProto g = 6;          // graph
+  // The type field MUST be present for this version of the IR.
+  optional AttributeType type = 2;         // discriminator that indicates which field below is in use
 
-  repeated float floats = 7;          // list of floats
-  repeated int64 ints = 8;            // list of ints
-  repeated bytes strings = 9;         // list of UTF-8 strings
-  repeated TensorProto tensors = 10;  // list of tensors
-  repeated GraphProto graphs = 11;    // list of graph
+  // Exactly ONE of the following fields must be present for this version of the IR
+  optional float f = 3;               // float
+  optional int64 i = 4;               // int
+  optional bytes s = 5;               // UTF-8 string
+  optional TensorProto t = 6;         // tensor value
+  optional GraphProto g = 7;          // graph
+
+  repeated float floats = 8;          // list of floats
+  repeated int64 ints = 9;            // list of ints
+  repeated bytes strings = 10;         // list of UTF-8 strings
+  repeated TensorProto tensors = 11;  // list of tensors
+  repeated GraphProto graphs = 12;    // list of graph
 }
 
 // Defines information on value, including the name, the type, and
