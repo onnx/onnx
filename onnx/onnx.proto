@@ -68,7 +68,9 @@ message AttributeProto {
   optional bytes s = 4;               // UTF-8 string
   optional TensorProto t = 5;         // tensor value
   optional GraphProto g = 6;          // graph
+// #if ONNX-ML
   optional ValueProto v = 12;         // value - subsumes everything but graph
+// #endif
   
   repeated float floats = 7;          // list of floats 
   repeated int64 ints = 8;            // list of ints
@@ -301,6 +303,7 @@ message SparseTensorProto {
   optional TensorProto values = 3;
 }
 
+// #if ONNX-ML
 // A ValueProto represents a value that may be serialized into a model.
 message ValueProto {
 
@@ -380,6 +383,7 @@ message ValueProto {
     ScalarMapProto scalar_map = 7;
   }
 }
+// #endif
 
 // Define the types.
 message TypeProto {
@@ -410,6 +414,7 @@ message TypeProto {
     optional TensorShapeProto shape = 2;    
   }
 
+// #if ONNX-ML
   // message T { ... }
   message RecordTypeProto {
   // The type and optional shape of each field 
@@ -444,6 +449,7 @@ message TypeProto {
     repeated ValueInfoProto choice = 1;
   };
 
+// #endif 
 
   oneof value {
     // The type of a tensor.
@@ -451,6 +457,8 @@ message TypeProto {
 
     // The type of a sparse tensor.
     SparseTensorTypeProto sparse_tensor_type = 2;
+
+// #if ONNX-ML
 
     // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
     //        as input and output to graphs and nodes. These types are needed to naturally
@@ -468,5 +476,7 @@ message TypeProto {
 
     // The type of a union.
     UnionTypeProto union_type = 6;
+
+// #endif
   }
 }
