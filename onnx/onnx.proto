@@ -56,10 +56,10 @@ enum Version {
   //  version we published on Oct 10, 2017.
   IR_VERSION_2017_10_10 = 0x00000001;
 
-  // IR_VERSION 1.1.0 (this proto file) contains the following IR format changes
+  // IR_VERSION 1.0.1 (this proto file) contains the following IR format changes
   // - Added type discriminator to AttributeProto to support proto3 users
 
-  IR_VERSION = 0x00000101;
+  IR_VERSION = 0x00010001;
 }
 
 
