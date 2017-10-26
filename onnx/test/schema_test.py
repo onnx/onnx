@@ -1,6 +1,6 @@
 import unittest
 
-from onnx import defs, onnx_pb2, helper
+from onnx import defs, onnx_ml_pb2, helper
 
 
 class TestSchema(unittest.TestCase):

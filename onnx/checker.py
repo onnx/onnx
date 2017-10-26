@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 import itertools
 import logging
 
-from onnx.onnx_pb2 import TensorProto, ValueInfoProto, NodeProto, \
+from onnx.onnx_ml_pb2 import TensorProto, ValueInfoProto, NodeProto, \
     GraphProto, ModelProto, IR_VERSION
 from onnx import defs, mapping
 
