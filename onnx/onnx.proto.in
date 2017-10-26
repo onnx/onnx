@@ -48,6 +48,9 @@ package onnx;
 // To be compatible with both proto2 and proto3, we will use a version number
 // that is not defined by the default value but an explicit enum number.
 enum Version {
+  // proto3 requires the first enum value to be zero.
+  // We add this just to appease the compiler.
+  _START_VERSION = 0;
   // The version field is always serialized and we will use it to store the
   // version that the  graph is generated from. This helps us set up version
   // control. We should use version as

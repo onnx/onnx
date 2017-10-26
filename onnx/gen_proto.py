@@ -31,9 +31,32 @@ def process_ifs(lines, onnx_ml):
             if not in_if or (in_if and onnx_ml):
                 yield line
 
+PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
+OPTIONAL_REGEX = re.compile(r'(\s*)optional(\s.*)$')
+
+def convert_to_proto3(lines):
+    for line in lines:
+        # Set the syntax specifier
+        m = PROTO_SYNTAX_REGEX.match(line)
+        if m:
+            yield m.group(1) + 'syntax = "proto3";'
+            continue
+
+        # Remove optinoal keywords
+        m = OPTIONAL_REGEX.match(line)
+        if m:
+            yield m.group(1) + m.group(2)
+            continue
+
+        yield line
+
 def translate(source, proto, onnx_ml):
     lines = source.splitlines()
     lines = process_ifs(lines, onnx_ml=onnx_ml)
+    if proto == 3:
+        lines = convert_to_proto3(lines)
+    else:
+        assert proto == 2
     return "\n".join(lines)  # TODO: not Windows friendly
 
 def main():
