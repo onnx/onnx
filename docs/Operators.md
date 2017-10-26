@@ -871,9 +871,11 @@
   directly.
   * **attribute**:
     <dl>
+      <dt>activations</dt>
+      <dd>A list of activation functions for the gates. Typical activation functions are sigmoid and tanh</dd>
       <dt>cell_type</dt>
       <dd>
-Types of the cell: `relu`, `tanh`, `gru`, `lstm`
+Types of the cell: `simple`, `gru`, `lstm`, `lstm_peephole`, `lstm_input_forget`
 
 Equation definitions:
 `i` - input gate
@@ -885,47 +887,72 @@ Equation definitions:
 `h` - hidden gate
 `t` - time step (t-1 means previous time step)
 `Xi` - input tensor
-`W[izrfcoh]` - W parameter weight matrices for the corresponding gates
-`R[izrfcoh]` - R parameter weight matrices for the corresponding gates
-`Wb[izrfcoh]` - W parameter bias vectors for the corresponding gates
-`Rb[izrfcoh]` - R parameter bias vectors for the corresponding gates
+`W[izrfcohp]` - W parameter weight matrices for the corresponding gates
+`R[izrfcohp]` - R parameter weight matrices for the corresponding gates
+`Wb[izrfcohp]` - W parameter bias vectors for the corresponding gates
+`Rb[izrfcohp]` - R parameter bias vectors for the corresponding gates
 `ReLU(X)` - max(X, 0)
 `tanh` - hyperbolic tangent of X
 `sigmoid(X)` - 1 / (1 + e^-X)
 `[C|H]` - Cell/Hidden state
 
 - Equations:
-  `relu`
+  `simple(relu)`
   - Ht = ReLU(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  `tanh`
+
+  `simple(tanh)`
   - Ht = tanh(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  `lstm`
+
+  `lstm with default activations`
   - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
   - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
   - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
   - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
-  - C = ft * Ct-1 + it * ct
-  - H = ot * tanh(C)
-  `gru`
+  - Ct = ft (.) Ct-1 + it (.) ct
+  - H = ot (.) tanh(C)
+
+  `gru with default activations`
   - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
   - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
   - ht = tanh(Wh*Xt + rt *(Rh*Ht-1 + Rbh) + Wbh)
-  - H = (1 - zt) * ht + it * Ht-1
+  - H = (1 - zt) (.) ht + it (.) Ht-1
+
+  `lstm_peephole with default activations`
+  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi(.)Ct-1 + Wbi + Rbi)
+  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Pf(.)Ct-1 + Wbf + Rbf)
+  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po(.)Ct-1 + Wbo + Rbo)
+  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+  - Ct = ft (.) Ct-1 + it (.) ct
+  - H = ot (.) tanh(C)
+
+  `lstm_input_forget with default activations`
+  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
+  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
+  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+  - Ct = (1 - it) (.) Ct-1 + it (.) ct
+  - H = ot (.) tanh(C)
 
 Note, that for LSTM and 2 out of 3 gates for GRU, there are duplicate biases for
 the gates (model is overparametrized). It follows CuDNN/TensorRT convention and
 allows to make spec more uniform.
 </dd>
+      <dt>clip</dt>
+      <dd>Cell clip threshold. Default to no clip if not specified.</dd>
       <dt>directions</dt>
       <dd>Number of directions: 1 for unidirectional (default) and 2 for bidirectional</dd>
       <dt>hidden_size</dt>
       <dd>Number of neurons in the hidden layer</dd>
       <dt>num_layers</dt>
       <dd>Numbers of RNN layers in the stack, default 1</dd>
+      <dt>reverse</dt>
+      <dd>Process the sequences in reverse order, default 0</dd>
       <dt>skip_input_transform</dt>
       <dd>If set, skips linear transformation on the input of the first layer</dd>
+      <dt>use_bias</dt>
+      <dd>Use the bias tensors for the gates if 1. Default 1.</dd>
     </dl>
-  * **input**:2 - 4
+  * **input**:2 - 6
     <dl>
       <dt>weights</dt>
       <dd>
@@ -939,7 +966,7 @@ Each parameter matrix is linearly appended after the previous parameter matrix
 without padding.
 
 The order of matrixes `{K, L, D, R, N, C}` is defined as:
- - K - type of the matrix: `weight` (first) or `bias` second
+ - K - type of the matrix: `weight` (first) or `bias` (second)
  - L - The number of layers in the RNN - `num_layers`
  - D - The direction of the layer: normal (first) or reverse (second).
                                    (in case of `directions=2`)
@@ -965,9 +992,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
       <dt>input</dt>
       <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
       <dt>initial_h</dt>
-      <dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
+      <dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, hidden_size]`</dd>
       <dt>initial_c</dt>
-      <dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
+      <dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, hidden_size]`</dd>
+      <dt>seq_lens</dt>
+      <dd>Optional tensor specifying lengths of the sequences in a batch.Has shape `[batch_size]`.</dd>
+      <dt>peephole_w</dt>
+      <dd>For LSTM-peephole only: weight for peepholes. Dimensions `[3 * num_layers * directions, hidden_size]`</dd>
     </dl>
   * **output**:1 - 3
     <dl>
