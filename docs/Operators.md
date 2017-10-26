@@ -134,13 +134,13 @@
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1. 
+  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
   * **attribute**:
     <dl>
-      <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dt>axis</dt>
+      <dd>The axis in which to compute the arg indices</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -159,13 +159,13 @@
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axes. The resulted tensor has the same shape as the input if keepdims equal 1. 
+  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
   * **attribute**:
     <dl>
-      <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dt>axis</dt>
+      <dd>The axis in which to compute the arg indices</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -602,8 +602,14 @@
 
 ### <a name="Gemm"></a><a name="gemm">**Gemm**</a>
 
-  General Matrix multiplication: https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K), input tensor B has dimension (K X N), input tensor C and output tensor Y have dimension (M X N). Input tensor C can be used inplace as the output tensor Y. If attribute broadcast is non-zero, input tensor C will be broadcasted to match the dimension requirement. If A can be transposed before doing the computation if attribute transA is non-zero, same for B and transB.
+  General Matrix multiplication:
+  https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+  Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
+  , input tensor B has dimension (K X N), input tensor C and output tensor Y have
+  dimension (M X N). Input tensor C can be used inplace as the output tensor Y.
+  If attribute broadcast is non-zero, input tensor C will be broadcasted to match
+  the dimension requirement. If A can be transposed before doing the computation
+  if attribute transA is non-zero, same for B and transB.
   * **attribute**:
     <dl>
       <dt>alpha</dt>
@@ -669,8 +675,9 @@
 
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
-  Local Response Normalization. It normalizes over local input regions. Each input value is divided by
-   (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+  Local Response Normalization. It normalizes over local input regions.
+  Each input value is divided by
+  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
   * **attribute**:
     <dl>
       <dt>alpha</dt>
@@ -928,22 +935,31 @@ be compatible with input attributes passed to the op.
 The layout format is the one used by CuDNN and very similar to TensorRT:
 
 The weight structure holds weights and biases for each layer of the network.
-Each parameter matrix is linearly appended after the previous parameter matrix without padding.
+Each parameter matrix is linearly appended after the previous parameter matrix
+without padding.
 
 The order of matrixes `{K, L, D, R, N, C}` is defined as:
  - K - type of the matrix: `weight` (first) or `bias` second
  - L - The number of layers in the RNN - `num_layers`
- - D - The direction of the layer: normal (first) or reverse (second). (in case of `directions=2`)
- - R - The type of the connection: `input-hidden` (first) or `hidden-hidden` (second)
+ - D - The direction of the layer: normal (first) or reverse (second).
+                                   (in case of `directions=2`)
+ - R - The type of the connection: `input-hidden` (first) or
+                                   `hidden-hidden` (second)
  - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
  -- For `relu` or `tanh` there is one gate
  -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
  -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
  - C - The size of each matrix, which varies.
- -- If the linear layer on the input is skipped (`skip_input_transform=1`) and then for the first layer (`L=1`) the weight matrix (`K=weight`) on the input connection (`R=input-hidden`) is skipped, i.e. has 0 parameters in the list
- -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
- -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
- -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`), dimensions are `{hidden_size, hidden_size}`
+ -- If the linear layer on the input is skipped (`skip_input_transform=1`)
+    and then for the first layer (`L=1`) the weight matrix (`K=weight`)
+    on the input connection (`R=input-hidden`) is skipped,
+    i.e. has 0 parameters in the list
+ -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
+ -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
+ -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
+    dimensions are `{hidden_size, hidden_size}`
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
 </dd>
       <dt>input</dt>
@@ -980,7 +996,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **output**:
     <dl>
       <dt>Y</dt>
-      <dd>Input tensor</dd>
+      <dd>Output tensor</dd>
     </dl>
 
 
@@ -1187,7 +1203,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1195,7 +1211,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1214,7 +1230,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1222,7 +1238,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1241,7 +1257,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
   Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1249,7 +1265,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1268,7 +1284,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1276,7 +1292,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1295,7 +1311,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
   Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1303,7 +1319,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1322,7 +1338,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same shape as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -1330,7 +1346,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **attribute**:
     <dl>
       <dt>axes</dt>
-      <dd>A list of integers, along which to reduce max.</dd>
+      <dd>A list of integers, along which to reduce.</dd>
       <dt>keepdims</dt>
       <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
     </dl>
@@ -1394,7 +1410,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 
   Selu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the scaled exponential linear unit function,
-  `y = gamma * (alpha * e^x - alpha) for x <= 0`, `f(x) = gamma * x for x > 0`,
+  `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
   is applied to the tensor elementwise.
   * **attribute**:
     <dl>
@@ -1437,10 +1453,11 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
   
-  Slices uses `axes`, `starts` and `ends` list to specify the start and end dimension 
-  for each axis in the list of axes, it uses this information to slice the input `data` 
-  tensor. If a negative value is passed for any of the start or end indices, it represent 
-  number of elements before the end of that dimension.
+  Slices uses `axes`, `starts` and `ends` list to specify the start and end
+  dimension for each axis in the list of axes, it uses this information to
+  slice the input `data` tensor. If a negative value is passed for any of the
+  start or end indices, it represent number of elements before the end of that
+  dimension.
   * **input**:
     <dl>
       <dt>data</dt>
