@@ -85,12 +85,41 @@ dimension for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
 start or end indices, it represent number of elements before the end of that
 dimension.
+
+Example 1:
+
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  axes = [0, 1]
+  starts = [1, 0]
+  ends = [2, 3]
+
+  result = [
+      [5, 6, 7],
+  ]
+
+
+Example 2:
+
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  starts = [0]
+  ends = [-1]
+
+  result = [
+      [1, 2, 3, 4],
+  ]
+
 )DOC")
     .Input(0, "data", "Tensor of data to extract slices from.")
     .Attr("axes",
           "Axes that `starts` and `ends` apply to. "
           "It's optional. If not present, will be treated as "
-          "[0, 1, ..., ndim - 1].",
+          "[0, 1, ..., len(`starts`) - 1].",
           AttrType::INTS)
     .Attr("starts",
           "Starting indices of corresponding axis in `axes`",
