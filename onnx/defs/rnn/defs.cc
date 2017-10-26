@@ -10,7 +10,7 @@ using AttrType = onnx::OpSchema::AttrType;
 // Description below is borrowed from CuDNN and TensorRT docs
 
 OPERATOR_SCHEMA(OptimizedRNN)
-    .NumInputs(2, 5)
+    .NumInputs(2, 6)
     .NumOutputs(1, 3)
     .SetDoc(R"DOC(
 Computes a stack of several RNNs in optimized fashion. This operator is usually
