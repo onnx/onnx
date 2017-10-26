@@ -215,6 +215,8 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
+        if os.path.join(SRC_DIR, "onnx.pb.cc") in self.sources:
+            raise RuntimeError("Stale onnx/onnx.pb.cc file detected.  Please delete this file and rebuild.")
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
