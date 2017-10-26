@@ -136,16 +136,16 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
     .Input(1, "input",
            "The input sequences packed (and potentially padded) into one 3-D "
            "tensor with the shape of `[seq_length, batch_size, input_size]`.")
-    .Input(2, "seq_lens",
-           "Optional tensor specifying lengths of the sequences in a batch."
-           "Has shape `[batch_size]`.");
-    .Input(3, "initial_h",
+    .Input(2, "initial_h",
            "Optional initial value of the hidden. If not specified - assumed "
            "to be 0. Dimensions `[num_layers * directions, hidden_size]`")
-    .Input(4, "initial_c",
+    .Input(3, "initial_c",
            "For LSTM only: optional initial value of the cell. If not "
            "specified - assumed to be 0. Dimensions `[num_layers * directions, "
            "hidden_size]`")
+    .Input(4, "seq_lens",
+           "Optional tensor specifying lengths of the sequences in a batch."
+           "Has shape `[batch_size]`.")
     .Input(5, "peephole_w",
            "For LSTM-peephole only: weight for peepholes. Dimensions "
            "`[3 * num_layers * directions, hidden_size]`")    
