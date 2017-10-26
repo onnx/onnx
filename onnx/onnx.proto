@@ -77,21 +77,21 @@ enum Version {
 // An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
 
-enum AttributeType {
-  FLOAT = 0;
-  INT = 1;
-  STRING = 2;
-  TENSOR = 3;
-  GRAPH = 4;
-
-  FLOATS = 5;
-  INTS = 6;
-  STRINGS = 7;
-  TENSORS = 8;
-  GRAPHS = 9;
-}
-
 message AttributeProto {
+  enum AttributeType {
+    FLOAT = 0;
+    INT = 1;
+    STRING = 2;
+    TENSOR = 3;
+    GRAPH = 4;
+  
+    FLOATS = 5;
+    INTS = 6;
+    STRINGS = 7;
+    TENSORS = 8;
+    GRAPHS = 9;
+  }
+
   // The name field MUST be present for this version of the IR.
   optional string name = 1;           // namespace Attribute
 
