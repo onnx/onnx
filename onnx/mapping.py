@@ -1,4 +1,4 @@
-from onnx.onnx_pb2 import TensorProto
+from onnx.onnx_ml_pb2 import TensorProto
 import numpy as np
 
 TENSOR_TYPE_TO_NP_TYPE = {

@@ -8,7 +8,7 @@ import numbers
 
 from six import text_type, integer_types, binary_type
 
-from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
+from onnx.onnx_ml_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 from onnx import mapping
