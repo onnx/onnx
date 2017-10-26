@@ -15,6 +15,43 @@ from onnx.onnx_pb2 import TensorProto, ValueInfoProto, NodeProto, \
     GraphProto, ModelProto, IR_VERSION
 from onnx import defs, mapping
 
+def check_attr(attr, require_type_field):
+    has_attr_type = attr.HasField("type")
+    if require_type_field and not has_attr_type:
+        raise RuntimeError('AttributeProto missing type field where IR version requires it.')
+    if attr.HasField('s'):
+        if has_attr_type and attr.type != AttributeType.STRING:
+            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
+    if attr.HasField('f'):
+        if has_attr_type and attr.type != AttributeType.FLOAT:
+            raise RuntimeError('AttributeProto.type is wrong value (expected FLOAT).')
+    if attr.HasField('i'):
+        if has_attr_type and attr.type != AttributeType.INT:
+            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
+    if attr.HasField('t'):
+        if has_attr_type and attr.type != AttributeType.TENSOR:
+            raise RuntimeError('AttributeProto.type is wrong value (expected TENSOR).')
+        check_tensor(attr.t)
+    if attr.HasField('g'):
+        if has_attr_type and attr.type != AttributeType.GRAPH:
+            raise RuntimeError('AttributeProto.type is wrong value (expected GRAPH).')
+    if attr.HasField('strings'):
+        if has_attr_type and attr.type != AttributeType.STRINGS:
+            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
+    if attr.HasField('floats'):
+        if has_attr_type and attr.type != AttributeType.FLOATS:
+            raise RuntimeError('AttributeProto.type is wrong value (expected FLOAT).')
+    if attr.HasField('ints'):
+        if has_attr_type and attr.type != AttributeType.INTS:
+            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
+    if attr.HasField('tensors'):
+        if has_attr_type and attr.type != AttributeType.TENSORS:
+            raise RuntimeError('AttributeProto.type is wrong value (expected TENSORS).')
+        for tensor in attr.tensors:
+            check_tensor(tensor)
+    if attr.HasField('graphs'):
+        if has_attr_type and attr.type != AttributeType.GRAPHS:
+            raise RuntimeError('AttributeProto.type is wrong value (expected GRAPHS).')
 
 def check_node(node):
     """Checks if a node is legal.
@@ -39,10 +76,7 @@ def check_node(node):
         raise ValueError(
             'NodeProto of type {} did not pass defs schema check.'.format(str(node.op_type)))
     for attr in node.attribute:
-        if attr.HasField('t'):
-            check_tensor(attr.t)
-        for tensor in attr.tensors:
-            check_tensor(tensor)
+        check_attr(attr, false)
 
 
 def check_tensor_value_info(value_info,
