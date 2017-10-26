@@ -129,7 +129,9 @@ class build_proto(ONNXCommand):
     def run(self):
         self.run_command('build_proto_in')
 
-        proto_files = recursive_glob(SRC_DIR, '*.proto')
+        # NB: Not a glob, because you can't build both onnx.proto and
+        # onnx-proto.ml in the same build
+        proto_files = [os.path.join(SRC_DIR, "onnx-ml.proto")]
 
         for proto_file in proto_files:
             log('compiling {}'.format(proto_file))
