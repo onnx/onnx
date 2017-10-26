@@ -1451,23 +1451,26 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="Slice"></a><a name="slice">**Slice**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
+  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   
-  Slices uses `axes`, `starts` and `ends` list to specify the start and end
+  Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
   dimension.
+  * **attribute**:
+    <dl>
+      <dt>axes</dt>
+      <dd>Axes that `starts` and `ends` apply to. It's optional. If not present, will be treated as [0, 1, ..., ndim - 1].</dd>
+      <dt>ends</dt>
+      <dd>Ending indices (exclusive) of corresponding axis in axes`</dd>
+      <dt>starts</dt>
+      <dd>Starting indices of corresponding axis in `axes`</dd>
+    </dl>
   * **input**:
     <dl>
       <dt>data</dt>
       <dd>Tensor of data to extract slices from.</dd>
-      <dt>axes</dt>
-      <dd>1D Tensor contains the list of axes in which starts and ends apply to.</dd>
-      <dt>starts</dt>
-      <dd>1D Tensor contains the list of indices starting values corresponding to each axes in the axes input.</dd>
-      <dt>ends</dt>
-      <dd>1D Tensor contains the list of indices end values corresponding to each axes in the axes input.</dd>
     </dl>
   * **output**:
     <dl>
