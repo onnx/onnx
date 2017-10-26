@@ -15,49 +15,54 @@ from onnx.onnx_pb2 import TensorProto, ValueInfoProto, NodeProto, AttributeProto
     GraphProto, ModelProto, IR_VERSION
 from onnx import defs, mapping
 
-def check_attr(attr, require_type_field):
+def check_attr(attr, model):
+    """Checks if a node attribute is legal.
+
+    Inputs:
+        node: an AttributeProto object.
+        model: the ModelProto object this node came from.
+    Returns:
+        None
+    An exception is thrown if it does not pass the test.
+    """
+    require_type_field = model.ir_version >= IR_VERSION
     has_attr_type = attr.HasField("type")
     if require_type_field and not has_attr_type:
         raise RuntimeError('AttributeProto missing type field where IR version requires it.')
-    if attr.HasField('s'):
-        if has_attr_type and attr.type != AttributeProto.STRING:
-            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
-    if attr.HasField('f'):
-        if has_attr_type and attr.type != AttributeProto.FLOAT:
-            raise RuntimeError('AttributeProto.type is wrong value (expected FLOAT).')
-    if attr.HasField('i'):
-        if has_attr_type and attr.type != AttributeProto.INT:
-            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
+    if attr.HasField('s') and has_attr_type and attr.type != AttributeProto.STRING:
+        raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
+    if attr.HasField('f') and has_attr_type and attr.type != AttributeProto.FLOAT:
+        raise RuntimeError('AttributeProto.type is wrong value (expected FLOAT).')
+    if attr.HasField('i') and has_attr_type and attr.type != AttributeProto.INT:
+        raise RuntimeError('AttributeProto.type is wrong value (expected INT).')
     if attr.HasField('t'):
         if has_attr_type and attr.type != AttributeProto.TENSOR:
             raise RuntimeError('AttributeProto.type is wrong value (expected TENSOR).')
-        check_tensor(attr.t)
+        check_tensor(attr.t, model)
     if attr.HasField('g'):
         if has_attr_type and attr.type != AttributeProto.GRAPH:
             raise RuntimeError('AttributeProto.type is wrong value (expected GRAPH).')
-    if attr.HasField('strings'):
-        if has_attr_type and attr.type != AttributeProto.STRINGS:
-            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
-    if attr.HasField('floats'):
-        if has_attr_type and attr.type != AttributeProto.FLOATS:
-            raise RuntimeError('AttributeProto.type is wrong value (expected FLOAT).')
-    if attr.HasField('ints'):
-        if has_attr_type and attr.type != AttributeProto.INTS:
-            raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
+    if attr.HasField('strings') and has_attr_type and attr.type != AttributeProto.STRINGS:
+        raise RuntimeError('AttributeProto.type is wrong value (expected STRINGS).')
+    if attr.HasField('floats') and has_attr_type and attr.type != AttributeProto.FLOATS:
+        raise RuntimeError('AttributeProto.type is wrong value (expected FLOATS).')
+    if attr.HasField('ints') and has_attr_type and attr.type != AttributeProto.INTS:
+        raise RuntimeError('AttributeProto.type is wrong value (expected INTS).')
     if attr.HasField('tensors'):
         if has_attr_type and attr.type != AttributeProto.TENSORS:
             raise RuntimeError('AttributeProto.type is wrong value (expected TENSORS).')
         for tensor in attr.tensors:
-            check_tensor(tensor)
+            check_tensor(tensor, model)
     if attr.HasField('graphs'):
         if has_attr_type and attr.type != AttributeProto.GRAPHS:
             raise RuntimeError('AttributeProto.type is wrong value (expected GRAPHS).')
 
-def check_node(node):
+def check_node(node, model):
     """Checks if a node is legal.
 
     Inputs:
         node: a NodeProto object.
+        model: the ModelProto object this node came from.
     Returns:
         None
     An exception is thrown if it does not pass the test.
@@ -76,7 +81,7 @@ def check_node(node):
         raise ValueError(
             'NodeProto of type {} did not pass defs schema check.'.format(str(node.op_type)))
     for attr in node.attribute:
-        check_attr(attr, false)
+        check_attr(attr, model)
 
 
 def check_tensor_value_info(value_info,
@@ -109,7 +114,7 @@ def check_tensor_value_info(value_info,
             'TypeProto.value should be either tensor_type or sparse_tensor_type')
 
 
-def check_tensor(tensor):
+def check_tensor(tensor, model):
     if not isinstance(tensor, TensorProto):
         raise RuntimeError('You cannot pass an object that is not TensorProto.')
 
@@ -139,7 +144,7 @@ def check_tensor(tensor):
                 ))
 
 
-def check_graph(graph):
+def check_graph(graph, model):
     """Checks if a GraphProto is legal.
 
     Inputs:
@@ -158,14 +163,14 @@ def check_graph(graph):
     for value_info in graph.value_info:
         check_tensor_value_info(value_info)
     for node in graph.node:
-        check_node(node)
+        check_node(node, model)
 
     input_names = {value_info.name for value_info in graph.input}
     for init in graph.initializer:
         if init.name not in input_names:
             raise ValueError(
                 '{} in initializer but not in graph input'.format(init.name))
-        check_tensor(init)
+        check_tensor(init, model)
 
 
 def check_model(model):
@@ -185,4 +190,4 @@ def check_model(model):
         logging.warning(
             'Your model ir_version is higher than the checker\'s, so it might '
             'not interpret the higher version correctly.')
-    check_graph(model.graph)
+    check_graph(model.graph, model)
