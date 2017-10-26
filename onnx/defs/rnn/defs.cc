@@ -98,7 +98,7 @@ allows to make spec more uniform.
     .Attr("reverse", "Process the sequences in reverse order, default 0",
           AttrType::INT)
     .Attr("clip", "Cell clip threshold. Default to no clip if not specified.",
-          AttrType.FLOAT)
+          AttrType::FLOAT)
     .Input(0, "weights", R"DOC(
 All parameters of the stack packed together in the opaque tensor. The size must
 be compatible with input attributes passed to the op.
@@ -110,7 +110,7 @@ Each parameter matrix is linearly appended after the previous parameter matrix
 without padding.
 
 The order of matrixes `{K, L, D, R, N, C}` is defined as:
- - K - type of the matrix: `weight` (first) or `bias` (second) or `peephole` (third)
+ - K - type of the matrix: `weight` (first) or `bias` (second)
  - L - The number of layers in the RNN - `num_layers`
  - D - The direction of the layer: normal (first) or reverse (second).
                                    (in case of `directions=2`)
@@ -132,7 +132,6 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
  -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
     dimensions are `{hidden_size, hidden_size}`
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
- -- For all peepholes (`K=peephole`), dimensions are `{hidden_size}`
 )DOC")
     .Input(1, "input",
            "The input sequences packed (and potentially padded) into one 3-D "
@@ -142,12 +141,14 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
            "Has shape `[batch_size]`.");
     .Input(3, "initial_h",
            "Optional initial value of the hidden. If not specified - assumed "
-           "to be 0. Dimensions `[num_layers * directions, batch_size, "
-           "hidden_size]`")
+           "to be 0. Dimensions `[num_layers * directions, hidden_size]`")
     .Input(4, "initial_c",
            "For LSTM only: optional initial value of the cell. If not "
            "specified - assumed to be 0. Dimensions `[num_layers * directions, "
-           "batch_size, hidden_size]`")
+           "hidden_size]`")
+    .Input(5, "peephole_w",
+           "For LSTM-peephole only: weight for peepholes. Dimensions "
+           "`[3 * num_layers * directions, hidden_size]`")    
     .Output(0, "output", "The output 3-dim sequence.")
     .Output(1, "output_h",
             "Optional output value of the hidden. Same shape as input_h")
