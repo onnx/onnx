@@ -28,6 +28,7 @@ def check_attr(attr, ir_version=IR_VERSION):
         None
     An exception is thrown if it does not pass the test.
     """
+
     require_type_field = ir_version >= IR_VERSION
     has_attr_type = attr.HasField("type")
 
