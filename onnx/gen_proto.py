@@ -32,7 +32,7 @@ def process_ifs(lines, onnx_ml):
                 yield line
 
 PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
-OPTIONAL_REGEX = re.compile(r'(\s*)optional(\s.*)$')
+OPTIONAL_REGEX = re.compile(r'(\s*)optional\s(.*)$')
 
 def convert_to_proto3(lines):
     for line in lines:
