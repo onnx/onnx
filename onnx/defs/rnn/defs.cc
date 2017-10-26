@@ -10,7 +10,7 @@ using AttrType = onnx::OpSchema::AttrType;
 // Description below is borrowed from CuDNN and TensorRT docs
 
 OPERATOR_SCHEMA(OptimizedRNN)
-    .NumInputs(2, 4)
+    .NumInputs(2, 5)
     .NumOutputs(1, 3)
     .SetDoc(R"DOC(
 Computes a stack of several RNNs in optimized fashion. This operator is usually
@@ -18,7 +18,7 @@ implemented via CuDNN and thus most of the attributes and weights layout matches
 directly.
 )DOC")
     .Attr("cell_type", R"DOC(
-Types of the cell: `relu`, `tanh`, `gru`, `lstm`
+Types of the cell: `simple`, `gru`, `lstm`, `lstm_peephole`, `lstm_input_forget`
 
 Equation definitions:
 `i` - input gate
@@ -30,32 +30,51 @@ Equation definitions:
 `h` - hidden gate
 `t` - time step (t-1 means previous time step)
 `Xi` - input tensor
-`W[izrfcoh]` - W parameter weight matrices for the corresponding gates
-`R[izrfcoh]` - R parameter weight matrices for the corresponding gates
-`Wb[izrfcoh]` - W parameter bias vectors for the corresponding gates
-`Rb[izrfcoh]` - R parameter bias vectors for the corresponding gates
+`W[izrfcohp]` - W parameter weight matrices for the corresponding gates
+`R[izrfcohp]` - R parameter weight matrices for the corresponding gates
+`Wb[izrfcohp]` - W parameter bias vectors for the corresponding gates
+`Rb[izrfcohp]` - R parameter bias vectors for the corresponding gates
 `ReLU(X)` - max(X, 0)
 `tanh` - hyperbolic tangent of X
 `sigmoid(X)` - 1 / (1 + e^-X)
 `[C|H]` - Cell/Hidden state
 
 - Equations:
-  `relu`
+  `simple(relu)`
   - Ht = ReLU(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  `tanh`
+
+  `simple(tanh)`
   - Ht = tanh(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  `lstm`
+
+  `lstm with default activations`
   - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
   - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
   - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
   - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
-  - C = ft * Ct-1 + it * ct
-  - H = ot * tanh(C)
-  `gru`
+  - Ct = ft (.) Ct-1 + it (.) ct
+  - H = ot (.) tanh(C)
+
+  `gru with default activations`
   - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
   - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
   - ht = tanh(Wh*Xt + rt *(Rh*Ht-1 + Rbh) + Wbh)
-  - H = (1 - zt) * ht + it * Ht-1
+  - H = (1 - zt) (.) ht + it (.) Ht-1
+
+  `lstm_peephole with default activations`
+  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi(.)Ct-1 + Wbi + Rbi)
+  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Pf(.)Ct-1 + Wbf + Rbf)
+  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po(.)Ct-1 + Wbo + Rbo)
+  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+  - Ct = ft (.) Ct-1 + it (.) ct
+  - H = ot (.) tanh(C)
+
+  `lstm_input_forget with default activations`
+  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
+  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
+  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+  - Ct = (1 - it) (.) Ct-1 + it (.) ct
+  - H = ot (.) tanh(C)
 
 Note, that for LSTM and 2 out of 3 gates for GRU, there are duplicate biases for
 the gates (model is overparametrized). It follows CuDNN/TensorRT convention and
@@ -71,6 +90,15 @@ allows to make spec more uniform.
     .Attr("num_layers", "Numbers of RNN layers in the stack, default 1",
           AttrType::INT)
     .Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT)
+    .Attr("activations", "A list of activation functions for the gates. Typical activation "
+          "functions are sigmoid and tanh",
+          AttrType::STRINGS)
+    .Attr("use_bias", "Use the bias tensors for the gates if 1. Default 1.",
+          AttrType::INT)
+    .Attr("reverse", "Process the sequences in reverse order, default 0",
+          AttrType::INT)
+    .Attr("clip", "Cell clip threshold. Default to no clip if not specified.",
+          AttrType.FLOAT)
     .Input(0, "weights", R"DOC(
 All parameters of the stack packed together in the opaque tensor. The size must
 be compatible with input attributes passed to the op.
@@ -81,7 +109,7 @@ The weight structure holds weights and biases for each layer of the network.
 Each parameter matrix is linearly appended after the previous parameter matrix without padding.
 
 The order of matrixes `{K, L, D, R, N, C}` is defined as:
- - K - type of the matrix: `weight` (first) or `bias` second
+ - K - type of the matrix: `weight` (first) or `bias` (second) or `peephole` (third)
  - L - The number of layers in the RNN - `num_layers`
  - D - The direction of the layer: normal (first) or reverse (second). (in case of `directions=2`)
  - R - The type of the connection: `input-hidden` (first) or `hidden-hidden` (second)
@@ -95,19 +123,19 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
  -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
  -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`), dimensions are `{hidden_size, hidden_size}`
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
+ -- For all peepholes (`K=peephole`), dimensions are `{hidden_size}`
 )DOC")
     .Input(1, "input",
            "The input sequences packed (and potentially padded) into one 3-D "
            "tensor with the shape of `[seq_length, batch_size, input_size]`.")
-    // TODO: do we want to allow different lengths of sequences in a minibatch?
-    // CuDNN supports it, but not all backend implementations do. One way to
-    // encode would be int-valued tensor denoting lengths of each sequence in
-    // the batch.
-    .Input(2, "initial_h",
+    .Input(2, "seq_lens",
+           "Optional tensor specifying lengths of the sequences in a batch."
+           "Has shape `[batch_size]`.");
+    .Input(3, "initial_h",
            "Optional initial value of the hidden. If not specified - assumed "
            "to be 0. Dimensions `[num_layers * directions, batch_size, "
            "hidden_size]`")
-    .Input(3, "initial_c",
+    .Input(4, "initial_c",
            "For LSTM only: optional initial value of the cell. If not "
            "specified - assumed to be 0. Dimensions `[num_layers * directions, "
            "batch_size, hidden_size]`")
