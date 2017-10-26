@@ -69,6 +69,9 @@ enum Version {
 // An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
 message AttributeProto {
+
+  // Note: this enum is structurally identical to the OpSchema::AttrType
+  // enum defined in schema.h.  If you rev one, you likely need to rev the other.
   enum AttributeType {
     FLOAT = 0;
     INT = 1;
