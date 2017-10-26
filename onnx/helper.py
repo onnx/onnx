@@ -5,11 +5,11 @@ from __future__ import unicode_literals
 
 import collections
 import numbers
-import sys
 
-from six import text_type, integer_types
+from six import text_type, integer_types, binary_type
 
-from onnx.onnx_pb2 import *
+from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
+    NodeProto, ModelProto, GraphProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 from onnx import mapping
 
@@ -29,7 +29,9 @@ def make_node(
     return node
 
 
-def make_graph(nodes, name, inputs, outputs, initializer=[]):
+def make_graph(nodes, name, inputs, outputs, initializer=None):
+    if initializer is None:
+        initializer = []
     graph = GraphProto()
     graph.node.extend(nodes)
     graph.name = name
@@ -50,8 +52,10 @@ def make_model(graph, **kwargs):
         setattr(model, k, v)
     return model
 
+
 def split_complex_to_pairs(ca):
-    return [(ca[i//2].real if (i % 2 == 0) else ca[i//2].imag) for i in range(len(ca) * 2)]
+    return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
+            for i in range(len(ca) * 2)]
 
 
 def make_tensor(name, data_type, dims, vals, raw=False):
@@ -71,7 +75,7 @@ def make_tensor(name, data_type, dims, vals, raw=False):
         tensor.string_data.extend(vals)
 
     if (data_type == TensorProto.COMPLEX64 or
-        data_type == TensorProto.COMPLEX128):
+            data_type == TensorProto.COMPLEX128):
         vals = split_complex_to_pairs(vals)
     if raw:
         tensor.raw_data = vals
@@ -199,19 +203,24 @@ def printable_attribute(attr):
     content = []
     content.append(attr.name)
     content.append("=")
+
     def str_float(f):
         # NB: Different Python versions print different numbers of trailing
         # decimals, specifying this explicitly keeps it consistent for all
         # versions
         return '{:.15g}'.format(f)
+
     def str_int(i):
         # NB: In Python 2, longs will repr() as '2L', which is ugly and
         # unnecessary.  Explicitly format it to keep it consistent.
         return '{:d}'.format(i)
+
     def str_str(s):
         return repr(s)
+
     def str_list(str_elem, xs):
         return '[' + ', '.join(map(str_elem, xs)) + ']'
+
     if attr.HasField("f"):
         content.append(str_float(attr.f))
     elif attr.HasField("i"):

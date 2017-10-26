@@ -16,7 +16,7 @@ if sys.byteorder != 'little':
 
 
 def combine_pairs_to_complex(fa):
-    return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa)//2)]
+    return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 def to_array(tensor):
     """Converts a tensor def object to a numpy array.
@@ -49,8 +49,8 @@ def to_array(tensor):
     else:
         data = getattr(tensor, storage_field),
         if (tensor_dtype == TensorProto.COMPLEX64 or
-            tensor_dtype == TensorProto.COMPLEX128):
-            datat = combine_pairs_to_complex(data)
+                tensor_dtype == TensorProto.COMPLEX128):
+            data = combine_pairs_to_complex(data)
         return (
             np.asarray(
                 data,

@@ -1,5 +1,9 @@
 # Provides reference implementation of CuDNN-style RNNs in numpy
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 from collections import defaultdict
 from itertools import chain
 
@@ -7,6 +11,7 @@ import numpy as np
 from six.moves import zip
 
 from .test_util import N
+
 
 def interleave(x, y):
     return list(chain.from_iterable(zip(x, y)))
