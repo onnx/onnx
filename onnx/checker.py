@@ -11,7 +11,7 @@ from __future__ import unicode_literals
 import itertools
 import logging
 
-from onnx.onnx_ml_pb2 import TensorProto, ValueInfoProto, NodeProto, \
+from onnx.onnx_ml_pb2 import TensorProto, ValueInfoProto, NodeProto, AttributeProto,  \
     GraphProto, ModelProto, IR_VERSION
 from onnx import defs, mapping
 
@@ -20,37 +20,37 @@ def check_attr(attr, require_type_field):
     if require_type_field and not has_attr_type:
         raise RuntimeError('AttributeProto missing type field where IR version requires it.')
     if attr.HasField('s'):
-        if has_attr_type and attr.type != AttributeType.STRING:
+        if has_attr_type and attr.type != AttributeProto.STRING:
             raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
     if attr.HasField('f'):
-        if has_attr_type and attr.type != AttributeType.FLOAT:
+        if has_attr_type and attr.type != AttributeProto.FLOAT:
             raise RuntimeError('AttributeProto.type is wrong value (expected FLOAT).')
     if attr.HasField('i'):
-        if has_attr_type and attr.type != AttributeType.INT:
+        if has_attr_type and attr.type != AttributeProto.INT:
             raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
     if attr.HasField('t'):
-        if has_attr_type and attr.type != AttributeType.TENSOR:
+        if has_attr_type and attr.type != AttributeProto.TENSOR:
             raise RuntimeError('AttributeProto.type is wrong value (expected TENSOR).')
         check_tensor(attr.t)
     if attr.HasField('g'):
-        if has_attr_type and attr.type != AttributeType.GRAPH:
+        if has_attr_type and attr.type != AttributeProto.GRAPH:
             raise RuntimeError('AttributeProto.type is wrong value (expected GRAPH).')
     if attr.HasField('strings'):
-        if has_attr_type and attr.type != AttributeType.STRINGS:
+        if has_attr_type and attr.type != AttributeProto.STRINGS:
             raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
     if attr.HasField('floats'):
-        if has_attr_type and attr.type != AttributeType.FLOATS:
+        if has_attr_type and attr.type != AttributeProto.FLOATS:
             raise RuntimeError('AttributeProto.type is wrong value (expected FLOAT).')
     if attr.HasField('ints'):
-        if has_attr_type and attr.type != AttributeType.INTS:
+        if has_attr_type and attr.type != AttributeProto.INTS:
             raise RuntimeError('AttributeProto.type is wrong value (expected STRING).')
     if attr.HasField('tensors'):
-        if has_attr_type and attr.type != AttributeType.TENSORS:
+        if has_attr_type and attr.type != AttributeProto.TENSORS:
             raise RuntimeError('AttributeProto.type is wrong value (expected TENSORS).')
         for tensor in attr.tensors:
             check_tensor(tensor)
     if attr.HasField('graphs'):
-        if has_attr_type and attr.type != AttributeType.GRAPHS:
+        if has_attr_type and attr.type != AttributeProto.GRAPHS:
             raise RuntimeError('AttributeProto.type is wrong value (expected GRAPHS).')
 
 def check_node(node):
