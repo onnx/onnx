@@ -80,15 +80,19 @@ OPERATOR_SCHEMA(Slice)
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
 
-Slices uses `axes`, `starts` and `ends` list to specify the start and end dimension 
-for each axis in the list of axes, it uses this information to slice the input `data` 
-tensor. If a negative value is passed for any of the start or end indices, it represent 
-number of elements before the end of that dimension.
+Slices uses `axes`, `starts` and `ends` list to specify the start and end
+dimension for each axis in the list of axes, it uses this information to
+slice the input `data` tensor. If a negative value is passed for any of the
+start or end indices, it represent number of elements before the end of that
+dimension.
 )DOC")
     .Input(0, "data", "Tensor of data to extract slices from.")
-    .Input(1, "axes", "1D Tensor contains the list of axes in which starts and ends apply to.")
-    .Input(2, "starts", "1D Tensor contains the list of indices starting values corresponding to each axes in the axes input.")
-    .Input(3, "ends", "1D Tensor contains the list of indices end values corresponding to each axes in the axes input.")            
+    .Input(1, "axes", "1D Tensor contains the list of axes in which starts "
+                      "and ends apply to.")
+    .Input(2, "starts", "1D Tensor contains the list of indices starting "
+                        "values corresponding to each axes in the axes input.")
+    .Input(3, "ends", "1D Tensor contains the list of indices end values "
+                      "corresponding to each axes in the axes input.")
     .Output(0, "output", "Sliced data tensor.");
 
 OPERATOR_SCHEMA(Transpose)

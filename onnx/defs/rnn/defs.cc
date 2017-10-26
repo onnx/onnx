@@ -106,22 +106,31 @@ be compatible with input attributes passed to the op.
 The layout format is the one used by CuDNN and very similar to TensorRT:
 
 The weight structure holds weights and biases for each layer of the network.
-Each parameter matrix is linearly appended after the previous parameter matrix without padding.
+Each parameter matrix is linearly appended after the previous parameter matrix
+without padding.
 
 The order of matrixes `{K, L, D, R, N, C}` is defined as:
  - K - type of the matrix: `weight` (first) or `bias` (second) or `peephole` (third)
  - L - The number of layers in the RNN - `num_layers`
- - D - The direction of the layer: normal (first) or reverse (second). (in case of `directions=2`)
- - R - The type of the connection: `input-hidden` (first) or `hidden-hidden` (second)
+ - D - The direction of the layer: normal (first) or reverse (second).
+                                   (in case of `directions=2`)
+ - R - The type of the connection: `input-hidden` (first) or
+                                   `hidden-hidden` (second)
  - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
  -- For `relu` or `tanh` there is one gate
  -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
  -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
  - C - The size of each matrix, which varies.
- -- If the linear layer on the input is skipped (`skip_input_transform=1`) and then for the first layer (`L=1`) the weight matrix (`K=weight`) on the input connection (`R=input-hidden`) is skipped, i.e. has 0 parameters in the list
- -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
- -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
- -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`), dimensions are `{hidden_size, hidden_size}`
+ -- If the linear layer on the input is skipped (`skip_input_transform=1`)
+    and then for the first layer (`L=1`) the weight matrix (`K=weight`)
+    on the input connection (`R=input-hidden`) is skipped,
+    i.e. has 0 parameters in the list
+ -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
+ -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
+ -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
+    dimensions are `{hidden_size, hidden_size}`
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
  -- For all peepholes (`K=peephole`), dimensions are `{hidden_size}`
 )DOC")

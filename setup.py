@@ -16,7 +16,6 @@ from collections import namedtuple
 import os
 import subprocess
 import sys
-import tempfile
 from textwrap import dedent
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
@@ -33,12 +32,13 @@ test_requires = set()
 ################################################################################
 
 try:
-    git_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=TOP_DIR).decode('ascii').strip()
+    git_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
+                                          cwd=TOP_DIR).decode('ascii').strip()
 except subprocess.CalledProcessError:
     git_version = None
 
 VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
-    version='0.2',
+    version='0.2.1',
     git_version=git_version
 )
 
@@ -94,10 +94,12 @@ class Protobuf(Dependency):
         # TODO: allow user specify protobuf include_dirs libraries with flags
         # and environment variables
         if os.getenv('CONDA_PREFIX') and platform.system() == 'Windows':
-            self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf")]
-            self.include_dirs = [os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include")]
+            self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library",
+                                           "lib", "libprotobuf")]
+            self.include_dirs = [os.path.join(os.getenv('CONDA_PREFIX'),
+                                              "Library", "Include")]
         else:
-            self.libraries = ['protobuf'] 
+            self.libraries = ['protobuf']
 
 
 class Pybind11(Dependency):
@@ -149,7 +151,8 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('create_version')
         self.run_command('build_proto')
         setuptools.command.build_py.build_py.run(self)
-        
+
+
 class develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command('create_version')
