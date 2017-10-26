@@ -68,7 +68,6 @@ enum Version {
 // and tensor values, or repeated float, integer, string and tensor values.
 // An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
-
 message AttributeProto {
   enum AttributeType {
     FLOAT = 0;

@@ -8,7 +8,7 @@ import numbers
 
 from six import text_type, integer_types, binary_type
 
-from onnx.onnx_pb2 import TensorProto, AttributeProto, AttributeType, ValueInfoProto, \
+from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 from onnx import mapping
@@ -117,39 +117,39 @@ def make_attribute(key, value):
     # float
     if isinstance(value, float):
         attr.f = value
-        attr.type = AttributeType.FLOAT
+        attr.type = AttributeProto.FLOAT
     # integer
     elif isinstance(value, numbers.Integral):
         attr.i = value
-        attr.type = AttributeType.INT
+        attr.type = AttributeProto.INT
     # string
     elif bytes_or_false:
         attr.s = bytes_or_false
-        attr.type = AttributeType.STRING
+        attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
-        attr.type = AttributeType.TENSOR
+        attr.type = AttributeProto.TENSOR
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
-        attr.type = AttributeType.GRAPH
+        attr.type = AttributeProto.GRAPH
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
         if all(isinstance(v, float) for v in value):
             attr.floats.extend(value)
-            attr.type = AttributeType.FLOATS
+            attr.type = AttributeProto.FLOATS
         elif all(isinstance(v, numbers.Integral) for v in value):
             attr.ints.extend(value)
-            attr.type = AttributeType.INTS
+            attr.type = AttributeProto.INTS
         elif all(byte_array):
             attr.strings.extend(byte_array)
-            attr.type = AttributeType.STRINGS
+            attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
-            attr.type = AttributeType.TENSORS
+            attr.type = AttributeProto.TENSORS
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
-            attr.type = AttributeType.GRAPHS
+            attr.type = AttributeProto.GRAPHS
         else:
             raise ValueError(
                 "You passed in an iterable attribute but I cannot figure out "
