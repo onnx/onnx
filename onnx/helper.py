@@ -9,7 +9,7 @@ import numpy as np
 
 from six import text_type, integer_types, binary_type
 
-from onnx.onnx_ml_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
+from onnx.onnx_ml_pb2 import TensorProto, AttributeProto, AttributeType, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
 import onnx.onnx_cpp2py_export as C
 from onnx import mapping
@@ -118,30 +118,40 @@ def make_attribute(key, value):
     # float
     if isinstance(value, float):
         attr.f = value
+        attr.type = AttributeType.FLOAT
     # integer
     elif isinstance(value, numbers.Integral):
         attr.i = value
+        attr.type = AttributeType.INT
     # string
     elif bytes_or_false:
         attr.s = bytes_or_false
+        attr.type = AttributeType.STRING
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
+        attr.type = AttributeType.TENSOR
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
+        attr.type = AttributeType.GRAPH
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
         if all(isinstance(v, float) for v in value):
             attr.floats.extend(value)
+            attr.type = AttributeType.FLOATS
         elif all(isinstance(v, numbers.Integral) for v in value):
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
+            attr.type = AttributeType.INTS
         elif all(byte_array):
             attr.strings.extend(byte_array)
+            attr.type = AttributeType.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
+            attr.type = AttributeType.TENSORS
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
+            attr.type = AttributeType.GRAPHS
         else:
             raise ValueError(
                 "You passed in an iterable attribute but I cannot figure out "
@@ -223,6 +233,8 @@ def printable_attribute(attr):
     def str_list(str_elem, xs):
         return '[' + ', '.join(map(str_elem, xs)) + ']'
 
+    # for now, this logic should continue to work as long as we are running on a proto3
+    # implementation. If/when we switch to proto3, we will need to use attr.type  
     if attr.HasField("f"):
         content.append(str_float(attr.f))
     elif attr.HasField("i"):
