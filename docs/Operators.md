@@ -63,6 +63,7 @@
 * <a href="#Tanh">Tanh</a>
 * <a href="#Transpose">Transpose</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
+* <a href="#BatchMatMul"><sub>experimental</sub> BatchMatMul</a>
 * <a href="#Caffe2ConvTranspose"><sub>experimental</sub> Caffe2ConvTranspose</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
 * <a href="#FC"><sub>experimental</sub> FC</a>
@@ -1708,6 +1709,31 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   and op
   * **input**:0 - &#8734;
   * **output**:0 - &#8734;
+
+
+### <a name="BatchMatMul"></a><a name="batchmatmul">**<sub>experimental</sub> BatchMatMul**</a>
+
+  Batch Matrix multiplication Yi = Ai * Bi, where A has size (C x M x K), B has
+  size (C x K x N) where C is the batch size and i ranges from 0 to C-1.
+  * **attribute**:
+    <dl>
+      <dt>trans_a</dt>
+      <dd>Pass 1 to transpose A before multiplication</dd>
+      <dt>trans_b</dt>
+      <dd>Pass 1 to transpose B before multiplication</dd>
+    </dl>
+  * **input**:
+    <dl>
+      <dt>A</dt>
+      <dd>3D matrix of size (C x M x K)</dd>
+      <dt>B</dt>
+      <dd>3D matrix of size (C x K x N)</dd>
+    </dl>
+  * **output**:
+    <dl>
+      <dt>Y</dt>
+      <dd>3D matrix of size (C x M x N)</dd>
+    </dl>
 
 
 ### <a name="Caffe2ConvTranspose"></a><a name="caffe2convtranspose">**<sub>experimental</sub> Caffe2ConvTranspose**</a>

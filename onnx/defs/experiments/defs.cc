@@ -307,3 +307,18 @@ OPERATOR_SCHEMA(ATen)
 Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
 and op)DOC");
+
+
+OPERATOR_SCHEMA(BatchMatMul)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(2)
+    .NumOutputs(1)
+    .SetDoc(R"DOC(
+Batch Matrix multiplication Yi = Ai * Bi, where A has size (C x M x K), B has
+size (C x K x N) where C is the batch size and i ranges from 0 to C-1.
+)DOC")
+    .Input(0, "A", "3D matrix of size (C x M x K)")
+    .Input(1, "B", "3D matrix of size (C x K x N)")
+    .Output(0, "Y", "3D matrix of size (C x M x N)")	
+    .Attr("trans_a", "Pass 1 to transpose A before multiplication", AttrType::INT)
+    .Attr("trans_b", "Pass 1 to transpose B before multiplication", AttrType::INT);
