@@ -927,7 +927,6 @@ Equation definitions:
 
   `lstm_input_forget with default activations`
   - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
   - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
   - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
   - Ct = (1 - it) (.) Ct-1 + it (.) ct
