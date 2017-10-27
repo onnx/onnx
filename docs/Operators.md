@@ -872,7 +872,7 @@
   * **attribute**:
     <dl>
       <dt>activations</dt>
-      <dd>A list of activation functions for the gates. Typical activation functions are sigmoid and tanh</dd>
+      <dd>A list of activation functions for the gates in the order `iofzrch`. Typical activation functions are sigmoid and tanh. For each cell type, the default is given in the above equations.</dd>
       <dt>cell_type</dt>
       <dd>
 Types of the cell: `simple`, `gru`, `lstm`, `lstm_peephole`, `lstm_input_forget`
@@ -938,7 +938,7 @@ the gates (model is overparametrized). It follows CuDNN/TensorRT convention and
 allows to make spec more uniform.
 </dd>
       <dt>clip</dt>
-      <dd>Cell clip threshold. Default to no clip if not specified.</dd>
+      <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the inputs of activations. Default to no clip if not specified.</dd>
       <dt>directions</dt>
       <dd>Number of directions: 1 for unidirectional (default) and 2 for bidirectional</dd>
       <dt>hidden_size</dt>
@@ -973,7 +973,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
  - R - The type of the connection: `input-hidden` (first) or
                                    `hidden-hidden` (second)
  - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
- -- For `relu` or `tanh` there is one gate
+ -- For `simple(relu)` or `simple(tanh)` there is one gate
  -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
  -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
  - C - The size of each matrix, which varies.
@@ -992,9 +992,9 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
       <dt>input</dt>
       <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
       <dt>initial_h</dt>
-      <dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, hidden_size]`</dd>
+      <dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
       <dt>initial_c</dt>
-      <dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, hidden_size]`</dd>
+      <dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
       <dt>seq_lens</dt>
       <dd>Optional tensor specifying lengths of the sequences in a batch.Has shape `[batch_size]`.</dd>
       <dt>peephole_w</dt>
