@@ -57,14 +57,14 @@ node_tests = [
                       mode='edge'),
      [(1, 3, L, M)]),
     ("test_slice",
-     N("Slice"),
-     lambda x, axes, starts, ends: x[
-         [(slice(starts[i], ends[i]) if i in axes else slice(None))
-          for i in range(x.ndim)]
-     ], [(L, M, S),
-         np.array([0, 1]), # axes
-         np.array([0, 0]), # starts
-         np.array([3, M])]), # ends
+     N("Slice", axes=[0, 1], starts=[0, 0], ends=[3, M]),
+     lambda x: x[0:3, 0:M], [(L, M, S)]),
+    ("test_slice_neg",
+     N("Slice", axes=[1], starts=[0], ends=[-1]),
+     lambda x: x[:, 0:-1], [(L, M, S)]),
+    ("test_slice_default_axes",
+     N("Slice", starts=[0, 0, 3], ends=[L, M, 4]),
+     lambda x: x[:, :, 3:4], [(L, M, S)]),
     # TODO: Add all the other operators
 ] + test_rnn.node_tests
 
