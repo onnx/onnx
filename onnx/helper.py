@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import collections
 import numbers
+import numpy as np
 
 from six import text_type, integer_types, binary_type
 
@@ -133,7 +134,15 @@ def make_attribute(key, value):
         if all(isinstance(v, float) for v in value):
             attr.floats.extend(value)
         elif all(isinstance(v, numbers.Integral) for v in value):
-            attr.ints.extend(value)
+            # Turn np.int64 into built-in numpy.int64.
+            # In some version of Python 3, numpy.int64 is not subtype of built-in int.
+            new_value = []
+            for v in value:
+                if isinstance(v, np.int64):
+                    new_value.append(v.item())
+                else:
+                    new_value.append(v)
+            attr.ints.extend(new_value)
         elif all(byte_array):
             attr.strings.extend(byte_array)
         elif all(isinstance(v, TensorProto) for v in value):
