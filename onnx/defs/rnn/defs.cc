@@ -90,14 +90,17 @@ allows to make spec more uniform.
     .Attr("num_layers", "Numbers of RNN layers in the stack, default 1",
           AttrType::INT)
     .Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT)
-    .Attr("activations", "A list of activation functions for the gates. Typical activation "
-          "functions are sigmoid and tanh",
+    .Attr("activations", "A list of activation functions for the gates in the order "
+          "`iofzrch`. Typical activation functions are sigmoid and tanh. For each "
+          "cell type, the default is given in the above equations.",
           AttrType::STRINGS)
     .Attr("use_bias", "Use the bias tensors for the gates if 1. Default 1.",
           AttrType::INT)
     .Attr("reverse", "Process the sequences in reverse order, default 0",
           AttrType::INT)
-    .Attr("clip", "Cell clip threshold. Default to no clip if not specified.",
+    .Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
+          "in the range of [-threshold, +threshold] and is applied to the inputs "
+          "of activations. Default to no clip if not specified.",
           AttrType::FLOAT)
     .Input(0, "weights", R"DOC(
 All parameters of the stack packed together in the opaque tensor. The size must
@@ -117,7 +120,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
  - R - The type of the connection: `input-hidden` (first) or
                                    `hidden-hidden` (second)
  - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
- -- For `relu` or `tanh` there is one gate
+ -- For `simple(relu)` or `simple(tanh)` there is one gate
  -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
  -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
  - C - The size of each matrix, which varies.
@@ -138,11 +141,12 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
            "tensor with the shape of `[seq_length, batch_size, input_size]`.")
     .Input(2, "initial_h",
            "Optional initial value of the hidden. If not specified - assumed "
-           "to be 0. Dimensions `[num_layers * directions, hidden_size]`")
+           "to be 0. Dimensions `[num_layers * directions, batch_size, "
+           "hidden_size]`")
     .Input(3, "initial_c",
            "For LSTM only: optional initial value of the cell. If not "
            "specified - assumed to be 0. Dimensions `[num_layers * directions, "
-           "hidden_size]`")
+           "batch_size, hidden_size]`")
     .Input(4, "seq_lens",
            "Optional tensor specifying lengths of the sequences in a batch."
            "Has shape `[batch_size]`.")
