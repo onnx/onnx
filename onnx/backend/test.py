@@ -22,7 +22,7 @@ M = 10
 S = 5
 const2_np = np.random.randn(S, S)
 const2_onnx = onnx.helper.make_tensor("const2",
-                                      onnx.TensorProto.FLOAT,
+                                      onnx.onnx_pb2.TensorProto.FLOAT,
                                       (S, S),
                                       const2_np.flatten().astype(float))
 
@@ -85,13 +85,15 @@ if not os.environ.get('TRAVIS'):
 
 
 class BackendTest(object):
-    def __init__(self, backend):
+    def __init__(self, backend, parent_module=None):
         class TestsContainer(unittest.TestCase):
             def setUp(self):
                 np.random.seed(seed=0)
 
         self.backend = backend
         self._base_case = TestsContainer
+        if parent_module:
+            self._parent_module = parent_module
         # List of test cases to be applied on the parent scope
         # Example usage: globals().update(BackendTest(backend).test_cases)
         self.test_cases = {}
@@ -113,6 +115,8 @@ class BackendTest(object):
         name = 'OnnxBackend{}Test'.format(category)
         if name not in self.test_cases:
             self.test_cases[name] = type(str(name), (self._base_case,), {})
+            if self._parent_module:
+                self.test_cases[name].__module__ = self._parent_module
         return self.test_cases[name]
 
     def _prepare_model(self, model_name):
