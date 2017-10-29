@@ -111,11 +111,6 @@ message ModelProto {
   // This field MUST be present.
   optional int64 ir_version = 1;
 
-  // The version of the operator namespace this model targets.  An operator
-  // namespace specifies the mapping of op_type (namespace Operator) to
-  // operator definitions (namespace OpDefinition).
-  optional int64 op_version = 8;
-
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
