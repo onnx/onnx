@@ -92,8 +92,7 @@ class BackendTest(object):
 
         self.backend = backend
         self._base_case = TestsContainer
-        if parent_module:
-            self._parent_module = parent_module
+        self._parent_module = parent_module
         # List of test cases to be applied on the parent scope
         # Example usage: globals().update(BackendTest(backend).test_cases)
         self.test_cases = {}
