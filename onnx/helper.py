@@ -118,30 +118,40 @@ def make_attribute(key, value):
     # float
     if isinstance(value, float):
         attr.f = value
+        attr.type = AttributeProto.FLOAT
     # integer
     elif isinstance(value, numbers.Integral):
         attr.i = value
+        attr.type = AttributeProto.INT
     # string
     elif bytes_or_false:
         attr.s = bytes_or_false
+        attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
         attr.t.CopyFrom(value)
+        attr.type = AttributeProto.TENSOR
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
+        attr.type = AttributeProto.GRAPH
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
         if all(isinstance(v, float) for v in value):
             attr.floats.extend(value)
+            attr.type = AttributeProto.FLOATS
         elif all(isinstance(v, numbers.Integral) for v in value):
             # Turn np.int32/64 into Python built-in int.
             attr.ints.extend(int(v) for v in value)
+            attr.type = AttributeProto.INTS
         elif all(byte_array):
             attr.strings.extend(byte_array)
+            attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
+            attr.type = AttributeProto.TENSORS
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
+            attr.type = AttributeProto.GRAPHS
         else:
             raise ValueError(
                 "You passed in an iterable attribute but I cannot figure out "
@@ -223,6 +233,8 @@ def printable_attribute(attr):
     def str_list(str_elem, xs):
         return '[' + ', '.join(map(str_elem, xs)) + ']'
 
+    # for now, this logic should continue to work as long as we are running on a proto3
+    # implementation. If/when we switch to proto3, we will need to use attr.type  
     if attr.HasField("f"):
         content.append(str_float(attr.f))
     elif attr.HasField("i"):
