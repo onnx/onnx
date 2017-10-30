@@ -35,6 +35,9 @@ def check_attr(attr, ir_version=IR_VERSION):
     if require_type_field and not has_attr_type:
         raise RuntimeError('AttributeProto missing type field where IR version requires it.')
 
+    # NB: It's not legal to call HasField on a 'repeated' field, because
+    # the empty list case and the not defined case are indistinguishable.
+
     def check_mismatch(field_name, type_value, type_value_name):
         if attr.HasField(field_name) and has_attr_type and attr.type != type_value:
             raise RuntimeError('AttributeProto.type is wrong value (expected '
@@ -47,17 +50,21 @@ def check_attr(attr, ir_version=IR_VERSION):
     check_mismatch('t', AttributeProto.TENSOR, 'TENSOR')
     check_mismatch('g', AttributeProto.GRAPH, 'GRAPH')
 
-    check_mismatch('strings', AttributeProto.STRINGS, 'STRINGS')
-    check_mismatch('floats', AttributeProto.FLOATS, 'FLOATS')
-    check_mismatch('ints', AttributeProto.INTS, 'INTS')
-    check_mismatch('tensors', AttributeProto.TENSORS, 'TENSORS')
-    check_mismatch('graphs', AttributeProto.GRAPHS, 'GRAPHS')
+    def check_repeated_mismatch(field_value, type_value, type_value_name):
+        if field_value and has_attr_type and attr.type != type_value:
+            raise RuntimeError('AttributeProto.type is wrong value (expected '
+                               + type_value_name + ').')
+
+    check_repeated_mismatch(attr.strings, AttributeProto.STRINGS, 'STRINGS')
+    check_repeated_mismatch(attr.floats, AttributeProto.FLOATS, 'FLOATS')
+    check_repeated_mismatch(attr.ints, AttributeProto.INTS, 'INTS')
+    check_repeated_mismatch(attr.tensors, AttributeProto.TENSORS, 'TENSORS')
+    check_repeated_mismatch(attr.graphs, AttributeProto.GRAPHS, 'GRAPHS')
 
     if attr.HasField('t'):
         check_tensor(attr.t)
-    if attr.HasField('tensors'):
-        for tensor in attr.tensors:
-            check_tensor(tensor)
+    for tensor in attr.tensors:
+        check_tensor(tensor)
 
 
 def check_node(node, ir_version=IR_VERSION):
