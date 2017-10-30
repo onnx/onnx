@@ -60,8 +60,14 @@ enum Version {
   // version that the  graph is generated from. This helps us set up version
   // control. We should use version as
   //     xx(major) - xx(minor) - xxxx(bugfix)
-  // and we are starting with 00000001.
-  IR_VERSION = 00000001;
+  // and we are starting with 0x00000001 (0.0.1), which was the
+  //  version we published on Oct 10, 2017.
+  IR_VERSION_2017_10_10 = 0x00000001;
+
+  // IR_VERSION 0.0.2 (this proto file) contains the following IR format changes
+  // - Added type discriminator to AttributeProto to support proto3 users
+
+  IR_VERSION = 0x00000002;
 }
 
 // A named attribute containing either singular float, integer, string
@@ -69,16 +75,44 @@ enum Version {
 // An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
 message AttributeProto {
+
+  // Note: this enum is structurally identical to the OpSchema::AttrType
+  // enum defined in schema.h.  If you rev one, you likely need to rev the other.
+  enum AttributeType {
+    UNDEFINED = 0;
+    FLOAT = 1;
+    INT = 2;
+    STRING = 3;
+    TENSOR = 4;
+    GRAPH = 5;
+
+    FLOATS = 6;
+    INTS = 7;
+    STRINGS = 8;
+    TENSORS = 9;
+    GRAPHS = 10;
+  }
+
   // The name field MUST be present for this version of the IR.
   string name = 1;           // namespace Attribute
+
+  // The type field MUST be present for this version of the IR.
+  // For 0.0.1 versions of the IR, this field was not defined, and
+  // implementations needed to use has_field hueristics to determine
+  // which value field was in use.  For IR_VERSION 0.0.2 or later, this
+  // field MUST be set and match the f|i|s|t|... field in use.  This
+  // change was made to accomodate proto3 implementations.
+  AttributeType type = 20;   // discriminator that indicates which field below is in use
+
+  // Exactly ONE of the following fields must be present for this version of the IR
   float f = 2;               // float
   int64 i = 3;               // int
   bytes s = 4;               // UTF-8 string
   TensorProto t = 5;         // tensor value
   GraphProto g = 6;          // graph
   ValueProto v = 12;         // value - subsumes everything but graph
-  
-  repeated float floats = 7;          // list of floats 
+
+  repeated float floats = 7;          // list of floats
   repeated int64 ints = 8;            // list of ints
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
@@ -329,7 +363,7 @@ message ValueProto {
 
   // Defines a record in its serialized format.
   // A record is a sequence of one or more
-  // typed uniquely named values, which may be of different types. 
+  // typed uniquely named values, which may be of different types.
   message RecordProto {
     repeated NameValuePairProto fields = 1;
   }
@@ -339,9 +373,9 @@ message ValueProto {
   message UnionProto {
     NameValuePairProto choice = 1;
   }
-  
+
   // Defines a map in its serialized format.
-  // A record is a sequence of zero or more 
+  // A record is a sequence of zero or more
   // key/value pairs all of which have unique
   // keys
   message MapProto {
@@ -349,7 +383,7 @@ message ValueProto {
   }
 
   // Alternate space-efficient encoding of map that MAY be used
-  // for maps whose value type is a scalar. 
+  // for maps whose value type is a scalar.
   message ScalarMapProto {
     // keys.DataType must be an integral type or string
     repeated TensorProto keys = 1;
@@ -359,7 +393,7 @@ message ValueProto {
   }
 
   // Defines a sequence in its serialized format.
-  // A sequence is a list of zero or more 
+  // A sequence is a list of zero or more
   // tensors, maps, records, or subsequences.
   message SequenceProto {
     repeated ValueProto elems = 1;
@@ -370,7 +404,7 @@ message ValueProto {
     TensorProto dense_tensor = 1;
 
     // A sparse tensor.
-    SparseTensorProto sparse_tensor = 2;  
+    SparseTensorProto sparse_tensor = 2;
 
     // A tuple.
     RecordProto record = 3;
@@ -415,19 +449,19 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     TensorProto.DataType elem_type = 1;
-    TensorShapeProto shape = 2;    
+    TensorShapeProto shape = 2;
   }
 
   // message T { ... }
   message RecordTypeProto {
-  // The type and optional shape of each field 
+  // The type and optional shape of each field
   // is described by a ValueInfoProto. The field
-  // names must be unique.     
+  // names must be unique.
   // This field MUST be present for this version of the IR.
     repeated ValueInfoProto field = 1;
   };
 
-  // repeated T 
+  // repeated T
   message SequenceTypeProto {
   // The type and optional shape of each element of the sequence.
   // This field MUST be present for this version of the IR.
@@ -442,12 +476,12 @@ message TypeProto {
   // This field MUST be present for this version of the IR.
     TypeProto value_type = 2;
   };
-        
+
   // oneof { ... }
   message UnionTypeProto {
-  // The type and optional shape of each alternative  
+  // The type and optional shape of each alternative
   // is described by a ValueInfoProto. The alternative
-  // names must be unique.     
+  // names must be unique.
   // This field MUST be present for this version of the IR.
     repeated ValueInfoProto choice = 1;
   };
@@ -464,7 +498,7 @@ message TypeProto {
     // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
     //        as input and output to graphs and nodes. These types are needed to naturally
     //        support classical ML operators.  DNN operators SHOULD restrict their input
-    //        and output types to tensors. 
+    //        and output types to tensors.
 
     // The type of a record.
     RecordTypeProto record_type = 3;
