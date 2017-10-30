@@ -61,6 +61,13 @@ You can then install ONNX from PyPi:
 pip install onnx
 ```
 
+Note: When installing in a non-Anaconda environment, make sure to install the Protobuf compiler before running the pip installation of onnx. For example, on Ubuntu:
+
+```
+sudo apt-get install protobuf-compiler libprotoc-dev
+pip install onnx
+```
+
 After installation, run
 
 ```

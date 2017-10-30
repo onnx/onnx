@@ -3,7 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .onnx_ml_pb2 import *
+from .onnx_ml_pb2 import *  # noqa
+from .version import version as __version__  # noqa
 
 import sys
 
