@@ -35,7 +35,7 @@ The ONNX versioning principles are based on [Postel's law](https://en.wikipedia.
 
 Per the rules of SemVer 2.0, during the initial development of ONNX:
 * We use a MAJOR version of 0 for both the IR version and operator version.
-* We will only increment the MINOR version in the face of either a breaking change as defined in this specification or the need to stabiize a version for specific engineering purposes.
+* We will only increment the MINOR version in the face of either a breaking change as defined in this specification or the need to stabilize a version for specific engineering purposes.
 
 Once we declare a stable/released version of ONNX (e.g., we hit 1.0.0), we will adhere to the standard SemVer rules for versioning.
 
@@ -87,7 +87,7 @@ ISSUE: the following is a strawman. I'm confident some of it is right and some i
     * Breaking changes to the semantics of an input or output (e.g., changing the required contents of an input tensor from color image to black and white image). 
     * Changing the declared type of an input or output to an incompatible type (e.g., tensor(int)->tensor(string).
     * Adding a new input for which there is no meaningful or specified default value. For graph inputs, those values are provided by a same-named value in GraphProto. initializer.
-    * Removing an exising output for which there is no meaningful or specified default value.
+    * Removing an existing output for which there is no meaningful or specified default value.
 
 2. Non-breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MINOR version of ModelProto.model_version. Non-breaking changes include:
     
