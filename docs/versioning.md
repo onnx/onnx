@@ -33,13 +33,19 @@ The ONNX versioning principles are based on [Postel's law](https://en.wikipedia.
 2. A consumer of a given ONNX model SHOULD consume an updated ONNX file provided there are no breaking changes in the new ONNX file's IR version, referenced operator versions, or model version (e.g., the MAJOR version numbers are have not changed between the two ONNX files) .
 3. A consumer of a given ONNX model MAY consume an updated ONNX file provided there are one or more breaking changes in the new ONNX file's IR version, referenced operator versions, or model version.
 
-Per the rules of SemVer 2.0, during the initial development of ONNX, we use a MAJOR version of 0 for both the IR version and operator version and will only increment the MINOR version in the face of either a breaking change or the need to stabiize a version for specific engineering purposes. [ISSUE: decide how we will stabilize and archive released versions of ONNX] 
+Per the rules of SemVer 2.0, during the initial development of ONNX:
+* We use a MAJOR version of 0 for both the IR version and operator version.
+* We will only increment the MINOR version in the face of either a breaking change as defined in this specification or the need to stabiize a version for specific engineering purposes.
+
+Once we declare a stable/released version of ONNX (e.g., we hit 1.0.0), we will adhere to the standard SemVer rules for versioning.
+
+ [ISSUE: decide how we will stabilize and archive released versions of ONNX] 
 
 ### Serializing SemVer version numbers in protobuf
 
 For historical reasons, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most siginificant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component. 
 
-For example, 1.2.3 is represented as 0x01020003.
+For example, 1.2.345 is represented as 0x01020159.
 
 The pre-release and build metadata are represented as ISSUE: are we supporting these or not, and if so, on what entity types? 
 
@@ -57,7 +63,7 @@ As a general principle, implementations SHOULD be robust in the face of missing 
 
     // This field MUST be present for this version of the IR.
 
-By way of example, the ModelProto.ir_version MUST be present in every model.
+By way of example, the ModelProto.ir_version MUST be present in every model.  The ONNX checker (onnx/checker.py) will enforce these rules.
 
 ISSUE: decide and document how we want to handle changes to the format that are forward compatible but will cause the generated code to introduce a breaking change (e.g., changing the data type of a field from int64 to int32, int64 to double or bytes to string).  I would recommend that we never do it after we hit 1.0.0 - prior to that we should be fairly liberal with changes to size (e.g., int32<>int16, float<>double) and conservative with changes to value space (e.g., integral<>floatingpoint, string<>int, scalar<>message)
 
@@ -69,23 +75,27 @@ ISSUE: sort out the design and then document.
 
 ## Model versioning
 
-Model authors and applications/systems  MAY elect to ignore model versioning mechanism and policy rules. For models that will be shared across developers, teams, or organizations, model authors and applications/systems SHOUD adhere to the following version policies:
+Model versioning is ultimately the domain of a given organization, and therefor, this section of the spec is non-normative and simply proposes a set of practices to consider.
+
+Model authors and applications/systems  MAY elect to ignore model versioning mechanism and policy rules. For models that will be shared across developers, teams, or organizations, model authors and applications/systems SHOULD adhere to the following version policies:
 
 ISSUE: the following is a strawman. I'm confident some of it is right and some is wrong. Either way, we need to make some calls and document it.
 
 ### Signature Changes
-1. Breaking changes to the ModelProto.graph.GraphProto.input our .output MUST increment the MAJOR version of ModelProto.model_version. Breaking changes include:
+1. Breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MAJOR version of ModelProto.model_version. Breaking changes include:
     
-    * Breaking changes to the semantics of an input or output (e.g., changing the required contents of an from color image to black and white image). 
+    * Breaking changes to the semantics of an input or output (e.g., changing the required contents of an input tensor from color image to black and white image). 
     * Changing the declared type of an input or output to an incompatible type (e.g., tensor(int)->tensor(string).
-    * Adding a new input for which there is no meaningful or specified default value.
+    * Adding a new input for which there is no meaningful or specified default value. For graph inputs, those values are provided by a same-named value in GraphProto. initializer.
     * Removing an exising output for which there is no meaningful or specified default value.
 
-2. Non-breaking changes to the ModelProto.graph.GraphProto.input our .output MUST increment the MINOR version of ModelProto.model_version. Non-breaking changes include:
+2. Non-breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MINOR version of ModelProto.model_version. Non-breaking changes include:
     
     * Changing the declared type of an input or output to an compatible/widening type (e.g., tensor(int32)->tensor(int64), tensor(float16)->tensor(float32).
-    * Adding a new input for which there is no meaningful or specified default value.
-    * Removing an exising output for which there is no meaningful or specified default value.
+    * Adding a new input for which there is a meaningful or specified default value.
+    * Adding new behavior that is only triggered in the presence of inputs that were not
+    possible in prior versions of the graph (typically by the presense of a new input 
+    or allowing a previously invalid input value).
 
 ### IR version/Operator version dependency changes
 
@@ -97,5 +107,3 @@ ISSUE: what's our policy when a model takes a dependency on new IR_VERSION chang
 Assuming that there are no breaking changes to the signature of the model's graph or any operator dependencies, the shape and contents of the graph can change freely provided there are no semantic changes to the model. However, changes to the shape and contents of the graph can impact model accuracy and/or model performance.    
 
 ISSUE: what's our policy for accuracy or perf changes?
-
-
