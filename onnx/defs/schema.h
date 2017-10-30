@@ -148,6 +148,8 @@ class OpSchema {
   // Functions to do documentation for the operator schema.
   OpSchema& SetDoc(const std::string& doc);
 
+  // Note: this enum is structurally identical to the AttributeProto.AttributeType
+  // enum defined in onnx.proto.  If you rev one, you likely need to rev the other.
   enum class AttrType {
       FLOAT,
       INT,
