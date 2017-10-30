@@ -111,6 +111,12 @@ message ModelProto {
   // This field MUST be present.
   optional int64 ir_version = 1;
 
+  // This field contains the SemVer prerelease value of the IR version. 
+  optional string ir_version_prerelease = 8;
+  // This field contains the SemVer build metadata value of the IR version. 
+  optional string ir_version_build_metadata = 9;
+  
+
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
@@ -131,6 +137,11 @@ message ModelProto {
 
   // The version of the graph encoded. See Version enum below.
   optional int64 model_version = 5;
+
+  // This field contains the SemVer prerelease value of the model version. 
+  optional string model_version_prerelease = 11;
+  // This field contains the SemVer build metadata value of the model version. 
+  optional string model_version_build_metadata = 12;
 
   // A human-readable documentation for this model. Markdown is allowed.
   optional string doc_string = 6;
