@@ -33,25 +33,13 @@ The ONNX versioning principles are based on [Postel's law](https://en.wikipedia.
 2. A consumer of a given ONNX model SHOULD consume an updated ONNX file provided there are no breaking changes in the new ONNX file's IR version, referenced operator versions, or model version (e.g., the MAJOR version numbers are have not changed between the two ONNX files) .
 3. A consumer of a given ONNX model MAY consume an updated ONNX file provided there are one or more breaking changes in the new ONNX file's IR version, referenced operator versions, or model version.
 
-Per the rules of SemVer 2.0, during the initial development of ONNX:
-* We use a MAJOR version of 0 for both the IR version and operator version.
-* We will only increment the MINOR version in the face of either a breaking change as defined in this specification or the need to stabilize a version for specific engineering purposes.
-
-Once we declare a stable/released version of ONNX (e.g., we hit 1.0.0), we will adhere to the standard SemVer rules for versioning.
-
- [ISSUE: decide how we will stabilize and archive released versions of ONNX] 
+The operational rules for how the ONNX project is managed are documented at [here](../RELEASE-MANAGEMENT.md). 
 
 ### Serializing SemVer version numbers in protobuf
 
-For historical reasons, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most siginificant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component. 
+ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most siginificant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component. 
 
 For example, 1.2.345 is represented as 0x01020159.
-
-The pre-release and build metadata are represented as ISSUE: are we supporting these or not, and if so, on what entity types? 
-
-
-
-
 
 ## IR versioning
 
