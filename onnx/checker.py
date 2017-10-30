@@ -30,15 +30,16 @@ def check_attr(attr, ir_version=IR_VERSION):
     """
 
     require_type_field = ir_version >= IR_VERSION
-    has_attr_type = attr.HasField("type")
+    has_attr_type = attr.HasField('type') and attr.type != AttributeProto.UNDEFINED
+
+    if require_type_field and not has_attr_type:
+        raise RuntimeError('AttributeProto missing type field where IR version requires it.')
 
     def check_mismatch(field_name, type_value, type_value_name):
         if attr.HasField(field_name) and has_attr_type and attr.type != type_value:
             raise RuntimeError('AttributeProto.type is wrong value (expected '
                                + type_value_name + ').')
 
-    if require_type_field and not has_attr_type:
-        raise RuntimeError('AttributeProto missing type field where IR version requires it.')
 
     check_mismatch('s', AttributeProto.STRING, 'STRING')
     check_mismatch('f', AttributeProto.FLOAT, 'FLOAT')
