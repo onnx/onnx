@@ -147,6 +147,11 @@ class build_proto(ONNXCommand):
                     proto_file
                 ])
 
+        # Otherwise, you'll get mysterious errors if you 'import onnx.onnx_pb2'
+        # directly
+        if os.path.exists(os.path.join(SRC_DIR, "onnx_pb2.py")):
+            raise RuntimeError("Stale onnx/onnx_pb2.py file detected.  Please delete this file and rebuild.")
+
 
 class create_version(ONNXCommand):
     def run(self):
