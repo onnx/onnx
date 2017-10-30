@@ -108,7 +108,7 @@ The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.NumInputs(2, 3);
+            schema.NumInputs(1, 2);
             schema.NumOutputs(1);
             schema.Input(0,
                          "X",
