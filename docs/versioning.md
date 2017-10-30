@@ -7,9 +7,9 @@ specification, MUST, SHOULD et al are used consistent with [RFC2119](https://too
 
 ONNX defines versioning policy and mechanism for three classes of entities:
 
-* The abstract graph model and the concrete format that serializes it. The graph model and format are versioned atomically and are referred to as the *IR version.* The IR version is  represented by the `ModelProto.ir_version` field.  
+* The abstract graph model and the concrete format that serializes it. The graph model and format are versioned atomically and are referred to as the *IR version.* The IR version is  represented by the `ModelProto.ir_version` fields.  
 * Operators that are referenced by a given ONNX graph. The version of a given operator  is referred to as the *operator version*. The operator version is  represented by the `TBD` field.  
-* An ONNX ModelProto that represents a given graph - that is, the contents of a model. We refer to this version as the *model version* and it is represented by the `ModelProto.model_version` field.    
+* An ONNX ModelProto that represents a given graph - that is, the contents of a model. We refer to this version as the *model version* and it is represented by the `ModelProto.model_version` fields.    
 
 The versioning of all three of these entity types is distinct, and largely independent. That is, ONNX versions the IR format at a different rate than the operators defined by ONNX - the former will version much slower than the latter. 
 
@@ -43,15 +43,16 @@ Once we declare a stable/released version of ONNX (e.g., we hit 1.0.0), we will 
 
 ### Serializing SemVer version numbers in protobuf
 
-For historical reasons, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most siginificant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component. 
 
-For example, 1.2.345 is represented as 0x01020159.
+In ONNX, the SemVer value is spread across three fields:
 
-The pre-release and build metadata are represented as ISSUE: are we supporting these or not, and if so, on what entity types? 
+    optional int32 xxx_version = N1;
+    optional string xxx_version_prerelease = N2;
+    optional string xxx_version_build_metadata = N3;
 
+For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most siginificant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component. 
 
-
-
+For example, 1.2.345 is represented as 0x01020159. 
 
 ## IR versioning
 
