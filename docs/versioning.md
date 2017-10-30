@@ -79,7 +79,7 @@ Model versioning is ultimately the domain of a given organization, and therefor,
 
 Model authors and applications/systems  MAY elect to ignore model versioning mechanism and policy rules. For models that will be shared across developers, teams, or organizations, model authors and applications/systems SHOULD adhere to the following version policies:
 
-ISSUE: the following is a strawman. I'm confident some of it is right and some is wrong. Either way, we need to make some calls and document it.
+ISSUE: the following is a strawman. I'm confident some of it is right and some is wrong. Either way, we need to make some calls and document it.  Also note that A LOT of this will likely apply to operators, as both operators and graphs have signatures AND can be versioned. 
 
 ### Signature Changes
 1. Breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MAJOR version of ModelProto.model_version. Breaking changes include:
