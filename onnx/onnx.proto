@@ -70,8 +70,6 @@ enum Version {
   IR_VERSION = 0x00000002;
 }
 
-
-
 // A named attribute containing either singular float, integer, string
 // and tensor values, or repeated float, integer, string and tensor values.
 // An AttributeProto MUST contain the name field, and *only one* of the
@@ -87,7 +85,7 @@ message AttributeProto {
     STRING = 3;
     TENSOR = 4;
     GRAPH = 5;
-  
+
     FLOATS = 6;
     INTS = 7;
     STRINGS = 8;
@@ -101,9 +99,9 @@ message AttributeProto {
   // The type field MUST be present for this version of the IR.
   // For 0.0.1 versions of the IR, this field was not defined, and
   // implementations needed to use has_field hueristics to determine
-  // which value field was in use.  For IR_VERSION 0.0.2 or later, this 
+  // which value field was in use.  For IR_VERSION 0.0.2 or later, this
   // field MUST be set and match the f|i|s|t|... field in use.  This
-  // change was made to accomodate proto3 implementations. 
+  // change was made to accomodate proto3 implementations.
   optional AttributeType type = 20;   // discriminator that indicates which field below is in use
 
   // Exactly ONE of the following fields must be present for this version of the IR
@@ -371,7 +369,7 @@ message TypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
-    optional TensorShapeProto shape = 2;    
+    optional TensorShapeProto shape = 2;
   }
 
 
