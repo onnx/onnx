@@ -190,10 +190,12 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel valuesfrom the pads attribute.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for upper and lower side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -338,6 +340,8 @@
   computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel valuesfrom the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
       <dt>group</dt>
@@ -345,7 +349,7 @@
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for upper and lower side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -355,6 +359,8 @@
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+      <dt>bias</dt>
+      <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
     </dl>
   * **output**:
     <dl>
@@ -369,23 +375,29 @@
   and computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel valuesfrom the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
+      <dt>group</dt>
+      <dd>number of groups input channels and output channels are divided into</dd>
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>output_shape</dt>
       <dd>The shape of the output.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for upper and lower side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
-  * **input**:
+  * **input**:2 - 3
     <dl>
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+      <dt>bias</dt>
+      <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
     </dl>
   * **output**:
     <dl>
@@ -767,12 +779,14 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel valuesfrom the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for upper and lower side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
