@@ -86,6 +86,9 @@ message AttributeProto {
     STRINGS = 8;
     TENSORS = 9;
     GRAPHS = 10;
+// #if ONNX-ML
+    VALUE = 11;
+// #endif
   }
 
   // The name field MUST be present for this version of the IR.
