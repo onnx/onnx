@@ -22,7 +22,7 @@ M = 10
 S = 5
 const2_np = np.random.randn(S, S)
 const2_onnx = onnx.helper.make_tensor("const2",
-                                      onnx.TensorProto.FLOAT,
+                                      onnx.onnx_pb2.TensorProto.FLOAT,
                                       (S, S),
                                       const2_np.flatten().astype(float))
 
