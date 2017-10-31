@@ -174,8 +174,10 @@ def make_tensor_value_info(name, elem_type, shape):
     for d in shape:
         dim = tensor_shape_proto.add()
         if isinstance(d, integer_types):
+            dim.type = TensorShapeProto.VALUE
             dim.dim_value = d
         elif isinstance(d, text_type):
+            dim.type = TensorShapeProto.PARAM
             dim.dim_param = d
         else:
             raise ValueError(

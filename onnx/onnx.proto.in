@@ -61,8 +61,11 @@ enum Version {
 
   // IR_VERSION 0.0.2 (this proto file) contains the following IR format changes
   // - Added type discriminator to AttributeProto to support proto3 users
-
+  // - Added type discriminator to KeyValuePairProto to support proto3 users
+  // - Added type discriminator to Dimension to support proto3 users
+  
   IR_VERSION = 0x00000002;
+
 }
 
 // A named attribute containing either singular float, integer, string
@@ -345,6 +348,15 @@ message SparseTensorProto {
 message ValueProto {
 
   message KeyValuePairProto {
+    enum KeyType {
+      UNDEFINED = 0;
+      STRING = 1;
+      INT32 = 2;
+      INT64 = 3;
+      UINT64 = 4;
+    }
+    // This field MUST be present for this version of the IR.
+    optional KeyType type = 5;
     oneof key {
       string s = 1;
       int32 i32 = 2;
@@ -428,7 +440,15 @@ message TypeProto {
   // or a symbolic variable. A symbolic variable represents an unknown
   // dimension.
   message TensorShapeProto {
+    message DimensionType {
+      UNDEFINED = 0;
+      VALUE = 1;
+      PARAM = 2;
+    }
+   
     message Dimension {
+      // This field MUST be present for this version of the IR.
+      optional DimensionType type = 3;
       oneof value {
         int64 dim_value = 1;
         string dim_param = 2;   // namespace Shape
