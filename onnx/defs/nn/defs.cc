@@ -28,11 +28,11 @@ namespace onnx {
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values"
+                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
                         "from the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for upper and lower side along each axis, it can take any value greater "
+                        "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
@@ -84,11 +84,11 @@ namespace onnx {
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values"
+                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
                         "from the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for upper and lower side along each axis, it can take any value greater "
+                        "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
@@ -167,11 +167,11 @@ computes the output.)DOC";
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values"
+                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
                         "from the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for upper and lower side along each axis, it can take any value greater "
+                        "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
@@ -237,11 +237,11 @@ and computes the output.)DOC";
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values"
+                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
                         "from the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for upper and lower side along each axis, it can take any value greater "
+                        "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
