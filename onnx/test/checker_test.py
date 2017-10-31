@@ -55,7 +55,7 @@ class TestChecker(unittest.TestCase):
         graph.initializer.extend([self._sample_float_tensor])
 
         graph.initializer[0].name = 'no-exist'
-        self.assertRaises(ValueError, checker.check_graph, graph)
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
@@ -87,23 +87,24 @@ class TestChecker(unittest.TestCase):
         checker.check_tensor(tensor)
 
         tensor.raw_data = np.random.randn(2, 3).astype(np.float32).tobytes()
-        self.assertRaises(ValueError, checker.check_tensor, tensor)
+        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
     def test_check_string_tensor(self):
         tensor = TensorProto()
         tensor.data_type = TensorProto.STRING
+        tensor.dims.append(1)
         tensor.string_data.append('Test'.encode('utf-8'))
         checker.check_tensor(tensor)
 
         del tensor.string_data[:]
         tensor.raw_data = 'Test'.encode('utf-8')
         # string data should not be stored in raw_data field
-        self.assertRaises(ValueError, checker.check_tensor, tensor)
+        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
     def test_check_tensor_mismatched_field(self):
         tensor = self._sample_float_tensor
         tensor.data_type = TensorProto.INT32
-        self.assertRaises(ValueError, checker.check_tensor, tensor)
+        self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
 
 
 if __name__ == '__main__':
