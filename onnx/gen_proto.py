@@ -60,7 +60,7 @@ def translate(source, proto, onnx_ml):
     return "\n".join(lines)  # TODO: not Windows friendly
 
 def main():
-    onnx_proto_in = os.path.join(os.path.dirname(__file__), "onnx.proto.in")
+    onnx_proto_in = os.path.join(os.path.dirname(__file__), "onnx.in.proto")
     onnx_proto = os.path.join(os.path.dirname(__file__), "onnx.proto")
     onnx_ml_proto = os.path.join(os.path.dirname(__file__), "onnx-ml.proto")
     onnx_proto3 = os.path.join(os.path.dirname(__file__), "onnx.proto3")
