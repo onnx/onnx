@@ -134,7 +134,7 @@ class build_proto(ONNXCommand):
 
         # NB: Not a glob, because you can't build both onnx.proto and
         # onnx-proto.ml in the same build
-        proto_files = [os.path.join(SRC_DIR, "onnx-ml.proto")]
+        proto_files = [os.path.join(SRC_DIR, "onnx.proto")]
 
         for proto_file in proto_files:
             log('compiling {}'.format(proto_file))
@@ -146,11 +146,6 @@ class build_proto(ONNXCommand):
                     '--cpp_out', SRC_DIR,
                     proto_file
                 ])
-
-        # Otherwise, you'll get mysterious errors if you 'import onnx.onnx_pb2'
-        # directly
-        if os.path.exists(os.path.join(SRC_DIR, "onnx_pb2.py")):
-            raise RuntimeError("Stale onnx/onnx_pb2.py file detected.  Please delete this file and rebuild.")
 
 
 class create_version(ONNXCommand):
@@ -224,8 +219,8 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
-        if os.path.join(SRC_DIR, "onnx.pb.cc") in self.sources:
-            raise RuntimeError("Stale onnx/onnx.pb.cc file detected.  Please delete this file and rebuild.")
+        if os.path.join(SRC_DIR, "onnx-ml.pb.cc") in self.sources:
+            raise RuntimeError("Stale onnx/onnx-ml.pb.cc file detected.  Please delete this file and rebuild.")
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
