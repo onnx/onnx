@@ -15,7 +15,7 @@
 #include <string>
 #include <cstring>
 
-#include "onnx/onnx-ml.pb.h"
+#include "onnx/onnx.pb.h"
 
 namespace onnx {
 

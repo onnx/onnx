@@ -7,7 +7,7 @@ import unittest
 import numpy as np
 
 from onnx import checker, helper
-from onnx.onnx_ml_pb2 import TensorProto
+from onnx.onnx_pb2 import TensorProto
 
 
 class TestChecker(unittest.TestCase):
