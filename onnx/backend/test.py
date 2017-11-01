@@ -26,6 +26,17 @@ const2_onnx = onnx.helper.make_tensor("const2",
                                       (S, S),
                                       const2_np.flatten().astype(float))
 
+def bmm_reference(m1, m2):
+    assert m1.ndim == 3 and m2.ndim == 3
+    assert m1.shape[0] == m2.shape[0]
+    assert m1.shape[2] == m2.shape[1]
+    b, m, k = m1.shape
+    _, _, n = m2.shape
+    r = np.zeros((b, m, n))
+    for i in range(b):
+        r[i, :, :] = np.matmul(m1[i, :, :], m2[i, :, :])
+    return retval
+
 # TODO: These Numpy specs will be generally useful to backend implementations,
 # so they should get moved out of here at some point
 node_tests = [
@@ -65,6 +76,10 @@ node_tests = [
     ("test_slice_default_axes",
      N("Slice", starts=[0, 0, 3], ends=[L, M, 4]),
      lambda x: x[:, :, 3:4], [(L, M, S)]),
+     ("test_bmm",
+      N("BatchMatMul"),
+      bmm_reference,
+      [(L, M, S), (L, S, 3)]),
     # TODO: Add all the other operators
 ] + test_rnn.node_tests
 
