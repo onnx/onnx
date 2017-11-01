@@ -16,7 +16,6 @@
 * <a href="#Conv">Conv</a>
 * <a href="#ConvTranspose">ConvTranspose</a>
 * <a href="#Div">Div</a>
-* <a href="#Dot">Dot</a>
 * <a href="#Dropout">Dropout</a>
 * <a href="#Elu">Elu</a>
 * <a href="#Exp">Exp</a>
@@ -29,6 +28,7 @@
 * <a href="#LRN">LRN</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Log">Log</a>
+* <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
 * <a href="#Min">Min</a>
@@ -447,24 +447,6 @@
     </dl>
 
 
-### <a name="Dot"></a><a name="dot">**Dot**</a>
-
-  Apply dot product between 2 tensors. Similar to numpy implementation:
-  https://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
-  * **input**:
-    <dl>
-      <dt>X</dt>
-      <dd>Input tensor of any shape</dd>
-      <dt>Y</dt>
-      <dd>Input tensor of any shape</dd>
-    </dl>
-  * **output**:
-    <dl>
-      <dt>Z</dt>
-      <dd>Output tensor the dot product between X and Y.</dd>
-    </dl>
-
-
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -749,6 +731,23 @@
     <dl>
       <dt>output</dt>
       <dd>The natural log of the input tensor computed element-wise</dd>
+    </dl>
+
+
+### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+  * **input**:
+    <dl>
+      <dt>A</dt>
+      <dd>N-dimensional matrix A</dd>
+      <dt>B</dt>
+      <dd>N-dimensional matrix B</dd>
+    </dl>
+  * **output**:
+    <dl>
+      <dt>Y</dt>
+      <dd>Matrix multiply results from A * B</dd>
     </dl>
 
 
