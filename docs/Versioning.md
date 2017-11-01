@@ -7,13 +7,13 @@ specification, MUST, SHOULD et al are used consistent with [RFC2119](https://too
 
 ONNX defines versioning policy and mechanism for three classes of entities:
 
-* The abstract graph model and the concrete format that serializes it. The graph model and format are versioned atomically and are referred to as the *IR version.* The IR version is  represented by the `ModelProto.ir_version` field.
-* Operators that are referenced by a given ONNX graph. The version of a given operator  is referred to as the *operator version*. The operator version is  represented by the `TBD` field.
+* The abstract graph model and the concrete format that serializes it. The graph model and format are versioned atomically and are referred to as the *IR version.* The IR version is represented by the `ModelProto.ir_version` field.
+* Operators that are referenced by a given ONNX graph.  The set of ONNX operators in scope and their semantics is versioned via the *ONNX operator version*. The ONNX operator version is represented by the `ModelProto.op_version` field.
 * An ONNX ModelProto that represents a given graph - that is, the contents of a model. We refer to this version as the *model version* and it is represented by the `ModelProto.model_version` field.
 
 The versioning of all three of these entity types is distinct, and largely independent. That is, ONNX versions the IR format at a different rate than the operators defined by ONNX - the former will version much slower than the latter.
 
-While the versioning mechanisms are clearly specified in this document, the policies for version management are only mandated for IR version and operator verison.
+While the versioning mechanisms are clearly specified in this document, the policies for version management are only mandated for IR version and operator version.
 
 For model version, ONNX users and systems MAY follow whatever local customs make sense, however, to facilitate shared libraries or repositories of ONNX models to be managable, models SHOULD adhere to the policies described under Model versioning
 
@@ -55,11 +55,142 @@ By way of example, the `ModelProto.ir_version` MUST be present in every model.  
 
 ISSUE: decide and document how we want to handle changes to the format that are forward compatible but will cause the generated code to introduce a breaking change (e.g., changing the data type of a field from int64 to int32, int64 to double or bytes to string).  I would recommend that we never do it after we hit 1.0.0 - prior to that we should be fairly liberal with changes to size (e.g., `int32<>int16`, `float<>double`) and conservative with changes to value space (e.g., `integral<>floatingpoint`, `string<>int`, `scalar<>message`)
 
-ISSUE: define type compatiblity rules either here or under model versioning - probably here
+ISSUE: define type compatibility rules either here or under model versioning - probably here
 
 ## Operator versioning
 
-ISSUE: sort out the design and then document.
+ONNX's operator versioning has semantic meaning: the ONNX operator
+version associated with a model controls the set of ONNX operators it
+may use, and the semantic meaning of these operators.  Operator
+versioning permits ONNX to evolve the semantics of the operators it
+specifies in BC-breaking ways, while preserving backwards-compatibility
+with older exported models (which pin the meaning of operators by
+recording the operator version they target).
+
+The ONNX operator version used by a model is recorded in
+`ModelProto.op_version` and is a simple integer (i.e., it does *not*
+use semantic versioning.)  Each operator version of ONNX is associated
+with some machine-readable metadata which specifies the implementation
+for every operator that is in scope.  When ONNX makes BC-breaking
+changes to the semantics of operators (e.g., by changing the meaning
+of an operator or removing an operator), it increments the ONNX
+operator version.  Additions of new operators do NOT increment the
+ONNX operator version (as they are not BC-breaking changes), nor
+do additions of new optional attributes.
+
+When understanding the semantics of an operator version, it is helpful
+to distinguish an *operator implementation* from an operator name
+(`op_type`).  An operator implementation specifies the actual semantics
+of an operator (its type, the mathematical computation it performs on
+its arguments, etc.); an operator name is simply what is recorded in an
+exported model.  Operator implementations are *immutable*; they never
+change across ONNX operator versions.  For example, if ONNX wants to
+introduce a breaking change to the `Conv` operator, it must create a
+new operator implementation describing the new desired behavior, and
+then remap the `Conv` name to this new implementation in the next ONNX
+operator version.  In this way, the ONNX operator version is a
+*namespace* mechanism on top of an immutable store of operator
+implementations; each operator version defines a mapping of operator
+names to operator implementations.
+
+It will be helpful to refer to operator implementations by name without
+reference to an operator version. To distinguish these identifiers from
+operator names, they have a leading underscore (e.g., the old and new
+implementations of `Conv` might be `_Conv` and `_ConvWithBias`).
+
+### Frontends export models targeting a specific operator version
+
+The frontend of a given ONNX model MUST pick a specific ONNX operator
+version they target; we refer to this as the *target ONNX operator
+version*.  They MUST use only operators which are defined within this
+version; the semantics of the operators are exactly as defined by that
+ONNX operator version.
+
+Upon serializing an ONNX model, the frontend SHOULD record in
+`ModelProto.op_version` smallest operator version for which the used
+subset of the mapping from operator names to operator implementations is
+equal to the corresponding subset of the target ONNX operator version
+mapping.  For example, if a frontend targets ONNX operator version 5,
+but only uses operators which were available since operator version 3,
+it should export a model with `op_version = 3`.
+This ensures that exported models can be understood by
+backends which don't understand later ONNX operator versions.
+
+### Backends use the operator version database to pick implementations
+
+A backend which interprets ONNX models MUST declare a maximum ONNX
+operator versions it is aware of; this defines the *known ONNX operator
+version range* (which always extends from the beginning of ONNX's
+operator version history, to some particular operator version).  A
+backend MUST *unconditionally* reject any models whose `op_version`
+beyond this version.  ONNX may make BC-breaking changes to operators; a
+backend which is not aware of these changes cannot know if they should
+reject a model because it uses an operator that was changed in a
+backwards incompatible way.
+
+A backend MAY implement some of the operator implementations utilized by
+this range (it is not expected to implement *all* operator
+implementations, especially legacy ones; however, a larger set of
+operator implementations means better interoperability).  For every ONNX
+operator version inside the known ONNX operator version range, a backend
+MUST be able to compute the corresponding mapping from operator name to
+operator implementation.  To interpret a model, a backend MUST use the
+recorded `ModelProto.op_version` to translate operator names `op_type`
+into the actual implementations of the operators.
+
+To allow backends to easily compute the operator name to implementation
+mapping, ONNX publishes an *operator version database* in an auxiliary
+protobuf format, which defines all of the name to implementation
+mappings for all operator versions up to the latest operator version at
+the time of the database's publication.  A backend SHOULD ship a copy of
+the operator version database corresponding to the latest ONNX operator
+version they support and use it to perform the mapping computation
+(frontends which target a later ONNX operator version may still export
+models which are interpretable by this backend, if they recorded a
+minimum compatible `op_version`).  The operator version database
+increases monotonically; mappings for old versions never change.
+(Internally, the operator version database is represented as a
+changelog, recording the deltas from one operator version to the next.)
+
+### Vendor extensions to operators
+
+We don't expect ONNX to cover every operator that every vendor may use;
+some backends may need to expose specific operators before they
+can go through the ONNX standardization process.  Thus, ONNX operator
+names are extended with an optional namespace prefix, specified by an
+alphanumeric string and a period, can place their custom operators
+under.  For example, a Caffe2 only operator might be assigned the name
+`Caffe2.ConvTBC`.  The list of vendor prefixes will be coordinated by
+the ONNX standards team, in a manner similar to URI schemes.
+
+Each vendor operator extension namespace can also have an operator
+version number associated with it.  The operator versions for every
+vendor extension used in a model are stored in a list of key-value pairs in
+`ModelProto.ext_op_versions`; each operator version controls the
+semantics of the operators in its indicated namespace.  Operator
+implementations are similarly namespaced, e.g., `Caffe2._ConvTBCImpl`,
+and each extension provider MUST provide an operator version database
+for their names.
+
+A backend MUST reject a model which uses an extension namespace that
+it does not understand.
+
+### The operator implementation database
+
+The operator implementation database records information about operator
+implementations, which frontends and backends MAY use to implement
+facilities such as type checking imported models or determining
+the portability/stability of an exported model.  The operator
+implementation database is mapping from operator implementation names to
+information about the operator, e.g., types, stability, documentation,
+etc.  Use of the operator implementation database is OPTIONAL; a backend
+may choose to hard code their information about implementations (as such
+information is immutable.)
+
+One thing to note is that the operator version database does NOT contain
+the operator implementation database; it contains only the bare minimum
+to calculate the mapping of operator names to operator implementations;
+no more, no less.
 
 ## Model versioning
 
