@@ -36,9 +36,9 @@ OPERATOR_SCHEMA(Reshape)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
-    
+
 It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
-    
+
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is going to be copied
@@ -54,6 +54,7 @@ OPERATOR_SCHEMA(Concat)
           "Which axis to concat on",
           AttrType::INT)
     .SetDoc("Concatenate a list of tensors into a single tensor")
+    .Input(0, "inputs...", "List of tensors for concatenation")
     .Output(0, "concat_result", "Concatenated tensor");
 
 OPERATOR_SCHEMA(Split)
@@ -61,6 +62,7 @@ OPERATOR_SCHEMA(Split)
     .NumOutputs(1, INT_MAX)
     .Input(0, "input", "The tensor to split")
     .Input(1, "split", "Optional list of output lengths (see also arg 'split')")
+    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting")
     .Attr("axis",
           "Which axis to split on",
           AttrType::INT)

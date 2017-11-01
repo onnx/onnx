@@ -17,6 +17,15 @@ def display_number(v):
     return str(v)
 
 
+def display_attr_type(v):
+    assert isinstance(v, OpSchema.AttrType)
+    s = str(v)
+    s = s[s.rfind('.')+1:].lower()
+    if s[-1] == 's':
+        s = 'list of ' + s
+    return s
+
+
 def support_level_str(level):
     return \
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
@@ -58,41 +67,46 @@ def main(args):
 
         # attributes
         if schema.attributes:
-            s += '  * **attribute**:\n'
-            s += '    <dl>\n'
+            s += '\n#### Attributes\n\n'
+            s += '<dl>\n'
             for _, attr in sorted(schema.attributes.items()):
-                s += '      <dt>{}</dt>\n'.format(attr.name)
-                s += '      <dd>{}</dd>\n'.format(attr.description)
-            s += '    </dl>\n'
+                s += '<dt><tt>{}</tt> : {}{}</dt>\n'.format(
+                    attr.name,
+                    display_attr_type(attr.type),
+                    ' (required)' if attr.required else '')
+                s += '<dd>{}</dd>\n'.format(attr.description)
+            s += '</dl>\n'
 
 
         # inputs
-        s += '  * **input**:'
+        s += '\n#### Inputs'
         if schema.min_input != schema.max_input:
-            s += '{} - {}'.format(display_number(schema.min_input),
-                                  display_number(schema.max_input))
-        s += '\n'
+            s += ' ({} - {})'.format(display_number(schema.min_input),
+                                   display_number(schema.max_input))
+        s += '\n\n'
         if schema.input_desc:
-            s += '    <dl>\n'
-            for input_name, input_desc in schema.input_desc:
-                s += '      <dt>{}</dt>\n'.format(input_name)
-                s += '      <dd>{}</dd>\n'.format(input_desc)
-            s += '    </dl>\n'
+            s += '<dl>\n'
+            for idx, (input_name, input_desc) in enumerate(schema.input_desc):
+                s += '<dt><tt>{}</tt>{}</dt>\n'.format(
+                    input_name,
+                    ' (optional)' if idx in schema.optional_inputs else '')
+                s += '<dd>{}</dd>\n'.format(input_desc)
+            s += '</dl>\n'
 
         # outputs
-        s += '  * **output**:'
+        s += '\n#### Outputs'
         if schema.min_output != schema.max_output:
-            s += '{} - {}'.format(display_number(schema.min_output),
-                                  display_number(schema.max_output))
+            s += ' ({} - {})'.format(display_number(schema.min_output),
+                                   display_number(schema.max_output))
         s += '\n'
         if schema.output_desc:
-            s += '    <dl>\n'
+            s += '<dl>\n'
             for output_name, output_desc in schema.output_desc:
-                s += '      <dt>{}</dt>\n'.format(output_name)
-                s += '      <dd>{}</dd>\n'.format(output_desc)
-            s += '    </dl>\n'
+                s += '<dt><tt>{}</tt></dt>\n'.format(output_name)
+                s += '<dd>{}</dd>\n'.format(output_desc)
+            s += '</dl>\n'
 
-        s += '\n\n'
+        s += '\n\n---\n\n'
         args.output.write(s)
 
 
