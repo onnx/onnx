@@ -191,7 +191,7 @@ OPERATOR_SCHEMA(Selu)
     .SetDoc(R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
-`y = gamma * (alpha * e^x - alpha) for x <= 0`, `f(x) = gamma * x for x > 0`,
+`y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
 is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor")
@@ -267,7 +267,8 @@ produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor of any shape, base of the exponent.")
-    .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, the exponent component.")    
+    .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, "
+                   "the exponent component.")
     .Output(0, "Z", "Output tensor (same size as X)");
 
 OPERATOR_SCHEMA(Dot)
@@ -385,8 +386,14 @@ will throw errors.
 OPERATOR_SCHEMA(Gemm)
     .NumInputs(3)
     .NumOutputs(1)
-    .SetDoc(R"DOC(General Matrix multiplication: https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K), input tensor B has dimension (K X N), input tensor C and output tensor Y have dimension (M X N). Input tensor C can be used inplace as the output tensor Y. If attribute broadcast is non-zero, input tensor C will be broadcasted to match the dimension requirement. If A can be transposed before doing the computation if attribute transA is non-zero, same for B and transB.
+    .SetDoc(R"DOC(General Matrix multiplication:
+https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
+, input tensor B has dimension (K X N), input tensor C and output tensor Y have
+dimension (M X N). Input tensor C can be used inplace as the output tensor Y.
+If attribute broadcast is non-zero, input tensor C will be broadcasted to match
+the dimension requirement. If A can be transposed before doing the computation
+if attribute transA is non-zero, same for B and transB.
 )DOC")
     .Input(0, "A", "Input tensor A")
     .Input(1, "B", "Input tensor B")

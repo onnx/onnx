@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import numpy as np
 
 from onnx import numpy_helper
-from onnx.onnx_pb2 import TensorProto
 
 import unittest
 
@@ -24,7 +23,8 @@ class TestNumpyHelper(unittest.TestCase):
         a = np.random.randint(
             np.iinfo(dtype).min,
             np.iinfo(dtype).max,
-            size=(13, 37)).astype(dtype)
+            dtype=dtype,
+            size=(13, 37))
         tensor_def = numpy_helper.from_array(a, "test")
         self.assertEqual(tensor_def.name, "test")
         a_recover = numpy_helper.to_array(tensor_def)

@@ -15,3 +15,8 @@ ccache -s
 cd $onnx_dir
 pip install pytest-cov
 pytest
+
+# check auto-gen files up-to-date
+python onnx/defs/gen_doc.py -o docs/Operators.md
+python onnx/gen_proto.py
+git diff --exit-code

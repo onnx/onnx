@@ -11,15 +11,68 @@ from __future__ import unicode_literals
 import itertools
 import logging
 
-from onnx.onnx_pb2 import *
+from onnx.onnx_pb2 import TensorProto, ValueInfoProto, NodeProto, AttributeProto,  \
+    GraphProto, ModelProto, IR_VERSION
 from onnx import defs, mapping
 
 
-def check_node(node):
+
+
+def check_attr(attr, ir_version=IR_VERSION):
+    """Checks if a node attribute is legal.
+
+    Inputs:
+        node: an AttributeProto object.
+        ir_version: the IR_VERSION to validate against.
+    Returns:
+        None
+    An exception is thrown if it does not pass the test.
+    """
+
+    require_type_field = ir_version >= IR_VERSION
+    has_attr_type = attr.HasField('type') and attr.type != AttributeProto.UNDEFINED
+
+    if require_type_field and not has_attr_type:
+        raise RuntimeError('AttributeProto missing type field where IR version requires it.')
+
+    # NB: It's not legal to call HasField on a 'repeated' field, because
+    # the empty list case and the not defined case are indistinguishable.
+
+    def check_mismatch(field_name, type_value, type_value_name):
+        if attr.HasField(field_name) and has_attr_type and attr.type != type_value:
+            raise RuntimeError('AttributeProto.type is wrong value (expected '
+                               + type_value_name + ').')
+
+
+    check_mismatch('s', AttributeProto.STRING, 'STRING')
+    check_mismatch('f', AttributeProto.FLOAT, 'FLOAT')
+    check_mismatch('i', AttributeProto.INT, 'INT')
+    check_mismatch('t', AttributeProto.TENSOR, 'TENSOR')
+    check_mismatch('g', AttributeProto.GRAPH, 'GRAPH')
+
+    def check_repeated_mismatch(field_value, type_value, type_value_name):
+        if field_value and has_attr_type and attr.type != type_value:
+            raise RuntimeError('AttributeProto.type is wrong value (expected '
+                               + type_value_name + ').')
+
+    check_repeated_mismatch(attr.strings, AttributeProto.STRINGS, 'STRINGS')
+    check_repeated_mismatch(attr.floats, AttributeProto.FLOATS, 'FLOATS')
+    check_repeated_mismatch(attr.ints, AttributeProto.INTS, 'INTS')
+    check_repeated_mismatch(attr.tensors, AttributeProto.TENSORS, 'TENSORS')
+    check_repeated_mismatch(attr.graphs, AttributeProto.GRAPHS, 'GRAPHS')
+
+    if attr.HasField('t'):
+        check_tensor(attr.t)
+    for tensor in attr.tensors:
+        check_tensor(tensor)
+
+
+def check_node(node, ir_version=IR_VERSION):
     """Checks if a node is legal.
 
     Inputs:
         node: a NodeProto object.
+        ir_version: the IR_VERSION to check against.
     Returns:
         None
     An exception is thrown if it does not pass the test.
@@ -38,10 +91,7 @@ def check_node(node):
         raise ValueError(
             'NodeProto of type {} did not pass defs schema check.'.format(str(node.op_type)))
     for attr in node.attribute:
-        if attr.HasField('t'):
-            check_tensor(attr.t)
-        for tensor in attr.tensors:
-            check_tensor(tensor)
+        check_attr(attr, ir_version)
 
 
 def check_tensor_value_info(value_info,
@@ -64,7 +114,8 @@ def check_tensor_value_info(value_info,
         if shape_required and not value_info.type.tensor_type.HasField('shape'):
             raise ValueError('shape field of TensorTypeProto is missing')
     elif value == 'sparse_tensor_type':
-        if type_required and not value_info.type.sparse_tensor_type.HasField('elem_type'):
+        if type_required and \
+           not value_info.type.sparse_tensor_type.HasField('elem_type'):
             raise ValueError('elem_type field of SparseTensorTypeProto is missing')
         if shape_required and not value_info.type.sparse_tensor_type.HasField('shape'):
             raise ValueError('shape field of SparseTensorTypeProto is missing')
@@ -103,11 +154,12 @@ def check_tensor(tensor):
                 ))
 
 
-def check_graph(graph):
+def check_graph(graph, ir_version=IR_VERSION):
     """Checks if a GraphProto is legal.
 
     Inputs:
         graph: a GraphProto object.
+        ir_version: the IR_VERSION to check against.
     Returns:
         None
     An exception is thrown if it does not pass the test.
@@ -122,7 +174,7 @@ def check_graph(graph):
     for value_info in graph.value_info:
         check_tensor_value_info(value_info)
     for node in graph.node:
-        check_node(node)
+        check_node(node, ir_version)
 
     input_names = {value_info.name for value_info in graph.input}
     for init in graph.initializer:
@@ -149,4 +201,4 @@ def check_model(model):
         logging.warning(
             'Your model ir_version is higher than the checker\'s, so it might '
             'not interpret the higher version correctly.')
-    check_graph(model.graph)
+    check_graph(model.graph, model.ir_version)

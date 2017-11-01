@@ -57,14 +57,14 @@ node_tests = [
                       mode='edge'),
      [(1, 3, L, M)]),
     ("test_slice",
-     N("Slice"),
-     lambda x, axes, starts, ends: x[
-         [(slice(starts[i], ends[i]) if i in axes else slice(None))
-          for i in range(x.ndim)]
-     ], [(L, M, S),
-         np.array([0, 1]), # axes
-         np.array([0, 0]), # starts
-         np.array([3, M])]), # ends
+     N("Slice", axes=[0, 1], starts=[0, 0], ends=[3, M]),
+     lambda x: x[0:3, 0:M], [(L, M, S)]),
+    ("test_slice_neg",
+     N("Slice", axes=[1], starts=[0], ends=[-1]),
+     lambda x: x[:, 0:-1], [(L, M, S)]),
+    ("test_slice_default_axes",
+     N("Slice", starts=[0, 0, 3], ends=[L, M, 4]),
+     lambda x: x[:, :, 3:4], [(L, M, S)]),
     # TODO: Add all the other operators
 ] + test_rnn.node_tests
 
@@ -83,14 +83,16 @@ model_tests = [
 if not os.environ.get('TRAVIS'):
     model_tests.append(('test_vgg19', 'vgg19'))
 
+
 class BackendTest(object):
-    def __init__(self, backend):
+    def __init__(self, backend, parent_module=None):
         class TestsContainer(unittest.TestCase):
             def setUp(self):
                 np.random.seed(seed=0)
 
         self.backend = backend
         self._base_case = TestsContainer
+        self._parent_module = parent_module
         # List of test cases to be applied on the parent scope
         # Example usage: globals().update(BackendTest(backend).test_cases)
         self.test_cases = {}
@@ -112,6 +114,8 @@ class BackendTest(object):
         name = 'OnnxBackend{}Test'.format(category)
         if name not in self.test_cases:
             self.test_cases[name] = type(str(name), (self._base_case,), {})
+            if self._parent_module:
+                self.test_cases[name].__module__ = self._parent_module
         return self.test_cases[name]
 
     def _prepare_model(self, model_name):
@@ -122,12 +126,12 @@ class BackendTest(object):
             os.makedirs(model_dir)
             url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
                 model_name)
-            download_file = tempfile.NamedTemporaryFile(delete=True)
-            print('Start downloading model {} from {}'.format(model_name, url))
-            urlretrieve(url, download_file.name)
-            print('Done')
-            with tarfile.open(download_file.name) as t:
-                t.extractall(models_dir)
+            with tempfile.NamedTemporaryFile(delete=True) as download_file:
+                print('Start downloading model {} from {}'.format(model_name, url))
+                urlretrieve(url, download_file.name)
+                print('Done')
+                with tarfile.open(download_file.name) as t:
+                    t.extractall(models_dir)
         return model_dir
 
     def _add_test(self, test_case, name, test_func):
