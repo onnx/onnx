@@ -190,10 +190,12 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -338,6 +340,8 @@
   computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
       <dt>group</dt>
@@ -345,7 +349,7 @@
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -355,6 +359,8 @@
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+      <dt>bias</dt>
+      <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
     </dl>
   * **output**:
     <dl>
@@ -369,23 +375,29 @@
   and computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
+      <dt>group</dt>
+      <dd>number of groups input channels and output channels are divided into</dd>
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>output_shape</dt>
       <dd>The shape of the output.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
-  * **input**:
+  * **input**:2 - 3
     <dl>
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+      <dt>bias</dt>
+      <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
     </dl>
   * **output**:
     <dl>
@@ -602,8 +614,14 @@
 
 ### <a name="Gemm"></a><a name="gemm">**Gemm**</a>
 
-  General Matrix multiplication: https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K), input tensor B has dimension (K X N), input tensor C and output tensor Y have dimension (M X N). Input tensor C can be used inplace as the output tensor Y. If attribute broadcast is non-zero, input tensor C will be broadcasted to match the dimension requirement. If A can be transposed before doing the computation if attribute transA is non-zero, same for B and transB.
+  General Matrix multiplication:
+  https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+  Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
+  , input tensor B has dimension (K X N), input tensor C and output tensor Y have
+  dimension (M X N). Input tensor C can be used inplace as the output tensor Y.
+  If attribute broadcast is non-zero, input tensor C will be broadcasted to match
+  the dimension requirement. If A can be transposed before doing the computation
+  if attribute transA is non-zero, same for B and transB.
   * **attribute**:
     <dl>
       <dt>alpha</dt>
@@ -669,8 +687,9 @@
 
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
-  Local Response Normalization. It normalizes over local input regions. Each input value is divided by
-   (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+  Local Response Normalization. It normalizes over local input regions.
+  Each input value is divided by
+  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
   * **attribute**:
     <dl>
       <dt>alpha</dt>
@@ -760,12 +779,14 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -928,22 +949,31 @@ be compatible with input attributes passed to the op.
 The layout format is the one used by CuDNN and very similar to TensorRT:
 
 The weight structure holds weights and biases for each layer of the network.
-Each parameter matrix is linearly appended after the previous parameter matrix without padding.
+Each parameter matrix is linearly appended after the previous parameter matrix
+without padding.
 
 The order of matrixes `{K, L, D, R, N, C}` is defined as:
  - K - type of the matrix: `weight` (first) or `bias` second
  - L - The number of layers in the RNN - `num_layers`
- - D - The direction of the layer: normal (first) or reverse (second). (in case of `directions=2`)
- - R - The type of the connection: `input-hidden` (first) or `hidden-hidden` (second)
+ - D - The direction of the layer: normal (first) or reverse (second).
+                                   (in case of `directions=2`)
+ - R - The type of the connection: `input-hidden` (first) or
+                                   `hidden-hidden` (second)
  - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
  -- For `relu` or `tanh` there is one gate
  -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
  -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
  - C - The size of each matrix, which varies.
- -- If the linear layer on the input is skipped (`skip_input_transform=1`) and then for the first layer (`L=1`) the weight matrix (`K=weight`) on the input connection (`R=input-hidden`) is skipped, i.e. has 0 parameters in the list
- -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
- -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
- -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`), dimensions are `{hidden_size, hidden_size}`
+ -- If the linear layer on the input is skipped (`skip_input_transform=1`)
+    and then for the first layer (`L=1`) the weight matrix (`K=weight`)
+    on the input connection (`R=input-hidden`) is skipped,
+    i.e. has 0 parameters in the list
+ -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
+ -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
+ -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
+    dimensions are `{hidden_size, hidden_size}`
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
 </dd>
       <dt>input</dt>
@@ -1394,7 +1424,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 
   Selu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the scaled exponential linear unit function,
-  `y = gamma * (alpha * e^x - alpha) for x <= 0`, `f(x) = gamma * x for x > 0`,
+  `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
   is applied to the tensor elementwise.
   * **attribute**:
     <dl>
@@ -1435,22 +1465,55 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="Slice"></a><a name="slice">**Slice**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
+  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   
-  Slices uses `axes`, `starts` and `ends` list to specify the start and end dimension 
-  for each axis in the list of axes, it uses this information to slice the input `data` 
-  tensor. If a negative value is passed for any of the start or end indices, it represent 
-  number of elements before the end of that dimension.
+  Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
+  dimension for each axis in the list of axes, it uses this information to
+  slice the input `data` tensor. If a negative value is passed for any of the
+  start or end indices, it represent number of elements before the end of that
+  dimension.
+  
+  Example 1:
+  
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    axes = [0, 1]
+    starts = [1, 0]
+    ends = [2, 3]
+  
+    result = [
+        [5, 6, 7],
+    ]
+  
+  
+  Example 2:
+  
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    starts = [0]
+    ends = [-1]
+  
+    result = [
+        [1, 2, 3, 4],
+    ]
+  
+  * **attribute**:
+    <dl>
+      <dt>axes</dt>
+      <dd>Axes that `starts` and `ends` apply to. It's optional. If not present, will be treated as [0, 1, ..., len(`starts`) - 1].</dd>
+      <dt>ends</dt>
+      <dd>Ending indices (exclusive) of corresponding axis in axes`</dd>
+      <dt>starts</dt>
+      <dd>Starting indices of corresponding axis in `axes`</dd>
+    </dl>
   * **input**:
     <dl>
       <dt>data</dt>
       <dd>Tensor of data to extract slices from.</dd>
-      <dt>axes</dt>
-      <dd>1D Tensor contains the list of axes in which starts and ends apply to.</dd>
-      <dt>starts</dt>
-      <dd>1D Tensor contains the list of indices starting values corresponding to each axes in the axes input.</dd>
-      <dt>ends</dt>
-      <dd>1D Tensor contains the list of indices end values corresponding to each axes in the axes input.</dd>
     </dl>
   * **output**:
     <dl>
