@@ -102,6 +102,7 @@
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
 * <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
+* <a href="#ResizeNearest"><sub>experimental</sub> ResizeNearest</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 * <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
 * <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
@@ -4483,6 +4484,48 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ResizeNearest"></a><a name="resizenearest">**<sub>experimental</sub> ResizeNearest**</a>
+
+  Resize the width and height dimensions:
+  output_width = floor(input_width * width_scale),
+  output_height = floor(input_height * height_scale).
+  For example:
+  X = [[[[1, 2],[3, 4]]]],
+  width_scale = 2,
+  height_scale = 2,
+  Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
+
+#### Attributes
+
+<dl>
+<dt><tt>height_scale</tt> : float (required)</dt>
+<dd>The scale along height dimension</dd>
+<dt><tt>width_scale</tt> : float (required)</dt>
+<dd>The scale along width dimension</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>4-D tensor, [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>4-D tensor after resizing, [N,C,H,W]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
 
 
