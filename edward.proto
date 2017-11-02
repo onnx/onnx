@@ -1,0 +1,44 @@
+
+
+message LibraryIdentifier {
+    string domain = 1;
+    int64 version = 2;  // ??? unclear how/if this work
+}
+
+message ModelProto
+{
+// identify referenced libraries
+    repeated LibraryIdentifier import = 1;
+
+    // actually in graph
+    repeated NodeProto node = 2;
+
+}
+
+message NodeProto {
+    // com.acme.FancyConv v3
+    string op_type = 1; // Library-relative name (e.g., com.acme.FancyConv)
+    string domain = 3; // Domain-qualifier (e.g., com.acme)
+
+    int64 version = 2; (e.g., 3)
+}
+
+
+/// -----
+
+message LibraryProto
+{
+    string domain = 1; // represents namespace/prefix - emptystring == onnx
+    int64 version = 3; 
+
+    repeated OperatorProto operator = 2;
+
+}
+
+message OperatorProto
+{
+    string name = 1;
+    int64 version = 2;
+}
+
+
