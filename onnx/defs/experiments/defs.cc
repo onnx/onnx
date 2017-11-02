@@ -311,7 +311,6 @@ Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
 and op)DOC");
 
-
 OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
@@ -342,7 +341,7 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    
+
 OPERATOR_SCHEMA(Crop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
@@ -380,3 +379,39 @@ OPERATOR_SCHEMA(Embedding)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to float tensors.");
+
+OPERATOR_SCHEMA(ResizeNearest)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr(
+        "width_scale",
+        "The scale along width dimension",
+        AttrType::FLOAT, true)
+    .Attr(
+        "height_scale",
+        "The scale along height dimension",
+        AttrType::FLOAT, true)
+    .Input(
+        0,
+        "X",
+        "4-D tensor, [N,C,H,W]", "T")
+    .Output(
+        0,
+        "Y",
+        "4-D tensor after resizing, [N,C,H,W]", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(bool)", "tensor(int32)", "tensor(int64)",
+        "tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain output types to bool, int32, int64, float16, float, double tensors.")
+    .SetDoc(R"DOC(
+Resize the width and height dimensions:
+output_width = floor(input_width * width_scale),
+output_height = floor(input_height * height_scale).
+For example:
+X = [[[[1, 2],[3, 4]]]],
+width_scale = 2,
+height_scale = 2,
+Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
+)DOC");
