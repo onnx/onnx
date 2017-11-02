@@ -65,6 +65,10 @@ node_tests = [
     ("test_slice_default_axes",
      N("Slice", starts=[0, 0, 3], ends=[L, M, 4]),
      lambda x: x[:, :, 3:4], [(L, M, S)]),
+    ("test_matmul",
+      N("MatMul"),
+      np.matmul,
+      [(L, M, S), (L, S, M)]),
     # TODO: Add all the other operators
 ] + test_rnn.node_tests
 
