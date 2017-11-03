@@ -43,9 +43,9 @@ class OpSchema {
     EXPERIMENTAL, // This OP is experimental and can be changed or removed in the future.
   };
 
-  OpSchema() : file_("unknown"), line_(0), support_(SupportType::COMMON) {}
-  OpSchema(const std::string& file, const int line)
-      : file_(file), line_(line), support_(SupportType::COMMON) {}
+  OpSchema() : name_("unknown"), file_("unknown"), line_(0), support_(SupportType::COMMON) {}
+  OpSchema(const std::string& name, const std::string& file, const int line)
+      : name_(name), file_(file), line_(line), support_(SupportType::COMMON) {}
 
   /**
    * @brief Returns the file that the op schema is registered from.
@@ -192,11 +192,20 @@ class OpSchema {
                  bool required = false);
   OpSchema& AllowUncheckedAttributes();
 
-  OpSchema& Input(const int n, const char* name, const char* description);
-  OpSchema& Output(const int n, const char* name, const char* description);
+  // Optional = true means that the input might have empty input value
+  // (represented as "") in the graph even though the later inputs have values.
+  // It's useful for complex situation when there are several independent
+  // optional inputs.
+  OpSchema& Input(const int n, const char *name, const char *description,
+                  bool optional = false);
+  OpSchema& Output(const int n, const char *name, const char *description);
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
+
+
+  // Verifies that the schema is valid and all specifications are compatible.
+  void Finalize();
 
   /**
    * @brief A function to allow one to get the number of outputs based on the
@@ -215,6 +224,9 @@ class OpSchema {
   const std::vector<std::pair<const char*, const char*>>& output_desc() const {
     return output_desc_;
   }
+  const std::set<int> optional_inputs() const {
+    return optional_inputs_;
+  }
   int min_input() const {
     return min_input_;
   }
@@ -232,6 +244,7 @@ class OpSchema {
   }
 
  private:
+  std::string name_;
   std::string file_;
   std::string doc_;
   std::map<std::string, Attribute> attributes_{};
@@ -244,6 +257,7 @@ class OpSchema {
   int max_input_ = std::numeric_limits<int>::max();
   int min_output_ = 0;
   int max_output_ = std::numeric_limits<int>::max();
+  std::set<int> optional_inputs_;
   std::function<bool(int)> num_inputs_allowed_
       = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_
@@ -255,6 +269,27 @@ class OpSchema {
   // If so, which output idx shares the same buffer with i
   std::function<std::pair<UseType,int>(int)> consumed_
       = [](int){ return std::make_pair(UseType::DEFAULT, 0); };
+};
+
+/**
+ * Internal class used in schema declaration
+ */
+class OpSchemaHolder {
+ public:
+  OpSchemaHolder(OpSchema& schema) : schema_(&schema) {
+    // TODO: when we fix all issues - we can add abort() here
+    try {
+      schema.Finalize();
+    } catch (const std::exception& e) {
+      std::cerr << "Schema error: " << e.what() << std::endl;
+    }
+  }
+  const OpSchema* operator->() const {
+    return schema_;
+  }
+
+ private:
+  const OpSchema* schema_;
 };
 
 /**
@@ -273,7 +308,7 @@ class OpSchemaRegistry {
                 << schema.file() << " line " << schema.line();
       abort();
     }
-    m.emplace(std::make_pair(key, OpSchema(file, line)));
+    m.emplace(std::make_pair(key, OpSchema(key, file, line)));
     return m[key];
   }
 
@@ -308,7 +343,7 @@ class OpSchemaRegistry {
 };
 
 #define OPERATOR_SCHEMA(name)                                       \
-  static onnx::OpSchema& (op_schema_##name) =                     \
+  static onnx::OpSchemaHolder (op_schema_##name) =                     \
     onnx::OpSchemaRegistry::NewSchema(#name, __FILE__, __LINE__)
 
 // Helper function
