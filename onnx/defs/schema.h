@@ -34,18 +34,18 @@ namespace onnx {
     constexpr int kCannotComputeNumOutputs = -1;
 
     /**
-     * @brief A class to record the schema of an op.
-     *
-     * OpSchema records the common interface of an op specified by its name.
-     *
-     * To register an OpSchema, one can use the macro OPERATOR_SCHEMA(name) and
-     * then append the various functions in the class. For example, for an op
-     * that itakes in two inputs, one output, and the first input and output
-     * could be in-place, can be written as
-     *
-     *     OPERATOR_SCHEMA(name)
-     *         .NumInputs(2).NumOutputs(1).AllowConsumed({{0, 0}});
-     */
+    * @brief A class to record the schema of an op.
+    *
+    * OpSchema records the common interface of an op specified by its name.
+    *
+    * To register an OpSchema, one can use the macro OPERATOR_SCHEMA(name) and
+    * then append the various functions in the class. For example, for an op
+    * that itakes in two inputs, one output, and the first input and output
+    * could be in-place, can be written as
+    *
+    *     OPERATOR_SCHEMA(name)
+    *         .NumInputs(2).NumOutputs(1).AllowConsumed({{0, 0}});
+    */
     class OpSchema {
     public:
 
@@ -111,89 +111,88 @@ namespace onnx {
             : name_(name), file_(file), line_(line), support_(SupportType::COMMON) {}
 
         /**
-         * @brief Returns the file that the op schema is registered from.
-         */
+        * @brief Returns the file that the op schema is registered from.
+        */
         inline const std::string& file() const { return file_; }
 
         /**
-         * @brief Returns the line in file that the op schema is registered from.
-         */
+        * @brief Returns the line in file that the op schema is registered from.
+        */
         inline int line() const { return line_; }
 
         /**
-         * @brief Returns the support level of the op schema.
-         */
+        * @brief Returns the support level of the op schema.
+        */
         SupportType support_level() const { return support_; }
 
         /**
-         * @brief Returns the docstring of the op schema.
-         */
+        * @brief Returns the docstring of the op schema.
+        */
         inline const char* doc() const {
             return doc_.empty() ? nullptr : doc_.c_str();
         }
 
         /**
-         * @brief Verifies if a NodeProto matches the pattern specified in
-         * the schema.
-         */
+        * @brief Verifies if a NodeProto matches the pattern specified in
+        * the schema.
+        */
         bool Verify(const NodeProto& node) const;
-        static bool IsAttributeLegal(const AttributeProto&);
 
         // Functions to set the property of the operator schemas.
         // Sets the number of inputs, either a fixed number or a min and a max.
 
         /**
-         * @brief A single input.
-         */
+        * @brief A single input.
+        */
         OpSchema& NumInputs(int n);
         /**
-         * @brief Input could be in range [min, max], inclusive.
-         */
+        * @brief Input could be in range [min, max], inclusive.
+        */
         OpSchema& NumInputs(int min, int max);
         /**
-         * @brief Input could be one of the values specified in allowed_input_nums.
-         */
+        * @brief Input could be one of the values specified in allowed_input_nums.
+        */
         OpSchema& NumInputs(std::set<int> allowed_input_nums);
         /**
-         * @brief Input is checked with a specified function.
-         */
+        * @brief Input is checked with a specified function.
+        */
         OpSchema& NumInputs(std::function<bool(int)> func);
 
         // Sets the number of outputs, either a fixed number, a min and a max,
         // or a function that takes in the input number and produces an output
         // number. Use only one function in the set below.
         /**
-         * @brief A single output.
-         */
+        * @brief A single output.
+        */
         OpSchema& NumOutputs(int n);
         /**
-         * @brief Output could be in range [min, max], inclusive.
-         */
+        * @brief Output could be in range [min, max], inclusive.
+        */
         OpSchema& NumOutputs(int min, int max);
         /**
-         * @brief Output could be one of the values specified in allowed_output_nums.
-         */
+        * @brief Output could be one of the values specified in allowed_output_nums.
+        */
         OpSchema& NumOutputs(std::set<int> allowed_output_nums);
         /**
-         * @brief Output is checked with a specified function.
-         */
+        * @brief Output is checked with a specified function.
+        */
         OpSchema& NumOutputs(std::function<bool(int)> func);
 
         /**
-         * @brief Relationship between inputs and outputs is checked with a specified
-         * function.
-         */
+        * @brief Relationship between inputs and outputs is checked with a specified
+        * function.
+        */
         OpSchema& NumInputsOutputs(std::function<bool(int, int)> func);
 
         // Set the function that can calculate the number of output based on the
         // number of input. Use only one function in the set below.
         /**
-         * @brief Set the output calculator to a user-defined function.
-         */
+        * @brief Set the output calculator to a user-defined function.
+        */
         OpSchema& OutputCalculator(std::function<int(int)> calc);
         /**
-         * @brief Set the number of outputs to be the same as the number of inputs.
-         */
+        * @brief Set the number of outputs to be the same as the number of inputs.
+        */
         OpSchema& SameNumberOfOutput();
 
         // Sets the rule to allow optional in-place operation.
@@ -270,6 +269,10 @@ namespace onnx {
         // .Input(1, "input_b", "the second input", "T")
         // .Output(0, "sum", "the sum of two numbers", "T")
         // .TypeConstraint("T", {"float", "double", "int32"}, "allowed data types for sum.")
+        //
+        // Optional = true means that the input might have empty input value
+        // (represented as "") in the graph even though the later inputs have values.
+        // It's useful for complex situation when there are several independent optional inputs.
         OpSchema& Input(const int n, const std::string& name, const std::string& description, const std::string& typeStr, bool optinal = false);
         OpSchema& Output(const int n, const std::string& name, const std::string& description, const std::string& typeStr);
         OpSchema& TypeConstraint(const std::string& typeStr,
@@ -281,9 +284,9 @@ namespace onnx {
         OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
 
         /**
-         * @brief A function to allow one to get the number of outputs based on the
-         * number of inputs, if this schema supports it.
-         */
+        * @brief A function to allow one to get the number of outputs based on the
+        * number of inputs, if this schema supports it.
+        */
         int CalculateOutput(int num_input) const;
 
         friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
@@ -380,8 +383,8 @@ namespace onnx {
     };
 
     /**
-     * @brief A registry to hold all the operator schemas.
-     */
+    * @brief A registry to hold all the operator schemas.
+    */
     class OpSchemaRegistry {
     public:
 
@@ -394,7 +397,8 @@ namespace onnx {
                 // TODO: when we fix all issues - we can add abort() here
                 try {
                     opSchema.Finalize();
-                } catch (const std::exception& e) {
+                }
+                catch (const std::exception& e) {
                     std::cerr << "Schema error: " << e.what() << std::endl;
                 }
                 auto& m = map();
@@ -427,15 +431,15 @@ namespace onnx {
         OpSchemaRegistry() = delete;
 
         /**
-         * @brief Returns the underlying string to OpSchema map.
-         *
-         * You should not manually manipulate the map object returned. Instead, use
-         * the macros defined such as OPERATOR_SCHEMA to register your operator
-         * schema.
-         *
-         * We wrap it inside a function to avoid the statia initialization order
-         * fiasco.
-         */
+        * @brief Returns the underlying string to OpSchema map.
+        *
+        * You should not manually manipulate the map object returned. Instead, use
+        * the macros defined such as OPERATOR_SCHEMA to register your operator
+        * schema.
+        *
+        * We wrap it inside a function to avoid the statia initialization order
+        * fiasco.
+        */
         static std::unordered_map<std::string, OpSchema>& map();
     public:
         static const std::unordered_map<std::string, OpSchema>& registered_schemas() {
