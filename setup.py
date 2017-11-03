@@ -37,10 +37,11 @@ try:
 except subprocess.CalledProcessError:
     git_version = None
 
-VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
-    version='0.2.1',
-    git_version=git_version
-)
+with open(os.path.join(TOP_DIR, 'VERSION_NUMBER')) as version_file:
+    VersionInfo = namedtuple('VersionInfo', ['version', 'git_version'])(
+        version=version_file.read().strip(),
+        git_version=git_version
+    )
 
 ################################################################################
 # Utilities
@@ -121,13 +122,23 @@ class ONNXCommand(setuptools.Command):
         pass
 
 
+class build_proto_in(ONNXCommand):
+    def run(self):
+        log('compiling onnx.proto.in')
+        subprocess.check_call(["python", os.path.join(SRC_DIR, "gen_proto.py")])
+
+
 class build_proto(ONNXCommand):
     def run(self):
-        proto_files = recursive_glob(SRC_DIR, '*.proto')
+        self.run_command('build_proto_in')
 
-        if not self.dry_run:
-            for proto_file in proto_files:
-                log('compiling {}'.format(proto_file))
+        # NB: Not a glob, because you can't build both onnx.proto and
+        # onnx-proto.ml in the same build
+        proto_files = [os.path.join(SRC_DIR, "onnx.proto")]
+
+        for proto_file in proto_files:
+            log('compiling {}'.format(proto_file))
+            if not self.dry_run:
                 subprocess.check_call([
                     PROTOC,
                     '--proto_path', SRC_DIR,
@@ -169,6 +180,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
 
 cmdclass={
     'build_proto': build_proto,
+    'build_proto_in': build_proto_in,
     'create_version': create_version,
     'build_py': build_py,
     'develop': develop,
@@ -207,6 +219,8 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
+        if os.path.join(SRC_DIR, "onnx-ml.pb.cc") in self.sources:
+            raise RuntimeError("Stale onnx/onnx-ml.pb.cc file detected.  Please delete this file and rebuild.")
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []

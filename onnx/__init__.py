@@ -3,7 +3,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from .onnx_pb2 import *
+from .onnx_pb2 import *  # noqa
+from .version import version as __version__  # noqa
+
+# Import common subpackages so they're available when you 'import onnx'
+import onnx.helper  # noqa
+import onnx.checker  # noqa
+import onnx.defs  # noqa
 
 import sys
 

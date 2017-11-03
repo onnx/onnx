@@ -6,7 +6,7 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-syntax = "proto2";
+syntax = "proto3";
 
 package onnx;
 
@@ -94,7 +94,7 @@ message AttributeProto {
   }
 
   // The name field MUST be present for this version of the IR.
-  optional string name = 1;           // namespace Attribute
+  string name = 1;           // namespace Attribute
 
   // The type field MUST be present for this version of the IR.
   // For 0.0.1 versions of the IR, this field was not defined, and
@@ -102,14 +102,14 @@ message AttributeProto {
   // which value field was in use.  For IR_VERSION 0.0.2 or later, this
   // field MUST be set and match the f|i|s|t|... field in use.  This
   // change was made to accomodate proto3 implementations.
-  optional AttributeType type = 20;   // discriminator that indicates which field below is in use
+  AttributeType type = 20;   // discriminator that indicates which field below is in use
 
   // Exactly ONE of the following fields must be present for this version of the IR
-  optional float f = 2;               // float
-  optional int64 i = 3;               // int
-  optional bytes s = 4;               // UTF-8 string
-  optional TensorProto t = 5;         // tensor value
-  optional GraphProto g = 6;          // graph
+  float f = 2;               // float
+  int64 i = 3;               // int
+  bytes s = 4;               // UTF-8 string
+  TensorProto t = 5;         // tensor value
+  GraphProto g = 6;          // graph
 
   repeated float floats = 7;          // list of floats
   repeated int64 ints = 8;            // list of ints
@@ -122,9 +122,9 @@ message AttributeProto {
 // the shape of the value.
 message ValueInfoProto {
   // This field MUST be present in this version of the IR.
-  optional string name = 1;     // namespace Value
+  string name = 1;     // namespace Value
   // This field MUST be present in this version of the IR.
-  optional TypeProto type = 2;
+  TypeProto type = 2;
 }
 
 // NodeProto stores a node that is similar to the notion of "layer"
@@ -134,8 +134,8 @@ message ValueInfoProto {
 message NodeProto {
   repeated string input = 1;    // namespace Value
   repeated string output = 2;   // namespace Value
-  optional string name = 3;     // namespace Node
-  optional string op_type = 4;  // namespace Operator
+  string name = 3;     // namespace Node
+  string op_type = 4;  // namespace Operator
 
   // Additional named attributes.
   // NOTE: Simply using ValueProto.NameValuePairProto is the most general
@@ -143,7 +143,7 @@ message NodeProto {
   repeated AttributeProto attribute = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
-  optional string doc_string = 6;
+  string doc_string = 6;
 }
 
 // ModelProto is a top-level file/container format for bundling a ML model.
@@ -153,17 +153,17 @@ message NodeProto {
 message ModelProto {
   // The version of the IR this model targets. See Version enum above.
   // This field MUST be present.
-  optional int64 ir_version = 1;
+  int64 ir_version = 1;
 
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
-  optional string producer_name = 2;
+  string producer_name = 2;
 
   // The version of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
-  optional string producer_version = 3;
+  string producer_version = 3;
 
   // Domain name of the model.
   // We use reverse domain names as name space indicators. For example:
@@ -171,16 +171,16 @@ message ModelProto {
   //
   // Together with `model_version` and GraphProto.name, this forms the unique identity of
   // the graph.
-  optional string domain = 4;
+  string domain = 4;
 
   // The version of the graph encoded. See Version enum below.
-  optional int64 model_version = 5;
+  int64 model_version = 5;
 
   // A human-readable documentation for this model. Markdown is allowed.
-  optional string doc_string = 6;
+  string doc_string = 6;
 
   // The parameterized graph that is evaluated to execute the model.
-  optional GraphProto graph = 7;
+  GraphProto graph = 7;
 };
 
 // GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
@@ -191,7 +191,7 @@ message GraphProto {
   repeated NodeProto node = 1;
 
   // The name of the graph.
-  optional string name = 2;   // namespace Graph
+  string name = 2;   // namespace Graph
 
   // A list of named tensor values (constants), used to specify default
   // values for some of the inputs of the graph.
@@ -203,7 +203,7 @@ message GraphProto {
   repeated TensorProto initializer = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
-  optional string doc_string = 10;
+  string doc_string = 10;
 
   // The inputs and outputs of the graph.
   repeated ValueInfoProto input = 11;
@@ -251,16 +251,16 @@ message TensorProto {
   repeated int64 dims = 1;
 
   // The data type of the tensor.
-  optional DataType data_type = 2;
+  DataType data_type = 2;
 
   // For very large tensors, we may want to store them in chunks, in which
   // case the following fields will specify the segment that is stored in
   // the current TensorProto.
   message Segment {
-    optional int64 begin = 1;
-    optional int64 end = 2;
+    int64 begin = 1;
+    int64 end = 2;
   }
-  optional Segment segment = 3;
+  Segment segment = 3;
 
   // Tensor content must be in the row major order.
   //
@@ -295,7 +295,7 @@ message TensorProto {
   repeated int64 int64_data = 7 [packed = true];
 
   // Optionally, a name for the tensor.
-  optional string name = 8; // namespace Value
+  string name = 8; // namespace Value
 
   // Serializations can either use one of the fields above, or use this
   // raw bytes field. The only exception is the string case, where one is
@@ -312,7 +312,7 @@ message TensorProto {
   // that in some cases (e.g. int data), protobuf does a better packing via
   // variable length storage, and may lead to smaller binary footprint.
   // When this field is present, the data_type field MUST NOT be STRING or UNDEFINED
-  optional bytes raw_data = 9;
+  bytes raw_data = 9;
 
   // For double
   // Complex64 tensors are encoded as a single array of doubles,
@@ -337,9 +337,9 @@ message SparseTensorProto {
   // The dimensions in the tensor.
   repeated int64 dims = 1;
   // This field MUST be present this version of the IR.
-  optional TensorProto indices = 2;
+  TensorProto indices = 2;
   // This field MUST be present this version of the IR.
-  optional TensorProto values = 3;
+  TensorProto values = 3;
 }
 
 
@@ -361,15 +361,15 @@ message TypeProto {
   message TensorTypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
-    optional TensorProto.DataType elem_type = 1;
-    optional TensorShapeProto shape = 2;
+    TensorProto.DataType elem_type = 1;
+    TensorShapeProto shape = 2;
   }
 
   message SparseTensorTypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
-    optional TensorProto.DataType elem_type = 1;
-    optional TensorShapeProto shape = 2;
+    TensorProto.DataType elem_type = 1;
+    TensorShapeProto shape = 2;
   }
 
 
