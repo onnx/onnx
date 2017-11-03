@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+using namespace onnx;
 
 using AttrType = onnx::OpSchema::AttrType;
 
@@ -47,12 +48,14 @@ namespace onnx {
                          "width of the data. For non image case, the "
                          "dimension are in the form of "
                          "(N x C x D1 x D2 ... Dn), where N is the batch "
-                         "size.");
+                         "size.", "T");
             schema.Output(0,
                           "Y",
                           "Output data tensor from average pooling across "
                           "the input tensor. Dimensions will vary based "
-                          "on various kernel, stride, and pad sizes.");
+                          "on various kernel, stride, and pad sizes.", "T");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                "Constrain input and output types to float tensors.");
         };
     }
 
@@ -106,12 +109,14 @@ namespace onnx {
                          "width of the data. For non image case, the "
                          "dimension are in the form of "
                          "(N x C x D1 x D2 ... Dn), where N is the "
-                         "batch size.");
+                         "batch size.", "T");
             schema.Output(0,
                           "Y",
                           "Output data tensor from max pooling across the input "
                           "tensor. Dimensions will vary based on various kernel, stride, and pad "
-                          "sizes.");
+                          "sizes.", "T");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                "Constrain input and output types to float tensors.");
         };
     }
 
@@ -136,7 +141,7 @@ computes the output.)DOC";
                          "has size (N x C x H x W), where N is the batch size, "
                          "C is the number of channels, and H and W are the "
                          "height and width. Note that this is for the 2D image."
-                         "Otherwise the size is (N x D1 x D2 ... x Dn)");
+                         "Otherwise the size is (N x D1 x D2 ... x Dn)", "T");
             schema.Input(1,
                          "weights",
                          "The weight tensor that will be used in the "
@@ -145,15 +150,17 @@ computes the output.)DOC";
                          "height and width of the kernel, and M is the number "
                          "of feature maps. For more than 2 dimensions, the "
                          "kernel shape will be (M x C x k1 x k2 x ... x kn), "
-                         "where is the dimension of the kernel");
+                         "where is the dimension of the kernel", "T");
             schema.Input(2,
                          "bias",
-                         "Optional 1D bias to be added to the convolution, has size of M.");
+                         "Optional 1D bias to be added to the convolution, has size of M.", "T");
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the "
                           "convolution. The output dimensions are functions "
-                          "of the kernel size, stride size, and pad lengths.");
+                          "of the kernel size, stride size, and pad lengths.", "T");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
                          AttrType::INTS);
@@ -203,7 +210,7 @@ and computes the output.)DOC";
                          "Input data tensor from previous layer; has size (N x C x H x W)"
                          ", where N is the batch size, C is the number of channels, and"
                          " H and W are the height and width. Note that this is for the 2D image."
-                         "Otherwise the size is (N x D1 x D2 ... x Dn)");
+                         "Otherwise the size is (N x D1 x D2 ... x Dn)", "T");
             schema.Input(1,
                          "weights",
                          "The weight tensor that will be used in the "
@@ -212,15 +219,17 @@ and computes the output.)DOC";
                          "height and width of the kernel, and M is the number "
                          "of feature maps. For more than 2 dimensions, the "
                          "kernel shape will be (C x M x k1 x k2 x ... x kn), "
-                         "where is the dimension of the kernel");
+                         "where is the dimension of the kernel", "T");
             schema.Input(2,
                          "bias",
-                         "Optional 1D bias to be added to the convolution, has size of C.");
+                         "Optional 1D bias to be added to the convolution, has size of C.", "T");
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the convolution. The "
                           "output dimensions are functions of the kernel size, stride size, "
-                          "and pad lengths.");
+                          "and pad lengths.", "T");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
                          AttrType::INTS);
@@ -279,11 +288,13 @@ namespace onnx {
                          "channels, and H and W are the height and the width "
                          "of the data. For non image case, the dimension are "
                          "in the form of (N x C x D1 x D2 ... Dn), "
-                         "where N is the batch size.");
+                         "where N is the batch size.", "T");
             schema.Output(0,
                           "Y",
                           "Output data tensor from pooling across the input "
-                          "tensor. Dimensions will be N x C x 1 x 1");
+                          "tensor. Dimensions will be N x C x 1 x 1", "T");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                "Constrain input and output types to float tensors.");
             schema.SetDoc(doc);
         };
     }
@@ -294,10 +305,10 @@ namespace onnx {
 } // namespace onnx
 
 OPERATOR_SCHEMA(BatchNormalization)
-    .NumInputs(5)
-    .NumOutputs({1, 5})
-    .EnforceConsumed({{3, 1}, {4, 2}})
-    .SetDoc(R"DOC(
+.NumInputs(5)
+.NumOutputs({ 1, 5 })
+.EnforceConsumed({ {3, 1}, {4, 2} })
+.SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
@@ -305,56 +316,58 @@ there are multiple cases for the number of outputs, which we list below:
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
 )DOC")
-    .Attr("spatial",
-          "Compute the mean and variance across all spatial elements or per feature.",
-          AttrType::INT)
+.Attr("spatial",
+    "Compute the mean and variance across all spatial elements or per feature.",
+    AttrType::INT)
     .Attr("is_test",
-          "If set to nonzero, run spatial batch normalization in test mode.",
-          AttrType::INT)
+        "If set to nonzero, run spatial batch normalization in test mode.",
+        AttrType::INT)
     .Attr("epsilon",
-          "The epsilon value to use to avoid division by zero.",
-          AttrType::FLOAT)
+        "The epsilon value to use to avoid division by zero.",
+        AttrType::FLOAT)
     .Attr("momentum",
-          "Factor used in computing the running mean and variance."
-          "e.g., running_mean = running_mean * momentum + mean * (1 - momentum)",
-          AttrType::FLOAT)
+        "Factor used in computing the running mean and variance."
+        "e.g., running_mean = running_mean * momentum + mean * (1 - momentum)",
+        AttrType::FLOAT)
     .Input(0,
-           "X",
-           "The input 4-dimensional tensor of shape NCHW or NHWC depending "
-           "on the order parameter.")
+        "X",
+        "The input 4-dimensional tensor of shape NCHW or NHWC depending "
+        "on the order parameter.", "T")
     .Input(1,
-           "scale",
-           "The scale as a 1-dimensional tensor of size C to be applied to the "
-           "output.")
+        "scale",
+        "The scale as a 1-dimensional tensor of size C to be applied to the "
+        "output.", "T")
     .Input(2,
-           "bias",
-           "The bias as a 1-dimensional tensor of size C to be applied to the "
-           "output.")
+        "bias",
+        "The bias as a 1-dimensional tensor of size C to be applied to the "
+        "output.", "T")
     .Input(3,
-           "mean",
-           "The running mean (training) or the estimated mean (testing) "
-           "as a 1-dimensional tensor of size C.")
+        "mean",
+        "The running mean (training) or the estimated mean (testing) "
+        "as a 1-dimensional tensor of size C.", "T")
     .Input(4,
-           "var",
-           "The running variance (training) or the estimated "
-           "variance (testing) as a 1-dimensional tensor of size C.")
-    .Output(0, "Y", "The output 4-dimensional tensor of the same shape as X.")
+        "var",
+        "The running variance (training) or the estimated "
+        "variance (testing) as a 1-dimensional tensor of size C.", "T")
+    .Output(0, "Y", "The output 4-dimensional tensor of the same shape as X.", "T")
     .Output(1,
-            "mean",
-            "The running mean after the BatchNormalization operator. Must be in-place "
-            "with the input mean. Should not be used for testing.")
+        "mean",
+        "The running mean after the BatchNormalization operator. Must be in-place "
+        "with the input mean. Should not be used for testing.", "T")
     .Output(2,
-            "var",
-            "The running variance after the BatchNormalization operator. Must be "
-            "in-place with the input var. Should not be used for testing.")
+        "var",
+        "The running variance after the BatchNormalization operator. Must be "
+        "in-place with the input var. Should not be used for testing.", "T")
     .Output(3,
-            "saved_mean",
-            "Saved mean used during training to speed up gradient "
-            "computation. Should not be used for testing.")
+        "saved_mean",
+        "Saved mean used during training to speed up gradient "
+        "computation. Should not be used for testing.", "T")
     .Output(4,
-            "saved_var",
-            "Saved variance used during training to speed up "
-            "gradient computation. Should not be used for testing.");
+        "saved_var",
+        "Saved variance used during training to speed up "
+        "gradient computation. Should not be used for testing.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Dropout)
     .NumInputs(1)
@@ -374,10 +387,12 @@ the training phase, so during testing nothing needs to be done.
           "(int, default 0) if nonzero, run dropout in test mode where "
           "the output is simply Y = X.",
           AttrType::INT)
-    .Input(0, "data", "The input data as Tensor.")
-    .Output(0, "output", "The output.")
+    .Input(0, "data", "The input data as Tensor.", "T")
+    .Output(0, "output", "The output.", "T")
     .Output(1, "mask",
-               "The output mask. If is_test is nonzero, this output is not filled.");
+               "The output mask. If is_test is nonzero, this output is not filled.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Flatten)
     .NumInputs(1)
@@ -387,14 +402,16 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
 )DOC")
-    .Input(0, "input", "A tensor of rank >= axis.")
+    .Input(0, "input", "A tensor of rank >= axis.", "T")
     .Output(
         0,
         "output",
         "A 2D tensor with the contents of the input tensor, "
         "with input dimensions up to axis flattened to the outer dimension "
         "of the output and remaining input dimensions flattened into the inner "
-        "dimension of the output.")
+        "dimension of the output.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.")
     .Attr(
         "axis",
         "(Default to 1) Indicate up to which input dimensions "
@@ -408,8 +425,10 @@ OPERATOR_SCHEMA(LRN)
     .Attr("alpha", "Scaling parameter", AttrType::FLOAT, true)
     .Attr("beta", "The exponent", AttrType::FLOAT, true)
     .Attr("bias", "Default to 1", AttrType::FLOAT)
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor")
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output "
+        " types to float tensors.")
     .SetDoc(R"DOC(
 Local Response Normalization. It normalizes over local input regions.
 Each input value is divided by
