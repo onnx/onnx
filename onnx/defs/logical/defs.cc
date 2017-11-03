@@ -18,10 +18,9 @@ The result is a tensor of type integer in which `0` mean false and `1` mean true
         schema.NumInputs(2);
         schema.NumOutputs(1);
         schema.SetDoc(doc);
-        schema.Input(0, "left", "Left input tensor for the logical operator.", "T");
-        schema.Input(1, "right", "Right input tensor for the logical operator.", "T");
-        schema.Output(0, "output", "Result tensor of type `int`, 0 mean False and 1 mean True.", "T");
-        schema.TypeConstraint("T", { "tensor(int32)" }, "Constrain input and output types to int tensor.");
+        schema.Input(0, "left", "Left input tensor for the logical operator.", "tensor(int32)");
+        schema.Input(1, "right", "Right input tensor for the logical operator.", "tensor(int32)");
+        schema.Output(0, "output", "Result tensor of type `int`, 0 mean False and 1 mean True.", "tensor(int32)");
     };
 }
 

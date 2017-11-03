@@ -23,7 +23,7 @@ namespace onnx {
 
     typedef std::unordered_set<DTYPE> DataTypeSet;
     // Input/Output parameter, which contain name, description and type string.
-    typedef std::tuple<std::string, std::string, std::string> InputOutputParam;
+    typedef std::tuple<std::string, std::string, std::string, bool> InputOutputParam;
     // Type constraint, which contain type string, allowed types and description.
     typedef std::tuple<std::string, std::vector<std::string>, std::string> TypeConstraintParam;
     // Type constraint map. Key is type string. Value is data type set and description.    
@@ -59,7 +59,8 @@ namespace onnx {
             explicit FormalParameter(const std::string& p_name,
                 const DataTypeSet& p_typeSet,
                 const std::string& p_typeStr,
-                const std::string& p_description);
+                const std::string& p_description,
+                bool p_isOptional = false);
 
             // Get formal parameter name.
             const std::string& GetName() const;
@@ -72,6 +73,10 @@ namespace onnx {
 
             // Get formal parameter description.
             const std::string& GetDescription() const;
+
+            // Indicates whether this formal parameter is optional or not.
+            // It's applicable for input formal parameter only.
+            bool IsOptional() const;
 
         private:
 
@@ -89,8 +94,11 @@ namespace onnx {
             // maps to a set of supported data types.
             std::string m_typeStr;
 
-            // Formal parameter description
+            // Formal parameter description.
             std::string m_description;
+
+            // Flag indicates whether this formal parameter is optional or not.
+            bool m_isOptional;
         };
 
         enum class SupportType {
@@ -98,7 +106,7 @@ namespace onnx {
             EXPERIMENTAL, // This OP is experimental and can be changed or removed in the future.
         };
 
-        OpSchema() : file_("unknown"), line_(0), support_(SupportType::COMMON) {}
+        OpSchema() : name_("unknown"), file_("unknown"), line_(0), support_(SupportType::COMMON) {}
         OpSchema(const std::string& name, const std::string& file, const int line)
             : name_(name), file_(file), line_(line), support_(SupportType::COMMON) {}
 
@@ -262,7 +270,7 @@ namespace onnx {
         // .Input(1, "input_b", "the second input", "T")
         // .Output(0, "sum", "the sum of two numbers", "T")
         // .TypeConstraint("T", {"float", "double", "int32"}, "allowed data types for sum.")
-        OpSchema& Input(const int n, const std::string& name, const std::string& description, const std::string& typeStr);
+        OpSchema& Input(const int n, const std::string& name, const std::string& description, const std::string& typeStr, bool optinal = false);
         OpSchema& Output(const int n, const std::string& name, const std::string& description, const std::string& typeStr);
         OpSchema& TypeConstraint(const std::string& typeStr,
             const std::vector<std::string>& constraints,
@@ -296,6 +304,11 @@ namespace onnx {
             return outputs_;
         }
 
+        const std::set<int> optional_inputs() const
+        {
+            return optional_inputs_;
+        }
+
         const std::vector<TypeConstraintParam>& typeConstraintParams() const
         {
             return type_constraint_params_;
@@ -326,10 +339,10 @@ namespace onnx {
 
         friend class OpSchemaRegistry;
 
-        // Build <*this> operator.
-        // It will parse all type strings specified for inputs/outputs into valid TypeProto
+        // Verifies that the schema is valid and all specifications are compatible.
+        // It will also parse all type strings specified for inputs/outputs into valid TypeProto
         // and create global unique string pointer as the DTYPE for efficiency.
-        void Build();
+        void Finalize();
 
         void SetDataType(
             const std::vector<InputOutputParam>& symbolicParams,
@@ -352,6 +365,7 @@ namespace onnx {
         int max_input_ = std::numeric_limits<int>::max();
         int min_output_ = 0;
         int max_output_ = std::numeric_limits<int>::max();
+        std::set<int> optional_inputs_;
         std::function<bool(int)> num_inputs_allowed_
             = [](int) { return true; };
         std::function<bool(int)> num_outputs_allowed_
@@ -377,7 +391,12 @@ namespace onnx {
 
             OpSchemaRegisterOnce(OpSchema& opSchema)
             {
-                opSchema.Build();
+                // TODO: when we fix all issues - we can add abort() here
+                try {
+                    opSchema.Finalize();
+                } catch (const std::exception& e) {
+                    std::cerr << "Schema error: " << e.what() << std::endl;
+                }
                 auto& m = map();
                 auto& key = opSchema.Name();
                 if (m.count(key)) {
