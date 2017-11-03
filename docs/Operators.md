@@ -93,7 +93,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -143,7 +143,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -176,7 +176,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -209,7 +209,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -247,7 +247,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -310,7 +310,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -345,7 +345,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -370,7 +370,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -393,7 +393,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain output types to float tensors.</dd>
     </dl>
 
@@ -416,7 +416,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -461,7 +461,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -508,7 +508,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -558,7 +558,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -595,7 +595,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -626,7 +626,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -651,7 +651,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -681,7 +681,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -706,7 +706,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -755,7 +755,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -804,7 +804,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -829,7 +829,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -854,7 +854,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -890,7 +890,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output  types to float tensors.</dd>
     </dl>
 
@@ -920,7 +920,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -945,7 +945,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -971,7 +971,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -997,7 +997,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1037,7 +1037,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1063,7 +1063,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1113,7 +1113,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1138,7 +1138,7 @@
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1267,7 +1267,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1296,7 +1296,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1346,7 +1346,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1374,7 +1374,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1411,7 +1411,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1451,7 +1451,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1487,7 +1487,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1526,7 +1526,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1551,7 +1551,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1586,7 +1586,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1621,7 +1621,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1656,7 +1656,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1691,7 +1691,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1726,7 +1726,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1761,7 +1761,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1786,7 +1786,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1821,7 +1821,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1854,7 +1854,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1879,7 +1879,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1947,7 +1947,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -1989,7 +1989,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2020,7 +2020,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input types to float tensors.</dd>
     </dl>
 
@@ -2045,7 +2045,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2074,7 +2074,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2124,7 +2124,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2150,7 +2150,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2175,7 +2175,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2205,7 +2205,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2267,7 +2267,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2320,7 +2320,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2372,7 +2372,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2414,7 +2414,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2446,7 +2446,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 
@@ -2545,7 +2545,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **type constraints**:
     <dl>
       <dt>T</dt>
-      <dt>['tensor(float16)', 'tensor(float)', 'tensor(double)']</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
       <dd>Constrain input and output types to float tensors.</dd>
     </dl>
 

@@ -101,7 +101,11 @@ def main(args):
             s += '    <dl>\n'
             for typeStr, allowedTypes, description in schema.type_constraints:
                 s += '      <dt>{}</dt>\n'.format(typeStr)
-                s += '      <dt>{}</dt>\n'.format(allowedTypes)
+                if (len(allowedTypes) > 0):
+                    allowedTypeStr = allowedTypes[0]
+                for allowedType in allowedTypes[1:]:
+                    allowedTypeStr += ', ' + allowedType
+                s += '      <dt>{}</dt>\n'.format(allowedTypeStr)
                 s += '      <dd>{}</dd>\n'.format(description)
             s += '    </dl>\n'
             
