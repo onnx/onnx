@@ -29,7 +29,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     .def_property_readonly("max_input", &OpSchema::max_input)
     .def_property_readonly("min_output", &OpSchema::min_output)
     .def_property_readonly("max_output", &OpSchema::max_output)
-    .def_property_readonly("optional_inputs", &OpSchema::optional_inputs)
     .def_property_readonly("attributes", &OpSchema::attributes)
     .def_property_readonly("inputs", &OpSchema::inputs)
     .def_property_readonly("outputs", &OpSchema::outputs)

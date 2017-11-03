@@ -46,7 +46,7 @@ namespace onnx
     }
 
     bool OpSchema::Verify(const NodeProto& node) const {
-        
+
         // Check the number of inputs.
         if (node.input_size() < min_input_ || node.input_size() > max_input_) {
             std::cerr << "Input size " << node.input_size()
@@ -90,7 +90,7 @@ namespace onnx
 
         // Check the values of inputs / outputs
         for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
-            if (node.input(in_idx).empty() && !optional_inputs_.count(in_idx)) {
+            if (node.input(in_idx).empty() && !(inputs_[in_idx].IsOptional())) {
                 std::cerr
                     << "Input " << in_idx
                     << " is not marked optional but has an empty string in the graph";
@@ -447,7 +447,7 @@ namespace onnx
         return *this;
     }
 
-    void OpSchema::SetDataType(
+    void OpSchema::ParseAndSetInputOutput(
         const std::vector<InputOutputParam>& symbolicParams,
         /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters)
     {
@@ -522,14 +522,18 @@ namespace onnx
         // marked as optional
         if (max_input_ < std::numeric_limits<int>::max()) {
             int ind = max_input_;
-            while (ind > 0 && optional_inputs_.count(ind - 1)) {
-                --ind;
+            for (auto& input : inputs_)
+            {
+                if (input.IsOptional() && ind > 0)
+                {
+                    --ind;
+                }
             }
             min_input_ = std::min(min_input_, ind);
         }
 
-        SetDataType(input_desc_, &inputs_);
-        SetDataType(output_desc_, &outputs_);
+        ParseAndSetInputOutput(input_desc_, &inputs_);
+        ParseAndSetInputOutput(output_desc_, &outputs_);
     }
 
     std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
