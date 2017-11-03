@@ -94,6 +94,17 @@ def main(args):
                 s += '      <dd>{}</dd>\n'.format(output.description)
             s += '    </dl>\n'
 
+        # type constraints
+        s += '  * **type constraints**:'
+        if schema.type_constraints:
+            s += '\n'
+            s += '    <dl>\n'
+            for typeStr, allowedTypes, description in schema.type_constraints:
+                s += '      <dt>{}</dt>\n'.format(typeStr)
+                s += '      <dt>{}</dt>\n'.format(allowedTypes)
+                s += '      <dd>{}</dd>\n'.format(description)
+            s += '    </dl>\n'
+            
         s += '\n\n'
         args.output.write(s)
 

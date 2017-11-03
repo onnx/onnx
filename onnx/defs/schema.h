@@ -24,6 +24,8 @@ namespace onnx {
     typedef std::unordered_set<DTYPE> DataTypeSet;
     // Input/Output parameter, which contain name, description and type string.
     typedef std::tuple<std::string, std::string, std::string> InputOutputParam;
+    // Type constraint, which contain type string, allowed types and description.
+    typedef std::tuple<std::string, std::vector<std::string>, std::string> TypeConstraintParam;
     // Type constraint map. Key is type string. Value is data type set and description.    
     typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>> TypeConstraintMap;
 
@@ -294,6 +296,11 @@ namespace onnx {
             return outputs_;
         }
 
+        const std::vector<TypeConstraintParam>& typeConstraintParams() const
+        {
+            return type_constraint_params_;
+        }
+
         const std::string& Name() const
         {
             return name_;
@@ -337,6 +344,7 @@ namespace onnx {
         std::vector<FormalParameter> inputs_;
         std::vector<InputOutputParam> output_desc_;
         std::vector<FormalParameter> outputs_;
+        std::vector<TypeConstraintParam> type_constraint_params_;
         TypeConstraintMap type_constraints;
         int line_ = 0;
         SupportType support_;

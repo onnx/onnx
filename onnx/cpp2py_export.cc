@@ -31,6 +31,7 @@ PYBIND11_PLUGIN(onnx_cpp2py_export) {
     .def_property_readonly("attributes", &OpSchema::attributes)
     .def_property_readonly("inputs", &OpSchema::inputs)
     .def_property_readonly("outputs", &OpSchema::outputs)
+    .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
     .def("verify", [](const OpSchema& schema,
                       const py::bytes& serialized_node_proto) -> bool {
        std::unique_ptr<NodeProto> node_proto(new NodeProto());
