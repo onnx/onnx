@@ -21,13 +21,14 @@ PYBIND11_PLUGIN(onnx_cpp2py_export) {
   op_schema
     .def_property_readonly("file", &OpSchema::file)
     .def_property_readonly("line", &OpSchema::line)
-    .def_property_readonly("support_level", &OpSchema::support_level)    
+    .def_property_readonly("support_level", &OpSchema::support_level)
     .def_property_readonly(
       "doc", &OpSchema::doc, py::return_value_policy::reference)
     .def_property_readonly("min_input", &OpSchema::min_input)
     .def_property_readonly("max_input", &OpSchema::max_input)
     .def_property_readonly("min_output", &OpSchema::min_output)
     .def_property_readonly("max_output", &OpSchema::max_output)
+    .def_property_readonly("optional_inputs", &OpSchema::optional_inputs)
     .def_property_readonly("attributes", &OpSchema::attributes)
     .def_property_readonly("inputs", &OpSchema::inputs)
     .def_property_readonly("outputs", &OpSchema::outputs)
@@ -56,7 +57,8 @@ PYBIND11_PLUGIN(onnx_cpp2py_export) {
       .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
       .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
       .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
-      .def_property_readonly("description", &OpSchema::FormalParameter::GetDescription);
+      .def_property_readonly("description", &OpSchema::FormalParameter::GetDescription)
+      .def_property_readonly("optional", &OpSchema::FormalParameter::IsOptional);
 
   py::enum_<OpSchema::AttrType>(op_schema, "AttrType")
       .value("FLOAT", OpSchema::AttrType::FLOAT)

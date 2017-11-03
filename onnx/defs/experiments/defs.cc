@@ -9,7 +9,7 @@ using SupportType = onnx::OpSchema::SupportType;
 
 OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(0, 1)
+    .NumInputs(1)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
@@ -56,7 +56,7 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         "1D tensor containing the desired output shape.  First input must be in "
         "CPU context.",
         AttrType::INT)
-    .Input(0, "input", "Input tensor (optional) to provide shape information.", "T")
+    .Input(0, "input", "Input tensor (optional) to provide shape information.", "T", true)
     .Output(
             0,
             "output",
@@ -244,6 +244,10 @@ OPERATOR_SCHEMA(Normalize)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
     .NumOutputs(1)
+    .Input(0, "input", "Input matrix", "T")
+    .Output(0, "output", "Matrix after normalization", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Given a matrix, apply L2-normalization along the last dimension.
 )DOC");
@@ -252,6 +256,10 @@ OPERATOR_SCHEMA(Scale)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
     .NumOutputs(1)
+    .Input(0, "input", "Input data to be scaled", "T")
+    .Output(0, "output", "Output data after scaling", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.")
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Scale takes one input data (Tensor<float>) and produces one output data
@@ -260,25 +268,6 @@ Scale takes one input data (Tensor<float>) and produces one output data
     .Attr("scale",
           "(float, default 1.0) the scale to apply.",
           AttrType::FLOAT);
-
-OPERATOR_SCHEMA(RecurrentNetwork)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1, INT_MAX)
-    .NumOutputs(2, INT_MAX)
-    .SetDoc(R"DOC(
-Run the input network in a recurrent fashion. This can be used to
-implement fairly general recurrent neural networks (RNNs).
-The operator proceeds as follows.
-- First, initialized the states from the input recurrent states
-- For each timestep T, apply the links (that map offsets from input/output
-tensors into the inputs/outputs for the `step` network)
-- Finally, alias the recurrent states to the specified output blobs.
-This is a fairly special-case meta-operator, and so the implementation
-is somewhat complex. It trades of generality (and frankly usability)
-against performance and control (compared to e.g. TF
-dynamic_rnn, Theano scan, etc).
-See the usage examples for a flavor of how to use it.
-)DOC");
 
 OPERATOR_SCHEMA(GRUUnit)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
