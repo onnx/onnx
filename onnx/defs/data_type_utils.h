@@ -141,4 +141,4 @@ namespace onnx
     }
 }
 
-#endif // ! LOTUSIR_UTILS_H
+#endif // ! ONNX_DATA_TYPE_UTILS_H
