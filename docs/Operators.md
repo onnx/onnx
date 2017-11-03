@@ -9,6 +9,7 @@
 * <a href="#ArgMin">ArgMin</a>
 * <a href="#AveragePool">AveragePool</a>
 * <a href="#BatchNormalization">BatchNormalization</a>
+* <a href="#BidirectionalLSTM">BidirectionalLSTM</a>
 * <a href="#Cast">Cast</a>
 * <a href="#Ceil">Ceil</a>
 * <a href="#Concat">Concat</a>
@@ -21,11 +22,13 @@
 * <a href="#Exp">Exp</a>
 * <a href="#Flatten">Flatten</a>
 * <a href="#Floor">Floor</a>
+* <a href="#GRU">GRU</a>
 * <a href="#Gather">Gather</a>
 * <a href="#Gemm">Gemm</a>
 * <a href="#GlobalAveragePool">GlobalAveragePool</a>
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
 * <a href="#LRN">LRN</a>
+* <a href="#LSTM">LSTM</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Log">Log</a>
 * <a href="#MatMul">MatMul</a>
@@ -34,7 +37,6 @@
 * <a href="#Min">Min</a>
 * <a href="#Mul">Mul</a>
 * <a href="#Neg">Neg</a>
-* <a href="#OptimizedRNN">OptimizedRNN</a>
 * <a href="#PRelu">PRelu</a>
 * <a href="#Pad">Pad</a>
 * <a href="#Pow">Pow</a>
@@ -53,6 +55,7 @@
 * <a href="#Reshape">Reshape</a>
 * <a href="#Selu">Selu</a>
 * <a href="#Sigmoid">Sigmoid</a>
+* <a href="#SimpleRNN">SimpleRNN</a>
 * <a href="#Slice">Slice</a>
 * <a href="#Softmax">Softmax</a>
 * <a href="#Split">Split</a>
@@ -292,6 +295,85 @@
 <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
 <dt><tt>saved_var</tt></dt>
 <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
+</dl>
+
+
+---
+
+### <a name="BidirectionalLSTM"></a><a name="bidirectionallstm">**BidirectionalLSTM**</a>
+
+  Computes an one-layer bidirectional LSTM. This operator is usually
+  supported via some custom implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `i` - input gate
+  `o` - output gate
+  `f` - forget gate
+  `c` - cell gate
+  `t` - time step (t-1 means previous time step)
+  `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  `P[iof]`  - P peephole weight matrix for input, output, and forget gates
+  `WR[iofc]` - WR parameter weight matrix for reverse direction input, output, forget, and cell gates
+  `RR[iofc]` - RR recurrence weight matrix for reverse direction input, output, forget, and cell gates
+  `WRb[iofc]` - WR bias vectors for reverse direction input, output, forget, and cell gates
+  `RRb[iofc]` - RR bias vectors for reverse direction input, output, forget, and cell gates
+  `PR[iof]`  - PR peephole weight matrix for reverse direction input, output, and forget gates
+  `tanh(X)` - hyperbolic tangent of X
+  `sigmoid(X)` - 1 / (1 + e^-X)
+  `H` - Hidden state
+  
+  Equations (forward direction LSTM with default activations):
+    - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+    - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
+    - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
+    - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+    - Ct = ft (.) Ct-1 + it (.) ct
+    - H = ot (.) tanh(Ct)
+
+#### Attributes
+
+<dl>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>A list of 4 activation functions for input, output, forget, and cell gates. Typical activation functions are sigmoid and tanh. See the equations for default if not specified.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+<dt><tt>input_forget</tt> : int</dt>
+<dd>Couple the input and forget gates if 1, default 0.</dd>
+</dl>
+
+#### Inputs (3 - 8)
+
+<dl>
+<dt><tt>input</tt></dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt></dt>
+<dd>The weight tensor for the gates. The weights W[iofc] and WR[iofc] are concatenated along dimension 0. This tensor has shape `[8 * hidden_size, input_size]`.</dd>
+<dt><tt>R</tt></dt>
+<dd>The recurrence weight tensor. The recurrence weights R[iofc] and RR[iofc] are concatenated along dimension 0. This tensor has shape `[8 * hidden_size, hidden_size}`.</dd>
+<dt><tt>B</tt> (optional)</dt>
+<dd>The bias tensor for input gate. The biases Wb[iofc], Rb[iofc], WRb[iofc], and RRb[iofc] are concatenated along dimension 0. This tensor has shape `[16 * hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>P</tt> (optional)</dt>
+<dd>The weight tensor for peepholes. The peephole weights P[iof] and PR[iof] are concatenated along dimension 0. It has shape `[6 * hidde_size, hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>initial_h</tt> (optional)</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[2, batch_size, hidden_size]`</dd>
+<dt><tt>initial_c</tt> (optional)</dt>
+<dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[2, batch_size, hidden_size]`</dd>
+<dt><tt>seq_lens</tt> (optional)</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+<dl>
+<dt><tt>output</tt></dt>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size]`.</dd>
+<dt><tt>output_h</tt></dt>
+<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size]`.</dd>
 </dl>
 
 
@@ -675,6 +757,72 @@
 
 ---
 
+### <a name="GRU"></a><a name="gru">**GRU**</a>
+
+  Computes an one-layer GRU. This operator is usually supported via some custom
+  implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `z` - update gate
+  `r` - reset gate
+  `h` - hidden gate
+  `t` - time step (t-1 means previous time step)
+  `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+  `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+  `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+  `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+  `tanh(X)` - hyperbolic tangent of X
+  `sigmoid(X)` - 1 / (1 + e^-X)
+  `H` - Hidden state
+  
+  Equations (GRU with default activations):
+    - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
+    - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
+    - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
+    - H = (1 - zt) (.) ht + it (.) Ht-1
+
+#### Attributes
+
+<dl>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>A list of 3 activation functions for update, reset, and hidden gates. Typical activation functions are sigmoid and tanh. See the equations for default if not specified.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+<dt><tt>reverse</tt> : int</dt>
+<dd>Process the sequences in reverse order if 1, default 0.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>input</tt></dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt></dt>
+<dd>The weight tensor for the gates. The weights W[zrh] are concatenated along dimension 0. This tensor has shape `[3 * hidden_size, input_size]`.</dd>
+<dt><tt>R</tt></dt>
+<dd>The recurrence weight tensor. The recurrence weights R[zrh] are concatenated along dimension 0. This tensor has shape `[3 * hidden_size, hidden_size}`.</dd>
+<dt><tt>B</tt> (optional)</dt>
+<dd>The bias tensor for the gates. The biases Wb[zrh] and Rb[zrh] are concatenated along dimension 0. This tensor has shape `[6 * hidden_size]`. Optional: If not specified - assumed to be 0</dd>
+<dt><tt>initial_h</tt> (optional)</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size]`.</dd>
+<dt><tt>seq_lens</tt> (optional)</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+<dl>
+<dt><tt>output</tt></dt>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size]`.</dd>
+<dt><tt>output_h</tt></dt>
+<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size]`.</dd>
+</dl>
+
+
+---
+
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
   Given DATA tensor of rank r >= 1, and INDICES tensor of rank q, gather
@@ -840,6 +988,82 @@
 <dl>
 <dt><tt>Y</tt></dt>
 <dd>Output tensor</dd>
+</dl>
+
+
+---
+
+### <a name="LSTM"></a><a name="lstm">**LSTM**</a>
+
+  Computes an one-layer LSTM. This operator is usually supported via some
+  custom implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `i` - input gate
+  `o` - output gate
+  `f` - forget gate
+  `c` - cell gate
+  `t` - time step (t-1 means previous time step)
+  `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  `P[iof]`  - P peephole weight matrix for input, output, and forget gates
+  `tanh(X)` - hyperbolic tangent of X
+  `sigmoid(X)` - 1 / (1 + e^-X)
+  `H` - Hidden state
+  
+  Equations (LSTM with default activations):
+    - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+    - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
+    - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
+    - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+    - Ct = ft (.) Ct-1 + it (.) ct
+    - H = ot (.) tanh(Ct)
+
+#### Attributes
+
+<dl>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>A list of 4 activation functions for input, output, forget, and cell gates. Typical activation functions are sigmoid and tanh. See the equations for default if not specified</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+<dt><tt>input_forget</tt> : int</dt>
+<dd>Couple the input and forget gates if 1, default 0.</dd>
+<dt><tt>reverse</tt> : int</dt>
+<dd>Process the sequences in reverse order if 1, default 0.</dd>
+</dl>
+
+#### Inputs (3 - 8)
+
+<dl>
+<dt><tt>input</tt></dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt></dt>
+<dd>The weight tensor for the gates. The weights W[iofc] are concatenated along dimension 0. This tensor has shape `[4 * hidden_size, input_size]`.</dd>
+<dt><tt>R</tt></dt>
+<dd>The recurrence weight tensor. The recurrence weights R[iofc] are concatenated along dimension 0. This tensor has shape `[4 * hidden_size, hidden_size}`.</dd>
+<dt><tt>B</tt> (optional)</dt>
+<dd>The bias tensor for input gate. The biases Wb[iofc] and Rb[iofc] are concatenated along dimension 0. This tensor has shape `[8 * hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>P</tt> (optional)</dt>
+<dd>The weight tensor for peepholes. The peephole weights P[iof] are concatenated along dimension 0. It has shape `[3 * hidde_size, hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>initial_h</tt> (optional)</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size]`.</dd>
+<dt><tt>initial_c</tt> (optional)</dt>
+<dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size]`.</dd>
+<dt><tt>seq_lens</tt> (optional)</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+<dl>
+<dt><tt>output</tt></dt>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size]`.</dd>
+<dt><tt>output_h</tt></dt>
+<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size]`.</dd>
 </dl>
 
 
@@ -1072,203 +1296,6 @@
 
 
 ---
-
-### <a name="OptimizedRNN"></a><a name="optimizedrnn">**OptimizedRNN**</a>
-
-  Computes a stack of several RNNs in optimized fashion. This operator is usually
-  implemented via CuDNN and thus most of the attributes and weights layout matches
-  directly.
-<<<<<<< HEAD
-  * **attribute**:
-    <dl>
-      <dt>activations</dt>
-      <dd>A list of activation functions for the gates in the order `iofzrch`. Typical activation functions are sigmoid and tanh. For each cell type, the default is given in the above equations.</dd>
-      <dt>cell_type</dt>
-      <dd>
-Types of the cell: `simple`, `gru`, `lstm`, `lstm_peephole`, `lstm_input_forget`
-=======
-
-#### Attributes
-
-<dl>
-<dt><tt>cell_type</tt> : string (required)</dt>
-<dd>
-Types of the cell: `relu`, `tanh`, `gru`, `lstm`
->>>>>>> 2358cfccb79f79c6b7d66f3bba7c6c1d0efe373e
-
-Equation definitions:
-`i` - input gate
-`o` - output gate
-`f` - forget gate
-`z` - update gate
-`r` - reset gate
-`c` - cell gate
-`h` - hidden gate
-`t` - time step (t-1 means previous time step)
-`Xi` - input tensor
-`W[izrfcohp]` - W parameter weight matrices for the corresponding gates
-`R[izrfcohp]` - R parameter weight matrices for the corresponding gates
-`Wb[izrfcohp]` - W parameter bias vectors for the corresponding gates
-`Rb[izrfcohp]` - R parameter bias vectors for the corresponding gates
-`ReLU(X)` - max(X, 0)
-`tanh` - hyperbolic tangent of X
-`sigmoid(X)` - 1 / (1 + e^-X)
-`[C|H]` - Cell/Hidden state
-
-- Equations:
-  `simple(relu)`
-  - Ht = ReLU(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-
-  `simple(tanh)`
-  - Ht = tanh(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-
-  `lstm with default activations`
-  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
-  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
-  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
-  - Ct = ft (.) Ct-1 + it (.) ct
-  - H = ot (.) tanh(C)
-
-  `gru with default activations`
-  - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
-  - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
-  - ht = tanh(Wh*Xt + rt *(Rh*Ht-1 + Rbh) + Wbh)
-  - H = (1 - zt) (.) ht + it (.) Ht-1
-
-  `lstm_peephole with default activations`
-  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi(.)Ct-1 + Wbi + Rbi)
-  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Pf(.)Ct-1 + Wbf + Rbf)
-  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po(.)Ct-1 + Wbo + Rbo)
-  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
-  - Ct = ft (.) Ct-1 + it (.) ct
-  - H = ot (.) tanh(C)
-
-  `lstm_input_forget with default activations`
-  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
-  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
-  - Ct = (1 - it) (.) Ct-1 + it (.) ct
-  - H = ot (.) tanh(C)
-
-Note, that for LSTM and 2 out of 3 gates for GRU, there are duplicate biases for
-the gates (model is overparametrized). It follows CuDNN/TensorRT convention and
-allows to make spec more uniform.
-</dd>
-<<<<<<< HEAD
-      <dt>clip</dt>
-      <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the inputs of activations. Default to no clip if not specified.</dd>
-      <dt>directions</dt>
-      <dd>Number of directions: 1 for unidirectional (default) and 2 for bidirectional</dd>
-      <dt>hidden_size</dt>
-      <dd>Number of neurons in the hidden layer</dd>
-      <dt>num_layers</dt>
-      <dd>Numbers of RNN layers in the stack, default 1</dd>
-      <dt>reverse</dt>
-      <dd>Process the sequences in reverse order, default 0</dd>
-      <dt>skip_input_transform</dt>
-      <dd>If set, skips linear transformation on the input of the first layer</dd>
-      <dt>use_bias</dt>
-      <dd>Use the bias tensors for the gates if 1. Default 1.</dd>
-    </dl>
-  * **input**:2 - 6
-    <dl>
-      <dt>weights</dt>
-      <dd>
-=======
-<dt><tt>directions</tt> : int</dt>
-<dd>Number of directions: 1 for unidirectional (default) and 2 for bidirectional</dd>
-<dt><tt>hidden_size</tt> : int</dt>
-<dd>Number of neurons in the hidden layer</dd>
-<dt><tt>num_layers</tt> : int</dt>
-<dd>Numbers of RNN layers in the stack, default 1</dd>
-<dt><tt>skip_input_transform</tt> : int</dt>
-<dd>If set, skips linear transformation on the input of the first layer</dd>
-</dl>
-
-#### Inputs (2 - 4)
-
-<dl>
-<dt><tt>weights</tt></dt>
-<dd>
->>>>>>> 2358cfccb79f79c6b7d66f3bba7c6c1d0efe373e
-All parameters of the stack packed together in the opaque tensor. The size must
-be compatible with input attributes passed to the op.
-
-The layout format is the one used by CuDNN and very similar to TensorRT:
-
-The weight structure holds weights and biases for each layer of the network.
-Each parameter matrix is linearly appended after the previous parameter matrix
-without padding.
-
-The order of matrixes `{K, L, D, R, N, C}` is defined as:
- - K - type of the matrix: `weight` (first) or `bias` (second)
- - L - The number of layers in the RNN - `num_layers`
- - D - The direction of the layer: normal (first) or reverse (second).
-                                   (in case of `directions=2`)
- - R - The type of the connection: `input-hidden` (first) or
-                                   `hidden-hidden` (second)
- - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
- -- For `simple(relu)` or `simple(tanh)` there is one gate
- -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
- -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
- - C - The size of each matrix, which varies.
- -- If the linear layer on the input is skipped (`skip_input_transform=1`)
-    and then for the first layer (`L=1`) the weight matrix (`K=weight`)
-    on the input connection (`R=input-hidden`) is skipped,
-    i.e. has 0 parameters in the list
- -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection
-    (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
- -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection
-    (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
- -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
-    dimensions are `{hidden_size, hidden_size}`
- -- For all biases (`K=bias`), dimensions are `{hidden_size}`
-</dd>
-<<<<<<< HEAD
-      <dt>input</dt>
-      <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-      <dt>initial_h</dt>
-      <dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
-      <dt>initial_c</dt>
-      <dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
-      <dt>seq_lens</dt>
-      <dd>Optional tensor specifying lengths of the sequences in a batch.Has shape `[batch_size]`.</dd>
-      <dt>peephole_w</dt>
-      <dd>For LSTM-peephole only: weight for peepholes. Dimensions `[3 * num_layers * directions, hidden_size]`</dd>
-    </dl>
-  * **output**:1 - 3
-    <dl>
-      <dt>output</dt>
-      <dd>The output 3-dim sequence.</dd>
-      <dt>output_h</dt>
-      <dd>Optional output value of the hidden. Same shape as input_h</dd>
-      <dt>output_c</dt>
-      <dd>For LSTM only: optional output value of the cell. Same shape as input_h</dd>
-    </dl>
-
-=======
-<dt><tt>input</tt></dt>
-<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-<dt><tt>initial_h</tt></dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
-<dt><tt>initial_c</tt></dt>
-<dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
-</dl>
-
-#### Outputs (1 - 3)
-<dl>
-<dt><tt>output</tt></dt>
-<dd>The output 3-dim sequence.</dd>
-<dt><tt>output_h</tt></dt>
-<dd>Optional output value of the hidden. Same shape as input_h</dd>
-<dt><tt>output_c</tt></dt>
-<dd>For LSTM only: optional output value of the cell. Same shape as input_h</dd>
-</dl>
-
-
----
->>>>>>> 2358cfccb79f79c6b7d66f3bba7c6c1d0efe373e
 
 ### <a name="PRelu"></a><a name="prelu">**PRelu**</a>
 
@@ -1849,6 +1876,67 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>Y</tt></dt>
 <dd>Output tensor</dd>
+</dl>
+
+
+---
+
+### <a name="SimpleRNN"></a><a name="simplernn">**SimpleRNN**</a>
+
+  Computes an one-layer simple RNN. This operator is usually supported
+  via some custom implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `i` - input gate
+  `t` - time step (t-1 means previous time step)
+  `Wi` - W parameter weight matrix for input gate
+  `Ri` - R recurrence weight matrix for input gate
+  `Wbi` - W parameter bias vector for input gate
+  `Rbi` - R parameter bias vector for input gate
+  `ReLU(X)` - max(X, 0)
+  `tanh(X)` - hyperbolic tangent of X
+  `H` - Hidden state
+  
+  Equations:
+    - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string</dt>
+<dd>The activation function for input gate. Typical activation functions are tanh and ReLU. Default `tanh`.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+<dt><tt>reverse</tt> : int</dt>
+<dd>Process the sequences in reverse order, default 0.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>input</tt></dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt></dt>
+<dd>The weight tensor for input gate. The tensor has shape `[hidden_size, input_size]`.</dd>
+<dt><tt>R</tt></dt>
+<dd>The recurrence weight tensor. The tensor has shape `[hidden_size, hidden_size}`.</dd>
+<dt><tt>B</tt> (optional)</dt>
+<dd>The bias tensor for input gate. The tensor is a concatenation of`Wbi` and `Rbi`, and has shape `[2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>initial_h</tt> (optional)</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[batch_size, hidden_size]`.</dd>
+<dt><tt>seq_lens</tt> (optional)</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+<dl>
+<dt><tt>output</tt></dt>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, batch_size, hidden_size]`.</dd>
+<dt><tt>output_h</tt></dt>
+<dd>The last output value of the hidden. It has shape `[batch_size, hidden_size]`.</dd>
 </dl>
 
 
