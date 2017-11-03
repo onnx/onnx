@@ -74,7 +74,6 @@ class OpSchema {
    * the schema.
    */
   bool Verify(const NodeProto& node) const;
-  static bool IsAttributeLegal(const AttributeProto&);
 
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.

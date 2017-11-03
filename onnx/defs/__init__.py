@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import onnx.onnx_cpp2py_export as C
+import onnx.onnx_cpp2py_export.defs as C
 
 
 def has(op_type):
@@ -17,8 +17,5 @@ def get_schema(op_type):
 def get_all_schemas():
     return C.get_all_schemas()
 
-
-def verify(schema, node_proto):
-    return schema.verify(node_proto.SerializeToString())
 
 OpSchema = C.OpSchema
