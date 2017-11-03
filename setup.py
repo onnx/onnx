@@ -124,7 +124,7 @@ class ONNXCommand(setuptools.Command):
 
 class build_proto_in(ONNXCommand):
     def run(self):
-        log('compiling onnx.proto.in')
+        log('compiling onnx.in.proto')
         subprocess.check_call(["python", os.path.join(SRC_DIR, "gen_proto.py")])
 
 
