@@ -1,41 +1,57 @@
 
 
-message LibraryIdentifier {
-    string domain = 1;
-    int64 version = 2;  // ??? unclear how/if this work
-}
 
 message ModelProto
 {
-// identify referenced libraries
-    repeated LibraryIdentifier import = 1;
+    // Design choice: if we omit this field, ONNX is just an 'extension' with no domain
+    int64 op_version = 1;
 
-    // actually in graph
-    repeated NodeProto node = 2;
+    // Identified referenced vendor extensions
+    repeated ExtensionProto extension = 2;
 
+    // just for illustrative purposes; this is actually in graph
+    repeated NodeProto node = 3;
 }
+
+message ExtensionProto {
+    string domain = 1;
+    int64 version = 2;  // ??? unclear how/if this work
+}
+// Interpretation 1:
+//     The domain and version record the version of the extension that was
+//     "targeted" by the frontend.
+// Interpretation 2:
+//     It's strictly redundant, you can infer it by looking at the version/domain
+//     in all NodeProto.
 
 message NodeProto {
     // com.acme.FancyConv v3
     string op_type = 1; // Library-relative name (e.g., com.acme.FancyConv)
-    string domain = 3; // Domain-qualifier (e.g., com.acme)
+    string domain = 2; // Domain-qualifier (e.g., com.acme)
 
-    int64 version = 2; (e.g., 3)
+    int64 version = 3; // (e.g., 3)
+    // Alternative: no version on NodeProto
+    // In this world, here are some possible resolution strategies:
+    //      - Find the "latest" revision of an operator that you support and
+    //        attempt to interpret it with it (this is unsound, but will
+    //        never fail if it actually could succeed legitimately)
+    //      - Have a database specifying, at operator version 'n', what
+    //        the latest versions of all operators are
 }
 
 
 /// -----
 
-message LibraryProto
+message ExtensionSpecProto
 {
     string domain = 1; // represents namespace/prefix - emptystring == onnx
-    int64 version = 3; 
+    int64 version = 2; 
 
-    repeated OperatorProto operator = 2;
+    repeated OperatorSpecProto operator = 3;
 
 }
 
-message OperatorProto
+message OperatorSpecProto
 {
     string name = 1;
     int64 version = 2;
