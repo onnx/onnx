@@ -307,11 +307,6 @@ namespace onnx {
             return outputs_;
         }
 
-        const std::set<int> optional_inputs() const
-        {
-            return optional_inputs_;
-        }
-
         const std::vector<TypeConstraintParam>& typeConstraintParams() const
         {
             return type_constraint_params_;
@@ -347,7 +342,7 @@ namespace onnx {
         // and create global unique string pointer as the DTYPE for efficiency.
         void Finalize();
 
-        void SetDataType(
+        void ParseAndSetInputOutput(
             const std::vector<InputOutputParam>& symbolicParams,
             /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
 
@@ -368,7 +363,6 @@ namespace onnx {
         int max_input_ = std::numeric_limits<int>::max();
         int min_output_ = 0;
         int max_output_ = std::numeric_limits<int>::max();
-        std::set<int> optional_inputs_;
         std::function<bool(int)> num_inputs_allowed_
             = [](int) { return true; };
         std::function<bool(int)> num_outputs_allowed_
