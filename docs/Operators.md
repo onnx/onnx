@@ -81,11 +81,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -120,13 +122,16 @@
   * **input**:
     <dl>
       <dt>A</dt>
+      <dt>T</dt>
       <dd>First operand, should share the type with the second operand.</dd>
       <dt>B</dt>
+      <dt>T</dt>
       <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>C</dt>
+      <dt>T</dt>
       <dd>Result, has same dimensions and type as A</dd>
     </dl>
 
@@ -147,11 +152,13 @@
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor with integer data type.</dd>
     </dl>
 
@@ -172,11 +179,13 @@
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor with integer data type.</dd>
     </dl>
 
@@ -202,11 +211,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output data tensor from average pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
     </dl>
 
@@ -233,27 +244,37 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>The input 4-dimensional tensor of shape NCHW or NHWC depending on the order parameter.</dd>
       <dt>scale</dt>
+      <dt>T</dt>
       <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
       <dt>bias</dt>
+      <dt>T</dt>
       <dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
       <dt>mean</dt>
+      <dt>T</dt>
       <dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
       <dt>var</dt>
+      <dt>T</dt>
       <dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
     </dl>
   * **output**:0 - &#8734;
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>The output 4-dimensional tensor of the same shape as X.</dd>
       <dt>mean</dt>
+      <dt>T</dt>
       <dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
       <dt>var</dt>
+      <dt>T</dt>
       <dd>The running variance after the BatchNormalization operator. Must be in-place with the input var. Should not be used for testing.</dd>
       <dt>saved_mean</dt>
+      <dt>T</dt>
       <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
       <dt>saved_var</dt>
+      <dt>T</dt>
       <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
     </dl>
 
@@ -276,11 +297,13 @@
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>Input tensor to be cast.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Output tensor with the same shape as input with type specified by the 'to' argument</dd>
     </dl>
 
@@ -293,11 +316,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -314,6 +339,7 @@
   * **output**:
     <dl>
       <dt>concat_result</dt>
+      <dt>T</dt>
       <dd>Concatenated tensor</dd>
     </dl>
 
@@ -330,6 +356,7 @@
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Output tensor containing the same value of the provided tensor.</dd>
     </dl>
 
@@ -356,15 +383,19 @@
   * **input**:2 - 3
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
+      <dt>T</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
       <dt>bias</dt>
+      <dt>T</dt>
       <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
     </dl>
 
@@ -393,15 +424,19 @@
   * **input**:2 - 3
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
+      <dt>T</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
       <dt>bias</dt>
+      <dt>T</dt>
       <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
     </dl>
 
@@ -436,13 +471,16 @@
   * **input**:
     <dl>
       <dt>A</dt>
+      <dt>T</dt>
       <dd>First operand, should share the type with the second operand.</dd>
       <dt>B</dt>
+      <dt>T</dt>
       <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>C</dt>
+      <dt>T</dt>
       <dd>Result, has same dimensions and type as A</dd>
     </dl>
 
@@ -464,13 +502,16 @@
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>The input data as Tensor.</dd>
     </dl>
   * **output**:1 - 2
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>The output.</dd>
       <dt>mask</dt>
+      <dt>T</dt>
       <dd>The output mask. If is_test is nonzero, this output is not filled.</dd>
     </dl>
 
@@ -489,11 +530,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>1D input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>1D input tensor</dd>
     </dl>
 
@@ -506,11 +549,13 @@
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>The exponential of the input tensor computed element-wise</dd>
     </dl>
 
@@ -528,11 +573,13 @@
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>A tensor of rank >= axis.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
     </dl>
 
@@ -545,11 +592,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -583,13 +632,16 @@
   * **input**:
     <dl>
       <dt>DATA</dt>
+      <dt>T</dt>
       <dd>Tensor of rank r >= 1.</dd>
       <dt>INDICES</dt>
+      <dt>T</dt>
       <dd>Tensor of int32/int64 indices, of any rank q.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>OUTPUT</dt>
+      <dt>T</dt>
       <dd>Tensor of rank q + (r - 1).</dd>
     </dl>
 
@@ -620,15 +672,19 @@
   * **input**:
     <dl>
       <dt>A</dt>
+      <dt>T</dt>
       <dd>Input tensor A</dd>
       <dt>B</dt>
+      <dt>T</dt>
       <dd>Input tensor B</dd>
       <dt>C</dt>
+      <dt>T</dt>
       <dd>Input tensor C, can be inplace.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor.</dd>
     </dl>
 
@@ -641,11 +697,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
     </dl>
 
@@ -658,11 +716,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
     </dl>
 
@@ -686,11 +746,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -708,11 +770,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -725,11 +789,13 @@
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>The natural log of the input tensor computed element-wise</dd>
     </dl>
 
@@ -740,13 +806,16 @@
   * **input**:
     <dl>
       <dt>A</dt>
+      <dt>T</dt>
       <dd>N-dimensional matrix A</dd>
       <dt>B</dt>
+      <dt>T</dt>
       <dd>N-dimensional matrix B</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Matrix multiply results from A * B</dd>
     </dl>
 
@@ -760,11 +829,13 @@
   * **input**:1 - &#8734;
     <dl>
       <dt>data_0</dt>
+      <dt>T</dt>
       <dd>First of the input tensors. Can be inplace.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>max</dt>
+      <dt>T</dt>
       <dd>Output tensor. Same dimension as inputs.</dd>
     </dl>
 
@@ -792,11 +863,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output data tensor from max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
     </dl>
 
@@ -810,11 +883,13 @@
   * **input**:1 - &#8734;
     <dl>
       <dt>data_0</dt>
+      <dt>T</dt>
       <dd>First of the input tensors. Can be inplace.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>max</dt>
+      <dt>T</dt>
       <dd>Output tensor. Same dimension as inputs.</dd>
     </dl>
 
@@ -849,13 +924,16 @@
   * **input**:
     <dl>
       <dt>A</dt>
+      <dt>T</dt>
       <dd>First operand, should share the type with the second operand.</dd>
       <dt>B</dt>
+      <dt>T</dt>
       <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>C</dt>
+      <dt>T</dt>
       <dd>Result, has same dimensions and type as A</dd>
     </dl>
 
@@ -868,11 +946,13 @@
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -941,6 +1021,7 @@ allows to make spec more uniform.
   * **input**:2 - 4
     <dl>
       <dt>weights</dt>
+      <dt>T</dt>
       <dd>
 All parameters of the stack packed together in the opaque tensor. The size must
 be compatible with input attributes passed to the op.
@@ -976,19 +1057,25 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
 </dd>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
       <dt>initial_h</dt>
+      <dt>T</dt>
       <dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
       <dt>initial_c</dt>
+      <dt>T</dt>
       <dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
     </dl>
   * **output**:1 - 3
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>The output 3-dim sequence.</dd>
       <dt>output_h</dt>
+      <dt>T</dt>
       <dd>Optional output value of the hidden. Same shape as input_h</dd>
       <dt>output_c</dt>
+      <dt>T</dt>
       <dd>For LSTM only: optional output value of the cell. Same shape as input_h</dd>
     </dl>
 
@@ -1002,13 +1089,16 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
       <dt>Slope</dt>
+      <dt>T</dt>
       <dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -1046,11 +1136,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>DATA</dt>
+      <dt>T</dt>
       <dd>Input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>OUTPUT</dt>
+      <dt>T</dt>
       <dd>Tensor after padding.</dd>
     </dl>
 
@@ -1063,13 +1155,16 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor of any shape, base of the exponent.</dd>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Input tensor of any shape broadcastable to X shape, the exponent component.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Z</dt>
+      <dt>T</dt>
       <dd>Output tensor (same size as X)</dd>
     </dl>
 
@@ -1100,6 +1195,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Output tensor of random values drawn from normal distribution</dd>
     </dl>
 
@@ -1127,11 +1223,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>Input tensor to provide shape information.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Output tensor of random values drawn from normal distribution</dd>
     </dl>
 
@@ -1161,6 +1259,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Output tensor of random values drawn from uniform distribution</dd>
     </dl>
 
@@ -1187,11 +1286,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>Input tensor to provide shape information.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Output tensor of random values drawn from uniform distribution</dd>
     </dl>
 
@@ -1204,11 +1305,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -1231,11 +1334,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor.</dd>
     </dl>
 
@@ -1258,11 +1363,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor.</dd>
     </dl>
 
@@ -1285,11 +1392,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor.</dd>
     </dl>
 
@@ -1312,11 +1421,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor.</dd>
     </dl>
 
@@ -1339,11 +1450,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor.</dd>
     </dl>
 
@@ -1366,11 +1479,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reduced</dt>
+      <dt>T</dt>
       <dd>Reduced output tensor.</dd>
     </dl>
 
@@ -1383,11 +1498,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -1410,11 +1527,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>reshaped</dt>
+      <dt>T</dt>
       <dd>Reshaped data.</dd>
     </dl>
 
@@ -1435,11 +1554,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -1452,11 +1573,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -1512,11 +1635,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>Tensor of data to extract slices from.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Sliced data tensor.</dd>
     </dl>
 
@@ -1546,11 +1671,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>The softmax normalized output values with the same shape as input tensor.</dd>
     </dl>
 
@@ -1571,8 +1698,10 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:1 - 2
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>The tensor to split</dd>
       <dt>split</dt>
+      <dt>T</dt>
       <dd>Optional list of output lengths (see also arg 'split')</dd>
     </dl>
   * **output**:1 - &#8734;
@@ -1586,11 +1715,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output tensor</dd>
     </dl>
 
@@ -1607,11 +1738,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>Tensors with at least max(dims) dimensions.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>squeezed</dt>
+      <dt>T</dt>
       <dd>Reshaped tensor with same data as input.</dd>
     </dl>
 
@@ -1646,13 +1779,16 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>A</dt>
+      <dt>T</dt>
       <dd>First operand, should share the type with the second operand.</dd>
       <dt>B</dt>
+      <dt>T</dt>
       <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>C</dt>
+      <dt>T</dt>
       <dd>Result, has same dimensions and type as A</dd>
     </dl>
 
@@ -1666,11 +1802,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:1 - &#8734;
     <dl>
       <dt>data_0</dt>
+      <dt>T</dt>
       <dd>First of the input tensors. Can be inplace.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>sum</dt>
+      <dt>T</dt>
       <dd>Output tensor. Same dimension as inputs.</dd>
     </dl>
 
@@ -1683,11 +1821,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>1-D input tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>The hyperbolic tangent values of the input tensor computed element-wise</dd>
     </dl>
 
@@ -1705,11 +1845,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>data</dt>
+      <dt>T</dt>
       <dd>An input tensor.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>transposed</dt>
+      <dt>T</dt>
       <dd>Transposed output.</dd>
     </dl>
 
@@ -1753,15 +1895,19 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>Input data blob from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the NCHW usage. On the other hand, the NHWC Op has a different set of dimension constraints.</dd>
       <dt>filter</dt>
+      <dt>T</dt>
       <dd>The filter blob that will be used in the transposed convolution; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel.</dd>
       <dt>bias</dt>
+      <dt>T</dt>
       <dd>The 1D bias blob that is added through the convolution;has size (C)</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>Output data blob that contains the result of the transposed convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
     </dl>
 
@@ -1802,11 +1948,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:0 - 1
     <dl>
       <dt>input</dt>
+      <dt>T</dt>
       <dd>Input tensor (optional) to provide shape information.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>output</dt>
+      <dt>T</dt>
       <dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
     </dl>
 
@@ -1840,15 +1988,19 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
       <dt>W</dt>
+      <dt>T</dt>
       <dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
       <dt>b</dt>
+      <dt>T</dt>
       <dd>1D blob containing bias vector</dd>
     </dl>
   * **output**:
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>2D output tensor</dd>
     </dl>
 
@@ -1869,17 +2021,22 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>hidden_prev</dt>
+      <dt>T</dt>
       <dd>The previous GRU hidden state.</dd>
       <dt>gates</dt>
+      <dt>T</dt>
       <dd>Unactivated gate outputs from forget, update, and output gates, pre-activation.</dd>
       <dt>seq_lengths</dt>
+      <dt>T</dt>
       <dd>Array of sequence lengths.  len(seq_lengths) should equal batch size N.</dd>
       <dt>t</dt>
+      <dt>T</dt>
       <dd>The timestep for this operation.</dd>
     </dl>
   * **output**:
     <dl>
       <dt>hidden</dt>
+      <dt>T</dt>
       <dd>The new GRU hidden state calculated by this op.</dd>
     </dl>
 
@@ -1899,11 +2056,13 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:0 - 1
     <dl>
       <dt>shape</dt>
+      <dt>T</dt>
       <dd>The shape of filled tensor</dd>
     </dl>
   * **output**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>The filled tensor</dd>
     </dl>
 
@@ -1966,27 +2125,37 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
   * **input**:
     <dl>
       <dt>X</dt>
+      <dt>T</dt>
       <dd>The input 4-dimensional tensor of shape NCHW.</dd>
       <dt>scale</dt>
+      <dt>T</dt>
       <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
       <dt>bias</dt>
+      <dt>T</dt>
       <dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
       <dt>mean</dt>
+      <dt>T</dt>
       <dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
       <dt>var</dt>
+      <dt>T</dt>
       <dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
     </dl>
   * **output**:0 - &#8734;
     <dl>
       <dt>Y</dt>
+      <dt>T</dt>
       <dd>The output 4-dimensional tensor of the same shape as X.</dd>
       <dt>mean</dt>
+      <dt>T</dt>
       <dd>The running mean after the spatial BN operator. Must be in-place with the input mean. Should not be used for testing.</dd>
       <dt>var</dt>
+      <dt>T</dt>
       <dd>The running variance after the spatial BN operator. Must be in-place with the input var. Should not be used for testing.</dd>
       <dt>saved_mean</dt>
+      <dt>T</dt>
       <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
       <dt>saved_var</dt>
+      <dt>T</dt>
       <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
     </dl>
 

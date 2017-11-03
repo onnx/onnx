@@ -72,11 +72,12 @@ def main(args):
             s += '{} - {}'.format(display_number(schema.min_input),
                                   display_number(schema.max_input))
         s += '\n'
-        if schema.input_desc:
+        if schema.inputs:
             s += '    <dl>\n'
-            for input_name, input_desc in schema.input_desc:
-                s += '      <dt>{}</dt>\n'.format(input_name)
-                s += '      <dd>{}</dd>\n'.format(input_desc)
+            for input in schema.inputs:
+                s += '      <dt>{}</dt>\n'.format(input.name)
+                s += '      <dt>{}</dt>\n'.format(input.typeStr)
+                s += '      <dd>{}</dd>\n'.format(input.description)
             s += '    </dl>\n'
 
         # outputs
@@ -85,11 +86,12 @@ def main(args):
             s += '{} - {}'.format(display_number(schema.min_output),
                                   display_number(schema.max_output))
         s += '\n'
-        if schema.output_desc:
+        if schema.outputs:
             s += '    <dl>\n'
-            for output_name, output_desc in schema.output_desc:
-                s += '      <dt>{}</dt>\n'.format(output_name)
-                s += '      <dd>{}</dd>\n'.format(output_desc)
+            for output in schema.outputs:
+                s += '      <dt>{}</dt>\n'.format(output.name)
+                s += '      <dt>{}</dt>\n'.format(output.typeStr)
+                s += '      <dd>{}</dd>\n'.format(output.description)
             s += '    </dl>\n'
 
         s += '\n\n'
