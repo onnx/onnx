@@ -454,6 +454,7 @@ namespace onnx
             d.insert(Utils::DataTypeUtils::ToType(t));
         }
         type_constraints.insert(std::make_pair(typeStr, std::make_pair(d, description)));
+        type_constraint_params_.push_back(std::make_tuple(typeStr, constraints, description));
         return *this;
     }
 
