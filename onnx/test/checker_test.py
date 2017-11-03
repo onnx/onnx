@@ -27,6 +27,21 @@ class TestChecker(unittest.TestCase):
 
         checker.check_node(node)
 
+    def test_check_node_input_marked_optional(self):
+        # Constant fill's input is marked optional
+        node = helper.make_node(
+            "ConstantFill", [], ["Y"], name="test")
+        checker.check_node(node)
+
+        # Explicitly pass the empty string as optional
+        node = helper.make_node(
+            "ConstantFill", [""], ["Y"], name="test")
+
+        # Input of RELU is not optional
+        node = helper.make_node(
+            "Relu", [""], ["Y"], name="test")
+        self.assertRaises(ValueError, checker.check_node, node)
+
     def test_check_graph(self):
         node = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
@@ -43,6 +58,16 @@ class TestChecker(unittest.TestCase):
         self.assertRaises(ValueError, checker.check_graph, graph)
 
         graph.initializer[0].name = 'X'
+        checker.check_graph(graph)
+
+    def test_check_graph_optional_input(self):
+        node = helper.make_node(
+            "ConstantFill", [""], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
         checker.check_graph(graph)
 
     def test_check_model(self):
@@ -79,3 +104,7 @@ class TestChecker(unittest.TestCase):
         tensor = self._sample_float_tensor
         tensor.data_type = TensorProto.INT32
         self.assertRaises(ValueError, checker.check_tensor, tensor)
+
+
+if __name__ == '__main__':
+    unittest.main()

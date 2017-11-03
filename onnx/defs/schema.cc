@@ -3,6 +3,7 @@
 
 #include "schema.h"
 #include <unordered_set>
+#include <stdexcept>
 
 namespace onnx {
 
@@ -46,6 +47,23 @@ bool OpSchema::Verify(const NodeProto& node) const {
                       << expected_nout;
       return false;
     }
+  }
+
+  // Check the values of inputs / outputs
+  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
+    if (node.input(in_idx).empty() && !optional_inputs_.count(in_idx)) {
+      std::cerr
+          << "Input " << in_idx
+          << " is not marked optional but has an empty string in the graph";
+      return false;
+    }
+  }
+  for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
+    if (node.output(out_idx).empty()) {
+        std::cerr << "Output " << out_idx
+                  << " has an empty string in the graph";
+        return false;
+      }
   }
 
   // Check attributes
@@ -393,11 +411,14 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
   return *this;
 }
 
-OpSchema& OpSchema::Input(const int n, const char* name, const char* description) {
+OpSchema& OpSchema::Input(const int n, const char* name, const char* description, bool optional) {
   if (int(input_desc_.size()) <= n) {
     input_desc_.resize(n + 1);
   }
   input_desc_[n] = std::make_pair(name, description);
+  if (optional) {
+    optional_inputs_.insert(n);
+  }
   return *this;
 }
 
@@ -425,6 +446,41 @@ int OpSchema::CalculateOutput(int num_input) const {
     return kCannotComputeNumOutputs;
   }
 }
+
+void OpSchema::Finalize() {
+#define ENFORCE(x) do { if (!(x)) throw std::logic_error("ONNX Schema " + name_ + ": failed validating the check: " + #x); } while (0)
+  ENFORCE(min_input_ <= max_input_);
+  ENFORCE(min_output_ <= max_output_);
+  ENFORCE(input_desc_.size() >= min_input_);
+  ENFORCE(output_desc_.size() >= min_output_);
+  ENFORCE(input_desc_.size() <= max_input_);
+  ENFORCE(output_desc_.size() <= max_output_);
+  // if max limit is finite - all names should be specified
+  if (max_input_ < std::numeric_limits<int>::max()) {
+    ENFORCE(input_desc_.size() == max_input_);
+  }
+  if (max_output_ < std::numeric_limits<int>::max()) {
+    ENFORCE(output_desc_.size() == max_output_);
+  }
+  // all inputs and outputs have names
+  for (const auto& it : input_desc_) {
+    ENFORCE(it.first);
+  }
+  for (const auto& it : output_desc_) {
+    ENFORCE(it.first);
+  }
+  // TODO: also cover checks for arbitrary number of inputs
+  // allow extra tailing inputs not be present if all inputs at the end are
+  // marked as optional
+  if (max_input_ < std::numeric_limits<int>::max()) {
+    int ind = max_input_;
+    while (ind > 0 && optional_inputs_.count(ind-1)) {
+      --ind;
+    }
+    min_input_ = std::min(min_input_, ind);
+  }
+}
+
 
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
