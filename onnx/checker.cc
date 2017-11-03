@@ -10,20 +10,31 @@ namespace checker {
 
 #define fail(...) throw ValidationError(onnx::MakeString(__VA_ARGS__));
 
-#define enforce_has_field(proto, field)                                    \
-  if (!proto.has_##field()) {                                              \
-    fail("Field '", #field, "' of ", #proto, " is required but missing."); \
-  }
+#define enforce_has_field(proto, field)                                      \
+  do {                                                                       \
+    if (!proto.has_##field()) {                                              \
+      fail("Field '", #field, "' of ", #proto, " is required but missing."); \
+    }                                                                        \
+  } while (0)
 
-#define enforce_has_repeated_field(proto, field)                    \
-  if (!proto.field##_size()) {                                      \
-    fail("Repeated Field '", #field, "' is required but missing."); \
-  }
+#define enforce_has_repeated_field(proto, field)                      \
+  do {                                                                \
+    if (!proto.field##_size()) {                                      \
+      fail("Repeated Field '", #field, "' is required but missing."); \
+    }                                                                 \
+  } while (0)
 
-#define enforce_non_empty_field(proto, field)                                  \
-  if (proto.field().empty()) {                                                 \
-    fail("Field '", #field, "' of ", #proto, " is required to be non-empty."); \
-  }
+#define enforce_non_empty_field(proto, field) \
+  do {                                        \
+    if (proto.field().empty()) {              \
+      fail(                                   \
+          "Field '",                          \
+          #field,                             \
+          "' of ",                            \
+          #proto,                             \
+          " is required to be non-empty.");   \
+    }                                         \
+  } while (0)
 
 void check_value_info(const ValueInfoProto& value_info, int ir_version) {
   enforce_non_empty_field(value_info, name);
@@ -185,9 +196,9 @@ void check_attribute(const AttributeProto& attr, int ir_version) {
 }
 
 void check_node(const NodeProto& node, int ir_version) {
-  enforce_non_empty_field(node, op_type)
+  enforce_non_empty_field(node, op_type);
 
-      if (node.input().empty() && node.output().empty()) {
+  if (node.input().empty() && node.output().empty()) {
     fail("NodeProto has zero input and zero output.");
   }
 
@@ -241,6 +252,7 @@ void check_model(const ModelProto& model, int ir_version) {
 
 #undef fail
 #undef enforce_has_field
+#undef enforce_has_repeated_field
 #undef enforce_non_empty_field
 
 } // namespace checker
