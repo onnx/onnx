@@ -80,14 +80,6 @@ bool OpSchema::Verify(const NodeProto& node) const {
           return false;
       };
 
-      if (!IsAttributeLegal(attr_proto)) {
-          std::cerr << "Attribute '"
-                    << name
-                    << "' is not legal"
-                    << std::endl;
-          return false;
-      }
-
       const auto& search = attributes_.find(name);
       AttrType expected_type;
       if (search != attributes_.end()) {
@@ -241,34 +233,6 @@ bool OpSchema::Verify(const NodeProto& node) const {
 
   // Phew. All verifications passed.
   return true;
-}
-
-bool OpSchema::IsAttributeLegal(const AttributeProto& proto) {
-    if (proto.name().empty()) {
-        std::cerr << "Attribute should set name field." << std::endl;
-        return false;
-    }
-
-    int used_fields =
-        proto.has_f() +
-        proto.has_i() +
-        proto.has_s() +
-        proto.has_t() +
-        proto.has_g() +
-        (proto.floats_size() > 0) +
-        (proto.ints_size() > 0) +
-        (proto.strings_size() > 0) +
-        (proto.tensors_size() > 0) +
-        (proto.graphs_size() > 0);
-    if (used_fields != 1) {
-        std::cerr << "Attribute should contain one and only one value field.\n"
-                  << "AttributeProto:\n"
-                  << proto.SerializeAsString()
-                  << "\n"
-                  << std::endl;
-        return false;
-    }
-    return true;
 }
 
 OpSchema& OpSchema::NumInputs(int min, int max) {

@@ -11,7 +11,7 @@ from six import text_type, integer_types, binary_type
 
 from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
-import onnx.onnx_cpp2py_export as C
+import onnx.defs as defs
 from onnx import mapping
 
 def make_node(
@@ -183,19 +183,6 @@ def make_tensor_value_info(name, elem_type, shape):
                 'Needs to of integer_types or text_type.'.format(d))
 
     return value_info_proto
-
-
-def is_attribute_legal(attr):
-    """Checks if an AttributeProto is legal.
-
-    Inputs:
-        arg: an AttributeProto object.
-    Returns:
-        bool.
-    """
-    if not isinstance(attr, AttributeProto):
-        raise RuntimeError("You cannot pass an object that is not AttributeProto.")
-    return C.is_attribute_legal(attr.SerializeToString())
 
 
 def _sanitize_str(s):
