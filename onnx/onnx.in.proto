@@ -149,8 +149,6 @@ message NodeProto {
   optional string op_type = 4;  // namespace Operator
   // The domain that OperatorSet that specifies the operator. 
   optional string domain = 7;   // namespace Domain
-  // The op_version of the operator.  
-  optional int64 op_version = 8;    
 
   // Additional named attributes.
   // NOTE: Simply using ValueProto.NameValuePairProto is the most general
@@ -174,6 +172,10 @@ message ModelProto {
   // All ModelProtos MUST have at least one entry that
   // specifies which version of the ONNX OperatorSet is
   // being imported.
+  // 
+  // All nodes in the ModelProto's graph will bind against the operator
+  // with the same-domain/same-op_type operator with the HIGHEST version
+  // in the referenced operator sets.
   repeated OperatorSetIdProto import = 8;
 
   // The name of the framework or tool used to generate this model.
@@ -551,29 +553,44 @@ message TypeProto {
 // domain name for the set.
 // 
 // Operators are uniquely identified by a three part identifier
-//   (domain, op_type, op_version) 
+//   (domain, op_type, since_version) 
 // where
-//   domain is the domain of an operator set that
-//      is contains this operator specification.
+//   *domain* is the domain of an operator set that
+//      contains this operator specification.
 // 
-//   op_type is the name of the operator as referenced by a
+//   *op_type* is the name of the operator as referenced by a
 //      NodeProto.op_type
 //
-//   op_version is the version of the operator in the imported
-//      OperatorSetProto.operator
+//   *since_version* is the version of the initial operator set that 
+//      this operator was declared in. 
 //
 message OperatorProto {
+  enum OperatorStatus {
+    EXPERIMENTAL = 0;
+    STABLE = 1;
+  }
+
   // The name of the operator within a domain. 
   // This field MUST be present in this version of the IR.  
   optional string op_type = 1;
 
-  // The version of the operator. This is a simple int value
-  // that is monotonically increasing as new specifications of the operator
-  // are published. Any changes to the signature or semantics of an 
-  // operator MUST use a new version number. 
+  // The version of the operator set that first introduced this
+  // operator. This value MUST be the same value as the
+  // opset_version of the operator set that first published this operator. 
+  // Subsequent versions of the operator set MUST NOT alter the signature 
+  // or semantics of the operator once published as STABLE. 
   // This field MUST be present in this version of the IR.  
-  optional int64 op_version = 2;
+  optional int64 since_version = 2;
 
+  // This field indicates whether the syntax, semantics, or presence
+  // of this operator is in an experimental or stable stage. Once an
+  // operator is published as STABLE, it's syntax and semantics MUST NOT
+  // change in subsequent versions of the operator set.
+  // When an operator is published as EXPERIMENTAL, the syntax and semantics
+  // of the operator MAY change across operator set versions.
+  // Operators "become" stable by deprecating the experimental version and
+  // introducing a new stable operator with the same op_type. 
+  optional OperatorStatus status = 3;
 
   // Eventually we will declare the signature of the operator here
 
