@@ -9,7 +9,7 @@ using SupportType = onnx::OpSchema::SupportType;
 
 OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(01)
+    .NumInputs(0,1)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
