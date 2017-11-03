@@ -286,4 +286,10 @@ setuptools.setup(
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
+    entry_points={
+        'console_scripts': [
+            'check-model = onnx.bin.checker:check_model',
+            'check-node = onnx.bin.checker:check_node',
+        ]
+    },
 )
