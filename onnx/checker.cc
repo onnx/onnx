@@ -1,7 +1,7 @@
 #include "onnx/checker.h"
 
 #include "onnx/defs/schema.h"
-#include "onnx/utils.h"
+#include "onnx/string_utils.h"
 
 #include <unordered_set>
 
@@ -92,6 +92,7 @@ void check_tensor(const TensorProto& tensor, int ir_version) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail("STRING data should not be stored in raw_data field");
     }
+    return;
   } else {
 #define check_field(field)               \
   if (!has_##field) {                    \
