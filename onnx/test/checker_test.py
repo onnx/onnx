@@ -40,7 +40,7 @@ class TestChecker(unittest.TestCase):
         # Input of RELU is not optional
         node = helper.make_node(
             "Relu", [""], ["Y"], name="test")
-        self.assertRaises(ValueError, checker.check_node, node)
+        self.assertRaises(checker.ValidationError, checker.check_node, node)
 
     def test_check_graph(self):
         node = helper.make_node(
