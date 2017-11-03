@@ -175,7 +175,7 @@ message ModelProto {
   // All nodes in the ModelProto's graph will bind against the operator
   // with the same-domain/same-op_type operator with the HIGHEST version
   // in the referenced operator sets.
-  repeated OperatorSetIdProto import = 8;
+  repeated OperatorSetIdProto opset_import = 8;
 
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework

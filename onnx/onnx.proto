@@ -142,7 +142,7 @@ message NodeProto {
   repeated string input = 1;    // namespace Value
   repeated string output = 2;   // namespace Value
 
-  // An optional identifier for this node in a grap.
+  // An optional identifier for this node in a graph.
   // This field MAY be absent in ths version of the IR.
   optional string name = 3;     // namespace Node
 
@@ -177,7 +177,7 @@ message ModelProto {
   // All nodes in the ModelProto's graph will bind against the operator
   // with the same-domain/same-op_type operator with the HIGHEST version
   // in the referenced operator sets.
-  repeated OperatorSetIdProto import = 8;
+  repeated OperatorSetIdProto opset_import = 8;
 
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
