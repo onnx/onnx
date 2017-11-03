@@ -16,7 +16,6 @@
 * <a href="#Conv">Conv</a>
 * <a href="#ConvTranspose">ConvTranspose</a>
 * <a href="#Div">Div</a>
-* <a href="#Dot">Dot</a>
 * <a href="#Dropout">Dropout</a>
 * <a href="#Elu">Elu</a>
 * <a href="#Exp">Exp</a>
@@ -29,6 +28,7 @@
 * <a href="#LRN">LRN</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Log">Log</a>
+* <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
 * <a href="#Min">Min</a>
@@ -190,10 +190,12 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -338,6 +340,8 @@
   computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
       <dt>group</dt>
@@ -345,7 +349,7 @@
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
@@ -355,6 +359,8 @@
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+      <dt>bias</dt>
+      <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
     </dl>
   * **output**:
     <dl>
@@ -369,23 +375,29 @@
   and computes the output.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>dilation value along each axis of the filter.</dd>
+      <dt>group</dt>
+      <dd>number of groups input channels and output channels are divided into</dd>
       <dt>kernel_shape</dt>
       <dd>The shape of the convolution kernel.</dd>
       <dt>output_shape</dt>
       <dd>The shape of the output.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>stride along each axis.</dd>
     </dl>
-  * **input**:
+  * **input**:2 - 3
     <dl>
       <dt>X</dt>
       <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
       <dt>weights</dt>
       <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+      <dt>bias</dt>
+      <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
     </dl>
   * **output**:
     <dl>
@@ -432,24 +444,6 @@
     <dl>
       <dt>C</dt>
       <dd>Result, has same dimensions and type as A</dd>
-    </dl>
-
-
-### <a name="Dot"></a><a name="dot">**Dot**</a>
-
-  Apply dot product between 2 tensors. Similar to numpy implementation:
-  https://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
-  * **input**:
-    <dl>
-      <dt>X</dt>
-      <dd>Input tensor of any shape</dd>
-      <dt>Y</dt>
-      <dd>Input tensor of any shape</dd>
-    </dl>
-  * **output**:
-    <dl>
-      <dt>Z</dt>
-      <dd>Output tensor the dot product between X and Y.</dd>
     </dl>
 
 
@@ -740,6 +734,23 @@
     </dl>
 
 
+### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+  * **input**:
+    <dl>
+      <dt>A</dt>
+      <dd>N-dimensional matrix A</dd>
+      <dt>B</dt>
+      <dd>N-dimensional matrix B</dd>
+    </dl>
+  * **output**:
+    <dl>
+      <dt>Y</dt>
+      <dd>Matrix multiply results from A * B</dd>
+    </dl>
+
+
 ### <a name="Max"></a><a name="max">**Max**</a>
 
   Element-wise max of each of the input tensors. The first input tensor can be
@@ -767,12 +778,14 @@
    data into the output tensor Y for further processing.
   * **attribute**:
     <dl>
+      <dt>auto_pad</dt>
+      <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
       <dt>dilations</dt>
       <dd>Dilation along each axis, 1 means no dilation.</dd>
       <dt>kernel_shape</dt>
       <dd>The size of the kernel along each axis.</dd>
       <dt>pads</dt>
-      <dd>Padding along each axis, can take the value 0 (False) or non 0 (True)</dd>
+      <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
       <dt>strides</dt>
       <dd>Stride along each axis.</dd>
     </dl>
@@ -1481,23 +1494,55 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="Slice"></a><a name="slice">**Slice**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
-  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html 
+  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
   
-  Slices uses `axes`, `starts` and `ends` list to specify the start and end
+  Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
   dimension.
+  
+  Example 1:
+  
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    axes = [0, 1]
+    starts = [1, 0]
+    ends = [2, 3]
+  
+    result = [
+        [5, 6, 7],
+    ]
+  
+  
+  Example 2:
+  
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    starts = [0]
+    ends = [-1]
+  
+    result = [
+        [1, 2, 3, 4],
+    ]
+  
+  * **attribute**:
+    <dl>
+      <dt>axes</dt>
+      <dd>Axes that `starts` and `ends` apply to. It's optional. If not present, will be treated as [0, 1, ..., len(`starts`) - 1].</dd>
+      <dt>ends</dt>
+      <dd>Ending indices (exclusive) of corresponding axis in axes`</dd>
+      <dt>starts</dt>
+      <dd>Starting indices of corresponding axis in `axes`</dd>
+    </dl>
   * **input**:
     <dl>
       <dt>data</dt>
       <dd>Tensor of data to extract slices from.</dd>
-      <dt>axes</dt>
-      <dd>1D Tensor contains the list of axes in which starts and ends apply to.</dd>
-      <dt>starts</dt>
-      <dd>1D Tensor contains the list of indices starting values corresponding to each axes in the axes input.</dd>
-      <dt>ends</dt>
-      <dd>1D Tensor contains the list of indices end values corresponding to each axes in the axes input.</dd>
     </dl>
   * **output**:
     <dl>

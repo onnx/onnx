@@ -271,17 +271,6 @@ is applied to the data tensor elementwise.
                    "the exponent component.")
     .Output(0, "Z", "Output tensor (same size as X)");
 
-OPERATOR_SCHEMA(Dot)
-    .NumInputs(2)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
-Apply dot product between 2 tensors. Similar to numpy implementation:
-https://docs.scipy.org/doc/numpy/reference/generated/numpy.dot.html
-)DOC")
-    .Input(0, "X", "Input tensor of any shape")
-    .Input(1, "Y", "Input tensor of any shape")
-    .Output(0, "Z", "Output tensor the dot product between X and Y.");
-
 OPERATOR_SCHEMA(PRelu)
     .NumInputs(2)
     .NumOutputs(1)
@@ -415,3 +404,14 @@ if attribute transA is non-zero, same for B and transB.
     .Attr("beta",
           "Scalar multiplier for input tensor C",
           AttrType::FLOAT);
+
+
+OPERATOR_SCHEMA(MatMul)
+    .NumInputs(2)
+    .NumOutputs(1)
+    .Input(0, "A", "N-dimensional matrix A")
+    .Input(1, "B", "N-dimensional matrix B")
+    .Output(0, "Y", "Matrix multiply results from A * B")
+    .SetDoc(R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+)DOC");

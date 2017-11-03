@@ -35,7 +35,6 @@ node_tests = [
     ("test_constant", N("Constant", value=const2_onnx), lambda: const2_np, []),
     # TODO: Are we actually supporting other dot modes?  In that case, some fancy
     # footwork is necessary...
-    ("test_dot", N("Dot"), np.dot, [(S, M), (M, L)]),
     ("test_relu", N("Relu"), lambda x: np.clip(x, 0, np.inf), [(S, S, S)]),
     ("test_constant_pad",
      N("Pad", mode='constant', value=1.2, paddings=[0, 0, 0, 0, 1, 2, 3, 4]),
@@ -57,14 +56,27 @@ node_tests = [
                       mode='edge'),
      [(1, 3, L, M)]),
     ("test_slice",
-     N("Slice"),
-     lambda x, axes, starts, ends: x[
-         [(slice(starts[i], ends[i]) if i in axes else slice(None))
-          for i in range(x.ndim)]
-     ], [(L, M, S),
-         np.array([0, 1]), # axes
-         np.array([0, 0]), # starts
-         np.array([3, M])]), # ends
+     N("Slice", axes=[0, 1], starts=[0, 0], ends=[3, M]),
+     lambda x: x[0:3, 0:M], [(L, M, S)]),
+    ("test_slice_neg",
+     N("Slice", axes=[1], starts=[0], ends=[-1]),
+     lambda x: x[:, 0:-1], [(L, M, S)]),
+    ("test_slice_default_axes",
+     N("Slice", starts=[0, 0, 3], ends=[L, M, 4]),
+     lambda x: x[:, :, 3:4], [(L, M, S)]),
+    ("test_matmul_2d",
+     N("MatMul"),
+     np.matmul,
+     [(M, S), (S, M)]),
+    ("test_matmul_3d",
+      N("MatMul"),
+      np.matmul,
+      [(1, M, S), (1, S, M)]),
+    ("test_matmul_4d",
+     N("MatMul"),
+     np.matmul,
+     [(1, 2, S, M),
+      (1, 2, M, S)]),
     # TODO: Add all the other operators
 ] + test_rnn.node_tests
 
@@ -85,13 +97,14 @@ if not os.environ.get('TRAVIS'):
 
 
 class BackendTest(object):
-    def __init__(self, backend):
+    def __init__(self, backend, parent_module=None):
         class TestsContainer(unittest.TestCase):
             def setUp(self):
                 np.random.seed(seed=0)
 
         self.backend = backend
         self._base_case = TestsContainer
+        self._parent_module = parent_module
         # List of test cases to be applied on the parent scope
         # Example usage: globals().update(BackendTest(backend).test_cases)
         self.test_cases = {}
@@ -113,6 +126,8 @@ class BackendTest(object):
         name = 'OnnxBackend{}Test'.format(category)
         if name not in self.test_cases:
             self.test_cases[name] = type(str(name), (self._base_case,), {})
+            if self._parent_module:
+                self.test_cases[name].__module__ = self._parent_module
         return self.test_cases[name]
 
     def _prepare_model(self, model_name):
