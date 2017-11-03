@@ -118,14 +118,6 @@ namespace onnx
                 return false;
             };
 
-            if (!IsAttributeLegal(attr_proto)) {
-                std::cerr << "Attribute '"
-                    << name
-                    << "' is not legal"
-                    << std::endl;
-                return false;
-            }
-
             const auto& search = attributes_.find(name);
             AttrType expected_type;
             if (search != attributes_.end()) {
@@ -256,7 +248,6 @@ namespace onnx
             }
         }
 
-
         // Check in-place settings.
         for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
             bool consumed = consume_attr ? consume_attr->ints(in_idx) : false;
@@ -281,34 +272,6 @@ namespace onnx
         }
 
         // Phew. All verifications passed.
-        return true;
-    }
-
-    bool OpSchema::IsAttributeLegal(const AttributeProto& proto) {
-        if (proto.name().empty()) {
-            std::cerr << "Attribute should set name field." << std::endl;
-            return false;
-        }
-
-        int used_fields =
-            proto.has_f() +
-            proto.has_i() +
-            proto.has_s() +
-            proto.has_t() +
-            proto.has_g() +
-            (proto.floats_size() > 0) +
-            (proto.ints_size() > 0) +
-            (proto.strings_size() > 0) +
-            (proto.tensors_size() > 0) +
-            (proto.graphs_size() > 0);
-        if (used_fields != 1) {
-            std::cerr << "Attribute should contain one and only one value field.\n"
-                << "AttributeProto:\n"
-                << proto.SerializeAsString()
-                << "\n"
-                << std::endl;
-            return false;
-        }
         return true;
     }
 
@@ -483,25 +446,6 @@ namespace onnx
         return *this;
     }
 
-    OpSchema& OpSchema::FillUsing(std::function<void(OpSchema&)> populator) {
-        if (populator) {
-            populator(*this);
-        }
-        return *this;
-    }
-
-    int OpSchema::CalculateOutput(int num_input) const {
-        if (min_output_ == max_output_) {
-            return min_output_;
-        }
-        else if (calculate_output_) {
-            return calculate_output_(num_input);
-        }
-        else {
-            return kCannotComputeNumOutputs;
-        }
-    }
-
     void OpSchema::SetDataType(
         const std::vector<InputOutputParam>& symbolicParams,
         /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters)
@@ -528,6 +472,63 @@ namespace onnx
 
             formalParameters->push_back(FormalParameter(name, allowedTypes, type, desc, optional));
         }
+    }
+
+    OpSchema& OpSchema::FillUsing(std::function<void(OpSchema&)> populator) {
+        if (populator) {
+            populator(*this);
+        }
+        return *this;
+    }
+
+    int OpSchema::CalculateOutput(int num_input) const {
+        if (min_output_ == max_output_) {
+            return min_output_;
+        }
+        else if (calculate_output_) {
+            return calculate_output_(num_input);
+        }
+        else {
+            return kCannotComputeNumOutputs;
+        }
+    }
+
+    void OpSchema::Finalize()
+    {
+#define ENFORCE(x) do { if (!(x)) throw std::logic_error("ONNX Schema " + name_ + ": failed validating the check: " + #x); } while (0)
+        ENFORCE(min_input_ <= max_input_);
+        ENFORCE(min_output_ <= max_output_);
+        ENFORCE(input_desc_.size() >= min_input_);
+        ENFORCE(output_desc_.size() >= min_output_);
+        ENFORCE(input_desc_.size() <= max_input_);
+        ENFORCE(output_desc_.size() <= max_output_);
+        // if max limit is finite - all names should be specified
+        if (max_input_ < std::numeric_limits<int>::max()) {
+            ENFORCE(input_desc_.size() == max_input_);
+        }
+        if (max_output_ < std::numeric_limits<int>::max()) {
+            ENFORCE(output_desc_.size() == max_output_);
+        }
+        // all inputs and outputs have names
+        for (const auto& it : inputs_) {
+            ENFORCE("" != it.GetName());
+        }
+        for (const auto& it : outputs_) {
+            ENFORCE("" != it.GetName());
+        }
+        // TODO: also cover checks for arbitrary number of inputs
+        // allow extra tailing inputs not be present if all inputs at the end are
+        // marked as optional
+        if (max_input_ < std::numeric_limits<int>::max()) {
+            int ind = max_input_;
+            while (ind > 0 && optional_inputs_.count(ind - 1)) {
+                --ind;
+            }
+            min_input_ = std::min(min_input_, ind);
+        }
+
+        SetDataType(input_desc_, &inputs_);
+        SetDataType(output_desc_, &outputs_);
     }
 
     std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
@@ -601,44 +602,4 @@ namespace onnx
         }
         return numReplaced;
     }
-
-
-    void OpSchema::Finalize()
-    {
-#define ENFORCE(x) do { if (!(x)) throw std::logic_error("ONNX Schema " + name_ + ": failed validating the check: " + #x); } while (0)
-        ENFORCE(min_input_ <= max_input_);
-        ENFORCE(min_output_ <= max_output_);
-        ENFORCE(input_desc_.size() >= min_input_);
-        ENFORCE(output_desc_.size() >= min_output_);
-        ENFORCE(input_desc_.size() <= max_input_);
-        ENFORCE(output_desc_.size() <= max_output_);
-        // if max limit is finite - all names should be specified
-        if (max_input_ < std::numeric_limits<int>::max()) {
-            ENFORCE(input_desc_.size() == max_input_);
-        }
-        if (max_output_ < std::numeric_limits<int>::max()) {
-            ENFORCE(output_desc_.size() == max_output_);
-        }
-        // all inputs and outputs have names
-        for (const auto& it : inputs_) {
-            ENFORCE("" != it.GetName());
-        }
-        for (const auto& it : outputs_) {
-            ENFORCE("" != it.GetName());
-        }
-        // TODO: also cover checks for arbitrary number of inputs
-        // allow extra tailing inputs not be present if all inputs at the end are
-        // marked as optional
-        if (max_input_ < std::numeric_limits<int>::max()) {
-            int ind = max_input_;
-            while (ind > 0 && optional_inputs_.count(ind - 1)) {
-                --ind;
-            }
-            min_input_ = std::min(min_input_, ind);
-        }
-
-        SetDataType(input_desc_, &inputs_);
-        SetDataType(output_desc_, &outputs_);
-    }
-
 }  // namespace onnx
