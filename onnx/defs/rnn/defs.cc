@@ -72,7 +72,8 @@ OPERATOR_SCHEMA(GRU)
     .NumInputs(3, 6)
     .NumOutputs(1, 2)
     .SetDoc(R"DOC(
-Computes an one-layer GRU in optimized fashion.
+Computes an one-layer GRU. This operator is usually supported via some custom
+implementation such as CuDNN.
 
 Notations:
 `X` - input tensor
