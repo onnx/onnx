@@ -46,6 +46,7 @@ namespace onnx
     }
 
     bool OpSchema::Verify(const NodeProto& node) const {
+        
         // Check the number of inputs.
         if (node.input_size() < min_input_ || node.input_size() > max_input_) {
             std::cerr << "Input size " << node.input_size()
