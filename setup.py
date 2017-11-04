@@ -268,6 +268,7 @@ install_requires.update(['protobuf', 'numpy'])
 
 setup_requires.add('pytest-runner')
 test_requires.add('pytest-cov')
+test_requires.add('nbval')
 
 ################################################################################
 # Final
