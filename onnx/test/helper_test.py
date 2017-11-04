@@ -49,6 +49,14 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.i, 0x1701)
         checker.check_attribute(attr)
 
+    def test_attr_doc_string(self):
+        attr = helper.make_attribute("a", "value")
+        self.assertEqual(attr.name, "a")
+        self.assertEqual(attr.doc_string, "")
+        attr = helper.make_attribute("a", "value", "doc")
+        self.assertEqual(attr.name, "a")
+        self.assertEqual(attr.doc_string, "doc")
+
     def test_attr_string(self):
         # bytes
         attr = helper.make_attribute("str", b"test")
@@ -170,6 +178,11 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertEqual(list(node_def.input), ["X"])
         self.assertEqual(list(node_def.output), ["Y"])
 
+    def test_attr_doc_string(self):
+        node_def = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test", doc_string="doc")
+        self.assertEqual(node_def.doc_string, "doc")
+
     def test_node_with_arg(self):
         self.assertTrue(defs.has("Relu"))
         # Note: Relu actually does not need an arg, but let's
@@ -195,6 +208,12 @@ class TestHelperNodeFunctions(unittest.TestCase):
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
         self.assertEqual(len(graph.node), 1)
         self.assertEqual(graph.node[0], node_def)
+        self.assertEqual(graph.doc_string, "")
+
+    def test_graph_docstring(self):
+        graph = helper.make_graph([], "my graph", [], [], None, "my docs")
+        self.assertEqual(graph.name, "my graph")
+        self.assertEqual(graph.doc_string, "my docs")
 
     def test_model(self):
         node_def = helper.make_node(
@@ -208,6 +227,13 @@ class TestHelperNodeFunctions(unittest.TestCase):
         model_def = helper.make_model(graph_def, producer_name='test')
         self.assertEqual(model_def.producer_name, 'test')
 
+    def test_model_docstring(self):
+        graph = helper.make_graph([], "my graph", [], [])
+        model_def = helper.make_model(graph, doc_string='test')
+        # models may have their own documentation, but don't have a name
+        # their name is the domain-qualified name of the underlying graph.
+        self.assertFalse(hasattr(model_def, "name"))
+        self.assertEqual(model_def.doc_string, 'test')
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
