@@ -69,6 +69,7 @@ enum Version {
 
   // IR_VERSION 0.0.2 (this proto file) contains the following IR format changes
   // - Added type discriminator to AttributeProto to support proto3 users
+  // - Added operator versioning via 'opset_import'
   IR_VERSION = 0x00000002;
 }
 
