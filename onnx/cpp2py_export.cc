@@ -6,7 +6,7 @@
 
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
-#include "onnx/proto_utils.h"
+#include "onnx/py_utils.h"
 
 namespace onnx {
 
