@@ -73,7 +73,7 @@ class OpSchema {
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
    */
-  bool Verify(const NodeProto& node) const;
+  void Verify(const NodeProto& node) const;
 
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
