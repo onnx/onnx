@@ -16,7 +16,7 @@ OpSchema::FormalParameter::FormalParameter(
     : name_(name),
       type_set_(allowed_type_set),
       type_str_(type_str),
-      description_(description_),
+      description_(description),
       is_optional_(optional) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
