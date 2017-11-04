@@ -153,7 +153,7 @@ message NodeProto {
 
   // The symbolic identifier of the Operator to execute.
   optional string op_type = 4;  // namespace Operator
-  // The domain that OperatorSet that specifies the operator.
+  // The domain of the OperatorSet that specifies the operator named by op_type.
   optional string domain = 7;   // namespace Domain
 
   // Additional named attributes.
@@ -555,7 +555,8 @@ message TypeProto {
 // OperatorSets are uniquely identified by a (domain, opset_version) pair.
 message OperatorSetIdProto {
   // The domain of the operator set being identified.
-  // The empty string ("") implies the operator ses that us defined as part of the ONNX specification.
+  // The empty string ("") or absence of this field implies the operator 
+  // set that is defined as part of the ONNX specification.
   // This field MUST be present in this version of the IR when referring to any other operator set.
   optional string domain = 1;
 

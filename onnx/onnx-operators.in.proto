@@ -7,11 +7,21 @@ package onnx;
 
 import "onnx.proto";
 
-// --------------------------------------------------------------------
 //
-// Optional, specification portion of the proto spec.
+// This file contains the proto definitions for OperatorSetProto and 
+// OperatorProto.  OperatorSetProtos are used to describe a versioned
+// set of operators that can be used by a ModelProto.  
+// 
+// Like ModelProto, OperatorSetProto is defined as a top-level file/wire
+// format, however their usage is different.
 //
-// --------------------------------------------------------------------
+// ModelProto files are used to describe executable graphs that can be
+// executed directly by a framework, runtime, or engine.
+//
+// OperatorSetProto files are used to describe a set of operators that are 
+// available in a given environment.  The file TBD.TBD is the OperatorSetProto
+// that describes the ONNX standard operators. 
+//    
 
 // An OperatorProto represents the immutable specification of the signature
 // and semantics of an operator.
@@ -28,8 +38,8 @@ import "onnx.proto";
 //   *op_type* is the name of the operator as referenced by a
 //      NodeProto.op_type
 //
-//   *since_version* is the version of the initial operator set that
-//      this operator was declared in.
+//   *since_version* is the version of the operator set that
+//      this operator was initially declared in.
 //
 message OperatorProto {
   enum OperatorStatus {
@@ -116,5 +126,3 @@ message OperatorSetProto {
   // The (name, version) MUST be unique across all OperatorProtos in operator
   repeated OperatorProto operator = 8;
 }
-
-// OperatorSets are uniquely identified by a (domain, opset_version) pair.
