@@ -1,33 +1,31 @@
 #include "onnx/checker.h"
 
 #include "onnx/defs/schema.h"
-#include "onnx/string_utils.h"
 
 #include <unordered_set>
 
 namespace onnx {
 namespace checker {
 
-#define fail(...) throw ValidationError(onnx::MakeString(__VA_ARGS__));
-
-#define enforce_has_field(proto, field)                                      \
-  do {                                                                       \
-    if (!proto.has_##field()) {                                              \
-      fail("Field '", #field, "' of ", #proto, " is required but missing."); \
-    }                                                                        \
+#define enforce_has_field(proto, field)                                     \
+  do {                                                                      \
+    if (!proto.has_##field()) {                                             \
+      fail_check(                                                           \
+          "Field '", #field, "' of ", #proto, " is required but missing."); \
+    }                                                                       \
   } while (0)
 
-#define enforce_has_repeated_field(proto, field)                      \
-  do {                                                                \
-    if (!proto.field##_size()) {                                      \
-      fail("Repeated Field '", #field, "' is required but missing."); \
-    }                                                                 \
+#define enforce_has_repeated_field(proto, field)                            \
+  do {                                                                      \
+    if (!proto.field##_size()) {                                            \
+      fail_check("Repeated Field '", #field, "' is required but missing."); \
+    }                                                                       \
   } while (0)
 
 #define enforce_non_empty_field(proto, field) \
   do {                                        \
     if (proto.field().empty()) {              \
-      fail(                                   \
+      fail_check(                             \
           "Field '",                          \
           #field,                             \
           "' of ",                            \
@@ -52,14 +50,14 @@ void check_value_info(const ValueInfoProto& value_info, int ir_version) {
       enforce_has_field(type, shape);
     } break;
     default:
-      fail("Unrecognized type value case: ", value_case);
+      fail_check("Unrecognized type value case: ", value_case);
   }
 }
 
 void check_tensor(const TensorProto& tensor, int ir_version) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
-    fail("setting data_type field to UNDEFINED is not allowed");
+    fail_check("setting data_type field to UNDEFINED is not allowed");
   }
 
   enforce_has_repeated_field(tensor, dims);
@@ -86,17 +84,17 @@ void check_tensor(const TensorProto& tensor, int ir_version) {
 #undef check_data_field
 
   if (num_value_fields != 1) {
-    fail("TensorProto should contain one and only one value field.");
+    fail_check("TensorProto should contain one and only one value field.");
   }
   if (has_raw_data) {
     if (tensor.data_type() == TensorProto::STRING) {
-      fail("STRING data should not be stored in raw_data field");
+      fail_check("STRING data should not be stored in raw_data field");
     }
     return;
   } else {
 #define check_field(field)               \
   if (!has_##field) {                    \
-    fail(                                \
+    fail_check(                          \
         "values of data_type '",         \
         tensor.data_type(),              \
         "' should be stored in field '", \
@@ -136,7 +134,7 @@ void check_tensor(const TensorProto& tensor, int ir_version) {
         break;
 
       default:
-        fail("Unrecognized data_type: ", tensor.data_type());
+        fail_check("Unrecognized data_type: ", tensor.data_type());
     }
   }
 
@@ -154,7 +152,7 @@ void check_attribute(const AttributeProto& attr, int ir_version) {
 
 #define check_type(expected_type)                        \
   if (attr.has_type() && attr.type() != expected_type) { \
-    fail("type field and data field mismatch.");         \
+    fail_check("type field and data field mismatch.");   \
   }
 
 #define check_singular_field(field, type) \
@@ -185,7 +183,7 @@ void check_attribute(const AttributeProto& attr, int ir_version) {
 #undef check_repeated_field
 
   if (used_fields != 1) {
-    fail("Attribute should contain one and only one value field.");
+    fail_check("Attribute should contain one and only one value field.");
   }
 
   for (const auto& tensor : attr.tensors()) {
@@ -200,7 +198,7 @@ void check_node(const NodeProto& node, int ir_version) {
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
-    fail("NodeProto has zero input and zero output.");
+    fail_check("NodeProto has zero input and zero output.");
   }
 
   for (const auto& attr : node.attribute()) {
@@ -209,11 +207,9 @@ void check_node(const NodeProto& node, int ir_version) {
 
   const auto* schema = OpSchemaRegistry::Schema(node.op_type());
   if (!schema) {
-    fail("No Schema registered for " + node.op_type());
+    fail_check("No Schema registered for " + node.op_type());
   }
-  if (!schema->Verify(node)) {
-    fail("NodeProto of type " + node.op_type() + " did not pass schema check.");
-  }
+  schema->Verify(node);
 }
 
 void check_graph(const GraphProto& graph, int ir_version) {
@@ -235,7 +231,7 @@ void check_graph(const GraphProto& graph, int ir_version) {
   }
   for (const auto& init : graph.initializer()) {
     if (!input_names.count(init.name())) {
-      fail(init.name() + " in initializer but not in graph input");
+      fail_check(init.name() + " in initializer but not in graph input");
     }
     check_tensor(init, ir_version);
   }
@@ -243,15 +239,15 @@ void check_graph(const GraphProto& graph, int ir_version) {
 
 void check_model(const ModelProto& model, int ir_version) {
   if (!model.ir_version()) {
-    fail("The model does not have an ir_version set properly.");
+    fail_check("The model does not have an ir_version set properly.");
   }
   if (model.ir_version() > ir_version) {
-    fail("Your model ir_version is higher than the checker's.");
+    fail_check("Your model ir_version is higher than the checker's.");
   }
   check_graph(model.graph(), model.ir_version());
 }
 
-#undef fail
+#undef fail_check
 #undef enforce_has_field
 #undef enforce_has_repeated_field
 #undef enforce_non_empty_field
