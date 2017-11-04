@@ -85,12 +85,12 @@ def main(args):
                                   display_number(schema.max_input))
         s += '\n'
         if schema.inputs:
-            s += '    <dl>\n'
+            s += '<dl>\n'
             for input in schema.inputs:
-                s += '      <dt>{}{}</dt>\n'.format(input.name, ' (optional)' if input.optional else '')
-                s += '      <dt>{}</dt>\n'.format(input.typeStr)
-                s += '      <dd>{}</dd>\n'.format(input.description)
-            s += '    </dl>\n'
+                s += '<dt><tt>{}</tt>{}</dt>\n'.format(input.name, ' (optional)' if input.optional else '')
+                s += '<dt>{}</dt>\n'.format(input.typeStr)
+                s += '<dd>{}</dd>\n'.format(input.description)
+            s += '</dl>\n'
 
         # outputs
         s += '\n#### Outputs'
@@ -100,27 +100,27 @@ def main(args):
         s += '\n'
 
         if schema.outputs:
-            s += '    <dl>\n'
+            s += '<dl>\n'
             for output in schema.outputs:
-                s += '      <dt>{}</dt>\n'.format(output.name)
-                s += '      <dt>{}</dt>\n'.format(output.typeStr)
-                s += '      <dd>{}</dd>\n'.format(output.description)
-            s += '    </dl>\n'
+                s += '<dt><tt>{}</tt></dt>\n'.format(output.name)
+                s += '<dt>{}</dt>\n'.format(output.typeStr)
+                s += '<dd>{}</dd>\n'.format(output.description)
+            s += '</dl>\n'
 
         # type constraints
         s += '  * **type constraints**:'
         if schema.type_constraints:
             s += '\n'
-            s += '    <dl>\n'
+            s += '<dl>\n'
             for typeStr, allowedTypes, description in schema.type_constraints:
-                s += '      <dt>{}</dt>\n'.format(typeStr)
+                s += '<dt><tt>{}</tt></dt>\n'.format(typeStr)
                 if (len(allowedTypes) > 0):
                     allowedTypeStr = allowedTypes[0]
                 for allowedType in allowedTypes[1:]:
                     allowedTypeStr += ', ' + allowedType
-                s += '      <dt>{}</dt>\n'.format(allowedTypeStr)
-                s += '      <dd>{}</dd>\n'.format(description)
-            s += '    </dl>\n'
+                s += '<dt>{}</dt>\n'.format(allowedTypeStr)
+                s += '<dd>{}</dd>\n'.format(description)
+            s += '</dl>\n'
             
         s += '\n\n'
         args.output.write(s)
