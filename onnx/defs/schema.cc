@@ -1,9 +1,10 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "schema.h"
-#include <unordered_set>
 #include <stdexcept>
+#include <unordered_set>
+#include "onnx/checker.h"
+#include "onnx/defs/schema.h"
 
 namespace onnx
 {
@@ -45,63 +46,73 @@ namespace onnx
         return m_isOptional;
     }
 
-    bool OpSchema::Verify(const NodeProto& node) const {
-
+    void OpSchema::Verify(const NodeProto& node) const {
         // Check the number of inputs.
         if (node.input_size() < min_input_ || node.input_size() > max_input_) {
-            std::cerr << "Input size " << node.input_size()
-                << " not in range [min=" << min_input_ << ", max="
-                << max_input_ << "].";
-            return false;
+            fail_check(
+                "Input size ",
+                node.input_size(),
+                " not in range [min=",
+                min_input_,
+                ", max=",
+                max_input_,
+                "].");
         }
+
         if (!num_inputs_allowed_(node.input_size())) {
-            std::cerr << "Input size " << node.input_size()
-                << " not in allowed input sizes.";
-            return false;
+            fail_check(
+                "Input size ", node.input_size(), " not in allowed input sizes.");
         }
+
         // Check the number of outputs.
         if (node.output_size() < min_output_ || node.output_size() > max_output_) {
-            std::cerr << "Output size " << node.output_size()
-                << " not in range [min=" << min_output_ << ", max="
-                << max_output_ << "].";
-            return false;
+            fail_check(
+                "Output size ",
+                node.output_size(),
+                " not in range [min=",
+                min_output_,
+                ", max=",
+                max_output_,
+                "].");
         }
+
         if (!num_outputs_allowed_(node.output_size())) {
-            std::cerr << "Output size " << node.output_size()
-                << " not in allowed output sizes.";
-            return false;
+            fail_check(
+                "Output size ", node.output_size(), " not in allowed output sizes.");
         }
         if (!num_inputs_outputs_allowed_(node.input_size(), node.output_size())) {
-            std::cerr << "Combination of input size " << node.input_size()
-                << "and output size " << node.output_size() << " not in allowed.";
-            return false;
+            fail_check(
+                "Combination of input size ",
+                node.input_size(),
+                "and output size ",
+                node.output_size(),
+                " not in allowed.");
         }
         // If the number of outputs can be calculated, check if the number matches.
         if (calculate_output_) {
             int expected_nout = calculate_output_(node.input_size());
             if (expected_nout != kCannotComputeNumOutputs &&
                 node.output_size() != expected_nout) {
-                std::cerr << "Output size " << node.output_size()
-                    << " not matching expected output size, which is "
-                    << expected_nout;
-                return false;
+                fail_check(
+                    "Output size ",
+                    node.output_size(),
+                    " not matching expected output size, which is ",
+                    expected_nout);
             }
         }
 
         // Check the values of inputs / outputs
         for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
             if (node.input(in_idx).empty() && !(inputs_[in_idx].IsOptional())) {
-                std::cerr
-                    << "Input " << in_idx
-                    << " is not marked optional but has an empty string in the graph";
-                return false;
+                fail_check(
+                    "Input ",
+                    in_idx,
+                    " is not marked optional but has an empty string in the graph");
             }
         }
         for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
             if (node.output(out_idx).empty()) {
-                std::cerr << "Output " << out_idx
-                    << " has an empty string in the graph";
-                return false;
+                fail_check("Output ", out_idx, " has an empty string in the graph");
             }
         }
 
@@ -113,10 +124,7 @@ namespace onnx
             const auto& name = attr_proto.name();
 
             if (!seen_attr_names.insert(name).second) {
-                std::cerr << "Attribute '"
-                    << name
-                    << "' appeared multiple times.";
-                return false;
+                fail_check("Attribute '", name, "' appeared multiple times.");
             };
 
             const auto& search = attributes_.find(name);
@@ -131,107 +139,72 @@ namespace onnx
                 expected_type = AttrType::INTS;
                 consume_attr = &attr_proto;
                 if (attr_proto.ints().size() != node.input_size()) {
-                    std::cerr << "Attribute consumed_inputs (length "
-                        << attr_proto.ints().size()
-                        << ") is not the same length as inputs (length "
-                        << node.input_size() << ")" << std::endl;
-                    return false;
+                    fail_check(
+                        "Attribute consumed_inputs (length ",
+                        attr_proto.ints().size(),
+                        ") is not the same length as inputs (length ",
+                        node.input_size(),
+                        ")");
                 }
             }
             else {
-                std::cerr << "Unrecognized attribute: " << name << std::endl;
-                return false;
+                fail_check("Unrecognized attribute: ", name);
             }
 
             switch (expected_type) {
             case AttrType::FLOAT:
                 if (!attr_proto.has_f()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'f'"
-                        << std::endl;
-                    return false;
+                    fail_check("Attribute '", name, "' is expected to have field 'f'");
                 }
                 break;
             case AttrType::INT:
                 if (!attr_proto.has_i()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'i'"
-                        << std::endl;
-                    return false;
+                    fail_check("Attribute '", name, "' is expected to have field 'i'");
                 }
                 break;
             case AttrType::STRING:
                 if (!attr_proto.has_s()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 's'"
-                        << std::endl;
-                    return false;
+                    fail_check("Attribute '", name, "' is expected to have field 's'");
                 }
                 break;
             case AttrType::TENSOR:
                 if (!attr_proto.has_t()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 't'"
-                        << std::endl;
-                    return false;
+                    fail_check("Attribute '", name, "' is expected to have field 't'");
                 }
                 break;
             case AttrType::GRAPH:
                 if (!attr_proto.has_g()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'g'"
-                        << std::endl;
-                    return false;
+                    fail_check("Attribute '", name, "' is expected to have field 'g'");
                 }
                 break;
             case AttrType::FLOATS:
                 if (!attr_proto.floats_size()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'floats'"
-                        << std::endl;
-                    return false;
+                    fail_check(
+                        "Attribute '", name, "' is expected to have field 'floats'");
                 }
                 break;
             case AttrType::INTS:
                 if (!attr_proto.ints_size()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'ints'"
-                        << std::endl;
-                    return false;
+                    fail_check(
+                        "Attribute '", name, "' is expected to have field 'ints'");
                 }
                 break;
             case AttrType::STRINGS:
                 if (!attr_proto.strings_size()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'strings'"
-                        << std::endl;
-                    return false;
+                    fail_check(
+                        "Attribute '", name, "' is expected to have field 'strings'");
                 }
                 break;
             case AttrType::TENSORS:
                 if (!attr_proto.tensors_size()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'tensors'"
-                        << std::endl;
-                    return false;
+                    fail_check(
+                        "Attribute '", name, "' is expected to have field 'tensors'");
                 }
                 break;
             case AttrType::GRAPHS:
                 if (!attr_proto.graphs_size()) {
-                    std::cerr << "Attribute '"
-                        << name
-                        << "' is expected to have field 'graphs'"
-                        << std::endl;
-                    return false;
+                    fail_check(
+                        "Attribute '", name, "' is expected to have field 'graphs'");
                 }
                 break;
             }
@@ -242,12 +215,10 @@ namespace onnx
                 continue;
             }
             if (!seen_attr_names.count(attr.name)) {
-                std::cerr << "Required attribute '"
-                    << attr.name
-                    << "' is missing." << std::endl;
-                return false;
+                fail_check("Required attribute '", attr.name, "' is missing.");
             }
         }
+
 
         // Check in-place settings.
         for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
@@ -256,24 +227,28 @@ namespace onnx
             switch (use_type.first) {
             case UseType::DEFAULT:
                 if (consumed) {
-                    std::cerr << "Input index " << in_idx << " is set to consumed but "
-                        << "is not supported by op " << node.op_type();
-                    return false;
+                    fail_check(
+                        "Input index ",
+                        in_idx,
+                        " is set to consumed but ",
+                        "is not supported by op ",
+                        node.op_type());
                 } break;
             case UseType::CONSUME_ENFORCED:
                 if (!consumed) {
-                    std::cerr << "Input index " << in_idx << " must be set to consumed "
-                        << "for operator " << node.op_type();
-                    return false;
+                    fail_check(
+                        "Input index ",
+                        in_idx,
+                        " must be set to consumed ",
+                        "for operator ",
+                        node.op_type());
                 } break;
             case UseType::CONSUME_ALLOWED:
                 // pass, either is allowed
                 break;
             }
         }
-
         // Phew. All verifications passed.
-        return true;
     }
 
     OpSchema& OpSchema::NumInputs(int min, int max) {

@@ -21,7 +21,7 @@
 
 namespace onnx {
 
-    typedef std::unordered_set<DTYPE> DataTypeSet;
+    typedef std::unordered_set<DataType> DataTypeSet;
     // Input/Output parameter, which contain name, description and type string.
     typedef std::tuple<std::string, std::string, std::string, bool> InputOutputParam;
     // Type constraint, which contain type string, allowed types and description.
@@ -136,7 +136,7 @@ namespace onnx {
         * @brief Verifies if a NodeProto matches the pattern specified in
         * the schema.
         */
-        bool Verify(const NodeProto& node) const;
+        void Verify(const NodeProto& node) const;
 
         // Functions to set the property of the operator schemas.
         // Sets the number of inputs, either a fixed number or a min and a max.
@@ -339,7 +339,7 @@ namespace onnx {
 
         // Verifies that the schema is valid and all specifications are compatible.
         // It will also parse all type strings specified for inputs/outputs into valid TypeProto
-        // and create global unique string pointer as the DTYPE for efficiency.
+        // and create global unique string pointer as the DataType for efficiency.
         void Finalize();
 
         void ParseAndSetInputOutput(
@@ -447,5 +447,4 @@ namespace onnx {
 
     // Helper function
     size_t ReplaceAll(std::string& s, const char* from, const char* to);
-
 }  // namespace onnx
