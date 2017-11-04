@@ -7,6 +7,37 @@
 
 namespace onnx {
 namespace Utils {
+
+// Singleton wrapper around allowed data types.
+// This implements construct on first use which is needed to ensure
+// static objects are initialized before use. Ops registration does not work
+// properly without this.
+class TypesWrapper {
+ public:
+  static TypesWrapper& GetTypesWrapper();
+
+  std::unordered_set<std::string>& GetAllowedDataTypes();
+
+  std::unordered_map<std::string, TensorProto_DataType>&
+  TypeStrToTensorDataType();
+
+  std::unordered_map<TensorProto_DataType, std::string>&
+  TensorDataTypeToTypeStr();
+
+  ~TypesWrapper() = default;
+  TypesWrapper(const TypesWrapper&) = delete;
+  void operator=(const TypesWrapper&) = delete;
+
+ private:
+  TypesWrapper();
+
+  std::unordered_map<std::string, TensorProto_DataType>
+      type_str_to_tensor_data_type_;
+  std::unordered_map<TensorProto_DataType, std::string>
+      tensor_data_type_to_type_str_;
+  std::unordered_set<std::string> allowed_data_types_;
+};
+
 // Simple class which contains pointers to external string buffer and a size.
 // This can be used to track a "valid" range/slice of the string.
 // Caller should ensure StringRange is not used after external storage has
@@ -99,7 +130,8 @@ std::string DataTypeUtils::ToString(
             right;
       } else {
         return left + "tensor(" +
-            ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" + right;
+            ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" +
+            right;
       }
     }
 
@@ -117,44 +149,14 @@ std::string DataTypeUtils::ToString(
 std::string DataTypeUtils::ToDataTypeString(
     const TensorProto::DataType& tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  switch (tensor_data_type) {
-    case TensorProto::DataType::TensorProto_DataType_BOOL:
-      return t.kBool;
-    case TensorProto::DataType::TensorProto_DataType_STRING:
-      return t.kString;
-    case TensorProto::DataType::TensorProto_DataType_FLOAT16:
-      return t.kFloat16;
-    case TensorProto::DataType::TensorProto_DataType_FLOAT:
-      return t.kFloat;
-    case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-      return t.kDouble;
-    case TensorProto::DataType::TensorProto_DataType_INT8:
-      return t.kInt8;
-    case TensorProto::DataType::TensorProto_DataType_INT16:
-      return t.kInt16;
-    case TensorProto::DataType::TensorProto_DataType_INT32:
-      return t.kInt32;
-    case TensorProto::DataType::TensorProto_DataType_INT64:
-      return t.kInt64;
-    case TensorProto::DataType::TensorProto_DataType_UINT8:
-      return t.kUint8;
-    case TensorProto::DataType::TensorProto_DataType_UINT16:
-      return t.kUint16;
-    case TensorProto::DataType::TensorProto_DataType_UINT32:
-      return t.kUint32;
-    case TensorProto::DataType::TensorProto_DataType_UINT64:
-      return t.kUint64;
-    case TensorProto::DataType::TensorProto_DataType_COMPLEX64:
-      return t.kComplex64;
-    case TensorProto::DataType::TensorProto_DataType_COMPLEX128:
-      return t.kComplex128;
-  }
-
-  assert(false);
-  return "";
+  auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
+  assert(t.TensorDataTypeToTypeStr().end() != iter);
+  return iter->second;
 }
 
-void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_proto) {
+void DataTypeUtils::FromString(
+    const std::string& type_str,
+    TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
   if (s.LStrip("sparse")) {
@@ -190,43 +192,10 @@ void DataTypeUtils::FromDataTypeString(
   assert(IsValidDataTypeString(type_str));
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  if (type_str == t.kBool) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_BOOL;
-  } else if (type_str == t.kFloat) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_FLOAT;
-  } else if (type_str == t.kFloat16) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_FLOAT16;
-  } else if (type_str == t.kDouble) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_DOUBLE;
-  } else if (type_str == t.kInt8) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT8;
-  } else if (type_str == t.kInt16) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT16;
-  } else if (type_str == t.kInt32) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT32;
-  } else if (type_str == t.kInt64) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT64;
-  } else if (type_str == t.kString) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_STRING;
-  } else if (type_str == t.kUint8) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT8;
-  } else if (type_str == t.kUint16) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT16;
-  } else if (type_str == t.kUint32) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT32;
-  } else if (type_str == t.kUint64) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT64;
-  } else if (type_str == t.kComplex64) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_COMPLEX64;
-  } else if (type_str == t.kComplex128) {
-    tensor_data_type = TensorProto::DataType::TensorProto_DataType_COMPLEX128;
-  } else {
-    assert(false);
-  }
+  tensor_data_type = t.TypeStrToTensorDataType()[type_str];
 }
 
-StringRange::StringRange()
-    : data_(""), size_(0), start_(data_), end_(data_) {}
+StringRange::StringRange() : data_(""), size_(0), start_(data_), end_(data_) {}
 
 StringRange::StringRange(const char* p_data, size_t p_size)
     : data_(p_data), size_(p_size), start_(data_), end_(data_) {
@@ -235,10 +204,7 @@ StringRange::StringRange(const char* p_data, size_t p_size)
 }
 
 StringRange::StringRange(const std::string& p_str)
-    : data_(p_str.data()),
-      size_(p_str.size()),
-      start_(data_),
-      end_(data_) {
+    : data_(p_str.data()), size_(p_str.size()), start_(data_), end_(data_) {
   LAndRStrip();
 }
 
@@ -282,16 +248,13 @@ void StringRange::Reset(const std::string& str) {
 }
 
 bool StringRange::StartsWith(const StringRange& str) const {
-  return (
-      (size_ >= str.size_) &&
-      (memcmp(data_, str.data_, str.size_) == 0));
+  return ((size_ >= str.size_) && (memcmp(data_, str.data_, str.size_) == 0));
 }
 
 bool StringRange::EndsWith(const StringRange& str) const {
   return (
       (size_ >= str.size_) &&
-      (memcmp(data_ + (size_ - str.size_), str.data_, str.size_) ==
-       0));
+      (memcmp(data_ + (size_ - str.size_), str.data_, str.size_) == 0));
 }
 
 bool StringRange::LStrip() {
@@ -394,22 +357,41 @@ TypesWrapper& TypesWrapper::GetTypesWrapper() {
 }
 
 std::unordered_set<std::string>& TypesWrapper::GetAllowedDataTypes() {
-  static std::unordered_set<std::string> allowedDataTypes = {kFloat16,
-                                                             kFloat,
-                                                             kDouble,
-                                                             kInt8,
-                                                             kInt16,
-                                                             kInt32,
-                                                             kInt64,
-                                                             kUint8,
-                                                             kUint16,
-                                                             kUint32,
-                                                             kUint64,
-                                                             kComplex64,
-                                                             kComplex128,
-                                                             kString,
-                                                             kBool};
-  return allowedDataTypes;
+  return allowed_data_types_;
+}
+
+std::unordered_map<std::string, TensorProto_DataType>&
+TypesWrapper::TypeStrToTensorDataType() {
+  return type_str_to_tensor_data_type_;
+}
+
+std::unordered_map<TensorProto_DataType, std::string>&
+TypesWrapper::TensorDataTypeToTypeStr() {
+  return tensor_data_type_to_type_str_;
+}
+
+TypesWrapper::TypesWrapper() {
+  // DataType strings. These should match the DataTypes defined in onnx.proto
+  type_str_to_tensor_data_type_["float16"] = TensorProto_DataType_FLOAT;
+  type_str_to_tensor_data_type_["double"] = TensorProto_DataType_DOUBLE;
+  type_str_to_tensor_data_type_["int8"] = TensorProto_DataType_INT8;
+  type_str_to_tensor_data_type_["int16"] = TensorProto_DataType_INT16;
+  type_str_to_tensor_data_type_["int32"] = TensorProto_DataType_INT32;
+  type_str_to_tensor_data_type_["int64"] = TensorProto_DataType_INT64;
+  type_str_to_tensor_data_type_["uint8"] = TensorProto_DataType_UINT8;
+  type_str_to_tensor_data_type_["uint16"] = TensorProto_DataType_UINT16;
+  type_str_to_tensor_data_type_["uint32"] = TensorProto_DataType_UINT32;
+  type_str_to_tensor_data_type_["uint64"] = TensorProto_DataType_UINT64;
+  type_str_to_tensor_data_type_["complext64"] = TensorProto_DataType_COMPLEX64;
+  type_str_to_tensor_data_type_["complext128"] =
+      TensorProto_DataType_COMPLEX128;
+  type_str_to_tensor_data_type_["string"] = TensorProto_DataType_STRING;
+  type_str_to_tensor_data_type_["bool"] = TensorProto_DataType_BOOL;
+
+  for (auto& str_type_pair : type_str_to_tensor_data_type_) {
+    tensor_data_type_to_type_str_[str_type_pair.second] = str_type_pair.first;
+    allowed_data_types_.insert(str_type_pair.first);
+  }
 }
 } // namespace Utils
 } // namespace onnx

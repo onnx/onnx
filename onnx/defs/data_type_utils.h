@@ -16,40 +16,6 @@ namespace onnx {
 typedef const std::string* DataType;
 
 namespace Utils {
-// Singleton wrapper around allowed data types.
-// This implements construct on first use which is needed to ensure
-// static objects are initialized before use. Ops registration does not work
-// properly without this.
-class TypesWrapper {
- public:
-  static TypesWrapper& GetTypesWrapper();
-
-  // DataType strings. These should match the DataTypes defined in onnx.proto
-  const std::string kFloat16 = "float16";
-  const std::string kFloat = "float";
-  const std::string kDouble = "double";
-  const std::string kInt8 = "int8";
-  const std::string kInt16 = "int16";
-  const std::string kInt32 = "int32";
-  const std::string kInt64 = "int64";
-  const std::string kUint8 = "uint8";
-  const std::string kUint16 = "uint16";
-  const std::string kUint32 = "uint32";
-  const std::string kUint64 = "uint64";
-  const std::string kComplex64 = "complex64";
-  const std::string kComplex128 = "complex128";
-  const std::string kString = "string";
-  const std::string kBool = "bool";
-
-  std::unordered_set<std::string>& GetAllowedDataTypes();
-
-  ~TypesWrapper() = default;
-  TypesWrapper(const TypesWrapper&) = delete;
-  void operator=(const TypesWrapper&) = delete;
-
- private:
-  TypesWrapper() = default;
-};
 
 // Data type utility, which maintains a global type string to TypeProto map.
 // DataType (string pointer) is used as unique data type identifier for
@@ -84,7 +50,8 @@ class DataTypeUtils {
       const std::string& left = "",
       const std::string& right = "");
 
-  static std::string ToDataTypeString(const TensorProto::DataType& tensor_data_type);
+  static std::string ToDataTypeString(
+      const TensorProto::DataType& tensor_data_type);
 
   static bool IsValidDataTypeString(const std::string& type_str);
 

@@ -1,10 +1,10 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
+#include "onnx/defs/schema.h"
 #include <stdexcept>
 #include <unordered_set>
 #include "onnx/checker.h"
-#include "onnx/defs/schema.h"
 
 namespace onnx {
 OpSchema::FormalParameter::FormalParameter(
