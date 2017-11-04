@@ -357,21 +357,24 @@
 #### Inputs
     <dl>
       <dt>input</dt>
-      <dt>T</dt>
+      <dt>T1</dt>
       <dd>Input tensor to be cast.</dd>
     </dl>
 
 #### Outputs
     <dl>
       <dt>output</dt>
-      <dt>T</dt>
+      <dt>T2</dt>
       <dd>Output tensor with the same shape as input with type specified by the 'to' argument</dd>
     </dl>
   * **type constraints**:
     <dl>
-      <dt>T</dt>
+      <dt>T1</dt>
       <dt>tensor(float16), tensor(float), tensor(double)</dt>
-      <dd>Constrain input and output types to float tensors.</dd>
+      <dd>Constrain input types to float tensors.</dd>
+      <dt>T2</dt>
+      <dt>tensor(float16), tensor(float), tensor(double)</dt>
+      <dd>Constrain output types to float tensors.</dd>
     </dl>
 
 
