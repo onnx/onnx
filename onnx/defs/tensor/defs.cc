@@ -24,15 +24,18 @@ NOTE: Casting to and from strings is not supported yet.
           "The data type to which the elements of the input tensor are cast."
           "Strictly must be one of the types from DataType enum in TensorProto",
           AttrType::STRING)
-    .Input(0, "input", "Input tensor to be cast.", "T")
+    .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
         "output",
         "Output tensor with the same shape as input with type "
         "specified by the 'to' argument",
-        "T")
-     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-            "Constrain input and output types to float tensors.");
+        "T2")
+    .TypeConstraint("T1", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input types to float tensors.")
+    .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain output types to float tensors.");
+            
 
 OPERATOR_SCHEMA(Reshape)
     .NumInputs(1)
