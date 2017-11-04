@@ -88,7 +88,7 @@ Change into another directory to fix this error.
 ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, first you need to install pytest:
 
 ```
-pip install pytest-cov
+pip install pytest-cov nbval
 ```
 
 After installing pytest, do
