@@ -4,8 +4,8 @@
 #include <pybind11/stl.h>
 #include <unordered_map>
 
-#include "onnx/defs/schema.h"
 #include "onnx/checker.h"
+#include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
 
 namespace onnx {
