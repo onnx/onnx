@@ -14,27 +14,27 @@ namespace Utils {
 class StringRange {
  public:
   StringRange();
-  StringRange(const char* p_data, size_t p_size);
-  StringRange(const std::string& p_str);
-  StringRange(const char* p_data);
+  StringRange(const char* data, size_t size);
+  StringRange(const std::string& str);
+  StringRange(const char* data);
   const char* Data() const;
   size_t Size() const;
   bool Empty() const;
-  char operator[](size_t p_idx) const;
+  char operator[](size_t idx) const;
   void Reset();
-  void Reset(const char* p_data, size_t p_size);
-  void Reset(const std::string& p_str);
-  bool StartsWith(const StringRange& p_str) const;
-  bool EndsWith(const StringRange& p_str) const;
+  void Reset(const char* data, size_t size);
+  void Reset(const std::string& str);
+  bool StartsWith(const StringRange& str) const;
+  bool EndsWith(const StringRange& str) const;
   bool LStrip();
-  bool LStrip(size_t p_size);
-  bool LStrip(StringRange p_str);
+  bool LStrip(size_t size);
+  bool LStrip(StringRange str);
   bool RStrip();
-  bool RStrip(size_t p_size);
-  bool RStrip(StringRange p_str);
+  bool RStrip(size_t size);
+  bool RStrip(StringRange str);
   bool LAndRStrip();
   void ParensWhitespaceStrip();
-  size_t Find(const char p_ch) const;
+  size_t Find(const char ch) const;
 
   // These methods provide a way to return the range of the string
   // which was discarded by LStrip(). i.e. We capture the string
@@ -43,14 +43,14 @@ class StringRange {
   void RestartCapture();
 
  private:
-  // m_data + size tracks the "valid" range of the external string buffer.
-  const char* m_data;
-  size_t m_size;
+  // data_ + size tracks the "valid" range of the external string buffer.
+  const char* data_;
+  size_t size_;
 
-  // m_start and m_end track the captured range.
-  // m_end advances when LStrip() is called.
-  const char* m_start;
-  const char* m_end;
+  // start_ and end_ track the captured range.
+  // end_ advances when LStrip() is called.
+  const char* start_;
+  const char* end_;
 };
 
 std::unordered_map<std::string, TypeProto>&
@@ -64,48 +64,48 @@ std::mutex& DataTypeUtils::GetTypeStrLock() {
   return lock;
 }
 
-DataType DataTypeUtils::ToType(const TypeProto& p_type) {
-  auto typeStr = ToString(p_type);
+DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
+  auto typeStr = ToString(type_proto);
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   if (GetTypeStrToProtoMap().find(typeStr) == GetTypeStrToProtoMap().end()) {
-    GetTypeStrToProtoMap()[typeStr] = p_type;
+    GetTypeStrToProtoMap()[typeStr] = type_proto;
   }
   return &(GetTypeStrToProtoMap().find(typeStr)->first);
 }
 
-DataType DataTypeUtils::ToType(const std::string& p_type) {
+DataType DataTypeUtils::ToType(const std::string& type_str) {
   TypeProto type;
-  FromString(p_type, type);
+  FromString(type_str, type);
   return ToType(type);
 }
 
-const TypeProto& DataTypeUtils::ToTypeProto(const DataType& p_type) {
+const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
-  auto it = GetTypeStrToProtoMap().find(*p_type);
+  auto it = GetTypeStrToProtoMap().find(*data_type);
   assert(it != GetTypeStrToProtoMap().end());
   return it->second;
 }
 
 std::string DataTypeUtils::ToString(
-    const TypeProto& p_type,
+    const TypeProto& type_proto,
     const std::string& left,
     const std::string& right) {
-  switch (p_type.value_case()) {
+  switch (type_proto.value_case()) {
     case TypeProto::ValueCase::kTensorType: {
-      if (p_type.tensor_type().has_shape() &&
-          p_type.tensor_type().shape().dim_size() == 0) {
+      if (type_proto.tensor_type().has_shape() &&
+          type_proto.tensor_type().shape().dim_size() == 0) {
         // Scalar case.
-        return left + ToDataTypeString(p_type.tensor_type().elem_type()) +
+        return left + ToDataTypeString(type_proto.tensor_type().elem_type()) +
             right;
       } else {
         return left + "tensor(" +
-            ToDataTypeString(p_type.tensor_type().elem_type()) + ")" + right;
+            ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" + right;
       }
     }
 
     case TypeProto::ValueCase::kSparseTensorType:
       return left + "sparse(" +
-          ToDataTypeString(p_type.sparse_tensor_type().elem_type()) + ")" +
+          ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" +
           right;
 
     default:
@@ -115,189 +115,189 @@ std::string DataTypeUtils::ToString(
 }
 
 std::string DataTypeUtils::ToDataTypeString(
-    const TensorProto::DataType& p_type) {
+    const TensorProto::DataType& tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  switch (p_type) {
+  switch (tensor_data_type) {
     case TensorProto::DataType::TensorProto_DataType_BOOL:
-      return t.c_bool;
+      return t.kBool;
     case TensorProto::DataType::TensorProto_DataType_STRING:
-      return t.c_string;
+      return t.kString;
     case TensorProto::DataType::TensorProto_DataType_FLOAT16:
-      return t.c_float16;
+      return t.kFloat16;
     case TensorProto::DataType::TensorProto_DataType_FLOAT:
-      return t.c_float;
+      return t.kFloat;
     case TensorProto::DataType::TensorProto_DataType_DOUBLE:
-      return t.c_double;
+      return t.kDouble;
     case TensorProto::DataType::TensorProto_DataType_INT8:
-      return t.c_int8;
+      return t.kInt8;
     case TensorProto::DataType::TensorProto_DataType_INT16:
-      return t.c_int16;
+      return t.kInt16;
     case TensorProto::DataType::TensorProto_DataType_INT32:
-      return t.c_int32;
+      return t.kInt32;
     case TensorProto::DataType::TensorProto_DataType_INT64:
-      return t.c_int64;
+      return t.kInt64;
     case TensorProto::DataType::TensorProto_DataType_UINT8:
-      return t.c_uint8;
+      return t.kUint8;
     case TensorProto::DataType::TensorProto_DataType_UINT16:
-      return t.c_uint16;
+      return t.kUint16;
     case TensorProto::DataType::TensorProto_DataType_UINT32:
-      return t.c_uint32;
+      return t.kUint32;
     case TensorProto::DataType::TensorProto_DataType_UINT64:
-      return t.c_uint64;
+      return t.kUint64;
     case TensorProto::DataType::TensorProto_DataType_COMPLEX64:
-      return t.c_complex64;
+      return t.kComplex64;
     case TensorProto::DataType::TensorProto_DataType_COMPLEX128:
-      return t.c_complex128;
+      return t.kComplex128;
   }
 
   assert(false);
   return "";
 }
 
-void DataTypeUtils::FromString(const std::string& p_src, TypeProto& p_type) {
-  StringRange s(p_src);
-  p_type.Clear();
+void DataTypeUtils::FromString(const std::string& type_str, TypeProto& type_proto) {
+  StringRange s(type_str);
+  type_proto.Clear();
   if (s.LStrip("sparse")) {
     s.ParensWhitespaceStrip();
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
-    p_type.mutable_sparse_tensor_type()->set_elem_type(e);
+    type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
   } else if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
-    p_type.mutable_tensor_type()->set_elem_type(e);
+    type_proto.mutable_tensor_type()->set_elem_type(e);
   } else {
     // Scalar
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
-    TypeProto::TensorTypeProto* t = p_type.mutable_tensor_type();
+    TypeProto::TensorTypeProto* t = type_proto.mutable_tensor_type();
     t->set_elem_type(e);
     // Call mutable_shape() to initialize a shape with no dimension.
     t->mutable_shape();
   }
 }
 
-bool DataTypeUtils::IsValidDataTypeString(const std::string& p_dataType) {
+bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   const auto& allowedSet = t.GetAllowedDataTypes();
-  return (allowedSet.find(p_dataType) != allowedSet.end());
+  return (allowedSet.find(type_str) != allowedSet.end());
 }
 
 void DataTypeUtils::FromDataTypeString(
-    const std::string& p_typeStr,
-    TensorProto::DataType& p_type) {
-  assert(IsValidDataTypeString(p_typeStr));
+    const std::string& type_str,
+    TensorProto::DataType& tensor_data_type) {
+  assert(IsValidDataTypeString(type_str));
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  if (p_typeStr == t.c_bool) {
-    p_type = TensorProto::DataType::TensorProto_DataType_BOOL;
-  } else if (p_typeStr == t.c_float) {
-    p_type = TensorProto::DataType::TensorProto_DataType_FLOAT;
-  } else if (p_typeStr == t.c_float16) {
-    p_type = TensorProto::DataType::TensorProto_DataType_FLOAT16;
-  } else if (p_typeStr == t.c_double) {
-    p_type = TensorProto::DataType::TensorProto_DataType_DOUBLE;
-  } else if (p_typeStr == t.c_int8) {
-    p_type = TensorProto::DataType::TensorProto_DataType_INT8;
-  } else if (p_typeStr == t.c_int16) {
-    p_type = TensorProto::DataType::TensorProto_DataType_INT16;
-  } else if (p_typeStr == t.c_int32) {
-    p_type = TensorProto::DataType::TensorProto_DataType_INT32;
-  } else if (p_typeStr == t.c_int64) {
-    p_type = TensorProto::DataType::TensorProto_DataType_INT64;
-  } else if (p_typeStr == t.c_string) {
-    p_type = TensorProto::DataType::TensorProto_DataType_STRING;
-  } else if (p_typeStr == t.c_uint8) {
-    p_type = TensorProto::DataType::TensorProto_DataType_UINT8;
-  } else if (p_typeStr == t.c_uint16) {
-    p_type = TensorProto::DataType::TensorProto_DataType_UINT16;
-  } else if (p_typeStr == t.c_uint32) {
-    p_type = TensorProto::DataType::TensorProto_DataType_UINT32;
-  } else if (p_typeStr == t.c_uint64) {
-    p_type = TensorProto::DataType::TensorProto_DataType_UINT64;
-  } else if (p_typeStr == t.c_complex64) {
-    p_type = TensorProto::DataType::TensorProto_DataType_COMPLEX64;
-  } else if (p_typeStr == t.c_complex128) {
-    p_type = TensorProto::DataType::TensorProto_DataType_COMPLEX128;
+  if (type_str == t.kBool) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_BOOL;
+  } else if (type_str == t.kFloat) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_FLOAT;
+  } else if (type_str == t.kFloat16) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_FLOAT16;
+  } else if (type_str == t.kDouble) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_DOUBLE;
+  } else if (type_str == t.kInt8) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT8;
+  } else if (type_str == t.kInt16) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT16;
+  } else if (type_str == t.kInt32) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT32;
+  } else if (type_str == t.kInt64) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_INT64;
+  } else if (type_str == t.kString) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_STRING;
+  } else if (type_str == t.kUint8) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT8;
+  } else if (type_str == t.kUint16) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT16;
+  } else if (type_str == t.kUint32) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT32;
+  } else if (type_str == t.kUint64) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_UINT64;
+  } else if (type_str == t.kComplex64) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_COMPLEX64;
+  } else if (type_str == t.kComplex128) {
+    tensor_data_type = TensorProto::DataType::TensorProto_DataType_COMPLEX128;
   } else {
     assert(false);
   }
 }
 
 StringRange::StringRange()
-    : m_data(""), m_size(0), m_start(m_data), m_end(m_data) {}
+    : data_(""), size_(0), start_(data_), end_(data_) {}
 
 StringRange::StringRange(const char* p_data, size_t p_size)
-    : m_data(p_data), m_size(p_size), m_start(m_data), m_end(m_data) {
+    : data_(p_data), size_(p_size), start_(data_), end_(data_) {
   assert(p_data != nullptr);
   LAndRStrip();
 }
 
 StringRange::StringRange(const std::string& p_str)
-    : m_data(p_str.data()),
-      m_size(p_str.size()),
-      m_start(m_data),
-      m_end(m_data) {
+    : data_(p_str.data()),
+      size_(p_str.size()),
+      start_(data_),
+      end_(data_) {
   LAndRStrip();
 }
 
 StringRange::StringRange(const char* p_data)
-    : m_data(p_data), m_size(strlen(p_data)), m_start(m_data), m_end(m_data) {
+    : data_(p_data), size_(strlen(p_data)), start_(data_), end_(data_) {
   LAndRStrip();
 }
 
 const char* StringRange::Data() const {
-  return m_data;
+  return data_;
 }
 
 size_t StringRange::Size() const {
-  return m_size;
+  return size_;
 }
 
 bool StringRange::Empty() const {
-  return m_size == 0;
+  return size_ == 0;
 }
 
-char StringRange::operator[](size_t p_idx) const {
-  return m_data[p_idx];
+char StringRange::operator[](size_t idx) const {
+  return data_[idx];
 }
 
 void StringRange::Reset() {
-  m_data = "";
-  m_size = 0;
-  m_start = m_end = m_data;
+  data_ = "";
+  size_ = 0;
+  start_ = end_ = data_;
 }
 
-void StringRange::Reset(const char* p_data, size_t p_size) {
-  m_data = p_data;
-  m_size = p_size;
-  m_start = m_end = m_data;
+void StringRange::Reset(const char* data, size_t size) {
+  data_ = data;
+  size_ = size;
+  start_ = end_ = data_;
 }
 
-void StringRange::Reset(const std::string& p_str) {
-  m_data = p_str.data();
-  m_size = p_str.size();
-  m_start = m_end = m_data;
+void StringRange::Reset(const std::string& str) {
+  data_ = str.data();
+  size_ = str.size();
+  start_ = end_ = data_;
 }
 
-bool StringRange::StartsWith(const StringRange& p_str) const {
+bool StringRange::StartsWith(const StringRange& str) const {
   return (
-      (m_size >= p_str.m_size) &&
-      (memcmp(m_data, p_str.m_data, p_str.m_size) == 0));
+      (size_ >= str.size_) &&
+      (memcmp(data_, str.data_, str.size_) == 0));
 }
 
-bool StringRange::EndsWith(const StringRange& p_str) const {
+bool StringRange::EndsWith(const StringRange& str) const {
   return (
-      (m_size >= p_str.m_size) &&
-      (memcmp(m_data + (m_size - p_str.m_size), p_str.m_data, p_str.m_size) ==
+      (size_ >= str.size_) &&
+      (memcmp(data_ + (size_ - str.size_), str.data_, str.size_) ==
        0));
 }
 
 bool StringRange::LStrip() {
   size_t count = 0;
-  const char* ptr = m_data;
-  while (count < m_size && isspace(*ptr)) {
+  const char* ptr = data_;
+  while (count < size_ && isspace(*ptr)) {
     count++;
     ptr++;
   }
@@ -308,27 +308,27 @@ bool StringRange::LStrip() {
   return false;
 }
 
-bool StringRange::LStrip(size_t p_size) {
-  if (p_size <= m_size) {
-    m_data += p_size;
-    m_size -= p_size;
-    m_end += p_size;
+bool StringRange::LStrip(size_t size) {
+  if (size <= size_) {
+    data_ += size;
+    size_ -= size;
+    end_ += size;
     return true;
   }
   return false;
 }
 
-bool StringRange::LStrip(StringRange p_str) {
-  if (StartsWith(p_str)) {
-    return LStrip(p_str.m_size);
+bool StringRange::LStrip(StringRange str) {
+  if (StartsWith(str)) {
+    return LStrip(str.size_);
   }
   return false;
 }
 
 bool StringRange::RStrip() {
   size_t count = 0;
-  const char* ptr = m_data + m_size - 1;
-  while (count < m_size && isspace(*ptr)) {
+  const char* ptr = data_ + size_ - 1;
+  while (count < size_ && isspace(*ptr)) {
     ++count;
     --ptr;
   }
@@ -339,17 +339,17 @@ bool StringRange::RStrip() {
   return false;
 }
 
-bool StringRange::RStrip(size_t p_size) {
-  if (m_size >= p_size) {
-    m_size -= p_size;
+bool StringRange::RStrip(size_t size) {
+  if (size_ >= size) {
+    size_ -= size;
     return true;
   }
   return false;
 }
 
-bool StringRange::RStrip(StringRange p_str) {
-  if (EndsWith(p_str)) {
-    return RStrip(p_str.m_size);
+bool StringRange::RStrip(StringRange str) {
+  if (EndsWith(str)) {
+    return RStrip(str.size_);
   }
   return false;
 }
@@ -368,10 +368,10 @@ void StringRange::ParensWhitespaceStrip() {
   RStrip();
 }
 
-size_t StringRange::Find(const char p_ch) const {
+size_t StringRange::Find(const char ch) const {
   size_t idx = 0;
-  while (idx < m_size) {
-    if (m_data[idx] == p_ch) {
+  while (idx < size_) {
+    if (data_[idx] == ch) {
       return idx;
     }
     idx++;
@@ -380,12 +380,12 @@ size_t StringRange::Find(const char p_ch) const {
 }
 
 void StringRange::RestartCapture() {
-  m_start = m_data;
-  m_end = m_data;
+  start_ = data_;
+  end_ = data_;
 }
 
 StringRange StringRange::GetCaptured() {
-  return StringRange(m_start, m_end - m_start);
+  return StringRange(start_, end_ - start_);
 }
 
 TypesWrapper& TypesWrapper::GetTypesWrapper() {
@@ -394,21 +394,21 @@ TypesWrapper& TypesWrapper::GetTypesWrapper() {
 }
 
 std::unordered_set<std::string>& TypesWrapper::GetAllowedDataTypes() {
-  static std::unordered_set<std::string> allowedDataTypes = {c_float16,
-                                                             c_float,
-                                                             c_double,
-                                                             c_int8,
-                                                             c_int16,
-                                                             c_int32,
-                                                             c_int64,
-                                                             c_uint8,
-                                                             c_uint16,
-                                                             c_uint32,
-                                                             c_uint64,
-                                                             c_complex64,
-                                                             c_complex128,
-                                                             c_string,
-                                                             c_bool};
+  static std::unordered_set<std::string> allowedDataTypes = {kFloat16,
+                                                             kFloat,
+                                                             kDouble,
+                                                             kInt8,
+                                                             kInt16,
+                                                             kInt32,
+                                                             kInt64,
+                                                             kUint8,
+                                                             kUint16,
+                                                             kUint32,
+                                                             kUint64,
+                                                             kComplex64,
+                                                             kComplex128,
+                                                             kString,
+                                                             kBool};
   return allowedDataTypes;
 }
 } // namespace Utils

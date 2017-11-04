@@ -58,11 +58,11 @@ class OpSchema {
    public:
     // Constructor.
     explicit FormalParameter(
-        const std::string& p_name,
-        const DataTypeSet& p_typeSet,
-        const std::string& p_typeStr,
-        const std::string& p_description,
-        bool p_isOptional = false);
+        const std::string& name,
+        const DataTypeSet& type_set,
+        const std::string& type_str,
+        const std::string& description,
+        bool is_optional = false);
 
     // Get formal parameter name.
     const std::string& GetName() const;
@@ -84,22 +84,22 @@ class OpSchema {
     FormalParameter() {}
 
     // Formal parameter name.
-    std::string m_name;
+    std::string name_;
 
     // A set of data types supported for <*this> formal parameter.
     // It should contain at least one element if this formal parameter is good.
-    DataTypeSet m_types;
+    DataTypeSet type_set_;
 
     // The <parameter type> string specified when registring an op.
     // It could be a supported data type or a type constraint key, which
     // maps to a set of supported data types.
-    std::string m_typeStr;
+    std::string type_str_;
 
     // Formal parameter description.
-    std::string m_description;
+    std::string description_;
 
     // Flag indicates whether this formal parameter is optional or not.
-    bool m_isOptional;
+    bool is_optional_;
   };
 
   enum class SupportType {
@@ -297,15 +297,15 @@ class OpSchema {
       const int n,
       const std::string& name,
       const std::string& description,
-      const std::string& typeStr,
+      const std::string& type_str,
       bool optinal = false);
   OpSchema& Output(
       const int n,
       const std::string& name,
       const std::string& description,
-      const std::string& typeStr);
+      const std::string& type_str);
   OpSchema& TypeConstraint(
-      const std::string& typeStr,
+      const std::string& type_str,
       const std::vector<std::string>& constraints,
       const std::string& description);
 
@@ -382,7 +382,7 @@ class OpSchema {
   std::vector<InputOutputParam> output_desc_;
   std::vector<FormalParameter> outputs_;
   std::vector<TypeConstraintParam> type_constraint_params_;
-  TypeConstraintMap type_constraints;
+  TypeConstraintMap type_constraints_;
   int line_ = 0;
   SupportType support_;
   int min_input_ = 0;
@@ -409,25 +409,25 @@ class OpSchemaRegistry {
  public:
   class OpSchemaRegisterOnce {
    public:
-    OpSchemaRegisterOnce(OpSchema& opSchema) {
+    OpSchemaRegisterOnce(OpSchema& op_schema) {
       // TODO: when we fix all issues - we can add abort() here
       try {
-        opSchema.Finalize();
+        op_schema.Finalize();
       } catch (const std::exception& e) {
         std::cerr << "Schema error: " << e.what() << std::endl;
       }
       auto& m = map();
-      auto& key = opSchema.Name();
+      auto& key = op_schema.Name();
       if (m.count(key)) {
         const auto& schema = m[key];
         std::cerr << "Trying to register schema with name " << key
-                  << " from file " << opSchema.file() << " line "
-                  << opSchema.line()
+                  << " from file " << op_schema.file() << " line "
+                  << op_schema.line()
                   << ", but it is already registered from file "
                   << schema.file() << " line " << schema.line();
         abort();
       }
-      m.emplace(std::make_pair(key, opSchema));
+      m.emplace(std::make_pair(key, op_schema));
     }
   };
 
