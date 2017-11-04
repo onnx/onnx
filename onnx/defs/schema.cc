@@ -1,42 +1,42 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "onnx/defs/schema.h"
 #include <stdexcept>
 #include <unordered_set>
 #include "onnx/checker.h"
+#include "onnx/defs/schema.h"
 
 namespace onnx {
 OpSchema::FormalParameter::FormalParameter(
-    const std::string& p_name,
-    const DataTypeSet& p_allowedTypes,
-    const std::string& p_typeStr,
-    const std::string& p_description,
-    bool p_optional)
-    : m_name(p_name),
-      m_types(p_allowedTypes),
-      m_typeStr(p_typeStr),
-      m_description(p_description),
-      m_isOptional(p_optional) {}
+    const std::string& name,
+    const DataTypeSet& allowed_type_set,
+    const std::string& type_str,
+    const std::string& description,
+    bool optional)
+    : name_(name),
+      type_set_(allowed_type_set),
+      type_str_(type_str),
+      description_(description_),
+      is_optional_(optional) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
-  return m_name;
+  return name_;
 }
 
 const DataTypeSet& OpSchema::FormalParameter::GetTypes() const {
-  return m_types;
+  return type_set_;
 }
 
 const std::string& OpSchema::FormalParameter::GetTypeStr() const {
-  return m_typeStr;
+  return type_str_;
 }
 
 const std::string& OpSchema::FormalParameter::GetDescription() const {
-  return m_description;
+  return description_;
 }
 
 bool OpSchema::FormalParameter::IsOptional() const {
-  return m_isOptional;
+  return is_optional_;
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
@@ -378,12 +378,12 @@ OpSchema& OpSchema::Input(
     const int n,
     const std::string& name,
     const std::string& description,
-    const std::string& typeStr,
+    const std::string& type_str,
     bool optional) {
   if (int(input_desc_.size()) <= n) {
     input_desc_.resize(n + 1);
   }
-  input_desc_[n] = std::make_tuple(name, description, typeStr, optional);
+  input_desc_[n] = std::make_tuple(name, description, type_str, optional);
   return *this;
 }
 
@@ -391,51 +391,51 @@ OpSchema& OpSchema::Output(
     const int n,
     const std::string& name,
     const std::string& description,
-    const std::string& typeStr) {
+    const std::string& type_str) {
   if (int(output_desc_.size()) <= n) {
     output_desc_.resize(n + 1);
   }
-  output_desc_[n] = std::make_tuple(name, description, typeStr, false);
+  output_desc_[n] = std::make_tuple(name, description, type_str, false);
   return *this;
 }
 
 OpSchema& OpSchema::TypeConstraint(
-    const std::string& typeStr,
+    const std::string& type_str,
     const std::vector<std::string>& constraints,
     const std::string& description) {
-  assert(type_constraints.end() == type_constraints.find(typeStr));
+  assert(type_constraints_.end() == type_constraints_.find(type_str));
   DataTypeSet d;
   for (const auto& t : constraints) {
     d.insert(Utils::DataTypeUtils::ToType(t));
   }
-  type_constraints.insert(
-      std::make_pair(typeStr, std::make_pair(d, description)));
+  type_constraints_.insert(
+      std::make_pair(type_str, std::make_pair(d, description)));
   type_constraint_params_.push_back(
-      std::make_tuple(typeStr, constraints, description));
+      std::make_tuple(type_str, constraints, description));
   return *this;
 }
 
 void OpSchema::ParseAndSetInputOutput(
-    const std::vector<InputOutputParam>& symbolicParams,
-    /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters) {
-  formalParameters->reserve(symbolicParams.size());
-  for (const auto& symbolicParam : symbolicParams) {
+    const std::vector<InputOutputParam>& symbolic_params,
+    /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
+  formal_parameters->reserve(symbolic_params.size());
+  for (const auto& symbolic_param : symbolic_params) {
     std::string name;
     std::string type;
     std::string desc;
     bool optional;
-    std::tie(name, desc, type, optional) = symbolicParam;
+    std::tie(name, desc, type, optional) = symbolic_param;
 
-    DataTypeSet allowedTypes;
-    auto it = type_constraints.find(type);
-    if (it != type_constraints.end()) {
-      allowedTypes = it->second.first;
+    DataTypeSet allowed_types;
+    auto it = type_constraints_.find(type);
+    if (it != type_constraints_.end()) {
+      allowed_types = it->second.first;
     } else {
-      allowedTypes.emplace(Utils::DataTypeUtils::ToType(type));
+      allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
     }
 
-    formalParameters->push_back(
-        FormalParameter(name, allowedTypes, type, desc, optional));
+    formal_parameters->push_back(
+        FormalParameter(name, allowed_types, type, desc, optional));
   }
 }
 
@@ -515,10 +515,10 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& p = schema.input_desc_[i];
         auto& name = std::get<0>(p);
         auto& description = std::get<1>(p);
-        auto& typeStr = std::get<2>(p);
+        auto& type_str = std::get<2>(p);
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
             << ("" != description ? description : "(no doc)") << " : "
-            << ("" != typeStr ? typeStr : "(no type)") << std::endl;
+            << ("" != type_str ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;
@@ -531,10 +531,10 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
         const auto& p = schema.output_desc_[i];
         auto& name = std::get<0>(p);
         auto& description = std::get<1>(p);
-        auto& typeStr = std::get<2>(p);
+        auto& type_str = std::get<2>(p);
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
             << ("" != description ? description : "(no doc)") << " : "
-            << ("" != typeStr ? typeStr : "(no type)") << std::endl;
+            << ("" != type_str ? type_str : "(no type)") << std::endl;
       }
     } else {
       out << "  (no explicit description available)" << std::endl;
