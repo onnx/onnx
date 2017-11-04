@@ -83,7 +83,7 @@ def main(args):
         if schema.min_input != schema.max_input:
             s += '{} - {}'.format(display_number(schema.min_input),
                                   display_number(schema.max_input))
-        s += '\n'
+        s += '\n\n'
         if schema.inputs:
             s += '<dl>\n'
             for input in schema.inputs:
@@ -97,7 +97,7 @@ def main(args):
         if schema.min_output != schema.max_output:
             s += ' ({} - {})'.format(display_number(schema.min_output),
                                    display_number(schema.max_output))
-        s += '\n'
+        s += '\n\n'
 
         if schema.outputs:
             s += '<dl>\n'
@@ -108,9 +108,9 @@ def main(args):
             s += '</dl>\n'
 
         # type constraints
-        s += '  * **type constraints**:'
-        if schema.type_constraints:
-            s += '\n'
+        s += '\n#### Type Constraints'
+        s += '\n\n'
+        if schema.type_constraints:            
             s += '<dl>\n'
             for typeStr, allowedTypes, description in schema.type_constraints:
                 s += '<dt><tt>{}</tt></dt>\n'.format(typeStr)
