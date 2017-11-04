@@ -2519,7 +2519,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dd>The value for the elements of the output tensor.</dd>
 </dl>
 
-#### Inputs
+#### Inputs0 - 1
     <dl>
       <dt>input (optional)</dt>
       <dt>T</dt>
