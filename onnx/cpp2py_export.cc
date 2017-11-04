@@ -6,6 +6,7 @@
 
 #include "onnx/defs/schema.h"
 #include "onnx/checker.h"
+#include "onnx/proto_utils.h"
 
 namespace onnx {
 
@@ -94,42 +95,42 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def("check_value_info", [](const py::bytes& bytes,
                                      int ir_version) -> void {
           std::unique_ptr<ValueInfoProto> proto(new ValueInfoProto());
-          proto->ParseFromString(bytes);
+          ParseProtoFromPyBytes(proto.get(), bytes);
           checker::check_value_info(*proto, ir_version);
       });
 
   checker.def("check_tensor", [](const py::bytes& bytes,
                                  int ir_version) -> void {
           std::unique_ptr<TensorProto> proto(new TensorProto());
-          proto->ParseFromString(bytes);
+          ParseProtoFromPyBytes(proto.get(), bytes);
           checker::check_tensor(*proto, ir_version);
       });
 
   checker.def("check_attribute", [](const py::bytes& bytes,
                                     int ir_version) -> void {
           std::unique_ptr<AttributeProto> proto(new AttributeProto());
-          proto->ParseFromString(bytes);
+          ParseProtoFromPyBytes(proto.get(), bytes);
           checker::check_attribute(*proto, ir_version);
       });
 
   checker.def("check_node", [](const py::bytes& bytes,
                                int ir_version) -> void {
           std::unique_ptr<NodeProto> proto(new NodeProto());
-          proto->ParseFromString(bytes);
+          ParseProtoFromPyBytes(proto.get(), bytes);
           checker::check_node(*proto, ir_version);
       });
 
   checker.def("check_graph", [](const py::bytes& bytes,
                                 int ir_version) -> void {
           std::unique_ptr<GraphProto> proto(new GraphProto());
-          proto->ParseFromString(bytes);
+          ParseProtoFromPyBytes(proto.get(), bytes);
           checker::check_graph(*proto, ir_version);
       });
 
   checker.def("check_model", [](const py::bytes& bytes,
                                 int ir_version) -> void {
           std::unique_ptr<ModelProto> proto(new ModelProto());
-          proto->ParseFromString(bytes);
+          ParseProtoFromPyBytes(proto.get(), bytes);
           checker::check_model(*proto, ir_version);
       });
 }
