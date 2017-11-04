@@ -81,14 +81,13 @@ def main(args):
         # inputs
         s += '\n#### Inputs'
         if schema.min_input != schema.max_input:
-            s += '{} - {}'.format(display_number(schema.min_input),
+            s += ' ({} - {})'.format(display_number(schema.min_input),
                                   display_number(schema.max_input))
         s += '\n\n'
         if schema.inputs:
             s += '<dl>\n'
             for input in schema.inputs:
-                s += '<dt><tt>{}</tt>{}</dt>\n'.format(input.name, ' (optional)' if input.optional else '')
-                s += '<dt>{}</dt>\n'.format(input.typeStr)
+                s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, ' (optional)' if input.optional else '', input.typeStr)
                 s += '<dd>{}</dd>\n'.format(input.description)
             s += '</dl>\n'
 
@@ -102,8 +101,7 @@ def main(args):
         if schema.outputs:
             s += '<dl>\n'
             for output in schema.outputs:
-                s += '<dt><tt>{}</tt></dt>\n'.format(output.name)
-                s += '<dt>{}</dt>\n'.format(output.typeStr)
+                s += '<dt><tt>{}</tt> : {}</dt>\n'.format(output.name, output.typeStr)
                 s += '<dd>{}</dd>\n'.format(output.description)
             s += '</dl>\n'
 
@@ -113,12 +111,11 @@ def main(args):
         if schema.type_constraints:            
             s += '<dl>\n'
             for typeStr, allowedTypes, description in schema.type_constraints:
-                s += '<dt><tt>{}</tt></dt>\n'.format(typeStr)
                 if (len(allowedTypes) > 0):
                     allowedTypeStr = allowedTypes[0]
                 for allowedType in allowedTypes[1:]:
                     allowedTypeStr += ', ' + allowedType
-                s += '<dt>{}</dt>\n'.format(allowedTypeStr)
+                s += '<dt><tt>{}</tt> : {}</dt>\n'.format(typeStr, allowedTypeStr)
                 s += '<dd>{}</dd>\n'.format(description)
             s += '</dl>\n'
             
