@@ -13,6 +13,6 @@ bool ParseProtoFromPyBytes(Proto* proto, const py::bytes& bytes) {
   Py_ssize_t length;
   PyBytes_AsStringAndSize(bytes.ptr(), &buffer, &length);
 
-  ParseProtoFromBytes(proto, buffer, length);
+  return ParseProtoFromBytes(proto, buffer, length);
 }
 } // namespace onnx
