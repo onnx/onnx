@@ -17,14 +17,14 @@ environment:
 # add install to run scripts after repository is cloned
 
 before_build:
-- cmd: C:\Miniconda36\Scripts\conda install -c conda-forge protobuf numpy
-- cmd: C:\Python36\Scripts\pip install pytest-cov nbval
+- cmd: C:\Miniconda36\Scripts\conda install -y -c conda-forge protobuf numpy
+- cmd: C:\Miniconda36\Scripts\pip install pytest-cov nbval
 
 build_script:
-- cmd: C:\Python36\Scripts\pip install -e c:\projects\onnx\
+- cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\
 
 test_script:
-- cmd: C:\Python36\Scripts\pytest c:\projects\onnx\
+- cmd: C:\Miniconda36\Scripts\pytest c:\projects\onnx\
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
