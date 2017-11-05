@@ -216,7 +216,7 @@ Equations (forward LSTM with default activations and peepholes):
           AttrType::FLOAT)
     .Input(0, "input",
            "The input sequences packed (and potentially padded) into one 3-D "
-           "tensor with the shape of `[seq_length, batch_size, input_size]`.")
+           "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T")
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[iofc]` and "
            "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
