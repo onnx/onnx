@@ -19,11 +19,25 @@ OpSchema::FormalParameter::FormalParameter(
       description_(description),
       is_optional_(optional) {}
 
+OpSchema::FormalParameter::FormalParameter(
+    const std::string& name,
+    const std::string& description,
+    const std::string& type_str,
+    bool optional)
+    : name_(name),
+      description_(description),
+      type_str_(type_str),
+      is_optional_(optional) {}
+
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
 }
 
 const DataTypeSet& OpSchema::FormalParameter::GetTypes() const {
+  return type_set_;
+}
+
+DataTypeSet& OpSchema::FormalParameter::MutableTypes() {
   return type_set_;
 }
 
@@ -380,10 +394,10 @@ OpSchema& OpSchema::Input(
     const std::string& description,
     const std::string& type_str,
     bool optional) {
-  if (int(input_desc_.size()) <= n) {
-    input_desc_.resize(n + 1);
+  if (int(inputs_.size()) <= n) {
+    inputs_.resize(n + 1);
   }
-  input_desc_[n] = std::make_tuple(name, description, type_str, optional);
+  inputs_[n] = FormalParameter(name, description, type_str, optional);
   return *this;
 }
 
@@ -392,10 +406,10 @@ OpSchema& OpSchema::Output(
     const std::string& name,
     const std::string& description,
     const std::string& type_str) {
-  if (int(output_desc_.size()) <= n) {
-    output_desc_.resize(n + 1);
+  if (int(outputs_.size()) <= n) {
+    outputs_.resize(n + 1);
   }
-  output_desc_[n] = std::make_tuple(name, description, type_str, false);
+  outputs_[n] = FormalParameter(name, description, type_str, false);
   return *this;
 }
 
@@ -411,21 +425,14 @@ OpSchema& OpSchema::TypeConstraint(
   type_constraints_.insert(
       std::make_pair(type_str, std::make_pair(d, description)));
   type_constraint_params_.push_back(
-      std::make_tuple(type_str, constraints, description));
+      TypeConstraintParam(type_str, constraints, description));
   return *this;
 }
 
-void OpSchema::ParseAndSetInputOutput(
-    const std::vector<InputOutputParam>& symbolic_params,
+void OpSchema::ParseAndSetTypes(
     /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
-  formal_parameters->reserve(symbolic_params.size());
-  for (const auto& symbolic_param : symbolic_params) {
-    std::string name;
-    std::string type;
-    std::string desc;
-    bool optional;
-    std::tie(name, desc, type, optional) = symbolic_param;
-
+  for (auto& formal_parameter : *formal_parameters) {
+    auto& type = formal_parameter.GetTypeStr();
     DataTypeSet allowed_types;
     auto it = type_constraints_.find(type);
     if (it != type_constraints_.end()) {
@@ -434,8 +441,7 @@ void OpSchema::ParseAndSetInputOutput(
       allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
     }
 
-    formal_parameters->push_back(
-        FormalParameter(name, allowed_types, type, desc, optional));
+    formal_parameter.MutableTypes() = allowed_types;
   }
 }
 
@@ -465,16 +471,16 @@ void OpSchema::Finalize() {
   } while (0)
   ENFORCE(min_input_ <= max_input_);
   ENFORCE(min_output_ <= max_output_);
-  ENFORCE(input_desc_.size() >= min_input_);
-  ENFORCE(output_desc_.size() >= min_output_);
-  ENFORCE(input_desc_.size() <= max_input_);
-  ENFORCE(output_desc_.size() <= max_output_);
+  ENFORCE(inputs_.size() >= min_input_);
+  ENFORCE(outputs_.size() >= min_output_);
+  ENFORCE(inputs_.size() <= max_input_);
+  ENFORCE(outputs_.size() <= max_output_);
   // if max limit is finite - all names should be specified
   if (max_input_ < std::numeric_limits<int>::max()) {
-    ENFORCE(input_desc_.size() == max_input_);
+    ENFORCE(inputs_.size() == max_input_);
   }
   if (max_output_ < std::numeric_limits<int>::max()) {
-    ENFORCE(output_desc_.size() == max_output_);
+    ENFORCE(outputs_.size() == max_output_);
   }
   // all inputs and outputs have names
   for (const auto& it : inputs_) {
@@ -496,8 +502,8 @@ void OpSchema::Finalize() {
     min_input_ = std::min(min_input_, ind);
   }
 
-  ParseAndSetInputOutput(input_desc_, &inputs_);
-  ParseAndSetInputOutput(output_desc_, &outputs_);
+  ParseAndSetTypes(&inputs_);
+  ParseAndSetTypes(&outputs_);
 }
 
 std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
@@ -510,12 +516,12 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   }
   if (schema.max_input_ > 0) {
     out << "Inputs:" << std::endl;
-    if (!schema.input_desc_.empty()) {
-      for (size_t i = 0; i < schema.input_desc_.size(); ++i) {
-        const auto& p = schema.input_desc_[i];
-        auto& name = std::get<0>(p);
-        auto& description = std::get<1>(p);
-        auto& type_str = std::get<2>(p);
+    if (!schema.inputs_.empty()) {
+      for (size_t i = 0; i < schema.inputs_.size(); ++i) {
+        const auto& p = schema.inputs_[i];
+        auto& name = p.GetName();
+        auto& description = p.GetDescription();
+        auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
             << ("" != description ? description : "(no doc)") << " : "
             << ("" != type_str ? type_str : "(no type)") << std::endl;
@@ -526,12 +532,12 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   }
   if (schema.max_output_ > 0) {
     out << "Outputs:" << std::endl;
-    if (!schema.output_desc_.empty()) {
-      for (size_t i = 0; i < schema.output_desc_.size(); ++i) {
-        const auto& p = schema.output_desc_[i];
-        auto& name = std::get<0>(p);
-        auto& description = std::get<1>(p);
-        auto& type_str = std::get<2>(p);
+    if (!schema.outputs_.empty()) {
+      for (size_t i = 0; i < schema.outputs_.size(); ++i) {
+        const auto& p = schema.outputs_[i];
+        auto& name = p.GetName();
+        auto& description = p.GetDescription();
+        auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
             << ("" != description ? description : "(no doc)") << " : "
             << ("" != type_str ? type_str : "(no type)") << std::endl;
