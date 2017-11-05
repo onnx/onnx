@@ -198,11 +198,11 @@ Equations (forward LSTM with default activations and peepholes):
            "Optional initial value of the hidden. If not specified - assumed "
            "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
 	   "T", true /*optional*/)
-    .Input(5, "initial_c",
+    .Input(6, "initial_c",
            "Optional initial value of the cell. If not specified - assumed "
 	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
 	   "T", true /*optional*/)
-    .Input(6, "P",
+    .Input(7, "P",
 	   "The weight tensor for peepholes. Concatenation of `P[iof]` and "
 	   "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
 	   "`[num_directions, 3*hidde_size, hidden_size]`. Optional: If not specified - "
