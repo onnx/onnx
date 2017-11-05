@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+using namespace onnx;
 
 using AttrType = onnx::OpSchema::AttrType;
 
@@ -16,7 +17,9 @@ OPERATOR_SCHEMA(Constant)
     .Output(
             0,
             "output",
-            "Output tensor containing the same value of the provided tensor.");
+            "Output tensor containing the same value of the provided tensor.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomUniform)
     .NumInputs(0)
@@ -52,7 +55,9 @@ TensorProto message.
     .Output(
             0,
             "output",
-            "Output tensor of random values drawn from uniform distribution");
+            "Output tensor of random values drawn from uniform distribution", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormal)
     .NumInputs(0)
@@ -89,7 +94,9 @@ TensorProto message.
     .Output(
             0,
             "output",
-            "Output tensor of random values drawn from normal distribution");
+            "Output tensor of random values drawn from normal distribution", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomUniformLike)
     .NumInputs(1)
@@ -122,11 +129,13 @@ TensorProto message.
     .Input(
            0,
            "input",
-           "Input tensor to provide shape information.")
+           "Input tensor to provide shape information.", "T")
     .Output(
             0,
             "output",
-            "Output tensor of random values drawn from uniform distribution");
+            "Output tensor of random values drawn from uniform distribution", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormalLike)
     .NumInputs(1)
@@ -160,8 +169,10 @@ TensorProto message.
     .Input(
            0,
            "input",
-           "Input tensor to provide shape information.")
+           "Input tensor to provide shape information.", "T")
     .Output(
             0,
             "output",
-            "Output tensor of random values drawn from normal distribution");
+            "Output tensor of random values drawn from normal distribution", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");

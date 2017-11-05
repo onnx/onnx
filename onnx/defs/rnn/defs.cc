@@ -4,6 +4,7 @@
 #include "onnx/defs/schema.h"
 
 using AttrType = onnx::OpSchema::AttrType;
+using namespace onnx;
 
 // CuDNN parameters not included yet:
 // - dropout (as we primarily target inference)
@@ -104,10 +105,10 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
  -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
     dimensions are `{hidden_size, hidden_size}`
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
-)DOC")
+)DOC", "T")
     .Input(1, "input",
            "The input sequences packed (and potentially padded) into one 3-D "
-           "tensor with the shape of `[seq_length, batch_size, input_size]`.")
+           "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T")
     // TODO: do we want to allow different lengths of sequences in a minibatch?
     // CuDNN supports it, but not all backend implementations do. One way to
     // encode would be int-valued tensor denoting lengths of each sequence in
@@ -115,14 +116,15 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
     .Input(2, "initial_h",
            "Optional initial value of the hidden. If not specified - assumed "
            "to be 0. Dimensions `[num_layers * directions, batch_size, "
-           "hidden_size]`")
+           "hidden_size]`", "T")
     .Input(3, "initial_c",
            "For LSTM only: optional initial value of the cell. If not "
            "specified - assumed to be 0. Dimensions `[num_layers * directions, "
-           "batch_size, hidden_size]`")
-    .Output(0, "output", "The output 3-dim sequence.")
+           "batch_size, hidden_size]`", "T")
+    .Output(0, "output", "The output 3-dim sequence.", "T")
     .Output(1, "output_h",
-            "Optional output value of the hidden. Same shape as input_h")
+            "Optional output value of the hidden. Same shape as input_h", "T")
     .Output(2, "output_c",
             "For LSTM only: optional output value of the cell. Same shape as "
-            "input_h");
+            "input_h", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output types to float tensors.");

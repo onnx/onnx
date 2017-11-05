@@ -4,6 +4,8 @@
 #include "onnx/defs/schema.h"
 #include <functional>
 
+using namespace onnx;
+
 using AttrType = onnx::OpSchema::AttrType;
 
 namespace onnx {
@@ -44,13 +46,15 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.Input(
         0,
         "A",
-        "First operand, should share the type with the second operand.");
+        "First operand, should share the type with the second operand.", "T");
     schema.Input(
         1,
         "B",
         "Second operand. With broadcasting can be of smaller size than A. "
-        "If broadcasting is disabled it should be of the same size.");
-    schema.Output(0, "C", "Result, has same dimensions and type as A");
+        "If broadcasting is disabled it should be of the same size.", "T");
+    schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
+    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
   };
 }
 
@@ -88,8 +92,10 @@ Neg takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where each element flipped sign, y = -x, is applied to
 the tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Abs)
     .NumInputs(1)
@@ -100,8 +106,10 @@ Absolute takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the absolute is, y = abs(x), is applied to
 the tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Reciprocal)
     .NumInputs(1)
@@ -112,8 +120,10 @@ Reciprocal takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
 the tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Floor)
     .NumInputs(1)
@@ -124,8 +134,10 @@ Floor takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the floor is, y = floor(x), is applied to
 the tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Ceil)
     .NumInputs(1)
@@ -136,8 +148,10 @@ Ceil takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the ceil is, y = ceil(x), is applied to
 the tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Sqrt)
     .NumInputs(1)
@@ -148,8 +162,10 @@ Square root takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the square root is, y = x^0.5, is applied to
 the tensor elementwise. If x is negative, then it will return NaN.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Relu)
   .NumInputs(1)
@@ -160,8 +176,10 @@ Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
 the tensor elementwise.
 )DOC")
-  .Input(0, "X", "Input tensor")
-  .Output(0, "Y", "Output tensor");
+  .Input(0, "X", "Input tensor", "T")
+  .Output(0, "Y", "Output tensor", "T")
+  .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(LeakyRelu)
     .NumInputs(1)
@@ -175,8 +193,10 @@ LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Selu)
     .NumInputs(1)
@@ -194,8 +214,10 @@ Selu takes one input data (Tensor<T>) and produces one output data
 `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
 is applied to the tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Elu)
     .NumInputs(1)
@@ -210,8 +232,10 @@ Elu takes one input data (Tensor<T>) and produces one output data
 0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
 
 )DOC")
-    .Input(0, "X", "1D input tensor")
-    .Output(0, "Y", "1D input tensor");
+    .Input(0, "X", "1D input tensor", "T")
+    .Output(0, "Y", "1D input tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Exp)
     .NumInputs(1)
@@ -222,12 +246,14 @@ Calculates the exponential of the given input tensor, element-wise. This
 operation can be done in an in-place fashion too, by providing the same input
 and output blobs.
 )DOC")
-    .Input(0, "input", "Input tensor")
+    .Input(0, "input", "Input tensor", "T")
     .Output(
         0,
         "output",
         "The exponential of the input tensor computed "
-        "element-wise");
+        "element-wise", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Log)
     .NumInputs(1)
@@ -238,12 +264,14 @@ Calculates the natural log of the given input tensor, element-wise. This
 operation can be done in an in-place fashion too, by providing the same input
 and output blobs.
 )DOC")
-    .Input(0, "input", "Input tensor")
+    .Input(0, "input", "Input tensor", "T")
     .Output(
         0,
         "output",
         "The natural log of the input tensor computed "
-        "element-wise");
+        "element-wise", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Tanh)
   .NumInputs(1)
@@ -254,9 +282,11 @@ Calculates the hyperbolic tangent of the given input tensor element-wise. This
 operation can be done in an in-place fashion too, by providing the same input
 and output blobs.
 )DOC")
-    .Input(0, "input", "1-D input tensor")
+    .Input(0, "input", "1-D input tensor", "T")
     .Output(0, "output", "The hyperbolic tangent values of the input tensor "
-               "computed element-wise");
+               "computed element-wise", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Pow)
     .NumInputs(2)
@@ -266,10 +296,12 @@ Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor of any shape, base of the exponent.")
+    .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
     .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, "
-                   "the exponent component.")
-    .Output(0, "Z", "Output tensor (same size as X)");
+                   "the exponent component.", "T")
+    .Output(0, "Z", "Output tensor (same size as X)", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(PRelu)
     .NumInputs(2)
@@ -282,13 +314,15 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 
 )DOC")
-    .Input(0, "X", "Input tensor")
+    .Input(0, "X", "Input tensor", "T")
     .Input(
         1,
         "Slope",
         "Slope tensor. If `Slope` is of size 1, the value is shared"
-        "across different channels")
-    .Output(0, "Y", "Output tensor");
+        "across different channels", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Sigmoid)
   .NumInputs(1)
@@ -299,8 +333,10 @@ Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
 tensor elementwise.
 )DOC")
-    .Input(0, "X", "Input tensor")
-    .Output(0, "Y", "Output tensor");
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Max)
     .NumInputs(1, INT_MAX)
@@ -312,8 +348,10 @@ used in-place as the output tensor, in which case the max will be done in
 place and results will be accumulated in input0. All inputs and outputs must
 have the same shape and data type.
 )DOC")
-    .Input(0, "data_0", "First of the input tensors. Can be inplace.")
-    .Output(0, "max", "Output tensor. Same dimension as inputs.");
+    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Min)
     .NumInputs(1, INT_MAX)
@@ -325,8 +363,10 @@ used in-place as the output tensor, in which case the max will be done in
 place and results will be accumulated in input0. All inputs and outputs must
 have the same shape and data type.
 )DOC")
-    .Input(0, "data_0", "First of the input tensors. Can be inplace.")
-    .Output(0, "max", "Output tensor. Same dimension as inputs.");
+    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Sum)
     .NumInputs(1, INT_MAX)
@@ -338,8 +378,10 @@ used in-place as the output tensor, in which case the sum will be done in
 place and results will be accumulated in input0. All inputs and outputs must
 have the same shape and data type.
 )DOC")
-    .Input(0, "data_0", "First of the input tensors. Can be inplace.")
-    .Output(0, "sum", "Output tensor. Same dimension as inputs.");
+    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Softmax)
   .NumInputs(1)
@@ -368,9 +410,11 @@ will throw errors.
         AttrType::INT)
   .Input(0, "input",
          "The input tensor that's coerced into a 2D matrix of size (NxD) "
-         "as described above.")
+         "as described above.", "T")
   .Output(0, "output", "The softmax normalized output values with the same "
-          "shape as input tensor.");
+          "shape as input tensor.", "T")
+  .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Gemm)
     .NumInputs(3)
@@ -384,11 +428,13 @@ If attribute broadcast is non-zero, input tensor C will be broadcasted to match
 the dimension requirement. If A can be transposed before doing the computation
 if attribute transA is non-zero, same for B and transB.
 )DOC")
-    .Input(0, "A", "Input tensor A")
-    .Input(1, "B", "Input tensor B")
-    .Input(2, "C", "Input tensor C, can be inplace.")
+    .Input(0, "A", "Input tensor A", "T")
+    .Input(1, "B", "Input tensor B", "T")
+    .Input(2, "C", "Input tensor C, can be inplace.", "T")
     .AllowConsumed({{2, 0}})
-    .Output(0, "Y", "Output tensor.")
+    .Output(0, "Y", "Output tensor.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.")
     .Attr("transA",
           "Whether A should be transposed",
           AttrType::INT)
@@ -409,9 +455,11 @@ if attribute transA is non-zero, same for B and transB.
 OPERATOR_SCHEMA(MatMul)
     .NumInputs(2)
     .NumOutputs(1)
-    .Input(0, "A", "N-dimensional matrix A")
-    .Input(1, "B", "N-dimensional matrix B")
-    .Output(0, "Y", "Matrix multiply results from A * B")
+    .Input(0, "A", "N-dimensional matrix A", "T")
+    .Input(1, "B", "N-dimensional matrix B", "T")
+    .Output(0, "Y", "Matrix multiply results from A * B", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC");

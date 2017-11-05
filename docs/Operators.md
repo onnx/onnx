@@ -81,18 +81,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Add"></a><a name="add">**Add**</a>
 
@@ -127,20 +133,26 @@
 #### Inputs
 
 <dl>
-<dt><tt>A</tt></dt>
+<dt><tt>A</tt> : T</dt>
 <dd>First operand, should share the type with the second operand.</dd>
-<dt><tt>B</tt></dt>
+<dt><tt>B</tt> : T</dt>
 <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>C</tt></dt>
+<dt><tt>C</tt> : T</dt>
 <dd>Result, has same dimensions and type as A</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
@@ -161,18 +173,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
@@ -193,18 +211,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
@@ -230,18 +254,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from average pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="BatchNormalization"></a><a name="batchnormalization">**BatchNormalization**</a>
 
@@ -268,34 +298,40 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>The input 4-dimensional tensor of shape NCHW or NHWC depending on the order parameter.</dd>
-<dt><tt>scale</tt></dt>
+<dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
-<dt><tt>bias</tt></dt>
+<dt><tt>bias</tt> : T</dt>
 <dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
-<dt><tt>mean</tt></dt>
+<dt><tt>mean</tt> : T</dt>
 <dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
-<dt><tt>var</tt></dt>
+<dt><tt>var</tt> : T</dt>
 <dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
 </dl>
 
 #### Outputs (0 - &#8734;)
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>The output 4-dimensional tensor of the same shape as X.</dd>
-<dt><tt>mean</tt></dt>
+<dt><tt>mean</tt> : T</dt>
 <dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
-<dt><tt>var</tt></dt>
+<dt><tt>var</tt> : T</dt>
 <dd>The running variance after the BatchNormalization operator. Must be in-place with the input var. Should not be used for testing.</dd>
-<dt><tt>saved_mean</tt></dt>
+<dt><tt>saved_mean</tt> : T</dt>
 <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
-<dt><tt>saved_var</tt></dt>
+<dt><tt>saved_var</tt> : T</dt>
 <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Cast"></a><a name="cast">**Cast**</a>
 
@@ -318,18 +354,26 @@
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T1</dt>
 <dd>Input tensor to be cast.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T2</dt>
 <dd>Output tensor with the same shape as input with type specified by the 'to' argument</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Ceil"></a><a name="ceil">**Ceil**</a>
 
@@ -340,18 +384,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Concat"></a><a name="concat">**Concat**</a>
 
@@ -367,18 +417,24 @@
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>inputs...</tt></dt>
+<dt><tt>inputs...</tt> : T</dt>
 <dd>List of tensors for concatenation</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>concat_result</tt></dt>
+<dt><tt>concat_result</tt> : T</dt>
 <dd>Concatenated tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Constant"></a><a name="constant">**Constant**</a>
 
@@ -395,13 +451,19 @@
 
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output tensor containing the same value of the provided tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Conv"></a><a name="conv">**Conv**</a>
 
@@ -428,22 +490,28 @@
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
-<dt><tt>weights</tt></dt>
+<dt><tt>weights</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>bias</tt></dt>
+<dt><tt>bias</tt> : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ConvTranspose"></a><a name="convtranspose">**ConvTranspose**</a>
 
@@ -472,22 +540,28 @@
 #### Inputs (2 - 3)
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
-<dt><tt>weights</tt></dt>
+<dt><tt>weights</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>bias</tt></dt>
+<dt><tt>bias</tt> : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Div"></a><a name="div">**Div**</a>
 
@@ -522,20 +596,26 @@
 #### Inputs
 
 <dl>
-<dt><tt>A</tt></dt>
+<dt><tt>A</tt> : T</dt>
 <dd>First operand, should share the type with the second operand.</dd>
-<dt><tt>B</tt></dt>
+<dt><tt>B</tt> : T</dt>
 <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>C</tt></dt>
+<dt><tt>C</tt> : T</dt>
 <dd>Result, has same dimensions and type as A</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
@@ -557,20 +637,26 @@
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>The input data as Tensor.</dd>
 </dl>
 
 #### Outputs (1 - 2)
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt></dt>
+<dt><tt>mask</tt> : T</dt>
 <dd>The output mask. If is_test is nonzero, this output is not filled.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Elu"></a><a name="elu">**Elu**</a>
 
@@ -589,18 +675,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>1D input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>1D input tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Exp"></a><a name="exp">**Exp**</a>
 
@@ -611,18 +703,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>The exponential of the input tensor computed element-wise</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Flatten"></a><a name="flatten">**Flatten**</a>
 
@@ -640,18 +738,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>A tensor of rank >= axis.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Floor"></a><a name="floor">**Floor**</a>
 
@@ -662,18 +766,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
@@ -705,20 +815,26 @@
 #### Inputs
 
 <dl>
-<dt><tt>DATA</tt></dt>
+<dt><tt>DATA</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>INDICES</tt></dt>
+<dt><tt>INDICES</tt> : T</dt>
 <dd>Tensor of int32/int64 indices, of any rank q.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>OUTPUT</tt></dt>
+<dt><tt>OUTPUT</tt> : T</dt>
 <dd>Tensor of rank q + (r - 1).</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Gemm"></a><a name="gemm">**Gemm**</a>
 
@@ -749,22 +865,28 @@
 #### Inputs
 
 <dl>
-<dt><tt>A</tt></dt>
+<dt><tt>A</tt> : T</dt>
 <dd>Input tensor A</dd>
-<dt><tt>B</tt></dt>
+<dt><tt>B</tt> : T</dt>
 <dd>Input tensor B</dd>
-<dt><tt>C</tt></dt>
+<dt><tt>C</tt> : T</dt>
 <dd>Input tensor C, can be inplace.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="GlobalAveragePool"></a><a name="globalaveragepool">**GlobalAveragePool**</a>
 
@@ -775,18 +897,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="GlobalMaxPool"></a><a name="globalmaxpool">**GlobalMaxPool**</a>
 
@@ -797,18 +925,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
@@ -832,18 +966,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output  types to float tensors.</dd>
+</dl>
+
 
 ### <a name="LeakyRelu"></a><a name="leakyrelu">**LeakyRelu**</a>
 
@@ -861,18 +1001,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Log"></a><a name="log">**Log**</a>
 
@@ -883,18 +1029,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>The natural log of the input tensor computed element-wise</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
 
@@ -903,20 +1055,26 @@
 #### Inputs
 
 <dl>
-<dt><tt>A</tt></dt>
+<dt><tt>A</tt> : T</dt>
 <dd>N-dimensional matrix A</dd>
-<dt><tt>B</tt></dt>
+<dt><tt>B</tt> : T</dt>
 <dd>N-dimensional matrix B</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Matrix multiply results from A * B</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Max"></a><a name="max">**Max**</a>
 
@@ -928,18 +1086,24 @@
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt></dt>
+<dt><tt>data_0</tt> : T</dt>
 <dd>First of the input tensors. Can be inplace.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>max</tt></dt>
+<dt><tt>max</tt> : T</dt>
 <dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="MaxPool"></a><a name="maxpool">**MaxPool**</a>
 
@@ -967,18 +1131,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Min"></a><a name="min">**Min**</a>
 
@@ -990,18 +1160,24 @@
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt></dt>
+<dt><tt>data_0</tt> : T</dt>
 <dd>First of the input tensors. Can be inplace.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>max</tt></dt>
+<dt><tt>max</tt> : T</dt>
 <dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Mul"></a><a name="mul">**Mul**</a>
 
@@ -1036,20 +1212,26 @@
 #### Inputs
 
 <dl>
-<dt><tt>A</tt></dt>
+<dt><tt>A</tt> : T</dt>
 <dd>First operand, should share the type with the second operand.</dd>
-<dt><tt>B</tt></dt>
+<dt><tt>B</tt> : T</dt>
 <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>C</tt></dt>
+<dt><tt>C</tt> : T</dt>
 <dd>Result, has same dimensions and type as A</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Neg"></a><a name="neg">**Neg**</a>
 
@@ -1060,18 +1242,24 @@
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="OptimizedRNN"></a><a name="optimizedrnn">**OptimizedRNN**</a>
 
@@ -1140,7 +1328,7 @@ allows to make spec more uniform.
 #### Inputs (2 - 4)
 
 <dl>
-<dt><tt>weights</tt></dt>
+<dt><tt>weights</tt> : T</dt>
 <dd>
 All parameters of the stack packed together in the opaque tensor. The size must
 be compatible with input attributes passed to the op.
@@ -1175,26 +1363,32 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
     dimensions are `{hidden_size, hidden_size}`
  -- For all biases (`K=bias`), dimensions are `{hidden_size}`
 </dd>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-<dt><tt>initial_h</tt></dt>
+<dt><tt>initial_h</tt> : T</dt>
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
-<dt><tt>initial_c</tt></dt>
+<dt><tt>initial_c</tt> : T</dt>
 <dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
 </dl>
 
 #### Outputs (1 - 3)
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>The output 3-dim sequence.</dd>
-<dt><tt>output_h</tt></dt>
+<dt><tt>output_h</tt> : T</dt>
 <dd>Optional output value of the hidden. Same shape as input_h</dd>
-<dt><tt>output_c</tt></dt>
+<dt><tt>output_c</tt> : T</dt>
 <dd>For LSTM only: optional output value of the cell. Same shape as input_h</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="PRelu"></a><a name="prelu">**PRelu**</a>
 
@@ -1206,20 +1400,26 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
-<dt><tt>Slope</tt></dt>
+<dt><tt>Slope</tt> : T</dt>
 <dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
@@ -1257,18 +1457,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>DATA</tt></dt>
+<dt><tt>DATA</tt> : T</dt>
 <dd>Input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>OUTPUT</tt></dt>
+<dt><tt>OUTPUT</tt> : T</dt>
 <dd>Tensor after padding.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Pow"></a><a name="pow">**Pow**</a>
 
@@ -1279,20 +1485,26 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor of any shape, base of the exponent.</dd>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Input tensor of any shape broadcastable to X shape, the exponent component.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Z</tt></dt>
+<dt><tt>Z</tt> : T</dt>
 <dd>Output tensor (same size as X)</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="RandomNormal"></a><a name="randomnormal">**RandomNormal**</a>
 
@@ -1323,13 +1535,19 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output tensor of random values drawn from normal distribution</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="RandomNormalLike"></a><a name="randomnormallike">**RandomNormalLike**</a>
 
@@ -1357,18 +1575,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>Input tensor to provide shape information.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output tensor of random values drawn from normal distribution</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="RandomUniform"></a><a name="randomuniform">**RandomUniform**</a>
 
@@ -1398,13 +1622,19 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output tensor of random values drawn from uniform distribution</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="RandomUniformLike"></a><a name="randomuniformlike">**RandomUniformLike**</a>
 
@@ -1431,18 +1661,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>Input tensor to provide shape information.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output tensor of random values drawn from uniform distribution</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Reciprocal"></a><a name="reciprocal">**Reciprocal**</a>
 
@@ -1453,18 +1689,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
@@ -1487,18 +1729,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
@@ -1521,18 +1769,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
 
@@ -1555,18 +1809,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
@@ -1589,18 +1849,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
 
@@ -1623,18 +1889,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
@@ -1657,18 +1929,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reduced</tt></dt>
+<dt><tt>reduced</tt> : T</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Relu"></a><a name="relu">**Relu**</a>
 
@@ -1679,18 +1957,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Reshape"></a><a name="reshape">**Reshape**</a>
 
@@ -1713,18 +1997,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>reshaped</tt></dt>
+<dt><tt>reshaped</tt> : T</dt>
 <dd>Reshaped data.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
 
@@ -1745,18 +2035,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Sigmoid"></a><a name="sigmoid">**Sigmoid**</a>
 
@@ -1767,18 +2063,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Slice"></a><a name="slice">**Slice**</a>
 
@@ -1834,18 +2136,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>Tensor of data to extract slices from.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Sliced data tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
@@ -1875,18 +2183,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>The softmax normalized output values with the same shape as input tensor.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Split"></a><a name="split">**Split**</a>
 
@@ -1907,20 +2221,26 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs (1 - 2)
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>The tensor to split</dd>
-<dt><tt>split</tt></dt>
+<dt><tt>split</tt> : T</dt>
 <dd>Optional list of output lengths (see also arg 'split')</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
+
 <dl>
-<dt><tt>outputs...</tt></dt>
+<dt><tt>outputs...</tt> : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>
 
@@ -1931,18 +2251,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Squeeze"></a><a name="squeeze">**Squeeze**</a>
 
@@ -1959,18 +2285,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>Tensors with at least max(dims) dimensions.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>squeezed</tt></dt>
+<dt><tt>squeezed</tt> : T</dt>
 <dd>Reshaped tensor with same data as input.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Sub"></a><a name="sub">**Sub**</a>
 
@@ -2005,20 +2337,26 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>A</tt></dt>
+<dt><tt>A</tt> : T</dt>
 <dd>First operand, should share the type with the second operand.</dd>
-<dt><tt>B</tt></dt>
+<dt><tt>B</tt> : T</dt>
 <dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>C</tt></dt>
+<dt><tt>C</tt> : T</dt>
 <dd>Result, has same dimensions and type as A</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Sum"></a><a name="sum">**Sum**</a>
 
@@ -2030,18 +2368,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt></dt>
+<dt><tt>data_0</tt> : T</dt>
 <dd>First of the input tensors. Can be inplace.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>sum</tt></dt>
+<dt><tt>sum</tt> : T</dt>
 <dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Tanh"></a><a name="tanh">**Tanh**</a>
 
@@ -2052,18 +2396,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>1-D input tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>The hyperbolic tangent values of the input tensor computed element-wise</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
@@ -2081,18 +2431,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>data</tt></dt>
+<dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>transposed</tt></dt>
+<dt><tt>transposed</tt> : T</dt>
 <dd>Transposed output.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ATen"></a><a name="aten">**<sub>experimental</sub> ATen**</a>
 
@@ -2106,7 +2462,9 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Outputs (0 - &#8734;)
 
 
----
+#### Type Constraints
+
+
 
 ### <a name="Caffe2ConvTranspose"></a><a name="caffe2convtranspose">**<sub>experimental</sub> Caffe2ConvTranspose**</a>
 
@@ -2141,22 +2499,28 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Input data blob from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the NCHW usage. On the other hand, the NHWC Op has a different set of dimension constraints.</dd>
-<dt><tt>filter</tt></dt>
+<dt><tt>filter</tt> : T</dt>
 <dd>The filter blob that will be used in the transposed convolution; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel.</dd>
-<dt><tt>bias</tt></dt>
+<dt><tt>bias</tt> : T</dt>
 <dd>The 1D bias blob that is added through the convolution;has size (C)</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output data blob that contains the result of the transposed convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="ConstantFill"></a><a name="constantfill">**<sub>experimental</sub> ConstantFill**</a>
 
@@ -2197,18 +2561,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs (0 - 1)
 
 <dl>
-<dt><tt>input</tt> (optional)</dt>
+<dt><tt>input</tt> (optional) : T</dt>
 <dd>Input tensor (optional) to provide shape information.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="FC"></a><a name="fc">**<sub>experimental</sub> FC**</a>
 
@@ -2242,22 +2612,28 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
-<dt><tt>W</tt></dt>
+<dt><tt>W</tt> : T</dt>
 <dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
-<dt><tt>b</tt></dt>
+<dt><tt>b</tt> : T</dt>
 <dd>1D blob containing bias vector</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>2D output tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="GRUUnit"></a><a name="gruunit">**<sub>experimental</sub> GRUUnit**</a>
 
@@ -2278,24 +2654,30 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>hidden_prev</tt></dt>
+<dt><tt>hidden_prev</tt> : T</dt>
 <dd>The previous GRU hidden state.</dd>
-<dt><tt>gates</tt></dt>
+<dt><tt>gates</tt> : T</dt>
 <dd>Unactivated gate outputs from forget, update, and output gates, pre-activation.</dd>
-<dt><tt>seq_lengths</tt></dt>
+<dt><tt>seq_lengths</tt> : T</dt>
 <dd>Array of sequence lengths.  len(seq_lengths) should equal batch size N.</dd>
-<dt><tt>t</tt></dt>
+<dt><tt>t</tt> : T</dt>
 <dd>The timestep for this operation.</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>hidden</tt></dt>
+<dt><tt>hidden</tt> : T</dt>
 <dd>The new GRU hidden state calculated by this op.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="GivenTensorFill"></a><a name="giventensorfill">**<sub>experimental</sub> GivenTensorFill**</a>
 
@@ -2315,18 +2697,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs (0 - 1)
 
 <dl>
-<dt><tt>shape</tt></dt>
+<dt><tt>shape</tt> : T</dt>
 <dd>The shape of filled tensor</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>The filled tensor</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Normalize"></a><a name="normalize">**<sub>experimental</sub> Normalize**</a>
 
@@ -2335,18 +2723,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>Input matrix</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Matrix after normalization</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="Scale"></a><a name="scale">**<sub>experimental</sub> Scale**</a>
 
@@ -2363,18 +2757,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>input</tt></dt>
+<dt><tt>input</tt> : T</dt>
 <dd>Input data to be scaled</dd>
 </dl>
 
 #### Outputs
+
 <dl>
-<dt><tt>output</tt></dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output data after scaling</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
 ### <a name="SpatialBN"></a><a name="spatialbn">**<sub>experimental</sub> SpatialBN**</a>
 
@@ -2399,32 +2799,38 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs
 
 <dl>
-<dt><tt>X</tt></dt>
+<dt><tt>X</tt> : T</dt>
 <dd>The input 4-dimensional tensor of shape NCHW.</dd>
-<dt><tt>scale</tt></dt>
+<dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
-<dt><tt>bias</tt></dt>
+<dt><tt>bias</tt> : T</dt>
 <dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
-<dt><tt>mean</tt></dt>
+<dt><tt>mean</tt> : T</dt>
 <dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
-<dt><tt>var</tt></dt>
+<dt><tt>var</tt> : T</dt>
 <dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
 </dl>
 
 #### Outputs (0 - &#8734;)
+
 <dl>
-<dt><tt>Y</tt></dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>The output 4-dimensional tensor of the same shape as X.</dd>
-<dt><tt>mean</tt></dt>
+<dt><tt>mean</tt> : T</dt>
 <dd>The running mean after the spatial BN operator. Must be in-place with the input mean. Should not be used for testing.</dd>
-<dt><tt>var</tt></dt>
+<dt><tt>var</tt> : T</dt>
 <dd>The running variance after the spatial BN operator. Must be in-place with the input var. Should not be used for testing.</dd>
-<dt><tt>saved_mean</tt></dt>
+<dt><tt>saved_mean</tt> : T</dt>
 <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
-<dt><tt>saved_var</tt></dt>
+<dt><tt>saved_var</tt> : T</dt>
 <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
 </dl>
 
+#### Type Constraints
 
----
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 
