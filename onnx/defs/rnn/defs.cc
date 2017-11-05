@@ -66,7 +66,7 @@ Equations:
 )DOC")
     .Attr("activation", "The activation function for input gate. It must be "
           "one of tanh and ReLU. Default `tanh`.",
-          AttrType::STRING);
+          AttrType::STRING)
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
