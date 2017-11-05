@@ -30,10 +30,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     .def_property_readonly("max_input", &OpSchema::max_input)
     .def_property_readonly("min_output", &OpSchema::min_output)
     .def_property_readonly("max_output", &OpSchema::max_output)
-    .def_property_readonly("optional_inputs", &OpSchema::optional_inputs)
     .def_property_readonly("attributes", &OpSchema::attributes)
-    .def_property_readonly("input_desc", &OpSchema::input_desc)
-    .def_property_readonly("output_desc", &OpSchema::output_desc)
+    .def_property_readonly("inputs", &OpSchema::inputs)
+    .def_property_readonly("outputs", &OpSchema::outputs)
+    .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
     .def_static("is_infinite", [](int v) {
        return v == std::numeric_limits<int>::max();
      })
@@ -46,6 +46,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_readonly("description", &OpSchema::Attribute::description)
       .def_readonly("type", &OpSchema::Attribute::type)
       .def_readonly("required", &OpSchema::Attribute::required);
+      
+  py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
+      .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
+      .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
+      .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
+      .def_property_readonly("description", &OpSchema::FormalParameter::GetDescription)
+      .def_property_readonly("optional", &OpSchema::FormalParameter::IsOptional);
 
   py::enum_<OpSchema::AttrType>(op_schema, "AttrType")
       .value("FLOAT", OpSchema::AttrType::FLOAT)
