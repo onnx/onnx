@@ -77,7 +77,7 @@ Equations:
             "The last output value of the hidden. It has shape "
 	    "`[num_directions, batch_size, hidden_size]`.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                    "Constrain input and output types to float tensors.");
+                    "Constrain input and output types to float tensors.")
     .TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
 
 
@@ -159,7 +159,7 @@ Equations (GRU with default activations):
             "The last output value of the hidden. It has shape "
 	    "`[num_directions, batch_size, hidden_size]`.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                    "Constrain input and output types to float tensors.");
+                    "Constrain input and output types to float tensors.")
     .TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
 
 
@@ -258,5 +258,5 @@ Equations (forward LSTM with default activations and peepholes):
             "The last output value of the hidden. It has shape "
 	    "`[num_directions, batch_size, hidden_size]`.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                    "Constrain input and output types to float tensors.");
+                    "Constrain input and output types to float tensors.")
     .TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
