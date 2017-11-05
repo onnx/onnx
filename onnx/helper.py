@@ -11,18 +11,20 @@ from six import text_type, integer_types, binary_type
 
 from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
-import onnx.onnx_cpp2py_export as C
+import onnx.defs as defs
 from onnx import mapping
 
 def make_node(
         op_type, inputs, outputs,
-        name=None, **kwargs):
+        name=None, doc_string=None, **kwargs):
     node = NodeProto()
     node.op_type = op_type
     node.input.extend(inputs)
     node.output.extend(outputs)
     if name:
         node.name = name
+    if doc_string:
+        node.doc_string = doc_string
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
@@ -30,7 +32,7 @@ def make_node(
     return node
 
 
-def make_graph(nodes, name, inputs, outputs, initializer=None):
+def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None):
     if initializer is None:
         initializer = []
     graph = GraphProto()
@@ -39,6 +41,8 @@ def make_graph(nodes, name, inputs, outputs, initializer=None):
     graph.input.extend(inputs)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
+    if doc_string:
+        graph.doc_string = doc_string
     return graph
 
 
@@ -107,10 +111,12 @@ def _to_bytes_or_false(val):
             return False
 
 
-def make_attribute(key, value):
+def make_attribute(key, value, doc_string=None):
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
+    if doc_string:
+        attr.doc_string = doc_string
 
     is_iterable = isinstance(value, collections.Iterable)
     bytes_or_false = _to_bytes_or_false(value)
@@ -162,10 +168,12 @@ def make_attribute(key, value):
     return attr
 
 
-def make_tensor_value_info(name, elem_type, shape):
+def make_tensor_value_info(name, elem_type, shape, doc_string=""):
     """Makes a TypeProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
+    if doc_string:
+        value_info_proto.doc_string = doc_string
 
     tensor_type_proto = value_info_proto.type.tensor_type
     tensor_type_proto.elem_type = elem_type
@@ -183,19 +191,6 @@ def make_tensor_value_info(name, elem_type, shape):
                 'Needs to of integer_types or text_type.'.format(d))
 
     return value_info_proto
-
-
-def is_attribute_legal(attr):
-    """Checks if an AttributeProto is legal.
-
-    Inputs:
-        arg: an AttributeProto object.
-    Returns:
-        bool.
-    """
-    if not isinstance(attr, AttributeProto):
-        raise RuntimeError("You cannot pass an object that is not AttributeProto.")
-    return C.is_attribute_legal(attr.SerializeToString())
 
 
 def _sanitize_str(s):

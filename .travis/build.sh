@@ -13,7 +13,7 @@ ccache -s
 
 # onnx tests
 cd $onnx_dir
-pip install pytest-cov
+pip install pytest-cov nbval
 pytest
 
 # check auto-gen files up-to-date

@@ -1,6 +1,7 @@
 Open Neural Network Exchange (ONNX)
 ========
 [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx)
+[![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx)
 
 Open Neural Network Exchange (ONNX) is the first step toward an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
@@ -88,7 +89,7 @@ Change into another directory to fix this error.
 ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, first you need to install pytest:
 
 ```
-pip install pytest-cov
+pip install pytest-cov nbval
 ```
 
 After installing pytest, do

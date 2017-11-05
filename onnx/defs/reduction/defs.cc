@@ -25,8 +25,10 @@ False instead of True.)DOC";
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
                     AttrType::INT);
-        schema.Input(0, "data", "An input tensor.");
-        schema.Output(0, "reduced", "Reduced output tensor.");
+        schema.Input(0, "data", "An input tensor.", "T");
+        schema.Output(0, "reduced", "Reduced output tensor.", "T");
+        schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, 
+            "Constrain input and output types to float tensors.");
     };
 }
   
@@ -79,8 +81,9 @@ The type of the output tensor is integer.)DOC";
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
                     AttrType::INT);
-        schema.Input(0, "data", "An input tensor.");
-        schema.Output(0, "reduced", "Reduced output tensor with integer data type.");
+        schema.Input(0, "data", "An input tensor.", "T");
+        schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "T");
+        schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output types to float tensors.");
     };
 }
 
