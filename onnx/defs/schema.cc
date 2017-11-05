@@ -478,10 +478,10 @@ void OpSchema::Finalize() {
   }
   // all inputs and outputs have names
   for (const auto& it : inputs_) {
-    ENFORCE("" != it.GetName());
+    ENFORCE(!(it.GetName().empty()));
   }
   for (const auto& it : outputs_) {
-    ENFORCE("" != it.GetName());
+    ENFORCE(!(it.GetName().empty()));
   }
   // TODO: also cover checks for arbitrary number of inputs
   // allow extra tailing inputs not be present if all inputs at the end are

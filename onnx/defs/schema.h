@@ -52,7 +52,7 @@ constexpr int kCannotComputeNumOutputs = -1;
  */
 class OpSchema {
  public:
-  // Formal parameter represenation, including parameter name, typeStr,
+  // Formal parameter represenation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter {
    public:
