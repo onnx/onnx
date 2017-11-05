@@ -17,13 +17,13 @@ environment:
 # add install to run scripts after repository is cloned
 
 before_build:
-- cmd: %ONNXPY_DIR%\Scripts\pip install pytest-cov nbval numpy protobuf
+- cmd: C:\Python36\Scripts\pip install pytest-cov nbval numpy protobuf
 
 build_script:
-- cmd: %ONNXPY_DIR%\Scripts\pip install -e c:\projects\onnx\
+- cmd: C:\Python36\Scripts\pip install -e c:\projects\onnx\
 
 test_script:
-- cmd: %ONNXPY_DIR%\Scripts\pytest
+- cmd: C:\Python36\Scripts\pytest
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
