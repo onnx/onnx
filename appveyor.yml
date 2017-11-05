@@ -9,7 +9,7 @@ platform: x64
 configuration: Debug
 
 clone_folder: c:\projects\onnx
-shallow_clone: true
+clone_depth: 2
 
 # pick as per https://www.appveyor.com/docs/build-environment/#python
 environment:
