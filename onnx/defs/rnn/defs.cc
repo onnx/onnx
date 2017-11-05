@@ -4,6 +4,7 @@
 #include "onnx/defs/schema.h"
 
 using AttrType = onnx::OpSchema::AttrType;
+using namespace onnx;
 
 OPERATOR_SCHEMA(SimpleRNN)
     .NumInputs(3, 6)
@@ -162,6 +163,7 @@ OPERATOR_SCHEMA(LSTM)
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
+<<<<<<< HEAD
 Notations:
 `X` - input tensor
 `i` - input gate
@@ -248,3 +250,51 @@ Equations (forward LSTM with default activations and peepholes):
     .Output(1, "output_h",
             "The last output value of the hidden. It has shape "
 	    "`[num_directions, batch_size, hidden_size]`.");
+=======
+The order of matrixes `{K, L, D, R, N, C}` is defined as:
+ - K - type of the matrix: `weight` (first) or `bias` second
+ - L - The number of layers in the RNN - `num_layers`
+ - D - The direction of the layer: normal (first) or reverse (second).
+                                   (in case of `directions=2`)
+ - R - The type of the connection: `input-hidden` (first) or
+                                   `hidden-hidden` (second)
+ - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
+ -- For `relu` or `tanh` there is one gate
+ -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
+ -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
+ - C - The size of each matrix, which varies.
+ -- If the linear layer on the input is skipped (`skip_input_transform=1`)
+    and then for the first layer (`L=1`) the weight matrix (`K=weight`)
+    on the input connection (`R=input-hidden`) is skipped,
+    i.e. has 0 parameters in the list
+ -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
+ -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection
+    (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
+ -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
+    dimensions are `{hidden_size, hidden_size}`
+ -- For all biases (`K=bias`), dimensions are `{hidden_size}`
+)DOC", "T")
+    .Input(1, "input",
+           "The input sequences packed (and potentially padded) into one 3-D "
+           "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T")
+    // TODO: do we want to allow different lengths of sequences in a minibatch?
+    // CuDNN supports it, but not all backend implementations do. One way to
+    // encode would be int-valued tensor denoting lengths of each sequence in
+    // the batch.
+    .Input(2, "initial_h",
+           "Optional initial value of the hidden. If not specified - assumed "
+           "to be 0. Dimensions `[num_layers * directions, batch_size, "
+           "hidden_size]`", "T")
+    .Input(3, "initial_c",
+           "For LSTM only: optional initial value of the cell. If not "
+           "specified - assumed to be 0. Dimensions `[num_layers * directions, "
+           "batch_size, hidden_size]`", "T")
+    .Output(0, "output", "The output 3-dim sequence.", "T")
+    .Output(1, "output_h",
+            "Optional output value of the hidden. Same shape as input_h", "T")
+    .Output(2, "output_c",
+            "For LSTM only: optional output value of the cell. Same shape as "
+            "input_h", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output types to float tensors.");
+>>>>>>> b984c90f6f9166c33d96bcb8cab2c55fc3f06087

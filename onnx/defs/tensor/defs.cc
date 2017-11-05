@@ -4,6 +4,7 @@
 #include "onnx/defs/schema.h"
 
 using AttrType = onnx::OpSchema::AttrType;
+using namespace onnx;
 
 OPERATOR_SCHEMA(Cast)
     .NumInputs(1)
@@ -23,12 +24,18 @@ NOTE: Casting to and from strings is not supported yet.
           "The data type to which the elements of the input tensor are cast."
           "Strictly must be one of the types from DataType enum in TensorProto",
           AttrType::STRING)
-    .Input(0, "input", "Input tensor to be cast.")
+    .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
         "output",
         "Output tensor with the same shape as input with type "
-        "specified by the 'to' argument");
+        "specified by the 'to' argument",
+        "T2")
+    .TypeConstraint("T1", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input types to float tensors.")
+    .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain output types to float tensors.");
+            
 
 OPERATOR_SCHEMA(Reshape)
     .NumInputs(1)
@@ -44,25 +51,31 @@ inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is going to be copied
 from the shape argument.)DOC")
     .Attr("shape", "New shape", AttrType::INTS)
-    .Input(0, "data", "An input tensor.")
-    .Output(0, "reshaped", "Reshaped data.");
+    .Input(0, "data", "An input tensor.", "T")
+    .Output(0, "reshaped", "Reshaped data.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+	            "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Concat)
-    .NumInputs(1, INT_MAX)
-    .NumOutputs(1)
-    .Attr("axis",
-          "Which axis to concat on",
-          AttrType::INT)
+.NumInputs(1, INT_MAX)
+.NumOutputs(1)
+.Attr("axis",
+    "Which axis to concat on",
+    AttrType::INT)
     .SetDoc("Concatenate a list of tensors into a single tensor")
-    .Input(0, "inputs...", "List of tensors for concatenation")
-    .Output(0, "concat_result", "Concatenated tensor");
+    .Input(0, "inputs...", "List of tensors for concatenation", "T")
+    .Output(0, "concat_result", "Concatenated tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(Split)
     .NumInputs(1, 2)
     .NumOutputs(1, INT_MAX)
-    .Input(0, "input", "The tensor to split")
-    .Input(1, "split", "Optional list of output lengths (see also arg 'split')")
-    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting")
+    .Input(0, "input", "The tensor to split", "T")
+    .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T")
+    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input types to float tensors.")
     .Attr("axis",
           "Which axis to split on",
           AttrType::INT)
@@ -117,7 +130,7 @@ Example 2:
   ]
 
 )DOC")
-    .Input(0, "data", "Tensor of data to extract slices from.")
+    .Input(0, "data", "Tensor of data to extract slices from.", "T")
     .Attr("axes",
           "Axes that `starts` and `ends` apply to. "
           "It's optional. If not present, will be treated as "
@@ -131,7 +144,9 @@ Example 2:
           "Ending indices (exclusive) of corresponding axis in axes`",
           AttrType::INTS,
           true)
-    .Output(0, "output", "Sliced data tensor.");
+    .Output(0, "output", "Sliced data tensor.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Transpose)
     .NumInputs(1)
@@ -145,8 +160,10 @@ will be (2, 1, 3).
           "A list of integers. By default, reverse the dimensions, "
           "otherwise permute the axes according to the values given.",
           AttrType::INTS)
-    .Input(0, "data", "An input tensor.")
-    .Output(0, "transposed", "Transposed output.");
+    .Input(0, "data", "An input tensor.", "T")
+    .Output(0, "transposed", "Transposed output.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Gather)
     .NumInputs(2)
@@ -177,9 +194,11 @@ Example:
       ],
   ]
 )DOC")
-    .Input(0, "DATA", "Tensor of rank r >= 1.")
-    .Input(1, "INDICES", "Tensor of int32/int64 indices, of any rank q.")
-    .Output(0, "OUTPUT", "Tensor of rank q + (r - 1).");
+    .Input(0, "DATA", "Tensor of rank r >= 1.", "T")
+    .Input(1, "INDICES", "Tensor of int32/int64 indices, of any rank q.", "T")
+    .Output(0, "OUTPUT", "Tensor of rank q + (r - 1).", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Squeeze)
     .NumInputs(1)
@@ -192,8 +211,10 @@ OPERATOR_SCHEMA(Squeeze)
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
 )DOC")
-    .Input(0, "data", "Tensors with at least max(dims) dimensions.")
-    .Output(0, "squeezed", "Reshaped tensor with same data as input.");
+    .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
+    .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Pad)
     .NumInputs(1)
@@ -232,5 +253,7 @@ Example:
       ],
   ]
 )DOC")
-    .Input(0, "DATA", "Input tensor.")
-    .Output(0, "OUTPUT", "Tensor after padding.");
+    .Input(0, "DATA", "Input tensor.", "T")
+    .Output(0, "OUTPUT", "Tensor after padding.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input and output types to float tensors.");

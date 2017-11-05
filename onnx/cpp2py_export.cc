@@ -4,20 +4,22 @@
 #include <pybind11/stl.h>
 #include <unordered_map>
 
+#include "onnx/checker.h"
 #include "onnx/defs/schema.h"
+#include "onnx/py_utils.h"
 
 namespace onnx {
 
 namespace py = pybind11;
 
+PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
+  onnx_cpp2py_export.doc() = "Python interface to onnx";
 
-PYBIND11_PLUGIN(onnx_cpp2py_export) {
-  py::module m(
-      "onnx_cpp2py_export",
-      "Python interface to onnx schemas");
+  // Submodule `schema`
+  auto defs = onnx_cpp2py_export.def_submodule("defs");
+  defs.doc() = "Schema submodule";
 
-  // OpSchema
-  py::class_<OpSchema> op_schema(m, "OpSchema");
+  py::class_<OpSchema> op_schema(defs, "OpSchema");
   op_schema
     .def_property_readonly("file", &OpSchema::file)
     .def_property_readonly("line", &OpSchema::line)
@@ -28,29 +30,29 @@ PYBIND11_PLUGIN(onnx_cpp2py_export) {
     .def_property_readonly("max_input", &OpSchema::max_input)
     .def_property_readonly("min_output", &OpSchema::min_output)
     .def_property_readonly("max_output", &OpSchema::max_output)
-    .def_property_readonly("optional_inputs", &OpSchema::optional_inputs)
     .def_property_readonly("attributes", &OpSchema::attributes)
-    .def_property_readonly("input_desc", &OpSchema::input_desc)
-    .def_property_readonly("output_desc", &OpSchema::output_desc)
-    .def("verify", [](const OpSchema& schema,
-                      const py::bytes& serialized_node_proto) -> bool {
-       std::unique_ptr<NodeProto> node_proto(new NodeProto());
-       node_proto->ParseFromString(serialized_node_proto);
-       return schema.Verify(*node_proto);
-     })
-     .def_static("is_infinite", [](int v) {
+    .def_property_readonly("inputs", &OpSchema::inputs)
+    .def_property_readonly("outputs", &OpSchema::outputs)
+    .def_property_readonly("type_constraints", &OpSchema::typeConstraintParams)
+    .def_static("is_infinite", [](int v) {
        return v == std::numeric_limits<int>::max();
      })
      .def("consumed", [](const OpSchema& schema, int i) {
        return schema.consumed(i);
      });
 
-  //
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
       .def_readonly("description", &OpSchema::Attribute::description)
       .def_readonly("type", &OpSchema::Attribute::type)
       .def_readonly("required", &OpSchema::Attribute::required);
+      
+  py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
+      .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
+      .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
+      .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
+      .def_property_readonly("description", &OpSchema::FormalParameter::GetDescription)
+      .def_property_readonly("optional", &OpSchema::FormalParameter::IsOptional);
 
   py::enum_<OpSchema::AttrType>(op_schema, "AttrType")
       .value("FLOAT", OpSchema::AttrType::FLOAT)
@@ -73,7 +75,10 @@ PYBIND11_PLUGIN(onnx_cpp2py_export) {
       .value("CONSUME_ALLOWED", OpSchema::UseType::CONSUME_ALLOWED)
       .value("CONSUME_ENFORCED", OpSchema::UseType::CONSUME_ENFORCED);
 
-  m.def("get_schema", [](const std::string& op_type) -> OpSchema {
+  defs.def("has_schema", [](const std::string& op_type) -> bool {
+      return OpSchemaRegistry::Schema(op_type) != nullptr;
+    });
+  defs.def("get_schema", [](const std::string& op_type) -> OpSchema {
       const auto* schema = OpSchemaRegistry::Schema(op_type);
       if (!schema) {
         throw std::runtime_error(
@@ -82,22 +87,59 @@ PYBIND11_PLUGIN(onnx_cpp2py_export) {
       return *schema;
     });
 
-  m.def("has_schema", [](const std::string& op_type) -> bool {
-      return OpSchemaRegistry::Schema(op_type) != nullptr;
-    });
-
-  m.def("get_all_schemas", []() ->
+  defs.def("get_all_schemas", []() ->
         const std::unordered_map<std::string, OpSchema> {
           return OpSchemaRegistry::registered_schemas();
         });
 
-  m.def("is_attribute_legal", [](const py::bytes& serialized_attr_proto) -> bool {
-       std::unique_ptr<AttributeProto> attr_proto(new AttributeProto());
-       attr_proto->ParseFromString(serialized_attr_proto);
-       return OpSchema::IsAttributeLegal(*attr_proto);
-     });
+  // Submodule `checker`
+  auto checker = onnx_cpp2py_export.def_submodule("checker");
+  checker.doc() = "Checker submodule";
 
-  return m.ptr();
+  py::register_exception<checker::ValidationError>(checker,
+                                                   "ValidationError");
+
+  checker.def("check_value_info", [](const py::bytes& bytes,
+                                     int ir_version) -> void {
+          std::unique_ptr<ValueInfoProto> proto(new ValueInfoProto());
+          ParseProtoFromPyBytes(proto.get(), bytes);
+          checker::check_value_info(*proto, ir_version);
+      });
+
+  checker.def("check_tensor", [](const py::bytes& bytes,
+                                 int ir_version) -> void {
+          std::unique_ptr<TensorProto> proto(new TensorProto());
+          ParseProtoFromPyBytes(proto.get(), bytes);
+          checker::check_tensor(*proto, ir_version);
+      });
+
+  checker.def("check_attribute", [](const py::bytes& bytes,
+                                    int ir_version) -> void {
+          std::unique_ptr<AttributeProto> proto(new AttributeProto());
+          ParseProtoFromPyBytes(proto.get(), bytes);
+          checker::check_attribute(*proto, ir_version);
+      });
+
+  checker.def("check_node", [](const py::bytes& bytes,
+                               int ir_version) -> void {
+          std::unique_ptr<NodeProto> proto(new NodeProto());
+          ParseProtoFromPyBytes(proto.get(), bytes);
+          checker::check_node(*proto, ir_version);
+      });
+
+  checker.def("check_graph", [](const py::bytes& bytes,
+                                int ir_version) -> void {
+          std::unique_ptr<GraphProto> proto(new GraphProto());
+          ParseProtoFromPyBytes(proto.get(), bytes);
+          checker::check_graph(*proto, ir_version);
+      });
+
+  checker.def("check_model", [](const py::bytes& bytes,
+                                int ir_version) -> void {
+          std::unique_ptr<ModelProto> proto(new ModelProto());
+          ParseProtoFromPyBytes(proto.get(), bytes);
+          checker::check_model(*proto, ir_version);
+      });
 }
 
 }  // namespace onnx

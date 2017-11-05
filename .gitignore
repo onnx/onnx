@@ -70,3 +70,8 @@ onnx.egg-info
 
 # generated files
 onnx/version.py
+
+# test generated files
+.cache
+.coverage
+onnx/examples/.coverage.nbval

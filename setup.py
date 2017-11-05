@@ -93,15 +93,24 @@ class Protobuf(Dependency):
     def __init__(self):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
-        # and environment variables
-        if os.getenv('CONDA_PREFIX') and platform.system() == 'Windows':
-            self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library",
-                                           "lib", "libprotobuf")]
-            self.include_dirs = [os.path.join(os.getenv('CONDA_PREFIX'),
-                                              "Library", "Include")]
-        else:
-            self.libraries = ['protobuf']
+        use_conda = os.getenv('CONDA_PREFIX') and platform.system() == 'Windows'
 
+        libs = []
+        if os.getenv('PROTOBUF_LIBDIR'):
+            libs.append(os.path.join(os.getenv('PROTOBUF_LIBDIR'), "libprotobuf"))
+        elif use_conda:
+            libs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf"))
+        else:
+            libs.append("protobuf")
+
+        includes = []
+        if os.getenv('PROTOBUF_INCDIR'):
+            includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
+        elif use_conda:
+            includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
+
+        self.libraries = libs
+        self.include_dirs = includes
 
 class Pybind11(Dependency):
     def __init__(self):
@@ -124,7 +133,7 @@ class ONNXCommand(setuptools.Command):
 
 class build_proto_in(ONNXCommand):
     def run(self):
-        log('compiling onnx.proto.in')
+        log('compiling onnx.in.proto')
         subprocess.check_call(["python", os.path.join(SRC_DIR, "gen_proto.py")])
 
 
@@ -268,6 +277,7 @@ install_requires.update(['protobuf', 'numpy'])
 
 setup_requires.add('pytest-runner')
 test_requires.add('pytest-cov')
+test_requires.add('nbval')
 
 ################################################################################
 # Final
@@ -286,4 +296,10 @@ setuptools.setup(
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
+    entry_points={
+        'console_scripts': [
+            'check-model = onnx.bin.checker:check_model',
+            'check-node = onnx.bin.checker:check_node',
+        ]
+    },
 )

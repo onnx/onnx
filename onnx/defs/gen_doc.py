@@ -82,15 +82,13 @@ def main(args):
         s += '\n#### Inputs'
         if schema.min_input != schema.max_input:
             s += ' ({} - {})'.format(display_number(schema.min_input),
-                                   display_number(schema.max_input))
+                                  display_number(schema.max_input))
         s += '\n\n'
-        if schema.input_desc:
+        if schema.inputs:
             s += '<dl>\n'
-            for idx, (input_name, input_desc) in enumerate(schema.input_desc):
-                s += '<dt><tt>{}</tt>{}</dt>\n'.format(
-                    input_name,
-                    ' (optional)' if idx in schema.optional_inputs else '')
-                s += '<dd>{}</dd>\n'.format(input_desc)
+            for input in schema.inputs:
+                s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, ' (optional)' if input.optional else '', input.typeStr)
+                s += '<dd>{}</dd>\n'.format(input.description)
             s += '</dl>\n'
 
         # outputs
@@ -98,15 +96,30 @@ def main(args):
         if schema.min_output != schema.max_output:
             s += ' ({} - {})'.format(display_number(schema.min_output),
                                    display_number(schema.max_output))
-        s += '\n'
-        if schema.output_desc:
+        s += '\n\n'
+
+        if schema.outputs:
             s += '<dl>\n'
-            for output_name, output_desc in schema.output_desc:
-                s += '<dt><tt>{}</tt></dt>\n'.format(output_name)
-                s += '<dd>{}</dd>\n'.format(output_desc)
+            for output in schema.outputs:
+                s += '<dt><tt>{}</tt> : {}</dt>\n'.format(output.name, output.typeStr)
+                s += '<dd>{}</dd>\n'.format(output.description)
             s += '</dl>\n'
 
-        s += '\n\n---\n\n'
+        # type constraints
+        s += '\n#### Type Constraints'
+        s += '\n\n'
+        if schema.type_constraints:            
+            s += '<dl>\n'
+            for typeStr, allowedTypes, description in schema.type_constraints:
+                if (len(allowedTypes) > 0):
+                    allowedTypeStr = allowedTypes[0]
+                for allowedType in allowedTypes[1:]:
+                    allowedTypeStr += ', ' + allowedType
+                s += '<dt><tt>{}</tt> : {}</dt>\n'.format(typeStr, allowedTypeStr)
+                s += '<dd>{}</dd>\n'.format(description)
+            s += '</dl>\n'
+            
+        s += '\n\n'
         args.output.write(s)
 
 

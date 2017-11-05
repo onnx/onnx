@@ -4,20 +4,34 @@
 #pragma once
 
 #include <climits>
-#include <limits>
+#include <cstring>
 #include <functional>
 #include <initializer_list>
-#include <ostream>
 #include <iostream>
+#include <limits>
+#include <ostream>
 #include <set>
-#include <unordered_map>
-#include <vector>
 #include <string>
-#include <cstring>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
-#include "onnx/onnx.pb.h"
+#include "data_type_utils.h"
 
 namespace onnx {
+
+typedef std::unordered_set<DataType> DataTypeSet;
+// Input/Output parameter, which contain name, description and type string.
+typedef std::tuple<std::string, std::string, std::string, bool>
+    InputOutputParam;
+// Type constraint, which contain type string, allowed types and description.
+typedef std::tuple<std::string, std::vector<std::string>, std::string>
+    TypeConstraintParam;
+// Type constraint map. Key is type string. Value is data type set and
+// description.
+typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
+    TypeConstraintMap;
 
 // A const value returned by OpSchema::CalculateOutput() if the number of
 // output cannot be determined.
@@ -38,29 +52,90 @@ constexpr int kCannotComputeNumOutputs = -1;
  */
 class OpSchema {
  public:
-  enum class SupportType {
-    COMMON, // Supported by all frameworks that support this IR.
-    EXPERIMENTAL, // This OP is experimental and can be changed or removed in the future.
+  // Formal parameter represenation, including parameter name, typeStr,
+  // description, and type constraints.
+  class FormalParameter {
+   public:
+    // Constructor.
+    explicit FormalParameter(
+        const std::string& name,
+        const DataTypeSet& type_set,
+        const std::string& type_str,
+        const std::string& description,
+        bool is_optional = false);
+
+    // Get formal parameter name.
+    const std::string& GetName() const;
+
+    // Get allowed data types.
+    const DataTypeSet& GetTypes() const;
+
+    // Get formal parameter type string.
+    const std::string& GetTypeStr() const;
+
+    // Get formal parameter description.
+    const std::string& GetDescription() const;
+
+    // Indicates whether this formal parameter is optional or not.
+    // It's applicable for input formal parameter only.
+    bool IsOptional() const;
+
+   private:
+    FormalParameter() {}
+
+    // Formal parameter name.
+    std::string name_;
+
+    // A set of data types supported for <*this> formal parameter.
+    // It should contain at least one element if this formal parameter is good.
+    DataTypeSet type_set_;
+
+    // The <parameter type> string specified when registring an op.
+    // It could be a supported data type or a type constraint key, which
+    // maps to a set of supported data types.
+    std::string type_str_;
+
+    // Formal parameter description.
+    std::string description_;
+
+    // Flag indicates whether this formal parameter is optional or not.
+    bool is_optional_;
   };
 
-  OpSchema() : name_("unknown"), file_("unknown"), line_(0), support_(SupportType::COMMON) {}
+  enum class SupportType {
+    COMMON, // Supported by all frameworks that support this IR.
+    EXPERIMENTAL, // This OP is experimental and can be changed or removed in
+                  // the future.
+  };
+
+  OpSchema()
+      : name_("unknown"),
+        file_("unknown"),
+        line_(0),
+        support_(SupportType::COMMON) {}
   OpSchema(const std::string& name, const std::string& file, const int line)
       : name_(name), file_(file), line_(line), support_(SupportType::COMMON) {}
 
   /**
    * @brief Returns the file that the op schema is registered from.
    */
-  inline const std::string& file() const { return file_; }
+  inline const std::string& file() const {
+    return file_;
+  }
 
   /**
    * @brief Returns the line in file that the op schema is registered from.
    */
-  inline int line() const { return line_; }
+  inline int line() const {
+    return line_;
+  }
 
   /**
    * @brief Returns the support level of the op schema.
    */
-  SupportType support_level() const { return support_; }
+  SupportType support_level() const {
+    return support_;
+  }
 
   /**
    * @brief Returns the docstring of the op schema.
@@ -73,8 +148,7 @@ class OpSchema {
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
    */
-  bool Verify(const NodeProto& node) const;
-  static bool IsAttributeLegal(const AttributeProto&);
+  void Verify(const NodeProto& node) const;
 
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
@@ -134,11 +208,11 @@ class OpSchema {
   OpSchema& SameNumberOfOutput();
 
   // Sets the rule to allow optional in-place operation.
-  OpSchema& AllowConsumed(std::function<std::pair<bool,int>(int)> inplace);
+  OpSchema& AllowConsumed(std::function<std::pair<bool, int>(int)> inplace);
   OpSchema& AllowConsumed(std::unordered_map<int, int> inplace);
   OpSchema& AllowOneToOneConsumed();
   // Sets the rule to enforce in-place opeartion.
-  OpSchema& EnforceConsumed(std::function<std::pair<bool,int>(int)> inplace);
+  OpSchema& EnforceConsumed(std::function<std::pair<bool, int>(int)> inplace);
   OpSchema& EnforceConsumed(std::unordered_map<int, int> inplace);
   OpSchema& EnforceOneToOneConsumed();
 
@@ -148,36 +222,40 @@ class OpSchema {
   // Functions to do documentation for the operator schema.
   OpSchema& SetDoc(const std::string& doc);
 
-  // Note: this enum is structurally identical to the AttributeProto.AttributeType
-  // enum defined in onnx.proto.  If you rev one, you likely need to rev the other.
+  // Note: this enum is structurally identical to the
+  // AttributeProto.AttributeType enum defined in onnx.proto.  If you rev one,
+  // you likely need to rev the other.
   enum class AttrType {
-      FLOAT,
-      INT,
-      STRING,
-      TENSOR,
-      GRAPH,
-      FLOATS,
-      INTS,
-      STRINGS,
-      TENSORS,
-      GRAPHS
+    FLOAT,
+    INT,
+    STRING,
+    TENSOR,
+    GRAPH,
+    FLOATS,
+    INTS,
+    STRINGS,
+    TENSORS,
+    GRAPHS
   };
 
   enum class UseType {
     DEFAULT, // read only use of an input
-    CONSUME_ALLOWED, // allowed to be marked consumed by a "consumed_inputs" attribute.
-    CONSUME_ENFORCED, // must be marked consumed by a "consumed_inputs" attribute.
+    CONSUME_ALLOWED, // allowed to be marked consumed by a "consumed_inputs"
+                     // attribute.
+    CONSUME_ENFORCED, // must be marked consumed by a "consumed_inputs"
+                      // attribute.
   };
 
   struct Attribute {
-    Attribute(const char* name_,
-              const char* description_,
-              AttrType type_,
-              bool required_):
-      name(name_),
-      description(description_),
-      type(type_),
-      required(required_) {}
+    Attribute(
+        const char* name_,
+        const char* description_,
+        AttrType type_,
+        bool required_)
+        : name(name_),
+          description(description_),
+          type(type_),
+          required(required_) {}
 
     const std::string name;
     const std::string description;
@@ -186,26 +264,54 @@ class OpSchema {
   };
 
   OpSchema& Attr(const Attribute& attr);
-  OpSchema& Attr(const char* name,
-                 const char* description,
-                 AttrType type,
-                 bool required = false);
+  OpSchema& Attr(
+      const char* name,
+      const char* description,
+      AttrType type,
+      bool required = false);
   OpSchema& AllowUncheckedAttributes();
 
+  // Grammar for type strings used in Input(), Output().
+  // <type> ::= <data_type> | tensor(<data_type>) | sparse(<data_type>) |
+  // <type_parameter> <data_type> :: = float | int32 | string | bool | uint8
+  //                | int8 | uint16 | int16 | int64 | float16 | double
+  // <type_parameter> ::= any type parameter, say "T".
+  //
+  // NOTE: 1) <type_parameter> will always be together with a type constraints
+  // specification.
+  //       2) <type> ::= <data_type> means the data is scalar (zero dimension).
+  //
+  // Example:
+  // OPERATOR_SCHEMA(Sum)
+  // .Input(0, "input_a", "the first input", "T")
+  // .Input(1, "input_b", "the second input", "T")
+  // .Output(0, "sum", "the sum of two numbers", "T")
+  // .TypeConstraint("T", {"float", "double", "int32"}, "allowed data types for
+  // sum.")
+  //
   // Optional = true means that the input might have empty input value
   // (represented as "") in the graph even though the later inputs have values.
   // It's useful for complex situation when there are several independent
   // optional inputs.
-  OpSchema& Input(const int n, const char *name, const char *description,
-                  bool optional = false);
-  OpSchema& Output(const int n, const char *name, const char *description);
+  OpSchema& Input(
+      const int n,
+      const std::string& name,
+      const std::string& description,
+      const std::string& type_str,
+      bool optinal = false);
+  OpSchema& Output(
+      const int n,
+      const std::string& name,
+      const std::string& description,
+      const std::string& type_str);
+  OpSchema& TypeConstraint(
+      const std::string& type_str,
+      const std::vector<std::string>& constraints,
+      const std::string& description);
+
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
-
-
-  // Verifies that the schema is valid and all specifications are compatible.
-  void Finalize();
 
   /**
    * @brief A function to allow one to get the number of outputs based on the
@@ -218,15 +324,25 @@ class OpSchema {
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
-  const std::vector<std::pair<const char*, const char*>>& input_desc() const {
-    return input_desc_;
+
+  // Get input formal parameters.
+  const std::vector<FormalParameter>& inputs() const {
+    return inputs_;
   }
-  const std::vector<std::pair<const char*, const char*>>& output_desc() const {
-    return output_desc_;
+
+  // Get output formal parameters.
+  const std::vector<FormalParameter>& outputs() const {
+    return outputs_;
   }
-  const std::set<int> optional_inputs() const {
-    return optional_inputs_;
+
+  const std::vector<TypeConstraintParam>& typeConstraintParams() const {
+    return type_constraint_params_;
   }
+
+  const std::string& Name() const {
+    return name_;
+  }
+
   int min_input() const {
     return min_input_;
   }
@@ -244,52 +360,46 @@ class OpSchema {
   }
 
  private:
+  friend class OpSchemaRegistry;
+
+  // Verifies that the schema is valid and all specifications are compatible.
+  // It will also parse all type strings specified for inputs/outputs into valid
+  // TypeProto and create global unique string pointer as the DataType for
+  // efficiency.
+  void Finalize();
+
+  void ParseAndSetInputOutput(
+      const std::vector<InputOutputParam>& symbolicParams,
+      /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
+
   std::string name_;
   std::string file_;
   std::string doc_;
   std::map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
-  std::vector<std::pair<const char*, const char*>> input_desc_{};
-  std::vector<std::pair<const char*, const char*>> output_desc_{};
+  std::vector<InputOutputParam> input_desc_;
+  std::vector<FormalParameter> inputs_;
+  std::vector<InputOutputParam> output_desc_;
+  std::vector<FormalParameter> outputs_;
+  std::vector<TypeConstraintParam> type_constraint_params_;
+  TypeConstraintMap type_constraints_;
   int line_ = 0;
   SupportType support_;
   int min_input_ = 0;
   int max_input_ = std::numeric_limits<int>::max();
   int min_output_ = 0;
   int max_output_ = std::numeric_limits<int>::max();
-  std::set<int> optional_inputs_;
-  std::function<bool(int)> num_inputs_allowed_
-      = [](int) { return true; };
-  std::function<bool(int)> num_outputs_allowed_
-      = [](int) { return true; };
-  std::function<bool(int, int)> num_inputs_outputs_allowed_
-      = [](int, int) { return true; };
+  std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
+  std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
+  std::function<bool(int, int)> num_inputs_outputs_allowed_ = [](int, int) {
+    return true;
+  };
   std::function<int(int)> calculate_output_;
   // Is input i allowed/required to be marked consumed_
   // If so, which output idx shares the same buffer with i
-  std::function<std::pair<UseType,int>(int)> consumed_
-      = [](int){ return std::make_pair(UseType::DEFAULT, 0); };
-};
-
-/**
- * Internal class used in schema declaration
- */
-class OpSchemaHolder {
- public:
-  OpSchemaHolder(OpSchema& schema) : schema_(&schema) {
-    // TODO: when we fix all issues - we can add abort() here
-    try {
-      schema.Finalize();
-    } catch (const std::exception& e) {
-      std::cerr << "Schema error: " << e.what() << std::endl;
-    }
-  }
-  const OpSchema* operator->() const {
-    return schema_;
-  }
-
- private:
-  const OpSchema* schema_;
+  std::function<std::pair<UseType, int>(int)> consumed_ = [](int) {
+    return std::make_pair(UseType::DEFAULT, 0);
+  };
 };
 
 /**
@@ -297,20 +407,29 @@ class OpSchemaHolder {
  */
 class OpSchemaRegistry {
  public:
-  static OpSchema& NewSchema(
-    const std::string& key, const std::string& file, const int line) {
-    auto& m = map();
-    if (m.count(key)) {
-      const auto& schema = m[key];
-      std::cerr << "Trying to register schema with name "
-                << key << " from file " << file << " line " << line
-                << ", but it is already registered from file "
-                << schema.file() << " line " << schema.line();
-      abort();
+  class OpSchemaRegisterOnce {
+   public:
+    OpSchemaRegisterOnce(OpSchema& op_schema) {
+      // TODO: when we fix all issues - we can add abort() here
+      try {
+        op_schema.Finalize();
+      } catch (const std::exception& e) {
+        std::cerr << "Schema error: " << e.what() << std::endl;
+      }
+      auto& m = map();
+      auto& key = op_schema.Name();
+      if (m.count(key)) {
+        const auto& schema = m[key];
+        std::cerr << "Trying to register schema with name " << key
+                  << " from file " << op_schema.file() << " line "
+                  << op_schema.line()
+                  << ", but it is already registered from file "
+                  << schema.file() << " line " << schema.line();
+        abort();
+      }
+      m.emplace(std::make_pair(key, op_schema));
     }
-    m.emplace(std::make_pair(key, OpSchema(key, file, line)));
-    return m[key];
-  }
+  };
 
   static const OpSchema* Schema(const std::string& key) {
     auto& m = map();
@@ -336,17 +455,17 @@ class OpSchemaRegistry {
    * fiasco.
    */
   static std::unordered_map<std::string, OpSchema>& map();
+
  public:
   static const std::unordered_map<std::string, OpSchema>& registered_schemas() {
     return map();
   }
 };
 
-#define OPERATOR_SCHEMA(name)                                       \
-  static onnx::OpSchemaHolder (op_schema_##name) =                     \
-    onnx::OpSchemaRegistry::NewSchema(#name, __FILE__, __LINE__)
+#define OPERATOR_SCHEMA(name)                          \
+  static onnx::OpSchemaRegistry::OpSchemaRegisterOnce( \
+      op_schema_register_once##name) = OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
-
-}  // namespace onnx
+} // namespace onnx
