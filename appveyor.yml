@@ -13,6 +13,7 @@ clone_folder: c:\projects\onnx
 # pick as per https://www.appveyor.com/docs/build-environment/#python
 environment:
   ONNXPY_DIR: C:\Python36
+  CONDA_PREFIX: C:\Miniconda36
 
 # add install to run scripts after repository is cloned
 
@@ -24,7 +25,8 @@ build_script:
 - cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\
 
 test_script:
-- cmd: C:\Miniconda36\Scripts\pytest c:\projects\onnx\
+- cmd: cd c:\projects\onnx
+- cmd: C:\Miniconda36\Scripts\pytest
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts

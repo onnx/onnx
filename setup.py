@@ -93,15 +93,22 @@ class Protobuf(Dependency):
     def __init__(self):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
-        # and environment variables
-        if os.getenv('CONDA_PREFIX') and platform.system() == 'Windows':
-            self.libraries = [os.path.join(os.getenv('CONDA_PREFIX'), "Library",
-                                           "lib", "libprotobuf")]
-            self.include_dirs = [os.path.join(os.getenv('CONDA_PREFIX'),
-                                              "Library", "Include")]
-        else:
-            self.libraries = ['protobuf']
+        use_conda = os.getenv('CONDA_PREFIX') and platform.system() == 'Windows'
 
+        libs = []
+        if os.getenv('PROTOBUF_LIBDIR'):
+            libs.append(os.path.join(os.getenv('PROTOBUF_LIBDIR'), "libprotobuf"))
+        elif use_conda:
+            libs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf"))
+
+        includes = []
+        if os.getenv('PROTOBUF_INCDIR'):
+            includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
+        elif use_conda:
+            includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
+
+        self.libraries = libs
+        self.include_dirs = includes
 
 class Pybind11(Dependency):
     def __init__(self):
