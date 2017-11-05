@@ -1,0 +1,40 @@
+# reference: https://www.appveyor.com/docs/appveyor-yml/
+
+version: 0.3.{build}
+
+# build all branches by default
+
+image: Visual Studio 2017
+platform: x64
+configuration: Debug
+
+clone_folder: c:\projects\onnx
+clone_depth: 2
+
+# pick as per https://www.appveyor.com/docs/build-environment/#python
+environment:
+  ONNXPY_DIR: C:\Python36
+  CONDA_PREFIX: C:\Miniconda36
+
+install:
+- cmd: git submodule update --init --recursive
+
+before_build:
+- cmd: C:\Miniconda36\Scripts\conda install -y -c conda-forge protobuf numpy
+- cmd: C:\Miniconda36\Scripts\pip install pytest-cov nbval
+
+build_script:
+- cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\
+
+test_script:
+- cmd: cd c:\projects\onnx
+- cmd: C:\Miniconda36\Scripts\pytest
+
+# add after_test commands to collect logs and such
+# add artifacts: -path to collect build artifacts
+
+notifications:
+- provider: GitHubPullRequest
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: true
