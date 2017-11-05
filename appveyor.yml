@@ -9,13 +9,15 @@ platform: x64
 configuration: Debug
 
 clone_folder: c:\projects\onnx
+shallow_clone: true
 
 # pick as per https://www.appveyor.com/docs/build-environment/#python
 environment:
   ONNXPY_DIR: C:\Python36
   CONDA_PREFIX: C:\Miniconda36
 
-# add install to run scripts after repository is cloned
+install:
+- cmd: git submodule update --init --recursive
 
 before_build:
 - cmd: C:\Miniconda36\Scripts\conda install -y -c conda-forge protobuf numpy
