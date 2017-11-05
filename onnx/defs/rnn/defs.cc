@@ -8,9 +8,6 @@ using namespace onnx;
 
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
-        schema.Attr("activation", "The activation function for input gate. It must be "
-                    "one of tanh and ReLU. Default `tanh`.",
-                    AttrType::STRING);
         schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
@@ -67,6 +64,9 @@ Notations:
 Equations:
   - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
 )DOC")
+    .Attr("activation", "The activation function for input gate. It must be "
+          "one of tanh and ReLU. Default `tanh`.",
+          AttrType::STRING);
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
@@ -120,6 +120,10 @@ Equations (GRU with default activations):
   - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
   - H = (1 - zt) (.) ht + it (.) Ht-1
 )DOC")
+    .Attr("activations", "A list of 3 activation functions for update, reset, and "
+	  "hidden gates. The activation functions must be one of sigmoid and tanh. "
+          "See the equations for default.",
+          AttrType::STRINGS)
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
@@ -178,6 +182,10 @@ Equations (forward LSTM with default activations and peepholes):
   - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po (.) Ct + Wbo + Rbo)
   - H = ot (.) tanh(Ct)
 )DOC")
+    .Attr("activations", "A list of 4 activation functions for input, output, "
+	  "forget, and cell gates. The activation functions must be one of sigmoid "
+	  "and tanh. See the equations for default.",
+          AttrType::STRINGS)
     .Attr("input_forget", "Couple the input and forget gates if 1, default 0.",
           AttrType::INT)	  
     .Input(1, "W",
