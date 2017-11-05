@@ -45,36 +45,39 @@ Equations:
           AttrType::FLOAT)
     .Input(0, "input",
            "The input sequences packed (and potentially padded) into one 3-D "
-           "tensor with the shape of `[seq_length, batch_size, input_size]`.")
+           "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T")
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
-           "`num_directions, hidden_size, input_size]`.")
+           "`num_directions, hidden_size, input_size]`.", "T")
     .Input(2, "R",
 	   "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
            "(if bidirectional). The tensor has shape "
-	   "`[num_directions, hidden_size, hidden_size}`.")
+	   "`[num_directions, hidden_size, hidden_size}`.", "T")
     .Input(3, "B",
 	   "The bias tensor for input gate. Concatenation of `[Wbi, Rbi]`, "
            "and `[WBbi, RBbi]` (if bidirectional). The tensor has shape "
            "`[num_directions, 2*hidden_size]`, Optional: If not specified - assumed "
-           "to be 0.",
+           "to be 0.", "T",
 	   true /*optional*/)
     .Input(4, "initial_h",
 	   "Optional initial value of the hidden. If not specified - assumed "
 	   "to be 0. It has shape either `[num_directions, batch_size, hidden_size]`.",
-	   true /*optional*/)	   
+	   "T", true /*optional*/)	   
     .Input(5, "seq_lens",
            "Optional tensor specifying lengths of the sequences in a batch. "
            "If not specified - assumed all sequences in the batch to have "
-	   "length `seq_length`. It has shape `[batch_size]`.",
+	   "length `seq_length`. It has shape `[batch_size]`.", "T1",
 	   true /*optional*/)	   
     .Output(0, "output",
 	    "A tensor that concats all the intermediate output values of the hidden."
-	    "It has shape `[seq_length, num_directions, batch_size, hidden_size]`.")
+	    "It has shape `[seq_length, num_directions, batch_size, hidden_size]`.", "T")
     .Output(1, "output_h",
             "The last output value of the hidden. It has shape "
-	    "`[num_directions, batch_size, hidden_size]`.");
+	    "`[num_directions, batch_size, hidden_size]`.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                    "Constrain input and output types to float tensors.");
+    .TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
 
 
 OPERATOR_SCHEMA(GRU)
@@ -123,36 +126,40 @@ Equations (GRU with default activations):
           AttrType::FLOAT)
     .Input(0, "input",
            "The input sequences packed (and potentially padded) into one 3-D "
-           "tensor with the shape of `[seq_length, batch_size, input_size]`.")
+           "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T")
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
-	   "`[num_directions, 3*hidden_size, input_size]`.")
+	   "`[num_directions, 3*hidden_size, input_size]`.", "T")
     .Input(2, "R",
 	   "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
-	   "`[num_directions, 3*hidden_size, hidden_size}`.")
+	   "`[num_directions, 3*hidden_size, hidden_size}`.", "T")
     .Input(3, "B",
 	   "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
            "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
-           "- assumed to be 0",
+           "- assumed to be 0", "T",
 	   true /*optional*/)
     .Input(4, "initial_h",
 	   "Optional initial value of the hidden. If not specified - assumed "
 	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   true /*optional*/)
+	   "T", true /*optional*/)
     .Input(5, "seq_lens",
            "Optional tensor specifying lengths of the sequences in a batch. "
            "If not specified - assumed all sequences in the batch to have "
 	   "length `seq_length`. It has shape `[batch_size]`.",
-	   true /*optional*/)
+	   "T1", true /*optional*/)
     .Output(0, "output",
 	    "A tensor that concats all the intermediate output values of the "
-	    "hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`.")	    
+	    "hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`.",
+            "T")
     .Output(1, "output_h",
             "The last output value of the hidden. It has shape "
-	    "`[num_directions, batch_size, hidden_size]`.");
+	    "`[num_directions, batch_size, hidden_size]`.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                    "Constrain input and output types to float tensors.");
+    .TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
 
 
 OPERATOR_SCHEMA(LSTM)
@@ -212,39 +219,43 @@ Equations (forward LSTM with default activations and peepholes):
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[iofc]` and "
            "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
-	   "`[num_directions, 4*hidden_size, input_size]`.")
+	   "`[num_directions, 4*hidden_size, input_size]`.", "T")
     .Input(2, "R",
 	   "The recurrence weight tensor. Concatenation of `R[iofc]` and "
 	   "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
-           "`[num_directions, 4*hidden_size, hidden_size}`.")
+           "`[num_directions, 4*hidden_size, hidden_size}`.", "T")
     .Input(3, "B",
 	   "The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, "
 	   "and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This "
            "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
-	   "specified - assumed to be 0.",
+	   "specified - assumed to be 0.", "T",
 	   true /*optional*/)
     .Input(4, "P",
 	   "The weight tensor for peepholes. Concatenation of `P[iof]` and "
 	   "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
 	   "`[num_directions, 3*hidde_size, hidden_size]`. Optional: If not specified - "
-	   "assumed to be 0.",
+	   "assumed to be 0.", "T",
 	   true /*optional*/)
     .Input(5, "initial_h",
            "Optional initial value of the hidden. If not specified - assumed "
            "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   true /*optional*/)
+	   "T", true /*optional*/)
     .Input(6, "initial_c",
            "Optional initial value of the cell. If not specified - assumed "
 	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   true /*optional*/)
+	   "T", true /*optional*/)
     .Input(7, "seq_lens",
            "Optional tensor specifying lengths of the sequences in a batch. "
            "If not specified - assumed all sequences in the batch to have "
-	   "length `seq_length`. It has shape `[batch_size]`.",
+	   "length `seq_length`. It has shape `[batch_size]`.", "T1",
 	   true /*optional*/)
     .Output(0, "output",
 	    "A tensor that concats all the intermediate output values of the hidden."
-	    "It has shape `[seq_length, num_directions, batch_size, hidden_size]`.")	    
+	    "It has shape `[seq_length, num_directions, batch_size, hidden_size]`.",
+            "T")	    
     .Output(1, "output_h",
             "The last output value of the hidden. It has shape "
-	    "`[num_directions, batch_size, hidden_size]`.");
+	    "`[num_directions, batch_size, hidden_size]`.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                    "Constrain input and output types to float tensors.");
+    .TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
