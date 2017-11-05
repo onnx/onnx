@@ -1,0 +1,35 @@
+# reference: https://www.appveyor.com/docs/appveyor-yml/
+
+version: 0.3.{build}
+
+# build all branches by default
+
+image: Visual Studio 2017
+platform: x64
+configuration: Debug
+
+clone_folder: c:\projects\onnx
+
+# pick as per https://www.appveyor.com/docs/build-environment/#python
+environment:
+  ONNXPY_DIR: C:\Python36
+
+# add install to run scripts after repository is cloned
+
+before_build:
+- cmd: %ONNXPY_DIR%\Scripts\pip install pytest-cov nbval numpy protobuf
+
+build_script:
+- cmd: %ONNXPY_DIR%\Scripts\pip install -e c:\projects\onnx\
+
+test_script:
+- cmd: %ONNXPY_DIR%\Scripts\pytest
+
+# add after_test commands to collect logs and such
+# add artifacts: -path to collect build artifacts
+
+notifications:
+- provider: GitHubPullRequest
+  on_build_success: true
+  on_build_failure: true
+  on_build_status_changed: true
