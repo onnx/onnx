@@ -4,6 +4,7 @@
 #include "onnx/defs/schema.h"
 
 using AttrType = onnx::OpSchema::AttrType;
+using namespace onnx;
 
 OPERATOR_SCHEMA(SimpleRNN)
     .NumInputs(3, 6)
