@@ -64,8 +64,8 @@ Notations:
 Equations:
   - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
 )DOC")
-    .Attr("activation", "The activation function for input gate. It must be "
-          "one of tanh and ReLU. Default `tanh`.",
+    .Attr("activation", "One (or two if bidirectional) activation function for "
+          "input gate. It must be one of tanh and ReLU. Default `tanh`.",
           AttrType::STRING)
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
@@ -116,9 +116,9 @@ Equations (GRU with default activations):
   - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
   - H = (1 - zt) (.) ht + it (.) Ht-1
 )DOC")
-    .Attr("activations", "A list of 3 activation functions for update, reset, and "
-	  "hidden gates. The activation functions must be one of sigmoid and tanh. "
-          "See the equations for default.",
+    .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
+          "for update, reset, and hidden gates. The activation functions must be "
+          "one of sigmoid and tanh. See the equations for default.",
           AttrType::STRINGS)
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
@@ -160,7 +160,7 @@ Notations:
 `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
 `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
 `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-`PB[iof]`  - P peephole weight matrix for backward input, output, and forget gates
+`PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
 `tanh(X)` - hyperbolic tangent of X
 `sigmoid(X)` - 1 / (1 + e^-X)
 `H` - Hidden state
@@ -174,9 +174,9 @@ Equations (forward LSTM with default activations and peepholes):
   - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po (.) Ct + Wbo + Rbo)
   - H = ot (.) tanh(Ct)
 )DOC")
-    .Attr("activations", "A list of 4 activation functions for input, output, "
-	  "forget, and cell gates. The activation functions must be one of sigmoid "
-	  "and tanh. See the equations for default.",
+    .Attr("activations", "A list of 4 (or 8 if bidirectional) activation functions "
+          "for input, output, forget, and cell gates. The activation functions must "
+          "be one of sigmoid and tanh. See the equations for default.",
           AttrType::STRINGS)
     .Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
           "in the range of [-threshold, +threshold] and is applied to the input "
@@ -205,7 +205,7 @@ Equations (forward LSTM with default activations and peepholes):
     .Input(7, "P",
 	   "The weight tensor for peepholes. Concatenation of `P[iof]` and "
 	   "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
-	   "`[num_directions, 3*hidde_size, hidden_size]`. Optional: If not specified - "
+	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
 	   "assumed to be 0.", "T",
 	   true /*optional*/)
     .FillUsing(RNNDocGenerator("LSTM"));
