@@ -39,6 +39,7 @@
 * <a href="#PRelu">PRelu</a>
 * <a href="#Pad">Pad</a>
 * <a href="#Pow">Pow</a>
+* <a href="#RNN">RNN</a>
 * <a href="#RandomNormal">RandomNormal</a>
 * <a href="#RandomNormalLike">RandomNormalLike</a>
 * <a href="#RandomUniform">RandomUniform</a>
@@ -54,7 +55,6 @@
 * <a href="#Reshape">Reshape</a>
 * <a href="#Selu">Selu</a>
 * <a href="#Sigmoid">Sigmoid</a>
-* <a href="#SimpleRNN">SimpleRNN</a>
 * <a href="#Slice">Slice</a>
 * <a href="#Softmax">Softmax</a>
 * <a href="#Split">Split</a>
@@ -822,8 +822,6 @@
 <dl>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 3 activation functions for update, reset, and hidden gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
-<dt><tt>clip</tt> : float</dt>
-<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
@@ -833,12 +831,12 @@
 #### Inputs (3 - 6)
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>X</tt> : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size}`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
@@ -850,9 +848,9 @@
 #### Outputs (1 - 2)
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
-<dt><tt>output_h</tt> : T</dt>
+<dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
@@ -1119,12 +1117,12 @@
 #### Inputs (3 - 8)
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>X</tt> : T</dt>
 <dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size}`.</dd>
+<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
@@ -1140,9 +1138,9 @@
 #### Outputs (1 - 2)
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
-<dt><tt>output_h</tt> : T</dt>
+<dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
@@ -1545,6 +1543,78 @@
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="RNN"></a><a name="rnn">**RNN**</a>
+
+  Computes an one-layer simple RNN. This operator is usually supported
+  via some custom implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `i` - input gate
+  `t` - time step (t-1 means previous time step)
+  `Wi` - W parameter weight matrix for input gate
+  `Ri` - R recurrence weight matrix for input gate
+  `Wbi` - W parameter bias vector for input gate
+  `Rbi` - R parameter bias vector for input gate
+  `WBi` - W parameter weight matrix for backward input gate
+  `RBi` - R recurrence weight matrix for backward input gate
+  `WBbi` - WR bias vectors for backward input gate
+  `RBbi` - RR bias vectors for backward input gate
+  `ReLU(X)` - max(X, 0)
+  `tanh(X)` - hyperbolic tangent of X
+  `H` - Hidden state
+  `num_directions` - 2 if direction == bidirectional else 1
+  
+  Equations:
+    - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string</dt>
+<dd>The activation function for input gate. It must be one of tanh and ReLU. Default `tanh`.</dd>
+<dt><tt>direction</tt> : string</dt>
+<dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
+<dt><tt>R</tt> : T</dt>
+<dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>seq_lens</tt> (optional) : T1</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>Y_h</tt> : T</dt>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int32)</dt>
+<dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
 
@@ -2121,80 +2191,6 @@
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="SimpleRNN"></a><a name="simplernn">**SimpleRNN**</a>
-
-  Computes an one-layer simple RNN. This operator is usually supported
-  via some custom implementation such as CuDNN.
-  
-  Notations:
-  `X` - input tensor
-  `i` - input gate
-  `t` - time step (t-1 means previous time step)
-  `Wi` - W parameter weight matrix for input gate
-  `Ri` - R recurrence weight matrix for input gate
-  `Wbi` - W parameter bias vector for input gate
-  `Rbi` - R parameter bias vector for input gate
-  `WBi` - W parameter weight matrix for backward input gate
-  `RBi` - R recurrence weight matrix for backward input gate
-  `WBbi` - WR bias vectors for backward input gate
-  `RBbi` - RR bias vectors for backward input gate
-  `ReLU(X)` - max(X, 0)
-  `tanh(X)` - hyperbolic tangent of X
-  `H` - Hidden state
-  `num_directions` - 2 if direction == bidirectional else 1
-  
-  Equations:
-    - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-
-#### Attributes
-
-<dl>
-<dt><tt>activation</tt> : string</dt>
-<dd>The activation function for input gate. It must be one of tanh and ReLU. Default `tanh`.</dd>
-<dt><tt>clip</tt> : float</dt>
-<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string</dt>
-<dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
-<dt><tt>hidden_size</tt> : int</dt>
-<dd>Number of neurons in the hidden layer</dd>
-</dl>
-
-#### Inputs (3 - 6)
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-<dt><tt>W</tt> : T</dt>
-<dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
-<dt><tt>R</tt> : T</dt>
-<dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size}`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
-<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape either `[num_directions, batch_size, hidden_size]`.</dd>
-<dt><tt>seq_lens</tt> (optional) : T1</dt>
-<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
-</dl>
-
-#### Outputs (1 - 2)
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
-<dt><tt>output_h</tt> : T</dt>
-<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T1</tt> : tensor(int32)</dt>
-<dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
 
