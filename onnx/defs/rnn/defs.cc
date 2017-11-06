@@ -83,7 +83,7 @@ Equations:
 	   true /*optional*/)
     .Input(4, "initial_h",
 	   "Optional initial value of the hidden. If not specified - assumed "
-	   "to be 0. It has shape either `[num_directions, batch_size, hidden_size]`.",
+	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
 	   "T", true /*optional*/)	   
     .FillUsing(RNNDocGenerator("SimpleRNN"));
 
