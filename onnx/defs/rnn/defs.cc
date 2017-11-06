@@ -12,11 +12,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
                     AttrType::STRING);
-        schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
-                    "in the range of [-threshold, +threshold] and is applied to the input "
-                    "of activations. No clip if not specified.",
-                    AttrType::FLOAT);
-        schema.Input(0, "input",
+        schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
         schema.Input(5, "seq_lens",
@@ -24,10 +20,10 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                      "If not specified - assumed all sequences in the batch to have "
                      "length `seq_length`. It has shape `[batch_size]`.", "T1",
                      true /*optional*/);
-        schema.Output(0, "output",
+        schema.Output(0, "Y",
                       "A tensor that concats all the intermediate output values of the hidden."
                       "It has shape `[seq_length, num_directions, batch_size, hidden_size]`.", "T");
-        schema.Output(1, "output_h",
+        schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
                       "`[num_directions, batch_size, hidden_size]`.", "T");
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -186,6 +182,10 @@ Equations (forward LSTM with default activations and peepholes):
 	  "forget, and cell gates. The activation functions must be one of sigmoid "
 	  "and tanh. See the equations for default.",
           AttrType::STRINGS)
+    .Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
+          "in the range of [-threshold, +threshold] and is applied to the input "
+          "of activations. No clip if not specified.",
+          AttrType::FLOAT)
     .Attr("input_forget", "Couple the input and forget gates if 1, default 0.",
           AttrType::INT)	  
     .Input(1, "W",
