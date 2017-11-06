@@ -8,10 +8,10 @@ using namespace onnx;
 
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
-        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
                     AttrType::STRING);
+        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
