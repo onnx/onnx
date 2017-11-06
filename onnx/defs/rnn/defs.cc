@@ -15,7 +15,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
-        schema.Input(5, "seq_lens",
+        schema.Input(5, "sequence_lens",
                      "Optional tensor specifying lengths of the sequences in a batch. "
                      "If not specified - assumed all sequences in the batch to have "
                      "length `seq_length`. It has shape `[batch_size]`.", "T1",
