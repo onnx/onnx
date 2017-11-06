@@ -5,6 +5,7 @@
 
 * <a href="#Abs">Abs</a>
 * <a href="#Add">Add</a>
+* <a href="#And">And</a>
 * <a href="#ArgMax">ArgMax</a>
 * <a href="#ArgMin">ArgMin</a>
 * <a href="#AveragePool">AveragePool</a>
@@ -17,17 +18,20 @@
 * <a href="#ConvTranspose">ConvTranspose</a>
 * <a href="#Div">Div</a>
 * <a href="#Dropout">Dropout</a>
+* <a href="#EQ">EQ</a>
 * <a href="#Elu">Elu</a>
 * <a href="#Exp">Exp</a>
 * <a href="#Flatten">Flatten</a>
 * <a href="#Floor">Floor</a>
 * <a href="#GRU">GRU</a>
+* <a href="#GT">GT</a>
 * <a href="#Gather">Gather</a>
 * <a href="#Gemm">Gemm</a>
 * <a href="#GlobalAveragePool">GlobalAveragePool</a>
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
 * <a href="#LRN">LRN</a>
 * <a href="#LSTM">LSTM</a>
+* <a href="#LT">LT</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Log">Log</a>
 * <a href="#MatMul">MatMul</a>
@@ -36,6 +40,8 @@
 * <a href="#Min">Min</a>
 * <a href="#Mul">Mul</a>
 * <a href="#Neg">Neg</a>
+* <a href="#Not">Not</a>
+* <a href="#Or">Or</a>
 * <a href="#PRelu">PRelu</a>
 * <a href="#Pad">Pad</a>
 * <a href="#Pow">Pow</a>
@@ -64,6 +70,7 @@
 * <a href="#Sum">Sum</a>
 * <a href="#Tanh">Tanh</a>
 * <a href="#Transpose">Transpose</a>
+* <a href="#Xor">Xor</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
 * <a href="#Caffe2ConvTranspose"><sub>experimental</sub> Caffe2ConvTranspose</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
@@ -153,6 +160,37 @@
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="And"></a><a name="and">**And**</a>
+
+  Returns the tensor resulted from performing the `and` logical operation
+  elementwise on `A` and `B` input tensors.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 
@@ -660,6 +698,37 @@
 </dl>
 
 
+### <a name="EQ"></a><a name="eq">**EQ**</a>
+
+  Returns the tensor resulted from performing the `equal` logical operation
+  elementwise on `A` and `B` input tensors.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
 ### <a name="Elu"></a><a name="elu">**Elu**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
@@ -861,6 +930,37 @@
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
+
+### <a name="GT"></a><a name="gt">**GT**</a>
+
+  Returns the tensor resulted from performing the `greater` logical operation
+  elementwise on `A` and `B` input tensors.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 
@@ -1154,6 +1254,37 @@
 </dl>
 
 
+### <a name="LT"></a><a name="lt">**LT**</a>
+
+  Returns the tensor resulted from performing the `less` logical operation
+  elementwise on `A` and `B` input tensors.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
 ### <a name="LeakyRelu"></a><a name="leakyrelu">**LeakyRelu**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -1427,6 +1558,63 @@
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Not"></a><a name="not">**Not**</a>
+
+  Returns the negation of the input tensor element-wise.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input/output to boolean tensors.</dd>
+</dl>
+
+
+### <a name="Or"></a><a name="or">**Or**</a>
+
+  Returns the tensor resulted from performing the `or` logical operation
+  elementwise on `A` and `B` input tensors.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 
@@ -2559,6 +2747,37 @@
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Xor"></a><a name="xor">**Xor**</a>
+
+  Returns the tensor resulted from performing the `xor` logical operation
+  elementwise on `A` and `B` input tensors.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 
