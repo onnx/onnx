@@ -319,7 +319,6 @@ node_tests = [
         dim_in=32,
         num_layers=3,
         skip_input_transform=True),
-    # disabled for now as Caffe2 backend doesn't support optional inputs
-    # _create_test(
-    # "test_rnn_gru_simple", cell_type='gru', hidden_size=32, dim_in=15),
+    _create_test(
+    "test_rnn_gru_simple", cell_type='gru', hidden_size=32, dim_in=15),
 ]
