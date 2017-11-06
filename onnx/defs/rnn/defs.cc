@@ -15,6 +15,10 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
+        schema.Input(4, "initial_h",
+                     "Optional initial value of the hidden. If not specified - assumed "
+                     "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
+                     "T", true /*optional*/);
         schema.Input(5, "sequence_lens",
                      "Optional tensor specifying lengths of the sequences in a batch. "
                      "If not specified - assumed all sequences in the batch to have "
@@ -77,10 +81,6 @@ Equations:
            "`[num_directions, 2*hidden_size]`, Optional: If not specified - assumed "
            "to be 0.", "T",
 	   true /*optional*/)
-    .Input(4, "initial_h",
-	   "Optional initial value of the hidden. If not specified - assumed "
-	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   "T", true /*optional*/)	   
     .FillUsing(RNNDocGenerator("SimpleRNN"));
 
 
@@ -134,10 +134,6 @@ Equations (GRU with default activations):
            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
            "- assumed to be 0", "T",
 	   true /*optional*/)
-    .Input(4, "initial_h",
-	   "Optional initial value of the hidden. If not specified - assumed "
-	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   "T", true /*optional*/)
     .FillUsing(RNNDocGenerator("GRU"));
 
 
@@ -202,10 +198,6 @@ Equations (forward LSTM with default activations and peepholes):
            "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
 	   "specified - assumed to be 0.", "T",
 	   true /*optional*/)
-    .Input(4, "initial_h",
-           "Optional initial value of the hidden. If not specified - assumed "
-           "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   "T", true /*optional*/)
     .Input(6, "initial_c",
            "Optional initial value of the cell. If not specified - assumed "
 	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
