@@ -821,7 +821,7 @@
 
 <dl>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 3 activation functions for update, reset, and hidden gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dd>A list of 3 (or 6 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
@@ -1085,7 +1085,7 @@
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
-  `PB[iof]`  - P peephole weight matrix for backward input, output, and forget gates
+  `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
   `tanh(X)` - hyperbolic tangent of X
   `sigmoid(X)` - 1 / (1 + e^-X)
   `H` - Hidden state
@@ -1103,7 +1103,7 @@
 
 <dl>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 4 activation functions for input, output, forget, and cell gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dd>A list of 4 (or 8 if bidirectional) activation functions for input, output, forget, and cell gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
@@ -1132,7 +1132,7 @@
 <dt><tt>initial_c</tt> (optional) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>P</tt> (optional) : T</dt>
-<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size, hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -1575,7 +1575,7 @@
 
 <dl>
 <dt><tt>activation</tt> : string</dt>
-<dd>The activation function for input gate. It must be one of tanh and ReLU. Default `tanh`.</dd>
+<dd>One (or two if bidirectional) activation function for input gate. It must be one of tanh and ReLU. Default `tanh`.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
