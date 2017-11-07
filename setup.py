@@ -300,6 +300,7 @@ setuptools.setup(
         'console_scripts': [
             'check-model = onnx.bin.checker:check_model',
             'check-node = onnx.bin.checker:check_node',
+            'backend-test-tools = onnx.backend.test.cmd_tools:main',
         ]
     },
 )

@@ -100,6 +100,25 @@
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>abs</summary>
+```python
+node = onnx.helper.make_node(
+    'Abs',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.abs(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_abs')
+```
+</details>
+
+
 ### <a name="Add"></a><a name="add">**Add**</a>
 
   Performs element-wise binary addition (with limited broadcast support).
@@ -152,6 +171,43 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>add</summary>
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add')
+```
+</details>
+
+
+<details>
+<summary>add_broadcast</summary>
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_bcast')
+```
+</details>
 
 
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
@@ -463,6 +519,30 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>constant</summary>
+```python
+values = np.random.randn(5, 5).astype(np.float32)
+node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['values'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=values.shape,
+        vals=values.flatten().astype(float),
+    ),
+)
+
+expect(node, inputs=[], outputs=[values],
+       name='test_constant')
+```
+</details>
 
 
 ### <a name="Conv"></a><a name="conv">**Conv**</a>
@@ -1076,6 +1156,41 @@
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>matmul</summary>
+```python
+node = onnx.helper.make_node(
+    'MatMul',
+    inputs=['a', 'b'],
+    outputs=['c'],
+)
+
+# 2d
+a = np.random.randn(3, 4).astype(np.float32)
+b = np.random.randn(4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_2d')
+
+# 3d
+a = np.random.randn(2, 3, 4).astype(np.float32)
+b = np.random.randn(2, 4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_3d')
+
+# 4d
+a = np.random.randn(1, 2, 3, 4).astype(np.float32)
+b = np.random.randn(1, 2, 4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_4d')
+```
+</details>
+
+
 ### <a name="Max"></a><a name="max">**Max**</a>
 
   Element-wise max of each of the input tensors. The first input tensor can be
@@ -1474,6 +1589,57 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>reflection_and_edge_pad</summary>
+```python
+for mode in ['edge', 'reflect']:
+    node = onnx.helper.make_node(
+        'Pad',
+        inputs=['x'],
+        outputs=['y'],
+        mode=mode,
+        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
+    )
+    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    y = np.pad(
+        x,
+        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+        mode=mode,
+    )
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_{}_pad'.format(mode))
+```
+</details>
+
+
+<details>
+<summary>constant_pad</summary>
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x'],
+    outputs=['y'],
+    mode='constant',
+    value=1.2,
+    paddings=[0, 0, 0, 0, 1, 2, 3, 4],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.pad(
+    x,
+    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
+    mode='constant',
+    constant_values=1.2,
+)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_constant_pad')
+```
+</details>
 
 
 ### <a name="Pow"></a><a name="pow">**Pow**</a>
@@ -1976,6 +2142,25 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>relu</summary>
+```python
+node = onnx.helper.make_node(
+    'Relu',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_relu')
+```
+</details>
+
+
 ### <a name="Reshape"></a><a name="reshape">**Reshape**</a>
 
   Reshape the input tensor similar to numpy.reshape.
@@ -2153,6 +2338,70 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>slice_default_axes</summary>
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    starts=[0, 0, 3],
+    ends=[20, 10, 4],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_default_axes')
+```
+</details>
+
+
+<details>
+<summary>slice</summary>
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[0, 1],
+    starts=[0, 0],
+    ends=[3, 10],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[0:3, 0:10]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice')
+```
+</details>
+
+
+<details>
+<summary>slice_neg</summary>
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1],
+    starts=[0],
+    ends=[-1],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, 0:-1]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice_neg')
+```
+</details>
 
 
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
