@@ -72,11 +72,11 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
     .TypeConstraint(
         "T1",
         {"tensor(float)", "tensor(int32)", "tensor(int64)", "tensor(bool)"},
-        "Constrain input types to float, int32, int64, bool tensors, or int8 tensors as the input shape when input_as_shape set to be true.")
+        "Constrain input types to float, int32, int64, bool tensors.")
     .TypeConstraint(
         "T2",
         {"tensor(float)", "tensor(int32)", "tensor(int64)", "tensor(bool)"},
-        "Constrain output types to float, int32, int64, bool tensors");
+        "Constrain output types to float, int32, int64, bool tensors.");
 
 OPERATOR_SCHEMA(Caffe2ConvTranspose)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
