@@ -27,10 +27,8 @@
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
 * <a href="#HardSigmoid">HardSigmoid</a>
 * <a href="#Hardmax">Hardmax</a>
-* <a href="#Identity">Identity</a>
 * <a href="#LRN">LRN</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
-* <a href="#Linear">Linear</a>
 * <a href="#Log">Log</a>
 * <a href="#LogSoftmax">LogSoftmax</a>
 * <a href="#MatMul">MatMul</a>
@@ -1038,32 +1036,6 @@
 </dl>
 
 
-### <a name="Identity"></a><a name="identity">**Identity**</a>
-
-  Identity operator
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor to copy input into. Can be in-place</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
   Local Response Normalization. It normalizes over local input regions.
@@ -1130,43 +1102,6 @@
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="Linear"></a><a name="linear">**Linear**</a>
-
-  Linear takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the linear function, y = alpha * x + beta,
-  is applied to the tensor elementwise.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D output tensor</dd>
 </dl>
 
 #### Type Constraints
