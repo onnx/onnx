@@ -71,11 +71,7 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         "T2")
     .TypeConstraint(
         "T1",
-        {"tensor(float)",
-         "tensor(int32)",
-         "tensor(int64)",
-         "tensor(bool)",
-         "tensor(int8)"},
+        {"tensor(float)", "tensor(int32)", "tensor(int64)", "tensor(bool)"},
         "Constrain input types to float, int32, int64, bool tensors, or int8 tensors as the input shape when input_as_shape set to be true.")
     .TypeConstraint(
         "T2",

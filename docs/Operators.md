@@ -2575,7 +2575,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool), tensor(int8)</dt>
+<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain input types to float, int32, int64, bool tensors, or int8 tensors as the input shape when input_as_shape set to be true.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain output types to float, int32, int64, bool tensors</dd>
