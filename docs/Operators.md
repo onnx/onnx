@@ -1594,30 +1594,6 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Examples
 
 <details>
-<summary>reflection_and_edge_pad</summary>
-```python
-for mode in ['edge', 'reflect']:
-    node = onnx.helper.make_node(
-        'Pad',
-        inputs=['x'],
-        outputs=['y'],
-        mode=mode,
-        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
-    )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-    y = np.pad(
-        x,
-        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
-        mode=mode,
-    )
-
-    expect(node, inputs=[x], outputs=[y],
-           name='test_{}_pad'.format(mode))
-```
-</details>
-
-
-<details>
 <summary>constant_pad</summary>
 ```python
 node = onnx.helper.make_node(
@@ -1638,6 +1614,30 @@ y = np.pad(
 
 expect(node, inputs=[x], outputs=[y],
        name='test_constant_pad')
+```
+</details>
+
+
+<details>
+<summary>reflection_and_edge_pad</summary>
+```python
+for mode in ['edge', 'reflect']:
+    node = onnx.helper.make_node(
+        'Pad',
+        inputs=['x'],
+        outputs=['y'],
+        mode=mode,
+        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
+    )
+    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    y = np.pad(
+        x,
+        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+        mode=mode,
+    )
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_{}_pad'.format(mode))
 ```
 </details>
 
@@ -2343,26 +2343,6 @@ expect(node, inputs=[x], outputs=[y],
 #### Examples
 
 <details>
-<summary>slice_default_axes</summary>
-```python
-node = onnx.helper.make_node(
-    'Slice',
-    inputs=['x'],
-    outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[:, :, 3:4]
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_default_axes')
-```
-</details>
-
-
-<details>
 <summary>slice</summary>
 ```python
 node = onnx.helper.make_node(
@@ -2379,6 +2359,26 @@ y = x[0:3, 0:10]
 
 expect(node, inputs=[x], outputs=[y],
        name='test_slice')
+```
+</details>
+
+
+<details>
+<summary>slice_default_axes</summary>
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    starts=[0, 0, 3],
+    ends=[20, 10, 4],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_default_axes')
 ```
 </details>
 

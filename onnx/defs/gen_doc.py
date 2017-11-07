@@ -128,7 +128,7 @@ def main(args):
 
         if op_type in SNIPPETS:
             s += '#### Examples\n\n'
-            for summary, code in SNIPPETS[op_type]:
+            for summary, code in sorted(SNIPPETS[op_type]):
                 s += '<details>\n'
                 s += '<summary>{}</summary>\n'.format(summary)
                 s += '```python\n{}\n```\n'.format(code)
