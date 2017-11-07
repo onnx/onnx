@@ -42,6 +42,15 @@ class Runner(object):
                 if name.startswith('test_'):
                     setattr(self.tests, name, func)
 
+    @staticmethod
+    def _assert_similar_outputs(ref_outputs, outputs):
+        np.testing.assert_equal(len(ref_outputs), len(outputs))
+        for i in range(len(outputs)):
+            np.testing.assert_allclose(
+                ref_outputs[i],
+                outputs[i],
+                rtol=1e-3)
+
     def _get_test_case(self, category):
         name = 'OnnxBackend{}Test'.format(category)
         if name not in self.test_cases:
@@ -105,12 +114,7 @@ class Runner(object):
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
-                test_self.assertEqual(len(ref_outputs), len(outputs))
-                for i in range(len(outputs)):
-                    np.testing.assert_allclose(
-                        ref_outputs[i],
-                        outputs[i],
-                        rtol=1e-3)
+                self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test('Model', model_test.name, run)
 
@@ -138,11 +142,6 @@ class Runner(object):
                            for tensor in node_test.outputs]
 
             outputs = self.backend.run_node(node_test.node, np_inputs, device)
-            test_self.assertEqual(len(ref_outputs), len(outputs))
-            for i in range(len(outputs)):
-                np.testing.assert_allclose(
-                    ref_outputs[i],
-                    outputs[i],
-                    rtol=1e-3)
+            self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test('Node', node_test.name, run)
