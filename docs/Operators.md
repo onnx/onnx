@@ -25,9 +25,14 @@
 * <a href="#Gemm">Gemm</a>
 * <a href="#GlobalAveragePool">GlobalAveragePool</a>
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
+* <a href="#HardSigmoid">HardSigmoid</a>
+* <a href="#Hardmax">Hardmax</a>
+* <a href="#Identity">Identity</a>
 * <a href="#LRN">LRN</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
+* <a href="#Linear">Linear</a>
 * <a href="#Log">Log</a>
+* <a href="#LogSoftmax">LogSoftmax</a>
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
@@ -37,6 +42,7 @@
 * <a href="#OptimizedRNN">OptimizedRNN</a>
 * <a href="#PRelu">PRelu</a>
 * <a href="#Pad">Pad</a>
+* <a href="#ParametricSoftplus">ParametricSoftplus</a>
 * <a href="#Pow">Pow</a>
 * <a href="#RandomNormal">RandomNormal</a>
 * <a href="#RandomNormalLike">RandomNormalLike</a>
@@ -51,16 +57,20 @@
 * <a href="#ReduceSum">ReduceSum</a>
 * <a href="#Relu">Relu</a>
 * <a href="#Reshape">Reshape</a>
+* <a href="#ScaledTanh">ScaledTanh</a>
 * <a href="#Selu">Selu</a>
 * <a href="#Sigmoid">Sigmoid</a>
 * <a href="#Slice">Slice</a>
 * <a href="#Softmax">Softmax</a>
+* <a href="#Softplus">Softplus</a>
+* <a href="#Softsign">Softsign</a>
 * <a href="#Split">Split</a>
 * <a href="#Sqrt">Sqrt</a>
 * <a href="#Squeeze">Squeeze</a>
 * <a href="#Sub">Sub</a>
 * <a href="#Sum">Sum</a>
 * <a href="#Tanh">Tanh</a>
+* <a href="#ThresholdedRelu">ThresholdedRelu</a>
 * <a href="#Transpose">Transpose</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
 * <a href="#Caffe2ConvTranspose"><sub>experimental</sub> Caffe2ConvTranspose</a>
@@ -944,6 +954,116 @@
 </dl>
 
 
+### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
+
+  HardSigmoid takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
+
+  The operator computes the hardmax values for each layer in the batch
+   of the given input. The input is a 2-D tensor (Tensor<float>) of size
+  (batch_size x input_feature_dimensions). The output tensor has the same shape
+  and contains the softmax normalized values of the corresponding input.
+  
+  X does not need to explicitly be a 2D vector; rather, it will be
+  coerced into one. For an arbitrary n-dimensional tensor
+  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
+  Each of these dimensions must be matched correctly, or else the operator
+  will throw errors.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hardmax normalized output values with the same shape as input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Identity"></a><a name="identity">**Identity**</a>
+
+  Identity operator
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor to copy input into. Can be in-place</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
   Local Response Normalization. It normalizes over local input regions.
@@ -1020,6 +1140,43 @@
 </dl>
 
 
+### <a name="Linear"></a><a name="linear">**Linear**</a>
+
+  Linear takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the linear function, y = alpha * x + beta,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Log"></a><a name="log">**Log**</a>
 
   Calculates the natural log of the given input tensor, element-wise. This
@@ -1038,6 +1195,53 @@
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The natural log of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
+
+  The operator computes the log softmax normalized values for each layer in the batch
+   of the given input. The input is a 2-D tensor (Tensor<float>) of size
+  (batch_size x input_feature_dimensions). The output tensor has the same shape
+  and contains the softmax normalized values of the corresponding input.
+  
+  X does not need to explicitly be a 2D vector; rather, it will be
+  coerced into one. For an arbitrary n-dimensional tensor
+  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
+  Each of these dimensions must be matched correctly, or else the operator
+  will throw errors.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The softmax normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -1466,6 +1670,43 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>OUTPUT</tt> : T</dt>
 <dd>Tensor after padding.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ParametricSoftplus"></a><a name="parametricsoftplus">**ParametricSoftplus**</a>
+
+  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
+  the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D input tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -2016,6 +2257,41 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
+### <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
+
+  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
+  scale * tanh(x). This operation can be done in an in-place fashion too,
+  by providing the same input and output blobs.
+
+#### Attributes
+
+<dl>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scale for tanh</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>1-D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
@@ -2192,6 +2468,62 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The softmax normalized output values with the same shape as input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
+
+  Softplus takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
+  the tensor elementwise.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Softsign"></a><a name="softsign">**Softsign**</a>
+
+  Calculates the softsign (x/1+|x|) of the given input tensor element-wise. This
+  operation can be done in an in-place fashion too, by providing the same input
+  and output blobs.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>1-D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The softsign (x/1+|x|) values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
@@ -2405,6 +2737,41 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The hyperbolic tangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**ThresholdedRelu**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>theta</tt> : float</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
