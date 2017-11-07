@@ -401,7 +401,7 @@ have the same shape and data type.
 OPERATOR_SCHEMA(Clip)
     .NumInputs(1)
     .NumOutputs(1)
-    .AllowInplace({{0, 0}})
+    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified with arguments 'min' and 'max'. They default to
@@ -409,10 +409,14 @@ numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
 operation can be done in in-place fashion too, where the input and output blobs
 are the same.
 )DOC")
-    .Attr("min", "Minimum value, under which element is replaced by min")
-    .Attr("max", "Maximum value, above which element is replaced by max")
-    .Input(0, "input", "Input tensor whose elements to be clipped")
-    .Input(1, "output", "Output tensor containing clipped input elements");
+    .Attr("min", "Minimum value, under which element is replaced by min",
+          AttrType::FLOAT)
+    .Attr("max", "Maximum value, above which element is replaced by max",
+          AttrType::FLOAT)
+    .Input(0, "input", "Input tensor whose elements to be clipped", "T")
+    .Input(1, "output", "Output tensor containing clipped input elements", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Softmax)
   .NumInputs(1)
