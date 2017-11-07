@@ -11,6 +11,7 @@
 * <a href="#BatchNormalization">BatchNormalization</a>
 * <a href="#Cast">Cast</a>
 * <a href="#Ceil">Ceil</a>
+* <a href="#Clip">Clip</a>
 * <a href="#Concat">Concat</a>
 * <a href="#Constant">Constant</a>
 * <a href="#Conv">Conv</a>
@@ -31,6 +32,7 @@
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
+* <a href="#Mean">Mean</a>
 * <a href="#Min">Min</a>
 * <a href="#Mul">Mul</a>
 * <a href="#Neg">Neg</a>
@@ -43,12 +45,16 @@
 * <a href="#RandomUniform">RandomUniform</a>
 * <a href="#RandomUniformLike">RandomUniformLike</a>
 * <a href="#Reciprocal">Reciprocal</a>
+* <a href="#ReduceL1">ReduceL1</a>
+* <a href="#ReduceL2">ReduceL2</a>
+* <a href="#ReduceLogSum">ReduceLogSum</a>
 * <a href="#ReduceLogSumExp">ReduceLogSumExp</a>
 * <a href="#ReduceMax">ReduceMax</a>
 * <a href="#ReduceMean">ReduceMean</a>
 * <a href="#ReduceMin">ReduceMin</a>
 * <a href="#ReduceProd">ReduceProd</a>
 * <a href="#ReduceSum">ReduceSum</a>
+* <a href="#ReduceSumSquare">ReduceSumSquare</a>
 * <a href="#Relu">Relu</a>
 * <a href="#Reshape">Reshape</a>
 * <a href="#Selu">Selu</a>
@@ -393,6 +399,45 @@
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Clip"></a><a name="clip">**Clip**</a>
+
+  Clip operator limits the given input within an interval. The interval is
+  specified with arguments 'min' and 'max'. They default to
+  numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
+  operation can be done in in-place fashion too, where the input and output blobs
+  are the same.
+
+#### Attributes
+
+<dl>
+<dt><tt>max</tt> : float</dt>
+<dd>Maximum value, above which element is replaced by max</dd>
+<dt><tt>min</tt> : float</dt>
+<dd>Minimum value, under which element is replaced by min</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor whose elements to be clipped</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor with clipped input elements</dd>
 </dl>
 
 #### Type Constraints
@@ -1150,6 +1195,35 @@
 </dl>
 
 
+### <a name="Mean"></a><a name="mean">**Mean**</a>
+
+  Element-wise mean of each of the input tensors. The first input tensor can be
+  used in-place as the output tensor, in which case the sum will be done in
+  place and results will be accumulated in input0. All inputs and outputs must
+  have the same shape and data type.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First of the input tensors. Can be inplace.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>sum</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Min"></a><a name="min">**Min**</a>
 
   Element-wise min of each of the input tensors. The first input tensor can be
@@ -1708,6 +1782,126 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
+### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
+
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
+
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
+
+  Computes the log sum of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
@@ -1911,6 +2105,46 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
+
+  Computes the sum square of the input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
   the resulted tensor have the reduced dimension pruned.
   
@@ -2158,7 +2392,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax normalized values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
+  of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax normalized values of the corresponding input.
   

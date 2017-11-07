@@ -414,7 +414,7 @@ are the same.
     .Attr("max", "Maximum value, above which element is replaced by max",
           AttrType::FLOAT)
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
-    .Input(1, "output", "Output tensor containing clipped input elements", "T")
+    .Output(0, "output", "Output tensor with clipped input elements", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
