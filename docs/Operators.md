@@ -104,6 +104,7 @@
 
 <details>
 <summary>abs</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Abs',
@@ -116,6 +117,7 @@ y = np.abs(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
 ```
+
 </details>
 
 
@@ -177,6 +179,7 @@ expect(node, inputs=[x], outputs=[y],
 
 <details>
 <summary>add</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Add',
@@ -189,11 +192,13 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y],
        name='test_add')
 ```
+
 </details>
 
 
 <details>
 <summary>add_broadcast</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Add',
@@ -207,6 +212,7 @@ y = np.random.randn(5).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[x + y],
        name='test_add_bcast')
 ```
+
 </details>
 
 
@@ -525,6 +531,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
 <details>
 <summary>constant</summary>
+
 ```python
 values = np.random.randn(5, 5).astype(np.float32)
 node = onnx.helper.make_node(
@@ -542,6 +549,7 @@ node = onnx.helper.make_node(
 expect(node, inputs=[], outputs=[values],
        name='test_constant')
 ```
+
 </details>
 
 
@@ -1160,6 +1168,7 @@ expect(node, inputs=[], outputs=[values],
 
 <details>
 <summary>matmul</summary>
+
 ```python
 node = onnx.helper.make_node(
     'MatMul',
@@ -1188,6 +1197,7 @@ c = np.matmul(a, b)
 expect(node, inputs=[a, b], outputs=[c],
        name='test_matmul_4d')
 ```
+
 </details>
 
 
@@ -1595,6 +1605,7 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 
 <details>
 <summary>constant_pad</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Pad',
@@ -1615,11 +1626,13 @@ y = np.pad(
 expect(node, inputs=[x], outputs=[y],
        name='test_constant_pad')
 ```
+
 </details>
 
 
 <details>
 <summary>reflection_and_edge_pad</summary>
+
 ```python
 for mode in ['edge', 'reflect']:
     node = onnx.helper.make_node(
@@ -1639,6 +1652,7 @@ for mode in ['edge', 'reflect']:
     expect(node, inputs=[x], outputs=[y],
            name='test_{}_pad'.format(mode))
 ```
+
 </details>
 
 
@@ -2146,6 +2160,7 @@ for mode in ['edge', 'reflect']:
 
 <details>
 <summary>relu</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Relu',
@@ -2158,6 +2173,7 @@ y = np.clip(x, 0, np.inf)
 expect(node, inputs=[x], outputs=[y],
        name='test_relu')
 ```
+
 </details>
 
 
@@ -2344,6 +2360,7 @@ expect(node, inputs=[x], outputs=[y],
 
 <details>
 <summary>slice</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Slice',
@@ -2360,11 +2377,13 @@ y = x[0:3, 0:10]
 expect(node, inputs=[x], outputs=[y],
        name='test_slice')
 ```
+
 </details>
 
 
 <details>
 <summary>slice_default_axes</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Slice',
@@ -2380,11 +2399,13 @@ y = x[:, :, 3:4]
 expect(node, inputs=[x], outputs=[y],
        name='test_default_axes')
 ```
+
 </details>
 
 
 <details>
 <summary>slice_neg</summary>
+
 ```python
 node = onnx.helper.make_node(
     'Slice',
@@ -2401,6 +2422,7 @@ y = x[:, 0:-1]
 expect(node, inputs=[x], outputs=[y],
        name='test_slice_neg')
 ```
+
 </details>
 
 

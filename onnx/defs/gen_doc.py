@@ -130,8 +130,8 @@ def main(args):
             s += '#### Examples\n\n'
             for summary, code in sorted(SNIPPETS[op_type]):
                 s += '<details>\n'
-                s += '<summary>{}</summary>\n'.format(summary)
-                s += '```python\n{}\n```\n'.format(code)
+                s += '<summary>{}</summary>\n\n'.format(summary)
+                s += '```python\n{}\n```\n\n'.format(code)
                 s += '</details>\n'
                 s += '\n\n'
         args.output.write(s)
