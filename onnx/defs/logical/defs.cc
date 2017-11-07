@@ -13,12 +13,17 @@ std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         std::string doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
-elementwise on `A` and `B` input tensors.
+elementwise on the input tensors `A` and `B`.
+
+If broadcasting is enabled, the right-hand-side argument will be broadcasted
+to match the shape of left-hand-side argument. See the doc of `Add` for a
+detailed description of the broadcasting rules.
 )DOC";
         ReplaceAll(doc, "{name}", name);
-        schema.NumInputs(2);
-        schema.NumOutputs(1);
         schema.SetDoc(doc);
+        schema.Attr("broadcast", "Enable broadcasting", AttrType::INT);
+        schema.Attr("axis", "If set, defines the broadcast dimensions.",
+                    AttrType::INT);
         schema.Input(0, "A", "Left input tensor for the logical operator.", "T");
         schema.Input(1, "B", "Right input tensor for the logical operator.", "T");
         schema.Output(0, "C", "Result tensor.", "T1");
@@ -52,7 +57,7 @@ OPERATOR_SCHEMA(Xor)
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(GT)
+OPERATOR_SCHEMA(Greater)
     .NumInputs(2)
     .NumOutputs(1)
     .FillUsing(BinaryLogicDocGenerator("greater"))
@@ -61,7 +66,7 @@ OPERATOR_SCHEMA(GT)
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(LT)
+OPERATOR_SCHEMA(Less)
     .NumInputs(2)
     .NumOutputs(1)
     .FillUsing(BinaryLogicDocGenerator("less"))
@@ -70,7 +75,7 @@ OPERATOR_SCHEMA(LT)
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(EQ)
+OPERATOR_SCHEMA(Equal)
     .NumInputs(2)
     .NumOutputs(1)
     .FillUsing(BinaryLogicDocGenerator("equal"))
