@@ -5,34 +5,32 @@ from __future__ import unicode_literals
 
 from collections import namedtuple
 import importlib
-import os
+import pkgutil
 import sys
 
 from . import base
 from .base import TestCase
 
 
-def _find_submodules():
-    return [fn[:-3] for fn in
-            os.listdir(os.path.dirname(os.path.realpath(__file__)))
-            if fn.endswith('.py') if fn != '__init__.py']
+def _import_recursive(package):
+    """
+    Takes a package and imports all modules underneath it
+    """
 
-def _import_submodule(name):
-    cur_module = sys.modules[__name__]
-    return importlib.import_module('{}.{}'.format(
-        cur_module.__name__, name))
-
-
-def _import_all_submodules():
-    for m in _find_submodules():
-        _import_submodule(m)
+    pkg_dir = package.__path__
+    module_location = package.__name__
+    for (_module_loader, name, ispkg) in pkgutil.iter_modules(pkg_dir):
+        module_name = "{}.{}".format(module_location, name)  # Module/package
+        module = importlib.import_module(module_name)
+        if ispkg:
+            import_recursive(module)
 
 
 def collect_testcases():
-    _import_all_submodules()
+    _import_recursive(sys.modules[__name__])
     return base.TestCases
 
 
 def collect_snippets():
-    _import_all_submodules()
+    _import_recursive(sys.modules[__name__])
     return base.Snippets
