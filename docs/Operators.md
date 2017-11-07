@@ -2525,17 +2525,17 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 ### <a name="ConstantFill"></a><a name="constantfill">**<sub>experimental</sub> ConstantFill**</a>
 
   The operator fills the elements of the output tensor with a constant value
-  specified by the 'value' argument.
+  specified by the 'value' attribute.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
+  The data type is specified by the 'dtype' attribute. The 'dtype' attribute must
   be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message. If the 'dtype' argument is not provided, the data type of
+  TensorProto message. If the 'dtype' attribute is not provided, the data type of
   'value' is used.
   
-  The output tensor shape is specified by the 'shape' argument. If the number of
+  The output tensor shape is specified by the 'shape' attribute. If the number of
   input is 1, the shape will be identical to that of the input at run time with
   optional additional dimensions appended at the end as specified by 'extra_shape'
-  argument. In that case the 'shape' argument should not be set.
+  attribute. In that case the 'shape' attribute should not be set.
   
   If input_as_shape is set to true, then the input should be a 1D tensor
   containing the desired output shape (the dimensions specified in extra_shape
@@ -2561,22 +2561,24 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 #### Inputs (0 - 1)
 
 <dl>
-<dt><tt>input</tt> (optional) : T</dt>
+<dt><tt>input</tt> (optional) : T1</dt>
 <dd>Input tensor (optional) to provide shape information.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> : T2</dt>
 <dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
+<dd>Constrain input types to float, int32, int64, bool tensors.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
+<dd>Constrain output types to float, int32, int64, bool tensors.</dd>
 </dl>
 
 

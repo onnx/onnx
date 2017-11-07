@@ -9,22 +9,22 @@ using SupportType = onnx::OpSchema::SupportType;
 
 OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(0,1)
+    .NumInputs(0, 1)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 The operator fills the elements of the output tensor with a constant value
-specified by the 'value' argument.
+specified by the 'value' attribute.
 
-The data type is specified by the 'dtype' argument. The 'dtype' argument must
+The data type is specified by the 'dtype' attribute. The 'dtype' attribute must
 be one of the data types specified in the 'DataType' enum field in the
-TensorProto message. If the 'dtype' argument is not provided, the data type of
+TensorProto message. If the 'dtype' attribute is not provided, the data type of
 'value' is used.
 
-The output tensor shape is specified by the 'shape' argument. If the number of
+The output tensor shape is specified by the 'shape' attribute. If the number of
 input is 1, the shape will be identical to that of the input at run time with
 optional additional dimensions appended at the end as specified by 'extra_shape'
-argument. In that case the 'shape' argument should not be set.
+attribute. In that case the 'shape' attribute should not be set.
 
 If input_as_shape is set to true, then the input should be a 1D tensor
 containing the desired output shape (the dimensions specified in extra_shape
@@ -32,7 +32,8 @@ will also be appended)
 
 NOTE: Currently, it supports data type of float, int32, int64, and bool.
 )DOC")
-    .Attr("value",
+    .Attr(
+        "value",
         "The value for the elements of the output tensor.",
         AttrType::FLOAT)
     .Attr(
@@ -56,14 +57,26 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         "1D tensor containing the desired output shape.  First input must be in "
         "CPU context.",
         AttrType::INT)
-    .Input(0, "input", "Input tensor (optional) to provide shape information.", "T", true)
+    .Input(
+        0,
+        "input",
+        "Input tensor (optional) to provide shape information.",
+        "T1",
+        true)
     .Output(
-            0,
-            "output",
-            "Output tensor of constant values specified by 'value'"
-            "argument and its type is specified by the 'dtype' argument", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+        0,
+        "output",
+        "Output tensor of constant values specified by 'value'"
+        "argument and its type is specified by the 'dtype' argument",
+        "T2")
+    .TypeConstraint(
+        "T1",
+        {"tensor(float)", "tensor(int32)", "tensor(int64)", "tensor(bool)"},
+        "Constrain input types to float, int32, int64, bool tensors.")
+    .TypeConstraint(
+        "T2",
+        {"tensor(float)", "tensor(int32)", "tensor(int64)", "tensor(bool)"},
+        "Constrain output types to float, int32, int64, bool tensors.");
 
 OPERATOR_SCHEMA(Caffe2ConvTranspose)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
@@ -88,25 +101,31 @@ OPERATOR_SCHEMA(Caffe2ConvTranspose)
         "Input data blob from previous layer; has size "
         "(N x C x H x W), where N is the batch size, C is the number of channels, and"
         " H and W are the height and width. Note that this is for the NCHW usage. On "
-        "the other hand, the NHWC Op has a different set of dimension constraints.", "T")
+        "the other hand, the NHWC Op has a different set of dimension constraints.",
+        "T")
     .Input(
         1,
         "filter",
         "The filter blob that will be used in the transposed "
         "convolution; has size (M x C x kH x kW), where C is the number of channels,"
-        " and kH and kW are the height and width of the kernel.", "T")
+        " and kH and kW are the height and width of the kernel.",
+        "T")
     .Input(
         2,
         "bias",
         "The 1D bias blob that is added through the convolution;"
-        "has size (C)", "T")
+        "has size (C)",
+        "T")
     .Output(
         0,
         "Y",
         "Output data blob that contains the result of the "
         "transposed convolution. The output dimensions are functions of the kernel"
-        " size, stride size, and pad lengths.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        " size, stride size, and pad lengths.",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .Attr("pads", "", AttrType::INTS)
     .Attr("kernel_shape", "", AttrType::INTS)
@@ -127,53 +146,76 @@ there are multiple cases for the number of outputs, which we list below:
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
 )DOC")
-    .Attr("is_test",
+    .Attr(
+        "is_test",
         "If set to nonzero, run spatial batch normalization in test mode.",
         AttrType::INT)
-    .Attr("epsilon",
+    .Attr(
+        "epsilon",
         "The epsilon value to use to avoid division by zero.",
         AttrType::FLOAT)
-    .Attr("momentum",
+    .Attr(
+        "momentum",
         "Factor used in computing the running mean and variance."
         "e.g., running_mean = running_mean * momentum + mean * (1 - momentum)",
         AttrType::FLOAT)
-    .Input(0,
-        "X",
-        "The input 4-dimensional tensor of shape NCHW.", "T")
-    .Input(1,
+    .Input(0, "X", "The input 4-dimensional tensor of shape NCHW.", "T")
+    .Input(
+        1,
         "scale",
         "The scale as a 1-dimensional tensor of size C to be applied to the "
-        "output.", "T")
-    .Input(2,
+        "output.",
+        "T")
+    .Input(
+        2,
         "bias",
         "The bias as a 1-dimensional tensor of size C to be applied to the "
-        "output.", "T")
-    .Input(3,
+        "output.",
+        "T")
+    .Input(
+        3,
         "mean",
         "The running mean (training) or the estimated mean (testing) "
-        "as a 1-dimensional tensor of size C.", "T")
-    .Input(4,
+        "as a 1-dimensional tensor of size C.",
+        "T")
+    .Input(
+        4,
         "var",
         "The running variance (training) or the estimated "
-        "variance (testing) as a 1-dimensional tensor of size C.", "T")
-    .Output(0, "Y", "The output 4-dimensional tensor of the same shape as X.", "T")
-    .Output(1,
-            "mean",
-            "The running mean after the spatial BN operator. Must be in-place "
-            "with the input mean. Should not be used for testing.", "T")
-    .Output(2,
-            "var",
-            "The running variance after the spatial BN operator. Must be "
-            "in-place with the input var. Should not be used for testing.", "T")
-    .Output(3,
-            "saved_mean",
-            "Saved mean used during training to speed up gradient "
-            "computation. Should not be used for testing.", "T")
-    .Output(4,
-            "saved_var",
-            "Saved variance used during training to speed up "
-            "gradient computation. Should not be used for testing.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "variance (testing) as a 1-dimensional tensor of size C.",
+        "T")
+    .Output(
+        0,
+        "Y",
+        "The output 4-dimensional tensor of the same shape as X.",
+        "T")
+    .Output(
+        1,
+        "mean",
+        "The running mean after the spatial BN operator. Must be in-place "
+        "with the input mean. Should not be used for testing.",
+        "T")
+    .Output(
+        2,
+        "var",
+        "The running variance after the spatial BN operator. Must be "
+        "in-place with the input var. Should not be used for testing.",
+        "T")
+    .Output(
+        3,
+        "saved_mean",
+        "Saved mean used during training to speed up gradient "
+        "computation. Should not be used for testing.",
+        "T")
+    .Output(
+        4,
+        "saved_var",
+        "Saved variance used during training to speed up "
+        "gradient computation. Should not be used for testing.",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(GivenTensorFill)
@@ -182,7 +224,9 @@ OPERATOR_SCHEMA(GivenTensorFill)
     .NumOutputs(1)
     .Input(0, "shape", "The shape of filled tensor", "T")
     .Output(0, "X", "The filled tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .Attr("values", "", AttrType::FLOATS)
     .Attr("shape", "", AttrType::INTS)
@@ -229,15 +273,19 @@ will throw errors.
         0,
         "X",
         "input tensor that's coerced into a 2D matrix of size (MxK) "
-        "as described above", "T")
+        "as described above",
+        "T")
     .Input(
         1,
         "W",
         "2D blob of size (KxN) containing fully connected weight "
-        "matrix", "T")
+        "matrix",
+        "T")
     .Input(2, "b", "1D blob containing bias vector", "T")
     .Output(0, "Y", "2D output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Normalize)
@@ -246,7 +294,9 @@ OPERATOR_SCHEMA(Normalize)
     .NumOutputs(1)
     .Input(0, "input", "Input matrix", "T")
     .Output(0, "output", "Matrix after normalization", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Given a matrix, apply L2-normalization along the last dimension.
@@ -258,16 +308,16 @@ OPERATOR_SCHEMA(Scale)
     .NumOutputs(1)
     .Input(0, "input", "Input data to be scaled", "T")
     .Output(0, "output", "Output data after scaling", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Scale takes one input data (Tensor<float>) and produces one output data
 (Tensor<float>) whose value is the input data tensor scaled element-wise.
 )DOC")
-    .Attr("scale",
-          "(float, default 1.0) the scale to apply.",
-          AttrType::FLOAT);
+    .Attr("scale", "(float, default 1.0) the scale to apply.", AttrType::FLOAT);
 
 OPERATOR_SCHEMA(GRUUnit)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
@@ -291,15 +341,19 @@ value at X[t][n] >= seqLengths[n].
         1,
         "gates",
         "Unactivated gate outputs from forget, update, "
-        "and output gates, pre-activation.", "T")
+        "and output gates, pre-activation.",
+        "T")
     .Input(
         2,
         "seq_lengths",
         "Array of sequence lengths.  "
-        "len(seq_lengths) should equal batch size N.", "T")
+        "len(seq_lengths) should equal batch size N.",
+        "T")
     .Input(3, "t", "The timestep for this operation.", "T")
     .Output(0, "hidden", "The new GRU hidden state calculated by this op.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(ATen)
