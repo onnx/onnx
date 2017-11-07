@@ -217,7 +217,7 @@ namespace onnx {
                          "rois",
                          "RoIs (Regions of Interest) to pool over. Should "
                          "be a 2-D tensor of shape (num_rois, 5) given as "
-                         "[[batch_id, x1, y1, x2, y2], …].", "T");                         
+                         "[[batch_id, x1, y1, x2, y2], ...].", "T");
             schema.Output(0,
                           "Y",
                           "RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).", "T");
@@ -442,7 +442,7 @@ namespace onnx {
         };
     }
   OPERATOR_SCHEMA(GlobalLpPool)
-  .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));  
+  .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
 } // namespace onnx
 
 OPERATOR_SCHEMA(BatchNormalization)

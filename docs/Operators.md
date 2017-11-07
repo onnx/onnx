@@ -1404,6 +1404,156 @@
 </dl>
 
 
+### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
+
+  ROI max pool consumes an input tensor X and region of interests (RoIs) to 
+   apply max pooling across each RoI, to produce output 4-D tensor of shape 
+   (num_rois, channels, pooled_shape[0], pooled_shape[1]).
+
+#### Attributes
+
+<dl>
+<dt><tt>pooled_shape</tt> : list of ints</dt>
+<dd>ROI pool output shape (height, width).</dd>
+<dt><tt>spatial_scale</tt> : float</dt>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T</dt>
+<dd>RoIs (Regions of Interest) to pool over. Should be a 2-D tensor of shape (num_rois, 5) given as [[batch_id, x1, y1, x2, y2], ...].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Min"></a><a name="min">**Min**</a>
+
+  Element-wise min of each of the input tensors. The first input tensor can be
+  used in-place as the output tensor, in which case the max will be done in
+  place and results will be accumulated in input0. All inputs and outputs must
+  have the same shape and data type.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First of the input tensors. Can be inplace.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>max</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Mul"></a><a name="mul">**Mul**</a>
+
+  Performs element-wise binary multiplication (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Neg"></a><a name="neg">**Neg**</a>
+
+  Neg takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where each element flipped sign, y = -x, is applied to
+  the tensor elementwise.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="PRelu"></a><a name="prelu">**PRelu**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
