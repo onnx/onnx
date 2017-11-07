@@ -33,8 +33,9 @@ test_script:
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
 
-notifications:
-- provider: GitHubPullRequest
-  on_build_success: true
-  on_build_failure: true
-  on_build_status_changed: true
+# commented out to avoid comments on threads
+# notifications:
+# - provider: GitHubPullRequest
+#   on_build_success: true
+#   on_build_failure: true
+#   on_build_status_changed: true
