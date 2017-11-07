@@ -183,11 +183,7 @@ class BackendTest(object):
                     np.testing.assert_allclose(
                         ref_outputs[i],
                         outputs[i],
-                        rtol=1e-4)
-                    np.testing.assert_allclose(
-                        ref_outputs[i],
-                        outputs[i],
-                        atol=1e-4)
+                        rtol=1e-3)
 
         self._add_test('Model', test_name, run)
 
@@ -229,10 +225,6 @@ class BackendTest(object):
                 np.testing.assert_allclose(
                     ref_outputs[i],
                     outputs[i],
-                    rtol=1e-4)
-                np.testing.assert_allclose(
-                    ref_outputs[i],
-                    outputs[i],
-                    atol=1e-4)
+                    rtol=1e-3)
 
         self._add_test('Node', test_name, run)
