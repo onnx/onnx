@@ -4,4 +4,4 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 # for backward compatibility
-from .runner import Runner as BackendTest
+from .loader import BackendTest
