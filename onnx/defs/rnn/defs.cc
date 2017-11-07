@@ -15,15 +15,15 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
-        schema.Input(4, "initial_h",
-                     "Optional initial value of the hidden. If not specified - assumed "
-                     "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-                     "T", true /*optional*/);
-        schema.Input(5, "sequence_lens",
+        schema.Input(4, "sequence_lens",
                      "Optional tensor specifying lengths of the sequences in a batch. "
                      "If not specified - assumed all sequences in the batch to have "
                      "length `seq_length`. It has shape `[batch_size]`.", "T1",
                      true /*optional*/);
+        schema.Input(5, "initial_h",
+                     "Optional initial value of the hidden. If not specified - assumed "
+                     "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
+                     "T", true /*optional*/);
         schema.Output(0, "Y",
                       "A tensor that concats all the intermediate output values of the hidden."
                       "It has shape `[seq_length, num_directions, batch_size, hidden_size]`.", "T");
@@ -155,7 +155,7 @@ Notations:
 `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
 `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
 `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-`P[iof]`  - P peephole weight matrix for input, output, and forget gates
+`P[iof]`  - P peephole weight vector for input, output, and forget gates
 `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
 `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
 `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
