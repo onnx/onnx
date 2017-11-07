@@ -115,13 +115,14 @@ def main(args):
         s += '\n\n'
         if schema.type_constraints:
             s += '<dl>\n'
-            for typeStr, allowedTypes, description in schema.type_constraints:
+            for type_constraint in schema.type_constraints:
+                allowedTypes = type_constraint.allowed_type_strs
                 if (len(allowedTypes) > 0):
                     allowedTypeStr = allowedTypes[0]
                 for allowedType in allowedTypes[1:]:
                     allowedTypeStr += ', ' + allowedType
-                s += '<dt><tt>{}</tt> : {}</dt>\n'.format(typeStr, allowedTypeStr)
-                s += '<dd>{}</dd>\n'.format(description)
+                s += '<dt><tt>{}</tt> : {}</dt>\n'.format(type_constraint.type_param_str, allowedTypeStr)
+                s += '<dd>{}</dd>\n'.format(type_constraint.description)
             s += '</dl>\n'
 
         s += '\n\n'

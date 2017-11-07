@@ -107,10 +107,10 @@ class Runner(object):
                 ref_outputs = test_data['outputs']
                 test_self.assertEqual(len(ref_outputs), len(outputs))
                 for i in range(len(outputs)):
-                    np.testing.assert_almost_equal(
+                    np.testing.assert_allclose(
                         ref_outputs[i],
                         outputs[i],
-                        decimal=4)
+                        rtol=1e-3)
 
         self._add_test('Model', model_test.name, run)
 
@@ -140,9 +140,9 @@ class Runner(object):
             outputs = self.backend.run_node(node_test.node, np_inputs, device)
             test_self.assertEqual(len(ref_outputs), len(outputs))
             for i in range(len(outputs)):
-                np.testing.assert_almost_equal(
+                np.testing.assert_allclose(
                     ref_outputs[i],
                     outputs[i],
-                    decimal=4)
+                    rtol=1e-3)
 
         self._add_test('Node', node_test.name, run)
