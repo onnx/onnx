@@ -839,10 +839,10 @@
 <dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -1080,7 +1080,7 @@
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-  `P[iof]`  - P peephole weight matrix for input, output, and forget gates
+  `P[iof]`  - P peephole weight vector for input, output, and forget gates
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
@@ -1125,10 +1125,10 @@
 <dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>initial_c</tt> (optional) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>P</tt> (optional) : T</dt>
@@ -1593,10 +1593,10 @@
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (1 - 2)
