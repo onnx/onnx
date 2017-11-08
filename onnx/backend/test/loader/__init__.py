@@ -20,7 +20,6 @@ from onnx import helper, numpy_helper
 from ..case.node import TestCase as NodeTestCase
 from ..case.model import TestCase as ModelTestCase
 
-
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))),
     'data')
