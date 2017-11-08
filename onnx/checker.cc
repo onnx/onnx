@@ -44,11 +44,6 @@ void check_value_info(const ValueInfoProto& value_info, int ir_version) {
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-    case TypeProto::kSparseTensorType: {
-      const auto& type = value_info.type().sparse_tensor_type();
-      enforce_has_field(type, elem_type);
-      enforce_has_field(type, shape);
-    } break;
     default:
       fail_check("Unrecognized type value case: ", value_case);
   }
