@@ -159,6 +159,11 @@ class OpSchema {
   // Sets the number of inputs, either a fixed number or a min and a max.
 
   /**
+   * The earliest operator set version which this operator was
+   * present in.
+   */
+  OpSchema& SinceVersion(int n);
+  /**
    * @brief A single input.
    */
   OpSchema& NumInputs(int n);
@@ -345,6 +350,9 @@ class OpSchema {
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
+  int since_version() const {
+    return since_version_;
+  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -410,6 +418,8 @@ class OpSchema {
   int max_input_ = std::numeric_limits<int>::max();
   int min_output_ = 0;
   int max_output_ = std::numeric_limits<int>::max();
+  // The default is a little goofy, since it is never what you want
+  int since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   std::function<bool(int, int)> num_inputs_outputs_allowed_ = [](int, int) {
@@ -428,6 +438,9 @@ class OpSchema {
  */
 class OpSchemaRegistry {
  public:
+  // Update this when you make BC-breaking changes to the operator schema
+  constexpr static int version = 1;
+
   class OpSchemaRegisterOnce {
    public:
     OpSchemaRegisterOnce(OpSchema& op_schema) {
