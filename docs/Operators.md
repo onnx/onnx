@@ -40,7 +40,6 @@
 * <a href="#OptimizedRNN">OptimizedRNN</a>
 * <a href="#PRelu">PRelu</a>
 * <a href="#Pad">Pad</a>
-* <a href="#ParametricSoftplus">ParametricSoftplus</a>
 * <a href="#Pow">Pow</a>
 * <a href="#RandomNormal">RandomNormal</a>
 * <a href="#RandomNormalLike">RandomNormalLike</a>
@@ -55,7 +54,6 @@
 * <a href="#ReduceSum">ReduceSum</a>
 * <a href="#Relu">Relu</a>
 * <a href="#Reshape">Reshape</a>
-* <a href="#ScaledTanh">ScaledTanh</a>
 * <a href="#Selu">Selu</a>
 * <a href="#Sigmoid">Sigmoid</a>
 * <a href="#Slice">Slice</a>
@@ -68,7 +66,6 @@
 * <a href="#Sub">Sub</a>
 * <a href="#Sum">Sum</a>
 * <a href="#Tanh">Tanh</a>
-* <a href="#ThresholdedRelu">ThresholdedRelu</a>
 * <a href="#Transpose">Transpose</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
 * <a href="#Caffe2ConvTranspose"><sub>experimental</sub> Caffe2ConvTranspose</a>
@@ -991,10 +988,10 @@
 
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
-  The operator computes the hardmax values for each layer in the batch
+  The operator computes the hardmax normalized values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax normalized values of the corresponding input.
+  and contains the hardmax normalized values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -1025,7 +1022,7 @@
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The hardmax normalized output values with the same shape as input tensor.</dd>
+<dd>The softmax normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -1142,10 +1139,10 @@
 
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
-  The operator computes the log softmax normalized values for each layer in the batch
+  The operator computes the logsoftmax normalized values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax normalized values of the corresponding input.
+  and contains the logsoftmax normalized values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -1605,43 +1602,6 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>OUTPUT</tt> : T</dt>
 <dd>Tensor after padding.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="ParametricSoftplus"></a><a name="parametricsoftplus">**ParametricSoftplus**</a>
-
-  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
-  the tensor elementwise.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>1D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>1D input tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -2192,41 +2152,6 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
-### <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
-
-  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  scale * tanh(x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
-
-#### Attributes
-
-<dl>
-<dt><tt>scale</tt> : float</dt>
-<dd>Scale for tanh</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>1-D input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
@@ -2672,41 +2597,6 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The hyperbolic tangent values of the input tensor computed element-wise</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**ThresholdedRelu**</a>
-
-  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
-  is applied to the tensor elementwise.
-
-#### Attributes
-
-<dl>
-<dt><tt>theta</tt> : float</dt>
-<dd>Threshold value</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
