@@ -5,10 +5,15 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import argparse
+import inspect
+from textwrap import dedent
 import os
 
 from onnx import defs
 from onnx.defs import OpSchema
+from onnx.backend.test.case.node import collect_snippets
+
+SNIPPETS = collect_snippets()
 
 
 def display_number(v):
@@ -108,7 +113,7 @@ def main(args):
         # type constraints
         s += '\n#### Type Constraints'
         s += '\n\n'
-        if schema.type_constraints:            
+        if schema.type_constraints:
             s += '<dl>\n'
             for type_constraint in schema.type_constraints:
                 allowedTypes = type_constraint.allowed_type_strs
@@ -119,8 +124,17 @@ def main(args):
                 s += '<dt><tt>{}</tt> : {}</dt>\n'.format(type_constraint.type_param_str, allowedTypeStr)
                 s += '<dd>{}</dd>\n'.format(type_constraint.description)
             s += '</dl>\n'
-            
+
         s += '\n\n'
+
+        if op_type in SNIPPETS:
+            s += '#### Examples\n\n'
+            for summary, code in sorted(SNIPPETS[op_type]):
+                s += '<details>\n'
+                s += '<summary>{}</summary>\n\n'.format(summary)
+                s += '```python\n{}\n```\n\n'.format(code)
+                s += '</details>\n'
+                s += '\n\n'
         args.output.write(s)
 
 
