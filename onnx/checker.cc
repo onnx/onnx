@@ -237,12 +237,58 @@ void check_graph(const GraphProto& graph, int ir_version) {
   }
 }
 
+void check_semver_opt(char leading, const char *field_name, const std::string &val) {
+  if (val.empty()) {
+    return;
+  }
+  if (val[0] != leading) {
+    fail_check("semver value requires a specific leading char");
+  }
+
+  // the rest should be dot-separated, non-empty segments of [a-zA-Z0-9]
+  const char *p = val.data() + 1;
+  bool empty = true;
+  while (*p) {
+    char ch = *p;
+    if (empty && ch == '.') {
+      fail_check("empty identifiers not allowed in semver value");
+    }
+
+    if (ch == '.') {
+      empty = true;
+    }
+    else if (('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') ||
+             ('0' <= ch && ch <= '9')) {
+      empty = false;
+    }
+    else {
+      fail_check("identifiers may only have alphanumeric characters");
+    }
+    ++p;
+  }
+  if (empty) {
+    fail_check("trailing '.' not allowed in semver value");
+  }
+}
+
 void check_model(const ModelProto& model, int ir_version) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
   if (model.ir_version() > ir_version) {
     fail_check("Your model ir_version is higher than the checker's.");
+  }
+  if (model.has_ir_version_prerelease()) {
+    check_semver_opt('-', "ir_version_prerelease", model.ir_version_prerelease());
+  }
+  if (model.has_ir_version_build_metadata()) {
+    check_semver_opt('+', "ir_version_build_metadata", model.ir_version_build_metadata());
+  }
+  if (model.has_model_version_prerelease()) {
+    check_semver_opt('-', "model_version_prerelease", model.model_version_prerelease());
+  }
+  if (model.has_model_version_build_metadata()) {
+    check_semver_opt('+', "model_version_build_metadata", model.model_version_build_metadata());
   }
   check_graph(model.graph(), model.ir_version());
 }
