@@ -555,7 +555,7 @@ message TypeProto {
 // OperatorSets are uniquely identified by a (domain, opset_version) pair.
 message OperatorSetIdProto {
   // The domain of the operator set being identified.
-  // The empty string ("") or absence of this field implies the operator 
+  // The empty string ("") or absence of this field implies the operator
   // set that is defined as part of the ONNX specification.
   // This field MUST be present in this version of the IR when referring to any other operator set.
   optional string domain = 1;
