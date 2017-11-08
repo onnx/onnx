@@ -60,6 +60,40 @@ class TestChecker(unittest.TestCase):
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)
 
+    def test_check_versions(self):
+        # attr_name, value, fails
+        tests = [
+            ("ir_version_prerelease", "", False),
+            ("ir_version_prerelease", "-", True),
+            ("ir_version_prerelease", "-foo", False),
+            ("ir_version_prerelease", "-foo.1", False),
+            ("ir_version_prerelease", "-.foo.1", True),
+            ("ir_version_prerelease", "-foo.1.", True),
+            ("ir_version_prerelease", "+foo.1.", True),
+            ("ir_version_prerelease", "-foo!", True),
+            ("ir_version_build_metadata", "", False),
+            ("ir_version_build_metadata", "+", True),
+            ("ir_version_build_metadata", "+foo", False),
+            ("ir_version_build_metadata", "+foo.1", False),
+            ("ir_version_build_metadata", "-foo.1", True),
+            ("ir_version_build_metadata", "+foo.1.", True),
+            ("ir_version_build_metadata", "+foo.1.", True)
+            ]
+        graph = helper.make_graph([], "g", [], [])
+        for test_model in (True, False):
+            for t in tests:
+                attr_name = t[0]
+                if test_model:
+                    attr_name = attr_name.replace("ir_", "model_")
+                val = t[1]
+                should_fail = t[2]
+                model = helper.make_model(graph)
+                setattr(model, attr_name, val)
+                if should_fail:
+                    self.assertRaises(checker.ValidationError, checker.check_model, model)
+                else:
+                    checker.check_model(model)
+
     def test_check_graph_optional_input(self):
         node = helper.make_node(
             "ConstantFill", [""], ["Y"], name="test")
