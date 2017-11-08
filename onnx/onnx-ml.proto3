@@ -375,22 +375,23 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
+// Defines a tensor shape. A dimension can be either an integer value
+// or a symbolic variable. A symbolic variable represents an unknown
+// dimension.
+message TensorShapeProto {
+  message Dimension {
+    oneof value {
+      int64 dim_value = 1;
+      string dim_param = 2;   // namespace Shape
+    };
+  };
+  repeated Dimension dim = 1;
+}
+
 // Define the types.
 message TypeProto {
-  // Defines a tensor shape. A dimension can be either an integer value
-  // or a symbolic variable. A symbolic variable represents an unknown
-  // dimension.
-  message TensorShapeProto {
-    message Dimension {
-      oneof value {
-        int64 dim_value = 1;
-        string dim_param = 2;   // namespace Shape
-      };
-    };
-    repeated Dimension dim = 1;
-  }
 
-  message TensorTypeProto {
+  message Tensor {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     TensorProto.DataType elem_type = 1;
@@ -399,14 +400,14 @@ message TypeProto {
 
 
   // repeated T
-  message SequenceTypeProto {
+  message Sequence {
   // The type and optional shape of each element of the sequence.
   // This field MUST be present for this version of the IR.
     TypeProto elem_type = 1;
   };
 
   // map<K,V>
-  message MapTypeProto {
+  message Map {
   // This field MUST be present for this version of the IR.
   // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
     TensorProto.DataType key_type = 1;
@@ -417,7 +418,7 @@ message TypeProto {
 
   oneof value {
     // The type of a tensor.
-    TensorTypeProto tensor_type = 1;
+    Tensor tensor_type = 1;
 
 
     // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
@@ -426,10 +427,10 @@ message TypeProto {
     //        and output types to tensors.
 
     // The type of a sequence.
-    SequenceTypeProto sequence_type = 4;
+    Sequence sequence_type = 4;
 
     // The type of a map.
-    MapTypeProto map_type = 5;
+    Map map_type = 5;
 
   }
 }
