@@ -81,7 +81,7 @@ Equations:
            "`[num_directions, 2*hidden_size]`, Optional: If not specified - assumed "
            "to be 0.", "T",
 	   true /*optional*/)
-    .FillUsing(RNNDocGenerator("SimpleRNN"));
+    .FillUsing(RNNDocGenerator("RNN"));
 
 
 OPERATOR_SCHEMA(GRU)
