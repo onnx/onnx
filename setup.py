@@ -133,7 +133,7 @@ class ONNXCommand(setuptools.Command):
 
 class build_proto_in(ONNXCommand):
     def run(self):
-        log('compiling onnx.in.proto')
+        log('compiling *.in.proto')
         subprocess.check_call(["python", os.path.join(SRC_DIR, "gen_proto.py")])
 
 
@@ -143,7 +143,8 @@ class build_proto(ONNXCommand):
 
         # NB: Not a glob, because you can't build both onnx.proto and
         # onnx-proto.ml in the same build
-        proto_files = [os.path.join(SRC_DIR, "onnx.proto")]
+        proto_files = [os.path.join(SRC_DIR, "onnx.proto"),
+                       os.path.join(SRC_DIR, "onnx-operators.proto")]
 
         for proto_file in proto_files:
             log('compiling {}'.format(proto_file))
@@ -300,6 +301,7 @@ setuptools.setup(
         'console_scripts': [
             'check-model = onnx.bin.checker:check_model',
             'check-node = onnx.bin.checker:check_node',
+            'backend-test-tools = onnx.backend.test.cmd_tools:main',
         ]
     },
 )

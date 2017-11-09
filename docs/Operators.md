@@ -11,6 +11,7 @@
 * <a href="#BatchNormalization">BatchNormalization</a>
 * <a href="#Cast">Cast</a>
 * <a href="#Ceil">Ceil</a>
+* <a href="#Clip">Clip</a>
 * <a href="#Concat">Concat</a>
 * <a href="#Constant">Constant</a>
 * <a href="#Conv">Conv</a>
@@ -21,6 +22,7 @@
 * <a href="#Exp">Exp</a>
 * <a href="#Flatten">Flatten</a>
 * <a href="#Floor">Floor</a>
+* <a href="#GRU">GRU</a>
 * <a href="#Gather">Gather</a>
 * <a href="#Gemm">Gemm</a>
 * <a href="#GlobalAveragePool">GlobalAveragePool</a>
@@ -28,30 +30,36 @@
 * <a href="#HardSigmoid">HardSigmoid</a>
 * <a href="#Hardmax">Hardmax</a>
 * <a href="#LRN">LRN</a>
+* <a href="#LSTM">LSTM</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Log">Log</a>
 * <a href="#LogSoftmax">LogSoftmax</a>
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
+* <a href="#Mean">Mean</a>
 * <a href="#Min">Min</a>
 * <a href="#Mul">Mul</a>
 * <a href="#Neg">Neg</a>
-* <a href="#OptimizedRNN">OptimizedRNN</a>
 * <a href="#PRelu">PRelu</a>
 * <a href="#Pad">Pad</a>
 * <a href="#Pow">Pow</a>
+* <a href="#RNN">RNN</a>
 * <a href="#RandomNormal">RandomNormal</a>
 * <a href="#RandomNormalLike">RandomNormalLike</a>
 * <a href="#RandomUniform">RandomUniform</a>
 * <a href="#RandomUniformLike">RandomUniformLike</a>
 * <a href="#Reciprocal">Reciprocal</a>
+* <a href="#ReduceL1">ReduceL1</a>
+* <a href="#ReduceL2">ReduceL2</a>
+* <a href="#ReduceLogSum">ReduceLogSum</a>
 * <a href="#ReduceLogSumExp">ReduceLogSumExp</a>
 * <a href="#ReduceMax">ReduceMax</a>
 * <a href="#ReduceMean">ReduceMean</a>
 * <a href="#ReduceMin">ReduceMin</a>
 * <a href="#ReduceProd">ReduceProd</a>
 * <a href="#ReduceSum">ReduceSum</a>
+* <a href="#ReduceSumSquare">ReduceSumSquare</a>
 * <a href="#Relu">Relu</a>
 * <a href="#Reshape">Reshape</a>
 * <a href="#Selu">Selu</a>
@@ -103,6 +111,27 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>abs</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Abs',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.abs(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_abs')
+```
+
+</details>
 
 
 ### <a name="Add"></a><a name="add">**Add**</a>
@@ -157,6 +186,47 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>add</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add')
+```
+
+</details>
+
+
+<details>
+<summary>add_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_bcast')
+```
+
+</details>
 
 
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
@@ -408,6 +478,45 @@
 </dl>
 
 
+### <a name="Clip"></a><a name="clip">**Clip**</a>
+
+  Clip operator limits the given input within an interval. The interval is
+  specified with arguments 'min' and 'max'. They default to
+  numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
+  operation can be done in in-place fashion too, where the input and output blobs
+  are the same.
+
+#### Attributes
+
+<dl>
+<dt><tt>max</tt> : float</dt>
+<dd>Maximum value, above which element is replaced by max</dd>
+<dt><tt>min</tt> : float</dt>
+<dd>Minimum value, under which element is replaced by min</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor whose elements to be clipped</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor with clipped input elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Concat"></a><a name="concat">**Concat**</a>
 
   Concatenate a list of tensors into a single tensor
@@ -468,6 +577,32 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>constant</summary>
+
+```python
+values = np.random.randn(5, 5).astype(np.float32)
+node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['values'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=values.shape,
+        vals=values.flatten().astype(float),
+    ),
+)
+
+expect(node, inputs=[], outputs=[values],
+       name='test_constant')
+```
+
+</details>
 
 
 ### <a name="Conv"></a><a name="conv">**Conv**</a>
@@ -790,6 +925,83 @@
 </dl>
 
 
+### <a name="GRU"></a><a name="gru">**GRU**</a>
+
+  Computes an one-layer GRU. This operator is usually supported via some custom
+  implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `z` - update gate
+  `r` - reset gate
+  `h` - hidden gate
+  `t` - time step (t-1 means previous time step)
+  `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+  `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+  `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+  `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+  `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
+  `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
+  `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
+  `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
+  `tanh(X)` - hyperbolic tangent of X
+  `sigmoid(X)` - 1 / (1 + e^-X)
+  `H` - Hidden state
+  `num_directions` - 2 if direction == bidirectional else 1
+  
+  Equations (GRU with default activations):
+    - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
+    - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
+    - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
+    - H = (1 - zt) (.) ht + it (.) Ht-1
+
+#### Attributes
+
+<dl>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>A list of 3 (or 6 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dt><tt>direction</tt> : string</dt>
+<dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
+<dt><tt>R</tt> : T</dt>
+<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
+<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>Y_h</tt> : T</dt>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int32)</dt>
+<dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
+
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
   Given DATA tensor of rank r >= 1, and INDICES tensor of rank q, gather
@@ -1074,6 +1286,96 @@
 </dl>
 
 
+### <a name="LSTM"></a><a name="lstm">**LSTM**</a>
+
+  Computes an one-layer LSTM. This operator is usually supported via some
+  custom implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `i` - input gate
+  `o` - output gate
+  `f` - forget gate
+  `c` - cell gate
+  `t` - time step (t-1 means previous time step)
+  `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  `P[iof]`  - P peephole weight vector for input, output, and forget gates
+  `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
+  `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
+  `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
+  `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
+  `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
+  `tanh(X)` - hyperbolic tangent of X
+  `sigmoid(X)` - 1 / (1 + e^-X)
+  `H` - Hidden state
+  `num_directions` - 2 if direction == bidirectional else 1
+  
+  Equations (forward LSTM with default activations and peepholes):
+    - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi (.) Ct-1 + Wbi + Rbi)
+    - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Pf (.) Ct-1 + Wbf + Rbf)
+    - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+    - Ct = ft (.) Ct-1 + it (.) ct
+    - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po (.) Ct + Wbo + Rbo)
+    - H = ot (.) tanh(Ct)
+
+#### Attributes
+
+<dl>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>A list of 4 (or 8 if bidirectional) activation functions for input, output, forget, and cell gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
+<dt><tt>direction</tt> : string</dt>
+<dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+<dt><tt>input_forget</tt> : int</dt>
+<dd>Couple the input and forget gates if 1, default 0.</dd>
+</dl>
+
+#### Inputs (3 - 8)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
+<dt><tt>R</tt> : T</dt>
+<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>initial_c</tt> (optional) : T</dt>
+<dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>P</tt> (optional) : T</dt>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>Y_h</tt> : T</dt>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int32)</dt>
+<dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
+
 ### <a name="LeakyRelu"></a><a name="leakyrelu">**LeakyRelu**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -1212,6 +1514,43 @@
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>matmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MatMul',
+    inputs=['a', 'b'],
+    outputs=['c'],
+)
+
+# 2d
+a = np.random.randn(3, 4).astype(np.float32)
+b = np.random.randn(4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_2d')
+
+# 3d
+a = np.random.randn(2, 3, 4).astype(np.float32)
+b = np.random.randn(2, 4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_3d')
+
+# 4d
+a = np.random.randn(1, 2, 3, 4).astype(np.float32)
+b = np.random.randn(1, 2, 4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_4d')
+```
+
+</details>
+
+
 ### <a name="Max"></a><a name="max">**Max**</a>
 
   Element-wise max of each of the input tensors. The first input tensor can be
@@ -1276,6 +1615,35 @@
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Mean"></a><a name="mean">**Mean**</a>
+
+  Element-wise mean of each of the input tensors. The first input tensor can be
+  used in-place as the output tensor, in which case the sum will be done in
+  place and results will be accumulated in input0. All inputs and outputs must
+  have the same shape and data type.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First of the input tensors. Can be inplace.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>sum</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
 #### Type Constraints
@@ -1397,135 +1765,6 @@
 </dl>
 
 
-### <a name="OptimizedRNN"></a><a name="optimizedrnn">**OptimizedRNN**</a>
-
-  Computes a stack of several RNNs in optimized fashion. This operator is usually
-  implemented via CuDNN and thus most of the attributes and weights layout matches
-  directly.
-
-#### Attributes
-
-<dl>
-<dt><tt>cell_type</tt> : string (required)</dt>
-<dd>
-Types of the cell: `relu`, `tanh`, `gru`, `lstm`
-
-Equation definitions:
-`i` - input gate
-`o` - output gate
-`f` - forget gate
-`z` - update gate
-`r` - reset gate
-`c` - cell gate
-`h` - hidden gate
-`t` - time step (t-1 means previous time step)
-`Xi` - input tensor
-`W[izrfcoh]` - W parameter weight matrices for the corresponding gates
-`R[izrfcoh]` - R parameter weight matrices for the corresponding gates
-`Wb[izrfcoh]` - W parameter bias vectors for the corresponding gates
-`Rb[izrfcoh]` - R parameter bias vectors for the corresponding gates
-`ReLU(X)` - max(X, 0)
-`tanh` - hyperbolic tangent of X
-`sigmoid(X)` - 1 / (1 + e^-X)
-`[C|H]` - Cell/Hidden state
-
-- Equations:
-  `relu`
-  - Ht = ReLU(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  `tanh`
-  - Ht = tanh(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  `lstm`
-  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
-  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Wbf + Rbf)
-  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Wbo + Rbo)
-  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
-  - C = ft * Ct-1 + it * ct
-  - H = ot * tanh(C)
-  `gru`
-  - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
-  - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
-  - ht = tanh(Wh*Xt + rt *(Rh*Ht-1 + Rbh) + Wbh)
-  - H = (1 - zt) * ht + it * Ht-1
-
-Note, that for LSTM and 2 out of 3 gates for GRU, there are duplicate biases for
-the gates (model is overparametrized). It follows CuDNN/TensorRT convention and
-allows to make spec more uniform.
-</dd>
-<dt><tt>directions</tt> : int</dt>
-<dd>Number of directions: 1 for unidirectional (default) and 2 for bidirectional</dd>
-<dt><tt>hidden_size</tt> : int</dt>
-<dd>Number of neurons in the hidden layer</dd>
-<dt><tt>num_layers</tt> : int</dt>
-<dd>Numbers of RNN layers in the stack, default 1</dd>
-<dt><tt>skip_input_transform</tt> : int</dt>
-<dd>If set, skips linear transformation on the input of the first layer</dd>
-</dl>
-
-#### Inputs (2 - 4)
-
-<dl>
-<dt><tt>weights</tt> : T</dt>
-<dd>
-All parameters of the stack packed together in the opaque tensor. The size must
-be compatible with input attributes passed to the op.
-
-The layout format is the one used by CuDNN and very similar to TensorRT:
-
-The weight structure holds weights and biases for each layer of the network.
-Each parameter matrix is linearly appended after the previous parameter matrix
-without padding.
-
-The order of matrixes `{K, L, D, R, N, C}` is defined as:
- - K - type of the matrix: `weight` (first) or `bias` second
- - L - The number of layers in the RNN - `num_layers`
- - D - The direction of the layer: normal (first) or reverse (second).
-                                   (in case of `directions=2`)
- - R - The type of the connection: `input-hidden` (first) or
-                                   `hidden-hidden` (second)
- - N - The number of gates matrices in the RNN, dependent on the `cell_type`:
- -- For `relu` or `tanh` there is one gate
- -- For `gru` there are 3 gates ordered as `reset`, `update`, `hidden`
- -- For `lstm` there are 4 gates ordered as `input`, `forget`, `cell`, `output`
- - C - The size of each matrix, which varies.
- -- If the linear layer on the input is skipped (`skip_input_transform=1`)
-    and then for the first layer (`L=1`) the weight matrix (`K=weight`)
-    on the input connection (`R=input-hidden`) is skipped,
-    i.e. has 0 parameters in the list
- -- For the first layer (`L=1`) weight matrix (`K=weight`) on input connection
-    (`R=input-hidden`), dimensions are `{hidden_size, input_size}`
- -- For other layers (`L>1`) weight matrix (`K=weight`) on input connection
-    (`R=input-hidden`), dimensions are `{hidden_size, directions * hidden_size}`
- -- For weight matrix (`K=weight`) on recurrent connection (`R=hidden-hidden`),
-    dimensions are `{hidden_size, hidden_size}`
- -- For all biases (`K=bias`), dimensions are `{hidden_size}`
-</dd>
-<dt><tt>input</tt> : T</dt>
-<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
-<dt><tt>initial_h</tt> : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
-<dt><tt>initial_c</tt> : T</dt>
-<dd>For LSTM only: optional initial value of the cell. If not specified - assumed to be 0. Dimensions `[num_layers * directions, batch_size, hidden_size]`</dd>
-</dl>
-
-#### Outputs (1 - 3)
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>The output 3-dim sequence.</dd>
-<dt><tt>output_h</tt> : T</dt>
-<dd>Optional output value of the hidden. Same shape as input_h</dd>
-<dt><tt>output_c</tt> : T</dt>
-<dd>For LSTM only: optional output value of the cell. Same shape as input_h</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <a name="PRelu"></a><a name="prelu">**PRelu**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
@@ -1612,6 +1851,61 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>constant_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x'],
+    outputs=['y'],
+    mode='constant',
+    value=1.2,
+    paddings=[0, 0, 0, 0, 1, 2, 3, 4],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.pad(
+    x,
+    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
+    mode='constant',
+    constant_values=1.2,
+)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_constant_pad')
+```
+
+</details>
+
+
+<details>
+<summary>reflection_and_edge_pad</summary>
+
+```python
+for mode in ['edge', 'reflect']:
+    node = onnx.helper.make_node(
+        'Pad',
+        inputs=['x'],
+        outputs=['y'],
+        mode=mode,
+        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
+    )
+    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    y = np.pad(
+        x,
+        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+        mode=mode,
+    )
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_{}_pad'.format(mode))
+```
+
+</details>
+
+
 ### <a name="Pow"></a><a name="pow">**Pow**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
@@ -1639,6 +1933,78 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="RNN"></a><a name="rnn">**RNN**</a>
+
+  Computes an one-layer simple RNN. This operator is usually supported
+  via some custom implementation such as CuDNN.
+  
+  Notations:
+  `X` - input tensor
+  `i` - input gate
+  `t` - time step (t-1 means previous time step)
+  `Wi` - W parameter weight matrix for input gate
+  `Ri` - R recurrence weight matrix for input gate
+  `Wbi` - W parameter bias vector for input gate
+  `Rbi` - R parameter bias vector for input gate
+  `WBi` - W parameter weight matrix for backward input gate
+  `RBi` - R recurrence weight matrix for backward input gate
+  `WBbi` - WR bias vectors for backward input gate
+  `RBbi` - RR bias vectors for backward input gate
+  `ReLU(X)` - max(X, 0)
+  `tanh(X)` - hyperbolic tangent of X
+  `H` - Hidden state
+  `num_directions` - 2 if direction == bidirectional else 1
+  
+  Equations:
+    - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+
+#### Attributes
+
+<dl>
+<dt><tt>activation</tt> : string</dt>
+<dd>One (or two if bidirectional) activation function for input gate. It must be one of tanh and ReLU. Default `tanh`.</dd>
+<dt><tt>direction</tt> : string</dt>
+<dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
+<dt><tt>R</tt> : T</dt>
+<dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>Y_h</tt> : T</dt>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int32)</dt>
+<dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
 
@@ -1834,6 +2200,126 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
+
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
+
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
+
+  Computes the log sum of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -2084,6 +2570,46 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
+### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
+
+  Computes the sum square of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Relu"></a><a name="relu">**Relu**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
@@ -2110,6 +2636,27 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>relu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Relu',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_relu')
+```
+
+</details>
 
 
 ### <a name="Reshape"></a><a name="reshape">**Reshape**</a>
@@ -2291,10 +2838,80 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[0, 1],
+    starts=[0, 0],
+    ends=[3, 10],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[0:3, 0:10]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice')
+```
+
+</details>
+
+
+<details>
+<summary>slice_default_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    starts=[0, 0, 3],
+    ends=[20, 10, 4],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_default_axes')
+```
+
+</details>
+
+
+<details>
+<summary>slice_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1],
+    starts=[0],
+    ends=[-1],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, 0:-1]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice_neg')
+```
+
+</details>
+
+
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax normalized values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
+  of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax normalized values of the corresponding input.
   
