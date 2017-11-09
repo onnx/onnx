@@ -248,35 +248,32 @@ class TestHelperModelFunctions(unittest.TestCase):
         self.assertEqual(v[2], 4)
 
     def test_model_version_help(self):
-        self.assertRaises(checker.ValueError, helper.read_version, 0x000000044F4E5847)
-        v = helper.read_version(0x000000044F4E5846)
+        v = helper.read_version(0x00000004)
         self.assertEqual(v, (0, 0, 4))
+        v = helper.read_version(0x01100004)
+        self.assertEqual(v, (1, 16, 4))
 
     def test_model_version_serialized(self):
         graph = helper.make_graph([], "my graph", [], [])
         model_def = helper.make_model(graph)
         # all of these (valid) versions should yield the same serialization prefix
-        # 08 <- varint field 1
-        #    <- 1 + [ 0- 7] bits of fixed value
-        #    <- 1 + [ 8-13] bits of fixed value
-        #    <- 1 + [14-20] bits of fixed value
-        #    <- 1 + [21-26] bits of fixed value
-        # the rest of the in-memory bits should line up properly, but this should
-        # be enough to recognize the file as ONNX
-        test_vers = [0x00000004B24646AF,
-                     0x00000000B24646AF,
-                     0x00000001B24646AF,
-                     0x01000000B24646AF,
-                     0x01010000B24646AF,
-                     0x20200000B24646AF]
+        # note that version doesn't affect the prefix, so a couple of checks
+        # for stability will do
+        # 0D <- fixed32 field 1
+        # 4F <- [ 0- 7] bits of fixed value
+        # 4E <- [ 8-15] bits of fixed value
+        # 58 <- [16-23] bits of fixed value
+        # 46 <- [24-32] bits of fixed value
+        test_vers = [0x00000004, 0x01010004]
         for t in test_vers:
             model_def.ir_version = t
+            graph.name = "some name " + str(t)
             s = model_def.SerializeToString()
-            self.assertEqual(ord(s[0]), 0x08)
-            self.assertEqual(ord(s[1]), 0x08)
-            self.assertEqual(ord(s[2]), 0x08)
-            self.assertEqual(ord(s[3]), 0x08)
-            self.assertEqual(ord(s[4]), 0x08)
+            self.assertEqual(s[0], 0x0D)
+            self.assertEqual(s[1], 0x4F)
+            self.assertEqual(s[2], 0x4E)
+            self.assertEqual(s[3], 0x58)
+            self.assertEqual(s[4], 0x46)
 
 class TestHelperTensorFunctions(unittest.TestCase):
 

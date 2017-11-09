@@ -50,6 +50,7 @@ def make_model(graph, **kwargs):
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
+    model.magic_prefix = 0x46584E4F
     model.ir_version = IR_VERSION
     model.graph.CopyFrom(graph)
 
@@ -292,12 +293,9 @@ def printable_graph(graph, prefix=''):
     return '\n'.join(content)
 
 def read_version(val):
-    '''Given an i64 IR version, return a (major,minor,path) tuple.'''
-    sig   = (val & 0x00000000FFFFFFFF)
-    if sig != 0x4F4E5846:
-        raise ValueError('Tag "{:x}" is not a valid tag for version.'.format(sig))
-    patch = (val & 0x0000FFFF00000000) >> 32
-    minor = (val & 0x00FF000000000000) >> 48
-    major = (val & 0xFF00000000000000) >> 56
+    '''Given an i32 IR version, return a (major,minor,path) tuple.'''
+    patch = (val & 0x0000FFFF)
+    minor = (val & 0x00FF0000) >> 16
+    major = (val & 0xFF000000) >> 24
     return (major, minor, patch)
 

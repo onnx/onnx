@@ -239,6 +239,12 @@ void check_model(const ModelProto& model, int ir_version) {
   if (model.ir_version() > ir_version) {
     fail_check("Your model ir_version is higher than the checker's.");
   }
+  if (!model.has_magic_prefix()) {
+    fail_check("The model does not have a magic_prefix set properly.");
+  }
+  if (model.magic_prefix() != 0x46584E4F) {
+    fail_check("The model does not have a magic_prefix set properly.");
+  }
   check_graph(model.graph(), model.ir_version());
 }
 

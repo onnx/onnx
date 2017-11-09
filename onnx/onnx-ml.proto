@@ -76,7 +76,13 @@ enum Version {
   //    - Added new message OperatorSetIdProto
   //    - Added opset_import in ModelProto
   // - For vendor extensions, added domain in NodeProto
-  IR_VERSION = 0x00000003;
+  IR_VERSION_2017_11_03 = 0x00000003;
+
+  // IR VERSION 0.0.4 published on Nov 8, 2017
+  // - Model file starts with predictable, sniff-able bytes.
+  //    - magic_prefix is field 1
+  //    - ir_version is now field 12
+  IR_VERSION = 0x00000004;
 }
 
 // A named attribute containing either singular float, integer, string
@@ -173,9 +179,13 @@ message NodeProto {
 // a parameterized computation graph against a set of named operators that are
 // defined independently from the graph.
 message ModelProto {
+  // 'ONXF' (reversed as 46 58 4E 4F) 0x46584E4F
+  // This field MUST be present.
+  optional fixed32 magic_prefix = 1;
+
   // The version of the IR this model targets. See Version enum above.
   // This field MUST be present.
-  optional int64 ir_version = 1;
+  optional int64 ir_version = 13;
 
   // The OperatorSets this model relies on.
   // All ModelProtos MUST have at least one entry that
