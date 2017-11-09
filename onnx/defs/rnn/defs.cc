@@ -12,6 +12,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                     "Must be one of forward (default), reverse, or bidirectional.",
                     AttrType::STRING);
         schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
+        schema.Attr("alpha", "Optional scaling values used by some activation functions.", AttrType::FLOATS);
+        schema.Attr("beta", "Optional scaling values used by some activation functions.", AttrType::FLOATS);
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
@@ -56,16 +58,33 @@ Notations:
 `RBi` - R recurrence weight matrix for backward input gate
 `WBbi` - WR bias vectors for backward input gate
 `RBbi` - RR bias vectors for backward input gate
-`ReLU(X)` - max(X, 0)
+
 `tanh(X)` - hyperbolic tangent of X
 `H` - Hidden state
 `num_directions` - 2 if direction == bidirectional else 1
 
+Activation functions:
+  ReLU(x)                - max(0, x)
+  tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  sigmoid(x)             - 1/(1 + e^{-x})
+  (Below are optional)
+  linear(x)              - alpha*x + beta
+  leakyReLU(x)           - x if x >= 0 else alpha * x
+  thresholdedReLU(x)     - x if x >= alpha else 0
+  PReLU(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  scaledTanh(x)          - alpha*tanh(beta*x)
+  sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  softsign(x)            - x/(1 + |x|)
+  softplus(x)            - log(1 + e^x)
+  parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
+
 Equations:
   - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
 )DOC")
-    .Attr("activation", "One (or two if bidirectional) activation function for "
-          "input gate. It must be one of tanh and ReLU. Default `tanh`.",
+    .Attr("activations", "One (or two if bidirectional) activation function for "
+          "input gate. The activation function must be one of the activation "
+          "functions given above. Default `tanh`.",
           AttrType::STRING)
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
@@ -110,15 +129,31 @@ Notations:
 `H` - Hidden state
 `num_directions` - 2 if direction == bidirectional else 1
 
+Activation functions:
+  ReLU(x)                - max(0, x)
+  tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  sigmoid(x)             - 1/(1 + e^{-x})
+  (Below are optional)
+  linear(x)              - alpha*x + beta
+  leakyReLU(x)           - x if x >= 0 else alpha * x
+  thresholdedReLU(x)     - x if x >= alpha else 0
+  PReLU(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  scaledTanh(x)          - alpha*tanh(beta*x)
+  sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  softsign(x)            - x/(1 + |x|)
+  softplus(x)            - log(1 + e^x)
+  parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
+
 Equations (GRU with default activations):
   - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
   - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
   - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
-  - H = (1 - zt) (.) ht + it (.) Ht-1
+  - Ht = (1 - zt) (.) ht + it (.) Ht-1
 )DOC")
-    .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
-          "for update, reset, and hidden gates. The activation functions must be "
-          "one of sigmoid and tanh. See the equations for default.",
+    .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
+          "for update, reset, and hidden gates. The activation functions must be one "
+          "of the activation functions given above. See the equations for default.",
           AttrType::STRINGS)
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
@@ -166,17 +201,33 @@ Notations:
 `H` - Hidden state
 `num_directions` - 2 if direction == bidirectional else 1
 
+Activation functions:
+  ReLU(x)                - max(0, x)
+  tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  sigmoid(x)             - 1/(1 + e^{-x})
+  (NOTE: Below are optional)
+  linear(x)              - alpha*x + beta
+  leakyReLU(x)           - x if x >= 0 else alpha * x
+  thresholdedReLU(x)     - x if x >= alpha else 0
+  PReLU(xi)               - xi if xi >= 0 else alpha[i]* xi over dim 0
+  scaledTanh(x)          - alpha*tanh(beta*x)
+  sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  softsign(x)            - x/(1 + |x|)
+  softplus(x)            - log(1 + e^x)
+  parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
+
 Equations (forward LSTM with default activations and peepholes):
   - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi (.) Ct-1 + Wbi + Rbi)
   - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Pf (.) Ct-1 + Wbf + Rbf)
   - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
   - Ct = ft (.) Ct-1 + it (.) ct
   - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po (.) Ct + Wbo + Rbo)
-  - H = ot (.) tanh(Ct)
+  - Ht = ot (.) tanh(Ct)
 )DOC")
-    .Attr("activations", "A list of 4 (or 8 if bidirectional) activation functions "
-          "for input, output, forget, and cell gates. The activation functions must "
-          "be one of sigmoid and tanh. See the equations for default.",
+    .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
+          "for input, output, forget, cell, and hidden. The activation functions must "
+          "be one of the activation functions given above. See the equations for default.",
           AttrType::STRINGS)
     .Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
           "in the range of [-threshold, +threshold] and is applied to the input "
