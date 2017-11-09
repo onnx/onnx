@@ -383,12 +383,47 @@ have the same shape and data type.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
+OPERATOR_SCHEMA(Mean)
+    .NumInputs(1, INT_MAX)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+Element-wise mean of each of the input tensors. The first input tensor can be
+used in-place as the output tensor, in which case the sum will be done in
+place and results will be accumulated in input0. All inputs and outputs must
+have the same shape and data type.
+)DOC")
+    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(Clip)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+Clip operator limits the given input within an interval. The interval is
+specified with arguments 'min' and 'max'. They default to
+numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
+operation can be done in in-place fashion too, where the input and output blobs
+are the same.
+)DOC")
+    .Attr("min", "Minimum value, under which element is replaced by min",
+          AttrType::FLOAT)
+    .Attr("max", "Maximum value, above which element is replaced by max",
+          AttrType::FLOAT)
+    .Input(0, "input", "Input tensor whose elements to be clipped", "T")
+    .Output(0, "output", "Output tensor with clipped input elements", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
 OPERATOR_SCHEMA(Softmax)
   .NumInputs(1)
   .NumOutputs(1)
   .SetDoc(R"DOC(
 The operator computes the softmax normalized values for each layer in the batch
- of the given input. The input is a 2-D tensor (Tensor<float>) of size
+of the given input. The input is a 2-D tensor (Tensor<float>) of size
 (batch_size x input_feature_dimensions). The output tensor has the same shape
 and contains the softmax normalized values of the corresponding input.
 

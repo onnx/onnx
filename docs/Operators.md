@@ -12,6 +12,7 @@
 * <a href="#BatchNormalization">BatchNormalization</a>
 * <a href="#Cast">Cast</a>
 * <a href="#Ceil">Ceil</a>
+* <a href="#Clip">Clip</a>
 * <a href="#Concat">Concat</a>
 * <a href="#Constant">Constant</a>
 * <a href="#Conv">Conv</a>
@@ -37,6 +38,7 @@
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
+* <a href="#Mean">Mean</a>
 * <a href="#Min">Min</a>
 * <a href="#Mul">Mul</a>
 * <a href="#Neg">Neg</a>
@@ -51,12 +53,16 @@
 * <a href="#RandomUniform">RandomUniform</a>
 * <a href="#RandomUniformLike">RandomUniformLike</a>
 * <a href="#Reciprocal">Reciprocal</a>
+* <a href="#ReduceL1">ReduceL1</a>
+* <a href="#ReduceL2">ReduceL2</a>
+* <a href="#ReduceLogSum">ReduceLogSum</a>
 * <a href="#ReduceLogSumExp">ReduceLogSumExp</a>
 * <a href="#ReduceMax">ReduceMax</a>
 * <a href="#ReduceMean">ReduceMean</a>
 * <a href="#ReduceMin">ReduceMin</a>
 * <a href="#ReduceProd">ReduceProd</a>
 * <a href="#ReduceSum">ReduceSum</a>
+* <a href="#ReduceSumSquare">ReduceSumSquare</a>
 * <a href="#Relu">Relu</a>
 * <a href="#Reshape">Reshape</a>
 * <a href="#Selu">Selu</a>
@@ -107,6 +113,27 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>abs</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Abs',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.abs(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_abs')
+```
+
+</details>
 
 
 ### <a name="Add"></a><a name="add">**Add**</a>
@@ -162,6 +189,46 @@
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+
+#### Examples
+
+<details>
+<summary>add</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add')
+```
+
+</details>
+
+
+<details>
+<summary>add_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_bcast')
+```
+
+</details>
 
 ### <a name="And"></a><a name="and">**And**</a>
 
@@ -456,6 +523,45 @@
 </dl>
 
 
+### <a name="Clip"></a><a name="clip">**Clip**</a>
+
+  Clip operator limits the given input within an interval. The interval is
+  specified with arguments 'min' and 'max'. They default to
+  numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
+  operation can be done in in-place fashion too, where the input and output blobs
+  are the same.
+
+#### Attributes
+
+<dl>
+<dt><tt>max</tt> : float</dt>
+<dd>Maximum value, above which element is replaced by max</dd>
+<dt><tt>min</tt> : float</dt>
+<dd>Minimum value, under which element is replaced by min</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor whose elements to be clipped</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor with clipped input elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Concat"></a><a name="concat">**Concat**</a>
 
   Concatenate a list of tensors into a single tensor
@@ -516,6 +622,32 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>constant</summary>
+
+```python
+values = np.random.randn(5, 5).astype(np.float32)
+node = onnx.helper.make_node(
+    'Constant',
+    inputs=[],
+    outputs=['values'],
+    value=onnx.helper.make_tensor(
+        name='const_tensor',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=values.shape,
+        vals=values.flatten().astype(float),
+    ),
+)
+
+expect(node, inputs=[], outputs=[values],
+       name='test_constant')
+```
+
+</details>
 
 
 ### <a name="Conv"></a><a name="conv">**Conv**</a>
@@ -934,10 +1066,10 @@
 <dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -1219,7 +1351,7 @@
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
-  `P[iof]`  - P peephole weight matrix for input, output, and forget gates
+  `P[iof]`  - P peephole weight vector for input, output, and forget gates
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
@@ -1264,10 +1396,10 @@
 <dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>initial_c</tt> (optional) : T</dt>
 <dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>P</tt> (optional) : T</dt>
@@ -1428,6 +1560,43 @@
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>matmul</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MatMul',
+    inputs=['a', 'b'],
+    outputs=['c'],
+)
+
+# 2d
+a = np.random.randn(3, 4).astype(np.float32)
+b = np.random.randn(4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_2d')
+
+# 3d
+a = np.random.randn(2, 3, 4).astype(np.float32)
+b = np.random.randn(2, 4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_3d')
+
+# 4d
+a = np.random.randn(1, 2, 3, 4).astype(np.float32)
+b = np.random.randn(1, 2, 4, 3).astype(np.float32)
+c = np.matmul(a, b)
+expect(node, inputs=[a, b], outputs=[c],
+       name='test_matmul_4d')
+```
+
+</details>
+
+
 ### <a name="Max"></a><a name="max">**Max**</a>
 
   Element-wise max of each of the input tensors. The first input tensor can be
@@ -1492,6 +1661,35 @@
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Mean"></a><a name="mean">**Mean**</a>
+
+  Element-wise mean of each of the input tensors. The first input tensor can be
+  used in-place as the output tensor, in which case the sum will be done in
+  place and results will be accumulated in input0. All inputs and outputs must
+  have the same shape and data type.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First of the input tensors. Can be inplace.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>sum</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
 #### Type Constraints
@@ -1769,6 +1967,61 @@
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>constant_pad</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pad',
+    inputs=['x'],
+    outputs=['y'],
+    mode='constant',
+    value=1.2,
+    paddings=[0, 0, 0, 0, 1, 2, 3, 4],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.pad(
+    x,
+    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
+    mode='constant',
+    constant_values=1.2,
+)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_constant_pad')
+```
+
+</details>
+
+
+<details>
+<summary>reflection_and_edge_pad</summary>
+
+```python
+for mode in ['edge', 'reflect']:
+    node = onnx.helper.make_node(
+        'Pad',
+        inputs=['x'],
+        outputs=['y'],
+        mode=mode,
+        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
+    )
+    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    y = np.pad(
+        x,
+        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+        mode=mode,
+    )
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_{}_pad'.format(mode))
+```
+
+</details>
+
+
 ### <a name="Pow"></a><a name="pow">**Pow**</a>
 
   Pow takes input data (Tensor<T>) and exponent Tensor, and
@@ -1846,10 +2099,10 @@
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
-<dt><tt>initial_h</tt> (optional) : T</dt>
-<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Outputs (1 - 2)
@@ -2063,6 +2316,126 @@
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
+
+  Computes the L1 norm of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
+
+  Computes the L2 norm of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
+
+  Computes the log sum of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -2313,6 +2686,46 @@
 </dl>
 
 
+### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
+
+  Computes the sum square of the input tensor's element along the provided axes. The resulted
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  the resulted tensor have the reduced dimension pruned.
+  
+  The above behavior is similar to numpy, with the exception that numpy default keepdims to
+  False instead of True.
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>A list of integers, along which to reduce.</dd>
+<dt><tt>keepdims</tt> : int</dt>
+<dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>reduced</tt> : T</dt>
+<dd>Reduced output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Relu"></a><a name="relu">**Relu**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
@@ -2339,6 +2752,27 @@
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>relu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Relu',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_relu')
+```
+
+</details>
 
 
 ### <a name="Reshape"></a><a name="reshape">**Reshape**</a>
@@ -2520,10 +2954,80 @@
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[0, 1],
+    starts=[0, 0],
+    ends=[3, 10],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[0:3, 0:10]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice')
+```
+
+</details>
+
+
+<details>
+<summary>slice_default_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    starts=[0, 0, 3],
+    ends=[20, 10, 4],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_default_axes')
+```
+
+</details>
+
+
+<details>
+<summary>slice_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1],
+    starts=[0],
+    ends=[-1],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, 0:-1]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice_neg')
+```
+
+</details>
+
+
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax normalized values for each layer in the batch
-   of the given input. The input is a 2-D tensor (Tensor<float>) of size
+  of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax normalized values of the corresponding input.
   
@@ -2934,17 +3438,17 @@
 ### <a name="ConstantFill"></a><a name="constantfill">**<sub>experimental</sub> ConstantFill**</a>
 
   The operator fills the elements of the output tensor with a constant value
-  specified by the 'value' argument.
+  specified by the 'value' attribute.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
+  The data type is specified by the 'dtype' attribute. The 'dtype' attribute must
   be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message. If the 'dtype' argument is not provided, the data type of
+  TensorProto message. If the 'dtype' attribute is not provided, the data type of
   'value' is used.
   
-  The output tensor shape is specified by the 'shape' argument. If the number of
+  The output tensor shape is specified by the 'shape' attribute. If the number of
   input is 1, the shape will be identical to that of the input at run time with
   optional additional dimensions appended at the end as specified by 'extra_shape'
-  argument. In that case the 'shape' argument should not be set.
+  attribute. In that case the 'shape' attribute should not be set.
   
   If input_as_shape is set to true, then the input should be a 1D tensor
   containing the desired output shape (the dimensions specified in extra_shape
@@ -2970,22 +3474,24 @@
 #### Inputs (0 - 1)
 
 <dl>
-<dt><tt>input</tt> (optional) : T</dt>
+<dt><tt>input</tt> (optional) : T1</dt>
 <dd>Input tensor (optional) to provide shape information.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> : T2</dt>
 <dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
+<dd>Constrain input types to float, int32, int64, bool tensors.</dd>
+<dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
+<dd>Constrain output types to float, int32, int64, bool tensors.</dd>
 </dl>
 
 

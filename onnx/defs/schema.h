@@ -22,12 +22,7 @@
 namespace onnx {
 
 typedef std::unordered_set<DataType> DataTypeSet;
-// Input/Output parameter, which contain name, description and type string.
-typedef std::tuple<std::string, std::string, std::string, bool>
-    InputOutputParam;
-// Type constraint, which contain type string, allowed types and description.
-typedef std::tuple<std::string, std::vector<std::string>, std::string>
-    TypeConstraintParam;
+
 // Type constraint map. Key is type string. Value is data type set and
 // description.
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
@@ -52,16 +47,24 @@ constexpr int kCannotComputeNumOutputs = -1;
  */
 class OpSchema {
  public:
-  // Formal parameter represenation, including parameter name, typeStr,
+  // Formal parameter represenation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter {
    public:
     // Constructor.
+    FormalParameter() = default;
+
     explicit FormalParameter(
         const std::string& name,
         const DataTypeSet& type_set,
         const std::string& type_str,
         const std::string& description,
+        bool is_optional = false);
+
+    explicit FormalParameter(
+        const std::string& name,
+        const std::string& description,
+        const std::string& type_str,
         bool is_optional = false);
 
     // Get formal parameter name.
@@ -81,7 +84,9 @@ class OpSchema {
     bool IsOptional() const;
 
    private:
-    FormalParameter() {}
+    friend class OpSchema;
+
+    DataTypeSet& MutableTypes();
 
     // Formal parameter name.
     std::string name_;
@@ -153,6 +158,11 @@ class OpSchema {
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
 
+  /**
+   * The earliest operator set version which this operator was
+   * present in.
+   */
+  OpSchema& SinceVersion(int n);
   /**
    * @brief A single input.
    */
@@ -271,8 +281,27 @@ class OpSchema {
       bool required = false);
   OpSchema& AllowUncheckedAttributes();
 
+  // Type constraint.
+  struct TypeConstraintParam {
+    TypeConstraintParam(
+        const std::string& type_param_str_,
+        const std::vector<std::string>& allowed_type_strs_,
+        const std::string& description_)
+        : type_param_str(type_param_str_),
+          allowed_type_strs(allowed_type_strs_),
+          description(description_) {}
+
+    // Type parameter string, for example, "T", "T1", etc.
+    std::string type_param_str;
+    // Allowed type strings for <*this> type parameter, for example,
+    // "tensor(float)".
+    std::vector<std::string> allowed_type_strs;
+    // Type parameter description.
+    std::string description;
+  };
+
   // Grammar for type strings used in Input(), Output().
-  // <type> ::= <data_type> | tensor(<data_type>) | sparse(<data_type>) |
+  // <type> ::= <data_type> | tensor(<data_type>) | ...
   // <type_parameter> <data_type> :: = float | int32 | string | bool | uint8
   //                | int8 | uint16 | int16 | int64 | float16 | double
   // <type_parameter> ::= any type parameter, say "T".
@@ -321,6 +350,9 @@ class OpSchema {
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
+  int since_version() const {
+    return since_version_;
+  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -368,8 +400,7 @@ class OpSchema {
   // efficiency.
   void Finalize();
 
-  void ParseAndSetInputOutput(
-      const std::vector<InputOutputParam>& symbolicParams,
+  void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
 
   std::string name_;
@@ -377,9 +408,7 @@ class OpSchema {
   std::string doc_;
   std::map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
-  std::vector<InputOutputParam> input_desc_;
   std::vector<FormalParameter> inputs_;
-  std::vector<InputOutputParam> output_desc_;
   std::vector<FormalParameter> outputs_;
   std::vector<TypeConstraintParam> type_constraint_params_;
   TypeConstraintMap type_constraints_;
@@ -389,6 +418,8 @@ class OpSchema {
   int max_input_ = std::numeric_limits<int>::max();
   int min_output_ = 0;
   int max_output_ = std::numeric_limits<int>::max();
+  // The default is a little goofy, since it is never what you want
+  int since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   std::function<bool(int, int)> num_inputs_outputs_allowed_ = [](int, int) {
@@ -407,6 +438,9 @@ class OpSchema {
  */
 class OpSchemaRegistry {
  public:
+  // Update this when you make BC-breaking changes to the operator schema
+  constexpr static int version = 1;
+
   class OpSchemaRegisterOnce {
    public:
     OpSchemaRegisterOnce(OpSchema& op_schema) {
