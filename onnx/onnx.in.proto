@@ -374,24 +374,6 @@ message ValueProto {
     optional ValueProto value = 100;
   }
 
-  message NameValuePairProto {
-    optional string key = 1;
-    optional ValueProto value = 100;
-  }
-
-  // Defines a record in its serialized format.
-  // A record is a sequence of one or more
-  // typed uniquely named values, which may be of different types.
-  message RecordProto {
-    repeated NameValuePairProto fields = 1;
-  }
-
-  // Defines a union value  in its serialized format.
-  // The name is the discriminator from the union type.
-  message UnionProto {
-    optional NameValuePairProto choice = 1;
-  }
-
   // Defines a map in its serialized format.
   // A record is a sequence of zero or more
   // key/value pairs all of which have unique
@@ -421,14 +403,8 @@ message ValueProto {
     // A dense tensor (or scalar).
     TensorProto dense_tensor = 1;
 
-    // A tuple.
-    RecordProto record = 3;
-
     // A sequence.
     SequenceProto seq = 4;
-
-    // A union.
-    UnionProto union = 5;
 
     // A map.
     MapProto map = 6;
@@ -462,14 +438,6 @@ message TypeProto {
   }
 
 // #if ONNX-ML
-  // message T { ... }
-  message RecordTypeProto {
-  // The type and optional shape of each field
-  // is described by a ValueInfoProto. The field
-  // names must be unique.
-  // This field MUST be present for this version of the IR.
-    repeated ValueInfoProto field = 1;
-  };
 
   // repeated T
   message SequenceTypeProto {
@@ -487,15 +455,6 @@ message TypeProto {
     optional TypeProto value_type = 2;
   };
 
-  // oneof { ... }
-  message UnionTypeProto {
-  // The type and optional shape of each alternative
-  // is described by a ValueInfoProto. The alternative
-  // names must be unique.
-  // This field MUST be present for this version of the IR.
-    repeated ValueInfoProto choice = 1;
-  };
-
 // #endif
 
   oneof value {
@@ -509,17 +468,11 @@ message TypeProto {
     //        support classical ML operators.  DNN operators SHOULD restrict their input
     //        and output types to tensors.
 
-    // The type of a record.
-    RecordTypeProto record_type = 3;
-
     // The type of a sequence.
     SequenceTypeProto sequence_type = 4;
 
     // The type of a map.
     MapTypeProto map_type = 5;
-
-    // The type of a union.
-    UnionTypeProto union_type = 6;
 
 // #endif
   }
