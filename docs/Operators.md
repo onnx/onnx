@@ -68,9 +68,14 @@
 * <a href="#FC"><sub>experimental</sub> FC</a>
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
+* <a href="#Identity"><sub>experimental</sub> Identity</a>
+* <a href="#Linear"><sub>experimental</sub> Linear</a>
 * <a href="#Normalize"><sub>experimental</sub> Normalize</a>
+* <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
+* <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
 * <a href="#SpatialBN"><sub>experimental</sub> SpatialBN</a>
+* <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -2718,6 +2723,69 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 </dl>
 
 
+### <a name="Identity"></a><a name="identity">**<sub>experimental</sub> Identity**</a>
+
+  Identity operator
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor to copy input into. Can be in-place</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Linear"></a><a name="linear">**<sub>experimental</sub> Linear**</a>
+
+  Linear takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the linear function, y = alpha * x + beta,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Normalize"></a><a name="normalize">**<sub>experimental</sub> Normalize**</a>
 
   Given a matrix, apply L2-normalization along the last dimension.
@@ -2734,6 +2802,43 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Matrix after normalization</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ParametricSoftplus"></a><a name="parametricsoftplus">**<sub>experimental</sub> ParametricSoftplus**</a>
+
+  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
+  the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D input tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -2768,6 +2873,42 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Output data after scaling</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ScaledTanh"></a><a name="scaledtanh">**<sub>experimental</sub> ScaledTanh**</a>
+
+  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
+  scale * tanh(x). This operation can be done in an in-place fashion too,
+  by providing the same input and output blobs.
+      
+
+#### Attributes
+
+<dl>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scale for tanh</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>1-D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
@@ -2826,6 +2967,41 @@ The order of matrixes `{K, L, D, R, N, C}` is defined as:
 <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
 <dt><tt>saved_var</tt> : T</dt>
 <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**<sub>experimental</sub> ThresholdedRelu**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>theta</tt> : float</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
