@@ -475,19 +475,9 @@ are the same.
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Softmax)
-<<<<<<< HEAD
     .NumInputs(1)
     .NumOutputs(1)
     .FillUsing(SoftmaxFamilyDocGenerator("softmax"));
-=======
-  .NumInputs(1)
-  .NumOutputs(1)
-  .SetDoc(R"DOC(
-The operator computes the softmax normalized values for each layer in the batch
-of the given input. The input is a 2-D tensor (Tensor<float>) of size
-(batch_size x input_feature_dimensions). The output tensor has the same shape
-and contains the softmax normalized values of the corresponding input.
->>>>>>> master
 
 OPERATOR_SCHEMA(LogSoftmax)
     .NumInputs(1)

@@ -119,16 +119,16 @@
 <summary>abs</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Abs',
-    inputs=['x'],
-    outputs=['y'],
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.abs(x)
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_abs')
+    node = onnx.helper.make_node(
+        'Abs',
+        inputs=['x'],
+        outputs=['y'],
+    )
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.abs(x)
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_abs')
 ```
 
 </details>
@@ -194,16 +194,16 @@ expect(node, inputs=[x], outputs=[y],
 <summary>add</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(3, 4, 5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add')
+    node = onnx.helper.make_node(
+        'Add',
+        inputs=['x', 'y'],
+        outputs=['sum'],
+    )
+
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.random.randn(3, 4, 5).astype(np.float32)
+    expect(node, inputs=[x, y], outputs=[x + y],
+           name='test_add')
 ```
 
 </details>
@@ -213,17 +213,17 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <summary>add_broadcast</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-    broadcast=1,
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add_bcast')
+    node = onnx.helper.make_node(
+        'Add',
+        inputs=['x', 'y'],
+        outputs=['sum'],
+        broadcast=1,
+    )
+
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.random.randn(5).astype(np.float32)
+    expect(node, inputs=[x, y], outputs=[x + y],
+           name='test_add_bcast')
 ```
 
 </details>
@@ -585,21 +585,21 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <summary>constant</summary>
 
 ```python
-values = np.random.randn(5, 5).astype(np.float32)
-node = onnx.helper.make_node(
-    'Constant',
-    inputs=[],
-    outputs=['values'],
-    value=onnx.helper.make_tensor(
-        name='const_tensor',
-        data_type=onnx.TensorProto.FLOAT,
-        dims=values.shape,
-        vals=values.flatten().astype(float),
-    ),
-)
-
-expect(node, inputs=[], outputs=[values],
-       name='test_constant')
+    values = np.random.randn(5, 5).astype(np.float32)
+    node = onnx.helper.make_node(
+        'Constant',
+        inputs=[],
+        outputs=['values'],
+        value=onnx.helper.make_tensor(
+            name='const_tensor',
+            data_type=onnx.TensorProto.FLOAT,
+            dims=values.shape,
+            vals=values.flatten().astype(float),
+        ),
+    )
+
+    expect(node, inputs=[], outputs=[values],
+           name='test_constant')
 ```
 
 </details>
@@ -1520,32 +1520,32 @@ expect(node, inputs=[], outputs=[values],
 <summary>matmul</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'MatMul',
-    inputs=['a', 'b'],
-    outputs=['c'],
-)
-
-# 2d
-a = np.random.randn(3, 4).astype(np.float32)
-b = np.random.randn(4, 3).astype(np.float32)
-c = np.matmul(a, b)
-expect(node, inputs=[a, b], outputs=[c],
-       name='test_matmul_2d')
-
-# 3d
-a = np.random.randn(2, 3, 4).astype(np.float32)
-b = np.random.randn(2, 4, 3).astype(np.float32)
-c = np.matmul(a, b)
-expect(node, inputs=[a, b], outputs=[c],
-       name='test_matmul_3d')
-
-# 4d
-a = np.random.randn(1, 2, 3, 4).astype(np.float32)
-b = np.random.randn(1, 2, 4, 3).astype(np.float32)
-c = np.matmul(a, b)
-expect(node, inputs=[a, b], outputs=[c],
-       name='test_matmul_4d')
+    node = onnx.helper.make_node(
+        'MatMul',
+        inputs=['a', 'b'],
+        outputs=['c'],
+    )
+
+    # 2d
+    a = np.random.randn(3, 4).astype(np.float32)
+    b = np.random.randn(4, 3).astype(np.float32)
+    c = np.matmul(a, b)
+    expect(node, inputs=[a, b], outputs=[c],
+           name='test_matmul_2d')
+
+    # 3d
+    a = np.random.randn(2, 3, 4).astype(np.float32)
+    b = np.random.randn(2, 4, 3).astype(np.float32)
+    c = np.matmul(a, b)
+    expect(node, inputs=[a, b], outputs=[c],
+           name='test_matmul_3d')
+
+    # 4d
+    a = np.random.randn(1, 2, 3, 4).astype(np.float32)
+    b = np.random.randn(1, 2, 4, 3).astype(np.float32)
+    c = np.matmul(a, b)
+    expect(node, inputs=[a, b], outputs=[c],
+           name='test_matmul_4d')
 ```
 
 </details>
@@ -1857,24 +1857,24 @@ expect(node, inputs=[a, b], outputs=[c],
 <summary>constant_pad</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Pad',
-    inputs=['x'],
-    outputs=['y'],
-    mode='constant',
-    value=1.2,
-    paddings=[0, 0, 0, 0, 1, 2, 3, 4],
-)
-x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-y = np.pad(
-    x,
-    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
-    mode='constant',
-    constant_values=1.2,
-)
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_constant_pad')
+    node = onnx.helper.make_node(
+        'Pad',
+        inputs=['x'],
+        outputs=['y'],
+        mode='constant',
+        value=1.2,
+        paddings=[0, 0, 0, 0, 1, 2, 3, 4],
+    )
+    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    y = np.pad(
+        x,
+        pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
+        mode='constant',
+        constant_values=1.2,
+    )
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_constant_pad')
 ```
 
 </details>
@@ -1884,23 +1884,23 @@ expect(node, inputs=[x], outputs=[y],
 <summary>reflection_and_edge_pad</summary>
 
 ```python
-for mode in ['edge', 'reflect']:
-    node = onnx.helper.make_node(
-        'Pad',
-        inputs=['x'],
-        outputs=['y'],
-        mode=mode,
-        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
-    )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-    y = np.pad(
-        x,
-        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
-        mode=mode,
-    )
-
-    expect(node, inputs=[x], outputs=[y],
-           name='test_{}_pad'.format(mode))
+    for mode in ['edge', 'reflect']:
+        node = onnx.helper.make_node(
+            'Pad',
+            inputs=['x'],
+            outputs=['y'],
+            mode=mode,
+            paddings=[0, 0, 0, 0, 1, 1, 1, 1]
+        )
+        x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+        y = np.pad(
+            x,
+            pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+            mode=mode,
+        )
+
+        expect(node, inputs=[x], outputs=[y],
+               name='test_{}_pad'.format(mode))
 ```
 
 </details>
@@ -2644,16 +2644,16 @@ for mode in ['edge', 'reflect']:
 <summary>relu</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Relu',
-    inputs=['x'],
-    outputs=['y'],
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf)
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_relu')
+    node = onnx.helper.make_node(
+        'Relu',
+        inputs=['x'],
+        outputs=['y'],
+    )
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.clip(x, 0, np.inf)
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_relu')
 ```
 
 </details>
@@ -2844,20 +2844,20 @@ expect(node, inputs=[x], outputs=[y],
 <summary>slice</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Slice',
-    inputs=['x'],
-    outputs=['y'],
-    axes=[0, 1],
-    starts=[0, 0],
-    ends=[3, 10],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[0:3, 0:10]
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_slice')
+    node = onnx.helper.make_node(
+        'Slice',
+        inputs=['x'],
+        outputs=['y'],
+        axes=[0, 1],
+        starts=[0, 0],
+        ends=[3, 10],
+    )
+
+    x = np.random.randn(20, 10, 5).astype(np.float32)
+    y = x[0:3, 0:10]
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_slice')
 ```
 
 </details>
@@ -2867,19 +2867,19 @@ expect(node, inputs=[x], outputs=[y],
 <summary>slice_default_axes</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Slice',
-    inputs=['x'],
-    outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[:, :, 3:4]
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_default_axes')
+    node = onnx.helper.make_node(
+        'Slice',
+        inputs=['x'],
+        outputs=['y'],
+        starts=[0, 0, 3],
+        ends=[20, 10, 4],
+    )
+
+    x = np.random.randn(20, 10, 5).astype(np.float32)
+    y = x[:, :, 3:4]
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_default_axes')
 ```
 
 </details>
@@ -2889,20 +2889,20 @@ expect(node, inputs=[x], outputs=[y],
 <summary>slice_neg</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Slice',
-    inputs=['x'],
-    outputs=['y'],
-    axes=[1],
-    starts=[0],
-    ends=[-1],
-)
-
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[:, 0:-1]
-
-expect(node, inputs=[x], outputs=[y],
-       name='test_slice_neg')
+    node = onnx.helper.make_node(
+        'Slice',
+        inputs=['x'],
+        outputs=['y'],
+        axes=[1],
+        starts=[0],
+        ends=[-1],
+    )
+
+    x = np.random.randn(20, 10, 5).astype(np.float32)
+    y = x[:, 0:-1]
+
+    expect(node, inputs=[x], outputs=[y],
+           name='test_slice_neg')
 ```
 
 </details>
@@ -2911,7 +2911,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax normalized values for each layer in the batch
-  of the given input. The input is a 2-D tensor (Tensor<float>) of size
+   of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax normalized values of the corresponding input.
   
