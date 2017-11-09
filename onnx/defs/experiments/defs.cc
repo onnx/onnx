@@ -363,3 +363,87 @@ OPERATOR_SCHEMA(ATen)
 Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
 and op)DOC");
+
+
+OPERATOR_SCHEMA(ImageScaler)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in 
+the same ordering as the image pixel format.)DOC")
+    .Attr("bias", "Bias applied to each channel, same size as C.", AttrType::FLOATS)
+    .Attr("scale", "(float, default 1.0) the scale to apply.", AttrType::FLOAT)
+    .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
+    .Output(0, "output", "Result, has same shape and type as input", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(MeanSubtraction)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(Subtracts the provided mean image from the input image.)DOC")
+    .Attr("image", "Mean image tensor of shape [C,H,W].", AttrType::TENSOR)
+    .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
+    .Output(0, "output", "Result, has same shape and type as input", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(MeanVarianceNormalization)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
+    .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttrType::INT)
+    .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttrType::INT)    
+    .Input(0, "input", "Input tensor of any shape", "T")
+    .Output(0, "output", "Result, has same shape and type as input", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    
+OPERATOR_SCHEMA(Crop)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given, 
+then optionally start the crop offset by the left/top border amounts. 
+If scale is not provided, crop the borders as provided.)DOC")
+    .Attr("border", "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).", AttrType::INTS)
+    .Attr("scale", "A 1-D values of (height, width).", AttrType::INTS)
+    .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
+    .Output(0, "output", "Result, has same type as input, with H and W dimensions reduced.", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(Embedding)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(Turns positive integers (indexes) into dense vectors of fixed size.)DOC")
+    .Attr("input_dim", "Size of the input vocabulary.", AttrType::INT)
+    .Attr("output_dim", "Dimension of the embedding output vectors.", AttrType::INT)
+    .Attr("weights", "2-D tensor of weights [O,I].", AttrType::TENSOR)    
+    .Input(0, 
+           "input", 
+           "1-D tensor of integers representing indices in the embedding dictionary "
+           "with length [N] and values [0, input_dim -1]", "tensor(int64)")
+    .Output(0, 
+            "output", 
+            "Output tensor of computed features [N, O].", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain output types to float tensors.");
