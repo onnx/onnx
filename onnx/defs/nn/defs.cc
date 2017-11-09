@@ -36,8 +36,8 @@ namespace onnx {
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis."
-                        "This attribute cannot be used simultaneously with autopad attribute.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis. "
+                        "This attribute cannot be used simultaneously with auto_pad attribute.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -94,8 +94,8 @@ namespace onnx {
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis."
-                        "This attribute cannot be used simultaneously with autopad attribute.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis. "
+                        "This attribute cannot be used simultaneously with auto_pad attribute.",
                         AttrType::INTS);
             schema.Attr("dilations",
                         "Dilation along each axis, 1 means no dilation.",
@@ -181,8 +181,8 @@ computes the output.)DOC";
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis."
-                        "This attribute cannot be used simultaneously with autopad attribute.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis. "
+                        "This attribute cannot be used simultaneously with auto_pad attribute.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -253,8 +253,8 @@ and computes the output.)DOC";
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis."
-                        "This attribute cannot be used simultaneously with autopad attribute.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis. "
+                        "This attribute cannot be used simultaneously with auto_pad attribute.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",

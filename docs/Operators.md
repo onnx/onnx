@@ -248,7 +248,7 @@
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.This attribute cannot be used simultaneously with autopad attribute.</dd>
+<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis.</dd>
 </dl>
@@ -484,7 +484,7 @@
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.This attribute cannot be used simultaneously with autopad attribute.</dd>
+<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>stride along each axis.</dd>
 </dl>
@@ -534,7 +534,7 @@
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.This attribute cannot be used simultaneously with autopad attribute.</dd>
+<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>stride along each axis.</dd>
 </dl>
@@ -1292,7 +1292,7 @@
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.This attribute cannot be used simultaneously with autopad attribute.</dd>
+<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis.</dd>
 </dl>
