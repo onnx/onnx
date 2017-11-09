@@ -71,7 +71,13 @@ enum Version {
   //    - Added new message OperatorSetIdProto
   //    - Added opset_import in ModelProto
   // - For vendor extensions, added domain in NodeProto
-  IR_VERSION = 0x00000003;
+  IR_VERSION_2017_11_03 = 0x00000003;
+
+  // IR VERSION 0.0.4 published on Nov 8, 2017
+  // - Model file starts with predictable, sniff-able bytes.
+  //    - Note that protobuf steals the MSB, so ASCII is out the window
+  //    - IR version is encoded as XX YY ZZZZ (major/minor/bugfix) 'ONXF' 4F 4E 58 46
+  IR_VERSION = 0x000000044F4E5846;
 }
 
 // A named attribute containing either singular float, integer, string

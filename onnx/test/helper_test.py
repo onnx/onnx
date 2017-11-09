@@ -215,6 +215,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertEqual(graph.name, "my graph")
         self.assertEqual(graph.doc_string, "my docs")
 
+class TestHelperModelFunctions(unittest.TestCase):
+
     def test_model(self):
         node_def = helper.make_node(
             "Relu", ["X"], ["Y"])
@@ -234,6 +236,47 @@ class TestHelperNodeFunctions(unittest.TestCase):
         # their name is the domain-qualified name of the underlying graph.
         self.assertFalse(hasattr(model_def, "name"))
         self.assertEqual(model_def.doc_string, 'test')
+
+    def test_model_version_default(self):
+        graph = helper.make_graph([], "my graph", [], [])
+        model_def = helper.make_model(graph)
+        v = helper.read_version(model_def.ir_version)
+        # it's fine to change this to be more lenient in the future
+        # right now we're interested in testing correct values are masked by default
+        self.assertEqual(v[0], 0)
+        self.assertEqual(v[1], 0)
+        self.assertEqual(v[2], 4)
+
+    def test_model_version_help(self):
+        self.assertRaises(checker.ValueError, helper.read_version, 0x000000044F4E5847)
+        v = helper.read_version(0x000000044F4E5846)
+        self.assertEqual(v, (0, 0, 4))
+
+    def test_model_version_serialized(self):
+        graph = helper.make_graph([], "my graph", [], [])
+        model_def = helper.make_model(graph)
+        # all of these (valid) versions should yield the same serialization prefix
+        # 08 <- varint field 1
+        #    <- 1 + [ 0- 7] bits of fixed value
+        #    <- 1 + [ 8-13] bits of fixed value
+        #    <- 1 + [14-20] bits of fixed value
+        #    <- 1 + [21-26] bits of fixed value
+        # the rest of the in-memory bits should line up properly, but this should
+        # be enough to recognize the file as ONNX
+        test_vers = [0x00000004B24646AF,
+                     0x00000000B24646AF,
+                     0x00000001B24646AF,
+                     0x01000000B24646AF,
+                     0x01010000B24646AF,
+                     0x20200000B24646AF]
+        for t in test_vers:
+            model_def.ir_version = t
+            s = model_def.SerializeToString()
+            self.assertEqual(ord(s[0]), 0x08)
+            self.assertEqual(ord(s[1]), 0x08)
+            self.assertEqual(ord(s[2]), 0x08)
+            self.assertEqual(ord(s[3]), 0x08)
+            self.assertEqual(ord(s[4]), 0x08)
 
 class TestHelperTensorFunctions(unittest.TestCase):
 

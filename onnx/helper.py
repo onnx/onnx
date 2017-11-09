@@ -290,3 +290,14 @@ def printable_graph(graph, prefix=''):
     # closing bracket
     content.append(prefix + '}')
     return '\n'.join(content)
+
+def read_version(val):
+    '''Given an i64 IR version, return a (major,minor,path) tuple.'''
+    sig   = (val & 0x00000000FFFFFFFF)
+    if sig != 0x4F4E5846:
+        raise ValueError('Tag "{:x}" is not a valid tag for version.'.format(sig))
+    patch = (val & 0x0000FFFF00000000) >> 32
+    minor = (val & 0x00FF000000000000) >> 48
+    major = (val & 0xFF00000000000000) >> 56
+    return (major, minor, patch)
+
