@@ -131,11 +131,6 @@ std::string DataTypeUtils::ToString(
       }
     }
 
-    case TypeProto::ValueCase::kSparseTensorType:
-      return left + "sparse(" +
-          ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" +
-          right;
-
     default:
       assert(false);
       return "";
@@ -155,12 +150,7 @@ void DataTypeUtils::FromString(
     TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
-  if (s.LStrip("sparse")) {
-    s.ParensWhitespaceStrip();
-    TensorProto::DataType e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
-    type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
-  } else if (s.LStrip("tensor")) {
+  if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);

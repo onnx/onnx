@@ -22,13 +22,13 @@ namespace Utils {
 // efficiency.
 //
 // Grammar for data type string:
-// <type> ::= <data_type> | tensor(<data_type>) | sparse(<data_type>)
+// <type> ::= <data_type> | tensor(<data_type>) | ...
 // <data_type> :: = float | int32 | string | bool | uint8
 //                | int8 | uint16 | int16 | int64 | float16 | double
 //
 // NOTE: <type> ::= <data_type> means the data is scalar (zero dimension).
 //
-// Example: float, tensor(float), sparse(double), etc.
+// Example: float, tensor(float), etc.
 //
 class DataTypeUtils {
  public:

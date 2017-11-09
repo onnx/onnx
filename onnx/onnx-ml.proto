@@ -363,19 +363,6 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
-// A sparse tensor must be stored as three dense tensors:
-//  1. dims: The shape of the original dense tensor.
-//  2. indices: A 2-D tensor specifying the indices of the nonzero elements.
-//  3. values: A 1-D tensor containing the values of the nonzero elements.
-message SparseTensorProto {
-  // The dimensions in the tensor.
-  repeated int64 dims = 1;
-  // This field MUST be present this version of the IR.
-  optional TensorProto indices = 2;
-  // This field MUST be present this version of the IR.
-  optional TensorProto values = 3;
-}
-
 // A ValueProto represents a value that may be serialized into a model.
 message ValueProto {
 
@@ -436,9 +423,6 @@ message ValueProto {
     // A dense tensor (or scalar).
     TensorProto dense_tensor = 1;
 
-    // A sparse tensor.
-    SparseTensorProto sparse_tensor = 2;
-
     // A tuple.
     RecordProto record = 3;
 
@@ -472,13 +456,6 @@ message TypeProto {
   }
 
   message TensorTypeProto {
-    // This field MUST NOT have the value of UNDEFINED
-    // This field MUST be present for this version of the IR.
-    optional TensorProto.DataType elem_type = 1;
-    optional TensorShapeProto shape = 2;
-  }
-
-  message SparseTensorTypeProto {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
@@ -523,9 +500,6 @@ message TypeProto {
   oneof value {
     // The type of a tensor.
     TensorTypeProto tensor_type = 1;
-
-    // The type of a sparse tensor.
-    SparseTensorTypeProto sparse_tensor_type = 2;
 
 
     // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
