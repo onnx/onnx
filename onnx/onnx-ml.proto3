@@ -122,7 +122,6 @@ message AttributeProto {
   bytes s = 4;               // UTF-8 string
   TensorProto t = 5;         // tensor value
   GraphProto g = 6;          // graph
-  ValueProto v = 12;         // value - subsumes everything but graph
 
   repeated float floats = 7;          // list of floats
   repeated int64 ints = 8;            // list of ints
