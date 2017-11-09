@@ -29,15 +29,15 @@ namespace onnx {
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
-                        "from the pads attribute.",
+                        "begining for SAME_LOWER. VALID mean no padding.",
                         AttrType::STRING);
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis."
+                        "This attribute cannot be used simultaneously with autopad attribute.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -95,8 +95,7 @@ namespace onnx {
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
                         "and the second value corresponding to the number of pixels add at the end of the axis."
-                        "In the event that both pads and auto_pad are specified, pads will take precedence over "
-                        "auto_pad",
+                        "This attribute cannot be used simultaneously with autopad attribute.",
                         AttrType::INTS);
             schema.Attr("dilations",
                         "Dilation along each axis, 1 means no dilation.",
@@ -175,15 +174,15 @@ computes the output.)DOC";
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
-                        "from the pads attribute.",
+                        "begining for SAME_LOWER. VALID mean no padding.",
                         AttrType::STRING);
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis."
+                        "This attribute cannot be used simultaneously with autopad attribute.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -247,15 +246,15 @@ and computes the output.)DOC";
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
-                        "from the pads attribute.",
+                        "begining for SAME_LOWER. VALID mean no padding.",
                         AttrType::STRING);
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis."
+                        "This attribute cannot be used simultaneously with autopad attribute.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
