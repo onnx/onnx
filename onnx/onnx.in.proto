@@ -117,9 +117,8 @@ message AttributeProto {
   optional bytes s = 4;               // UTF-8 string
   optional TensorProto t = 5;         // tensor value
   optional GraphProto g = 6;          // graph
-// #if ONNX-ML
-  optional ValueProto v = 12;         // value - subsumes everything but graph
-// #endif
+  // Do not use field below, it's deprecated.
+  // optional ValueProto v = 12;         // value - subsumes everything but graph
 
   repeated float floats = 7;          // list of floats
   repeated int64 ints = 8;            // list of ints
