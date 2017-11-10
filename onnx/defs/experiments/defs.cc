@@ -288,7 +288,7 @@ will throw errors.
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Normalize)
+OPERATOR_SCHEMA(LpNormalization)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
     .NumOutputs(1)
@@ -299,8 +299,10 @@ OPERATOR_SCHEMA(Normalize)
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
-Given a matrix, apply L2-normalization along the last dimension.
-)DOC");
+Given a matrix, apply Lp-normalization along the provided axis.
+)DOC")
+    .Attr("axis", "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.", AttrType::INT)
+    .Attr("p", "(float, default 2.0) the order of the normalization, only 2.0 is supported.", AttrType::FLOAT);
 
 OPERATOR_SCHEMA(Scale)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
@@ -381,20 +383,6 @@ the same ordering as the image pixel format.)DOC")
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(MeanSubtraction)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
-    .AllowConsumed({{0, 0}})
-    .SetDoc(R"DOC(Subtracts the provided mean image from the input image.)DOC")
-    .Attr("image", "Mean image tensor of shape [C,H,W].", AttrType::TENSOR)
-    .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
-    .Output(0, "output", "Result, has same shape and type as input", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-
 OPERATOR_SCHEMA(MeanVarianceNormalization)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
@@ -403,7 +391,7 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
     .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
     .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttrType::INT)
     .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttrType::INT)    
-    .Input(0, "input", "Input tensor of any shape", "T")
+    .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same shape and type as input", "T")
     .TypeConstraint(
         "T",

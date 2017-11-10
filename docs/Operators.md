@@ -73,9 +73,8 @@
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
-* <a href="#MeanSubtraction"><sub>experimental</sub> MeanSubtraction</a>
+* <a href="#LpNormalization"><sub>experimental</sub> LpNormalization</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
-* <a href="#Normalize"><sub>experimental</sub> Normalize</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 * <a href="#SpatialBN"><sub>experimental</sub> SpatialBN</a>
 
@@ -3216,29 +3215,31 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
-### <a name="MeanSubtraction"></a><a name="meansubtraction">**<sub>experimental</sub> MeanSubtraction**</a>
+### <a name="LpNormalization"></a><a name="lpnormalization">**<sub>experimental</sub> LpNormalization**</a>
 
-  Subtracts the provided mean image from the input image.
+  Given a matrix, apply Lp-normalization along the provided axis.
 
 #### Attributes
 
 <dl>
-<dt><tt>image</tt> : tensor</dt>
-<dd>Mean image tensor of shape [C,H,W].</dd>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
+<dt><tt>p</tt> : float</dt>
+<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
+<dd>Input matrix</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
+<dd>Matrix after normalization</dd>
 </dl>
 
 #### Type Constraints
@@ -3266,7 +3267,7 @@ expect(node, inputs=[x], outputs=[y],
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>Input tensor of any shape</dd>
+<dd>Input tensor of shape [N,C,H,W]</dd>
 </dl>
 
 #### Outputs
@@ -3274,32 +3275,6 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="Normalize"></a><a name="normalize">**<sub>experimental</sub> Normalize**</a>
-
-  Given a matrix, apply L2-normalization along the last dimension.
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input matrix</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Matrix after normalization</dd>
 </dl>
 
 #### Type Constraints
