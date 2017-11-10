@@ -26,7 +26,7 @@ def process_snippet(op_name, name, export):
     lines = source_code.splitlines()
     assert lines[0] == '@staticmethod'
     assert lines[1].startswith('def export')
-    return snippet_name, dedent("\n".join(lines[2:]))
+    return snippet_name, dedent(os.linesep.join(lines[2:]))
 
 
 Snippets = defaultdict(list)
