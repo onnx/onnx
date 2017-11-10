@@ -129,7 +129,7 @@ class ONNXCommand(setuptools.Command):
     user_options = []
 
     def initialize_options(self):
-        self.onnxml=ONNX_ML
+        pass
 
     def finalize_options(self):
         pass
@@ -147,7 +147,7 @@ class build_proto(ONNXCommand):
 
         # NB: Not a glob, because you can't build both onnx.proto and
         # onnx-proto.ml in the same build
-        if (1 == self.onnxml):
+        if ONNX_ML:
             proto_files = [os.path.join(SRC_DIR, "onnx-ml.proto"),
                            os.path.join(SRC_DIR, "onnx-operators-ml.proto")]
         else:
@@ -214,7 +214,7 @@ class ONNXExtension(setuptools.Extension):
     def pre_run(self):
         pass
 
-def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects, onnx_ml=False):
+def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects):
     include_dirs = sum([dep.include_dirs for dep in dependencies], [TOP_DIR])
     libraries = sum([dep.libraries for dep in dependencies], [])
     extra_compile_args=['-std=c++11']
@@ -225,7 +225,7 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
     if platform.system() == 'Windows':
         extra_compile_args.append('/MT')
     macros = []
-    if onnx_ml:
+    if ONNX_ML:
         macros = [('ONNX_ML', '1')]
     return ExtType(
         name=name,
@@ -242,10 +242,16 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
-        if (os.path.join(SRC_DIR, "onnx-ml.pb.cc") in self.sources and 0 == ONNX_ML):
-            raise RuntimeError("Stale onnx/onnx-ml.pb.cc file detected.  Please delete this file and rebuild.")
-        elif (os.path.join(SRC_DIR, "onnx.pb.cc") in self.sources and 1 == ONNX_ML):
-            raise RuntimeError("Stale onnx/onnx.pb.cc file detected.  Please delete this file and rebuild.")
+        if ONNX_ML:
+            # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
+            sources_filter = [os.path.join(SRC_DIR, "onnx.pb.cc"), os.path.join(SRC_DIR, "onnx-operators.pb.cc")]
+        else:
+            # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
+            sources_filter = [os.path.join(SRC_DIR, "onnx-ml.pb.cc"), os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc")]
+
+        for source_filter in sources_filter:
+            if source_filter in self.sources:
+                self.sources.remove(source_filter)
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
@@ -275,8 +281,7 @@ ext_modules = [
                      sources=[], # sources will be propagated in pre_run
                      dependencies=cpp2py_deps,
                      extra_link_args=cpp2py_link_args,
-                     extra_objects=cpp2py_extra_objects,
-                     onnx_ml=ONNX_ML)
+                     extra_objects=cpp2py_extra_objects)
 ]
 
 ################################################################################
