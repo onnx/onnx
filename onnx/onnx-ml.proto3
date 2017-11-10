@@ -214,6 +214,16 @@ message ModelProto {
 
   // The parameterized graph that is evaluated to execute the model.
   GraphProto graph = 7;
+
+  // Named metadata values; keys should be distinct.
+  repeated StringStringEntryProto metadata_props = 14;
+};
+
+// StringStringEntryProto follows the pattern for cross-proto-version maps.
+// See https://developers.google.com/protocol-buffers/docs/proto3#maps
+message StringStringEntryProto {
+  string key = 1;
+  string value= 2;
 };
 
 // GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
