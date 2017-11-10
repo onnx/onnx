@@ -18,10 +18,8 @@ autogen_header = """\
 IF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#if\s+ONNX-ML\s*$')
 ENDIF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endif\s*$')
 ELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#else\s*$')
-#ENDELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endelse\s*$')
 
 def process_ifs(lines, onnx_ml):
-    print("zhangke")
     in_if = 0
     for line in lines:
         if IF_ONNX_ML_REGEX.match(line):
