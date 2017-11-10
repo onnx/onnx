@@ -17,18 +17,28 @@ autogen_header = """\
 
 IF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#if\s+ONNX-ML\s*$')
 ENDIF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endif\s*$')
+ELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#else\s*$')
+#ENDELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endelse\s*$')
 
 def process_ifs(lines, onnx_ml):
-    in_if = False
+    print("zhangke")
+    in_if = 0
     for line in lines:
         if IF_ONNX_ML_REGEX.match(line):
-            assert not in_if
-            in_if = True
+            assert 0 == in_if
+            in_if = 1
+        elif ELSE_ONNX_ML_REGEX.match(line):
+            assert 1 == in_if
+            in_if = 2
         elif ENDIF_ONNX_ML_REGEX.match(line):
-            assert in_if
-            in_if = False
+            assert (1 == in_if or 2 == in_if)
+            in_if = 0
         else:
-            if not in_if or (in_if and onnx_ml):
+            if 0 == in_if:
+                yield line
+            elif (1 == in_if and onnx_ml):
+                yield line
+            elif (2 == in_if and not onnx_ml):
                 yield line
 
 PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
@@ -100,7 +110,7 @@ def convert(stem, do_onnx_ml=False):
 
 def main():
     convert("onnx", do_onnx_ml=True)
-    convert("onnx-operators")
+    convert("onnx-operators", do_onnx_ml=True)
 
 if __name__ == '__main__':
     import argparse

@@ -1,7 +1,11 @@
 #pragma once
 
 #include <stdexcept>
+#ifdef ONNX_ML
+#include "onnx/onnx-ml.pb.h"
+#else
 #include "onnx/onnx.pb.h"
+#endif
 #include "onnx/string_utils.h"
 
 namespace onnx {

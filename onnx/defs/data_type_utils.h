@@ -8,8 +8,11 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-
+#ifdef ONNX_ML
+#include "onnx/onnx-ml.pb.h"
+#else
 #include "onnx/onnx.pb.h"
+#endif
 
 namespace onnx {
 // String pointer as unique TypeProto identifier.

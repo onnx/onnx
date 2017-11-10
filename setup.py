@@ -143,8 +143,10 @@ class build_proto(ONNXCommand):
 
         # NB: Not a glob, because you can't build both onnx.proto and
         # onnx-proto.ml in the same build
-        proto_files = [os.path.join(SRC_DIR, "onnx.proto"),
-                       os.path.join(SRC_DIR, "onnx-operators.proto")]
+        proto_files = [#os.path.join(SRC_DIR, "onnx.proto"),
+                       os.path.join(SRC_DIR, "onnx-ml.proto"),
+                       #os.path.join(SRC_DIR, "onnx-operators.proto")
+                       os.path.join(SRC_DIR, "onnx-operators-ml.proto")]
 
         for proto_file in proto_files:
             log('compiling {}'.format(proto_file))
@@ -205,7 +207,7 @@ class ONNXExtension(setuptools.Extension):
     def pre_run(self):
         pass
 
-def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects):
+def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects, onnx_ml=True):
     include_dirs = sum([dep.include_dirs for dep in dependencies], [TOP_DIR])
     libraries = sum([dep.libraries for dep in dependencies], [])
     extra_compile_args=['-std=c++11']
@@ -215,8 +217,12 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
     if platform.system() == 'Windows':
         extra_compile_args.append('/MT')
+    macros = []
+    if onnx_ml:
+        macros = [('ONNX_ML', '1')]
     return ExtType(
         name=name,
+        define_macros = macros,
         sources=sources,
         include_dirs=include_dirs,
         libraries=libraries,
@@ -229,8 +235,8 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
-        if os.path.join(SRC_DIR, "onnx-ml.pb.cc") in self.sources:
-            raise RuntimeError("Stale onnx/onnx-ml.pb.cc file detected.  Please delete this file and rebuild.")
+        #if os.path.join(SRC_DIR, "onnx-ml.pb.cc") in self.sources:
+        #    raise RuntimeError("Stale onnx/onnx-ml.pb.cc file detected.  Please delete this file and rebuild.")
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
