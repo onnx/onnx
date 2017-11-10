@@ -3,8 +3,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import defaultdict
+import functools
 import glob
 import os
+import re
 import tarfile
 import tempfile
 import unittest
@@ -15,19 +18,22 @@ import onnx
 from onnx import helper, numpy_helper
 from six.moves.urllib.request import urlretrieve
 from ..loader import load_node_tests, load_model_tests
+from .item import TestItem
 
 
 class Runner(object):
-    def __init__(self, backend, parent_module=None):
-        class TestsContainer(unittest.TestCase):
-            pass
 
+    def __init__(self, backend, parent_module=None):
         self.backend = backend
-        self._base_case = TestsContainer
         self._parent_module = parent_module
-        # List of test cases to be applied on the parent scope
-        # Example usage: globals().update(BackendTest(backend).test_cases)
-        self.test_cases = {}
+        self._include_patterns = set()
+        self._exclude_patterns = set()
+
+        # This is the source of the truth of all test functions.
+        # Properties `test_cases`, `test_suite` and `tests` will be
+        # derived from it.
+        # {category: {name: func}}
+        self._test_items = defaultdict(dict)
 
         for nt in load_node_tests():
             self._add_node_test(nt)
@@ -35,12 +41,91 @@ class Runner(object):
         for gt in load_model_tests():
             self._add_model_test(gt)
 
-        # For backward compatibility - create a suite to aggregate them all
-        self.tests = type(str('OnnxBackendTest'), (self._base_case,), {})
-        for _, case in sorted(self.test_cases.items()):
-            for name, func in sorted(case.__dict__.items()):
-                if name.startswith('test_'):
-                    setattr(self.tests, name, func)
+    def _get_test_case(self, name):
+        test_case = type(str(name), (unittest.TestCase,), {})
+        if self._parent_module:
+            test_case.__module__ = self._parent_module
+        return test_case
+
+    def include(self, pattern):
+        self._include_patterns.add(re.compile(pattern))
+        return self
+
+    def exclude(self, pattern):
+        self._exclude_patterns.add(re.compile(pattern))
+        return self
+
+    def enable_report(self):
+        import pytest
+
+        for category, items_map in self._test_items.items():
+            for name, item in items_map.items():
+                item.func = pytest.mark.onnx_coverage(item.proto)(item.func)
+        return self
+
+    @property
+    def _filtered_test_items(self):
+        filtered = {}
+        for category, items_map in self._test_items.items():
+            filtered[category] = {}
+            for name, item in items_map.items():
+                if (self._include_patterns and
+                    (not any(include.search(name)
+                             for include in self._include_patterns))):
+                    item.func = unittest.skip(
+                        'no matched include pattern'
+                    )(item.func)
+                for exclude in self._exclude_patterns:
+                    if exclude.search(name):
+                        item.func = unittest.skip(
+                            'matched exclude pattern "{}"'.format(
+                                exclude.pattern)
+                        )(item.func)
+                filtered[category][name] = item
+        return filtered
+
+    @property
+    def test_cases(self):
+        '''
+        List of test cases to be applied on the parent scope
+        Example usage:
+            globals().update(BackendTest(backend).test_cases)
+        '''
+        test_cases = {}
+        for category, items_map in self._filtered_test_items.items():
+            test_case_name = 'OnnxBackend{}Test'.format(category)
+            test_case = self._get_test_case(test_case_name)
+            for name, item in sorted(items_map.items()):
+                setattr(test_case, name, item.func)
+            test_cases[test_case_name] = test_case
+        return test_cases
+
+    @property
+    def test_suite(self):
+        '''
+        TestSuite that can be run by TestRunner
+        Example usage:
+            unittest.TextTestRunner().run(BackendTest(backend).test_suite)
+        '''
+        suite = unittest.TestSuite()
+        for case in sorted(self.test_cases.values()):
+            suite.addTests(
+                unittest.defaultTestLoader.loadTestsFromTestCase(case))
+        return suite
+
+    # For backward compatibility (we used to expose `.tests`)
+    @property
+    def tests(self):
+        '''
+        One single unittest.TestCase that hosts all the test functions
+        Example usage:
+            onnx_backend_tests = BackendTest(backend).tests
+        '''
+        tests = self._get_test_case('OnnxBackendTest')
+        for _, items_map in sorted(self._filtered_test_items.values()):
+            for name, item in sorted(funcs_map.items()):
+                setattr(tests, name, item.func)
+        return tests
 
     @staticmethod
     def _assert_similar_outputs(ref_outputs, outputs):
@@ -51,97 +136,82 @@ class Runner(object):
                 outputs[i],
                 rtol=1e-3)
 
-    def _get_test_case(self, category):
-        name = 'OnnxBackend{}Test'.format(category)
-        if name not in self.test_cases:
-            self.test_cases[name] = type(str(name), (self._base_case,), {})
-            if self._parent_module:
-                self.test_cases[name].__module__ = self._parent_module
-        return self.test_cases[name]
-
     def _prepare_model_data(self, model_test):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', '~/.onnx'))
-        models_dir = os.getenv('ONNX_MODELS', os.path.join(onnx_home, 'models'))
+        models_dir = os.getenv('ONNX_MODELS',
+                               os.path.join(onnx_home, 'models'))
         model_dir = os.path.join(models_dir, model_test.model_name)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
             url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
                 model_test.model_name)
             with tempfile.NamedTemporaryFile(delete=True) as download_file:
-                print('Start downloading model {} from {}'.format(model_test.model_name, url))
+                print('Start downloading model {} from {}'.format(
+                    model_test.model_name, url))
                 urlretrieve(url, download_file.name)
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)
         return model_dir
 
-    def _add_test(self, test_case, name, test_func):
+    def _add_test(self, category, test_name, test_func, report_item, devices=('CPU', 'CUDA')):
         # We don't prepend the 'test_' prefix to improve greppability
-        if not name.startswith('test_'):
-            raise ValueError('Test name must start with test_: {}'.format(name))
-        s = self._get_test_case(test_case)
-        if hasattr(s, name):
-            raise ValueError('Duplicated test name: {}'.format(name))
+        if not test_name.startswith('test_'):
+            raise ValueError(
+                'Test name must start with test_: {}'.format(test_name))
 
-        def add_test_for_device(device):
+        def add_device_test(device):
+            device_test_name = '{}_{}'.format(test_name, device.lower())
+            if device_test_name in self._test_items[category]:
+                raise ValueError(
+                    'Duplicated test name "{}" in category "{}"'.format(
+                        device_test_name, category))
+
             @unittest.skipIf(
                 not self.backend.supports_device(device),
                 "Backend doesn't support device {}".format(device))
-            def device_test_func(test_self):
-                return test_func(test_self, device)
-            setattr(s, '{}_{}'.format(name, device.lower()), device_test_func)
+            @functools.wraps(test_func)
+            def device_test_func(*args, **kwargs):
+                return test_func(*args, device=device, **kwargs)
 
-        for device in ['CPU', 'CUDA']:
-            add_test_for_device(device)
+            self._test_items[category][device_test_name] = TestItem(
+                device_test_func, report_item)
+
+        for device in devices:
+            add_device_test(device)
 
     def _add_model_test(self, model_test):
-        """
-        Add A test for a single ONNX model against a reference implementation.
-            test_name (string): Eventual name of the test.  Must be prefixed
-                with 'test_'.
-            model_name (string): The ONNX model's name
-            inputs (list of ndarrays): inputs to the model
-            outputs (list of ndarrays): outputs to the model
-        """
+        # model is loaded at runtime, note sometimes it could even
+        # never loaded if the test skipped
+        model_marker = [None]
+
         def run(test_self, device):
             model_dir = self._prepare_model_data(model_test)
             model_pb_path = os.path.join(model_dir, 'model.pb')
             model = onnx.load(model_pb_path)
+            model_marker[0] = model
             prepared_model = self.backend.prepare(model, device)
 
-            for test_data_npz in glob.glob(os.path.join(model_dir, 'test_data_*.npz')):
+            for test_data_npz in glob.glob(
+                    os.path.join(model_dir, 'test_data_*.npz')):
                 test_data = np.load(test_data_npz, encoding='bytes')
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
                 self._assert_similar_outputs(ref_outputs, outputs)
 
-        self._add_test('Model', model_test.name, run)
+        self._add_test('Model', model_test.name, run, model_marker)
 
     def _add_node_test(self, node_test):
-        """
-        Add A test for a single ONNX node against a reference implementation.
 
-        Arguments:
-            test_name (string): Eventual name of the test.  Must be prefixed
-                with 'test_'.
-            node (NodeSpec): The ONNX node's name and attributes to be tested;
-                inputs and outputs will be inferred from other arguments of this
-                spec.
-            ref (lambda): A function from any number of Numpy ndarrays,
-                to a single ndarray or tuple of ndarrays.
-            inputs (tuple of ndarrays or size tuples): A specification of
-                the input to the operator.
-        """
         def run(test_self, device):
-            # TODO: In some cases we should generate multiple random inputs
-            # and test (ala Hypothesis)
             np_inputs = [numpy_helper.to_array(tensor)
                          for tensor in node_test.inputs]
             ref_outputs = [numpy_helper.to_array(tensor)
                            for tensor in node_test.outputs]
 
-            outputs = self.backend.run_node(node_test.node, np_inputs, device)
+            outputs = self.backend.run_node(
+                node_test.node, np_inputs, device)
             self._assert_similar_outputs(ref_outputs, outputs)
 
-        self._add_test('Node', node_test.name, run)
+        self._add_test('Node', node_test.name, run, node_test.node)

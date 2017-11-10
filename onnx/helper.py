@@ -45,7 +45,6 @@ def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None):
         graph.doc_string = doc_string
     return graph
 
-
 def make_model(graph, **kwargs):
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
@@ -57,6 +56,13 @@ def make_model(graph, **kwargs):
         setattr(model, k, v)
     return model
 
+def set_model_props(model, dict_value):
+    del model.metadata_props[:]
+    for (k, v) in dict_value.items():
+        entry = model.metadata_props.add()
+        entry.key = k
+        entry.value = v
+        # model.metadata_properties.append(entry)
 
 def split_complex_to_pairs(ca):
     return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
@@ -166,6 +172,30 @@ def make_attribute(key, value, doc_string=None):
         raise ValueError(
             'Value "{}" is not valid attribute data type.'.format(value))
     return attr
+
+def get_attribute_value(attr):
+    if attr.HasField('f'):
+        return attr.f
+    elif attr.HasField('i'):
+        return attr.i
+    elif attr.HasField('s'):
+        return attr.s
+    elif attr.HasField('t'):
+        return attr.t
+    elif attr.HasField('g'):
+        return onnn_attr.g
+    elif len(attr.floats):
+        return list(attr.floats)
+    elif len(attr.ints):
+        return list(attr.ints)
+    elif len(attr.strings):
+        return list(attr.strings)
+    elif len(attr.tensors):
+        return list(attr.tensors)
+    elif len(attr.graphs):
+        return list(attr.graphs)
+    else:
+        raise ValueError("Unsupported ONNX attribute: {}".format(onnx_arg))
 
 
 def make_tensor_value_info(name, elem_type, shape, doc_string=""):
