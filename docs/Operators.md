@@ -9,13 +9,13 @@
 * <a href="#ArgMin">ArgMin</a>
 * <a href="#AveragePool">AveragePool</a>
 * <a href="#BatchNormalization">BatchNormalization</a>
-* <a href="#BatchToSpace">BatchToSpace</a>
 * <a href="#Cast">Cast</a>
 * <a href="#Ceil">Ceil</a>
 * <a href="#Concat">Concat</a>
 * <a href="#Constant">Constant</a>
 * <a href="#Conv">Conv</a>
 * <a href="#ConvTranspose">ConvTranspose</a>
+* <a href="#DepthToSpace">DepthToSpace</a>
 * <a href="#Div">Div</a>
 * <a href="#Dropout">Dropout</a>
 * <a href="#Elu">Elu</a>
@@ -58,7 +58,7 @@
 * <a href="#Sigmoid">Sigmoid</a>
 * <a href="#Slice">Slice</a>
 * <a href="#Softmax">Softmax</a>
-* <a href="#SpaceToBatch">SpaceToBatch</a>
+* <a href="#SpaceToDepth">SpaceToDepth</a>
 * <a href="#Split">Split</a>
 * <a href="#Sqrt">Sqrt</a>
 * <a href="#Squeeze">Squeeze</a>
@@ -338,43 +338,6 @@
 </dl>
 
 
-### <a name="BatchToSpace"></a><a name="batchtospace">**BatchToSpace**</a>
-
-  BatchToSpace for 4-D tensors<T>. Rearranges (permutes) data from batch into 
-  blocks of spatial data, followed by cropping. This is the reverse transformation of SpaceToBatch. 
-  More specifically, this op outputs a copy of the input tensor where values from the batch 
-  dimension are moved in spatial blocks to the height and width dimensions, followed by cropping 
-  along the height and width dimensions.
-
-#### Attributes
-
-<dl>
-<dt><tt>blocksize</tt> : int</dt>
-<dd>Blocks of [blocksize, blocksize] are moved.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel , H is the height and W is the width.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
-</dl>
-
-
 ### <a name="Cast"></a><a name="cast">**Cast**</a>
 
   The operator casts the elements of a given input tensor to a data type
@@ -602,6 +565,42 @@
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
+
+  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
+  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
+  the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+  and width dimensions.
+
+#### Attributes
+
+<dl>
+<dt><tt>blocksize</tt> : int</dt>
+<dd>Blocks of [blocksize, blocksize] are moved.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
 </dl>
 
 
@@ -2354,12 +2353,11 @@
 </dl>
 
 
-### <a name="SpaceToBatch"></a><a name="spacetobatch">**SpaceToBatch**</a>
+### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
 
-  SpaceToBatch for 4-D tensors<T>. Zero-pads and then rearranges (permutes) blocks 
-  of spatial data into batch. More specifically, this op outputs a copy of the input tensor where values 
-  from the height and width dimensions are moved to the batch dimension. After the zero-padding, both 
-  height and width of the input must be divisible by the block size.
+  SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
+  this op outputs a copy of the input tensor where values from the height and width dimensions 
+  are moved to the depth dimension.
 
 #### Attributes
 
@@ -2372,7 +2370,7 @@
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel , H is the height and W is the width.</dd>
+<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
 </dl>
 
 #### Outputs

@@ -258,20 +258,19 @@ Example:
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(SpaceToBatch)
+OPERATOR_SCHEMA(SpaceToDepth)
     .NumInputs(1)
     .NumOutputs(1)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
-    .SetDoc(R"DOC(SpaceToBatch for 4-D tensors<T>. Zero-pads and then rearranges (permutes) blocks 
-of spatial data into batch. More specifically, this op outputs a copy of the input tensor where values 
-from the height and width dimensions are moved to the batch dimension. After the zero-padding, both 
-height and width of the input must be divisible by the block size.
+    .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
+this op outputs a copy of the input tensor where values from the height and width dimensions 
+are moved to the depth dimension.
 )DOC")
     .Input(0,
            "input", 
-           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel "
+           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
            ", H is the height and W is the width.", "T")
     .Output(0,
             "output", 
@@ -279,21 +278,20 @@ height and width of the input must be divisible by the block size.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
 
-OPERATOR_SCHEMA(BatchToSpace)
+OPERATOR_SCHEMA(DepthToSpace)
     .NumInputs(1)
     .NumOutputs(1)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
-    .SetDoc(R"DOC(BatchToSpace for 4-D tensors<T>. Rearranges (permutes) data from batch into 
-blocks of spatial data, followed by cropping. This is the reverse transformation of SpaceToBatch. 
-More specifically, this op outputs a copy of the input tensor where values from the batch 
-dimension are moved in spatial blocks to the height and width dimensions, followed by cropping 
-along the height and width dimensions.
+    .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
+This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
+the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+and width dimensions.
 )DOC")
     .Input(0,
            "input", 
-           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel "
+           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
            ", H is the height and W is the width.", "T")
     .Output(0,
             "output", 
