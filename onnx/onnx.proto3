@@ -67,10 +67,16 @@ enum Version {
   //  version we published on Oct 10, 2017.
   IR_VERSION_2017_10_10 = 0x00000001;
 
-  // IR_VERSION 0.0.2 (this proto file) contains the following IR format changes
+  // IR_VERSION 0.0.2 published on Oct 30, 2017
   // - Added type discriminator to AttributeProto to support proto3 users
+  IR_VERSION_2017_10_30 = 0x00000002;
 
-  IR_VERSION = 0x00000002;
+  // IR VERSION 0.0.3 published on Nov 3, 2017
+  // - For operator versioning:
+  //    - Added new message OperatorSetIdProto
+  //    - Added opset_import in ModelProto
+  // - For vendor extensions, added domain in NodeProto
+  IR_VERSION = 0x00000003;
 }
 
 // A named attribute containing either singular float, integer, string
@@ -116,6 +122,8 @@ message AttributeProto {
   bytes s = 4;               // UTF-8 string
   TensorProto t = 5;         // tensor value
   GraphProto g = 6;          // graph
+  // Do not use field below, it's deprecated.
+  // optional ValueProto v = 12;         // value - subsumes everything but graph
 
   repeated float floats = 7;          // list of floats
   repeated int64 ints = 8;            // list of ints
@@ -142,8 +150,15 @@ message ValueInfoProto {
 message NodeProto {
   repeated string input = 1;    // namespace Value
   repeated string output = 2;   // namespace Value
+
+  // An optional identifier for this node in a graph.
+  // This field MAY be absent in ths version of the IR.
   string name = 3;     // namespace Node
+
+  // The symbolic identifier of the Operator to execute.
   string op_type = 4;  // namespace Operator
+  // The domain of the OperatorSet that specifies the operator named by op_type.
+  string domain = 7;   // namespace Domain
 
   // Additional named attributes.
   // NOTE: Simply using ValueProto.NameValuePairProto is the most general
@@ -162,6 +177,16 @@ message ModelProto {
   // The version of the IR this model targets. See Version enum above.
   // This field MUST be present.
   int64 ir_version = 1;
+
+  // The OperatorSets this model relies on.
+  // All ModelProtos MUST have at least one entry that
+  // specifies which version of the ONNX OperatorSet is
+  // being imported.
+  //
+  // All nodes in the ModelProto's graph will bind against the operator
+  // with the same-domain/same-op_type operator with the HIGHEST version
+  // in the referenced operator sets.
+  repeated OperatorSetIdProto opset_import = 8;
 
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
@@ -340,19 +365,6 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
-// A sparse tensor must be stored as three dense tensors:
-//  1. dims: The shape of the original dense tensor.
-//  2. indices: A 2-D tensor specifying the indices of the nonzero elements.
-//  3. values: A 1-D tensor containing the values of the nonzero elements.
-message SparseTensorProto {
-  // The dimensions in the tensor.
-  repeated int64 dims = 1;
-  // This field MUST be present this version of the IR.
-  TensorProto indices = 2;
-  // This field MUST be present this version of the IR.
-  TensorProto values = 3;
-}
-
 
 // Define the types.
 message TypeProto {
@@ -376,20 +388,23 @@ message TypeProto {
     TensorShapeProto shape = 2;
   }
 
-  message SparseTensorTypeProto {
-    // This field MUST NOT have the value of UNDEFINED
-    // This field MUST be present for this version of the IR.
-    TensorProto.DataType elem_type = 1;
-    TensorShapeProto shape = 2;
-  }
-
 
   oneof value {
     // The type of a tensor.
     TensorTypeProto tensor_type = 1;
 
-    // The type of a sparse tensor.
-    SparseTensorTypeProto sparse_tensor_type = 2;
-
   }
+}
+
+// OperatorSets are uniquely identified by a (domain, opset_version) pair.
+message OperatorSetIdProto {
+  // The domain of the operator set being identified.
+  // The empty string ("") or absence of this field implies the operator
+  // set that is defined as part of the ONNX specification.
+  // This field MUST be present in this version of the IR when referring to any other operator set.
+  string domain = 1;
+
+  // The version of the operator set being identified.
+  // This field MUST be present in this version of the IR.
+  int64 version = 2;
 }
