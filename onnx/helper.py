@@ -45,7 +45,6 @@ def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None):
         graph.doc_string = doc_string
     return graph
 
-
 def make_model(graph, **kwargs):
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
@@ -57,6 +56,13 @@ def make_model(graph, **kwargs):
         setattr(model, k, v)
     return model
 
+def set_model_props(model, dict_value):
+    del model.metadata_props[:]
+    for (k, v) in dict_value.items():
+        entry = model.metadata_props.add()
+        entry.key = k
+        entry.value = v
+        # model.metadata_properties.append(entry)
 
 def split_complex_to_pairs(ca):
     return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
