@@ -65,14 +65,11 @@
 * <a href="#Tanh">Tanh</a>
 * <a href="#Transpose">Transpose</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
-* <a href="#Caffe2ConvTranspose"><sub>experimental</sub> Caffe2ConvTranspose</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
-* <a href="#FC"><sub>experimental</sub> FC</a>
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
 * <a href="#Normalize"><sub>experimental</sub> Normalize</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
-* <a href="#SpatialBN"><sub>experimental</sub> SpatialBN</a>
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -2849,62 +2846,6 @@ expect(node, inputs=[x], outputs=[y],
 
 
 
-### <a name="Caffe2ConvTranspose"></a><a name="caffe2convtranspose">**<sub>experimental</sub> Caffe2ConvTranspose**</a>
-
-  The transposed convolution consumes an input vector, the filter blob, and
-      the bias blob, and computes the output. Note that other parameters, such as
-      the stride and kernel size, or the pads' sizes in each direction are not
-      necessary for input because they are provided by the
-      ConvTransposeUnpoolOpBase operator. Various dimension checks are done
-      implicitly, and the sizes are specified in the Input docs for this operator.
-      As is expected, the filter is deconvolved with a subset of the
-      image and the bias is added; this is done throughout the image data and the
-      output is computed. As a side note on the implementation layout:
-      conv_transpose_op_impl.h is the templated implementation of the
-      conv_transpose_op.h file, which is why they are separate files.
-    
-
-#### Attributes
-
-<dl>
-<dt><tt>dilations</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>group</tt> : int</dt>
-<dd></dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>pads</tt> : list of ints</dt>
-<dd></dd>
-<dt><tt>strides</tt> : list of ints</dt>
-<dd></dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data blob from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the NCHW usage. On the other hand, the NHWC Op has a different set of dimension constraints.</dd>
-<dt><tt>filter</tt> : T</dt>
-<dd>The filter blob that will be used in the transposed convolution; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel.</dd>
-<dt><tt>bias</tt> : T</dt>
-<dd>The 1D bias blob that is added through the convolution;has size (C)</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output data blob that contains the result of the transposed convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <a name="ConstantFill"></a><a name="constantfill">**<sub>experimental</sub> ConstantFill**</a>
 
   The operator fills the elements of the output tensor with a constant value
@@ -2962,61 +2903,6 @@ expect(node, inputs=[x], outputs=[y],
 <dd>Constrain input types to float, int32, int64, bool tensors.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain output types to float, int32, int64, bool tensors.</dd>
-</dl>
-
-
-### <a name="FC"></a><a name="fc">**<sub>experimental</sub> FC**</a>
-
-  Computes the result of passing an input vector X into a fully
-  connected layer with 2D weight matrix W and 1D bias vector b. That is,
-  the layer computes Y = X * W^T + b, where X has size (M x K),
-  W has size (N x K), b has size (N), and Y has size (M x N),
-  where M is often the batch size.
-  NOTE: X does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ...,a_{k-1}, a_k, ..., a_{n-1}] where a_i \in N+ and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = M and a_1 * ... * a_{n-1} = K.
-  Lastly, even though b is a 1D vector of size N, it is copied/resized to
-  be size (M x N) implicitly and added to each vector in the batch.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int32_t) default to 1; describes the axis of the inputs; defaults to one because the 0th axis most likely describes the batch_size</dd>
-<dt><tt>axis_w</tt> : int</dt>
-<dd>(int32_t) default to 1; describes the axis of the weights; defaults to one because the 0th axis most likely describes the batch_size</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
-<dt><tt>W</tt> : T</dt>
-<dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
-<dt><tt>b</tt> : T</dt>
-<dd>1D blob containing bias vector</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>2D output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 
@@ -3151,64 +3037,6 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Output data after scaling</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="SpatialBN"></a><a name="spatialbn">**<sub>experimental</sub> SpatialBN**</a>
-
-  Carries out batch normalization as described in the paper
-  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-  there are multiple cases for the number of outputs, which we list below:
-  
-  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-  Output case #2: Y (test mode)
-
-#### Attributes
-
-<dl>
-<dt><tt>epsilon</tt> : float</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
-<dt><tt>is_test</tt> : int</dt>
-<dd>If set to nonzero, run spatial batch normalization in test mode.</dd>
-<dt><tt>momentum</tt> : float</dt>
-<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum)</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW.</dd>
-<dt><tt>scale</tt> : T</dt>
-<dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
-<dt><tt>bias</tt> : T</dt>
-<dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
-<dt><tt>mean</tt> : T</dt>
-<dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
-<dt><tt>var</tt> : T</dt>
-<dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
-</dl>
-
-#### Outputs (0 - &#8734;)
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>The output 4-dimensional tensor of the same shape as X.</dd>
-<dt><tt>mean</tt> : T</dt>
-<dd>The running mean after the spatial BN operator. Must be in-place with the input mean. Should not be used for testing.</dd>
-<dt><tt>var</tt> : T</dt>
-<dd>The running variance after the spatial BN operator. Must be in-place with the input var. Should not be used for testing.</dd>
-<dt><tt>saved_mean</tt> : T</dt>
-<dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
-<dt><tt>saved_var</tt> : T</dt>
-<dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
 </dl>
 
 #### Type Constraints
