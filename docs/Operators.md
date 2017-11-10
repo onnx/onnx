@@ -73,10 +73,14 @@
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
 * <a href="#Caffe2ConvTranspose"><sub>experimental</sub> Caffe2ConvTranspose</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
+* <a href="#Crop"><sub>experimental</sub> Crop</a>
+* <a href="#Embedding"><sub>experimental</sub> Embedding</a>
 * <a href="#FC"><sub>experimental</sub> FC</a>
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
-* <a href="#Normalize"><sub>experimental</sub> Normalize</a>
+* <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
+* <a href="#LpNormalization"><sub>experimental</sub> LpNormalization</a>
+* <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 * <a href="#SpatialBN"><sub>experimental</sub> SpatialBN</a>
 
@@ -3199,6 +3203,80 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
+### <a name="Crop"></a><a name="crop">**<sub>experimental</sub> Crop**</a>
+
+  Crop and image to the specified spatial dimensions. If scale is given, 
+  then optionally start the crop offset by the left/top border amounts. 
+  If scale is not provided, crop the borders as provided.
+
+#### Attributes
+
+<dl>
+<dt><tt>border</tt> : list of ints</dt>
+<dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
+<dt><tt>scale</tt> : list of ints</dt>
+<dd>A 1-D values of (height, width).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of shape [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Result, has same type as input, with H and W dimensions reduced.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Embedding"></a><a name="embedding">**<sub>experimental</sub> Embedding**</a>
+
+  Turns positive integers (indexes) into dense vectors of fixed size.
+
+#### Attributes
+
+<dl>
+<dt><tt>input_dim</tt> : int</dt>
+<dd>Size of the input vocabulary.</dd>
+<dt><tt>output_dim</tt> : int</dt>
+<dd>Dimension of the embedding output vectors.</dd>
+<dt><tt>weights</tt> : tensor</dt>
+<dd>2-D tensor of weights [O,I].</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : tensor(int64)</dt>
+<dd>1-D tensor of integers representing indices in the embedding dictionary with length [N] and values [0, input_dim -1]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor of computed features [N, O].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="FC"></a><a name="fc">**<sub>experimental</sub> FC**</a>
 
   Computes the result of passing an input vector X into a fully
@@ -3335,9 +3413,54 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
-### <a name="Normalize"></a><a name="normalize">**<sub>experimental</sub> Normalize**</a>
+### <a name="ImageScaler"></a><a name="imagescaler">**<sub>experimental</sub> ImageScaler**</a>
 
-  Given a matrix, apply L2-normalization along the last dimension.
+  Scale and bias the input image. Bias values are stored in 
+  the same ordering as the image pixel format.
+
+#### Attributes
+
+<dl>
+<dt><tt>bias</tt> : list of floats</dt>
+<dd>Bias applied to each channel, same size as C.</dd>
+<dt><tt>scale</tt> : float</dt>
+<dd>(float, default 1.0) the scale to apply.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of shape [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Result, has same shape and type as input</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="LpNormalization"></a><a name="lpnormalization">**<sub>experimental</sub> LpNormalization**</a>
+
+  Given a matrix, apply Lp-normalization along the provided axis.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
+<dt><tt>p</tt> : float</dt>
+<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
+</dl>
 
 #### Inputs
 
@@ -3351,6 +3474,41 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Matrix after normalization</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**<sub>experimental</sub> MeanVarianceNormalization**</a>
+
+  Perform mean variance normalization.
+
+#### Attributes
+
+<dl>
+<dt><tt>across_channels</tt> : int</dt>
+<dd>If 1, mean and variance are computed across channels. Default is 0.</dd>
+<dt><tt>normalize_variance</tt> : int</dt>
+<dd>If 0, normalize the mean only.  Default is 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of shape [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Result, has same shape and type as input</dd>
 </dl>
 
 #### Type Constraints
