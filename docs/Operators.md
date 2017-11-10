@@ -66,6 +66,7 @@
 * <a href="#Transpose">Transpose</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
+* <a href="#FC"><sub>experimental</sub> FC</a>
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
 * <a href="#Normalize"><sub>experimental</sub> Normalize</a>
@@ -2903,6 +2904,61 @@ expect(node, inputs=[x], outputs=[y],
 <dd>Constrain input types to float, int32, int64, bool tensors.</dd>
 <dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain output types to float, int32, int64, bool tensors.</dd>
+</dl>
+
+
+### <a name="FC"></a><a name="fc">**<sub>experimental</sub> FC**</a>
+
+  Computes the result of passing an input vector X into a fully
+  connected layer with 2D weight matrix W and 1D bias vector b. That is,
+  the layer computes Y = X * W^T + b, where X has size (M x K),
+  W has size (N x K), b has size (N), and Y has size (M x N),
+  where M is often the batch size.
+  NOTE: X does not need to explicitly be a 2D vector; rather, it will be
+  coerced into one. For an arbitrary n-dimensional tensor
+  X \in [a_0, a_1, ...,a_{k-1}, a_k, ..., a_{n-1}] where a_i \in N+ and k is
+  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+  In this situation, we must have a_0 = M and a_1 * ... * a_{n-1} = K.
+  Lastly, even though b is a 1D vector of size N, it is copied/resized to
+  be size (M x N) implicitly and added to each vector in the batch.
+  Each of these dimensions must be matched correctly, or else the operator
+  will throw errors.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int32_t) default to 1; describes the axis of the inputs; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dt><tt>axis_w</tt> : int</dt>
+<dd>(int32_t) default to 1; describes the axis of the weights; defaults to one because the 0th axis most likely describes the batch_size</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
+<dt><tt>b</tt> : T</dt>
+<dd>1D blob containing bias vector</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>2D output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 
