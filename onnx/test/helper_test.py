@@ -215,6 +215,8 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertEqual(graph.name, "my graph")
         self.assertEqual(graph.doc_string, "my docs")
 
+class TestHelperModelFunctions(unittest.TestCase):
+
     def test_model(self):
         node_def = helper.make_node(
             "Relu", ["X"], ["Y"])
@@ -234,6 +236,44 @@ class TestHelperNodeFunctions(unittest.TestCase):
         # their name is the domain-qualified name of the underlying graph.
         self.assertFalse(hasattr(model_def, "name"))
         self.assertEqual(model_def.doc_string, 'test')
+
+    def test_model_version_default(self):
+        graph = helper.make_graph([], "my graph", [], [])
+        model_def = helper.make_model(graph)
+        v = helper.read_version(model_def.ir_version)
+        # it's fine to change this to be more lenient in the future
+        # right now we're interested in testing correct values are masked by default
+        self.assertEqual(v[0], 0)
+        self.assertEqual(v[1], 0)
+        self.assertEqual(v[2], 4)
+
+    def test_model_version_help(self):
+        v = helper.read_version(0x00000004)
+        self.assertEqual(v, (0, 0, 4))
+        v = helper.read_version(0x01100004)
+        self.assertEqual(v, (1, 16, 4))
+
+    def test_model_version_serialized(self):
+        graph = helper.make_graph([], "my graph", [], [])
+        model_def = helper.make_model(graph)
+        # all of these (valid) versions should yield the same serialization prefix
+        # note that version doesn't affect the prefix, so a couple of checks
+        # for stability will do
+        # 0D <- fixed32 field 1
+        # 4F <- [ 0- 7] bits of fixed value
+        # 4E <- [ 8-15] bits of fixed value
+        # 58 <- [16-23] bits of fixed value
+        # 46 <- [24-32] bits of fixed value
+        test_vers = [0x00000004, 0x01010004]
+        for t in test_vers:
+            model_def.ir_version = t
+            graph.name = "some name " + str(t)
+            s = model_def.SerializeToString()
+            self.assertEqual(s[0], 0x0D)
+            self.assertEqual(s[1], 0x4F)
+            self.assertEqual(s[2], 0x4E)
+            self.assertEqual(s[3], 0x58)
+            self.assertEqual(s[4], 0x46)
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
