@@ -11,8 +11,6 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
                     AttrType::STRING);
-        schema.Attr("output_sequence", "Return the sequence output Y if and only if 1.",
-                    AttrType::INT);
         schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "

@@ -1056,8 +1056,6 @@ expect(node, inputs=[], outputs=[values],
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>output_sequence</tt> : int</dt>
-<dd>Return the sequence output Y if and only if 1.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -1388,8 +1386,6 @@ expect(node, inputs=[], outputs=[values],
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int</dt>
 <dd>Couple the input and forget gates if 1, default 0.</dd>
-<dt><tt>output_sequence</tt> : int</dt>
-<dd>Return the sequence output Y if and only if 1.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -2093,8 +2089,6 @@ for mode in ['edge', 'reflect']:
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>output_sequence</tt> : int</dt>
-<dd>Return the sequence output Y if and only if 1.</dd>
 </dl>
 
 #### Inputs (3 - 6)
