@@ -83,7 +83,7 @@ Equations:
 )DOC")
     .Attr("activations", "One (or two if bidirectional) activation function for "
           "input gate. The activation function must be one of the activation "
-          "functions given above. Default `tanh`.",
+          "functions specified above. Default `tanh`.",
           AttrType::STRING)
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
@@ -150,7 +150,7 @@ Equations (GRU with default activations):
 )DOC")
     .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
           "for update, reset, and hidden gates. The activation functions must be one "
-          "of the activation functions given above. See the equations for default.",
+          "of the activation functions specified above. See the equations for default.",
           AttrType::STRINGS)
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
@@ -222,7 +222,7 @@ Equations (forward LSTM with default activations and peepholes):
 )DOC")
     .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
           "for input, output, forget, cell, and hidden. The activation functions must "
-          "be one of the activation functions given above. See the equations for default.",
+          "be one of the activation functions specified above. See the equations for default.",
           AttrType::STRINGS)
     .Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
           "in the range of [-threshold, +threshold] and is applied to the input "
