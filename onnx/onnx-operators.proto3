@@ -9,7 +9,6 @@
 syntax = "proto3";
 
 package onnx;
-
 import "onnx.proto3";
 
 //
