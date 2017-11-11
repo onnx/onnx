@@ -1,7 +1,7 @@
 #pragma once
 
 #include <stdexcept>
-#include "onnx/onnx.pb.h"
+#include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
 namespace onnx {
