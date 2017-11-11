@@ -30,7 +30,7 @@
 * <a href="#GlobalAveragePool">GlobalAveragePool</a>
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
 * <a href="#Greater">Greater</a>
-* <a href="#InstanceNorm">InstanceNorm</a>
+* <a href="#InstanceNormalization">InstanceNormalization</a>
 * <a href="#LRN">LRN</a>
 * <a href="#LSTM">LSTM</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
@@ -1299,7 +1299,7 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
-### <a name="InstanceNorm"></a><a name="instancenorm">**InstanceNorm**</a>
+### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022. Depending on the mode it is being run,

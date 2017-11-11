@@ -372,7 +372,7 @@ Output case #2: Y (test mode)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(InstanceNorm)
+OPERATOR_SCHEMA(InstanceNormalization)
     .NumInputs(3)
     .NumOutputs(1, 3)
     .AllowConsumed({{0, 0}})
