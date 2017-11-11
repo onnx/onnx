@@ -5,6 +5,7 @@
 
 * <a href="#Abs">Abs</a>
 * <a href="#Add">Add</a>
+* <a href="#And">And</a>
 * <a href="#ArgMax">ArgMax</a>
 * <a href="#ArgMin">ArgMin</a>
 * <a href="#AveragePool">AveragePool</a>
@@ -19,6 +20,7 @@
 * <a href="#Div">Div</a>
 * <a href="#Dropout">Dropout</a>
 * <a href="#Elu">Elu</a>
+* <a href="#Equal">Equal</a>
 * <a href="#Exp">Exp</a>
 * <a href="#Flatten">Flatten</a>
 * <a href="#Floor">Floor</a>
@@ -27,9 +29,11 @@
 * <a href="#Gemm">Gemm</a>
 * <a href="#GlobalAveragePool">GlobalAveragePool</a>
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
+* <a href="#Greater">Greater</a>
 * <a href="#LRN">LRN</a>
 * <a href="#LSTM">LSTM</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
+* <a href="#Less">Less</a>
 * <a href="#Log">Log</a>
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
@@ -38,6 +42,8 @@
 * <a href="#Min">Min</a>
 * <a href="#Mul">Mul</a>
 * <a href="#Neg">Neg</a>
+* <a href="#Not">Not</a>
+* <a href="#Or">Or</a>
 * <a href="#PRelu">PRelu</a>
 * <a href="#Pad">Pad</a>
 * <a href="#Pow">Pow</a>
@@ -70,6 +76,7 @@
 * <a href="#Sum">Sum</a>
 * <a href="#Tanh">Tanh</a>
 * <a href="#Transpose">Transpose</a>
+* <a href="#Xor">Xor</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
 * <a href="#Crop"><sub>experimental</sub> Crop</a>
@@ -116,16 +123,16 @@
 <summary>abs</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Abs',
-    inputs=['x'],
-    outputs=['y'],
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.abs(x)
+    node = onnx.helper.make_node(
+        'Abs',
+        inputs=['x'],
+        outputs=['y'],
+    )
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.abs(x)
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_abs')
+    expect(node, inputs=[x], outputs=[y],
+           name='test_abs')
 ```
 
 </details>
@@ -191,16 +198,16 @@ expect(node, inputs=[x], outputs=[y],
 <summary>add</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-)
+    node = onnx.helper.make_node(
+        'Add',
+        inputs=['x', 'y'],
+        outputs=['sum'],
+    )
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(3, 4, 5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add')
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.random.randn(3, 4, 5).astype(np.float32)
+    expect(node, inputs=[x, y], outputs=[x + y],
+           name='test_add')
 ```
 
 </details>
@@ -210,20 +217,64 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <summary>add_broadcast</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-    broadcast=1,
-)
+    node = onnx.helper.make_node(
+        'Add',
+        inputs=['x', 'y'],
+        outputs=['sum'],
+        broadcast=1,
+    )
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add_bcast')
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.random.randn(5).astype(np.float32)
+    expect(node, inputs=[x, y], outputs=[x + y],
+           name='test_add_bcast')
 ```
 
 </details>
+
+
+### <a name="And"></a><a name="and">**And**</a>
+
+  Returns the tensor resulted from performing the `and` logical operation
+  elementwise on the input tensors `A` and `B`.
+  
+  If broadcasting is enabled, the right-hand-side argument will be broadcasted
+  to match the shape of left-hand-side argument. See the doc of `Add` for a
+  detailed description of the broadcasting rules.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
@@ -582,21 +633,21 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <summary>constant</summary>
 
 ```python
-values = np.random.randn(5, 5).astype(np.float32)
-node = onnx.helper.make_node(
-    'Constant',
-    inputs=[],
-    outputs=['values'],
-    value=onnx.helper.make_tensor(
-        name='const_tensor',
-        data_type=onnx.TensorProto.FLOAT,
-        dims=values.shape,
-        vals=values.flatten().astype(float),
-    ),
-)
+    values = np.random.randn(5, 5).astype(np.float32)
+    node = onnx.helper.make_node(
+        'Constant',
+        inputs=[],
+        outputs=['values'],
+        value=onnx.helper.make_tensor(
+            name='const_tensor',
+            data_type=onnx.TensorProto.FLOAT,
+            dims=values.shape,
+            vals=values.flatten().astype(float),
+        ),
+    )
 
-expect(node, inputs=[], outputs=[values],
-       name='test_constant')
+    expect(node, inputs=[], outputs=[values],
+           name='test_constant')
 ```
 
 </details>
@@ -831,6 +882,50 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="Equal"></a><a name="equal">**Equal**</a>
+
+  Returns the tensor resulted from performing the `equal` logical operation
+  elementwise on the input tensors `A` and `B`.
+  
+  If broadcasting is enabled, the right-hand-side argument will be broadcasted
+  to match the shape of left-hand-side argument. See the doc of `Add` for a
+  detailed description of the broadcasting rules.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
 ### <a name="Exp"></a><a name="exp">**Exp**</a>
 
   Calculates the exponential of the given input tensor, element-wise. This
@@ -961,6 +1056,8 @@ expect(node, inputs=[], outputs=[values],
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>Return the sequence output Y if and only if 1.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -1158,6 +1255,50 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="Greater"></a><a name="greater">**Greater**</a>
+
+  Returns the tensor resulted from performing the `greater` logical operation
+  elementwise on the input tensors `A` and `B`.
+  
+  If broadcasting is enabled, the right-hand-side argument will be broadcasted
+  to match the shape of left-hand-side argument. See the doc of `Add` for a
+  detailed description of the broadcasting rules.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
   Local Response Normalization. It normalizes over local input regions.
@@ -1247,6 +1388,8 @@ expect(node, inputs=[], outputs=[values],
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int</dt>
 <dd>Couple the input and forget gates if 1, default 0.</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>Return the sequence output Y if and only if 1.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -1324,6 +1467,50 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="Less"></a><a name="less">**Less**</a>
+
+  Returns the tensor resulted from performing the `less` logical operation
+  elementwise on the input tensors `A` and `B`.
+  
+  If broadcasting is enabled, the right-hand-side argument will be broadcasted
+  to match the shape of left-hand-side argument. See the doc of `Add` for a
+  detailed description of the broadcasting rules.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
 ### <a name="Log"></a><a name="log">**Log**</a>
 
   Calculates the natural log of the given input tensor, element-wise. This
@@ -1386,32 +1573,32 @@ expect(node, inputs=[], outputs=[values],
 <summary>matmul</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'MatMul',
-    inputs=['a', 'b'],
-    outputs=['c'],
-)
+    node = onnx.helper.make_node(
+        'MatMul',
+        inputs=['a', 'b'],
+        outputs=['c'],
+    )
 
-# 2d
-a = np.random.randn(3, 4).astype(np.float32)
-b = np.random.randn(4, 3).astype(np.float32)
-c = np.matmul(a, b)
-expect(node, inputs=[a, b], outputs=[c],
-       name='test_matmul_2d')
+    # 2d
+    a = np.random.randn(3, 4).astype(np.float32)
+    b = np.random.randn(4, 3).astype(np.float32)
+    c = np.matmul(a, b)
+    expect(node, inputs=[a, b], outputs=[c],
+           name='test_matmul_2d')
 
-# 3d
-a = np.random.randn(2, 3, 4).astype(np.float32)
-b = np.random.randn(2, 4, 3).astype(np.float32)
-c = np.matmul(a, b)
-expect(node, inputs=[a, b], outputs=[c],
-       name='test_matmul_3d')
+    # 3d
+    a = np.random.randn(2, 3, 4).astype(np.float32)
+    b = np.random.randn(2, 4, 3).astype(np.float32)
+    c = np.matmul(a, b)
+    expect(node, inputs=[a, b], outputs=[c],
+           name='test_matmul_3d')
 
-# 4d
-a = np.random.randn(1, 2, 3, 4).astype(np.float32)
-b = np.random.randn(1, 2, 4, 3).astype(np.float32)
-c = np.matmul(a, b)
-expect(node, inputs=[a, b], outputs=[c],
-       name='test_matmul_4d')
+    # 4d
+    a = np.random.randn(1, 2, 3, 4).astype(np.float32)
+    b = np.random.randn(1, 2, 4, 3).astype(np.float32)
+    c = np.matmul(a, b)
+    expect(node, inputs=[a, b], outputs=[c],
+           name='test_matmul_4d')
 ```
 
 </details>
@@ -1631,6 +1818,76 @@ expect(node, inputs=[a, b], outputs=[c],
 </dl>
 
 
+### <a name="Not"></a><a name="not">**Not**</a>
+
+  Returns the negation of the input tensor element-wise.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input/output to boolean tensors.</dd>
+</dl>
+
+
+### <a name="Or"></a><a name="or">**Or**</a>
+
+  Returns the tensor resulted from performing the `or` logical operation
+  elementwise on the input tensors `A` and `B`.
+  
+  If broadcasting is enabled, the right-hand-side argument will be broadcasted
+  to match the shape of left-hand-side argument. See the doc of `Add` for a
+  detailed description of the broadcasting rules.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+
 ### <a name="PRelu"></a><a name="prelu">**PRelu**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
@@ -1723,24 +1980,24 @@ expect(node, inputs=[a, b], outputs=[c],
 <summary>constant_pad</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Pad',
-    inputs=['x'],
-    outputs=['y'],
-    mode='constant',
-    value=1.2,
-    paddings=[0, 0, 0, 0, 1, 2, 3, 4],
-)
-x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-y = np.pad(
-    x,
-    pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
-    mode='constant',
-    constant_values=1.2,
-)
+    node = onnx.helper.make_node(
+        'Pad',
+        inputs=['x'],
+        outputs=['y'],
+        mode='constant',
+        value=1.2,
+        paddings=[0, 0, 0, 0, 1, 2, 3, 4],
+    )
+    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+    y = np.pad(
+        x,
+        pad_width=((0, 0), (0, 0), (1, 2), (3, 4)),
+        mode='constant',
+        constant_values=1.2,
+    )
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_constant_pad')
+    expect(node, inputs=[x], outputs=[y],
+           name='test_constant_pad')
 ```
 
 </details>
@@ -1750,23 +2007,23 @@ expect(node, inputs=[x], outputs=[y],
 <summary>reflection_and_edge_pad</summary>
 
 ```python
-for mode in ['edge', 'reflect']:
-    node = onnx.helper.make_node(
-        'Pad',
-        inputs=['x'],
-        outputs=['y'],
-        mode=mode,
-        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
-    )
-    x = np.random.randn(1, 3, 4, 5).astype(np.float32)
-    y = np.pad(
-        x,
-        pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
-        mode=mode,
-    )
+    for mode in ['edge', 'reflect']:
+        node = onnx.helper.make_node(
+            'Pad',
+            inputs=['x'],
+            outputs=['y'],
+            mode=mode,
+            paddings=[0, 0, 0, 0, 1, 1, 1, 1]
+        )
+        x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+        y = np.pad(
+            x,
+            pad_width=((0, 0), (0, 0), (1, 1), (1, 1)),
+            mode=mode,
+        )
 
-    expect(node, inputs=[x], outputs=[y],
-           name='test_{}_pad'.format(mode))
+        expect(node, inputs=[x], outputs=[y],
+               name='test_{}_pad'.format(mode))
 ```
 
 </details>
@@ -1836,6 +2093,8 @@ for mode in ['edge', 'reflect']:
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>Return the sequence output Y if and only if 1.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -2510,16 +2769,16 @@ for mode in ['edge', 'reflect']:
 <summary>relu</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Relu',
-    inputs=['x'],
-    outputs=['y'],
-)
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf)
+    node = onnx.helper.make_node(
+        'Relu',
+        inputs=['x'],
+        outputs=['y'],
+    )
+    x = np.random.randn(3, 4, 5).astype(np.float32)
+    y = np.clip(x, 0, np.inf)
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_relu')
+    expect(node, inputs=[x], outputs=[y],
+           name='test_relu')
 ```
 
 </details>
@@ -2710,20 +2969,20 @@ expect(node, inputs=[x], outputs=[y],
 <summary>slice</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Slice',
-    inputs=['x'],
-    outputs=['y'],
-    axes=[0, 1],
-    starts=[0, 0],
-    ends=[3, 10],
-)
+    node = onnx.helper.make_node(
+        'Slice',
+        inputs=['x'],
+        outputs=['y'],
+        axes=[0, 1],
+        starts=[0, 0],
+        ends=[3, 10],
+    )
 
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[0:3, 0:10]
+    x = np.random.randn(20, 10, 5).astype(np.float32)
+    y = x[0:3, 0:10]
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_slice')
+    expect(node, inputs=[x], outputs=[y],
+           name='test_slice')
 ```
 
 </details>
@@ -2733,19 +2992,19 @@ expect(node, inputs=[x], outputs=[y],
 <summary>slice_default_axes</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Slice',
-    inputs=['x'],
-    outputs=['y'],
-    starts=[0, 0, 3],
-    ends=[20, 10, 4],
-)
+    node = onnx.helper.make_node(
+        'Slice',
+        inputs=['x'],
+        outputs=['y'],
+        starts=[0, 0, 3],
+        ends=[20, 10, 4],
+    )
 
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[:, :, 3:4]
+    x = np.random.randn(20, 10, 5).astype(np.float32)
+    y = x[:, :, 3:4]
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_default_axes')
+    expect(node, inputs=[x], outputs=[y],
+           name='test_default_axes')
 ```
 
 </details>
@@ -2755,20 +3014,20 @@ expect(node, inputs=[x], outputs=[y],
 <summary>slice_neg</summary>
 
 ```python
-node = onnx.helper.make_node(
-    'Slice',
-    inputs=['x'],
-    outputs=['y'],
-    axes=[1],
-    starts=[0],
-    ends=[-1],
-)
+    node = onnx.helper.make_node(
+        'Slice',
+        inputs=['x'],
+        outputs=['y'],
+        axes=[1],
+        starts=[0],
+        ends=[-1],
+    )
 
-x = np.random.randn(20, 10, 5).astype(np.float32)
-y = x[:, 0:-1]
+    x = np.random.randn(20, 10, 5).astype(np.float32)
+    y = x[:, 0:-1]
 
-expect(node, inputs=[x], outputs=[y],
-       name='test_slice_neg')
+    expect(node, inputs=[x], outputs=[y],
+           name='test_slice_neg')
 ```
 
 </details>
@@ -3066,6 +3325,50 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Xor"></a><a name="xor">**Xor**</a>
+
+  Returns the tensor resulted from performing the `xor` logical operation
+  elementwise on the input tensors `A` and `B`.
+  
+  If broadcasting is enabled, the right-hand-side argument will be broadcasted
+  to match the shape of left-hand-side argument. See the doc of `Add` for a
+  detailed description of the broadcasting rules.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Left input tensor for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Right input tensor for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 
