@@ -47,6 +47,11 @@ OPERATOR_SCHEMA(ReduceSum)
     .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("sum"));
 
+OPERATOR_SCHEMA(ReduceSumSquare)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .FillUsing(ReduceDocGenerator("sum square"));
+
 OPERATOR_SCHEMA(ReduceMean)
     .NumInputs(1)
     .NumOutputs(1)
@@ -57,11 +62,27 @@ OPERATOR_SCHEMA(ReduceProd)
     .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("product"));
 
+OPERATOR_SCHEMA(ReduceLogSum)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .FillUsing(ReduceDocGenerator("log sum"));
+
 OPERATOR_SCHEMA(ReduceLogSumExp)
     .NumInputs(1)
     .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("log sum exponent"));
 
+OPERATOR_SCHEMA(ReduceL1)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .FillUsing(ReduceDocGenerator("L1 norm"));
+
+OPERATOR_SCHEMA(ReduceL2)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .FillUsing(ReduceDocGenerator("L2 norm"));
+
+    
 }  // namespace onnx
 
 namespace onnx {
