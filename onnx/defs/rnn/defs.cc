@@ -14,6 +14,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
         schema.Attr("alpha", "Optional scaling values used by some activation functions.", AttrType::FLOATS);
         schema.Attr("beta", "Optional scaling values used by some activation functions.", AttrType::FLOATS);
+        schema.Attr("output_sequence", "The sequence output Y is optional if 0. Default 0.", AttrType::INT);
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
@@ -58,8 +59,6 @@ Notations:
 `RBi` - R recurrence weight matrix for backward input gate
 `WBbi` - WR bias vectors for backward input gate
 `RBbi` - RR bias vectors for backward input gate
-
-`tanh(X)` - hyperbolic tangent of X
 `H` - Hidden state
 `num_directions` - 2 if direction == bidirectional else 1
 
@@ -80,7 +79,7 @@ Activation functions:
   parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
 
 Equations:
-  - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+  - Ht = Activation((Xt^T)*Wi + Ht-1*Ri + Wbi + Rbi)
 )DOC")
     .Attr("activations", "One (or two if bidirectional) activation function for "
           "input gate. The activation function must be one of the activation "
@@ -124,8 +123,6 @@ Notations:
 `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
 `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
 `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-`tanh(X)` - hyperbolic tangent of X
-`sigmoid(X)` - 1 / (1 + e^-X)
 `H` - Hidden state
 `num_directions` - 2 if direction == bidirectional else 1
 
@@ -146,9 +143,9 @@ Activation functions:
   parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
 
 Equations (GRU with default activations):
-  - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
-  - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
-  - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
+  - zt = sigmoid((Xt^T)*Wz + Ht-1*Rz + Wbz + Rbz)
+  - rt = sigmoid((Xt^T)*Wr + Ht-1*Rr + Wbr + Rbr)
+  - ht = tanh((Xt^T)*Wh + rt*(Ht-1*Rh + Rbh) + Wbh)
   - Ht = (1 - zt) (.) ht + it (.) Ht-1
 )DOC")
     .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
@@ -196,8 +193,6 @@ Notations:
 `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
 `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
 `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-`tanh(X)` - hyperbolic tangent of X
-`sigmoid(X)` - 1 / (1 + e^-X)
 `H` - Hidden state
 `num_directions` - 2 if direction == bidirectional else 1
 
@@ -218,11 +213,11 @@ Activation functions:
   parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
 
 Equations (forward LSTM with default activations and peepholes):
-  - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi (.) Ct-1 + Wbi + Rbi)
-  - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Pf (.) Ct-1 + Wbf + Rbf)
-  - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+  - it = sigmoid((Xt^T)*Wi + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+  - ft = sigmoid((Xt^T)*Wf + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+  - ct = tanh((Xt^T)*Wc + Ht-1*Rc + Wbc + Rbc)
   - Ct = ft (.) Ct-1 + it (.) ct
-  - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po (.) Ct + Wbo + Rbo)
+  - ot = sigmoid((Xt^T)*Wo + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
   - Ht = ot (.) tanh(Ct)
 )DOC")
     .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "

@@ -894,26 +894,46 @@
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-  `tanh(X)` - hyperbolic tangent of X
-  `sigmoid(X)` - 1 / (1 + e^-X)
   `H` - Hidden state
   `num_directions` - 2 if direction == bidirectional else 1
+  
+  Activation functions:
+    ReLU(x)                - max(0, x)
+    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    sigmoid(x)             - 1/(1 + e^{-x})
+    (Below are optional)
+    linear(x)              - alpha*x + beta
+    leakyReLU(x)           - x if x >= 0 else alpha * x
+    thresholdedReLU(x)     - x if x >= alpha else 0
+    PReLU(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    scaledTanh(x)          - alpha*tanh(beta*x)
+    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    softsign(x)            - x/(1 + |x|)
+    softplus(x)            - log(1 + e^x)
+    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
   
   Equations (GRU with default activations):
     - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
     - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
     - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
-    - H = (1 - zt) (.) ht + it (.) Ht-1
+    - Ht = (1 - zt) (.) ht + it (.) Ht-1
 
 #### Attributes
 
 <dl>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 3 (or 6 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions given above. See the equations for default.</dd>
+<dt><tt>alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions.</dd>
+<dt><tt>beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output Y is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -1174,10 +1194,24 @@
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
   `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-  `tanh(X)` - hyperbolic tangent of X
-  `sigmoid(X)` - 1 / (1 + e^-X)
   `H` - Hidden state
   `num_directions` - 2 if direction == bidirectional else 1
+  
+  Activation functions:
+    ReLU(x)                - max(0, x)
+    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    sigmoid(x)             - 1/(1 + e^{-x})
+    (NOTE: Below are optional)
+    linear(x)              - alpha*x + beta
+    leakyReLU(x)           - x if x >= 0 else alpha * x
+    thresholdedReLU(x)     - x if x >= alpha else 0
+    PReLU(xi)               - xi if xi >= 0 else alpha[i]* xi over dim 0
+    scaledTanh(x)          - alpha*tanh(beta*x)
+    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    softsign(x)            - x/(1 + |x|)
+    softplus(x)            - log(1 + e^x)
+    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
   
   Equations (forward LSTM with default activations and peepholes):
     - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi (.) Ct-1 + Wbi + Rbi)
@@ -1185,13 +1219,17 @@
     - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
     - Ct = ft (.) Ct-1 + it (.) ct
     - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po (.) Ct + Wbo + Rbo)
-    - H = ot (.) tanh(Ct)
+    - Ht = ot (.) tanh(Ct)
 
 #### Attributes
 
 <dl>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 4 (or 8 if bidirectional) activation functions for input, output, forget, and cell gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions given above. See the equations for default.</dd>
+<dt><tt>alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions.</dd>
+<dt><tt>beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
@@ -1200,6 +1238,8 @@
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int</dt>
 <dd>Couple the input and forget gates if 1, default 0.</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output Y is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -1743,10 +1783,24 @@
   `RBi` - R recurrence weight matrix for backward input gate
   `WBbi` - WR bias vectors for backward input gate
   `RBbi` - RR bias vectors for backward input gate
-  `ReLU(X)` - max(X, 0)
-  `tanh(X)` - hyperbolic tangent of X
   `H` - Hidden state
   `num_directions` - 2 if direction == bidirectional else 1
+  
+  Activation functions:
+    ReLU(x)                - max(0, x)
+    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    sigmoid(x)             - 1/(1 + e^{-x})
+    (Below are optional)
+    linear(x)              - alpha*x + beta
+    leakyReLU(x)           - x if x >= 0 else alpha * x
+    thresholdedReLU(x)     - x if x >= alpha else 0
+    PReLU(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    scaledTanh(x)          - alpha*tanh(beta*x)
+    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    softsign(x)            - x/(1 + |x|)
+    softplus(x)            - log(1 + e^x)
+    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
   
   Equations:
     - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
@@ -1754,12 +1808,18 @@
 #### Attributes
 
 <dl>
-<dt><tt>activation</tt> : string</dt>
-<dd>One (or two if bidirectional) activation function for input gate. It must be one of tanh and ReLU. Default `tanh`.</dd>
+<dt><tt>activations</tt> : string</dt>
+<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions given above. Default `tanh`.</dd>
+<dt><tt>alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions.</dd>
+<dt><tt>beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output Y is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
