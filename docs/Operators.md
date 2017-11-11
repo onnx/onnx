@@ -1691,7 +1691,7 @@ expect(node, inputs=[a, b], outputs=[c],
 #### Outputs
 
 <dl>
-<dt><tt>sum</tt> : T</dt>
+<dt><tt>mean</tt> : T</dt>
 <dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
@@ -1720,7 +1720,7 @@ expect(node, inputs=[a, b], outputs=[c],
 #### Outputs
 
 <dl>
-<dt><tt>max</tt> : T</dt>
+<dt><tt>min</tt> : T</dt>
 <dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
