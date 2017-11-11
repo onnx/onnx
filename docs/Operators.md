@@ -35,6 +35,7 @@
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Less">Less</a>
 * <a href="#Log">Log</a>
+* <a href="#LpNormalization">LpNormalization</a>
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
@@ -85,7 +86,6 @@
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
-* <a href="#LpNormalization"><sub>experimental</sub> LpNormalization</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 
@@ -1525,6 +1525,41 @@ expect(node, inputs=[], outputs=[values],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The natural log of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
+
+  Given a matrix, apply Lp-normalization along the provided axis.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
+<dt><tt>p</tt> : float</dt>
+<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input matrix</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Matrix after normalization</dd>
 </dl>
 
 #### Type Constraints
@@ -3090,13 +3125,11 @@ expect(node, inputs=[x], outputs=[y],
 <dd>length of each output</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs
 
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>The tensor to split</dd>
-<dt><tt>split</tt> : T</dt>
-<dd>Optional list of output lengths (see also arg 'split')</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
@@ -3678,41 +3711,6 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="LpNormalization"></a><a name="lpnormalization">**<sub>experimental</sub> LpNormalization**</a>
-
-  Given a matrix, apply Lp-normalization along the provided axis.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
-<dt><tt>p</tt> : float</dt>
-<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input matrix</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Matrix after normalization</dd>
 </dl>
 
 #### Type Constraints
