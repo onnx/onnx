@@ -44,11 +44,6 @@ void check_value_info(const ValueInfoProto& value_info, int ir_version) {
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-    case TypeProto::kSparseTensorType: {
-      const auto& type = value_info.type().sparse_tensor_type();
-      enforce_has_field(type, elem_type);
-      enforce_has_field(type, shape);
-    } break;
     default:
       fail_check("Unrecognized type value case: ", value_case);
   }
@@ -243,6 +238,15 @@ void check_model(const ModelProto& model, int ir_version) {
   }
   if (model.ir_version() > ir_version) {
     fail_check("Your model ir_version is higher than the checker's.");
+  }
+  if (model.metadata_props_size() > 1) {
+    std::unordered_set<std::string> keys;
+    for (const StringStringEntryProto &entry : model.metadata_props()) {
+      auto i = keys.insert(entry.key());
+      if (!i.second) {
+        fail_check("Your model has duplicate keys in metadata_props.");
+      }
+    }
   }
   check_graph(model.graph(), model.ir_version());
 }

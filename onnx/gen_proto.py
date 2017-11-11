@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import io
 import os
 import re
 
@@ -17,22 +18,31 @@ autogen_header = """\
 
 IF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#if\s+ONNX-ML\s*$')
 ENDIF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endif\s*$')
+ELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#else\s*$')
 
 def process_ifs(lines, onnx_ml):
-    in_if = False
+    in_if = 0
     for line in lines:
         if IF_ONNX_ML_REGEX.match(line):
-            assert not in_if
-            in_if = True
+            assert 0 == in_if
+            in_if = 1
+        elif ELSE_ONNX_ML_REGEX.match(line):
+            assert 1 == in_if
+            in_if = 2
         elif ENDIF_ONNX_ML_REGEX.match(line):
-            assert in_if
-            in_if = False
+            assert (1 == in_if or 2 == in_if)
+            in_if = 0
         else:
-            if not in_if or (in_if and onnx_ml):
+            if 0 == in_if:
+                yield line
+            elif (1 == in_if and onnx_ml):
+                yield line
+            elif (2 == in_if and not onnx_ml):
                 yield line
 
 PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
 OPTIONAL_REGEX = re.compile(r'(\s*)optional\s(.*)$')
+IMPORT_REGEX = re.compile(r'(\s*)import\s*"([^"]*)\.proto";\s*$')
 
 def convert_to_proto3(lines):
     for line in lines:
@@ -42,13 +52,20 @@ def convert_to_proto3(lines):
             yield m.group(1) + 'syntax = "proto3";'
             continue
 
-        # Remove optinoal keywords
+        # Remove optional keywords
         m = OPTIONAL_REGEX.match(line)
         if m:
             yield m.group(1) + m.group(2)
             continue
 
+        # Rewrite import
+        m = IMPORT_REGEX.match(line)
+        if m:
+            yield m.group(1) + 'import "{}.proto3";'.format(m.group(2))
+            continue
+
         yield line
+
 
 def translate(source, proto, onnx_ml):
     lines = source.splitlines()
@@ -59,26 +76,40 @@ def translate(source, proto, onnx_ml):
         assert proto == 2
     return "\n".join(lines)  # TODO: not Windows friendly
 
-def main():
-    onnx_proto_in = os.path.join(os.path.dirname(__file__), "onnx.in.proto")
-    onnx_proto = os.path.join(os.path.dirname(__file__), "onnx.proto")
-    onnx_ml_proto = os.path.join(os.path.dirname(__file__), "onnx-ml.proto")
-    onnx_proto3 = os.path.join(os.path.dirname(__file__), "onnx.proto3")
-    onnx_ml_proto3 = os.path.join(os.path.dirname(__file__), "onnx-ml.proto3")
-    with open(onnx_proto_in, 'r') as fin:
+def qualify(f):
+    return os.path.join(os.path.dirname(__file__), f)
+
+def convert(stem, do_onnx_ml=False):
+    proto_in = qualify("{}.in.proto".format(stem))
+    proto = qualify("{}.proto".format(stem))
+    proto3 = qualify("{}.proto3".format(stem))
+    print("Processing {}".format(proto_in))
+
+    with io.open(proto_in, 'r') as fin:
         source = fin.read()
-        with open(onnx_proto, 'w') as fout:
+        print("Writing {}".format(proto))
+        with io.open(proto, 'w', newline='') as fout:
             fout.write(autogen_header)
             fout.write(translate(source, proto=2, onnx_ml=False))
-        with open(onnx_ml_proto, 'w') as fout:
-            fout.write(autogen_header)
-            fout.write(translate(source, proto=2, onnx_ml=True))
-        with open(onnx_proto3, 'w') as fout:
+        print("Writing {}".format(proto3))
+        with io.open(proto3, 'w', newline='') as fout:
             fout.write(autogen_header)
             fout.write(translate(source, proto=3, onnx_ml=False))
-        with open(onnx_ml_proto3, 'w') as fout:
-            fout.write(autogen_header)
-            fout.write(translate(source, proto=3, onnx_ml=True))
+        if do_onnx_ml:
+            ml_proto = qualify("{}-ml.proto".format(stem))
+            ml_proto3 = qualify("{}-ml.proto3".format(stem))
+            print("Writing {}".format(ml_proto))
+            with io.open(ml_proto, 'w', newline='') as fout:
+                fout.write(autogen_header)
+                fout.write(translate(source, proto=2, onnx_ml=True))
+            print("Writing {}".format(ml_proto3))
+            with io.open(ml_proto3, 'w', newline='') as fout:
+                fout.write(autogen_header)
+                fout.write(translate(source, proto=3, onnx_ml=True))
+
+def main():
+    convert("onnx", do_onnx_ml=True)
+    convert("onnx-operators", do_onnx_ml=True)
 
 if __name__ == '__main__':
     import argparse
