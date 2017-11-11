@@ -28,12 +28,12 @@ ccache -z
 pip install . --install-option="--onnxml=1"
 ccache -s
 
-# onnx tests
+# run onnx tests again
 cd $onnx_dir
 pip install pytest-cov nbval
 pytest
 
-# check auto-gen files up-to-date
+# check auto-gen files up-to-date again
 python onnx/defs/gen_doc.py -o docs/Operators.md
 python onnx/gen_proto.py
 backend-test-tools generate-data

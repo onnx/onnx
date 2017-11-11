@@ -56,7 +56,7 @@ way to get these dependencies is via
 conda install -c conda-forge protobuf numpy
 ```
 
-You can then install ONNX from PyPi:
+You can then install ONNX from PyPi: (Note: Add install option --install-option="--onnxml=1" for onnx-ml)
 
 ```
 pip install onnx
@@ -111,7 +111,7 @@ way to get these dependencies is via
 conda install -c conda-forge protobuf numpy
 ```
 
-During development it's convenient to install ONNX in development mode:
+During development it's convenient to install ONNX in development mode:(Note: Add install option --install-option="--onnxml=1" for onnx-ml)
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
