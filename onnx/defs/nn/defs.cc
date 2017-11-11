@@ -7,15 +7,16 @@ using namespace onnx;
 using AttrType = onnx::OpSchema::AttrType;
 
 namespace onnx {
-    std::function<void(OpSchema&)> AveragePoolOpSchemaGenerator(const char* name) {
+    std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
- {name} consumes an input tensor X and applies average pooling across the
+ {name} consumes an input tensor X and applies {opName} pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
- Average pooling consisting of averaging all values of a subset of the
- input tensor according to the kernel size and downsampling the
+ {opName} pooling consisting of computing the {opName} on all values of a 
+ subset of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
+            ReplaceAll(doc, "{opName}", opName);            
             schema.SetDoc(doc);
             schema.NumInputs(1);
             schema.NumOutputs(1);
@@ -51,7 +52,7 @@ namespace onnx {
                          "size.", "T");
             schema.Output(0,
                           "Y",
-                          "Output data tensor from average pooling across "
+                          "Output data tensor from average or max pooling across "
                           "the input tensor. Dimensions will vary based "
                           "on various kernel, stride, and pad sizes.", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -60,69 +61,11 @@ namespace onnx {
     }
 
     OPERATOR_SCHEMA(AveragePool)
-        .FillUsing(AveragePoolOpSchemaGenerator("AveragePool"));
-
-} // namespace onnx
-
-namespace onnx {
-    std::function<void(OpSchema&)> MaxPoolOpSchemaGenerator(const char* name) {
-        return [=](OpSchema& schema) {
-            std::string doc = R"DOC(
- {name} consumes an input tensor X and applies max pooling across the
- the tensor according to kernel sizes, stride sizes, and pad lengths.
- Max pooling consisting of getting the max value of a subset of the
- input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing.)DOC";
-            ReplaceAll(doc, "{name}", name);
-            schema.SetDoc(doc);
-            schema.NumInputs(1);
-            schema.NumOutputs(1);
-            schema.Attr("kernel_shape",
-                        "The size of the kernel along each axis.",
-                        AttrType::INTS);
-            schema.Attr("strides",
-                        "Stride along each axis.",
-                        AttrType::INTS);
-            schema.Attr("auto_pad",
-                        "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
-                        "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
-                        "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding.",
-                        AttrType::STRING);
-            schema.Attr("pads",
-                        "Padding for lower and upper side along each axis, it can take any value greater "
-                        "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. So `pads` will have two values per axis, "
-                        "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis. "
-                        "This attribute cannot be used simultaneously with auto_pad attribute.",
-                        AttrType::INTS);
-            schema.Attr("dilations",
-                        "Dilation along each axis, 1 means no dilation.",
-                        AttrType::INTS);
-            schema.Input(0,
-                         "X",
-                         "Input data tensor from the previous operator; "
-                         "dimensions for image case are (N x C x H x W), "
-                         "where N is the batch size, C is the number of "
-                         "channels, and H and W are the height and the "
-                         "width of the data. For non image case, the "
-                         "dimension are in the form of "
-                         "(N x C x D1 x D2 ... Dn), where N is the "
-                         "batch size.", "T");
-            schema.Output(0,
-                          "Y",
-                          "Output data tensor from max pooling across the input "
-                          "tensor. Dimensions will vary based on various kernel, stride, and pad "
-                          "sizes.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
-        };
-    }
+        .FillUsing(PoolOpSchemaGenerator("AveragePool", "average"));
 
     OPERATOR_SCHEMA(MaxPool)
-        .FillUsing(MaxPoolOpSchemaGenerator("MaxPool"));
-
+        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
+        
 } // namespace onnx
 
 namespace onnx {
@@ -157,9 +100,6 @@ namespace onnx {
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
                         "and the second value corresponding to the number of pixels add at the end of the axis.",
-                        AttrType::INTS);
-            schema.Attr("dilations",
-                        "Dilation along each axis, 1 means no dilation.",
                         AttrType::INTS);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.0.",
