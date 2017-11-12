@@ -17,6 +17,7 @@
 * <a href="#Constant">Constant</a>
 * <a href="#Conv">Conv</a>
 * <a href="#ConvTranspose">ConvTranspose</a>
+* <a href="#DepthToSpace">DepthToSpace</a>
 * <a href="#Div">Div</a>
 * <a href="#Dropout">Dropout</a>
 * <a href="#Elu">Elu</a>
@@ -69,12 +70,14 @@
 * <a href="#Sigmoid">Sigmoid</a>
 * <a href="#Slice">Slice</a>
 * <a href="#Softmax">Softmax</a>
+* <a href="#SpaceToDepth">SpaceToDepth</a>
 * <a href="#Split">Split</a>
 * <a href="#Sqrt">Sqrt</a>
 * <a href="#Squeeze">Squeeze</a>
 * <a href="#Sub">Sub</a>
 * <a href="#Sum">Sum</a>
 * <a href="#Tanh">Tanh</a>
+* <a href="#Tile">Tile</a>
 * <a href="#Transpose">Transpose</a>
 * <a href="#Xor">Xor</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
@@ -748,6 +751,42 @@ expect(node, inputs=[], outputs=[values],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
+
+  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
+  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
+  the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+  and width dimensions.
+
+#### Attributes
+
+<dl>
+<dt><tt>blocksize</tt> : int</dt>
+<dd>Blocks of [blocksize, blocksize] are moved.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
 </dl>
 
 
@@ -3074,6 +3113,41 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
+### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
+
+  SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
+  this op outputs a copy of the input tensor where values from the height and width dimensions 
+  are moved to the depth dimension.
+
+#### Attributes
+
+<dl>
+<dt><tt>blocksize</tt> : int</dt>
+<dd>Blocks of [blocksize, blocksize] are moved.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth, H is the height and W is the width.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Split"></a><a name="split">**Split**</a>
 
   Split a tensor into a list of tensors, along the specified
@@ -3284,6 +3358,36 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Tile"></a><a name="tile">**Tile**</a>
+
+  Repeat the elements of a tensor along an axis.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of any shape.</dd>
+<dt><tt>tiles</tt> : T</dt>
+<dd>Number of repeated copies to make of the input tensor.</dd>
+<dt><tt>axis</tt> : T</dt>
+<dd>Axis along which to repeat.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor of same shape and type as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
 </dl>
 
 
