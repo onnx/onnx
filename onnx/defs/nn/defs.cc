@@ -374,30 +374,22 @@ Output case #2: Y (test mode)
 
 OPERATOR_SCHEMA(InstanceNormalization)
     .NumInputs(3)
-    .NumOutputs(1, 3)
+    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Carries out instance normalization as described in the paper
-https://arxiv.org/abs/1607.08022. Depending on the mode it is being run,
-there are multiple cases for the number of outputs, which we list below:
+https://arxiv.org/abs/1607.08022. 
 
-* Output case #1: output
-* Output case #2: output, saved_mean
-  - don't use, doesn't make sense but won't crash
-* Output case #3: output, saved_mean, saved_inv_stdev
-  - Makes sense for training only
+y = sacle * (x - mean) / sqrt(variance + epsilon) + bias, 
+where mean and bias are computed per instance. 
 
-For training mode, type 3 is faster in the sense that for the backward
-pass, it is able to reuse the saved mean and inv_stdev in the gradient
-computation.
 )DOC")
     .Attr("epsilon",
         "The epsilon value to use to avoid division by zero.",
         AttrType::FLOAT)
     .Input(0,
         "input",
-        "The input 4-dimensional tensor of shape NCHW or NHWC depending "
-        "on the order parameter.", "T")
+        "The input 4-dimensional tensor of shape NCHW.", "T")
     .Input(1,
         "scale",
         "The input 1-dimensional scale tensor of size C.", "T")
@@ -407,14 +399,6 @@ computation.
     .Output(0,
         "output",
         "The output 4-dimensional tensor of the same shape as input.", "T")
-    .Output(1,
-        "saved_mean",
-        "Optional saved mean used during training to speed up gradient "
-        "computation. Should not be used for testing.", "T")
-    .Output(2,
-        "saved_inv_stdev",
-        "Optional saved inverse stdev used during training to speed up "
-        "gradient computation. Should not be used for testing.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
