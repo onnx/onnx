@@ -29,6 +29,7 @@
 * <a href="#Gather">Gather</a>
 * <a href="#Gemm">Gemm</a>
 * <a href="#GlobalAveragePool">GlobalAveragePool</a>
+* <a href="#GlobalLpPool">GlobalLpPool</a>
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
 * <a href="#Greater">Greater</a>
 * <a href="#LRN">LRN</a>
@@ -36,9 +37,11 @@
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Less">Less</a>
 * <a href="#Log">Log</a>
+* <a href="#LpPool">LpPool</a>
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
 * <a href="#MaxPool">MaxPool</a>
+* <a href="#MaxRoiPool">MaxRoiPool</a>
 * <a href="#Mean">Mean</a>
 * <a href="#Min">Min</a>
 * <a href="#Mul">Mul</a>
@@ -360,8 +363,8 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
   AveragePool consumes an input tensor X and applies average pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Average pooling consisting of averaging all values of a subset of the
-   input tensor according to the kernel size and downsampling the
+   average pooling consisting of computing the average on all values of a 
+   subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
 #### Attributes
@@ -388,7 +391,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
 </dl>
 
 #### Type Constraints
@@ -1264,6 +1267,41 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="GlobalLpPool"></a><a name="globallppool">**GlobalLpPool**</a>
+
+  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
+   the values in the same channel. This is equivalent to LpPool with kernel size
+   equal to the spatial dimension of input tensor.
+
+#### Attributes
+
+<dl>
+<dt><tt>p</tt> : float</dt>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor from pooling across the input tensor. Dimensions will be N x C x 1 x 1</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="GlobalMaxPool"></a><a name="globalmaxpool">**GlobalMaxPool**</a>
 
   GlobalMaxPool consumes an input tensor X and applies max pooling across the
@@ -1574,6 +1612,51 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="LpPool"></a><a name="lppool">**LpPool**</a>
+
+  LpPool consumes an input tensor X and applies Lp pooling across the
+   the tensor according to kernel sizes, stride sizes, and pad lengths.
+   Lp pooling consisting of computing the Lp norm on all values of a subset 
+   of the input tensor according to the kernel size and downsampling the
+   data into the output tensor Y for further processing.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string</dt>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>p</tt> : float</dt>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor from Lp pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="MatMul"></a><a name="matmul">**MatMul**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
@@ -1672,8 +1755,8 @@ expect(node, inputs=[a, b], outputs=[c],
 
   MaxPool consumes an input tensor X and applies max pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Average pooling consisting of averaging all values of a subset of the
-   input tensor according to the kernel size and downsampling the
+   max pooling consisting of computing the max on all values of a 
+   subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
 #### Attributes
@@ -1681,8 +1764,6 @@ expect(node, inputs=[a, b], outputs=[c],
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding.</dd>
-<dt><tt>dilations</tt> : list of ints</dt>
-<dd>Dilation along each axis, 1 means no dilation.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -1702,7 +1783,46 @@ expect(node, inputs=[a, b], outputs=[c],
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
+
+  ROI max pool consumes an input tensor X and region of interests (RoIs) to 
+   apply max pooling across each RoI, to produce output 4-D tensor of shape 
+   (num_rois, channels, pooled_shape[0], pooled_shape[1]).
+
+#### Attributes
+
+<dl>
+<dt><tt>pooled_shape</tt> : list of ints</dt>
+<dd>ROI pool output shape (height, width).</dd>
+<dt><tt>spatial_scale</tt> : float</dt>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T</dt>
+<dd>RoIs (Regions of Interest) to pool over. Should be a 2-D tensor of shape (num_rois, 5) given as [[batch_id, x1, y1, x2, y2], ...].</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).</dd>
 </dl>
 
 #### Type Constraints
