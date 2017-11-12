@@ -7,15 +7,16 @@ using namespace onnx;
 using AttrType = onnx::OpSchema::AttrType;
 
 namespace onnx {
-    std::function<void(OpSchema&)> AveragePoolOpSchemaGenerator(const char* name) {
+    std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
- {name} consumes an input tensor X and applies average pooling across the
+ {name} consumes an input tensor X and applies {opName} pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
- Average pooling consisting of averaging all values of a subset of the
- input tensor according to the kernel size and downsampling the
+ {opName} pooling consisting of computing the {opName} on all values of a 
+ subset of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
+            ReplaceAll(doc, "{opName}", opName);            
             schema.SetDoc(doc);
             schema.NumInputs(1);
             schema.NumOutputs(1);
@@ -51,7 +52,7 @@ namespace onnx {
                          "size.", "T");
             schema.Output(0,
                           "Y",
-                          "Output data tensor from average pooling across "
+                          "Output data tensor from average or max pooling across "
                           "the input tensor. Dimensions will vary based "
                           "on various kernel, stride, and pad sizes.", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -60,18 +61,21 @@ namespace onnx {
     }
 
     OPERATOR_SCHEMA(AveragePool)
-        .FillUsing(AveragePoolOpSchemaGenerator("AveragePool"));
+        .FillUsing(PoolOpSchemaGenerator("AveragePool", "average"));
 
+    OPERATOR_SCHEMA(MaxPool)
+        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
+        
 } // namespace onnx
 
 namespace onnx {
-    std::function<void(OpSchema&)> MaxPoolOpSchemaGenerator(const char* name) {
+    std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
- {name} consumes an input tensor X and applies max pooling across the
+ {name} consumes an input tensor X and applies Lp pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
- Average pooling consisting of averaging all values of a subset of the
- input tensor according to the kernel size and downsampling the
+ Lp pooling consisting of computing the Lp norm on all values of a subset 
+ of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
@@ -87,19 +91,19 @@ namespace onnx {
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding.",
+                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
+                        "from the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis. "
-                        "This attribute cannot be used simultaneously with auto_pad attribute.",
+                        "and the second value corresponding to the number of pixels add at the end of the axis.",
                         AttrType::INTS);
-            schema.Attr("dilations",
-                        "Dilation along each axis, 1 means no dilation.",
-                        AttrType::INTS);
+            schema.Attr("p",
+                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
+                        AttrType::FLOAT);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -112,7 +116,7 @@ namespace onnx {
                          "batch size.", "T");
             schema.Output(0,
                           "Y",
-                          "Output data tensor from max pooling across the input "
+                          "Output data tensor from Lp pooling across the input "
                           "tensor. Dimensions will vary based on various kernel, stride, and pad "
                           "sizes.", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -120,9 +124,50 @@ namespace onnx {
         };
     }
 
-    OPERATOR_SCHEMA(MaxPool)
-        .FillUsing(MaxPoolOpSchemaGenerator("MaxPool"));
+    OPERATOR_SCHEMA(LpPool)
+        .FillUsing(LpPoolOpSchemaGenerator("LpPool"));
 
+} // namespace onnx
+
+namespace onnx {
+    std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
+        return [=](OpSchema& schema) {
+            std::string doc = R"DOC(
+ ROI {name} pool consumes an input tensor X and region of interests (RoIs) to 
+ apply {name} pooling across each RoI, to produce output 4-D tensor of shape 
+ (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
+            ReplaceAll(doc, "{name}", name);
+            schema.SetDoc(doc);
+            schema.NumInputs(2);
+            schema.NumOutputs(1);
+            schema.Attr("pooled_shape",
+                        "ROI pool output shape (height, width).",
+                        AttrType::INTS);
+            schema.Attr("spatial_scale",
+                        "Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.",
+                        AttrType::FLOAT);
+            schema.Input(0,
+                         "X",
+                         "Input data tensor from the previous operator; "
+                         "dimensions for image case are (N x C x H x W), "
+                         "where N is the batch size, C is the number of "
+                         "channels, and H and W are the height and the "
+                         "width of the data.", "T");
+            schema.Input(1,
+                         "rois",
+                         "RoIs (Regions of Interest) to pool over. Should "
+                         "be a 2-D tensor of shape (num_rois, 5) given as "
+                         "[[batch_id, x1, y1, x2, y2], ...].", "T");
+            schema.Output(0,
+                          "Y",
+                          "RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).", "T");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                "Constrain input and output types to float tensors.");
+        };
+    }
+
+    OPERATOR_SCHEMA(MaxRoiPool)
+        .FillUsing(RoiPoolOpSchemaGenerator("max"));
 } // namespace onnx
 
 namespace onnx {
@@ -269,7 +314,6 @@ and computes the output.)DOC";
 
 } // namespace onnx
 
-
 namespace onnx {
   std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char* op_type, const char* op) {
         return [=](OpSchema& schema) {
@@ -306,6 +350,43 @@ namespace onnx {
   .FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max"));
 } // namespace onnx
 
+namespace onnx {
+  std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const char* op_type, const char* op) {
+        return [=](OpSchema& schema) {
+            std::string doc = R"DOC(
+ Global{op_type} consumes an input tensor X and applies {op} pooling across the
+ the values in the same channel. This is equivalent to {op_type} with kernel size
+ equal to the spatial dimension of input tensor.)DOC";
+            ReplaceAll(doc, "{op_type}", op_type);
+            ReplaceAll(doc, "{op}", op);
+            schema.SetDoc(doc);
+            schema.NumInputs(1);
+            schema.NumOutputs(1);
+            schema.Attr("p",
+                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
+                        AttrType::FLOAT);
+            schema.Input(0,
+                         "X",
+                         "Input data tensor from the previous operator; "
+                         "dimensions for image case are (N x C x H x W), "
+                         "where N is the batch size, C is the number of "
+                         "channels, and H and W are the height and the width "
+                         "of the data. For non image case, the dimension are "
+                         "in the form of (N x C x D1 x D2 ... Dn), "
+                         "where N is the batch size.", "T");
+            schema.Output(0,
+                          "Y",
+                          "Output data tensor from pooling across the input "
+                          "tensor. Dimensions will be N x C x 1 x 1", "T");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                "Constrain input and output types to float tensors.");
+            schema.SetDoc(doc);
+        };
+    }
+  OPERATOR_SCHEMA(GlobalLpPool)
+  .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
+} // namespace onnx
+
 OPERATOR_SCHEMA(BatchNormalization)
     .NumInputs(5)
     .NumOutputs({ 1, 5 })
@@ -321,7 +402,7 @@ Output case #2: Y (test mode)
     .Attr("spatial",
         "If true, compute the mean and variance across all spatial elements "
         "If false, compute the mean and variance across per feature.",
-    AttrType::INT)
+        AttrType::INT)
     .Attr("is_test",
         "If set to nonzero, run spatial batch normalization in test mode.",
         AttrType::INT)
