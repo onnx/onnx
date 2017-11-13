@@ -375,59 +375,6 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
-// A ValueProto represents a value that may be serialized into a model.
-message ValueProto {
-
-  message KeyValuePairProto {
-    oneof key {
-      string s = 1;
-      int32 i32 = 2;
-      int64 i64 = 3;
-      uint64 ui64 = 4;
-    };
-    ValueProto value = 100;
-  }
-
-  // Defines a map in its serialized format.
-  // A record is a sequence of zero or more
-  // key/value pairs all of which have unique
-  // keys
-  message MapProto {
-    repeated KeyValuePairProto key_value_pairs = 1;
-  }
-
-  // Alternate space-efficient encoding of map that MAY be used
-  // for maps whose value type is a scalar.
-  message ScalarMapProto {
-    // keys.DataType must be an integral type or string
-    repeated TensorProto keys = 1;
-
-    // No restriction on data type, keys.length must equal values.length
-    repeated TensorProto values = 2;
-  }
-
-  // Defines a sequence in its serialized format.
-  // A sequence is a list of zero or more
-  // tensors, maps, records, or subsequences.
-  message SequenceProto {
-    repeated ValueProto elems = 1;
-  }
-
-  oneof value {
-    // A dense tensor (or scalar).
-    TensorProto dense_tensor = 1;
-
-    // A sequence.
-    SequenceProto seq = 4;
-
-    // A map.
-    MapProto map = 6;
-
-    // A map.
-    ScalarMapProto scalar_map = 7;
-  }
-}
-
 // Define the types.
 message TypeProto {
   // Defines a tensor shape. A dimension can be either an integer value
