@@ -375,7 +375,6 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
-
 // Define the types.
 message TypeProto {
   // Defines a tensor shape. A dimension can be either an integer value
