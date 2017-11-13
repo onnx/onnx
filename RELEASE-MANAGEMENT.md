@@ -2,22 +2,14 @@
 
 This describes the process by which versions of ONNX are officially released to the public.
 
-ISSUE: How do we manage IR and operator version #'s for a given release/pre-release both pre-declaration and post-declaration?
+Releases
+--------
 
-ISSUE: How do we use experimental on operators (or potentially IR features) for a given release/pre-release?
+Releases are versioned according to docs/Versioning.md. This describes IR and operator versioning policies, as well as a propose how models themselves should be versioned.
 
-ISSUE: How do we communicate schedules and exit criteria for a given pre-release/release?
+The GitHub repo for ONNX provides release branches where the project is stabilized as per the process described here. Release notes are used to communicate the stability and status of a release. The master branch will be used to continue work for subsequent releases.
 
-ISSUE: How do we stablize one pre-release/release while we are working on subsequent ones?
-
-ISSUE: which files should be included? Probably an archive of all files (minus tests if they get large). How about protoc targets?
-
-### Fodder from versioning.md that belongs here somewhere.
-Per the rules of SemVer 2.0, during the initial development of ONNX:
-* We use a MAJOR version of 0 for both the IR version and operator version.
-* We will only increment the MINOR version in the face of either a breaking change as defined in this specification or the need to stabilize a version for specific engineering purposes.
-
-Once we declare a stable/released version of ONNX (e.g., we hit 1.0.0), we will adhere to the standard SemVer rules for versioning.
+Major, minor and patch releases will have branch names and version numbers reflecting the nature of the change as per semantic versioning definitions.
 
 Workflow
 --------

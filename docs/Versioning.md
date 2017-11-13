@@ -39,20 +39,7 @@ For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-pack
 
 For example, 1.2.345 is represented as 0x01020159.
 
-The prerelease and build metadata are stored as distinct string fields. For example:
-
-    optional int32 model_version = x;
-    optional string model_prerelease = y;
-    optional string model_build_metadata = z;
-
-The SemVer value 1.2.345-alpha.1+mips.dbg would be represented as:
-
-    model_version: 0x01020159,
-    model_prerelease: "alpha.1",
-    model_build_metadata: "mips.dbg"
-
-An absent prerelease or build_metadata field imply no corresponding component in the SemVer value.
-
+The prerelease and build metadata aren't stored in the model.
 
 ## IR versioning
 
@@ -90,9 +77,12 @@ ONNX specification. The union of the operator sets specified by a given model MU
 
 How nodes bind to operator declarations is strictly defined and are designed to increase model compatibilitey across ONNX implementations (appealing to the conservative clause of the robustnes principle). 
 
-How ONNX implementations bind an operator declaration to specific implementation is outside the scope
-of this specification.  Implementations of ONNX MAY elect 
-to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle. 
+How ONNX implementations bind an operator declaration to specific implementation is outside the scope of this specification.
+Implementations of ONNX MAY elect to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle.
+
+Implementations and models MAY provide experimental operators by agreeing to use operators in an experimental domain.
+
+Implementations and models MAY provide experimental IR features by agreeing to use fields from reserved ranges.
 
 ## Model versioning
 
@@ -127,4 +117,3 @@ ISSUE: what's our policy when a model takes a dependency on new `IR_VERSION` cha
 
 Assuming that there are no breaking changes to the signature of the model's graph or any operator dependencies, the shape and contents of the graph can change freely provided there are no semantic changes to the model. However, changes to the shape and contents of the graph can impact model accuracy and/or model performance.
 
-ISSUE: what's our policy for accuracy or perf changes?
