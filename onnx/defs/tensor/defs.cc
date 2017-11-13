@@ -257,3 +257,64 @@ Example:
     .Output(0, "OUTPUT", "Tensor after padding.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(SpaceToDepth)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr("blocksize",
+          "Blocks of [blocksize, blocksize] are moved.",
+          AttrType::INT)
+    .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
+this op outputs a copy of the input tensor where values from the height and width dimensions 
+are moved to the depth dimension.
+)DOC")
+    .Input(0,
+           "input", 
+           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+           ", H is the height and W is the width.", "T")
+    .Output(0,
+            "output", 
+            "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input types to float tensors.");
+
+OPERATOR_SCHEMA(DepthToSpace)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr("blocksize",
+          "Blocks of [blocksize, blocksize] are moved.",
+          AttrType::INT)
+    .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
+This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
+the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+and width dimensions.
+)DOC")
+    .Input(0,
+           "input", 
+           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+           ", H is the height and W is the width.", "T")
+    .Output(0,
+            "output", 
+            "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input types to float tensors.");
+
+OPERATOR_SCHEMA(Tile)
+    .NumInputs(3)
+    .NumOutputs(1)
+    .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
+    .Input(0,
+           "input",
+           "Input tensor of any shape.", "T")
+    .Input(1,
+           "tiles",
+           "Number of repeated copies to make of the input tensor.", "T") 
+    .Input(2,
+           "axis",
+           "Axis along which to repeat.", "T")
+    .Output(0,
+            "output",
+            "Output tensor of same shape and type as input.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input types to float tensors.");
+        

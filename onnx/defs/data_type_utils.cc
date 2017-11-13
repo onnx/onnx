@@ -130,12 +130,16 @@ std::string DataTypeUtils::ToString(
             right;
       }
     }
+#ifdef ONNX_ML
+    case TypeProto::ValueCase::kSequenceType: {
+        return ToString(type_proto.sequence_type().elem_type(), left + "seq(", ")" + right);
+    }
 
-    case TypeProto::ValueCase::kSparseTensorType:
-      return left + "sparse(" +
-          ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" +
-          right;
-
+    case TypeProto::ValueCase::kMapType: {
+        std::string map_str = "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
+        return ToString(type_proto.map_type().value_type(), left + map_str, ")" + right);
+    }
+#endif
     default:
       assert(false);
       return "";
@@ -155,12 +159,26 @@ void DataTypeUtils::FromString(
     TypeProto& type_proto) {
   StringRange s(type_str);
   type_proto.Clear();
-  if (s.LStrip("sparse")) {
-    s.ParensWhitespaceStrip();
-    TensorProto::DataType e;
-    FromDataTypeString(std::string(s.Data(), s.Size()), e);
-    type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
-  } else if (s.LStrip("tensor")) {
+#ifdef ONNX_ML
+  if (s.LStrip("seq")) {
+      s.ParensWhitespaceStrip();
+      return FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
+  }
+  else if (s.LStrip("map") ){
+      s.ParensWhitespaceStrip();
+      size_t key_size = s.Find(',');
+      StringRange k(s.Data(), key_size);
+      std::string key = std::string(k.Data(), k.Size());
+      s.LStrip(key_size);
+      s.LStrip(",");
+      StringRange v(s.Data(), s.Size());
+      TensorProto::DataType key_type;
+      FromDataTypeString(key, key_type);
+      type_proto.mutable_map_type()->set_key_type(key_type);
+      return FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
+  }
+#endif
+  if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);

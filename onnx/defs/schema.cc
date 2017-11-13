@@ -25,8 +25,8 @@ OpSchema::FormalParameter::FormalParameter(
     const std::string& type_str,
     bool optional)
     : name_(name),
-      description_(description),
       type_str_(type_str),
+      description_(description),
       is_optional_(optional) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {

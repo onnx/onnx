@@ -159,6 +159,11 @@ class OpSchema {
   // Sets the number of inputs, either a fixed number or a min and a max.
 
   /**
+   * The earliest operator set version which this operator was
+   * present in.
+   */
+  OpSchema& SinceVersion(int n);
+  /**
    * @brief A single input.
    */
   OpSchema& NumInputs(int n);
@@ -296,10 +301,14 @@ class OpSchema {
   };
 
   // Grammar for type strings used in Input(), Output().
-  // <type> ::= <data_type> | tensor(<data_type>) | sparse(<data_type>) |
-  // <type_parameter> <data_type> :: = float | int32 | string | bool | uint8
+  // <type> ::= <data_type> |
+  //            tensor(<data_type>) |
+  //            seq(<type>) |
+  //            map(<data_type>, <type>) |
+  //            <type_parameter> 
+  // <data_type> :: = float | int32 | string | bool | uint8
   //                | int8 | uint16 | int16 | int64 | float16 | double
-  // <type_parameter> ::= any type parameter, say "T".
+  // <type_parameter> ::= any type parameter string, say "T".
   //
   // NOTE: 1) <type_parameter> will always be together with a type constraints
   // specification.
@@ -345,6 +354,9 @@ class OpSchema {
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
+  int since_version() const {
+    return since_version_;
+  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -410,6 +422,8 @@ class OpSchema {
   int max_input_ = std::numeric_limits<int>::max();
   int min_output_ = 0;
   int max_output_ = std::numeric_limits<int>::max();
+  // The default is a little goofy, since it is never what you want
+  int since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   std::function<bool(int, int)> num_inputs_outputs_allowed_ = [](int, int) {
@@ -428,6 +442,9 @@ class OpSchema {
  */
 class OpSchemaRegistry {
  public:
+  // Update this when you make BC-breaking changes to the operator schema
+  constexpr static int version = 1;
+
   class OpSchemaRegisterOnce {
    public:
     OpSchemaRegisterOnce(OpSchema& op_schema) {
