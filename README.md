@@ -131,7 +131,10 @@ python onnx/defs/gen_doc.py
 ```
 
 
-
 # License
 
 [MIT License](LICENSE)
+
+# Code of Conduct
+
+[ONNX Open Source Code of Conduct](http://onnx.ai/codeofconduct.html)
