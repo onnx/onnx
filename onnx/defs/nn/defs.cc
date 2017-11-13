@@ -461,8 +461,8 @@ OPERATOR_SCHEMA(InstanceNormalization)
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022. 
 
-y = sacle * (x - mean) / sqrt(variance + epsilon) + bias, 
-where mean and bias are computed per instance. 
+y = scale * (x - mean) / sqrt(variance + epsilon) + bias, 
+where mean and bias are computed per instance per channel. 
 
 )DOC")
     .Attr("epsilon",
