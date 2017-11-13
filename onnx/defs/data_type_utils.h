@@ -8,8 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "onnx/onnx.pb.h"
+#include "onnx/onnx_pb.h"
 
 namespace onnx {
 // String pointer as unique TypeProto identifier.
@@ -22,7 +21,10 @@ namespace Utils {
 // efficiency.
 //
 // Grammar for data type string:
-// <type> ::= <data_type> | tensor(<data_type>) | ...
+// <type> ::= <data_type> |
+//            tensor(<data_type>) |
+//            seq(<type>) |
+//            map(<data_type>, <type>)
 // <data_type> :: = float | int32 | string | bool | uint8
 //                | int8 | uint16 | int16 | int64 | float16 | double
 //
