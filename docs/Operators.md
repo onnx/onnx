@@ -1072,53 +1072,88 @@ expect(node, inputs=[], outputs=[values],
   implementation such as CuDNN.
   
   Notations:
+  
   `X` - input tensor
+  
   `z` - update gate
+  
   `r` - reset gate
+  
   `h` - hidden gate
+  
   `t` - time step (t-1 means previous time step)
+  
   `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+  
   `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+  
   `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+  
   `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+  
   `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
+  
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
+  
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
+  
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
+  
   `H` - Hidden state
+  
   `num_directions` - 2 if direction == bidirectional else 1
   
   Activation functions:
-    ReLU(x)                - max(0, x)
+  
+    relu(x)                - max(0, x)
+  
     tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
     sigmoid(x)             - 1/(1 + e^{-x})
-    (Below are optional)
+  
+    (NOTE: Below are optional)
+  
     linear(x)              - alpha*x + beta
-    leakyReLU(x)           - x if x >= 0 else alpha * x
-    thresholdedReLU(x)     - x if x >= alpha else 0
-    PReLU(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
+    leakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    thresholdedRelu(x)     - x if x >= alpha else 0
+  
+    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
     scaledTanh(x)          - alpha*tanh(beta*x)
+  
     sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
-    ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
     softsign(x)            - x/(1 + |x|)
+  
     softplus(x)            - log(1 + e^x)
+  
     parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
   
-  Equations (GRU with default activations):
-    - zt = sigmoid((Xt^T)*Wz + Ht-1*Rz + Wbz + Rbz)
-    - rt = sigmoid((Xt^T)*Wr + Ht-1*Rr + Wbr + Rbr)
-    - ht = tanh((Xt^T)*Wh + rt*(Ht-1*Rh + Rbh) + Wbh)
+  Equations (Default: f=sigmoid, g=tanh):
+  
+    - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
+  
+    - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
+  
+    - ht = g(Xt*(Wh^T) + rt*(Ht-1*Rh + Rbh) + Wbh)
+  
     - Ht = (1 - zt) (.) ht + it (.) Ht-1
 
 #### Attributes
 
 <dl>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. See the equations for default.</dd>
+<dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>alpha</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>beta</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
@@ -1574,54 +1609,92 @@ expect(node, inputs=[], outputs=[values],
   custom implementation such as CuDNN.
   
   Notations:
+  
   `X` - input tensor
+  
   `i` - input gate
+  
   `o` - output gate
+  
   `f` - forget gate
+  
   `c` - cell gate
+  
   `t` - time step (t-1 means previous time step)
+  
   `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  
   `P[iof]`  - P peephole weight vector for input, output, and forget gates
+  
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
+  
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
+  
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
+  
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
+  
   `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
+  
   `H` - Hidden state
+  
   `num_directions` - 2 if direction == bidirectional else 1
   
   Activation functions:
-    ReLU(x)                - max(0, x)
+  
+    relu(x)                - max(0, x)
+  
     tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
     sigmoid(x)             - 1/(1 + e^{-x})
+  
     (NOTE: Below are optional)
+  
     linear(x)              - alpha*x + beta
-    leakyReLU(x)           - x if x >= 0 else alpha * x
-    thresholdedReLU(x)     - x if x >= alpha else 0
-    PReLU(xi)               - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
+    leakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    thresholdedRelu(x)     - x if x >= alpha else 0
+  
+    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
     scaledTanh(x)          - alpha*tanh(beta*x)
+  
     sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
-    ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
     softsign(x)            - x/(1 + |x|)
+  
     softplus(x)            - log(1 + e^x)
+  
     parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
   
-  Equations (forward LSTM with default activations and peepholes):
-    - it = sigmoid((Xt^T)*Wi + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
-    - ft = sigmoid((Xt^T)*Wf + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
-    - ct = tanh((Xt^T)*Wc + Ht-1*Rc + Wbc + Rbc)
+  Equations (Default: f=sigmoid, g=tanh, h=tanh):
+  
+    - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+  
+    - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+  
+    - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
+  
     - Ct = ft (.) Ct-1 + it (.) ct
-    - ot = sigmoid((Xt^T)*Wo + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
-    - Ht = ot (.) tanh(Ct)
+  
+    - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
+  
+    - Ht = ot (.) h(Ct)
 
 #### Attributes
 
 <dl>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. See the equations for default.</dd>
+<dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>alpha</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>beta</tt> : list of floats</dt>
@@ -2440,48 +2513,78 @@ for mode in ['edge', 'reflect']:
   via some custom implementation such as CuDNN.
   
   Notations:
+  
   `X` - input tensor
+  
   `i` - input gate
+  
   `t` - time step (t-1 means previous time step)
+  
   `Wi` - W parameter weight matrix for input gate
+  
   `Ri` - R recurrence weight matrix for input gate
+  
   `Wbi` - W parameter bias vector for input gate
+  
   `Rbi` - R parameter bias vector for input gate
+  
   `WBi` - W parameter weight matrix for backward input gate
+  
   `RBi` - R recurrence weight matrix for backward input gate
+  
   `WBbi` - WR bias vectors for backward input gate
+  
   `RBbi` - RR bias vectors for backward input gate
+  
   `H` - Hidden state
+  
   `num_directions` - 2 if direction == bidirectional else 1
   
   Activation functions:
-    ReLU(x)                - max(0, x)
+  
+    relu(x)                - max(0, x)
+  
     tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
     sigmoid(x)             - 1/(1 + e^{-x})
-    (Below are optional)
+  
+    (NOTE: Below are optional)
+  
     linear(x)              - alpha*x + beta
-    leakyReLU(x)           - x if x >= 0 else alpha * x
-    thresholdedReLU(x)     - x if x >= alpha else 0
-    PReLU(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
+    leakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    thresholdedRelu(x)     - x if x >= alpha else 0
+  
+    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
     scaledTanh(x)          - alpha*tanh(beta*x)
+  
     sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
-    ELU(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
     softsign(x)            - x/(1 + |x|)
+  
     softplus(x)            - log(1 + e^x)
+  
     parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
   
-  Equations:
-    - Ht = Activation((Xt^T)*Wi + Ht-1*Ri + Wbi + Rbi)
+  Equations (Default: f=tanh):
+  
+    - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
 #### Attributes
 
 <dl>
-<dt><tt>activations</tt> : string</dt>
-<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Default `tanh`.</dd>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `tanh` if not specified.</dd>
 <dt><tt>alpha</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>beta</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
@@ -2500,7 +2603,7 @@ for mode in ['edge', 'reflect']:
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
 <dt><tt>B</tt> (optional) : T</dt>
-<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
+<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
