@@ -34,6 +34,7 @@
 * <a href="#Greater">Greater</a>
 * <a href="#HardSigmoid">HardSigmoid</a>
 * <a href="#Hardmax">Hardmax</a>
+* <a href="#InstanceNormalization">InstanceNormalization</a>
 * <a href="#LRN">LRN</a>
 * <a href="#LSTM">LSTM</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
@@ -415,6 +416,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
+      
 
 #### Attributes
 
@@ -426,7 +428,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <dt><tt>momentum</tt> : float</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum)</dd>
 <dt><tt>spatial</tt> : int</dt>
-<dd>Compute the mean and variance across all spatial elements or per feature.</dd>
+<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.</dd>
 </dl>
 
 #### Inputs
@@ -681,7 +683,7 @@ expect(node, inputs=[], outputs=[values],
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, axis_n_end, n is kernel's dimension.This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>stride along each axis.</dd>
 </dl>
@@ -1453,6 +1455,48 @@ expect(node, inputs=[], outputs=[values],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The softmax normalized output values with the same shape as input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
+
+  Carries out instance normalization as described in the paper
+  https://arxiv.org/abs/1607.08022. 
+  
+  y = scale * (x - mean) / sqrt(variance + epsilon) + bias, 
+  where mean and bias are computed per instance per channel. 
+  
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>The input 1-dimensional scale tensor of size C.</dd>
+<dt><tt>bias</tt> : T</dt>
+<dd>The input 1-dimensional bias tensor of size C.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output 4-dimensional tensor of the same shape as input.</dd>
 </dl>
 
 #### Type Constraints
