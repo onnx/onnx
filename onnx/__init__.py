@@ -16,7 +16,7 @@ import google.protobuf.message
 
 def load(obj):
     '''
-    Loads a binary protobuf that stores onnx graph
+    Loads a binary protobuf that stores onnx model
 
     @params
     Takes a file-like object (has "read" function)
@@ -32,6 +32,19 @@ def load(obj):
     decoded = model.ParseFromString(s)
     if decoded != len(s):
         raise google.protobuf.message.DecodeError(
-            "Protobuf decoding consumed too few bytes: {} out of {}".format(
-                decoded, len(s)))
+            "Protobuf decoding consumed too few bytes: {} out of {} {}".format(
+                decoded, len(s), model))
+    return model
+
+
+def load_from_string(obj):
+    '''
+    Loads a binary string that stores onnx model
+
+    @params
+    Takes a string object containing protobuf
+    @return ONNX ModelProto object
+    '''
+    model = ModelProto()
+    model.ParseFromString(obj)
     return model
