@@ -80,10 +80,6 @@ How nodes bind to operator declarations is strictly defined and are designed to 
 How ONNX implementations bind an operator declaration to specific implementation is outside the scope of this specification.
 Implementations of ONNX MAY elect to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle.
 
-Implementations and models MAY provide experimental operators by agreeing to use operators in an experimental domain.
-
-Implementations and models MAY provide experimental IR features by agreeing to use fields from reserved ranges.
-
 ## Model versioning
 
 Model versioning is ultimately the domain of a given organization, and therefor, this section of the spec is non-normative and simply proposes a set of practices to consider.
