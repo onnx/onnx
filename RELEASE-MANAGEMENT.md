@@ -5,7 +5,7 @@ This describes the process by which versions of ONNX are officially released to 
 Releases
 --------
 
-Releases are versioned according to docs/Versioning.md. This describes IR and operator versioning policies, as well as a propose how models themselves should be versioned.
+Releases are versioned according to [docs/Versioning.md](docs/Versioning.md). This describes IR and operator versioning policies, as well as propose how models themselves should be versioned.
 
 The GitHub repo for ONNX provides release branches where the project is stabilized as per the process described here. Release notes are used to communicate the stability and status of a release. The master branch will be used to continue work for subsequent releases.
 
