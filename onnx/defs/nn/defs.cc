@@ -489,6 +489,21 @@ where mean and bias are computed per instance per channel.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
+OPERATOR_SCHEMA(LpNormalization)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Input(0, "input", "Input matrix", "T")
+    .Output(0, "output", "Matrix after normalization", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .SetDoc(R"DOC(
+Given a matrix, apply Lp-normalization along the provided axis.
+)DOC")
+    .Attr("axis", "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.", AttrType::INT)
+    .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttrType::INT);
+
 OPERATOR_SCHEMA(Dropout)
     .NumInputs(1)
     .NumOutputs(1,2)
