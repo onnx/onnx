@@ -103,10 +103,4 @@ Operators may be extended via custom domain names in the `opset_import` field.
 
 ### Protobuf Fields
 
-The following field ranges are reserved:
-
-- ONNX features (0-200). This specification will use values in this range.
-- Experimental (300-400). Implementations may use these to experiment on features that are candidates for interop via ONNX.
-- Private use (600-700). Implementations may use these as they see fit for non-interoperable features.
-
-Opening up additional ranges should be discussed with the ONNX community.
+The range 600-700 is reserved for private use. Implementations may use these as they see fit for non-interoperable features.
