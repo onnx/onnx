@@ -90,16 +90,21 @@
 * <a href="#Transpose">Transpose</a>
 * <a href="#Xor">Xor</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
+* <a href="#Affine"><sub>experimental</sub> Affine</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
 * <a href="#Crop"><sub>experimental</sub> Crop</a>
 * <a href="#Embedding"><sub>experimental</sub> Embedding</a>
 * <a href="#FC"><sub>experimental</sub> FC</a>
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
+* <a href="#Identity"><sub>experimental</sub> Identity</a>
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
 * <a href="#LpNormalization"><sub>experimental</sub> LpNormalization</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
+* <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
+* <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
+* <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -1171,7 +1176,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>bias</tt> (optional) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -1200,21 +1205,21 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
-  Given DATA tensor of rank r >= 1, and INDICES tensor of rank q, gather
-  entries of the outer-most dimension of DATA indexed by INDICES, and concatenate
+  Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
+  entries of the outer-most dimension of `data` indexed by `indices`, and concatenate
   them in an output tensor of rank q + (r - 1).
   
   Example:
-    DATA  = [
+    data  = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-    INDICES = [
+    indices = [
         [0, 1],
         [1, 2],
     ]
-    OUTPUT = [
+    output = [
         [
             [1.0, 1.2],
             [2.3, 3.4],
@@ -1228,16 +1233,16 @@ expect(node, inputs=[], outputs=[values],
 #### Inputs
 
 <dl>
-<dt><tt>DATA</tt> : T</dt>
+<dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>INDICES</tt> : T</dt>
+<dt><tt>indices</tt> : T</dt>
 <dd>Tensor of int32/int64 indices, of any rank q.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>OUTPUT</tt> : T</dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Tensor of rank q + (r - 1).</dd>
 </dl>
 
@@ -1720,7 +1725,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>bias</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -2348,7 +2353,7 @@ expect(node, inputs=[a, b], outputs=[c],
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
-<dt><tt>Slope</tt> : T</dt>
+<dt><tt>slope</tt> : T</dt>
 <dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
 </dl>
 
@@ -2369,19 +2374,19 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
-  Given DATA tensor, paddings, mode, and value.
+  Given `data` tensor, paddings, mode, and value.
   
   Example:
     Insert 0 paddings to the beginning of the second dimension.
   
-    DATA  = [
+    data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
     paddings = [0, 0, 2, 0]
   
-    OUTPUT = [
+    output = [
         [
             [0.0, 0.0, 1.0, 1.2],
             [0.0, 0.0, 2.3, 3.4],
@@ -2403,14 +2408,14 @@ expect(node, inputs=[a, b], outputs=[c],
 #### Inputs
 
 <dl>
-<dt><tt>DATA</tt> : T</dt>
+<dt><tt>data</tt> : T</dt>
 <dd>Input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>OUTPUT</tt> : T</dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Tensor after padding.</dd>
 </dl>
 
@@ -2602,7 +2607,7 @@ for mode in ['edge', 'reflect']:
 <dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>bias</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -4005,6 +4010,43 @@ expect(node, inputs=[x], outputs=[y],
 
 
 
+### <a name="Affine"></a><a name="affine">**<sub>experimental</sub> Affine**</a>
+
+  Affine takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the affine function, y = alpha * x + beta,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="ConstantFill"></a><a name="constantfill">**<sub>experimental</sub> ConstantFill**</a>
 
   The operator fills the elements of the output tensor with a constant value
@@ -4175,7 +4217,7 @@ expect(node, inputs=[x], outputs=[y],
 <dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
-<dt><tt>b</tt> : T</dt>
+<dt><tt>bias</tt> : T</dt>
 <dd>1D blob containing bias vector</dd>
 </dl>
 
@@ -4265,6 +4307,32 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>The filled tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Identity"></a><a name="identity">**<sub>experimental</sub> Identity**</a>
+
+  Identity operator
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor to copy input into. Can be in-place</dd>
 </dl>
 
 #### Type Constraints
@@ -4381,6 +4449,43 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
+### <a name="ParametricSoftplus"></a><a name="parametricsoftplus">**<sub>experimental</sub> ParametricSoftplus**</a>
+
+  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
+  the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Scale"></a><a name="scale">**<sub>experimental</sub> Scale**</a>
 
   Scale takes one input data (Tensor<float>) and produces one output data
@@ -4405,6 +4510,77 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Output data after scaling</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ScaledTanh"></a><a name="scaledtanh">**<sub>experimental</sub> ScaledTanh**</a>
+
+  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
+  scale * tanh(x). This operation can be done in an in-place fashion too,
+  by providing the same input and output blobs.
+      
+
+#### Attributes
+
+<dl>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scale for tanh</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>1-D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**<sub>experimental</sub> ThresholdedRelu**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>theta</tt> : float</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
