@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import argparse
-import io
 import json
 import os
 import shutil
@@ -29,15 +28,15 @@ def generate_data(args):
     for case in node_cases:
         output_dir = os.path.join(args.output, 'node', case.name)
         prepare_dir(output_dir)
-        with io.open(os.path.join(output_dir, 'node.pb'), 'wb', newline='') as f:
+        with open(os.path.join(output_dir, 'node.pb', newline=''), 'wb') as f:
             f.write(case.node.SerializeToString())
         for i, input_np in enumerate(case.inputs):
             tensor = numpy_helper.from_array(input_np, case.node.input[i])
-            with io.open(os.path.join(output_dir, 'input_{}.pb'.format(i)), 'wb', newline='') as f:
+            with open(os.path.join(output_dir, 'input_{}.pb'.format(i)), 'wb') as f:
                 f.write(tensor.SerializeToString())
         for i, output_np in enumerate(case.outputs):
             tensor = numpy_helper.from_array(output_np, case.node.output[i])
-            with io.open(os.path.join(output_dir, 'output_{}.pb'.format(i)), 'wb', newline='') as f:
+            with open(os.path.join(output_dir, 'output_{}.pb'.format(i)), 'wb') as f:
                 f.write(tensor.SerializeToString())
 
     # model tests
@@ -45,7 +44,7 @@ def generate_data(args):
     for case in model_cases:
         output_dir = os.path.join(args.output, 'model', case.name)
         prepare_dir(output_dir)
-        with io.open(os.path.join(output_dir, 'data.json'), 'w', newline='') as f:
+        with open(os.path.join(output_dir, 'data.json'), 'w') as f:
             json.dump({
                 'url': case.url,
                 'model_name': case.model_name,
