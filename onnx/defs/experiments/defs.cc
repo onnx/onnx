@@ -368,7 +368,7 @@ OPERATOR_SCHEMA(Embedding)
     .SetDoc(R"DOC(Turns positive integers (indexes) into dense vectors of fixed size.)DOC")
     .Attr("input_dim", "Size of the input vocabulary.", AttrType::INT)
     .Attr("output_dim", "Dimension of the embedding output vectors.", AttrType::INT)
-    .Attr("weights", "2-D tensor of weights [O,I].", AttrType::TENSOR)    
+    .Attr("W", "2-D tensor of weights [O,I].", AttrType::TENSOR)    
     .Input(0, 
            "input", 
            "1-D tensor of integers representing indices in the embedding dictionary "

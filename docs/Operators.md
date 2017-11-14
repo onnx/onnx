@@ -3988,12 +3988,12 @@ expect(node, inputs=[x], outputs=[y],
 #### Attributes
 
 <dl>
+<dt><tt>W</tt> : tensor</dt>
+<dd>2-D tensor of weights [O,I].</dd>
 <dt><tt>input_dim</tt> : int</dt>
 <dd>Size of the input vocabulary.</dd>
 <dt><tt>output_dim</tt> : int</dt>
 <dd>Dimension of the embedding output vectors.</dd>
-<dt><tt>weights</tt> : tensor</dt>
-<dd>2-D tensor of weights [O,I].</dd>
 </dl>
 
 #### Inputs
