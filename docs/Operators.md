@@ -1146,12 +1146,12 @@ expect(node, inputs=[], outputs=[values],
 #### Attributes
 
 <dl>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
-<dt><tt>alpha</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions.</dd>
-<dt><tt>beta</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
@@ -1159,7 +1159,7 @@ expect(node, inputs=[], outputs=[values],
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>output_sequence</tt> : int</dt>
-<dd>The sequence output Y is optional if 0. Default 0.</dd>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -1183,7 +1183,7 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -1693,12 +1693,12 @@ expect(node, inputs=[], outputs=[values],
 #### Attributes
 
 <dl>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
-<dt><tt>alpha</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions.</dd>
-<dt><tt>beta</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
@@ -1708,7 +1708,7 @@ expect(node, inputs=[], outputs=[values],
 <dt><tt>input_forget</tt> : int</dt>
 <dd>Couple the input and forget gates if 1, default 0.</dd>
 <dt><tt>output_sequence</tt> : int</dt>
-<dd>The sequence output Y is optional if 0. Default 0.</dd>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -1736,7 +1736,7 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -2577,12 +2577,12 @@ for mode in ['edge', 'reflect']:
 #### Attributes
 
 <dl>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `tanh` if not specified.</dd>
-<dt><tt>alpha</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions.</dd>
-<dt><tt>beta</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
@@ -2590,7 +2590,7 @@ for mode in ['edge', 'reflect']:
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>output_sequence</tt> : int</dt>
-<dd>The sequence output Y is optional if 0. Default 0.</dd>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -2614,7 +2614,7 @@ for mode in ['edge', 'reflect']:
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>

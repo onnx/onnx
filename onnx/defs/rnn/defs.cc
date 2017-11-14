@@ -14,9 +14,19 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                     "Must be one of forward (default), reverse, or bidirectional.",
                     AttrType::STRING);
         schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
-        schema.Attr("alpha", "Optional scaling values used by some activation functions.", AttrType::FLOATS);
-        schema.Attr("beta", "Optional scaling values used by some activation functions.", AttrType::FLOATS);
-        schema.Attr("output_sequence", "The sequence output Y is optional if 0. Default 0.", AttrType::INT);
+        schema.Attr("activation_alpha",
+                    "Optional scaling values used by some activation functions. The values "
+                    "are consumed in the order of activation functions, for example (f, g, h) "
+                    "in LSTM.",
+                    AttrType::FLOATS);
+        schema.Attr("activation_beta",
+                    "Optional scaling values used by some activation functions. The values "
+                    "are consumed in the order of activation functions, for example (f, g, h) "
+                    "in LSTM.",
+                    AttrType::FLOATS);
+        schema.Attr("output_sequence",
+                    "The sequence output for the hidden is optional if 0. Default 0.",
+                    AttrType::INT);
         schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
                     "in the range of [-threshold, +threshold] and is applied to the input "
                     "of activations. No clip if not specified.", AttrType::FLOAT);
@@ -33,8 +43,9 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                      "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
                      "T", true /*optional*/);
         schema.Output(0, "Y",
-                      "A tensor that concats all the intermediate output values of the hidden."
-                      "It has shape `[seq_length, num_directions, batch_size, hidden_size]`.", "T");
+                      "A tensor that concats all the intermediate output values of the hidden. "
+                      "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
+                      "It is optional if `output_sequence` is 0.", "T");
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
                       "`[num_directions, batch_size, hidden_size]`.", "T");
