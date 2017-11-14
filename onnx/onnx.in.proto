@@ -370,101 +370,23 @@ message TensorProto {
   repeated uint64 uint64_data = 11 [packed = true];
 }
 
-// #if ONNX-ML
-// A ValueProto represents a value that may be serialized into a model.
-message ValueProto {
-
-  message KeyValuePairProto {
-    oneof key {
-      string s = 1;
-      int32 i32 = 2;
-      int64 i64 = 3;
-      uint64 ui64 = 4;
+// Defines a tensor shape. A dimension can be either an integer value
+// or a symbolic variable. A symbolic variable represents an unknown
+// dimension.
+message TensorShapeProto {
+  message Dimension {
+    oneof value {
+      int64 dim_value = 1;
+      string dim_param = 2;   // namespace Shape
     };
-    optional ValueProto value = 100;
-  }
-
-  message NameValuePairProto {
-    optional string key = 1;
-    optional ValueProto value = 100;
-  }
-
-  // Defines a record in its serialized format.
-  // A record is a sequence of one or more
-  // typed uniquely named values, which may be of different types.
-  message RecordProto {
-    repeated NameValuePairProto fields = 1;
-  }
-
-  // Defines a union value  in its serialized format.
-  // The name is the discriminator from the union type.
-  message UnionProto {
-    optional NameValuePairProto choice = 1;
-  }
-
-  // Defines a map in its serialized format.
-  // A record is a sequence of zero or more
-  // key/value pairs all of which have unique
-  // keys
-  message MapProto {
-    repeated KeyValuePairProto key_value_pairs = 1;
-  }
-
-  // Alternate space-efficient encoding of map that MAY be used
-  // for maps whose value type is a scalar.
-  message ScalarMapProto {
-    // keys.DataType must be an integral type or string
-    repeated TensorProto keys = 1;
-
-    // No restriction on data type, keys.length must equal values.length
-    repeated TensorProto values = 2;
-  }
-
-  // Defines a sequence in its serialized format.
-  // A sequence is a list of zero or more
-  // tensors, maps, records, or subsequences.
-  message SequenceProto {
-    repeated ValueProto elems = 1;
-  }
-
-  oneof value {
-    // A dense tensor (or scalar).
-    TensorProto dense_tensor = 1;
-
-    // A tuple.
-    RecordProto record = 3;
-
-    // A sequence.
-    SequenceProto seq = 4;
-
-    // A union.
-    UnionProto union = 5;
-
-    // A map.
-    MapProto map = 6;
-
-    // A map.
-    ScalarMapProto scalar_map = 7;
-  }
+  };
+  repeated Dimension dim = 1;
 }
-// #endif
 
 // Define the types.
 message TypeProto {
-  // Defines a tensor shape. A dimension can be either an integer value
-  // or a symbolic variable. A symbolic variable represents an unknown
-  // dimension.
-  message TensorShapeProto {
-    message Dimension {
-      oneof value {
-        int64 dim_value = 1;
-        string dim_param = 2;   // namespace Shape
-      };
-    };
-    repeated Dimension dim = 1;
-  }
 
-  message TensorTypeProto {
+  message Tensor {
     // This field MUST NOT have the value of UNDEFINED
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
@@ -472,24 +394,16 @@ message TypeProto {
   }
 
 // #if ONNX-ML
-  // message T { ... }
-  message RecordTypeProto {
-  // The type and optional shape of each field
-  // is described by a ValueInfoProto. The field
-  // names must be unique.
-  // This field MUST be present for this version of the IR.
-    repeated ValueInfoProto field = 1;
-  };
 
   // repeated T
-  message SequenceTypeProto {
+  message Sequence {
   // The type and optional shape of each element of the sequence.
   // This field MUST be present for this version of the IR.
     optional TypeProto elem_type = 1;
   };
 
   // map<K,V>
-  message MapTypeProto {
+  message Map {
   // This field MUST be present for this version of the IR.
   // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
     optional TensorProto.DataType key_type = 1;
@@ -497,20 +411,11 @@ message TypeProto {
     optional TypeProto value_type = 2;
   };
 
-  // oneof { ... }
-  message UnionTypeProto {
-  // The type and optional shape of each alternative
-  // is described by a ValueInfoProto. The alternative
-  // names must be unique.
-  // This field MUST be present for this version of the IR.
-    repeated ValueInfoProto choice = 1;
-  };
-
 // #endif
 
   oneof value {
     // The type of a tensor.
-    TensorTypeProto tensor_type = 1;
+    Tensor tensor_type = 1;
 
 // #if ONNX-ML
 
@@ -519,17 +424,11 @@ message TypeProto {
     //        support classical ML operators.  DNN operators SHOULD restrict their input
     //        and output types to tensors.
 
-    // The type of a record.
-    RecordTypeProto record_type = 3;
-
     // The type of a sequence.
-    SequenceTypeProto sequence_type = 4;
+    Sequence sequence_type = 4;
 
     // The type of a map.
-    MapTypeProto map_type = 5;
-
-    // The type of a union.
-    UnionTypeProto union_type = 6;
+    Map map_type = 5;
 
 // #endif
   }

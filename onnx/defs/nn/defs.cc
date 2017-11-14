@@ -227,6 +227,8 @@ computes the output.)DOC";
                         "and upper part of the corresponding axis. So `pads` will have two values per axis, "
                         "first value corresponding to the number of pixels added to the begining of the axis "
                         "and the second value corresponding to the number of pixels add at the end of the axis. "
+                        "The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, "
+                        "axis_n_end, n is kernel's dimension."
                         "This attribute cannot be used simultaneously with auto_pad attribute.",
                         AttrType::INTS);
             schema.Attr("group",
@@ -396,10 +398,11 @@ there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
-)DOC")
+    )DOC")
     .Attr("spatial",
-          "Compute the mean and variance across all spatial elements or per feature.",
-          AttrType::INT)
+        "If true, compute the mean and variance across all spatial elements "
+        "If false, compute the mean and variance across per feature.",
+        AttrType::INT)
     .Attr("is_test",
         "If set to nonzero, run spatial batch normalization in test mode.",
         AttrType::INT)
@@ -450,6 +453,36 @@ Output case #2: Y (test mode)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
+OPERATOR_SCHEMA(InstanceNormalization)
+    .NumInputs(3)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+Carries out instance normalization as described in the paper
+https://arxiv.org/abs/1607.08022. 
+
+y = scale * (x - mean) / sqrt(variance + epsilon) + bias, 
+where mean and bias are computed per instance per channel. 
+
+)DOC")
+    .Attr("epsilon",
+        "The epsilon value to use to avoid division by zero.",
+        AttrType::FLOAT)
+    .Input(0,
+        "input",
+        "The input 4-dimensional tensor of shape NCHW.", "T")
+    .Input(1,
+        "scale",
+        "The input 1-dimensional scale tensor of size C.", "T")
+    .Input(2,
+        "bias",
+        "The input 1-dimensional bias tensor of size C.", "T")
+    .Output(0,
+        "output",
+        "The output 4-dimensional tensor of the same shape as input.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
 OPERATOR_SCHEMA(LpNormalization)
     .NumInputs(1)
     .NumOutputs(1)
@@ -463,7 +496,7 @@ OPERATOR_SCHEMA(LpNormalization)
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC")
     .Attr("axis", "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.", AttrType::INT)
-    .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttrType::FLOAT);
+    .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttrType::INT);
 
 OPERATOR_SCHEMA(Dropout)
     .NumInputs(1)

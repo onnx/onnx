@@ -32,12 +32,15 @@
 * <a href="#GlobalLpPool">GlobalLpPool</a>
 * <a href="#GlobalMaxPool">GlobalMaxPool</a>
 * <a href="#Greater">Greater</a>
+* <a href="#HardSigmoid">HardSigmoid</a>
+* <a href="#Hardmax">Hardmax</a>
+* <a href="#InstanceNormalization">InstanceNormalization</a>
 * <a href="#LRN">LRN</a>
 * <a href="#LSTM">LSTM</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Less">Less</a>
 * <a href="#Log">Log</a>
-* <a href="#LpNormalization">LpNormalization</a>
+* <a href="#LogSoftmax">LogSoftmax</a>
 * <a href="#LpPool">LpPool</a>
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
@@ -74,6 +77,8 @@
 * <a href="#Sigmoid">Sigmoid</a>
 * <a href="#Slice">Slice</a>
 * <a href="#Softmax">Softmax</a>
+* <a href="#Softplus">Softplus</a>
+* <a href="#Softsign">Softsign</a>
 * <a href="#SpaceToDepth">SpaceToDepth</a>
 * <a href="#Split">Split</a>
 * <a href="#Sqrt">Sqrt</a>
@@ -85,15 +90,21 @@
 * <a href="#Transpose">Transpose</a>
 * <a href="#Xor">Xor</a>
 * <a href="#ATen"><sub>experimental</sub> ATen</a>
+* <a href="#Affine"><sub>experimental</sub> Affine</a>
 * <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
 * <a href="#Crop"><sub>experimental</sub> Crop</a>
 * <a href="#Embedding"><sub>experimental</sub> Embedding</a>
 * <a href="#FC"><sub>experimental</sub> FC</a>
 * <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
+* <a href="#Identity"><sub>experimental</sub> Identity</a>
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
+* <a href="#LpNormalization"><sub>experimental</sub> LpNormalization</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
+* <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
+* <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
+* <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -410,6 +421,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
+      
 
 #### Attributes
 
@@ -421,7 +433,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <dt><tt>momentum</tt> : float</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum)</dd>
 <dt><tt>spatial</tt> : int</dt>
-<dd>Compute the mean and variance across all spatial elements or per feature.</dd>
+<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.</dd>
 </dl>
 
 #### Inputs
@@ -676,7 +688,7 @@ expect(node, inputs=[], outputs=[values],
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, axis_n_end, n is kernel's dimension.This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>stride along each axis.</dd>
 </dl>
@@ -1065,39 +1077,94 @@ expect(node, inputs=[], outputs=[values],
   implementation such as CuDNN.
   
   Notations:
+  
   `X` - input tensor
+  
   `z` - update gate
+  
   `r` - reset gate
+  
   `h` - hidden gate
+  
   `t` - time step (t-1 means previous time step)
+  
   `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+  
   `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+  
   `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+  
   `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+  
   `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
+  
   `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
+  
   `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
+  
   `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
-  `tanh(X)` - hyperbolic tangent of X
-  `sigmoid(X)` - 1 / (1 + e^-X)
+  
   `H` - Hidden state
+  
   `num_directions` - 2 if direction == bidirectional else 1
   
-  Equations (GRU with default activations):
-    - zt = sigmoid(Wz*Xt + Rz*Ht-1 + Wbz + Rbz)
-    - rt = sigmoid(Wr*Xt + Rr*Ht-1 + Wbr + Rbr)
-    - ht = tanh(Wh*Xt + rt*(Rh*Ht-1 + Rbh) + Wbh)
-    - H = (1 - zt) (.) ht + it (.) Ht-1
+  Activation functions:
+  
+    relu(x)                - max(0, x)
+  
+    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
+    sigmoid(x)             - 1/(1 + e^{-x})
+  
+    (NOTE: Below are optional)
+  
+    linear(x)              - alpha*x + beta
+  
+    leakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    thresholdedRelu(x)     - x if x >= alpha else 0
+  
+    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
+    scaledTanh(x)          - alpha*tanh(beta*x)
+  
+    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  
+    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    softsign(x)            - x/(1 + |x|)
+  
+    softplus(x)            - log(1 + e^x)
+  
+    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
+  
+  Equations (Default: f=sigmoid, g=tanh):
+  
+    - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
+  
+    - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
+  
+    - ht = g(Xt*(Wh^T) + rt*(Ht-1*Rh + Rbh) + Wbh)
+  
+    - Ht = (1 - zt) (.) ht + it (.) Ht-1
 
 #### Attributes
 
 <dl>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 3 (or 6 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -1109,7 +1176,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>bias</tt> (optional) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -1121,7 +1188,7 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -1138,21 +1205,21 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
-  Given DATA tensor of rank r >= 1, and INDICES tensor of rank q, gather
-  entries of the outer-most dimension of DATA indexed by INDICES, and concatenate
+  Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
+  entries of the outer-most dimension of `data` indexed by `indices`, and concatenate
   them in an output tensor of rank q + (r - 1).
   
   Example:
-    DATA  = [
+    data  = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-    INDICES = [
+    indices = [
         [0, 1],
         [1, 2],
     ]
-    OUTPUT = [
+    output = [
         [
             [1.0, 1.2],
             [2.3, 3.4],
@@ -1166,16 +1233,16 @@ expect(node, inputs=[], outputs=[values],
 #### Inputs
 
 <dl>
-<dt><tt>DATA</tt> : T</dt>
+<dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>INDICES</tt> : T</dt>
+<dt><tt>indices</tt> : T</dt>
 <dd>Tensor of int32/int64 indices, of any rank q.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>OUTPUT</tt> : T</dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Tensor of rank q + (r - 1).</dd>
 </dl>
 
@@ -1374,6 +1441,132 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
+
+  HardSigmoid takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
+
+  The operator computes the hardmax normalized values for each layer in the batch
+   of the given input. The input is a 2-D tensor (Tensor<float>) of size
+  (batch_size x input_feature_dimensions). The output tensor has the same shape
+  and contains the hardmax normalized values of the corresponding input.
+  
+  X does not need to explicitly be a 2D vector; rather, it will be
+  coerced into one. For an arbitrary n-dimensional tensor
+  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
+  Each of these dimensions must be matched correctly, or else the operator
+  will throw errors.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
+
+  Carries out instance normalization as described in the paper
+  https://arxiv.org/abs/1607.08022. 
+  
+  y = scale * (x - mean) / sqrt(variance + epsilon) + bias, 
+  where mean and bias are computed per instance per channel. 
+  
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>The input 1-dimensional scale tensor of size C.</dd>
+<dt><tt>bias</tt> : T</dt>
+<dd>The input 1-dimensional bias tensor of size C.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output 4-dimensional tensor of the same shape as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
   Local Response Normalization. It normalizes over local input regions.
@@ -1421,40 +1614,96 @@ expect(node, inputs=[], outputs=[values],
   custom implementation such as CuDNN.
   
   Notations:
+  
   `X` - input tensor
+  
   `i` - input gate
+  
   `o` - output gate
+  
   `f` - forget gate
+  
   `c` - cell gate
+  
   `t` - time step (t-1 means previous time step)
+  
   `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  
   `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  
   `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  
   `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  
   `P[iof]`  - P peephole weight vector for input, output, and forget gates
+  
   `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
+  
   `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
+  
   `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
+  
   `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
+  
   `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
-  `tanh(X)` - hyperbolic tangent of X
-  `sigmoid(X)` - 1 / (1 + e^-X)
+  
   `H` - Hidden state
+  
   `num_directions` - 2 if direction == bidirectional else 1
   
-  Equations (forward LSTM with default activations and peepholes):
-    - it = sigmoid(Wi*Xt + Ri*Ht-1 + Pi (.) Ct-1 + Wbi + Rbi)
-    - ft = sigmoid(Wf*Xt + Rf*Ht-1 + Pf (.) Ct-1 + Wbf + Rbf)
-    - ct = tanh(Wc*Xt + Rc*Ht-1 + Wbc + Rbc)
+  Activation functions:
+  
+    relu(x)                - max(0, x)
+  
+    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
+    sigmoid(x)             - 1/(1 + e^{-x})
+  
+    (NOTE: Below are optional)
+  
+    linear(x)              - alpha*x + beta
+  
+    leakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    thresholdedRelu(x)     - x if x >= alpha else 0
+  
+    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
+    scaledTanh(x)          - alpha*tanh(beta*x)
+  
+    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  
+    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    softsign(x)            - x/(1 + |x|)
+  
+    softplus(x)            - log(1 + e^x)
+  
+    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
+  
+  Equations (Default: f=sigmoid, g=tanh, h=tanh):
+  
+    - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+  
+    - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+  
+    - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
+  
     - Ct = ft (.) Ct-1 + it (.) ct
-    - ot = sigmoid(Wo*Xt + Ro*Ht-1 + Po (.) Ct + Wbo + Rbo)
-    - H = ot (.) tanh(Ct)
+  
+    - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
+  
+    - Ht = ot (.) h(Ct)
 
 #### Attributes
 
 <dl>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>A list of 4 (or 8 if bidirectional) activation functions for input, output, forget, and cell gates. The activation functions must be one of sigmoid and tanh. See the equations for default.</dd>
+<dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
@@ -1463,6 +1712,8 @@ expect(node, inputs=[], outputs=[values],
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int</dt>
 <dd>Couple the input and forget gates if 1, default 0.</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -1474,7 +1725,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>bias</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -1490,7 +1741,7 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -1612,31 +1863,43 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
-### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
+### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
-  Given a matrix, apply Lp-normalization along the provided axis.
+  The operator computes the logsoftmax normalized values for each layer in the batch
+   of the given input. The input is a 2-D tensor (Tensor<float>) of size
+  (batch_size x input_feature_dimensions). The output tensor has the same shape
+  and contains the logsoftmax normalized values of the corresponding input.
+  
+  X does not need to explicitly be a 2D vector; rather, it will be
+  coerced into one. For an arbitrary n-dimensional tensor
+  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+  In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
+  Each of these dimensions must be matched correctly, or else the operator
+  will throw errors.
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
-<dt><tt>p</tt> : float</dt>
-<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
+<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>Input matrix</dd>
+<dd>The input tensor that's coerced into a 2D matrix of size (NxD) as described above.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Matrix after normalization</dd>
+<dd>The softmax normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -2090,7 +2353,7 @@ expect(node, inputs=[a, b], outputs=[c],
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
-<dt><tt>Slope</tt> : T</dt>
+<dt><tt>slope</tt> : T</dt>
 <dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
 </dl>
 
@@ -2111,19 +2374,19 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
-  Given DATA tensor, paddings, mode, and value.
+  Given `data` tensor, paddings, mode, and value.
   
   Example:
     Insert 0 paddings to the beginning of the second dimension.
   
-    DATA  = [
+    data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
     paddings = [0, 0, 2, 0]
   
-    OUTPUT = [
+    output = [
         [
             [0.0, 0.0, 1.0, 1.2],
             [0.0, 0.0, 2.3, 3.4],
@@ -2145,14 +2408,14 @@ expect(node, inputs=[a, b], outputs=[c],
 #### Inputs
 
 <dl>
-<dt><tt>DATA</tt> : T</dt>
+<dt><tt>data</tt> : T</dt>
 <dd>Input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>OUTPUT</tt> : T</dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Tensor after padding.</dd>
 </dl>
 
@@ -2255,34 +2518,84 @@ for mode in ['edge', 'reflect']:
   via some custom implementation such as CuDNN.
   
   Notations:
+  
   `X` - input tensor
+  
   `i` - input gate
+  
   `t` - time step (t-1 means previous time step)
+  
   `Wi` - W parameter weight matrix for input gate
+  
   `Ri` - R recurrence weight matrix for input gate
+  
   `Wbi` - W parameter bias vector for input gate
+  
   `Rbi` - R parameter bias vector for input gate
+  
   `WBi` - W parameter weight matrix for backward input gate
+  
   `RBi` - R recurrence weight matrix for backward input gate
+  
   `WBbi` - WR bias vectors for backward input gate
+  
   `RBbi` - RR bias vectors for backward input gate
-  `ReLU(X)` - max(X, 0)
-  `tanh(X)` - hyperbolic tangent of X
+  
   `H` - Hidden state
+  
   `num_directions` - 2 if direction == bidirectional else 1
   
-  Equations:
-    - Ht = Activation(Wi*Xt + Ri*Ht-1 + Wbi + Rbi)
+  Activation functions:
+  
+    relu(x)                - max(0, x)
+  
+    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
+    sigmoid(x)             - 1/(1 + e^{-x})
+  
+    (NOTE: Below are optional)
+  
+    linear(x)              - alpha*x + beta
+  
+    leakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    thresholdedRelu(x)     - x if x >= alpha else 0
+  
+    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  
+    scaledTanh(x)          - alpha*tanh(beta*x)
+  
+    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  
+    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    softsign(x)            - x/(1 + |x|)
+  
+    softplus(x)            - log(1 + e^x)
+  
+    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
+  
+  Equations (Default: f=tanh):
+  
+    - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
 #### Attributes
 
 <dl>
-<dt><tt>activation</tt> : string</dt>
-<dd>One (or two if bidirectional) activation function for input gate. It must be one of tanh and ReLU. Default `tanh`.</dd>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `tanh` if not specified.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -2294,8 +2607,8 @@ for mode in ['edge', 'reflect']:
 <dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
-<dt><tt>B</tt> (optional) : T</dt>
-<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`, Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>bias</tt> (optional) : T</dt>
+<dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
 <dt><tt>initial_h</tt> (optional) : T</dt>
@@ -2306,7 +2619,7 @@ for mode in ['edge', 'reflect']:
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden.It has shape `[seq_length, num_directions, batch_size, hidden_size]`.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -3224,7 +3537,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
   The operator computes the softmax normalized values for each layer in the batch
-  of the given input. The input is a 2-D tensor (Tensor<float>) of size
+   of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax normalized values of the corresponding input.
   
@@ -3258,6 +3571,62 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The softmax normalized output values with the same shape as input tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
+
+  Softplus takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
+  the tensor elementwise.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Softsign"></a><a name="softsign">**Softsign**</a>
+
+  Calculates the softsign (x/1+|x|) of the given input tensor element-wise. This
+  operation can be done in an in-place fashion too, by providing the same input
+  and output blobs.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>1-D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The softsign (x/1+|x|) values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
@@ -3641,6 +4010,43 @@ expect(node, inputs=[x], outputs=[y],
 
 
 
+### <a name="Affine"></a><a name="affine">**<sub>experimental</sub> Affine**</a>
+
+  Affine takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the affine function, y = alpha * x + beta,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="ConstantFill"></a><a name="constantfill">**<sub>experimental</sub> ConstantFill**</a>
 
   The operator fills the elements of the output tensor with a constant value
@@ -3811,7 +4217,7 @@ expect(node, inputs=[x], outputs=[y],
 <dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
-<dt><tt>b</tt> : T</dt>
+<dt><tt>bias</tt> : T</dt>
 <dd>1D blob containing bias vector</dd>
 </dl>
 
@@ -3911,6 +4317,32 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
+### <a name="Identity"></a><a name="identity">**<sub>experimental</sub> Identity**</a>
+
+  Identity operator
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor to copy input into. Can be in-place</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="ImageScaler"></a><a name="imagescaler">**<sub>experimental</sub> ImageScaler**</a>
 
   Scale and bias the input image. Bias values are stored in 
@@ -3982,6 +4414,43 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
+### <a name="ParametricSoftplus"></a><a name="parametricsoftplus">**<sub>experimental</sub> ParametricSoftplus**</a>
+
+  ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
+  the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Scale"></a><a name="scale">**<sub>experimental</sub> Scale**</a>
 
   Scale takes one input data (Tensor<float>) and produces one output data
@@ -4006,6 +4475,77 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Output data after scaling</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ScaledTanh"></a><a name="scaledtanh">**<sub>experimental</sub> ScaledTanh**</a>
+
+  Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
+  scale * tanh(x). This operation can be done in an in-place fashion too,
+  by providing the same input and output blobs.
+      
+
+#### Attributes
+
+<dl>
+<dt><tt>scale</tt> : float</dt>
+<dd>Scale for tanh</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>1-D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The scaled hyperbolic tangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**<sub>experimental</sub> ThresholdedRelu**</a>
+
+  ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+  is applied to the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>theta</tt> : float</dt>
+<dd>Threshold value</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
