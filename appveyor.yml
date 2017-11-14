@@ -24,11 +24,16 @@ before_build:
 - cmd: C:\Miniconda36\Scripts\pip install pytest-cov nbval
 
 build_script:
+# Build and test onnx.
 - cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\
-
-test_script:
 - cmd: cd c:\projects\onnx
 - cmd: C:\Miniconda36\Scripts\pytest
+
+# Build and test onnx-ml.
+- cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\ --install-option="--onnxml=1"
+- cmd: cd c:\projects\onnx
+- cmd: C:\Miniconda36\Scripts\pytest
+
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
