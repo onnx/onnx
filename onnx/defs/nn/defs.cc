@@ -101,7 +101,7 @@ namespace onnx {
                         "first value corresponding to the number of pixels added to the begining of the axis "
                         "and the second value corresponding to the number of pixels add at the end of the axis.",
                         AttrType::INTS);
-            schema.Attr("p",
+            schema.Attr("P",
                         "p value of the Lp norm used to pool over the input data, default is 2.0.",
                         AttrType::FLOAT);
             schema.Input(0,
@@ -362,7 +362,7 @@ namespace onnx {
             schema.SetDoc(doc);
             schema.NumInputs(1);
             schema.NumOutputs(1);
-            schema.Attr("p",
+            schema.Attr("P",
                         "p value of the Lp norm used to pool over the input data, default is 2.0.",
                         AttrType::FLOAT);
             schema.Input(0,
