@@ -463,7 +463,7 @@ OPERATOR_SCHEMA(LpNormalization)
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC")
     .Attr("axis", "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.", AttrType::INT)
-    .Attr("p", "(float, default 2.0) the order of the normalization, only 2.0 is supported.", AttrType::FLOAT);
+    .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttrType::FLOAT);
 
 OPERATOR_SCHEMA(Dropout)
     .NumInputs(1)
