@@ -187,7 +187,7 @@ void DataTypeUtils::FromString(
     // Scalar
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
-    TypeProto::TensorTypeProto* t = type_proto.mutable_tensor_type();
+    TypeProto::Tensor* t = type_proto.mutable_tensor_type();
     t->set_elem_type(e);
     // Call mutable_shape() to initialize a shape with no dimension.
     t->mutable_shape();
