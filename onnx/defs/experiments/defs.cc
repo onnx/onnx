@@ -226,7 +226,7 @@ will throw errors.
         "2D blob of size (KxN) containing fully connected weight "
         "matrix",
         "T")
-    .Input(2, "b", "1D blob containing bias vector", "T")
+    .Input(2, "bias", "1D blob containing bias vector", "T")
     .Output(0, "Y", "2D output tensor", "T")
     .TypeConstraint(
         "T",

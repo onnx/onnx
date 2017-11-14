@@ -353,7 +353,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
     .Input(0, "X", "Input tensor", "T")
     .Input(
         1,
-        "Slope",
+        "slope",
         "Slope tensor. If `Slope` is of size 1, the value is shared"
         "across different channels", "T")
     .Output(0, "Y", "Output tensor", "T")
