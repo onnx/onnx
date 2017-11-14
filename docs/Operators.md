@@ -1288,7 +1288,7 @@ expect(node, inputs=[], outputs=[values],
 #### Attributes
 
 <dl>
-<dt><tt>p</tt> : float</dt>
+<dt><tt>P</tt> : float</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
 </dl>
 
@@ -1808,12 +1808,12 @@ expect(node, inputs=[], outputs=[values],
 #### Attributes
 
 <dl>
+<dt><tt>P</tt> : float</dt>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>p</tt> : float</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
@@ -4223,10 +4223,10 @@ expect(node, inputs=[x], outputs=[y],
 #### Attributes
 
 <dl>
+<dt><tt>P</tt> : float</dt>
+<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
 <dt><tt>axis</tt> : int</dt>
 <dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
-<dt><tt>p</tt> : float</dt>
-<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
 </dl>
 
 #### Inputs
