@@ -368,6 +368,13 @@ message TensorProto {
   // When this field is present, the data_type field MUST be
   // UINT32 or UINT64
   repeated uint64 uint64_data = 11 [packed = true];
+
+  // Very large tensors may be stored in separate files.
+  // Files should be placed in the same directory as the protobuf.
+  message FileReference {
+	  optional string filename = 1;
+  }
+  optional FileReference data_file = 13;
 }
 
 // Defines a tensor shape. A dimension can be either an integer value
