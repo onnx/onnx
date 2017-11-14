@@ -30,7 +30,9 @@ namespace onnx {
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding.",
+                        "begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
+                        "only intended to support legacy uses, and for framework authors, one is explicitly "
+                        "encouraged to use explicit padding specified in the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
@@ -92,7 +94,9 @@ namespace onnx {
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
                         "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
-                        "from the pads attribute.",
+                        "from the pads attribute. DEPRECATION NOTE: auto_pad is "
+                        "only intended to support legacy uses, and for framework authors, one is explicitly "
+                        "encouraged to use explicit padding specified in the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
@@ -219,7 +223,9 @@ computes the output.)DOC";
                         "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                         "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
                         "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding.",
+                        "begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
+                        "only intended to support legacy uses, and for framework authors, one is explicitly "
+                        "encouraged to use explicit padding specified in the pads attribute.",
                         AttrType::STRING);
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
