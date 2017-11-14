@@ -3619,8 +3619,15 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Softplus"></a><a name="softplus">**Softplus**</a>
 
   Softplus takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
+  (Tensor<T>) where the softplus function, y = ln(exp(steepness * x) + 1), is applied to
   the tensor elementwise.
+
+#### Attributes
+
+<dl>
+<dt><tt>steepness</tt> : float</dt>
+<dd>Steepness (default = 1, must be >= 1)</dd>
+</dl>
 
 #### Inputs
 
