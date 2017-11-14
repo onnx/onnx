@@ -29,7 +29,7 @@ def generate_data(args):
     for case in node_cases:
         output_dir = os.path.join(args.output, 'node', case.name)
         prepare_dir(output_dir)
-        with io.open(os.path.join(output_dir, 'node.pb', newline=''), 'wb') as f:
+        with io.open(os.path.join(output_dir, 'node.pb'), 'wb', newline='') as f:
             f.write(case.node.SerializeToString())
         for i, input_np in enumerate(case.inputs):
             tensor = numpy_helper.from_array(input_np, case.node.input[i])
