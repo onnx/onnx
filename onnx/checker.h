@@ -9,6 +9,19 @@ namespace checker {
 class ValidationError : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
+  const char* what() const noexcept override {
+    if (!expanded_message_.empty()) {
+      return expanded_message_.c_str();
+    }
+    return std::runtime_error::what();
+  }
+  void AppendContext(const std::string& context) {
+    expanded_message_ = onnx::MakeString(
+        std::runtime_error::what(), "\n\n==> Context: ", context);
+  }
+
+ private:
+  std::string expanded_message_;
 };
 
 #define fail_check(...) \
