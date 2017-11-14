@@ -34,7 +34,6 @@ The ONNX versioning principles are based on [Postel's law](https://en.wikipedia.
 The operational rules for how the ONNX project is managed are documented at [here](../RELEASE-MANAGEMENT.md).
 
 ### Serializing SemVer version numbers in protobuf
-
 For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most siginificant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component.
 
 For example, 1.2.345 is represented as 0x01020159.
@@ -75,7 +74,7 @@ ONNX models declare which operator sets they require as a list of two part opera
 ONNX specification. The union of the operator sets specified by a given model MUST have have have a compatible operator declaration for each node in the model's graph.  
 
 
-How nodes bind to operator declarations is strictly defined and are designed to increase model compatibilitey across ONNX implementations (appealing to the conservative clause of the robustnes principle). 
+How nodes bind to operator declarations is strictly defined and are designed to increase model compatibility across ONNX implementations (appealing to the conservative clause of the robustnes principle). 
 
 How ONNX implementations bind an operator declaration to specific implementation is outside the scope of this specification.
 Implementations of ONNX MAY elect to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle.
