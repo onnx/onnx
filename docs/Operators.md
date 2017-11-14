@@ -4109,8 +4109,8 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Crop"></a><a name="crop">**<sub>experimental</sub> Crop**</a>
 
-  Crop and image to the specified spatial dimensions. If scale is given, 
-  then optionally start the crop offset by the left/top border amounts. 
+  Crop and image to the specified spatial dimensions. If scale is given,
+  then optionally start the crop offset by the left/top border amounts.
   If scale is not provided, crop the borders as provided.
 
 #### Attributes
@@ -4155,8 +4155,6 @@ expect(node, inputs=[x], outputs=[y],
 <dd>Size of the input vocabulary.</dd>
 <dt><tt>output_dim</tt> : int</dt>
 <dd>Dimension of the embedding output vectors.</dd>
-<dt><tt>weights</tt> : tensor</dt>
-<dd>2-D tensor of weights [O,I].</dd>
 </dl>
 
 #### Inputs
@@ -4164,6 +4162,8 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>input</tt> : tensor(int64)</dt>
 <dd>1-D tensor of integers representing indices in the embedding dictionary with length [N] and values [0, input_dim -1]</dd>
+<dt><tt>weights</tt> : T</dt>
+<dd>2-D tensor of weights [O, I].</dd>
 </dl>
 
 #### Outputs
@@ -4345,7 +4345,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="ImageScaler"></a><a name="imagescaler">**<sub>experimental</sub> ImageScaler**</a>
 
-  Scale and bias the input image. Bias values are stored in 
+  Scale and bias the input image. Bias values are stored in
   the same ordering as the image pixel format.
 
 #### Attributes
@@ -4523,15 +4523,17 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="ScaledTanh"></a><a name="scaledtanh">**<sub>experimental</sub> ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  scale * tanh(x). This operation can be done in an in-place fashion too,
+  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
   by providing the same input and output blobs.
       
 
 #### Attributes
 
 <dl>
-<dt><tt>scale</tt> : float</dt>
-<dd>Scale for tanh</dd>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Scaling value</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Scaling value</dd>
 </dl>
 
 #### Inputs
@@ -4559,13 +4561,13 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**<sub>experimental</sub> ThresholdedRelu**</a>
 
   ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
   is applied to the tensor elementwise.
 
 #### Attributes
 
 <dl>
-<dt><tt>theta</tt> : float</dt>
+<dt><tt>alpha</tt> : float</dt>
 <dd>Threshold value</dd>
 </dl>
 
