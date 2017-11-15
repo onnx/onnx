@@ -35,7 +35,7 @@ Integrating the ONNX Backend Test suite into your CI should be pretty easy. Here
 
 [onnx-coreml onnx backend test](https://github.com/onnx/onnx-coreml/blob/master/tests/onnx_backend_test.py)
 
-If you have (pytest)[https://docs.pytest.org/en/latest/] installed, you can get a coverage report after running the ONNX backend test to see how well your backend is doing:
+If you have [pytest](https://docs.pytest.org/en/latest/) installed, you can get a coverage report after running the ONNX backend test to see how well your backend is doing:
 
 ```
 ---------- onnx coverage: ----------
