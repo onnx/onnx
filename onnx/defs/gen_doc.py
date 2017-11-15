@@ -46,14 +46,14 @@ def main(args):
           "            Do not modify directly and instead edit operator definitions.*\n")
 
       sorted_ops = sorted(
-          (int(schema.support_level), schema.domain, op_type, schema)
+          (schema.domain, int(schema.support_level), op_type, schema)
           for (op_type, schema) in defs.get_all_schemas().items())
 
       fout.write('\n')
 
       # Table of contents
-      for _, domain, op_type, schema in sorted_ops:
-          if not domain:
+      for domain, _, op_type, schema in sorted_ops:
+          if domain:
               domain = ' (Domain: {})'.format(domain)
           s = '* <a href="#{}">{}{}</a>{}\n'.format(
               op_type, support_level_str(schema.support_level), op_type, domain)
@@ -61,7 +61,7 @@ def main(args):
 
       fout.write('\n')
 
-      for _, domain, op_type, schema in sorted_ops:
+      for domain, _, op_type, schema in sorted_ops:
           # op_type
           s = '### <a name="{}"></a><a name="{}">**{}{}**</a>\n'.format(
               op_type, op_type.lower(), support_level_str(schema.support_level),

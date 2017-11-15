@@ -3,109 +3,109 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit operator definitions.*
 
-* <a href="#Abs">Abs</a> (Domain: )
-* <a href="#And">And</a> (Domain: )
-* <a href="#ArgMax">ArgMax</a> (Domain: )
-* <a href="#ArgMin">ArgMin</a> (Domain: )
-* <a href="#AveragePool">AveragePool</a> (Domain: )
-* <a href="#BatchNormalization">BatchNormalization</a> (Domain: )
-* <a href="#Cast">Cast</a> (Domain: )
-* <a href="#Ceil">Ceil</a> (Domain: )
-* <a href="#Clip">Clip</a> (Domain: )
-* <a href="#Concat">Concat</a> (Domain: )
-* <a href="#Constant">Constant</a> (Domain: )
-* <a href="#Conv">Conv</a> (Domain: )
-* <a href="#ConvTranspose">ConvTranspose</a> (Domain: )
-* <a href="#DepthToSpace">DepthToSpace</a> (Domain: )
-* <a href="#Div">Div</a> (Domain: )
-* <a href="#Dropout">Dropout</a> (Domain: )
-* <a href="#Elu">Elu</a> (Domain: )
-* <a href="#Equal">Equal</a> (Domain: )
-* <a href="#Exp">Exp</a> (Domain: )
-* <a href="#Flatten">Flatten</a> (Domain: )
-* <a href="#Floor">Floor</a> (Domain: )
-* <a href="#GRU">GRU</a> (Domain: )
-* <a href="#Gather">Gather</a> (Domain: )
-* <a href="#Gemm">Gemm</a> (Domain: )
-* <a href="#GlobalAveragePool">GlobalAveragePool</a> (Domain: )
-* <a href="#GlobalLpPool">GlobalLpPool</a> (Domain: )
-* <a href="#GlobalMaxPool">GlobalMaxPool</a> (Domain: )
-* <a href="#Greater">Greater</a> (Domain: )
-* <a href="#HardSigmoid">HardSigmoid</a> (Domain: )
-* <a href="#Hardmax">Hardmax</a> (Domain: )
-* <a href="#InstanceNormalization">InstanceNormalization</a> (Domain: )
-* <a href="#LRN">LRN</a> (Domain: )
-* <a href="#LSTM">LSTM</a> (Domain: )
-* <a href="#LeakyRelu">LeakyRelu</a> (Domain: )
-* <a href="#Less">Less</a> (Domain: )
-* <a href="#Log">Log</a> (Domain: )
-* <a href="#LogSoftmax">LogSoftmax</a> (Domain: )
-* <a href="#LpNormalization">LpNormalization</a> (Domain: )
-* <a href="#LpPool">LpPool</a> (Domain: )
-* <a href="#MatMul">MatMul</a> (Domain: )
-* <a href="#Max">Max</a> (Domain: )
-* <a href="#MaxPool">MaxPool</a> (Domain: )
-* <a href="#MaxRoiPool">MaxRoiPool</a> (Domain: )
-* <a href="#Mean">Mean</a> (Domain: )
-* <a href="#Min">Min</a> (Domain: )
-* <a href="#Mul">Mul</a> (Domain: )
-* <a href="#Neg">Neg</a> (Domain: )
-* <a href="#Not">Not</a> (Domain: )
-* <a href="#Or">Or</a> (Domain: )
-* <a href="#PRelu">PRelu</a> (Domain: )
-* <a href="#Pad">Pad</a> (Domain: )
-* <a href="#Pow">Pow</a> (Domain: )
-* <a href="#RNN">RNN</a> (Domain: )
-* <a href="#RandomNormal">RandomNormal</a> (Domain: )
-* <a href="#RandomNormalLike">RandomNormalLike</a> (Domain: )
-* <a href="#RandomUniform">RandomUniform</a> (Domain: )
-* <a href="#RandomUniformLike">RandomUniformLike</a> (Domain: )
-* <a href="#Reciprocal">Reciprocal</a> (Domain: )
-* <a href="#ReduceL1">ReduceL1</a> (Domain: )
-* <a href="#ReduceL2">ReduceL2</a> (Domain: )
-* <a href="#ReduceLogSum">ReduceLogSum</a> (Domain: )
-* <a href="#ReduceLogSumExp">ReduceLogSumExp</a> (Domain: )
-* <a href="#ReduceMax">ReduceMax</a> (Domain: )
-* <a href="#ReduceMean">ReduceMean</a> (Domain: )
-* <a href="#ReduceMin">ReduceMin</a> (Domain: )
-* <a href="#ReduceProd">ReduceProd</a> (Domain: )
-* <a href="#ReduceSum">ReduceSum</a> (Domain: )
-* <a href="#ReduceSumSquare">ReduceSumSquare</a> (Domain: )
-* <a href="#Relu">Relu</a> (Domain: )
-* <a href="#Reshape">Reshape</a> (Domain: )
-* <a href="#Selu">Selu</a> (Domain: )
-* <a href="#Sigmoid">Sigmoid</a> (Domain: )
-* <a href="#Slice">Slice</a> (Domain: )
-* <a href="#Softmax">Softmax</a> (Domain: )
-* <a href="#Softplus">Softplus</a> (Domain: )
-* <a href="#Softsign">Softsign</a> (Domain: )
-* <a href="#SpaceToDepth">SpaceToDepth</a> (Domain: )
-* <a href="#Split">Split</a> (Domain: )
-* <a href="#Sqrt">Sqrt</a> (Domain: )
-* <a href="#Squeeze">Squeeze</a> (Domain: )
-* <a href="#Sub">Sub</a> (Domain: )
-* <a href="#Sum">Sum</a> (Domain: )
-* <a href="#Tanh">Tanh</a> (Domain: )
-* <a href="#Tile">Tile</a> (Domain: )
-* <a href="#Transpose">Transpose</a> (Domain: )
-* <a href="#Xor">Xor</a> (Domain: )
-* <a href="#Add">Add</a>com.test
-* <a href="#ATen"><sub>experimental</sub> ATen</a> (Domain: )
-* <a href="#Affine"><sub>experimental</sub> Affine</a> (Domain: )
-* <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a> (Domain: )
-* <a href="#Crop"><sub>experimental</sub> Crop</a> (Domain: )
-* <a href="#Embedding"><sub>experimental</sub> Embedding</a> (Domain: )
-* <a href="#FC"><sub>experimental</sub> FC</a> (Domain: )
-* <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a> (Domain: )
-* <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a> (Domain: )
-* <a href="#Identity"><sub>experimental</sub> Identity</a> (Domain: )
-* <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a> (Domain: )
-* <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a> (Domain: )
-* <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a> (Domain: )
-* <a href="#ResizeNearest"><sub>experimental</sub> ResizeNearest</a> (Domain: )
-* <a href="#Scale"><sub>experimental</sub> Scale</a> (Domain: )
-* <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a> (Domain: )
-* <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a> (Domain: )
+* <a href="#Abs">Abs</a>
+* <a href="#And">And</a>
+* <a href="#ArgMax">ArgMax</a>
+* <a href="#ArgMin">ArgMin</a>
+* <a href="#AveragePool">AveragePool</a>
+* <a href="#BatchNormalization">BatchNormalization</a>
+* <a href="#Cast">Cast</a>
+* <a href="#Ceil">Ceil</a>
+* <a href="#Clip">Clip</a>
+* <a href="#Concat">Concat</a>
+* <a href="#Constant">Constant</a>
+* <a href="#Conv">Conv</a>
+* <a href="#ConvTranspose">ConvTranspose</a>
+* <a href="#DepthToSpace">DepthToSpace</a>
+* <a href="#Div">Div</a>
+* <a href="#Dropout">Dropout</a>
+* <a href="#Elu">Elu</a>
+* <a href="#Equal">Equal</a>
+* <a href="#Exp">Exp</a>
+* <a href="#Flatten">Flatten</a>
+* <a href="#Floor">Floor</a>
+* <a href="#GRU">GRU</a>
+* <a href="#Gather">Gather</a>
+* <a href="#Gemm">Gemm</a>
+* <a href="#GlobalAveragePool">GlobalAveragePool</a>
+* <a href="#GlobalLpPool">GlobalLpPool</a>
+* <a href="#GlobalMaxPool">GlobalMaxPool</a>
+* <a href="#Greater">Greater</a>
+* <a href="#HardSigmoid">HardSigmoid</a>
+* <a href="#Hardmax">Hardmax</a>
+* <a href="#InstanceNormalization">InstanceNormalization</a>
+* <a href="#LRN">LRN</a>
+* <a href="#LSTM">LSTM</a>
+* <a href="#LeakyRelu">LeakyRelu</a>
+* <a href="#Less">Less</a>
+* <a href="#Log">Log</a>
+* <a href="#LogSoftmax">LogSoftmax</a>
+* <a href="#LpNormalization">LpNormalization</a>
+* <a href="#LpPool">LpPool</a>
+* <a href="#MatMul">MatMul</a>
+* <a href="#Max">Max</a>
+* <a href="#MaxPool">MaxPool</a>
+* <a href="#MaxRoiPool">MaxRoiPool</a>
+* <a href="#Mean">Mean</a>
+* <a href="#Min">Min</a>
+* <a href="#Mul">Mul</a>
+* <a href="#Neg">Neg</a>
+* <a href="#Not">Not</a>
+* <a href="#Or">Or</a>
+* <a href="#PRelu">PRelu</a>
+* <a href="#Pad">Pad</a>
+* <a href="#Pow">Pow</a>
+* <a href="#RNN">RNN</a>
+* <a href="#RandomNormal">RandomNormal</a>
+* <a href="#RandomNormalLike">RandomNormalLike</a>
+* <a href="#RandomUniform">RandomUniform</a>
+* <a href="#RandomUniformLike">RandomUniformLike</a>
+* <a href="#Reciprocal">Reciprocal</a>
+* <a href="#ReduceL1">ReduceL1</a>
+* <a href="#ReduceL2">ReduceL2</a>
+* <a href="#ReduceLogSum">ReduceLogSum</a>
+* <a href="#ReduceLogSumExp">ReduceLogSumExp</a>
+* <a href="#ReduceMax">ReduceMax</a>
+* <a href="#ReduceMean">ReduceMean</a>
+* <a href="#ReduceMin">ReduceMin</a>
+* <a href="#ReduceProd">ReduceProd</a>
+* <a href="#ReduceSum">ReduceSum</a>
+* <a href="#ReduceSumSquare">ReduceSumSquare</a>
+* <a href="#Relu">Relu</a>
+* <a href="#Reshape">Reshape</a>
+* <a href="#Selu">Selu</a>
+* <a href="#Sigmoid">Sigmoid</a>
+* <a href="#Slice">Slice</a>
+* <a href="#Softmax">Softmax</a>
+* <a href="#Softplus">Softplus</a>
+* <a href="#Softsign">Softsign</a>
+* <a href="#SpaceToDepth">SpaceToDepth</a>
+* <a href="#Split">Split</a>
+* <a href="#Sqrt">Sqrt</a>
+* <a href="#Squeeze">Squeeze</a>
+* <a href="#Sub">Sub</a>
+* <a href="#Sum">Sum</a>
+* <a href="#Tanh">Tanh</a>
+* <a href="#Tile">Tile</a>
+* <a href="#Transpose">Transpose</a>
+* <a href="#Xor">Xor</a>
+* <a href="#ATen"><sub>experimental</sub> ATen</a>
+* <a href="#Affine"><sub>experimental</sub> Affine</a>
+* <a href="#ConstantFill"><sub>experimental</sub> ConstantFill</a>
+* <a href="#Crop"><sub>experimental</sub> Crop</a>
+* <a href="#Embedding"><sub>experimental</sub> Embedding</a>
+* <a href="#FC"><sub>experimental</sub> FC</a>
+* <a href="#GRUUnit"><sub>experimental</sub> GRUUnit</a>
+* <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
+* <a href="#Identity"><sub>experimental</sub> Identity</a>
+* <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
+* <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
+* <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
+* <a href="#ResizeNearest"><sub>experimental</sub> ResizeNearest</a>
+* <a href="#Scale"><sub>experimental</sub> Scale</a>
+* <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
+* <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
+* <a href="#Add">Add</a> (Domain: com.test)
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -3935,101 +3935,6 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
-### <a name="Add"></a><a name="add">**Add**</a>
-
-  Performs element-wise binary addition (with limited broadcast support).
-  
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of size 1 (a scalar value), or having its shape as a
-  contiguous subset of the first tensor's shape. The starting of the mutually
-  equal shape is specified by the argument "axis", and if it is not set, suffix
-  matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>add</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(3, 4, 5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add')
-```
-
-</details>
-
-
-<details>
-<summary>add_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-    broadcast=1,
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add_bcast')
-```
-
-</details>
-
-
 ### <a name="ATen"></a><a name="aten">**<sub>experimental</sub> ATen**</a>
 
   Experimental allowing ATen operations to be accessed directly from Caffe2
@@ -4632,5 +4537,100 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+### <a name="Add"></a><a name="add">**Add**</a>
+
+  Performs element-wise binary addition (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>add</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add')
+```
+
+</details>
+
+
+<details>
+<summary>add_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_bcast')
+```
+
+</details>
 
 
