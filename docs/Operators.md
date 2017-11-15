@@ -4403,6 +4403,16 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Result, has same shape and type as input</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**<sub>experimental</sub> MeanVarianceNormalization**</a>
 
   Perform mean variance normalization.
