@@ -21,6 +21,8 @@
 
 namespace onnx {
 
+using OperatorSetVersion = int;
+
 typedef std::unordered_set<DataType> DataTypeSet;
 
 // Type constraint map. Key is type string. Value is data type set and
@@ -160,9 +162,18 @@ class OpSchema {
 
   /**
    * The earliest operator set version which this operator was
-   * present in.
+   * present in.  If an operator has had no BC-breaking changes,
+   * this is simply the first operator set the operator was a member
+   * of; if it has had BC-breaking changes, then for the semantics
+   * /as described/ in the OpSchema entry, this version describes
+   * the operator set which introduced the BC-breaking change.
+   *
+   * For example, suppose op Foo was added in v3, and had a BC-breaking
+   * change in v6.  Then there will be an op schema entry for Foo with
+   * SinceVersion(3), and another, updated op schema entry for Foo
+   * with SinceVersion(6).
    */
-  OpSchema& SinceVersion(int n);
+  OpSchema& SinceVersion(OperatorSetVersion n); // aka int
   /**
    * @brief A single input.
    */
@@ -379,6 +390,10 @@ class OpSchema {
     return name_;
   }
 
+  const OperatorSetVersion SinceVersion() const {
+    return since_version_;
+  }
+
   int min_input() const {
     return min_input_;
   }
@@ -423,7 +438,7 @@ class OpSchema {
   int min_output_ = 0;
   int max_output_ = std::numeric_limits<int>::max();
   // The default is a little goofy, since it is never what you want
-  int since_version_ = 1;
+  OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   std::function<bool(int, int)> num_inputs_outputs_allowed_ = [](int, int) {
@@ -443,7 +458,7 @@ class OpSchema {
 class OpSchemaRegistry {
  public:
   // Update this when you make BC-breaking changes to the operator schema
-  constexpr static int version = 1;
+  constexpr static int version = 2;
 
   class OpSchemaRegisterOnce {
    public:
@@ -456,23 +471,26 @@ class OpSchemaRegistry {
       }
       auto& m = map();
       auto& key = op_schema.Name();
-      if (m.count(key)) {
-        const auto& schema = m[key];
+      auto ver = op_schema.SinceVersion();
+
+      if (m[key].count(ver)) {
+        const auto& schema = m[key][ver];
         std::cerr << "Trying to register schema with name " << key
-                  << " from file " << op_schema.file() << " line "
+                  << " (version " << ver << ") from file " << op_schema.file() << " line "
                   << op_schema.line()
                   << ", but it is already registered from file "
                   << schema.file() << " line " << schema.line();
         abort();
       }
-      m.emplace(std::make_pair(key, op_schema));
+      m[key].emplace(std::make_pair(ver, op_schema));
     }
   };
 
+  // Return the latest schema for an operator
   static const OpSchema* Schema(const std::string& key) {
     auto& m = map();
     if (m.count(key)) {
-      return &m[key];
+      return &m[key].rbegin()->second;
     } else {
       return nullptr;
     }
@@ -492,12 +510,22 @@ class OpSchemaRegistry {
    * We wrap it inside a function to avoid the statia initialization order
    * fiasco.
    */
-  static std::unordered_map<std::string, OpSchema>& map();
+  static std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>& map();
 
  public:
-  static const std::unordered_map<std::string, OpSchema>& registered_schemas() {
+  static const std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>& registered_schemas() {
     return map();
   }
+
+  static const std::unordered_map<std::string, OpSchema> latest_registered_schemas() {
+    // TODO: Do this better with C++11
+    std::unordered_map<std::string, OpSchema> latest_map;
+    for (auto kv : map()) {
+      latest_map.emplace(kv.first, kv.second.rbegin()->second);
+    }
+    return latest_map;
+  }
+
 };
 
 #define OPERATOR_SCHEMA(name)                          \

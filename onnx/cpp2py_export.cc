@@ -100,7 +100,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def(
       "get_all_schemas",
       []() -> const std::unordered_map<std::string, OpSchema> {
-        return OpSchemaRegistry::registered_schemas();
+        return OpSchemaRegistry::latest_registered_schemas();
       });
 
   // Submodule `checker`
