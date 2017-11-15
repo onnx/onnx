@@ -301,10 +301,14 @@ class OpSchema {
   };
 
   // Grammar for type strings used in Input(), Output().
-  // <type> ::= <data_type> | tensor(<data_type>) | ...
-  // <type_parameter> <data_type> :: = float | int32 | string | bool | uint8
+  // <type> ::= <data_type> |
+  //            tensor(<data_type>) |
+  //            seq(<type>) |
+  //            map(<data_type>, <type>) |
+  //            <type_parameter> 
+  // <data_type> :: = float | int32 | string | bool | uint8
   //                | int8 | uint16 | int16 | int64 | float16 | double
-  // <type_parameter> ::= any type parameter, say "T".
+  // <type_parameter> ::= any type parameter string, say "T".
   //
   // NOTE: 1) <type_parameter> will always be together with a type constraints
   // specification.

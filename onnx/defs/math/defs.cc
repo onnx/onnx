@@ -58,6 +58,42 @@ Performs element-wise binary {name} (with limited broadcast support).
   };
 }
 
+std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+The operator computes the {name} normalized values for each layer in the batch
+ of the given input. The input is a 2-D tensor (Tensor<float>) of size
+(batch_size x input_feature_dimensions). The output tensor has the same shape
+and contains the {name} normalized values of the corresponding input.
+
+X does not need to explicitly be a 2D vector; rather, it will be
+coerced into one. For an arbitrary n-dimensional tensor
+X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+the axis provided, then X will be coerced into a 2-dimensional tensor with
+dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
+case where axis=1, this means the X tensor will be coerced into a 2D tensor
+of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
+In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
+Each of these dimensions must be matched correctly, or else the operator
+will throw errors.
+)DOC";
+    ReplaceAll(doc, "{name}", name);
+    schema.SetDoc(doc);
+    schema.Attr("axis",
+        "(int) default to 1; describes the axis of the inputs when coerced "
+        "to 2D; defaults to one because the 0th axis most likely describes "
+        "the batch_size",
+        AttrType::INT);
+    schema.Input(0, "input",
+         "The input tensor that's coerced into a 2D matrix of size (NxD) "
+         "as described above.", "T");
+    schema.Output(0, "output", "The softmax normalized output values with the same "
+          "shape as input tensor.", "T");
+    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+  };
+}
+
 OPERATOR_SCHEMA(Add)
     .NumInputs(2)
     .NumOutputs(1)
@@ -317,7 +353,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
     .Input(0, "X", "Input tensor", "T")
     .Input(
         1,
-        "Slope",
+        "slope",
         "Slope tensor. If `Slope` is of size 1, the value is shared"
         "across different channels", "T")
     .Output(0, "Y", "Output tensor", "T")
@@ -332,6 +368,26 @@ OPERATOR_SCHEMA(Sigmoid)
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
 tensor elementwise.
+)DOC")
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(HardSigmoid)
+  .NumInputs(1)
+  .NumOutputs(1)
+  .AllowConsumed({{0, 0}})
+  .Attr("alpha",
+        "Value of alpha",
+        AttrType::FLOAT)
+  .Attr("beta",
+        "Value of beta",
+        AttrType::FLOAT)
+  .SetDoc(R"DOC(
+HardSigmoid takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
+is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
@@ -364,7 +420,7 @@ place and results will be accumulated in input0. All inputs and outputs must
 have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
-    .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
+    .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
@@ -394,7 +450,7 @@ place and results will be accumulated in input0. All inputs and outputs must
 have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
-    .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
+    .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
@@ -419,36 +475,48 @@ are the same.
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Softmax)
-  .NumInputs(1)
-  .NumOutputs(1)
-  .SetDoc(R"DOC(
-The operator computes the softmax normalized values for each layer in the batch
-of the given input. The input is a 2-D tensor (Tensor<float>) of size
-(batch_size x input_feature_dimensions). The output tensor has the same shape
-and contains the softmax normalized values of the corresponding input.
+    .NumInputs(1)
+    .NumOutputs(1)
+    .FillUsing(SoftmaxFamilyDocGenerator("softmax"));
 
-X does not need to explicitly be a 2D vector; rather, it will be
-coerced into one. For an arbitrary n-dimensional tensor
-X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-the axis provided, then X will be coerced into a 2-dimensional tensor with
-dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-case where axis=1, this means the X tensor will be coerced into a 2D tensor
-of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
-Each of these dimensions must be matched correctly, or else the operator
-will throw errors.
+OPERATOR_SCHEMA(LogSoftmax)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .FillUsing(SoftmaxFamilyDocGenerator("logsoftmax"));
+
+OPERATOR_SCHEMA(Hardmax)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .FillUsing(SoftmaxFamilyDocGenerator("hardmax"));
+
+OPERATOR_SCHEMA(Softsign)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .SetDoc(R"DOC(
+Calculates the softsign (x/1+|x|) of the given input tensor element-wise. This
+operation can be done in an in-place fashion too, by providing the same input
+and output blobs.
 )DOC")
-  .Attr("axis",
-        "(int) default to 1; describes the axis of the inputs when coerced "
-        "to 2D; defaults to one because the 0th axis most likely describes "
-        "the batch_size",
-        AttrType::INT)
-  .Input(0, "input",
-         "The input tensor that's coerced into a 2D matrix of size (NxD) "
-         "as described above.", "T")
-  .Output(0, "output", "The softmax normalized output values with the same "
-          "shape as input tensor.", "T")
-  .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .Input(0, "input", "1-D input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The softsign (x/1+|x|) values of the input tensor computed element-wise",
+        "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(Softplus)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .SetDoc(R"DOC(
+Softplus takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
+the tensor elementwise.
+)DOC")
+    .Input(0, "X", "1D input tensor", "T")
+    .Output(0, "Y", "1D input tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Gemm)

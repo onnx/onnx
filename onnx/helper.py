@@ -9,6 +9,7 @@ import numpy as np
 
 from six import text_type, integer_types, binary_type
 
+import google.protobuf.message
 from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
 import onnx.defs as defs
@@ -259,7 +260,7 @@ def printable_attribute(attr):
         return '[' + ', '.join(map(str_elem, xs)) + ']'
 
     # for now, this logic should continue to work as long as we are running on a proto3
-    # implementation. If/when we switch to proto3, we will need to use attr.type  
+    # implementation. If/when we switch to proto3, we will need to use attr.type
     if attr.HasField("f"):
         content.append(str_float(attr.f))
     elif attr.HasField("i"):
@@ -320,3 +321,19 @@ def printable_graph(graph, prefix=''):
     # closing bracket
     content.append(prefix + '}')
     return '\n'.join(content)
+
+
+def strip_doc_string(proto):
+    """
+    Empties `doc_string` field on any nested protobuf messages
+    """
+    assert isinstance(proto, google.protobuf.message.Message)
+    for descriptor in proto.DESCRIPTOR.fields:
+        if descriptor.name == 'doc_string':
+            proto.ClearField(descriptor.name)
+        elif descriptor.type == descriptor.TYPE_MESSAGE:
+            if descriptor.label == descriptor.LABEL_REPEATED:
+                for x in getattr(proto, descriptor.name):
+                    strip_doc_string(x)
+            elif proto.HasField(descriptor.name):
+                strip_doc_string(getattr(proto, descriptor.name))

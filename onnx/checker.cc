@@ -217,8 +217,13 @@ void check_graph(const GraphProto& graph, int ir_version) {
     check_value_info(value_info, ir_version);
   }
   for (const auto& node : graph.node()) {
-    check_node(node, ir_version);
-  }
+    try {
+      check_node(node, ir_version);
+    } catch (ValidationError& ex) {
+      ex.AppendContext("Bad node spec: " + node.ShortDebugString());
+      throw ex;
+    }
+   }
 
   std::unordered_set<std::string> input_names{};
   for (const auto& value_info : graph.input()) {

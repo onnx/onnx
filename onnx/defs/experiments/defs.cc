@@ -7,6 +7,91 @@ using namespace onnx;
 using AttrType = onnx::OpSchema::AttrType;
 using SupportType = onnx::OpSchema::SupportType;
 
+OPERATOR_SCHEMA(Identity)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .SetDoc("Identity operator")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "Tensor to copy input into. Can be in-place",
+        "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(Affine)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .SetDoc(R"DOC(
+Affine takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the affine function, y = alpha * x + beta,
+is applied to the tensor elementwise.
+)DOC")
+    .Attr("alpha", "Value of alpha", AttrType::FLOAT)
+    .Attr("beta" , "Value of beta", AttrType::FLOAT)
+    .Input(0, "X", "1D input tensor", "T")
+    .Output(0, "Y", "1D output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
+
+OPERATOR_SCHEMA(ThresholdedRelu)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+is applied to the tensor elementwise.
+)DOC")
+    .Attr("theta",
+          "Threshold value",
+          AttrType::FLOAT)
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(ScaledTanh)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
+scale * tanh(x). This operation can be done in an in-place fashion too,
+by providing the same input and output blobs.
+    )DOC")
+    .Attr("scale",
+        "Scale for tanh",
+        AttrType::FLOAT)
+    .Input(0, "input", "1-D input tensor", "T")
+    .Output(0, "output", "The scaled hyperbolic tangent values of the input tensor "
+        "computed element-wise", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(ParametricSoftplus)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
+the tensor elementwise.
+)DOC")
+    .Attr("alpha", "Value of alpha", AttrType::FLOAT)
+    .Attr("beta", "Value of beta", AttrType::FLOAT)
+    .Input(0, "X", "1D input tensor", "T")
+    .Output(0, "Y", "1D input tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
 OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(0, 1)
@@ -141,7 +226,7 @@ will throw errors.
         "2D blob of size (KxN) containing fully connected weight "
         "matrix",
         "T")
-    .Input(2, "b", "1D blob containing bias vector", "T")
+    .Input(2, "bias", "1D blob containing bias vector", "T")
     .Output(0, "Y", "2D output tensor", "T")
     .TypeConstraint(
         "T",
@@ -210,7 +295,6 @@ Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
 and op)DOC");
 
-
 OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
@@ -241,7 +325,7 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    
+
 OPERATOR_SCHEMA(Crop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
@@ -279,3 +363,39 @@ OPERATOR_SCHEMA(Embedding)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to float tensors.");
+
+OPERATOR_SCHEMA(ResizeNearest)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .NumInputs(1)
+    .NumOutputs(1)
+    .Attr(
+        "width_scale",
+        "The scale along width dimension",
+        AttrType::FLOAT, true)
+    .Attr(
+        "height_scale",
+        "The scale along height dimension",
+        AttrType::FLOAT, true)
+    .Input(
+        0,
+        "X",
+        "4-D tensor, [N,C,H,W]", "T")
+    .Output(
+        0,
+        "Y",
+        "4-D tensor after resizing, [N,C,H,W]", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(bool)", "tensor(int32)", "tensor(int64)",
+        "tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain output types to bool, int32, int64, float16, float, double tensors.")
+    .SetDoc(R"DOC(
+Resize the width and height dimensions:
+output_width = floor(input_width * width_scale),
+output_height = floor(input_height * height_scale).
+For example:
+X = [[[[1, 2],[3, 4]]]],
+width_scale = 2,
+height_scale = 2,
+Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
+)DOC");
