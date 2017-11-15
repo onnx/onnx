@@ -37,16 +37,28 @@ def _escape_label(name):
     return json.dumps(name)
 
 
-def GetOpNodeProducer(append_output, **kwargs):
+def _form_and_sanitize_docstring(s):
+    url = 'javascript:alert('
+    url += _escape_label(s).replace('"', '\'').replace('<', '').replace('>', '')
+    url += ')'
+    return url
+
+
+def GetOpNodeProducer(embed_docstring=False, **kwargs):
     def ReallyGetOpNode(op, op_id):
         if op.name:
             node_name = '%s/%s (op#%d)' % (op.name, op.op_type, op_id)
         else:
             node_name = '%s (op#%d)' % (op.op_type, op_id)
-        if append_output:
-            for output_name in op.output:
-                node_name += '\n' + output_name
-        return pydot.Node(node_name, **kwargs)
+        for i, input in enumerate(op.input):
+            node_name += '\n input' + str(i) + ' ' + input
+        for i, output in enumerate(op.output):
+            node_name += '\n output' + str(i) + ' ' + output
+        node = pydot.Node(node_name, **kwargs)
+        if embed_docstring:
+            url = _form_and_sanitize_docstring(op.doc_string)
+            node.set_URL(url)
+        return node
     return ReallyGetOpNode
 
 
@@ -55,9 +67,10 @@ def GetPydotGraph(
     name=None,
     rankdir='LR',
     node_producer=None,
+    embed_docstring=False,
 ):
     if node_producer is None:
-        node_producer = GetOpNodeProducer(False, **OP_STYLE)
+        node_producer = GetOpNodeProducer(embed_docstring=embed_docstring, **OP_STYLE)
     pydot_graph = pydot.Dot(name, rankdir=rankdir)
     pydot_nodes = {}
     pydot_node_counts = defaultdict(int)
@@ -105,12 +118,12 @@ def main():
         help="The output protobuf file.",
     )
     parser.add_argument(
-        "--append_output", action="store_true",
-        help="If set, append the output blobs to the operator names.",
-    )
-    parser.add_argument(
         "--rankdir", type=str, default='LR',
         help="The rank direction of the pydot graph.",
+    )
+    parser.add_argument(
+        "--embed_docstring", action="store_true",
+        help="Embed docstring as javascript alert. Useful for SVG format.",
     )
     args = parser.parse_args()
     model = ModelProto()
@@ -121,7 +134,11 @@ def main():
         model.graph,
         name=model.graph.name,
         rankdir=args.rankdir,
-        node_producer=GetOpNodeProducer(args.append_output, **OP_STYLE))
+        node_producer=GetOpNodeProducer(
+            embed_docstring=args.embed_docstring,
+            **OP_STYLE
+        ),
+    )
     pydot_graph.write_dot(args.output)
 
 
