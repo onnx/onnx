@@ -4,6 +4,7 @@
             Do not modify directly and instead edit operator definitions.*
 
 * <a href="#Abs">Abs</a>
+* <a href="#Add">Add</a>
 * <a href="#And">And</a>
 * <a href="#ArgMax">ArgMax</a>
 * <a href="#ArgMin">ArgMin</a>
@@ -105,7 +106,6 @@
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 * <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
 * <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
-* <a href="#Add">Add</a> (Domain: com.test)
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -151,6 +151,101 @@ y = np.abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
+```
+
+</details>
+
+
+### <a name="Add"></a><a name="add">**Add**</a>
+
+  Performs element-wise binary addition (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>add</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add')
+```
+
+</details>
+
+
+<details>
+<summary>add_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Add',
+    inputs=['x', 'y'],
+    outputs=['sum'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[x + y],
+       name='test_add_bcast')
 ```
 
 </details>
@@ -4537,100 +4632,5 @@ expect(node, inputs=[x], outputs=[y],
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
-
-
-### <a name="Add"></a><a name="add">**Add**</a>
-
-  Performs element-wise binary addition (with limited broadcast support).
-  
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of size 1 (a scalar value), or having its shape as a
-  contiguous subset of the first tensor's shape. The starting of the mutually
-  equal shape is specified by the argument "axis", and if it is not set, suffix
-  matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>add</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(3, 4, 5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add')
-```
-
-</details>
-
-
-<details>
-<summary>add_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Add',
-    inputs=['x', 'y'],
-    outputs=['sum'],
-    broadcast=1,
-)
-
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-expect(node, inputs=[x, y], outputs=[x + y],
-       name='test_add_bcast')
-```
-
-</details>
 
 
