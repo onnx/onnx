@@ -3724,13 +3724,11 @@ expect(node, inputs=[x], outputs=[y],
 <dd>length of each output</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs
 
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>The tensor to split</dd>
-<dt><tt>split</tt> : T</dt>
-<dd>Optional list of output lengths (see also arg 'split')</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
