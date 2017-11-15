@@ -98,7 +98,6 @@ OPERATOR_SCHEMA(Add)
     .NumInputs(2)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}, {1, 0}})
-    .SetDomain("com.test")
     .FillUsing(MathDocGenerator("addition"));
 
 OPERATOR_SCHEMA(Sub)
