@@ -4160,7 +4160,7 @@ expect(node, inputs=[x], outputs=[y],
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : tensor(int64)</dt>
+<dt><tt>X</tt> : tensor(int64)</dt>
 <dd>1-D tensor of integers representing indices in the embedding dictionary with length [N] and values [0, input_dim -1]</dd>
 <dt><tt>weights</tt> : T</dt>
 <dd>2-D tensor of weights [O, I].</dd>
@@ -4169,7 +4169,7 @@ expect(node, inputs=[x], outputs=[y],
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>Y</tt> : T</dt>
 <dd>Output tensor of computed features [N, O].</dd>
 </dl>
 

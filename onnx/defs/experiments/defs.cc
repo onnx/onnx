@@ -368,14 +368,14 @@ OPERATOR_SCHEMA(Embedding)
     .Attr("input_dim", "Size of the input vocabulary.", AttrType::INT)
     .Attr("output_dim", "Dimension of the embedding output vectors.", AttrType::INT)
     .Input(0,
-           "input",
+           "X",
            "1-D tensor of integers representing indices in the embedding dictionary "
            "with length [N] and values [0, input_dim -1]", "tensor(int64)")
     .Input(1,
            "weights",
            "2-D tensor of weights [O, I].", "T")
     .Output(0,
-            "output",
+            "Y",
             "Output tensor of computed features [N, O].", "T")
     .TypeConstraint(
         "T",
