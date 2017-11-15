@@ -418,9 +418,9 @@ class OpSchema {
 
   std::string name_;
   std::string file_;
+  std::string doc_;
   // Default domain value ("") means it's ONNX domain.
-  std::string doc_ = "";
-  std::string domain_;
+  std::string domain_ = "";
   std::map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;
