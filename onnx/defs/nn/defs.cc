@@ -37,10 +37,11 @@ namespace onnx {
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. So `pads` will have two values per axis, "
-                        "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis. "
-                        "This attribute cannot be used simultaneously with auto_pad attribute.",
+                        "and upper part of the corresponding axis. `pads` format should be as follow "
+                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
+                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
+                        "auto_pad attribute.",
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -101,9 +102,11 @@ namespace onnx {
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. So `pads` will have two values per axis, "
-                        "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis.",
+                        "and upper part of the corresponding axis. `pads` format should be as follow "
+                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
+                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
+                        "auto_pad attribute.",
                         AttrType::INTS);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -230,12 +233,11 @@ computes the output.)DOC";
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. So `pads` will have two values per axis, "
-                        "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis. "
-                        "The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, "
-                        "axis_n_end, n is kernel's dimension."
-                        "This attribute cannot be used simultaneously with auto_pad attribute.",
+                        "and upper part of the corresponding axis. `pads` format should be as follow "
+                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
+                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
+                        "auto_pad attribute.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -304,10 +306,11 @@ and computes the output.)DOC";
             schema.Attr("pads",
                         "Padding for lower and upper side along each axis, it can take any value greater "
                         "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. So `pads` will have two values per axis, "
-                        "first value corresponding to the number of pixels added to the begining of the axis "
-                        "and the second value corresponding to the number of pixels add at the end of the axis. "
-                        "This attribute cannot be used simultaneously with auto_pad attribute.",
+                        "and upper part of the corresponding axis. `pads` format should be as follow "
+                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
+                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
+                        "auto_pad attribute.",
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
