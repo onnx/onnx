@@ -1,4 +1,7 @@
-Open Neural Network Exchange (ONNX)
+
+
+<p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
+
 ========
 [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx)
 [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx)
