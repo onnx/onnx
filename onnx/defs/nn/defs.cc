@@ -197,7 +197,7 @@ computes the output.)DOC";
                          "kernel shape will be (M x C x k1 x k2 x ... x kn), "
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
-                         "bias",
+                         "B",
                          "Optional 1D bias to be added to the convolution, has size of M.", "T");
             schema.Output(0,
                           "Y",
@@ -258,7 +258,7 @@ and computes the output.)DOC";
                          "kernel shape will be (C x M x k1 x k2 x ... x kn), "
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
-                         "bias",
+                         "B",
                          "Optional 1D bias to be added to the convolution, has size of C.", "T");
             schema.Output(0,
                           "Y",
@@ -404,7 +404,7 @@ Output case #2: Y (test mode)
         "The scale as a 1-dimensional tensor of size C to be applied to the "
         "output.", "T")
     .Input(2,
-        "bias",
+        "B",
         "The bias as a 1-dimensional tensor of size C to be applied to the "
         "output.", "T")
     .Input(3,
@@ -443,8 +443,8 @@ OPERATOR_SCHEMA(InstanceNormalization)
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022. 
 
-y = scale * (x - mean) / sqrt(variance + epsilon) + bias, 
-where mean and bias are computed per instance per channel. 
+y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
+where mean and B are computed per instance per channel. 
 
 )DOC")
     .Attr("epsilon",
@@ -457,7 +457,7 @@ where mean and bias are computed per instance per channel.
         "scale",
         "The input 1-dimensional scale tensor of size C.", "T")
     .Input(2,
-        "bias",
+        "B",
         "The input 1-dimensional bias tensor of size C.", "T")
     .Output(0,
         "output",
