@@ -369,6 +369,11 @@ OpSchema& OpSchema::SetDoc(const std::string& doc) {
   return *this;
 }
 
+OpSchema& OpSchema::SetDomain(const std::string& domain) {
+  domain_ = domain;
+  return *this;
+}
+
 OpSchema& OpSchema::Attr(const Attribute& attr) {
   attributes_.insert(std::make_pair(attr.name, attr));
   return *this;
