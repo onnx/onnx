@@ -11,7 +11,8 @@ import onnx.helper  # noqa
 import onnx.checker  # noqa
 import onnx.defs  # noqa
 
-import sys
+import google.protobuf.message
+
 
 def load(obj):
     '''
@@ -24,8 +25,13 @@ def load(obj):
     '''
     model = ModelProto()
     if hasattr(obj, 'read') and callable(obj.read):
-        model.ParseFromString(obj.read())
+        s = obj.read()
     else:
         with open(obj, 'rb') as f:
-            model.ParseFromString(f.read())
+            s = f.read()
+    decoded = model.ParseFromString(s)
+    if decoded != len(s):
+        raise google.protobuf.message.DecodeError(
+            "Protobuf decoding consumed too few bytes: {} out of {}".format(
+                decoded, len(s)))
     return model
