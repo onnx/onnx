@@ -174,6 +174,7 @@ class OpSchema {
    * with SinceVersion(6).
    */
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
+
   /**
    * @brief A single input.
    */
@@ -242,6 +243,10 @@ class OpSchema {
 
   // Functions to do documentation for the operator schema.
   OpSchema& SetDoc(const std::string& doc);
+  
+  // Functions to specify domain for the operator schema.
+  // Default domain value ("") means it's ONNX domain.
+  OpSchema& SetDomain(const std::string& domain);
 
   // Note: this enum is structurally identical to the
   // AttributeProto.AttributeType enum defined in onnx.proto.  If you rev one,
@@ -365,6 +370,10 @@ class OpSchema {
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
+  const std::string& domain() const {
+      return domain_;
+  }
+  
   int since_version() const {
     return since_version_;
   }
@@ -425,6 +434,8 @@ class OpSchema {
   std::string name_;
   std::string file_;
   std::string doc_;
+  // Default domain value ("") means it's ONNX domain.
+  std::string domain_ = "";
   std::map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;

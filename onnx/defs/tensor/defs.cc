@@ -220,10 +220,12 @@ OPERATOR_SCHEMA(Pad)
     .NumInputs(1)
     .NumOutputs(1)
     .Attr("paddings",
-          "List of integers indicate the padding sizes, paddings's length"
-          " should be the double of input's dimension. "
-          "The order should be axis_0_begin, axis_0_end, axis_1_begin, ...,"
-          " axis_n_begin, axis_n_end, n is input's dimension.",
+          "List of integers indicate the padding element count at the "
+          "begining and end of each axis, for 2D it is the number of pixel. "
+          "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
+          "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+          "added at the begining of axis `i` and xi_end, the number of pixels added at "
+          "the end of axis `i`.",
           AttrType::INTS,
           true)
     .Attr("mode",
