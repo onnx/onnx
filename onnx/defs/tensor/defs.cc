@@ -69,10 +69,10 @@ OPERATOR_SCHEMA(Concat)
         "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(Split)
-    .NumInputs(1, 2)
+    .SinceVersion(2)
+    .NumInputs(1)
     .NumOutputs(1, INT_MAX)
     .Input(0, "input", "The tensor to split", "T")
-    .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T")
     .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
@@ -319,4 +319,4 @@ OPERATOR_SCHEMA(Tile)
             "Output tensor of same shape and type as input.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
-        
+
