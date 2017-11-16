@@ -17,7 +17,7 @@ evolve ONNX.
 
 # Use ONNX
 Start experimenting today.
-Check out our Getting Started Guide, [Supported Tools](http://onnx.ai/supported-tools), and [Tutorials](https://github.com/onnx/tutorials).
+Check out our [Getting Started Guide](http://onnx.ai/getting-started), [Supported Tools](http://onnx.ai/supported-tools), and [Tutorials](https://github.com/onnx/tutorials).
 
 # Contribute
 ONNX is a community project.  We encourage you to join the effort and contribute feedback, ideas, and code. Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
