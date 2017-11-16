@@ -137,7 +137,7 @@ Equations (Default: f=tanh):
 	   "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
            "(if bidirectional). The tensor has shape "
 	   "`[num_directions, hidden_size, hidden_size]`.", "T")
-    .Input(3, "bias",
+    .Input(3, "B",
 	   "The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` "
            "and `[WBbi, RBbi]` (if bidirectional). The tensor has shape "
            "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
@@ -238,7 +238,7 @@ Equations (Default: f=sigmoid, g=tanh):
 	   "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
 	   "`[num_directions, 3*hidden_size, hidden_size]`.", "T")
-    .Input(3, "bias",
+    .Input(3, "B",
 	   "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
            "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
@@ -351,7 +351,7 @@ Equations (Default: f=sigmoid, g=tanh, h=tanh):
 	   "The recurrence weight tensor. Concatenation of `R[iofc]` and "
 	   "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
            "`[num_directions, 4*hidden_size, hidden_size]`.", "T")
-    .Input(3, "bias",
+    .Input(3, "B",
 	   "The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, "
 	   "and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This "
            "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
