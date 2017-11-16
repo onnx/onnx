@@ -7,6 +7,22 @@ using namespace onnx;
 using AttrType = onnx::OpSchema::AttrType;
 
 namespace onnx {
+    static std::string pads_doc = "Padding for the begining and ending along each axis, it can take any value greater "
+                                  "than or equal to 0. The value represent the number of pixels added to the begining "
+                                  "and end part of the corresponding axis. `pads` format should be as follow "
+                                  "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+                                  "added at the begining of axis `i` and xi_end, the number of pixels added at "
+                                  "the end of axis `i`. This attribute cannot be used simultaneously with "
+                                  "auto_pad attribute.";
+    static std::string auto_pad_doc = "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
+                                      "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
+                                      "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
+                                      "begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
+                                      "only intended to support legacy uses, and for framework authors, one is explicitly "
+                                      "encouraged to use explicit padding specified in the pads attribute.";
+}
+
+namespace onnx {
     std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -27,21 +43,10 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
-                        "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
-                        "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
-                        "only intended to support legacy uses, and for framework authors, one is explicitly "
-                        "encouraged to use explicit padding specified in the pads attribute.",
+                        auto_pad_doc.c_str(),
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for lower and upper side along each axis, it can take any value greater "
-                        "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. `pads` format should be as follow "
-                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
-                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
-                        "auto_pad attribute.",
+                        pads_doc.c_str(),
                         AttrType::INTS);
             schema.Input(0,
                          "X",
@@ -91,22 +96,10 @@ namespace onnx {
                         "Stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
-                        "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
-                        "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values "
-                        "from the pads attribute. DEPRECATION NOTE: auto_pad is "
-                        "only intended to support legacy uses, and for framework authors, one is explicitly "
-                        "encouraged to use explicit padding specified in the pads attribute.",
+                        auto_pad_doc.c_str(),
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for lower and upper side along each axis, it can take any value greater "
-                        "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. `pads` format should be as follow "
-                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
-                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
-                        "auto_pad attribute.",
+                        pads_doc.c_str(),
                         AttrType::INTS);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -223,21 +216,10 @@ computes the output.)DOC";
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
-                        "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
-                        "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
-                        "only intended to support legacy uses, and for framework authors, one is explicitly "
-                        "encouraged to use explicit padding specified in the pads attribute.",
+                        auto_pad_doc.c_str(),
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for lower and upper side along each axis, it can take any value greater "
-                        "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. `pads` format should be as follow "
-                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
-                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
-                        "auto_pad attribute.",
+                        pads_doc.c_str(),
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
@@ -298,19 +280,10 @@ and computes the output.)DOC";
                         "stride along each axis.",
                         AttrType::INTS);
             schema.Attr("auto_pad",
-                        "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
-                        "SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input."
-                        "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
-                        "begining for SAME_LOWER. VALID mean no padding.",
+                        auto_pad_doc.c_str(),
                         AttrType::STRING);
             schema.Attr("pads",
-                        "Padding for lower and upper side along each axis, it can take any value greater "
-                        "than or equal to 0. The value represent the number of pixels added to the lower "
-                        "and upper part of the corresponding axis. `pads` format should be as follow "
-                        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-                        "added at the lower part of axis `i` and xi_end, the number of pixels added at "
-                        "the upper part of axis `i`. This attribute cannot be used simultaneously with "
-                        "auto_pad attribute.",
+                        pads_doc.c_str(),
                         AttrType::INTS);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
