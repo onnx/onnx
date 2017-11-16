@@ -497,14 +497,23 @@ class OpSchemaRegistry {
     }
   };
 
-  // Return the latest schema for an operator
-  static const OpSchema* Schema(const std::string& key) {
+  // Return the latest schema for an operator in specified domain.
+  // Domain with default value "" means ONNX.
+  static const OpSchema* Schema(const std::string& key, const std::string& domain="") {
     auto& m = map();
-    if (m.count(key)) {
-      return &m[key].rbegin()->second;
+    if (m.count(key) && m[key].count(domain)) {
+      return &m[key][domain].rbegin()->second;
     } else {
       return nullptr;
     }
+  }
+  
+  // Return the schema with biggest version, which is less than specified version
+  // in specified domain. Domain with default value "" means ONNX.
+  static const OpSchema* Schema(const std::string& key,
+      const int version,
+      const std::string& domain="") {
+      return nullptr;
   }
 
  private:
@@ -521,10 +530,10 @@ class OpSchemaRegistry {
    * We wrap it inside a function to avoid the statia initialization order
    * fiasco.
    */
-  static std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>& map();
+  static std::unordered_map<std::string, std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>& map();
 
  public:
-  static const std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>& registered_schemas() {
+  static const std::unordered_map<std::string, std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>& registered_schemas() {
     return map();
   }
 
@@ -532,7 +541,9 @@ class OpSchemaRegistry {
     // TODO: Do this better with C++11
     std::unordered_map<std::string, OpSchema> latest_map;
     for (auto kv : map()) {
-      latest_map.emplace(kv.first, kv.second.rbegin()->second);
+        for (auto domain_ops : kv.second) {
+            latest_map.emplace(kv.first, domain_ops.second.rbegin()->second);
+        }      
     }
     return latest_map;
   }
