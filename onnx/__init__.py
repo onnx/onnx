@@ -30,7 +30,10 @@ def load(obj):
         with open(obj, 'rb') as f:
             s = f.read()
     decoded = model.ParseFromString(s)
-    if decoded != len(s):
+
+    # google protobuf python implementation ParseFromString returns
+    # None, cpp implementation returns #bytes decoded
+    if decoded is not None and decoded != len(s):
         raise google.protobuf.message.DecodeError(
             "Protobuf decoding consumed too few bytes: {} out of {}".format(
                 decoded, len(s)))
