@@ -1,12 +1,14 @@
 ### Implementing an ONNX backend
 
-##### What is an ONNX backend
+#### What is an ONNX backend
 
 An ONNX backend is a library that can run ONNX models. As there are already many existing Deep Learning frameworks, you very likely don't need to create everything from scratch but rather create a converter that converts ONNX models to the corresponding framework specific representation and then delegate the execution to the framework. E.g. [onnx-caffe2](https://github.com/onnx/onnx-caffe2) , [onnx-coreml](https://github.com/onnx/onnx-coreml), [onnx-tensorflow](https://github.com/onnx/onnx-tensorflow) are all implemented as converters.
 
-##### Unified Backend Interface
+#### Unified Backend Interface
 
-ONNX has defined a unified (Python) backend interface at https://github.com/onnx/onnx/blob/master/onnx/backend/base.py. There are three core concepts in this interface: `Device`, `Backend` and `BackendRep`.
+ONNX has defined a unified (Python) backend interface at https://github.com/onnx/onnx/blob/master/onnx/backend/base.py.
+
+There are three core concepts in this interface: `Device`, `Backend` and `BackendRep`.
 
 - `Device` is a lightweight abstraction over varies hardwares, e.g. CPU, GPU.
 
@@ -18,16 +20,13 @@ ONNX has defined a unified (Python) backend interface at https://github.com/onnx
 
 - `BackendRep` is the handle that a Backend returns after prepared itself for executing a model repeatedly. Users will then pass inputs to the `run` function of `BackendRep` for getting the corresponding results.
 
-##### ONNX Backend Test
+Note even though the ONNX unified backend interface is defined in Python, your backend is not necessary to be implemented in Python. E.g. it can be created in C++, and then use tools like [pybind11](https://github.com/pybind/pybind11) or [cython](http://cython.org/) to provide a fullfil the interface.
+
+#### ONNX Backend Test
 
 ONNX has provided a standard backend test suite for helping backend implementations to do verification. We strongly encorage each ONNX backend to run it.
 
-There are two types of tests in this suite: Node Tests and Model Tests.
-
-- Node Tests is intended to verify whether a backend is doing the correct computation, having the expected bahavior of handling varies attributes for each individual operator. In each test case, backend will be given a node and some inputs, its returned outputs will then be compared with the expected outputs.
-- Model Tests is intended to verify the backend at the model level, test cases are similar as in the Node tests, but instead of a node, the backend will be given an ONNX model.
-
-Integrating the ONNX Backend Test suite into your CI should be pretty easy. Here are some examples of how a backend do the integration:
+Integrating the ONNX Backend Test suite into your CI should be pretty easy. Here are some examples of how a backend does the integration:
 
 [onnx-caffe2 onnx backend test](https://github.com/onnx/onnx-caffe2/blob/master/tests/onnx_backend_test.py)
 
