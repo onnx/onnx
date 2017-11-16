@@ -100,7 +100,3 @@ A model allows named metadata strings to be added via its `metadata_props` field
 ### Operators
 
 Operators may be extended via custom domain names in the `opset_import` field.
-
-### Protobuf Fields
-
-The range 600-700 is reserved for private use. Implementations may use these as they see fit for non-interoperable features.
