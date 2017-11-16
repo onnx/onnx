@@ -481,19 +481,21 @@ class OpSchemaRegistry {
         std::cerr << "Schema error: " << e.what() << std::endl;
       }
       auto& m = map();
-      auto& key = op_schema.Name();
+      auto& op_name = op_schema.Name();
+      auto& op_domain = op_schema.domain();
       auto ver = op_schema.SinceVersion();
 
-      if (m[key].count(ver)) {
-        const auto& schema = m[key][ver];
-        std::cerr << "Trying to register schema with name " << key
-                  << " (version " << ver << ") from file " << op_schema.file() << " line "
+      if (m[op_name][op_domain].count(ver)) {
+        const auto& schema = m[op_name][op_domain][ver];
+        std::cerr << "Trying to register schema with name " << op_name
+                  << " (domain: " << op_domain
+                  << " version: " << ver << ") from file " << op_schema.file() << " line "
                   << op_schema.line()
                   << ", but it is already registered from file "
                   << schema.file() << " line " << schema.line();
         abort();
       }
-      m[key].emplace(std::make_pair(ver, op_schema));
+      m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
     }
   };
 
@@ -508,12 +510,29 @@ class OpSchemaRegistry {
     }
   }
   
-  // Return the schema with biggest version, which is less than specified version
+  // Return the schema with biggest version, which is not greater than specified version
   // in specified domain. Domain with default value "" means ONNX.
   static const OpSchema* Schema(const std::string& key,
       const int version,
       const std::string& domain="") {
+    auto& m = map();
+    if (m.count(key) && m[key].count(domain)) {
+      auto pos = m[key][domain].lower_bound(version);
+      if (m[key][domain].begin() == pos && pos->first > version) {
+          // All versions are greater than specified version.
+          return nullptr;
+      }
+      if (m[key][domain].end() == pos || pos->first > version) {
+          // All versions are less than specified version, or,
+          // The <pos> version is greater than specified version.
+          pos--;
+          return &(pos->second);
+      }
+      // Schema with exact version as specified one exists.
+      return &(pos->second);
+    } else {
       return nullptr;
+    }
   }
 
  private:
