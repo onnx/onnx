@@ -581,7 +581,7 @@ class OpSchemaRegistry {
   static OpName_Domain_Version_Schema_Map& map();
 
  public:
-  static OpName_Domain_Version_Schema_Map& registered_schemas() {
+  static const OpName_Domain_Version_Schema_Map& registered_schemas() {
     return map();
   }
 
