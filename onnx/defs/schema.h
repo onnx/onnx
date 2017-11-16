@@ -463,6 +463,12 @@ class OpSchema {
   };
 };
 
+typedef std::unordered_map<
+    std::string,
+    std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>
+    OpName_Domain_Version_Schema_Map;
+    
+
 /**
  * @brief A registry to hold all the operator schemas.
  */
@@ -533,19 +539,19 @@ class OpSchemaRegistry {
   }
 
   // Return the schema with biggest version, which is not greater than specified
-  // version in specified domain. Domain with default value "" means ONNX.
+  // <maxInclusiveVersion> in specified domain. Domain with default value "" means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
-      const int version,
+      const int maxInclusiveVersion,
       const std::string& domain = "") {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
-      auto pos = m[key][domain].lower_bound(version);
-      if (m[key][domain].begin() == pos && pos->first > version) {
+      auto pos = m[key][domain].lower_bound(maxInclusiveVersion);
+      if (m[key][domain].begin() == pos && pos->first > maxInclusiveVersion) {
         // All versions are greater than specified version.
         return nullptr;
       }
-      if (m[key][domain].end() == pos || pos->first > version) {
+      if (m[key][domain].end() == pos || pos->first > maxInclusiveVersion) {
         // All versions are less than specified version, or,
         // The <pos> version is greater than specified version.
         pos--;
@@ -572,16 +578,10 @@ class OpSchemaRegistry {
    * We wrap it inside a function to avoid the statia initialization order
    * fiasco.
    */
-  static std::unordered_map<
-      std::string,
-      std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>&
-  map();
+  static OpName_Domain_Version_Schema_Map& map();
 
  public:
-  static const std::unordered_map<
-      std::string,
-      std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>&
-  registered_schemas() {
+  static OpName_Domain_Version_Schema_Map& registered_schemas() {
     return map();
   }
 
