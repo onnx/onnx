@@ -188,7 +188,7 @@ computes the output.)DOC";
                          "height and width. Note that this is for the 2D image."
                          "Otherwise the size is (N x D1 x D2 ... x Dn)", "T");
             schema.Input(1,
-                         "weights",
+                         "W",
                          "The weight tensor that will be used in the "
                          "convolutions; has size (M x C x kH x kW), where C "
                          "is the number of channels, and kH and kW are the "
@@ -249,7 +249,7 @@ and computes the output.)DOC";
                          " H and W are the height and width. Note that this is for the 2D image."
                          "Otherwise the size is (N x D1 x D2 ... x Dn)", "T");
             schema.Input(1,
-                         "weights",
+                         "W",
                          "The weight tensor that will be used in the "
                          "convolutions; has size (C x M x kH x kW), where C "
                          "is the number of channels, and kH and kW are the "
