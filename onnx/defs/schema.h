@@ -463,11 +463,12 @@ class OpSchema {
   };
 };
 
+// Map type to store operator schemas. The format is,
+// <OpName, <Domain, <OperatorSetVersion, OpSchema>>>.
 typedef std::unordered_map<
     std::string,
     std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>
-    OpName_Domain_Version_Schema_Map;
-    
+    OpName_Domain_Version_Schema_Map;    
 
 /**
  * @brief A registry to hold all the operator schemas.
