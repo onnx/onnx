@@ -41,7 +41,7 @@ def load_from_string(s):
     '''
     model = ModelProto()
     decoded = model.ParseFromString(s)
-    # in some versions of protobuf ParseFromString just returns None
+    # in python implementation ParseFromString returns None
     if decoded is not None and decoded != len(s):
         raise google.protobuf.message.DecodeError(
             "Protobuf decoding consumed too few bytes: {} out of {}".format(
