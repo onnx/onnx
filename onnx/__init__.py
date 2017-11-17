@@ -23,22 +23,15 @@ def load(obj):
     or a string containing a file name
     @return ONNX ModelProto object
     '''
-    model = ModelProto()
     if hasattr(obj, 'read') and callable(obj.read):
         s = obj.read()
     else:
         with open(obj, 'rb') as f:
             s = f.read()
-    decoded = model.ParseFromString(s)
-    # in some versions of protobuf ParseFromString just returns None
-    if decoded is not None and decoded != len(s):
-        raise google.protobuf.message.DecodeError(
-            "Protobuf decoding consumed too few bytes: {} out of {}".format(
-                decoded, len(s)))
-    return model
+    return load_from_string(s)
 
 
-def load_from_string(obj):
+def load_from_string(s):
     '''
     Loads a binary string that stores onnx model
 
@@ -47,5 +40,10 @@ def load_from_string(obj):
     @return ONNX ModelProto object
     '''
     model = ModelProto()
-    model.ParseFromString(obj)
+    decoded = model.ParseFromString(s)
+    # in some versions of protobuf ParseFromString just returns None
+    if decoded is not None and decoded != len(s):
+        raise google.protobuf.message.DecodeError(
+            "Protobuf decoding consumed too few bytes: {} out of {}".format(
+                decoded, len(s)))
     return model
