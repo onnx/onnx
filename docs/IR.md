@@ -3,11 +3,11 @@ Open Neural Network Exchange (ONNX)
 
 ONNX is an open specification that consists of the following components:
 
-1)  Definition of an extensible computation graph model.
+1)  A definition of an extensible computation graph model
 
-2)  Definition of built-in operators and standard data types.
+2)  Definitions of built-in operators and standard data types
 
-__Some notes on language in this and all related documents__:
+__Notes on language in this and all related documents__:
 
 1. The use of SHOULD, MUST, MAY and so on in this document is consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
@@ -16,47 +16,47 @@ __Some notes on language in this and all related documents__:
 Extensible computation graph model
 ----------------------------------
 
-ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and 
-manipulate internally. For example, a framework may keep the graph in memory in another format that it finds more efficient to 
+ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and
+manipulate. For example, a framework may keep the graph in memory in a format that it finds more efficient to
 manipulate for optimization passes. We make use of protobuf2 (with oneof, added in protobuf 2.6.1) for the serialized format.
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph, which MUST be free of cycles. 
-Nodes have one or more inputs and one or more outputs. Each node is a call to an operator.
+Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles.
+Nodes have one or more inputs and one or more outputs, and each node is a call to an operator.
 
-#### Metadata
+#### Model Graph Metadata
 
-The following are the metadata properties of a model graph:
+The following describes the metadata properties of a model graph:
 
 |Name|Type|Format|Description|
 |----|----|------|-----------|
 |name|string|Valid C identifier|A name for the model.|
 |domain|string|Valid DNS name|A namespace for the model, following the style of package names, that is, reverse DNS domain name.|
-|ir_version|int64||The version of the IR format specification|
+|ir_version|int64||The version of the IR format specification.|
 |doc_string|string|Free form|A human-readable documentation string intended to summarize the purpose of the model. Markdown is allowed.|
 
 #### Names Within a Graph
 
-We organize names into separate namespaces. Names must be unique within a namespace. 
-The namespaces are as follows:
- - Node: These names identify specific nodes in the graph but not necessarily any particular input or output of the node.
- - Graph: These names identify graphs in the protobuf.
- - Attribute: These names identify attribute names for extra attributes that are passed to operators.
- - Operator: These names identify particular operators.
- - Tensor: These names identify intermediate tensor values flowing through the computation of a graph.
+Names are organized into separate namespaces, and must be unique within a namespace.
+The namespaces include the following:
+ - `Node`: names that identify specific nodes in the graph, but not necessarily any particular input or output of the node.
+ - `Graph`: names that identify graphs in the protobuf.
+ - `Attribute`: names that identify attribute names for extra attributes that are passed to operators.
+ - `Operator`: names that identify particular operators.
+ - `Tensor`: names that identify intermediate tensor values flowing through the computation of a graph.
 
 All names MUST adhere to C identifier syntax rules.
 
 #### Nodes
 
-Computation nodes are comprised of a name, a list of named inputs, a list of named outputs, and a list of attributes.
+Computation nodes are comprised of a name, a list of named inputs and outputs, and a list of attributes.
 
-Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a 
-subsequent node. 
+Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a
+subsequent node.
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K 
-follows node N in the graph, none of the data inputs of N may refer to outputs of K; further, no control input of N may refer to K.
+The list of nodes defining the top-level computation graph MUST be ordered topologically – that is, if node K
+follows node N in the graph, none of the data inputs of N may refer to outputs of K, and no control input of N may refer to K.
 
 
 Built-in Operators and Standard Data Types
@@ -64,7 +64,7 @@ Built-in Operators and Standard Data Types
 
 ### Operators
 
-See [the operator documentation](Operators.md) for details
+See the [operator documentation](Operators.md) for details.
 
 
 ### Standard data types
@@ -85,16 +85,16 @@ The following data types are supported by ONNX. Additional data types can be sup
 Extensibility
 -------------
 
-ONNX is expected to evolve over time and provides features that allow users to experiment and implement additions before they are folded into the specifications.
+ONNX is expected to evolve over time and provides features that enable users to experiment and implement additions before they are added to the specifications.
 
 ### Metadata
 
-A model allows named metadata strings to be added via its `metadata_props` field, typically for use by tools such as converters, indexers or documentation generators. Names are not prescribed, but some name recommendations are provided for implementations that want to record such concepts.
+A model allows named metadata strings to be added via its `metadata_props` field, typically for use by tools such as converters, indexers, or documentation generators. Names are not prescribed, but some name recommendations are provided for implementations that want to record such concepts.
 
-- `author`: name of the person(s) who authored the model
-- `company`: name of the company or organization that authored the model
+- `author`: the name of the person(s) who authored the model
+- `company`: the name of the company or organization that authored the model
 - `converted_from`: if converted from a different format, the name of the source format or framework
-- `license`: a human-readable name for a license if applicable
+- `license`: a human-readable name for a license, if applicable
 - `license_url`: the URL where the license text is provided
 
 ### Operators
