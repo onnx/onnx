@@ -1,20 +1,3 @@
-
-# Testing
-
-ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, first you need to install pytest:
-
-```
-pip install pytest-cov nbval
-```
-
-After installing pytest, do
-
-```
-pytest
-```
-
-to run tests.
-
 # Development
 
 You will need an install of protobuf and numpy to build ONNX.  One easy
@@ -26,7 +9,7 @@ way to get these dependencies is via
 conda install -c conda-forge protobuf numpy
 ```
 
-During development it's convenient to install ONNX in development mode (Note: Add install option --install-option="--onnxml=1" for onnx-ml):
+During development it's convenient to install ONNX in development mode (Note: Add install option `--install-option="--onnxml=1"` for onnx-ml):
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
@@ -45,6 +28,26 @@ Then, after you have made changes to
 python onnx/defs/gen_doc.py
 ```
 
+# Testing
+
+ONNX uses [pytest](https://docs.pytest.org) as test driver. In order to run tests, first you need to install pytest:
+
+```
+pip install pytest-cov nbval
+```
+
+After installing pytest, do
+
+```
+pytest
+```
+
+to run tests.
+
+# Other developer documentation
+
+* [How to implement ONNX backend (ONNX to something converter)](docs/Implementing%20an%20ONNX%20backend.md)
+* [Backend test infrastructure and how to add tests](docs/ONNX%20Backend%20Test.md)
 
 # License
 
