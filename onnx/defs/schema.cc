@@ -569,8 +569,8 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   return out;
 }
 
-std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>& OpSchemaRegistry::map() {
-  static std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>> map;
+OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
+  static OpName_Domain_Version_Schema_Map map;
   return map;
 }
 
