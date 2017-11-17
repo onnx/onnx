@@ -372,7 +372,7 @@ OPERATOR_SCHEMA(Embedding)
            "1-D tensor of integers representing indices in the embedding dictionary "
            "with length [N] and values [0, input_dim -1]", "tensor(int64)")
     .Input(1,
-           "weights",
+           "W",
            "2-D tensor of weights [O, I].", "T")
     .Output(0,
             "Y",
