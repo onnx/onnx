@@ -5,7 +5,7 @@
 
 using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
-
+#ifdef ONNX_ML
 OPERATOR_SCHEMA(ArrayFeatureExtractor)
 .SetDomain("ai.onnx.ml")
 .NumInputs(2)
@@ -610,3 +610,5 @@ OPERATOR_SCHEMA(VecDictionizer)
     " allowed types.")
 .Attr("classlabels_strings", "keys if using string keys", AttrType::STRINGS)
 .Attr("classlabels_int64s", "keys if using int keys", AttrType::INTS);
+
+#endif
