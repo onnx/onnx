@@ -20,6 +20,15 @@ Then, after you have made changes to
 - Python files, the changes are immediately effective in your installation, you do not need to install again.
 - C++ files, you need to do install again to trigger the native extension build.
 
+## Folder Structure
+
+- onnx/: the main folder that all code lies under
+  - onnx.proto: the protobuf (v2.6.1) that contains all the structures
+  - checker.py: utility to check whether a serialized ONNX proto is legal.
+  - helper.py: tools for graph operation
+  - defs/: subfolder that defines the ONNX operators.
+  - test/: test files
+
 ## Generated operator documentation
 
 [Operator docs in Operators.md](docs/Operators.md) are auto-generated based on C++ operator definitions. In order to refresh them run the following command from the repo root and commit the results:
