@@ -33,8 +33,8 @@ def load(obj):
     # in some versions of protobuf ParseFromString just returns None
     if decoded is not None and decoded != len(s):
         raise google.protobuf.message.DecodeError(
-            "Protobuf decoding consumed too few bytes: {} out of {} {}".format(
-                decoded, len(s), model))
+            "Protobuf decoding consumed too few bytes: {} out of {}".format(
+                decoded, len(s)))
     return model
 
 

@@ -7,6 +7,7 @@ from onnx.onnx_pb2 import AttributeProto, NodeProto, GraphProto, ModelProto, IR_
 
 import io
 import onnx
+import os
 import tempfile
 import unittest
 
@@ -25,17 +26,16 @@ class TestProtobufExists(unittest.TestCase):
 
         # Test if input has a read function
         f = io.BytesIO(model_string)
-        f.flush()
         loaded_model = onnx.load(f)
         self.assertTrue(model == loaded_model)
 
         # Test if input is a file name
-        f = tempfile.NamedTemporaryFile()
+        f = tempfile.NamedTemporaryFile(delete=False)
         f.write(model_string)
-        f.flush()
+        f.close()
         loaded_model = onnx.load(f.name)
         self.assertTrue(model == loaded_model)
-        f.close()
+        os.remove(f.name)
 
     def test_existence(self):
         try:
