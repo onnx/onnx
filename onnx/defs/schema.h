@@ -243,7 +243,7 @@ class OpSchema {
 
   // Functions to do documentation for the operator schema.
   OpSchema& SetDoc(const std::string& doc);
-  
+
   // Functions to specify domain for the operator schema.
   // Default domain value ("") means it's ONNX domain.
   OpSchema& SetDomain(const std::string& domain);
@@ -321,7 +321,7 @@ class OpSchema {
   //            tensor(<data_type>) |
   //            seq(<type>) |
   //            map(<data_type>, <type>) |
-  //            <type_parameter> 
+  //            <type_parameter>
   // <data_type> :: = float | int32 | string | bool | uint8
   //                | int8 | uint16 | int16 | int64 | float16 | double
   // <type_parameter> ::= any type parameter string, say "T".
@@ -371,9 +371,9 @@ class OpSchema {
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
   const std::string& domain() const {
-      return domain_;
+    return domain_;
   }
-  
+
   int since_version() const {
     return since_version_;
   }
@@ -463,13 +463,40 @@ class OpSchema {
   };
 };
 
+// Map type to store operator schemas. The format is,
+// <OpName, <Domain, <OperatorSetVersion, OpSchema>>>.
+typedef std::unordered_map<
+    std::string,
+    std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>
+    OpName_Domain_Version_Schema_Map;    
+
 /**
  * @brief A registry to hold all the operator schemas.
  */
 class OpSchemaRegistry {
  public:
-  // Update this when you make BC-breaking changes to the operator schema
-  constexpr static int version = 2;
+  class DomainToVersionRange {
+   public:
+    DomainToVersionRange() {
+      // Increase the highest version when you make BC-breaking changes to the
+      // operator schema on specific domain. Update the lowest version when it's
+      // determined to remove too old version history.
+      map_[""] = std::make_pair(1, 2);
+    }
+
+    const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
+      return map_;
+    }
+
+    static DomainToVersionRange& Instance() {
+      static DomainToVersionRange domain_to_version_range;
+      return domain_to_version_range;
+    }
+
+   private:
+    // Key: domain. Value: <lowest version, highest version> pair.
+    std::unordered_map<std::string, std::pair<int, int>> map_;
+  };
 
   class OpSchemaRegisterOnce {
    public:
@@ -481,27 +508,58 @@ class OpSchemaRegistry {
         std::cerr << "Schema error: " << e.what() << std::endl;
       }
       auto& m = map();
-      auto& key = op_schema.Name();
+      auto& op_name = op_schema.Name();
+      auto& op_domain = op_schema.domain();
       auto ver = op_schema.SinceVersion();
 
-      if (m[key].count(ver)) {
-        const auto& schema = m[key][ver];
-        std::cerr << "Trying to register schema with name " << key
-                  << " (version " << ver << ") from file " << op_schema.file() << " line "
+      if (m[op_name][op_domain].count(ver)) {
+        const auto& schema = m[op_name][op_domain][ver];
+        std::cerr << "Trying to register schema with name " << op_name
+                  << " (domain: " << op_domain << " version: " << ver
+                  << ") from file " << op_schema.file() << " line "
                   << op_schema.line()
                   << ", but it is already registered from file "
                   << schema.file() << " line " << schema.line();
         abort();
       }
-      m[key].emplace(std::make_pair(ver, op_schema));
+      m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
     }
   };
 
-  // Return the latest schema for an operator
-  static const OpSchema* Schema(const std::string& key) {
+  // Return the latest schema for an operator in specified domain.
+  // Domain with default value "" means ONNX.
+  static const OpSchema* Schema(
+      const std::string& key,
+      const std::string& domain = "") {
     auto& m = map();
-    if (m.count(key)) {
-      return &m[key].rbegin()->second;
+    if (m.count(key) && m[key].count(domain)) {
+      return &m[key][domain].rbegin()->second;
+    } else {
+      return nullptr;
+    }
+  }
+
+  // Return the schema with biggest version, which is not greater than specified
+  // <maxInclusiveVersion> in specified domain. Domain with default value "" means ONNX.
+  static const OpSchema* Schema(
+      const std::string& key,
+      const int maxInclusiveVersion,
+      const std::string& domain = "") {
+    auto& m = map();
+    if (m.count(key) && m[key].count(domain)) {
+      auto pos = m[key][domain].lower_bound(maxInclusiveVersion);
+      if (m[key][domain].begin() == pos && pos->first > maxInclusiveVersion) {
+        // All versions are greater than specified version.
+        return nullptr;
+      }
+      if (m[key][domain].end() == pos || pos->first > maxInclusiveVersion) {
+        // All versions are less than specified version, or,
+        // The <pos> version is greater than specified version.
+        pos--;
+        return &(pos->second);
+      }
+      // Schema with exact version as specified one exists.
+      return &(pos->second);
     } else {
       return nullptr;
     }
@@ -521,22 +579,24 @@ class OpSchemaRegistry {
    * We wrap it inside a function to avoid the statia initialization order
    * fiasco.
    */
-  static std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>& map();
+  static OpName_Domain_Version_Schema_Map& map();
 
  public:
-  static const std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>& registered_schemas() {
+  static const OpName_Domain_Version_Schema_Map& registered_schemas() {
     return map();
   }
 
-  static const std::unordered_map<std::string, OpSchema> latest_registered_schemas() {
+  static const std::unordered_map<std::string, OpSchema>
+  latest_registered_schemas() {
     // TODO: Do this better with C++11
     std::unordered_map<std::string, OpSchema> latest_map;
     for (auto kv : map()) {
-      latest_map.emplace(kv.first, kv.second.rbegin()->second);
+      for (auto domain_ops : kv.second) {
+        latest_map.emplace(kv.first, domain_ops.second.rbegin()->second);
+      }
     }
     return latest_map;
   }
-
 };
 
 #define OPERATOR_SCHEMA(name)                          \
