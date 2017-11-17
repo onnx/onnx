@@ -7,61 +7,61 @@ using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
 
 OPERATOR_SCHEMA(ArrayFeatureExtractor)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(2)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(2)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Select a subset of the data based on the indices passed.
 )DOC")
-    .Input(0, "X", "Data to be selected", "T1")
-    .Input(1, "Y", "The index values to select as a tensor of int64s", "T2")
-    .Output(0, "Z", "Selected output data as an array", "T1")
-    .TypeConstraint(
-        "T1",
-        {"tensor(float)",
-         "tensor(double)",
-         "tensor(int64)",
-         "tensor(int32)",
-         "tensor(string)"},
-        " allowed types.")
-    .TypeConstraint("T2", {"tensor(int64)"}, " Index value types .");
+.Input(0, "X", "Data to be selected", "T1")
+.Input(1, "Y", "The index values to select as a tensor of int64s", "T2")
+.Output(0, "Z", "Selected output data as an array", "T1")
+.TypeConstraint(
+    "T1",
+    { "tensor(float)",
+    "tensor(double)",
+    "tensor(int64)",
+    "tensor(int32)",
+    "tensor(string)" },
+    " allowed types.")
+    .TypeConstraint("T2", { "tensor(int64)" }, " Index value types .");
 
 OPERATOR_SCHEMA(Binarizer)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Makes values 1 or 0 based on a single threshold.
 )DOC")
-    .Input(0, "X", "Data to be binarized", "T")
-    .Output(0, "Y", "Binarized output data", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-        " allowed types.")
+.Input(0, "X", "Data to be binarized", "T")
+.Output(0, "Y", "Binarized output data", "T")
+.TypeConstraint(
+    "T",
+    { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
+    " allowed types.")
     .Attr(
         "threshold",
         "Values greater than this are set to 1, else set to 0",
         AttrType::FLOAT);
 
 OPERATOR_SCHEMA(CastMap)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Converts a map to a tensor.  Map key must be int64 and the values will be ordered
     in ascending order based on this key.  Supports dense packing or sparse packing.
     If using sparse packing, the key cannot exceed the max_map-1 value.
 )DOC")
-    .Input(0, "X", "Data to be encoded", "T1")
-    .Output(0, "Y", "encoded output data", "T2")
-    .TypeConstraint(
-        "T1",
-        {"map(int64, string)", "map(int64, float)"},
-        " allowed input types.")
+.Input(0, "X", "Data to be encoded", "T1")
+.Output(0, "Y", "encoded output data", "T2")
+.TypeConstraint(
+    "T1",
+    { "map(int64, string)", "map(int64, float)" },
+    " allowed input types.")
     .TypeConstraint(
         "T2",
-        {"tensor(string)", "tensor(float)", "tensor(int64)"},
+        { "tensor(string)", "tensor(float)", "tensor(int64)" },
         " allowed output types.")
     .Attr(
         "cast_to",
@@ -77,10 +77,10 @@ OPERATOR_SCHEMA(CastMap)
         AttrType::INT);
 
 OPERATOR_SCHEMA(CategoryMapper)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Convert strings to int64s and vice versa.
     Takes in a map to use for the conversion.
     The index position in the strings and ints repeated inputs
@@ -90,19 +90,19 @@ OPERATOR_SCHEMA(CategoryMapper)
     If the string default value is set, it will convert ints to strings.
     If the int default value is set, it will convert strings to ints.
 )DOC")
-    .Input(0, "X", "Input data", "T1")
-    .Output(
-        0,
-        "Y",
-        "Output data, if strings are input, then output is int64s, and vice versa.",
-        "T2")
+.Input(0, "X", "Input data", "T1")
+.Output(
+    0,
+    "Y",
+    "Output data, if strings are input, then output is int64s, and vice versa.",
+    "T2")
     .TypeConstraint(
         "T1",
-        {"tensor(string)", "tensor(int64)"},
+        { "tensor(string)", "tensor(int64)" },
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {"tensor(string)", "tensor(int64)"},
+        { "tensor(string)", "tensor(int64)" },
         " allowed types.")
     .Attr(
         "cats_strings",
@@ -122,10 +122,10 @@ OPERATOR_SCHEMA(CategoryMapper)
         AttrType::INT);
 
 OPERATOR_SCHEMA(DictVectorizer)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Uses an index mapping to convert a dictionary to an array.
     The output array will be equal in length to the index mapping vector parameter.
     All keys in the input dictionary must be present in the index mapping vector.
@@ -140,74 +140,74 @@ OPERATOR_SCHEMA(DictVectorizer)
     .Output(0, "Y", "The tensor", "tensor(int64)")
     .TypeConstraint(
         "T",
-        {"map(string, int64)", "map(int64, string)"},
+        { "map(string, int64)", "map(int64, string)" },
         " allowed types.")
     .Attr("string_vocabulary", "The vocabulary vector", AttrType::STRINGS)
     .Attr("int64_vocabulary", "The vocabulary vector", AttrType::INTS);
 
 OPERATOR_SCHEMA(FeatureVectorizer)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1, 1000)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1, 1000)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Concatenates input features into one continuous output.  
     Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
     Inputs will be written to the output in the order of the input arguments.
     All inputs are tensors of float.  Any feature that is not a tensor of float should
     be converted using either Cast or CastMap.
 )DOC")
-    .Input(0, "X", "ordered input tensors", "T")
-    .Output(
-        0,
-        "Y",
-        "Full output array, in order assigned in the inputlist, as floats",
-        "T")
-    .TypeConstraint("T", {"tensor(float)"}, " allowed types.")
+.Input(0, "X", "ordered input tensors", "T")
+.Output(
+    0,
+    "Y",
+    "Full output array, in order assigned in the inputlist, as floats",
+    "T")
+    .TypeConstraint("T", { "tensor(float)" }, " allowed types.")
     .Attr(
         "inputdimensions",
         "the size of each input in the input list",
         AttrType::INT);
 
 OPERATOR_SCHEMA(Imputer)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Replace imputs that equal replaceValue/s  with  imputeValue/s.
     All other inputs are copied to the output unchanged.
     This op is used to replace missing values where we know what a missing value looks like.
     Only one of imputed_value_floats or imputed_value_int64s should be used.
     The size can be 1 element, which will be reused, or the size of the feature set F in input N,F
 )DOC")
-    .Input(0, "X", "Data to be imputed", "T")
-    .Output(0, "Y", "Imputed output data", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-        " allowed types.")
+.Input(0, "X", "Data to be imputed", "T")
+.Output(0, "Y", "Imputed output data", "T")
+.TypeConstraint(
+    "T",
+    { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
+    " allowed types.")
     .Attr("imputed_value_floats", "value to change to", AttrType::FLOATS)
     .Attr("replaced_value_float", "value that needs replacing", AttrType::FLOAT)
     .Attr("imputed_value_int64s", "value to change to", AttrType::INTS)
     .Attr("replaced_value_int64", "value that needs replacing", AttrType::INT);
 
 OPERATOR_SCHEMA(LabelEncoder)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Convert class label to their integral type and vice versa.
     In both cases the operator is instantiated with the list of class strings.
     The integral value of the string is the index position in the list.
 )DOC")
-    .Input(0, "X", "Data to be encoded", "T1")
-    .Output(0, "Y", "Encoded output data", "T2")
-    .TypeConstraint(
-        "T1",
-        {"tensor(string)", "tensor(int64)"},
-        " allowed types.")
+.Input(0, "X", "Data to be encoded", "T1")
+.Output(0, "Y", "Encoded output data", "T2")
+.TypeConstraint(
+    "T1",
+    { "tensor(string)", "tensor(int64)" },
+    " allowed types.")
     .TypeConstraint(
         "T2",
-        {"tensor(string)", "tensor(int64)"},
+        { "tensor(string)", "tensor(int64)" },
         " allowed types.")
     .Attr(
         "classes_strings",
@@ -223,26 +223,26 @@ OPERATOR_SCHEMA(LabelEncoder)
         AttrType::STRING);
 
 OPERATOR_SCHEMA(LinearClassifier)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(2)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(2)
+.SetDoc(R"DOC(
     Linear classifier prediction (choose class)
 )DOC")
-    .Input(0, "X", "Data to be classified", "T1")
-    .Output(0, "Y", "Classification outputs (one class per example", "T2")
-    .Output(
-        1,
-        "Z",
-        "Classification scores (N,E - one score for each class, for each example",
-        "tensor(float)")
+.Input(0, "X", "Data to be classified", "T1")
+.Output(0, "Y", "Classification outputs (one class per example", "T2")
+.Output(
+    1,
+    "Z",
+    "Classification scores (N,E - one score for each class, for each example",
+    "tensor(float)")
     .TypeConstraint(
         "T1",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+        { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {"tensor(string)", "tensor(int64)"},
+        { "tensor(string)", "tensor(int64)" },
         " allowed types.")
     .Attr("coefficients", "weights of the model(s)", AttrType::FLOATS)
     .Attr("intercepts", "weights of the intercepts (if used)", AttrType::FLOATS)
@@ -264,10 +264,10 @@ OPERATOR_SCHEMA(LinearClassifier)
         AttrType::STRING);
 
 OPERATOR_SCHEMA(LinearRegressor)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Generalized linear regression evaluation.
     If targets is set to 1 (default) then univariate regression is performed.
     If targets is set to M then M sets of coefficients must be passed in as a sequence
@@ -275,15 +275,15 @@ OPERATOR_SCHEMA(LinearRegressor)
     Coefficients are of the same length as an n, and coefficents for each target are contiguous.
     Intercepts are optional but if provided must match the number of targets.
 )DOC")
-    .Input(0, "X", "Data to be regressed", "T")
-    .Output(
-        0,
-        "Y",
-        "Regression outputs (one per target, per example",
-        "tensor(float)")
+.Input(0, "X", "Data to be regressed", "T")
+.Output(
+    0,
+    "Y",
+    "Regression outputs (one per target, per example",
+    "tensor(float)")
     .TypeConstraint(
         "T",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+        { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
         " allowed types.")
     .Attr(
         "post_transform",
@@ -297,29 +297,29 @@ OPERATOR_SCHEMA(LinearRegressor)
         AttrType::INT);
 
 OPERATOR_SCHEMA(Normalizer)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Normalize the input.  There are three normalization modes,
     which have the corresponding formulas:
     Max .. math::     max(x_i)
     L1  .. math::  z = ||x||_1 = \sum_{i=1}^{n} |x_i|
     L2  .. math::  z = ||x||_2 = \sqrt{\sum_{i=1}^{n} x_i^2}
 )DOC")
-    .Input(0, "X", "Data to be encoded", "T")
-    .Output(0, "Y", "encoded output data", "tensor(float)")
-    .TypeConstraint(
-        "T",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-        " allowed types.")
+.Input(0, "X", "Data to be encoded", "T")
+.Output(0, "Y", "encoded output data", "tensor(float)")
+.TypeConstraint(
+    "T",
+    { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
+    " allowed types.")
     .Attr("norm", "0=Lmax, 1=L1, 2=L2", AttrType::STRING);
 
 OPERATOR_SCHEMA(OneHotEncoder)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Replace the inputs with an array of ones and zeros, where the only
     one is the zero-based category that was passed in.  The total category count 
     will determine the length of the vector. For example if we pass a 
@@ -329,29 +329,29 @@ OPERATOR_SCHEMA(OneHotEncoder)
     This operator assumes every input in X is of the same category set 
     (meaning there is only one category count).
 )DOC")
-    .Input(0, "X", "Data to be encoded", "T")
-    .Output(0, "Y", "encoded output data", "tensor(float)")
-    .TypeConstraint("T", {"tensor(string)", "tensor(int64)"}, " allowed types.")
-    .Attr("cats_int64s", "list of cateogries, ints", AttrType::INT)
-    .Attr("cats_strings", "list of cateogries, strings", AttrType::STRINGS)
-    .Attr(
-        "zeros",
-        "if true and category is not present, will return all zeros, if false and missing category, operator will return false",
-        AttrType::INT);
+.Input(0, "X", "Data to be encoded", "T")
+.Output(0, "Y", "encoded output data", "tensor(float)")
+.TypeConstraint("T", { "tensor(string)", "tensor(int64)" }, " allowed types.")
+.Attr("cats_int64s", "list of cateogries, ints", AttrType::INT)
+.Attr("cats_strings", "list of cateogries, strings", AttrType::STRINGS)
+.Attr(
+    "zeros",
+    "if true and category is not present, will return all zeros, if false and missing category, operator will return false",
+    AttrType::INT);
 
 OPERATOR_SCHEMA(Scaler)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
 )DOC")
-    .Input(0, "X", "Data to be scaled", "T")
-    .Output(0, "Y", "Scaled output data", "tensor(float)")
-    .TypeConstraint(
-        "T",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-        " allowed types.")
+.Input(0, "X", "Data to be scaled", "T")
+.Output(0, "Y", "Scaled output data", "tensor(float)")
+.TypeConstraint(
+    "T",
+    { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
+    " allowed types.")
     .Attr(
         "scale",
         "second, multiply by this, can be length of features or length 1",
@@ -362,26 +362,26 @@ OPERATOR_SCHEMA(Scaler)
         AttrType::FLOATS);
 
 OPERATOR_SCHEMA(SVMClassifier)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(2)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(2)
+.SetDoc(R"DOC(
     SVM classifier prediction 
 )DOC")
-    .Input(0, "X", "Data to be classified", "T1")
-    .Output(0, "Y", "Classification outputs (one class per example)", "T2")
-    .Output(
-        1,
-        "Z",
-        "Class scores (one per class per example), if prob_a and prob_b are provided they are probabilities for each class otherwise they are raw scores.",
-        "tensor(float)")
+.Input(0, "X", "Data to be classified", "T1")
+.Output(0, "Y", "Classification outputs (one class per example)", "T2")
+.Output(
+    1,
+    "Z",
+    "Class scores (one per class per example), if prob_a and prob_b are provided they are probabilities for each class otherwise they are raw scores.",
+    "tensor(float)")
     .TypeConstraint(
         "T1",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+        { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {"tensor(string)", "tensor(int64)"},
+        { "tensor(string)", "tensor(int64)" },
         " allowed types.")
     .Attr(
         "kernel_type",
@@ -414,21 +414,21 @@ OPERATOR_SCHEMA(SVMClassifier)
         AttrType::INTS);
 
 OPERATOR_SCHEMA(SVMRegressor)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     SVM regression prediction and one-class svm anomaly detection
 )DOC")
-    .Input(0, "X", "Data to be regressed", "T")
-    .Output(
-        0,
-        "Y",
-        "Regression outputs (one score per target per example)",
-        "tensor(float)")
+.Input(0, "X", "Data to be regressed", "T")
+.Output(
+    0,
+    "Y",
+    "Regression outputs (one score per target per example)",
+    "tensor(float)")
     .TypeConstraint(
         "T",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+        { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
         " allowed types.")
     .Attr(
         "kernel_type",
@@ -452,10 +452,10 @@ OPERATOR_SCHEMA(SVMRegressor)
     .Attr("rho", "", AttrType::FLOATS);
 
 OPERATOR_SCHEMA(TreeEnsembleClassifier)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(2)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(2)
+.SetDoc(R"DOC(
     Tree Ensemble classifier.  Returns the top class for each input in N.
     All args with nodes_ are fields of a tuple of tree nodes, and 
     it is assumed they are the same length, and an index i will decode the
@@ -468,20 +468,20 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
     will be passed and the class_ids are an index into this list.
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 )DOC")
-    .Input(0, "X", "Input N,F", "T1")
-    .Output(0, "Y", "N, Top class for each point", "T2")
-    .Output(
-        1,
-        "Z",
-        "N,E the class score for each class, for each point",
-        "tensor(float)")
+.Input(0, "X", "Input N,F", "T1")
+.Output(0, "Y", "N, Top class for each point", "T2")
+.Output(
+    1,
+    "Z",
+    "N,E the class score for each class, for each point",
+    "tensor(float)")
     .TypeConstraint(
         "T1",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
+        { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {"tensor(string)", "tensor(int64)"},
+        { "tensor(string)", "tensor(int64)" },
         " allowed types.")
     .Attr("nodes_treeids", "tree id for this node", AttrType::INTS)
     .Attr(
@@ -538,10 +538,10 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
         AttrType::FLOATS);
 
 OPERATOR_SCHEMA(TreeEnsembleRegressor)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.
     All args with nodes_ are fields of a tuple of tree nodes, and 
     it is assumed they are the same length, and an index i will decode the
@@ -553,12 +553,12 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
     All trees must have their node ids start at 0 and increment by 1.
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 )DOC")
-    .Input(0, "X", "Input N,F", "T")
-    .Output(0, "Y", "N classes", "tensor(float)")
-    .TypeConstraint(
-        "T",
-        {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
-        " allowed types.")
+.Input(0, "X", "Input N,F", "T")
+.Output(0, "Y", "N classes", "tensor(float)")
+.TypeConstraint(
+    "T",
+    { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
+    " allowed types.")
     .Attr("nodes_treeids", "tree id for this node", AttrType::INTS)
     .Attr(
         "nodes_nodeids",
@@ -614,10 +614,10 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
         AttrType::FLOATS);
 
 OPERATOR_SCHEMA(VecDictionizer)
-    .SetDomain("ai.onnx.ml")
-    .NumInputs(1)
-    .NumOutputs(1)
-    .SetDoc(R"DOC(
+.SetDomain("ai.onnx.ml")
+.NumInputs(1)
+.NumOutputs(1)
+.SetDoc(R"DOC(
     Makes a map from the input and the attributes.  
     Assumes input 0 are the values, and the keys are specified by the attributes.
     Must provide keys in either classlabels_strings or classlabels_int64s (but not both).
@@ -625,11 +625,11 @@ OPERATOR_SCHEMA(VecDictionizer)
     but each input in the batch must be the size of the keys specified by the attributes.
     The order of the input and attributes determines the key-value mapping.
 )DOC")
-    .Input(0, "X", "The input values", "tensor(float)")
-    .Output(0, "Z", "The output map", "T")
-    .TypeConstraint(
-        "T",
-        {"map(string, float)", "map(int64, float)"},
-        " allowed types.")
+.Input(0, "X", "The input values", "tensor(float)")
+.Output(0, "Z", "The output map", "T")
+.TypeConstraint(
+    "T",
+    { "map(string, float)", "map(int64, float)" },
+    " allowed types.")
     .Attr("classlabels_strings", "keys if using string keys", AttrType::STRINGS)
     .Attr("classlabels_int64s", "keys if using int keys", AttrType::INTS);
