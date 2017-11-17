@@ -36,7 +36,6 @@ The following are the metadata properties of a model graph:
 |ir_version|int64||The version of the IR format specification|
 |doc_string|string|Free form|A human-readable documentation string intended to summarize the purpose of the model. Markdown is allowed.|
 
-
 #### Names Within a Graph
 
 We organize names into separate namespaces. Names must be unique within a namespace. 
@@ -82,3 +81,22 @@ The following data types are supported by ONNX. Additional data types can be sup
 |Other|__bool__|Boolean value represent data with only two values, typically _true_ and _false_.|
 |Other|__handle__|Handles are opaque types holding a 64-bit integer.|
 |Collections|__sparse and dense tensor__|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is equivalent to a scalar.|
+
+Extensibility
+-------------
+
+ONNX is expected to evolve over time and provides features that allow users to experiment and implement additions before they are folded into the specifications.
+
+### Metadata
+
+A model allows named metadata strings to be added via its `metadata_props` field, typically for use by tools such as converters, indexers or documentation generators. Names are not prescribed, but some name recommendations are provided for implementations that want to record such concepts.
+
+- `author`: name of the person(s) who authored the model
+- `company`: name of the company or organization that authored the model
+- `converted_from`: if converted from a different format, the name of the source format or framework
+- `license`: a human-readable name for a license if applicable
+- `license_url`: the URL where the license text is provided
+
+### Operators
+
+Operators may be extended via custom domain names in the `opset_import` field.
