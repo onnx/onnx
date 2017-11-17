@@ -139,12 +139,8 @@ OPERATOR_SCHEMA(DictVectorizer)
     .Input(0, "X", "The input dictionary", "T")
     .Output(0, "Y", "The tensor", "tensor(int64)")
     .TypeConstraint(
-        "T1",
-        {"tensor(string)", "tensor(int64)"},
-        " allowed types.")
-    .TypeConstraint(
-        "T2",
-        {"tensor(string)", "tensor(int64)"},
+        "T",
+        {"map(string, int64)", "map(int64, string)"},
         " allowed types.")
     .Attr("string_vocabulary", "The vocabulary vector", AttrType::STRINGS)
     .Attr("int64_vocabulary", "The vocabulary vector", AttrType::INTS);
@@ -258,7 +254,10 @@ OPERATOR_SCHEMA(LinearClassifier)
         "classlabels_strings",
         "class labels if using string labels",
         AttrType::STRINGS)
-    .Attr("classlabels_ints", "class labels if using int labels", AttrType::INTS)
+    .Attr(
+        "classlabels_ints",
+        "class labels if using int labels",
+        AttrType::INTS)
     .Attr(
         "post_transform",
         "enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
@@ -470,7 +469,7 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 )DOC")
     .Input(0, "X", "Input N,F", "T1")
-    .Output(0, "Y", "N, Top class for each point", "T1")
+    .Output(0, "Y", "N, Top class for each point", "T2")
     .Output(
         1,
         "Z",
@@ -554,7 +553,7 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
     All trees must have their node ids start at 0 and increment by 1.
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 )DOC")
-    .Input(0, "X", "Input N,F", "T1")
+    .Input(0, "X", "Input N,F", "T")
     .Output(0, "Y", "N classes", "tensor(float)")
     .TypeConstraint(
         "T",
