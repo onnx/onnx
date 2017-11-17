@@ -25,7 +25,7 @@ git diff --exit-code
 # install onnx-ml
 cd $onnx_dir
 ccache -z
-pip install . --install-option="--onnxml=1"
+pip install . --install-option=\"--onnxml=1\"
 ccache -s
 
 # run onnx tests again
