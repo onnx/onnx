@@ -1344,8 +1344,8 @@ expect(node, inputs=[], outputs=[values],
 #### Attributes
 
 <dl>
-<dt><tt>p</tt> : float</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
+<dt><tt>p</tt> : int</dt>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 </dl>
 
 #### Inputs
@@ -1961,8 +1961,8 @@ expect(node, inputs=[], outputs=[values],
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>p</tt> : float</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
+<dt><tt>p</tt> : int</dt>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
@@ -2410,17 +2410,17 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
-  Given `data` tensor, paddings, mode, and value.
+  Given `data` tensor, pads, mode, and value.
   
   Example:
-    Insert 0 paddings to the beginning of the second dimension.
+    Insert 0 pads to the beginning of the second dimension.
   
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-    paddings = [0, 0, 2, 0]
+    pads = [0, 0, 2, 0]
   
     output = [
         [
@@ -2435,8 +2435,8 @@ expect(node, inputs=[a, b], outputs=[c],
 <dl>
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
-<dt><tt>paddings</tt> : list of ints (required)</dt>
-<dd>List of integers indicate the padding element count at the begining and end of each axis, for 2D it is the number of pixel. `paddings` rank should be double of the input's rank. `paddings` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dt><tt>pads</tt> : list of ints (required)</dt>
+<dd>List of integers indicate the padding element count at the begining and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>

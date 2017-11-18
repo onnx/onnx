@@ -102,8 +102,8 @@ namespace onnx {
                         pads_doc.c_str(),
                         AttrType::INTS);
             schema.Attr("p",
-                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
-                        AttrType::FLOAT);
+                        "p value of the Lp norm used to pool over the input data, default is 2.",
+                        AttrType::INT);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -345,8 +345,8 @@ namespace onnx {
             schema.NumInputs(1);
             schema.NumOutputs(1);
             schema.Attr("p",
-                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
-                        AttrType::FLOAT);
+                        "p value of the Lp norm used to pool over the input data, default is 2.",
+                        AttrType::INT);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
