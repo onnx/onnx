@@ -511,9 +511,10 @@ OPERATOR_SCHEMA(Softplus)
     .NumOutputs(1)
     .SetDoc(R"DOC(
 Softplus takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
+(Tensor<T>) where the softplus function, y = ln(exp(steepness * x) + 1), is applied to
 the tensor elementwise.
 )DOC")
+    .Attr("steepness", "Steepness (default = 1, must be >= 1)", AttrType::FLOAT)
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
