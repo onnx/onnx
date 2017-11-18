@@ -3,13 +3,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import distutils
 from distutils.spawn import find_executable
-from distutils import sysconfig
+from distutils import sysconfig, dep_util, log
 import setuptools
 import setuptools.command.build_py
 import setuptools.command.develop
 import setuptools.command.build_ext
 
+from contextlib import contextmanager, nested
 import platform
 import fnmatch
 from collections import namedtuple
@@ -51,12 +53,8 @@ with open(os.path.join(TOP_DIR, 'VERSION_NUMBER')) as version_file:
 # Utilities
 ################################################################################
 
-def log(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-
-
 def die(msg):
-    log(msg)
+    log.error(msg)
     sys.exit(1)
 
 
@@ -137,8 +135,25 @@ class ONNXCommand(setuptools.Command):
 
 class build_proto_in(ONNXCommand):
     def run(self):
-        log('compiling *.in.proto')
-        subprocess.check_call(["python", os.path.join(SRC_DIR, "gen_proto.py")])
+        gen_script = os.path.join(SRC_DIR, 'gen_proto.py')
+        stems = ['onnx', 'onnx-operators']
+
+        in_files = [gen_script]
+        out_files = []
+        for stem in stems:
+            in_files.append(
+                os.path.join(SRC_DIR, '{}.in.proto'.format(stem)))
+            out_files.extend([
+                os.path.join(SRC_DIR, '{}.proto'.format(stem)),
+                os.path.join(SRC_DIR, '{}.proto3'.format(stem)),
+                os.path.join(SRC_DIR, '{}-ml.proto'.format(stem)),
+                os.path.join(SRC_DIR, '{}-ml.proto3'.format(stem)),
+            ])
+
+        if self.force or any(dep_util.newer_group(in_files, o)
+                             for o in out_files):
+            log.info('compiling *.in.proto')
+            subprocess.check_call([sys.executable, gen_script] + stems)
 
 
 class build_proto(ONNXCommand):
@@ -154,16 +169,27 @@ class build_proto(ONNXCommand):
             proto_files = [os.path.join(SRC_DIR, "onnx.proto"),
                            os.path.join(SRC_DIR, "onnx-operators.proto")]
 
-        for proto_file in proto_files:
-            log('compiling {}'.format(proto_file))
-            if not self.dry_run:
-                subprocess.check_call([
-                    PROTOC,
-                    '--proto_path', SRC_DIR,
-                    '--python_out', SRC_DIR,
-                    '--cpp_out', SRC_DIR,
-                    proto_file
-                ])
+
+        for f in proto_files:
+            base = os.path.splitext(f)[0]
+            outputs = [
+                # "-" is invalid in module name, protoc replaces '-'
+                # in the proto file name with '_' in the generated
+                # *_pb2.py file
+                '{}_pb2.py'.format(base.replace('-', '_')),
+                '{}.pb.cc'.format(base),
+                '{}.pb.h'.format(base),
+            ]
+            if self.force or any(dep_util.newer(f, o) for o in outputs):
+                log.info('compiling {}'.format(f))
+                if not self.dry_run:
+                    subprocess.check_call([
+                        PROTOC,
+                        '--proto_path', SRC_DIR,
+                        '--python_out', SRC_DIR,
+                        '--cpp_out', SRC_DIR,
+                        f
+                    ])
 
 
 class create_version(ONNXCommand):
@@ -179,13 +205,13 @@ class build_py(setuptools.command.build_py.build_py):
     def run(self):
         self.run_command('create_version')
         self.run_command('build_proto')
-        setuptools.command.build_py.build_py.run(self)
+        return setuptools.command.build_py.build_py.run(self)
 
 
 class develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command('create_version')
-        setuptools.command.develop.develop.run(self)
+        return setuptools.command.develop.develop.run(self)
 
 
 class build_ext(setuptools.command.build_ext.build_ext):
@@ -193,11 +219,88 @@ class build_ext(setuptools.command.build_ext.build_ext):
         self.run_command('build_proto')
         for ext in self.extensions:
             ext.pre_run()
-        setuptools.command.build_ext.build_ext.run(self)
+        return setuptools.command.build_ext.build_ext.run(self)
 
- 
+    def build_extensions(self):
+        try:
+            import ninja
+        except ImportError:
+            # Once PEP 518 is in, we can specify ninja as a build time
+            # requires. Technically, we can make it work without the
+            # PEP by installing ninja to a temp directory and insert
+            # that to sys.path, but as at this point ninja integration
+            # is not well proven yet, let's just fall back to the
+            # default build method.
+            return self._build_default()
+        else:
+            return self._build_with_ninja()
 
-cmdclass={
+    def _build_default(self):
+        return setuptools.command.build_ext.build_ext.build_extensions(self)
+
+    def _build_with_ninja(self):
+        import ninja
+
+        build_file = os.path.join(TOP_DIR, 'build.ninja')
+        log.debug('Ninja build file at {}'.format(build_file))
+        w = ninja.Writer(open(build_file, 'w'))
+
+        w.rule('compile', '$cmd')
+        w.rule('link', '$cmd')
+
+        @contextmanager
+        def patch(obj, attr_name, val):
+            orig_val = getattr(obj, attr_name)
+            setattr(obj, attr_name, val)
+            yield
+            setattr(obj, attr_name, orig_val)
+
+        orig_compile = distutils.unixccompiler.UnixCCompiler._compile
+        orig_link = distutils.unixccompiler.UnixCCompiler.link
+
+        def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
+            depfile = os.path.splitext(obj)[0] + '.d'
+            def spawn(cmd):
+                w.build(
+                    [obj], 'compile', [src],
+                    variables={
+                        'cmd': cmd,
+                        'depfile': depfile,
+                        'deps': 'gcc'
+                    })
+
+            extra_postargs.extend(['-MMD', '-MF', depfile])
+            with patch(self, 'spawn', spawn):
+                orig_compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts)
+
+        def link(self, target_desc, objects,
+             output_filename, output_dir=None, libraries=None,
+             library_dirs=None, runtime_library_dirs=None,
+             export_symbols=None, debug=0, extra_preargs=None,
+             extra_postargs=None, build_temp=None, target_lang=None):
+
+            w.close()
+            ninja._program('ninja', ['-f', build_file])
+
+            orig_link(self, target_desc, objects,
+                      output_filename, output_dir, libraries,
+                      library_dirs, runtime_library_dirs,
+                      export_symbols, debug, extra_preargs,
+                      extra_postargs, build_temp, target_lang)
+
+        with nested(
+                patch(
+                    distutils.unixccompiler.UnixCCompiler,
+                    '_compile',
+                    _compile),
+                patch(
+                    distutils.unixccompiler.UnixCCompiler,
+                    'link',
+                    link),
+                patch(self, 'force', True)):
+            self._build_default()
+
+cmdclass = {
     'build_proto': build_proto,
     'build_proto_in': build_proto_in,
     'create_version': create_version,

@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import argparse
 import io
 import os
 import re
@@ -108,11 +109,14 @@ def convert(stem, do_onnx_ml=False):
                 fout.write(translate(source, proto=3, onnx_ml=True))
 
 def main():
-    convert("onnx", do_onnx_ml=True)
-    convert("onnx-operators", do_onnx_ml=True)
+    parser = argparse.ArgumentParser(
+        description='Generates .proto file variations from .in.proto')
+    parser.add_argument('stems', nargs='+', default=['onnx', 'onnx-operators'],
+                      help='list of .in.proto file stems (default: %(default)s)')
+    args = parser.parse_args()
+
+    for stem in args.stems:
+        convert(stem, do_onnx_ml=True)
 
 if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser(description='Generates .proto file variations from ' + os.path.join(os.path.dirname(__file__), "onnx.in.proto"))
-    args = parser.parse_args()
     main()
