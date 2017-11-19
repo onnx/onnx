@@ -6,15 +6,15 @@ source "$scripts_dir/common";
 onnx_dir="$PWD"
 
 # install onnx
-install_options=()
+install_option=()
 
 if [[ $ONNX_ML == true ]]; then
-    install_options+=("--install-option=--onnxml=1")
+    install_option+=(--install-option="--onnxml=1")
 fi
 
 cd $onnx_dir
 ccache -z
-pip install -v . "${install_options[@]}"
+pip install -v . "${install_option[@]}"
 ccache -s
 
 # onnx tests
