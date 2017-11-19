@@ -21,7 +21,7 @@ env:
   global:
     - PB_VERSION=2.6.1
   matrix:
-    - ONNX_ML=false USE_NINJA=false
-    - ONNX_ML=false USE_NINJA=true
-    - ONNX_ML=true USE_NINJA=false
-    - ONNX_ML=true USE_NINJA=true
+    - USE_NINJA=false
+    - USE_NINJA=true
+    - ONNX_ML=1 USE_NINJA=false
+    - ONNX_ML=1 USE_NINJA=true
