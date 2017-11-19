@@ -24,10 +24,8 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 PROTOC = find_executable('protoc')
-ONNX_ML=False
-if "--onnxml=1" in sys.argv:
-    ONNX_ML=True
-    sys.argv.remove("--onnxml=1")
+
+ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 
 install_requires = {'six'}
 setup_requires = set()
