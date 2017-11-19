@@ -8,7 +8,7 @@ onnx_dir="$PWD"
 # install onnx
 cd $onnx_dir
 ccache -z
-pip install .
+pip install -v .
 ccache -s
 
 # onnx tests
@@ -25,7 +25,7 @@ git diff --exit-code
 # install onnx-ml
 cd $onnx_dir
 ccache -z
-pip install . --install-option="--onnxml=1"
+pip install -v . --install-option="--onnxml=1"
 ccache -s
 
 # run onnx tests again
