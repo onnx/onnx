@@ -11,7 +11,7 @@ import setuptools.command.build_py
 import setuptools.command.develop
 import setuptools.command.build_ext
 
-from contextlib import contextmanager, nested
+from contextlib import contextmanager
 import platform
 import fnmatch
 from collections import namedtuple
@@ -288,17 +288,10 @@ class build_ext(setuptools.command.build_ext.build_ext):
                       export_symbols, debug, extra_preargs,
                       extra_postargs, build_temp, target_lang)
 
-        with nested(
-                patch(
-                    distutils.unixccompiler.UnixCCompiler,
-                    '_compile',
-                    _compile),
-                patch(
-                    distutils.unixccompiler.UnixCCompiler,
-                    'link',
-                    link),
-                patch(self, 'force', True)):
-            self._build_default()
+        with patch(distutils.unixccompiler.UnixCCompiler, '_compile', _compile):
+            with patch(distutils.unixccompiler.UnixCCompiler, 'link', link):
+                with patch(self, 'force', True):
+                    self._build_default()
 
 cmdclass = {
     'build_proto': build_proto,
