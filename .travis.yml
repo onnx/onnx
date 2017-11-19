@@ -20,3 +20,6 @@ cache:
 env:
   global:
     - PB_VERSION=2.6.1
+  matrix:
+    - USE_NINJA=false
+    - USE_NINJA=true
