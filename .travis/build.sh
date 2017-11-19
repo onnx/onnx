@@ -8,11 +8,7 @@ onnx_dir="$PWD"
 # install onnx
 cd $onnx_dir
 ccache -z
-if [[ $ONNX_ML == true ]]; then
-    pip install -v . --install-option="--onnxml=1"
-else
-    pip install -v .
-fi
+pip install -v .
 ccache -s
 
 # onnx tests
