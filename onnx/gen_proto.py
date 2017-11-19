@@ -111,8 +111,9 @@ def convert(stem, do_onnx_ml=False):
 def main():
     parser = argparse.ArgumentParser(
         description='Generates .proto file variations from .in.proto')
-    parser.add_argument('stems', nargs='+', default=['onnx', 'onnx-operators'],
-                      help='list of .in.proto file stems (default: %(default)s)')
+    parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators'],
+                        help='list of .in.proto file stems '
+                        '(default: %(default)s)')
     args = parser.parse_args()
 
     for stem in args.stems:
