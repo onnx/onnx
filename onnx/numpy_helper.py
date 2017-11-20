@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import sys
 
 import numpy as np
-from onnx.onnx_pb2 import TensorProto
+from onnx import TensorProto
 from onnx import mapping
 
 if sys.byteorder != 'little':

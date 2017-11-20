@@ -1,7 +1,7 @@
 import unittest
 
 from onnx import defs, helper
-from onnx.onnx_pb2 import NodeProto
+from onnx import NodeProto
 
 
 class TestRelu(unittest.TestCase):
