@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx.onnx_pb2 import AttributeProto, NodeProto, GraphProto, ModelProto, IR_VERSION
+from onnx import AttributeProto, NodeProto, GraphProto, ModelProto, IR_VERSION
 
 import io
 import onnx

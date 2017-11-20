@@ -10,7 +10,7 @@ import numpy as np
 from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
-from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
+from onnx import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping

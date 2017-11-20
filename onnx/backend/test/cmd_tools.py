@@ -48,7 +48,7 @@ def generate_data(args):
             json.dump({
                 'url': case.url,
                 'model_name': case.model_name,
-            }, f)
+            }, f, sort_keys=True)
 
 
 def parse_args():
