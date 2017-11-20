@@ -87,7 +87,8 @@ namespace onnx {
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
-            schema.NumInputs(1);
+            schema.SinceVersion(2);
+            schema.NumInputs(1);            
             schema.NumOutputs(1);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
@@ -102,8 +103,8 @@ namespace onnx {
                         pads_doc.c_str(),
                         AttrType::INTS);
             schema.Attr("p",
-                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
-                        AttrType::FLOAT);
+                        "p value of the Lp norm used to pool over the input data, default is 2.",
+                        AttrType::INT);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -342,11 +343,12 @@ namespace onnx {
             ReplaceAll(doc, "{op_type}", op_type);
             ReplaceAll(doc, "{op}", op);
             schema.SetDoc(doc);
+            schema.SinceVersion(2);
             schema.NumInputs(1);
             schema.NumOutputs(1);
             schema.Attr("p",
-                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
-                        AttrType::FLOAT);
+                        "p value of the Lp norm used to pool over the input data, default is 2.",
+                        AttrType::INT);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -365,8 +367,9 @@ namespace onnx {
             schema.SetDoc(doc);
         };
     }
-  OPERATOR_SCHEMA(GlobalLpPool)
-  .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
+
+    OPERATOR_SCHEMA(GlobalLpPool)
+        .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
 } // namespace onnx
 
 OPERATOR_SCHEMA(BatchNormalization)
