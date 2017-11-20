@@ -23,3 +23,5 @@ env:
   matrix:
     - USE_NINJA=false
     - USE_NINJA=true
+    - ONNX_ML=1 USE_NINJA=false
+    - ONNX_ML=1 USE_NINJA=true
