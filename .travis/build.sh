@@ -22,20 +22,3 @@ python onnx/gen_proto.py
 backend-test-tools generate-data
 git status
 git diff --exit-code
-
-# install onnx-ml
-cd $onnx_dir
-ccache -z
-pip install -v . --install-option="--onnxml=1"
-ccache -s
-
-# run onnx tests again
-cd $onnx_dir
-pytest
-
-# check auto-gen files up-to-date again
-python onnx/defs/gen_doc.py -o docs/Operators.md
-python onnx/gen_proto.py
-backend-test-tools generate-data
-git status
-git diff --exit-code

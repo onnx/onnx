@@ -8,7 +8,7 @@ import random
 import numpy as np
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx.onnx_pb2 import AttributeProto, TensorProto, GraphProto
+from onnx import AttributeProto, TensorProto, GraphProto
 
 import unittest
 
