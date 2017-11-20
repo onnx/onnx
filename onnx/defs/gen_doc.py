@@ -15,7 +15,7 @@ from onnx.defs import OpSchema
 from onnx.backend.test.case.node import collect_snippets
 
 SNIPPETS = collect_snippets()
-
+ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 
 def display_number(v):
     if defs.OpSchema.is_infinite(v):
@@ -143,11 +143,15 @@ def main(args):
 
 
 if __name__ == '__main__':
+    if ONNX_ML:
+        doc_file_name = 'Operators-ml.md'
+    else:
+        doc_file_name = 'Operators.md'
     parser = argparse.ArgumentParser('gen_doc')
     parser.add_argument('-o', '--output', type=str,
                         default=os.path.join(
                             os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))),
                             'docs',
-                            'Operators.md'),
+                            doc_file_name),
                         help='output path (default: %(default)s)')
     main(parser.parse_args())
