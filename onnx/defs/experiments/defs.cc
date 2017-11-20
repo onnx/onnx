@@ -370,11 +370,11 @@ OPERATOR_SCHEMA(Upsample)
     .NumOutputs(1)
     .Attr(
         "width_scale",
-        "The scale along width dimension",
+        "The scale along width dimension. It takes value greater than or equal to 1.",
         AttrType::FLOAT, true)
     .Attr(
         "height_scale",
-        "The scale along height dimension",
+        "The scale along height dimension. It takes value greater than or equal to 1.",
         AttrType::FLOAT, true)
     .Attr(
         "mode",

@@ -4620,11 +4620,11 @@ expect(node, inputs=[x], outputs=[y],
 
 <dl>
 <dt><tt>height_scale</tt> : float (required)</dt>
-<dd>The scale along height dimension</dd>
+<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
 <dt><tt>mode</tt> : string</dt>
 <dd>Two interpolation modes: nearest(default), bilinear</dd>
 <dt><tt>width_scale</tt> : float (required)</dt>
-<dd>The scale along width dimension</dd>
+<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
 </dl>
 
 #### Inputs
