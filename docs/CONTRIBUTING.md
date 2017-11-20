@@ -31,7 +31,7 @@ Then, after you have made changes to
 
 ## Generated operator documentation
 
-[Operator docs in Operators.md](docs/Operators.md) are auto-generated based on C++ operator definitions. In order to refresh them run the following command from the repo root and commit the results:
+[Operator docs in Operators.md](Operators.md) are auto-generated based on C++ operator definitions. In order to refresh them run the following command from the repo root and commit the results:
 
 ```
 python onnx/defs/gen_doc.py
@@ -55,8 +55,8 @@ to run tests.
 
 # Other developer documentation
 
-* [How to implement ONNX backend (ONNX to something converter)](docs/Implementing%20an%20ONNX%20backend.md)
-* [Backend test infrastructure and how to add tests](docs/ONNX%20Backend%20Test.md)
+* [How to implement ONNX backend (ONNX to something converter)](Implementing%20an%20ONNX%20backend.md)
+* [Backend test infrastructure and how to add tests](ONNX%20Backend%20Test.md)
 
 # License
 
