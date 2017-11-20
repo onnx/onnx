@@ -111,6 +111,7 @@
 * <a href="#CastMap">CastMap</a> (Domain: ai.onnx.ml)
 * <a href="#CategoryMapper">CategoryMapper</a> (Domain: ai.onnx.ml)
 * <a href="#DictVectorizer">DictVectorizer</a> (Domain: ai.onnx.ml)
+* <a href="#FeatureVectorizer">FeatureVectorizer</a> (Domain: ai.onnx.ml)
 * <a href="#Imputer">Imputer</a> (Domain: ai.onnx.ml)
 * <a href="#LabelEncoder">LabelEncoder</a> (Domain: ai.onnx.ml)
 * <a href="#LinearClassifier">LinearClassifier</a> (Domain: ai.onnx.ml)
@@ -122,7 +123,7 @@
 * <a href="#Scaler">Scaler</a> (Domain: ai.onnx.ml)
 * <a href="#TreeEnsembleClassifier">TreeEnsembleClassifier</a> (Domain: ai.onnx.ml)
 * <a href="#TreeEnsembleRegressor">TreeEnsembleRegressor</a> (Domain: ai.onnx.ml)
-* <a href="#VecDictionizer">VecDictionizer</a> (Domain: ai.onnx.ml)
+* <a href="#ZipMap">ZipMap</a> (Domain: ai.onnx.ml)
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -4845,6 +4846,43 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
+### <a name="FeatureVectorizer"></a><a name="featurevectorizer">**FeatureVectorizer**</a>
+
+  Concatenates input features into one continuous output.  
+      Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
+      Inputs will be written to the output in the order of the input arguments.
+      All inputs are tensors of float.  Any feature that is not a tensor of float should
+      be converted using either Cast or CastMap.
+
+#### Attributes
+
+<dl>
+<dt><tt>inputdimensions</tt> : int</dt>
+<dd>the size of each input in the input list</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>ordered input tensors</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Full output array, in order assigned in the inputlist, as floats</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float)</dt>
+<dd> allowed types.</dd>
+</dl>
+
+
 ### <a name="Imputer"></a><a name="imputer">**Imputer**</a>
 
   Replace imputs that equal replaceValue/s  with  imputeValue/s.
@@ -5393,7 +5431,7 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
-### <a name="VecDictionizer"></a><a name="vecdictionizer">**VecDictionizer**</a>
+### <a name="ZipMap"></a><a name="zipmap">**ZipMap**</a>
 
   Makes a map from the input and the attributes.  
       Assumes input 0 are the values, and the keys are specified by the attributes.

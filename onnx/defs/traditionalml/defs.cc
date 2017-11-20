@@ -590,7 +590,7 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
     "base values for regression, added to final score, size must be the same as n_outputs or can be left unassigned (assumed 0)",
     AttrType::FLOATS);
 
-OPERATOR_SCHEMA(VecDictionizer)
+OPERATOR_SCHEMA(ZipMap)
 .SetDomain("ai.onnx.ml")
 .NumInputs(1)
 .NumOutputs(1)
@@ -610,5 +610,21 @@ OPERATOR_SCHEMA(VecDictionizer)
     " allowed types.")
 .Attr("classlabels_strings", "keys if using string keys", AttrType::STRINGS)
 .Attr("classlabels_int64s", "keys if using int keys", AttrType::INTS);
+
+OPERATOR_SCHEMA(FeatureVectorizer)
+.SetDomain("ai.onnx.ml")
+.NumInputs(1, INT_MAX)
+.NumOutputs(1)
+.SetDoc(R"DOC(
+    Concatenates input features into one continuous output.  
+    Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
+    Inputs will be written to the output in the order of the input arguments.
+    All inputs are tensors of float.  Any feature that is not a tensor of float should
+    be converted using either Cast or CastMap.
+)DOC")
+.Input(0, "X", "ordered input tensors", "T")
+.Output(0, "Y", "Full output array, in order assigned in the inputlist, as floats", "T")
+.TypeConstraint("T", { "tensor(float)" }, " allowed types.")
+.Attr("inputdimensions", "the size of each input in the input list", AttrType::INT);
 
 #endif
