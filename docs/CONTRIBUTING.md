@@ -9,7 +9,7 @@ way to get these dependencies is via
 conda install -c conda-forge protobuf numpy
 ```
 
-During development it's convenient to install ONNX in development mode (Note: Add install option `--install-option="--onnxml=1"` for onnx-ml):
+During development it's convenient to install ONNX in development mode (Note: Set environment variable `ONNX_ML=1` for onnx-ml):
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
@@ -31,7 +31,7 @@ Then, after you have made changes to
 
 ## Generated operator documentation
 
-[Operator docs in Operators.md](docs/Operators.md) are auto-generated based on C++ operator definitions. In order to refresh them run the following command from the repo root and commit the results:
+[Operator docs in Operators.md](Operators.md) are auto-generated based on C++ operator definitions. In order to refresh them run the following command from the repo root and commit the results:
 
 ```
 python onnx/defs/gen_doc.py
@@ -55,8 +55,8 @@ to run tests.
 
 # Other developer documentation
 
-* [How to implement ONNX backend (ONNX to something converter)](docs/Implementing%20an%20ONNX%20backend.md)
-* [Backend test infrastructure and how to add tests](docs/ONNX%20Backend%20Test.md)
+* [How to implement ONNX backend (ONNX to something converter)](Implementing%20an%20ONNX%20backend.md)
+* [Backend test infrastructure and how to add tests](ONNX%20Backend%20Test.md)
 
 # License
 

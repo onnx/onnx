@@ -16,14 +16,28 @@ __Notes on language in this and all related documents__:
 Extensible computation graph model
 ----------------------------------
 
-ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and
-manipulate. For example, a framework may keep the graph in memory in a format that it finds more efficient to
-manipulate for optimization passes. We make use of protobuf2 (with oneof, added in protobuf 2.6.1) for the serialized format.
+ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and manipulate. For example, a framework may keep the graph in memory in a format that it finds more efficient to manipulate for optimization passes. We make use of protobuf2 (with oneof, added in protobuf 2.6.1) for the serialized format.
+
+### Model
+
+The top-level container object in an ONNX model file is a ModelProto object that combines a computation graph with the following metadata properties.
+
+#### Model Metadata
+
+|Name|Type|Format|Description|
+|----|----|------|-----------|
+|ir_version|int64||The version of the IR format specification|
+|opset_import|||Custom operator sets imported by the model|
+|domain|string|Valid DNS name|A namespace for the model, following the style of package names, that is, reverse DNS domain name.|
+|model_version|int64||The version of the model|
+|producer_name|string||Name of framework/tool that generated this model|
+|producer_version|string||Version of the framework/tool that generated this model|
+
+Further metadata may be added to a model via its `metadata_props` field (as described further in the Extensibility section below).
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles.
-Nodes have one or more inputs and one or more outputs, and each node is a call to an operator.
+Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles. Each node is a call to an operator. Nodes have one or more inputs, one or more outputs, and zero or more attribute-value pairs.
 
 #### Model Graph Metadata
 
@@ -32,14 +46,11 @@ The following describes the metadata properties of a model graph:
 |Name|Type|Format|Description|
 |----|----|------|-----------|
 |name|string|Valid C identifier|A name for the model.|
-|domain|string|Valid DNS name|A namespace for the model, following the style of package names, that is, reverse DNS domain name.|
-|ir_version|int64||The version of the IR format specification.|
 |doc_string|string|Free form|A human-readable documentation string intended to summarize the purpose of the model. Markdown is allowed.|
 
 #### Names Within a Graph
 
-Names are organized into separate namespaces, and must be unique within a namespace.
-The namespaces include the following:
+Names are organized into separate namespaces, and must be unique within a namespace. The namespaces include the following:
  - `Node`: names that identify specific nodes in the graph, but not necessarily any particular input or output of the node.
  - `Graph`: names that identify graphs in the protobuf.
  - `Attribute`: names that identify attribute names for extra attributes that are passed to operators.
@@ -50,13 +61,11 @@ All names MUST adhere to C identifier syntax rules.
 
 #### Nodes
 
-Computation nodes are comprised of a name, a list of named inputs and outputs, and a list of attributes.
+Each computation node consists of a name, the identifier of the operator to be invoked, a list of named inputs and outputs, and a list of attribute-value pairs.
 
-Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a
-subsequent node.
+Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically – that is, if node K
-follows node N in the graph, none of the data inputs of N may refer to outputs of K, and no control input of N may refer to K.
+The list of nodes defining the top-level computation graph MUST be ordered topologically \- that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K, and no control input of N may refer to K.
 
 
 Built-in Operators and Standard Data Types
