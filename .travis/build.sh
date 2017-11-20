@@ -20,4 +20,5 @@ pytest
 python onnx/defs/gen_doc.py -o docs/Operators.md
 python onnx/gen_proto.py
 backend-test-tools generate-data
+git status
 git diff --exit-code
