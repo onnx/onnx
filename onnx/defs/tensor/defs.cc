@@ -63,7 +63,7 @@ OPERATOR_SCHEMA(Concat)
     "Which axis to concat on",
     AttrType::INT)
     .SetDoc("Concatenate a list of tensors into a single tensor")
-    .Input(0, "inputs...", "List of tensors for concatenation", "T")
+    .Input(0, "inputs", "List of tensors for concatenation", "T")
     .Output(0, "concat_result", "Concatenated tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.");
@@ -73,7 +73,7 @@ OPERATOR_SCHEMA(Split)
     .NumInputs(1)
     .NumOutputs(1, INT_MAX)
     .Input(0, "input", "The tensor to split", "T")
-    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T")
+    .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
     .Attr("axis",
