@@ -1,16 +1,16 @@
 
-
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
 
-[![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx)
-[![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx)
+| Linux | Windows |
+|-------|---------|
+| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
 
 [Open Neural Network Exchange (ONNX)](http://onnx.ai) is the first step toward an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
 It defines an extensible computation graph model, as well as definitions of built-in operators and standard 
 data types. Initially we focus on the capabilities needed for inferencing (evaluation).
 
-Caffe2, PyTorch, Cognitive Toolkit will, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different 
+Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different 
 frameworks and streamlining the path from research to production will increase the speed of innovation in 
 the AI community. We are an early stage and we invite the community to submit feedback and help us further 
 evolve ONNX.
