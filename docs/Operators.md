@@ -4189,21 +4189,21 @@ expect(node, inputs=[x], outputs=[y],
 <dd>Size of the input vocabulary.</dd>
 <dt><tt>output_dim</tt> : int</dt>
 <dd>Dimension of the embedding output vectors.</dd>
+<dt><tt>weights</tt> : tensor</dt>
+<dd>2-D tensor of weights [O,I].</dd>
 </dl>
 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : tensor(int64)</dt>
+<dt><tt>input</tt> : tensor(int64)</dt>
 <dd>1-D tensor of integers representing indices in the embedding dictionary with length [N] and values [0, input_dim -1]</dd>
-<dt><tt>W</tt> : T</dt>
-<dd>2-D tensor of weights [O, I].</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>output</tt> : T</dt>
 <dd>Output tensor of computed features [N, O].</dd>
 </dl>
 
