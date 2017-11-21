@@ -10,7 +10,7 @@ to choose the right tools as their project evolves. ONNX provides an open source
 It defines an extensible computation graph model, as well as definitions of built-in operators and standard 
 data types. Initially we focus on the capabilities needed for inferencing (evaluation).
 
-Caffe2, PyTorch, Cognitive Toolkit will, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different 
+Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different 
 frameworks and streamlining the path from research to production will increase the speed of innovation in 
 the AI community. We are an early stage and we invite the community to submit feedback and help us further 
 evolve ONNX.
