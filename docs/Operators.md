@@ -598,7 +598,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>inputs...</tt> : T</dt>
+<dt><tt>inputs</tt> : T</dt>
 <dd>List of tensors for concatenation</dd>
 </dl>
 
@@ -3734,7 +3734,7 @@ expect(node, inputs=[x], outputs=[y],
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs...</tt> : T</dt>
+<dt><tt>outputs</tt> : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 
