@@ -19,6 +19,7 @@
 *.pb.h
 *.pb.cc
 *_pb2.py
+*_pb.py
 
 # Compiled python
 *.pyc
@@ -67,6 +68,9 @@ build_*
 .eggs
 dist
 onnx.egg-info
+build.ninja
+.ninja_deps
+.ninja_log
 
 # generated files
 onnx/version.py

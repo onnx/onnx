@@ -10,3 +10,8 @@ wget -qO- "https://github.com/google/protobuf/releases/download/v$PB_VERSION/pro
 ccache -z
 cd "$pb_dir" && ./configure && make && make check && sudo make install && sudo ldconfig
 ccache -s
+
+
+if [[ $USE_NINJA == true ]]; then
+    pip install ninja
+fi

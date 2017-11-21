@@ -1,26 +1,44 @@
-Open Neural Network Exchange (ONNX)
-========
-[![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx)
-[![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx)
 
-Open Neural Network Exchange (ONNX) is the first step toward an open ecosystem that empowers AI developers
+<p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
+
+| Linux | Windows |
+|-------|---------|
+| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
+
+[Open Neural Network Exchange (ONNX)](http://onnx.ai) is the first step toward an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
 It defines an extensible computation graph model, as well as definitions of built-in operators and standard 
 data types. Initially we focus on the capabilities needed for inferencing (evaluation).
 
-Caffe2, PyTorch, and Cognitive Toolkit will be supporting ONNX. Enabling interoperability between different 
+Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different 
 frameworks and streamlining the path from research to production will increase the speed of innovation in 
 the AI community. We are an early stage and we invite the community to submit feedback and help us further 
 evolve ONNX.
 
+# Use ONNX
+Start experimenting today:
+* [Getting Started Guide](http://onnx.ai/getting-started)
+* [Supported Frameworks & Tools](http://onnx.ai/supported-tools)
+* [Tutorials on using ONNX converters](https://github.com/onnx/tutorials).
 
-# Folder Structure
+# Learn about ONNX spec
 
-- onnx/: the main folder that all code lies under
-  - onnx.proto: the protobuf (v2.6.1) that contains all the structures
-  - checker.py: utility to check whether a serialized ONNX proto is legal.
-  - defs/: subfolder that defines the ONNX operators.
-  - test/: test files
+Check ONNX design choices and internals:
+* [Overview](docs/Overview.md)
+* [ONNX intermediate representation spec](docs/IR.md)
+* [Versioning principles of the spec](docs/Versioning.md)
+* [Operators documentation](docs/Operators.md)
+
+# Contribute
+ONNX is a community project.  We encourage you to join the effort and contribute feedback, ideas, and code. Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
+
+# Follow Us
+Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/onnxai/)] [[Twitter](https://twitter.com/onnxai)]
+
+
+
+
+
 
 # Installation
 
@@ -56,7 +74,7 @@ way to get these dependencies is via
 conda install -c conda-forge protobuf numpy
 ```
 
-You can then install ONNX from PyPi (Note: Add install option --install-option="--onnxml=1" for onnx-ml):
+You can then install ONNX from PyPi (Note: Set environment variable `ONNX_ML=1` for onnx-ml):
 
 ```
 pip install onnx
@@ -102,34 +120,7 @@ to run tests.
 
 # Development
 
-You will need an install of protobuf and numpy to build ONNX.  One easy
-way to get these dependencies is via
-[Anaconda](https://www.anaconda.com/download/):
-
-```
-# Use conda-forge protobuf, as defaults doesn't come with protoc
-conda install -c conda-forge protobuf numpy
-```
-
-During development it's convenient to install ONNX in development mode (Note: Add install option --install-option="--onnxml=1" for onnx-ml):
-
-```
-git clone --recursive https://github.com/onnx/onnx.git
-pip install -e onnx/
-```
-Then, after you have made changes to
-
-- Python files, the changes are immediately effective in your installation, you do not need to install again.
-- C++ files, you need to do install again to trigger the native extension build.
-
-## Generated operator documentation
-
-[Operator docs in Operators.md](docs/Operators.md) are auto-generated based on C++ operator definitions. In order to refresh them run the following command from the repo root and commit the results:
-
-```
-python onnx/defs/gen_doc.py
-```
-
+Check out [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) for instructions.
 
 # License
 

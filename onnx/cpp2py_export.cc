@@ -26,6 +26,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "doc", &OpSchema::doc, py::return_value_policy::reference)
       .def_property_readonly("since_version", &OpSchema::since_version)
+      .def_property_readonly("domain", &OpSchema::domain)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
       .def_property_readonly("min_output", &OpSchema::min_output)
@@ -100,7 +101,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def(
       "get_all_schemas",
       []() -> const std::unordered_map<std::string, OpSchema> {
-        return OpSchemaRegistry::registered_schemas();
+        return OpSchemaRegistry::latest_registered_schemas();
       });
 
   // Submodule `checker`

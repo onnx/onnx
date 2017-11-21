@@ -41,6 +41,7 @@
 * <a href="#Less">Less</a>
 * <a href="#Log">Log</a>
 * <a href="#LogSoftmax">LogSoftmax</a>
+* <a href="#LpNormalization">LpNormalization</a>
 * <a href="#LpPool">LpPool</a>
 * <a href="#MatMul">MatMul</a>
 * <a href="#Max">Max</a>
@@ -99,9 +100,9 @@
 * <a href="#GivenTensorFill"><sub>experimental</sub> GivenTensorFill</a>
 * <a href="#Identity"><sub>experimental</sub> Identity</a>
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
-* <a href="#LpNormalization"><sub>experimental</sub> LpNormalization</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
 * <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
+* <a href="#ResizeNearest"><sub>experimental</sub> ResizeNearest</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 * <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
 * <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
@@ -382,11 +383,11 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis.</dd>
 </dl>
@@ -443,7 +444,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 <dd>The input 4-dimensional tensor of shape NCHW or NHWC depending on the order parameter.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
-<dt><tt>bias</tt> : T</dt>
+<dt><tt>B</tt> : T</dt>
 <dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
 <dt><tt>mean</tt> : T</dt>
 <dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
@@ -597,7 +598,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>inputs...</tt> : T</dt>
+<dt><tt>inputs</tt> : T</dt>
 <dd>List of tensors for concatenation</dd>
 </dl>
 
@@ -680,7 +681,7 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each axis of the filter.</dd>
 <dt><tt>group</tt> : int</dt>
@@ -688,7 +689,7 @@ expect(node, inputs=[], outputs=[values],
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, axis_n_end, n is kernel's dimension.This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>stride along each axis.</dd>
 </dl>
@@ -698,9 +699,9 @@ expect(node, inputs=[], outputs=[values],
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
-<dt><tt>weights</tt> : T</dt>
+<dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>bias</tt> : T</dt>
+<dt><tt>B</tt> : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
@@ -728,7 +729,7 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each axis of the filter.</dd>
 <dt><tt>group</tt> : int</dt>
@@ -738,7 +739,7 @@ expect(node, inputs=[], outputs=[values],
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>stride along each axis.</dd>
 </dl>
@@ -748,9 +749,9 @@ expect(node, inputs=[], outputs=[values],
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
-<dt><tt>weights</tt> : T</dt>
+<dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>bias</tt> : T</dt>
+<dt><tt>B</tt> : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
 </dl>
 
@@ -1176,7 +1177,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
-<dt><tt>bias</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -1343,8 +1344,8 @@ expect(node, inputs=[], outputs=[values],
 #### Attributes
 
 <dl>
-<dt><tt>p</tt> : float</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
+<dt><tt>p</tt> : int</dt>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 </dl>
 
 #### Inputs
@@ -1530,8 +1531,8 @@ expect(node, inputs=[], outputs=[values],
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022. 
   
-  y = scale * (x - mean) / sqrt(variance + epsilon) + bias, 
-  where mean and bias are computed per instance per channel. 
+  y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
+  where mean and B are computed per instance per channel. 
   
 
 #### Attributes
@@ -1548,7 +1549,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>The input 4-dimensional tensor of shape NCHW.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The input 1-dimensional scale tensor of size C.</dd>
-<dt><tt>bias</tt> : T</dt>
+<dt><tt>B</tt> : T</dt>
 <dd>The input 1-dimensional bias tensor of size C.</dd>
 </dl>
 
@@ -1725,7 +1726,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
-<dt><tt>bias</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -1910,6 +1911,41 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="LpNormalization"></a><a name="lpnormalization">**LpNormalization**</a>
+
+  Given a matrix, apply Lp-normalization along the provided axis.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
+<dt><tt>p</tt> : int</dt>
+<dd>(int64, default 2) the order of the normalization, only 1 or 2 are supported.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input matrix</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Matrix after normalization</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
 ### <a name="LpPool"></a><a name="lppool">**LpPool**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across the
@@ -1922,13 +1958,13 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding, therefore, read the pixel values from the pads attribute.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>p</tt> : float</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
+<dt><tt>p</tt> : int</dt>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis.</dd>
+<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis.</dd>
 </dl>
@@ -2061,11 +2097,11 @@ expect(node, inputs=[a, b], outputs=[c],
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for lower and upper side along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the lower and upper part of the corresponding axis. So `pads` will have two values per axis, first value corresponding to the number of pixels added to the begining of the axis and the second value corresponding to the number of pixels add at the end of the axis. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis.</dd>
 </dl>
@@ -2374,17 +2410,17 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
-  Given `data` tensor, paddings, mode, and value.
+  Given `data` tensor, pads, mode, and value.
   
   Example:
-    Insert 0 paddings to the beginning of the second dimension.
+    Insert 0 pads to the beginning of the second dimension.
   
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-    paddings = [0, 0, 2, 0]
+    pads = [0, 0, 2, 0]
   
     output = [
         [
@@ -2399,8 +2435,8 @@ expect(node, inputs=[a, b], outputs=[c],
 <dl>
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
-<dt><tt>paddings</tt> : list of ints (required)</dt>
-<dd>List of integers indicate the padding sizes, paddings's length should be the double of input's dimension. The order should be axis_0_begin, axis_0_end, axis_1_begin, ..., axis_n_begin, axis_n_end, n is input's dimension.</dd>
+<dt><tt>pads</tt> : list of ints (required)</dt>
+<dd>List of integers indicate the padding element count at the begining and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>
@@ -2439,7 +2475,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     mode='constant',
     value=1.2,
-    paddings=[0, 0, 0, 0, 1, 2, 3, 4],
+    pads=[0, 0, 0, 0, 1, 2, 3, 4],
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
 y = np.pad(
@@ -2466,7 +2502,7 @@ for mode in ['edge', 'reflect']:
         inputs=['x'],
         outputs=['y'],
         mode=mode,
-        paddings=[0, 0, 0, 0, 1, 1, 1, 1]
+        pads=[0, 0, 0, 0, 1, 1, 1, 1]
     )
     x = np.random.randn(1, 3, 4, 5).astype(np.float32)
     y = np.pad(
@@ -2607,7 +2643,7 @@ for mode in ['edge', 'reflect']:
 <dd>The weight tensor for input gate. Concatenation of `Wi` and `WBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, input_size]`.</dd>
 <dt><tt>R</tt> : T</dt>
 <dd>The recurrence weight tensor. Concatenation of `Ri` and `RBi` (if bidirectional). The tensor has shape `[num_directions, hidden_size, hidden_size]`.</dd>
-<dt><tt>bias</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional) : T</dt>
 <dd>The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` and `[WBbi, RBbi]` (if bidirectional). The tensor has shape `[num_directions, 2*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
 <dt><tt>sequence_lens</tt> (optional) : T1</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
@@ -3688,19 +3724,17 @@ expect(node, inputs=[x], outputs=[y],
 <dd>length of each output</dd>
 </dl>
 
-#### Inputs (1 - 2)
+#### Inputs
 
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>The tensor to split</dd>
-<dt><tt>split</tt> : T</dt>
-<dd>Optional list of output lengths (see also arg 'split')</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs...</tt> : T</dt>
+<dt><tt>outputs</tt> : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 
@@ -4217,7 +4251,7 @@ expect(node, inputs=[x], outputs=[y],
 <dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
-<dt><tt>bias</tt> : T</dt>
+<dt><tt>B</tt> : T</dt>
 <dd>1D blob containing bias vector</dd>
 </dl>
 
@@ -4379,41 +4413,6 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
-### <a name="LpNormalization"></a><a name="lpnormalization">**<sub>experimental</sub> LpNormalization**</a>
-
-  Given a matrix, apply Lp-normalization along the provided axis.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
-<dt><tt>p</tt> : float</dt>
-<dd>(float, default 2.0) the order of the normalization, only 2.0 is supported.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input matrix</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Matrix after normalization</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**<sub>experimental</sub> MeanVarianceNormalization**</a>
 
   Perform mean variance normalization.
@@ -4483,6 +4482,48 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="ResizeNearest"></a><a name="resizenearest">**<sub>experimental</sub> ResizeNearest**</a>
+
+  Resize the width and height dimensions:
+  output_width = floor(input_width * width_scale),
+  output_height = floor(input_height * height_scale).
+  For example:
+  X = [[[[1, 2],[3, 4]]]],
+  width_scale = 2,
+  height_scale = 2,
+  Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
+
+#### Attributes
+
+<dl>
+<dt><tt>height_scale</tt> : float (required)</dt>
+<dd>The scale along height dimension</dd>
+<dt><tt>width_scale</tt> : float (required)</dt>
+<dd>The scale along width dimension</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>4-D tensor, [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>4-D tensor after resizing, [N,C,H,W]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
 
 

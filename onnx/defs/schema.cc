@@ -261,6 +261,11 @@ OpSchema& OpSchema::NumInputs(int min, int max) {
   return *this;
 }
 
+OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
+  since_version_ = v;
+  return *this;
+}
+
 OpSchema& OpSchema::NumInputs(int n) {
   return NumInputs(n, n);
 }
@@ -366,6 +371,11 @@ OpSchema& OpSchema::SetSupportLevel(SupportType support) {
 
 OpSchema& OpSchema::SetDoc(const std::string& doc) {
   doc_ = doc;
+  return *this;
+}
+
+OpSchema& OpSchema::SetDomain(const std::string& domain) {
+  domain_ = domain;
   return *this;
 }
 
@@ -559,8 +569,8 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   return out;
 }
 
-std::unordered_map<std::string, OpSchema>& OpSchemaRegistry::map() {
-  static std::unordered_map<std::string, OpSchema> map;
+OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
+  static OpName_Domain_Version_Schema_Map map;
   return map;
 }
 

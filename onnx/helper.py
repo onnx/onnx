@@ -9,7 +9,8 @@ import numpy as np
 
 from six import text_type, integer_types, binary_type
 
-from onnx.onnx_pb2 import TensorProto, AttributeProto, ValueInfoProto, \
+import google.protobuf.message
+from onnx import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
@@ -259,7 +260,7 @@ def printable_attribute(attr):
         return '[' + ', '.join(map(str_elem, xs)) + ']'
 
     # for now, this logic should continue to work as long as we are running on a proto3
-    # implementation. If/when we switch to proto3, we will need to use attr.type  
+    # implementation. If/when we switch to proto3, we will need to use attr.type
     if attr.HasField("f"):
         content.append(str_float(attr.f))
     elif attr.HasField("i"):
@@ -283,13 +284,35 @@ def printable_attribute(attr):
     return ' '.join(content)
 
 
+def printable_dim(dim):
+    return str(getattr(dim, dim.WhichOneof('value')))
+
+
+def printable_type(t):
+    if t.WhichOneof('value') == "tensor_type":
+        s = TensorProto.DataType.Name(t.tensor_type.elem_type)
+        if t.tensor_type.HasField('shape'):
+            s += ', ' + 'x'.join(map(printable_dim, t.tensor_type.shape.dim))
+        return s
+    if t.WhichOneof('value') is None:
+        return ""
+    return 'Unknown type {}'.format(t.WhichOneof('value'))
+
+
+def printable_value_info(v):
+    s = '%{}'.format(v.name)
+    if v.type:
+        s = '{}[{}]'.format(s, printable_type(v.type))
+    return s
+
+
 def printable_node(node, prefix=''):
     content = []
     if len(node.output):
         content.append(
             ', '.join(['%{}'.format(name) for name in node.output]))
         content.append('=')
-    printed_attributes = ', '.join(map(printable_attribute, node.attribute))
+    printed_attributes = ', '.join(sorted(map(printable_attribute, node.attribute)))
     printed_inputs = ', '.join(['%{}'.format(name) for name in node.input])
     if node.attribute:
         content.append("{}[{}]({})".format(node.op_type, printed_attributes, printed_inputs))
@@ -298,14 +321,37 @@ def printable_node(node, prefix=''):
     # TODO: subgr
     return prefix + ' '.join(content)
 
+
 def printable_graph(graph, prefix=''):
     content = []
     indent = prefix + '  '
     # header
     header = ['graph', graph.name]
+    initialized = {t.name for t in graph.initializer}
     if len(graph.input):
-        header.append(
-            "(" + ', '.join(['%{}'.format(name) for name in graph.input]) + ")")
+        header.append("(")
+        in_strs = []
+        init_strs = []
+        for inp in graph.input:
+            if inp.name not in initialized:
+                in_strs.append(printable_value_info(inp))
+            else:
+                init_strs.append(printable_value_info(inp))
+        if in_strs:
+            content.append(prefix + ' '.join(header))
+            header = []
+            for line in in_strs:
+                content.append(prefix + '  ' + line)
+        header.append(")")
+
+        if init_strs:
+            header.append("initializers (")
+            content.append(prefix + ' '.join(header))
+            header = []
+            for line in init_strs:
+                content.append(prefix + '  ' + line)
+            header.append(")")
+
     header.append('{')
     content.append(prefix + ' '.join(header))
     # body
@@ -315,8 +361,24 @@ def printable_graph(graph, prefix=''):
     tail = ['return']
     if len(graph.output):
         tail.append(
-            ', '.join(['%{}'.format(name) for name in graph.output]))
+            ', '.join(['%{}'.format(out.name) for out in graph.output]))
     content.append(indent + ' '.join(tail))
     # closing bracket
     content.append(prefix + '}')
     return '\n'.join(content)
+
+
+def strip_doc_string(proto):
+    """
+    Empties `doc_string` field on any nested protobuf messages
+    """
+    assert isinstance(proto, google.protobuf.message.Message)
+    for descriptor in proto.DESCRIPTOR.fields:
+        if descriptor.name == 'doc_string':
+            proto.ClearField(descriptor.name)
+        elif descriptor.type == descriptor.TYPE_MESSAGE:
+            if descriptor.label == descriptor.LABEL_REPEATED:
+                for x in getattr(proto, descriptor.name):
+                    strip_doc_string(x)
+            elif proto.HasField(descriptor.name):
+                strip_doc_string(getattr(proto, descriptor.name))
