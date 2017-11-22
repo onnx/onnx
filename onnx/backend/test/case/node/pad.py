@@ -19,7 +19,7 @@ class Pad(Base):
             outputs=['y'],
             mode='constant',
             value=1.2,
-            pads=[0, 0, 0, 0, 1, 2, 3, 4],
+            pads=[0, 1, 0, 2, 0, 3, 0, 4],
         )
         x = np.random.randn(1, 3, 4, 5).astype(np.float32)
         y = np.pad(
@@ -40,7 +40,7 @@ class Pad(Base):
                 inputs=['x'],
                 outputs=['y'],
                 mode=mode,
-                pads=[0, 0, 0, 0, 1, 1, 1, 1]
+                pads=[0, 1, 0, 1, 0, 1, 0, 1]
             )
             x = np.random.randn(1, 3, 4, 5).astype(np.float32)
             y = np.pad(
