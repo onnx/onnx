@@ -1207,11 +1207,11 @@ expect(node, inputs=[], outputs=[values],
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
-  entries of the axis dimension of `data` (usually outer-most one as axis=0) indexed by `indices`, and concatenates
+  entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
   
   Example 1:
-    data  =
+    data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
@@ -1232,7 +1232,7 @@ expect(node, inputs=[], outputs=[values],
     ]
   
   Example 2:
-    data  =
+    data = [
         [1.0, 1.2, 1.9],
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
@@ -1252,7 +1252,7 @@ expect(node, inputs=[], outputs=[values],
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Which axis to gather on, defaults to 0</dd>
+<dd>Which axis to gather on, defaults to 0. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
 </dl>
 
 #### Inputs
