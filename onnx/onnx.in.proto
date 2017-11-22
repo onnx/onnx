@@ -51,6 +51,8 @@ package onnx;
 // To be compatible with both proto2 and proto3, we will use a version number
 // that is not defined by the default value but an explicit enum number.
 enum Version {
+  option allow_alias = true;
+
   // proto3 requires the first enum value to be zero.
   // We add this just to appease the compiler.
   _START_VERSION = 0;
@@ -71,7 +73,12 @@ enum Version {
   //    - Added new message OperatorSetIdProto
   //    - Added opset_import in ModelProto
   // - For vendor extensions, added domain in NodeProto
-  IR_VERSION = 0x00000003;
+  IR_VERSION_2017_10_03 = 0x00000003;
+
+  // IR VERSION 1_0 published on Nov 22, 2017
+  IR_VERSION_1_0 = 0x00010000;
+
+  IR_VERSION = 0x00010000;
 }
 
 // A named attribute containing either singular float, integer, string
