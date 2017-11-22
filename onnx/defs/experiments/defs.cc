@@ -16,7 +16,7 @@ OPERATOR_SCHEMA(Identity)
     .Output(
         0,
         "output",
-        "Tensor to copy input into. Can be in-place",
+        "Tensor to copy input into.",
         "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -63,8 +63,7 @@ OPERATOR_SCHEMA(ScaledTanh)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-scale * tanh(x). This operation can be done in an in-place fashion too,
-by providing the same input and output blobs.
+scale * tanh(x).
     )DOC")
     .Attr("scale",
         "Scale for tanh",

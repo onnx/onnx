@@ -549,9 +549,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
   Clip operator limits the given input within an interval. The interval is
   specified with arguments 'min' and 'max'. They default to
-  numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
-  operation can be done in in-place fashion too, where the input and output blobs
-  are the same.
+  numeric_limits::lowest() and numeric_limits::max() respectively.
 
 #### Attributes
 
@@ -983,9 +981,7 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="Exp"></a><a name="exp">**Exp**</a>
 
-  Calculates the exponential of the given input tensor, element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the exponential of the given input tensor, element-wise.
 
 #### Inputs
 
@@ -1287,7 +1283,7 @@ expect(node, inputs=[], outputs=[values],
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
   Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
-  dimension (M X N). Input tensor C can be used inplace as the output tensor Y.
+  dimension (M X N). 
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
   the dimension requirement. If A can be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
@@ -1864,9 +1860,7 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="Log"></a><a name="log">**Log**</a>
 
-  Calculates the natural log of the given input tensor, element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the natural log of the given input tensor, element-wise.
 
 #### Inputs
 
@@ -2084,16 +2078,14 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Max"></a><a name="max">**Max**</a>
 
-  Element-wise max of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the max will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -2195,16 +2187,14 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
 
-  Element-wise mean of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the sum will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -2224,16 +2214,14 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Min"></a><a name="min">**Min**</a>
 
-  Element-wise min of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the max will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -3673,9 +3661,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Softsign"></a><a name="softsign">**Softsign**</a>
 
-  Calculates the softsign (x/1+|x|) of the given input tensor element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
 
 #### Inputs
 
@@ -3890,16 +3876,14 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Sum"></a><a name="sum">**Sum**</a>
 
-  Element-wise sum of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the sum will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -3919,9 +3903,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Tanh"></a><a name="tanh">**Tanh**</a>
 
-  Calculates the hyperbolic tangent of the given input tensor element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the hyperbolic tangent of the given input tensor element-wise.
 
 #### Inputs
 
@@ -4392,7 +4374,7 @@ expect(node, inputs=[x], outputs=[y],
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Tensor to copy input into. Can be in-place</dd>
+<dd>Tensor to copy input into.</dd>
 </dl>
 
 #### Type Constraints
@@ -4590,8 +4572,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="ScaledTanh"></a><a name="scaledtanh">**<sub>experimental</sub> ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  scale * tanh(x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
+  scale * tanh(x).
       
 
 #### Attributes
