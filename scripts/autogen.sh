@@ -2,11 +2,6 @@
 
 set -e
 
-if ! python -c 'import onnx' 2>/dev/null; then
-    echo "Error: You need to install onnx first"
-    exit 1
-fi
-
 echo "Auto generating docs"
 python onnx/defs/gen_doc.py
 

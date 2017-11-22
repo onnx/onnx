@@ -18,5 +18,4 @@ pytest
 
 # check auto-gen files up-to-date
 ./scripts/autogen.sh
-git status
 git diff --exit-code
