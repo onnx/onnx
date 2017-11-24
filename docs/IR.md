@@ -65,7 +65,10 @@ Each computation node consists of a name, the identifier of the operator to be i
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
+Names of tensor values flowing through the graph are unique - a particular name can reference either a graph input or an output of a single node. Reuse of names for several outputs is not allowed.
+
 The list of nodes defining the top-level computation graph MUST be ordered topologically \- that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K, and no control input of N may refer to K.
+
 
 
 Built-in Operators and Standard Data Types
