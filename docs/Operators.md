@@ -596,7 +596,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>inputs</tt> : T</dt>
+<dt><tt>inputs</tt> (variadic) : T</dt>
 <dd>List of tensors for concatenation</dd>
 </dl>
 
@@ -699,7 +699,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
@@ -749,7 +749,7 @@ expect(node, inputs=[], outputs=[values],
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>B</tt> : T</dt>
+<dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
 </dl>
 
@@ -2084,7 +2084,7 @@ expect(node, inputs=[a, b], outputs=[c],
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> : T</dt>
+<dt><tt>data_0</tt> (variadic) : T</dt>
 <dd>First of the input tensors.</dd>
 </dl>
 
@@ -2193,7 +2193,7 @@ expect(node, inputs=[a, b], outputs=[c],
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> : T</dt>
+<dt><tt>data_0</tt> (variadic) : T</dt>
 <dd>First of the input tensors.</dd>
 </dl>
 
@@ -2220,7 +2220,7 @@ expect(node, inputs=[a, b], outputs=[c],
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> : T</dt>
+<dt><tt>data_0</tt> (variadic) : T</dt>
 <dd>First of the input tensors.</dd>
 </dl>
 
@@ -3882,7 +3882,7 @@ expect(node, inputs=[x], outputs=[y],
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> : T</dt>
+<dt><tt>data_0</tt> (variadic) : T</dt>
 <dd>First of the input tensors.</dd>
 </dl>
 
@@ -4340,7 +4340,7 @@ expect(node, inputs=[x], outputs=[y],
 #### Inputs (0 - 1)
 
 <dl>
-<dt><tt>shape</tt> : T</dt>
+<dt><tt>shape</tt> (optional) : T</dt>
 <dd>The shape of filled tensor</dd>
 </dl>
 
