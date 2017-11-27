@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import os
 import unittest
 import onnx.backend.base
 import onnx.backend.test
@@ -33,6 +34,9 @@ class DummyBackend(onnx.backend.base.Backend):
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
+if os.getenv('APPVEYOR')
+    backend_test.exclude('(test_vgg19|test_vgg16)')
+
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test
                  .test_cases)
