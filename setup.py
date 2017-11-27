@@ -27,9 +27,9 @@ PROTOC = find_executable('protoc')
 
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 
-install_requires = {'six'}
-setup_requires = set()
-test_requires = set()
+install_requires = ['six']
+setup_requires = []
+tests_require = []
 
 ################################################################################
 # Version
@@ -402,16 +402,16 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.update(['protobuf', 'numpy'])
+install_requires.extend(['protobuf', 'numpy'])
 
 ################################################################################
 # Test
 ################################################################################
 
-setup_requires.add('pytest-runner')
-test_requires.add('pytest-cov')
-test_requires.add('nbval')
-test_requires.add('tabulate')
+setup_requires.append('pytest-runner')
+tests_require.append('pytest-cov')
+tests_require.append('nbval')
+tests_require.append('tabulate')
 
 ################################################################################
 # Final
@@ -426,7 +426,7 @@ setuptools.setup(
     packages=packages,
     install_requires=install_requires,
     setup_requires=setup_requires,
-    tests_require=test_requires,
+    tests_require=tests_require,
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
