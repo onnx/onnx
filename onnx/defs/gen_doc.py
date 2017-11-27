@@ -97,9 +97,9 @@ def main(args):
               s += '<dl>\n'
               for input in schema.inputs:
                   option_str = ""
-                  if 1 == input.option:
+                  if OpSchema.FormalParameterOption.Optional == input.option:
                       option_str = " (optional)"
-                  elif 2 == input.option:
+                  elif OpSchema.FormalParameterOption.Variadic == input.option:
                       option_str = " (variadic)"
                   s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
                   s += '<dd>{}</dd>\n'.format(input.description)
