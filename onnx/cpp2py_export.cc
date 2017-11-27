@@ -64,7 +64,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "description", &OpSchema::FormalParameter::GetDescription)
       .def_property_readonly(
-          "optional", &OpSchema::FormalParameter::IsOptional);
+          "option", &OpSchema::FormalParameter::GetOption);
 
   py::enum_<OpSchema::AttrType>(op_schema, "AttrType")
       .value("FLOAT", OpSchema::AttrType::FLOAT)
