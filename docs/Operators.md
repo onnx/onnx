@@ -770,9 +770,9 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
 
-  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
-  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
-  the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+  the input tensor where values from the depth dimension are moved in spatial blocks to the height
   and width dimensions.
 
 #### Attributes
@@ -2434,7 +2434,7 @@ expect(node, inputs=[a, b], outputs=[c],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-    pads = [0, 0, 2, 0]
+    pads = [0, 2, 0, 0]
   
     output = [
         [
@@ -3687,8 +3687,8 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
 
-  SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
-  this op outputs a copy of the input tensor where values from the height and width dimensions 
+  SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+  this op outputs a copy of the input tensor where values from the height and width dimensions
   are moved to the depth dimension.
 
 #### Attributes
