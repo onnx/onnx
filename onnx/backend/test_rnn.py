@@ -7,6 +7,9 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from itertools import chain
 
+# TODO(dzhulgakov): these tests are not picked up any more and need to be fixed.
+
+"""
 import numpy as np
 from six.moves import zip
 
@@ -322,3 +325,4 @@ node_tests = [
     _create_test(
     "test_rnn_gru_simple", cell_type='gru', hidden_size=32, dim_in=15),
 ]
+"""
