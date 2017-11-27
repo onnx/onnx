@@ -363,18 +363,22 @@ OPERATOR_SCHEMA(Embedding)
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to float tensors.");
 
-OPERATOR_SCHEMA(ResizeNearest)
+OPERATOR_SCHEMA(Upsample)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
     .NumOutputs(1)
     .Attr(
         "width_scale",
-        "The scale along width dimension",
+        "The scale along width dimension. It takes value greater than or equal to 1.",
         AttrType::FLOAT, true)
     .Attr(
         "height_scale",
-        "The scale along height dimension",
+        "The scale along height dimension. It takes value greater than or equal to 1.",
         AttrType::FLOAT, true)
+    .Attr(
+        "mode",
+        "Two interpolation modes: nearest(default), bilinear",
+        AttrType::STRING, false)
     .Input(
         0,
         "X",
@@ -389,12 +393,27 @@ OPERATOR_SCHEMA(ResizeNearest)
         "tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to bool, int32, int64, float16, float, double tensors.")
     .SetDoc(R"DOC(
-Resize the width and height dimensions:
-output_width = floor(input_width * width_scale),
-output_height = floor(input_height * height_scale).
-For example:
-X = [[[[1, 2],[3, 4]]]],
-width_scale = 2,
-height_scale = 2,
-Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
+Upsample the input tensor.
+The width and height of the output tensor are:
+  output_width = floor(input_width * width_scale),
+  output_height = floor(input_height * height_scale).
+
+Exmpale:
+  Given `data` tensor, width_scale, height_scale, mode,
+  Upsample the input 4-D tensor in nearest mode:
+
+  data = [[[
+      [1, 2],
+      [3, 4]
+  ]]]
+  width_scale = 2
+  height_scale = 2
+  mode = "nearest"
+
+  output = [[[
+      [1, 1, 2, 2],
+      [1, 1, 2, 2],
+      [3, 3, 4, 4],
+      [3, 3, 4, 4]
+  ]]]
 )DOC");
