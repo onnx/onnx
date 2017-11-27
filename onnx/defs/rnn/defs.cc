@@ -37,11 +37,11 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                      "Optional tensor specifying lengths of the sequences in a batch. "
                      "If not specified - assumed all sequences in the batch to have "
                      "length `seq_length`. It has shape `[batch_size]`.", "T1",
-                     true /*optional*/);
+                     OpSchema::Optional /*optional*/);
         schema.Input(5, "initial_h",
                      "Optional initial value of the hidden. If not specified - assumed "
                      "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-                     "T", true /*optional*/);
+                     "T", OpSchema::Optional /*optional*/);
         schema.Output(0, "Y",
                       "A tensor that concats all the intermediate output values of the hidden. "
                       "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
@@ -142,7 +142,7 @@ Equations (Default: f=tanh):
            "and `[WBbi, RBbi]` (if bidirectional). The tensor has shape "
            "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
            "to be 0.", "T",
-	   true /*optional*/)
+        OpSchema::Optional /*optional*/)
     .FillUsing(RNNDocGenerator("RNN"));
 
 
@@ -243,7 +243,7 @@ Equations (Default: f=sigmoid, g=tanh):
            "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
            "- assumed to be 0", "T",
-	   true /*optional*/)
+        OpSchema::Optional /*optional*/)
     .FillUsing(RNNDocGenerator("GRU"));
 
 
@@ -356,17 +356,17 @@ Equations (Default: f=sigmoid, g=tanh, h=tanh):
 	   "and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This "
            "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
 	   "specified - assumed to be 0.", "T",
-	   true /*optional*/)
+       OpSchema::Optional /*optional*/)
     .Input(6, "initial_c",
            "Optional initial value of the cell. If not specified - assumed "
 	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   "T", true /*optional*/)
+	   "T", OpSchema::Optional /*optional*/)
     .Input(7, "P",
 	   "The weight tensor for peepholes. Concatenation of `P[iof]` and "
 	   "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
 	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
 	   "assumed to be 0.", "T",
-	   true /*optional*/)
+       OpSchema::Optional /*optional*/)
     .FillUsing(RNNDocGenerator("LSTM"));
 
 }  // namespace onnx    

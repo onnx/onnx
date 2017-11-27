@@ -12,22 +12,22 @@ OpSchema::FormalParameter::FormalParameter(
     const DataTypeSet& allowed_type_set,
     const std::string& type_str,
     const std::string& description,
-    bool optional)
+    FormalParameterOption param_option)
     : name_(name),
       type_set_(allowed_type_set),
       type_str_(type_str),
       description_(description),
-      is_optional_(optional) {}
+      param_option_(param_option) {}
 
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
     const std::string& description,
     const std::string& type_str,
-    bool optional)
+    FormalParameterOption param_option)
     : name_(name),
       type_str_(type_str),
       description_(description),
-      is_optional_(optional) {}
+      param_option_(param_option) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -49,8 +49,8 @@ const std::string& OpSchema::FormalParameter::GetDescription() const {
   return description_;
 }
 
-bool OpSchema::FormalParameter::IsOptional() const {
-  return is_optional_;
+OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
+  return param_option_;
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
@@ -110,11 +110,11 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
-    if (node.input(in_idx).empty() && !(inputs_[in_idx].IsOptional())) {
+    if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
       fail_check(
           "Input ",
           in_idx,
-          " is not marked optional but has an empty string in the graph");
+          " is marked single but has an empty string in the graph");
     }
   }
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
@@ -403,11 +403,11 @@ OpSchema& OpSchema::Input(
     const std::string& name,
     const std::string& description,
     const std::string& type_str,
-    bool optional) {
+    OpSchema::FormalParameterOption param_option) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
-  inputs_[n] = FormalParameter(name, description, type_str, optional);
+  inputs_[n] = FormalParameter(name, description, type_str, param_option);
   return *this;
 }
 
@@ -419,7 +419,7 @@ OpSchema& OpSchema::Output(
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
-  outputs_[n] = FormalParameter(name, description, type_str, false);
+  outputs_[n] = FormalParameter(name, description, type_str, Single);
   return *this;
 }
 
@@ -499,13 +499,19 @@ void OpSchema::Finalize() {
   for (const auto& it : outputs_) {
     ENFORCE(!(it.GetName().empty()));
   }
+
+  // Only the last input could be variadic.
+  for (int i = 0; i < (int)(inputs_.size()) - 1; ++i) {
+    ENFORCE(Variadic != inputs_[i].GetOption());        
+  }
+
   // TODO: also cover checks for arbitrary number of inputs
   // allow extra tailing inputs not be present if all inputs at the end are
   // marked as optional
   if (max_input_ < std::numeric_limits<int>::max()) {
     int ind = max_input_;
     for (auto& input : inputs_) {
-      if (input.IsOptional() && ind > 0) {
+      if (Single != input.GetOption() && ind > 0) {
         --ind;
       }
     }

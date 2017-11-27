@@ -146,7 +146,7 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         "input",
         "Input tensor (optional) to provide shape information.",
         "T1",
-        true)
+        OpSchema::Optional)
     .Output(
         0,
         "output",
@@ -166,7 +166,7 @@ OPERATOR_SCHEMA(GivenTensorFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(0, 1)
     .NumOutputs(1)
-    .Input(0, "shape", "The shape of filled tensor", "T")
+    .Input(0, "shape", "The shape of filled tensor", "T", OpSchema::Optional)
     .Output(0, "X", "The filled tensor", "T")
     .TypeConstraint(
         "T",

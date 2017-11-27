@@ -199,7 +199,7 @@ computes the output.)DOC";
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
                          "B",
-                         "Optional 1D bias to be added to the convolution, has size of M.", "T");
+                         "Optional 1D bias to be added to the convolution, has size of M.", "T", OpSchema::Optional);
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the "
@@ -260,7 +260,7 @@ and computes the output.)DOC";
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
                          "B",
-                         "Optional 1D bias to be added to the convolution, has size of C.", "T");
+                         "Optional 1D bias to be added to the convolution, has size of C.", "T", OpSchema::Optional);
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the convolution. The "

@@ -622,7 +622,7 @@ OPERATOR_SCHEMA(FeatureVectorizer)
     All inputs are tensors of float.  Any feature that is not a tensor of float should
     be converted using either Cast or CastMap.
 )DOC")
-.Input(0, "X", "ordered input tensors", "T")
+.Input(0, "X", "ordered input tensors", "T", OpSchema::Variadic)
 .Output(0, "Y", "Full output array, in order assigned in the inputlist, as floats", "T")
 .TypeConstraint("T", { "tensor(float)" }, " allowed types.")
 .Attr("inputdimensions", "the size of each input in the input list", AttrType::INT);
