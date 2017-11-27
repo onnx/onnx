@@ -424,6 +424,7 @@ setuptools.setup(
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,
+    include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
