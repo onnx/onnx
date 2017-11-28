@@ -221,9 +221,9 @@ Equations (Default: f=sigmoid, g=tanh):
 
   - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
 
-  - ht = g(Xt*(Wh^T) + rt*(Ht-1*Rh + Rbh) + Wbh)
+  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
 
-  - Ht = (1 - zt) (.) ht + it (.) Ht-1
+  - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC")
     .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
           "for update, reset, and hidden gates. The activation functions must be one "
