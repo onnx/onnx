@@ -160,6 +160,7 @@ class Runner(object):
             except Exception as e:
                 print('Failed to prepare data for model {}: {}'.format(
                     model_test.model_name, e))
+                raise
             finally:
                 os.remove(download_file.name)
         return model_dir
