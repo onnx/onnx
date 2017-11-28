@@ -236,7 +236,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
             ext.pre_run()
         return setuptools.command.build_ext.build_ext.run(self)
 
-    def build_extensions(self):
+    def build_extension(self, ext):
         try:
             import ninja
         except ImportError:
@@ -246,17 +246,17 @@ class build_ext(setuptools.command.build_ext.build_ext):
             # that to sys.path, but as at this point ninja integration
             # is not well proven yet, let's just fall back to the
             # default build method.
-            return self._build_default()
+            return self._build_default(ext)
         else:
-            return self._build_with_ninja()
+            return self._build_with_ninja(ext)
 
-    def _build_default(self):
-        return setuptools.command.build_ext.build_ext.build_extensions(self)
+    def _build_default(self, ext):
+        return setuptools.command.build_ext.build_ext.build_extension(self, ext)
 
-    def _build_with_ninja(self):
+    def _build_with_ninja(self, ext):
         import ninja
 
-        build_file = os.path.join(TOP_DIR, 'build.ninja')
+        build_file = os.path.join(TOP_DIR, 'build.{}.ninja'.format(ext.name))
         log.debug('Ninja build file at {}'.format(build_file))
         w = ninja.Writer(open(build_file, 'w'))
 
@@ -306,7 +306,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
         with patch(distutils.unixccompiler.UnixCCompiler, '_compile', _compile):
             with patch(distutils.unixccompiler.UnixCCompiler, 'link', link):
                 with patch(self, 'force', True):
-                    self._build_default()
+                    self._build_default(ext)
 
 cmdclass = {
     'build_proto': build_proto,

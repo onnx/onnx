@@ -68,7 +68,7 @@ build_*
 .eggs
 dist
 onnx.egg-info
-build.ninja
+*.ninja
 .ninja_deps
 .ninja_log
 
