@@ -1141,9 +1141,9 @@ expect(node, inputs=[], outputs=[values],
   
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + rt*(Ht-1*Rh + Rbh) + Wbh)
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
   
-    - Ht = (1 - zt) (.) ht + it (.) Ht-1
+    - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
 #### Attributes
 
