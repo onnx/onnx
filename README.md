@@ -3,7 +3,7 @@
 
 | Linux | Windows |
 |-------|---------|
-| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
+| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
 
 [Open Neural Network Exchange (ONNX)](http://onnx.ai) is the first step toward an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
@@ -28,6 +28,10 @@ Check ONNX design choices and internals:
 * [ONNX intermediate representation spec](docs/IR.md)
 * [Versioning principles of the spec](docs/Versioning.md)
 * [Operators documentation](docs/Operators.md)
+
+# Tools
+* [Netron: a viewer for ONNX models](https://github.com/lutzroeder/Netron)
+* [Net Drawer ONNX vizualizer](https://github.com/onnx/tutorials/blob/master/tutorials/VisualizingAModel.md)
 
 # Contribute
 ONNX is a community project.  We encourage you to join the effort and contribute feedback, ideas, and code. Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.

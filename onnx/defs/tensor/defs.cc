@@ -35,7 +35,7 @@ NOTE: Casting to and from strings is not supported yet.
             "Constrain input types to float tensors.")
     .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain output types to float tensors.");
-            
+
 
 OPERATOR_SCHEMA(Reshape)
     .NumInputs(1)
@@ -170,11 +170,11 @@ OPERATOR_SCHEMA(Gather)
     .NumOutputs(1)
     .SetDoc(R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
-entries of the outer-most dimension of `data` indexed by `indices`, and concatenate
+entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
 
-Example:
-  data  = [
+Example 1:
+  data = [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
@@ -193,12 +193,44 @@ Example:
           [4.5, 5.7],
       ],
   ]
+
+Example 2:
+  data = [
+      [1.0, 1.2, 1.9],
+      [2.3, 3.4, 3.9],
+      [4.5, 5.7, 5.9],
+  ]
+  indices = [0, 2],
+  ]
+  axis = 1,
+  output = [
+      [
+          [1.0, 1.9],
+          [2.3, 3.9],
+          [4.5, 5.9],
+      ],
+  ]
 )DOC")
+    .Attr(
+        "axis",
+        "Which axis to gather on, defaults to 0. Negative value means "
+        "counting dimensions from the back. Accepted range in [-r, r-1]",
+        AttrType::INT)
     .Input(0, "data", "Tensor of rank r >= 1.", "T")
-    .Input(1, "indices", "Tensor of int32/int64 indices, of any rank q.", "T")
+    .Input(
+        1,
+        "indices",
+        "Tensor of int32/int64 indices, of any rank q.",
+        "Tind")
     .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-            "Constrain input and output types to float tensors.");
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .TypeConstraint(
+        "Tind",
+        {"tensor(int32)", "tensor(int64)"},
+        "Constrain indices to integer types");
 
 OPERATOR_SCHEMA(Squeeze)
     .NumInputs(1)
@@ -246,7 +278,7 @@ Example:
       [2.3, 3.4],
       [4.5, 5.7],
   ]
-  pads = [0, 0, 2, 0]
+  pads = [0, 2, 0, 0]
 
   output = [
       [
@@ -267,16 +299,16 @@ OPERATOR_SCHEMA(SpaceToDepth)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
-    .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
-this op outputs a copy of the input tensor where values from the height and width dimensions 
+    .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
 )DOC")
     .Input(0,
-           "input", 
+           "input",
            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
            ", H is the height and W is the width.", "T")
     .Output(0,
-            "output", 
+            "output",
             "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
@@ -287,17 +319,17 @@ OPERATOR_SCHEMA(DepthToSpace)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
-    .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
-This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
-the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+    .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+the input tensor where values from the depth dimension are moved in spatial blocks to the height
 and width dimensions.
 )DOC")
     .Input(0,
-           "input", 
+           "input",
            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
            ", H is the height and W is the width.", "T")
     .Output(0,
-            "output", 
+            "output",
             "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
@@ -311,7 +343,7 @@ OPERATOR_SCHEMA(Tile)
            "Input tensor of any shape.", "T")
     .Input(1,
            "tiles",
-           "Number of repeated copies to make of the input tensor.", "T") 
+           "Number of repeated copies to make of the input tensor.", "T")
     .Input(2,
            "axis",
            "Axis along which to repeat.", "T")
@@ -320,4 +352,3 @@ OPERATOR_SCHEMA(Tile)
             "Output tensor of same shape and type as input.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
-

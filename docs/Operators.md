@@ -102,10 +102,10 @@
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
 * <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
-* <a href="#ResizeNearest"><sub>experimental</sub> ResizeNearest</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 * <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
 * <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
+* <a href="#Upsample"><sub>experimental</sub> Upsample</a>
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -549,9 +549,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
   Clip operator limits the given input within an interval. The interval is
   specified with arguments 'min' and 'max'. They default to
-  numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
-  operation can be done in in-place fashion too, where the input and output blobs
-  are the same.
+  numeric_limits::lowest() and numeric_limits::max() respectively.
 
 #### Attributes
 
@@ -772,9 +770,9 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
 
-  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
-  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
-  the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+  the input tensor where values from the depth dimension are moved in spatial blocks to the height
   and width dimensions.
 
 #### Attributes
@@ -983,9 +981,7 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="Exp"></a><a name="exp">**Exp**</a>
 
-  Calculates the exponential of the given input tensor, element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the exponential of the given input tensor, element-wise.
 
 #### Inputs
 
@@ -1145,9 +1141,9 @@ expect(node, inputs=[], outputs=[values],
   
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + rt*(Ht-1*Rh + Rbh) + Wbh)
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
   
-    - Ht = (1 - zt) (.) ht + it (.) Ht-1
+    - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
 #### Attributes
 
@@ -1207,11 +1203,11 @@ expect(node, inputs=[], outputs=[values],
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
-  entries of the outer-most dimension of `data` indexed by `indices`, and concatenate
+  entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
   
-  Example:
-    data  = [
+  Example 1:
+    data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
@@ -1230,13 +1226,37 @@ expect(node, inputs=[], outputs=[values],
             [4.5, 5.7],
         ],
     ]
+  
+  Example 2:
+    data = [
+        [1.0, 1.2, 1.9],
+        [2.3, 3.4, 3.9],
+        [4.5, 5.7, 5.9],
+    ]
+    indices = [0, 2],
+    ]
+    axis = 1,
+    output = [
+        [
+            [1.0, 1.9],
+            [2.3, 3.9],
+            [4.5, 5.9],
+        ],
+    ]
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Which axis to gather on, defaults to 0. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+</dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
-<dt><tt>indices</tt> : T</dt>
+<dt><tt>indices</tt> : Tind</dt>
 <dd>Tensor of int32/int64 indices, of any rank q.</dd>
 </dl>
 
@@ -1252,6 +1272,8 @@ expect(node, inputs=[], outputs=[values],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
 </dl>
 
 
@@ -1261,7 +1283,7 @@ expect(node, inputs=[], outputs=[values],
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
   Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
-  dimension (M X N). Input tensor C can be used inplace as the output tensor Y.
+  dimension (M X N). 
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
   the dimension requirement. If A can be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
@@ -1838,9 +1860,7 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="Log"></a><a name="log">**Log**</a>
 
-  Calculates the natural log of the given input tensor, element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the natural log of the given input tensor, element-wise.
 
 #### Inputs
 
@@ -2058,16 +2078,14 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Max"></a><a name="max">**Max**</a>
 
-  Element-wise max of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the max will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -2169,16 +2187,14 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
 
-  Element-wise mean of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the sum will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -2198,16 +2214,14 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Min"></a><a name="min">**Min**</a>
 
-  Element-wise min of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the max will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -2420,7 +2434,7 @@ expect(node, inputs=[a, b], outputs=[c],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-    pads = [0, 0, 2, 0]
+    pads = [0, 2, 0, 0]
   
     output = [
         [
@@ -2475,7 +2489,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
     mode='constant',
     value=1.2,
-    pads=[0, 0, 0, 0, 1, 2, 3, 4],
+    pads=[0, 0, 1, 3, 0, 0, 2, 4],
 )
 x = np.random.randn(1, 3, 4, 5).astype(np.float32)
 y = np.pad(
@@ -2502,7 +2516,7 @@ for mode in ['edge', 'reflect']:
         inputs=['x'],
         outputs=['y'],
         mode=mode,
-        pads=[0, 0, 0, 0, 1, 1, 1, 1]
+        pads=[0, 0, 1, 1, 0, 0, 1, 1]
     )
     x = np.random.randn(1, 3, 4, 5).astype(np.float32)
     y = np.pad(
@@ -3647,9 +3661,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Softsign"></a><a name="softsign">**Softsign**</a>
 
-  Calculates the softsign (x/1+|x|) of the given input tensor element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
 
 #### Inputs
 
@@ -3675,8 +3687,8 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
 
-  SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
-  this op outputs a copy of the input tensor where values from the height and width dimensions 
+  SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+  this op outputs a copy of the input tensor where values from the height and width dimensions
   are moved to the depth dimension.
 
 #### Attributes
@@ -3864,16 +3876,14 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Sum"></a><a name="sum">**Sum**</a>
 
-  Element-wise sum of each of the input tensors. The first input tensor can be
-  used in-place as the output tensor, in which case the sum will be done in
-  place and results will be accumulated in input0. All inputs and outputs must
+  Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> : T</dt>
-<dd>First of the input tensors. Can be inplace.</dd>
+<dd>First of the input tensors.</dd>
 </dl>
 
 #### Outputs
@@ -3893,9 +3903,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Tanh"></a><a name="tanh">**Tanh**</a>
 
-  Calculates the hyperbolic tangent of the given input tensor element-wise. This
-  operation can be done in an in-place fashion too, by providing the same input
-  and output blobs.
+  Calculates the hyperbolic tangent of the given input tensor element-wise.
 
 #### Inputs
 
@@ -4366,7 +4374,7 @@ expect(node, inputs=[x], outputs=[y],
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Tensor to copy input into. Can be in-place</dd>
+<dd>Tensor to copy input into.</dd>
 </dl>
 
 #### Type Constraints
@@ -4485,48 +4493,6 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
-### <a name="ResizeNearest"></a><a name="resizenearest">**<sub>experimental</sub> ResizeNearest**</a>
-
-  Resize the width and height dimensions:
-  output_width = floor(input_width * width_scale),
-  output_height = floor(input_height * height_scale).
-  For example:
-  X = [[[[1, 2],[3, 4]]]],
-  width_scale = 2,
-  height_scale = 2,
-  Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
-
-#### Attributes
-
-<dl>
-<dt><tt>height_scale</tt> : float (required)</dt>
-<dd>The scale along height dimension</dd>
-<dt><tt>width_scale</tt> : float (required)</dt>
-<dd>The scale along width dimension</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>4-D tensor, [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>4-D tensor after resizing, [N,C,H,W]</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
-</dl>
-
-
 ### <a name="Scale"></a><a name="scale">**<sub>experimental</sub> Scale**</a>
 
   Scale takes one input data (Tensor<float>) and produces one output data
@@ -4631,6 +4597,65 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Upsample"></a><a name="upsample">**<sub>experimental</sub> Upsample**</a>
+
+  Upsample the input tensor.
+  The width and height of the output tensor are:
+    output_width = floor(input_width * width_scale),
+    output_height = floor(input_height * height_scale).
+  
+  Exmpale:
+    Given `data` tensor, width_scale, height_scale, mode,
+    Upsample the input 4-D tensor in nearest mode:
+  
+    data = [[[
+        [1, 2],
+        [3, 4]
+    ]]]
+    width_scale = 2
+    height_scale = 2
+    mode = "nearest"
+  
+    output = [[[
+        [1, 1, 2, 2],
+        [1, 1, 2, 2],
+        [3, 3, 4, 4],
+        [3, 3, 4, 4]
+    ]]]
+
+#### Attributes
+
+<dl>
+<dt><tt>height_scale</tt> : float (required)</dt>
+<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
+<dt><tt>mode</tt> : string</dt>
+<dd>Two interpolation modes: nearest(default), bilinear</dd>
+<dt><tt>width_scale</tt> : float (required)</dt>
+<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>4-D tensor, [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>4-D tensor after resizing, [N,C,H,W]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
 
 
