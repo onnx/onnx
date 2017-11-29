@@ -35,10 +35,10 @@
 * <a href="#HardSigmoid">HardSigmoid</a>
 * <a href="#Hardmax">Hardmax</a>
 * <a href="#InstanceNormalization">InstanceNormalization</a>
-* <a href="#LRN">LRN</a>
 * <a href="#LSTM">LSTM</a>
 * <a href="#LeakyRelu">LeakyRelu</a>
 * <a href="#Less">Less</a>
+* <a href="#LocalResponseNormalization">LocalResponseNormalization</a>
 * <a href="#Log">Log</a>
 * <a href="#LogSoftmax">LogSoftmax</a>
 * <a href="#LpNormalization">LpNormalization</a>
@@ -375,7 +375,7 @@ expect(node, inputs=[x, y], outputs=[x + y],
 
   AveragePool consumes an input tensor X and applies average pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a 
+   average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -1551,10 +1551,10 @@ expect(node, inputs=[], outputs=[values],
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
 
   Carries out instance normalization as described in the paper
-  https://arxiv.org/abs/1607.08022. 
+  https://arxiv.org/abs/1607.08022.
   
-  y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
-  where mean and B are computed per instance per channel. 
+  y = scale * (x - mean) / sqrt(variance + epsilon) + B,
+  where mean and B are computed per instance per channel.
   
 
 #### Attributes
@@ -1587,47 +1587,6 @@ expect(node, inputs=[], outputs=[values],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <a name="LRN"></a><a name="lrn">**LRN**</a>
-
-  Local Response Normalization. It normalizes over local input regions.
-  Each input value is divided by
-  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
-
-#### Attributes
-
-<dl>
-<dt><tt>alpha</tt> : float (required)</dt>
-<dd>Scaling parameter</dd>
-<dt><tt>beta</tt> : float (required)</dt>
-<dd>The exponent</dd>
-<dt><tt>bias</tt> : float</dt>
-<dd>Default to 1</dd>
-<dt><tt>size</tt> : int (required)</dt>
-<dd>The number of channels to sum over</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output  types to float tensors.</dd>
 </dl>
 
 
@@ -1858,6 +1817,47 @@ expect(node, inputs=[], outputs=[values],
 </dl>
 
 
+### <a name="LocalResponseNormalization"></a><a name="localresponsenormalization">**LocalResponseNormalization**</a>
+
+  Local Response Normalization. It normalizes over local input regions.
+  Each input value is divided by
+  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (required)</dt>
+<dd>Scaling parameter</dd>
+<dt><tt>beta</tt> : float (required)</dt>
+<dd>The exponent</dd>
+<dt><tt>bias</tt> : float</dt>
+<dd>Default to 1</dd>
+<dt><tt>size</tt> : int (required)</dt>
+<dd>The number of channels to sum over</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output  types to float tensors.</dd>
+</dl>
+
+
 ### <a name="Log"></a><a name="log">**Log**</a>
 
   Calculates the natural log of the given input tensor, element-wise.
@@ -1970,7 +1970,7 @@ expect(node, inputs=[], outputs=[values],
 
   LpPool consumes an input tensor X and applies Lp pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset 
+   Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2107,7 +2107,7 @@ expect(node, inputs=[a, b], outputs=[c],
 
   MaxPool consumes an input tensor X and applies max pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a 
+   max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2148,8 +2148,8 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
 
-  ROI max pool consumes an input tensor X and region of interests (RoIs) to 
-   apply max pooling across each RoI, to produce output 4-D tensor of shape 
+  ROI max pool consumes an input tensor X and region of interests (RoIs) to
+   apply max pooling across each RoI, to produce output 4-D tensor of shape
    (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
 #### Attributes
