@@ -2085,7 +2085,7 @@ expect(node, inputs=[a, b], outputs=[c],
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>First of the input tensors.</dd>
+<dd>List of tensors for Max.</dd>
 </dl>
 
 #### Outputs
@@ -2194,7 +2194,7 @@ expect(node, inputs=[a, b], outputs=[c],
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>First of the input tensors.</dd>
+<dd>List of tensors for Mean.</dd>
 </dl>
 
 #### Outputs
@@ -2221,7 +2221,7 @@ expect(node, inputs=[a, b], outputs=[c],
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>First of the input tensors.</dd>
+<dd>List of tensors for Min</dd>
 </dl>
 
 #### Outputs
@@ -3883,7 +3883,7 @@ expect(node, inputs=[x], outputs=[y],
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>First of the input tensors.</dd>
+<dd>List of tensors for Sum.</dd>
 </dl>
 
 #### Outputs
