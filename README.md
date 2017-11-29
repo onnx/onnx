@@ -48,10 +48,10 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 ## Binaries
 
-A binary build of ONNX is available from [Conda](https://conda.io):
+A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
 
 ```
-conda install -c ezyang onnx
+conda install -c conda-forge onnx
 ```
 
 ## Docker
