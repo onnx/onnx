@@ -110,6 +110,22 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
+    if (in_idx >= inputs_.size()) {
+      if (Variadic == inputs_.back().GetOption()) {
+        // The last input formal parameter should be variadic.
+        break;
+      }
+      else {
+        fail_check(
+            "Node (",
+            node.name(),
+            ") has more inputs (",
+            node.input_size(),
+            ") than declared (",
+            inputs_.size(),
+            ") in op definition.");
+      }
+    }
     if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
       fail_check(
           "Input ",
