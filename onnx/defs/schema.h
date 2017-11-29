@@ -582,20 +582,27 @@ class OpSchemaRegistry {
   static OpName_Domain_Version_Schema_Map& map();
 
  public:
-  static const OpName_Domain_Version_Schema_Map& registered_schemas() {
-    return map();
-  }
-
-  static const std::unordered_map<std::string, OpSchema>
-  latest_registered_schemas() {
-    // TODO: Do this better with C++11
-    std::unordered_map<std::string, OpSchema> latest_map;
-    for (auto kv : map()) {
-      for (auto domain_ops : kv.second) {
-        latest_map.emplace(kv.first, domain_ops.second.rbegin()->second);
+  static const std::vector<OpSchema> get_all_schemas_with_history() {
+    std::vector<OpSchema> r;
+    for (auto x : map()) {
+      for (auto y : x.second) {
+        for (auto z : y.second) {
+          r.emplace_back(z.second);
+        }
       }
     }
-    return latest_map;
+    return r;
+  }
+
+  static const std::vector<OpSchema> get_all_schemas() {
+    std::vector<OpSchema> r;
+    for (auto x : map()) {
+      for (auto y : x.second) {
+        auto& version2schema = y.second;
+        r.emplace_back(version2schema.rbegin()->second);
+      }
+    }
+    return r;
   }
 };
 

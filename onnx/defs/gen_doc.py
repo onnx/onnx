@@ -46,8 +46,8 @@ def main(args):
           "            Do not modify directly and instead edit operator definitions.*\n")
 
       sorted_ops = sorted(
-          (schema.domain, int(schema.support_level), op_type, schema)
-          for (op_type, schema) in defs.get_all_schemas().items())
+          (schema.domain, int(schema.support_level), schema.name, schema)
+          for schema in defs.get_all_schemas())
 
       fout.write('\n')
 
