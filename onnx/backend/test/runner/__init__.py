@@ -157,9 +157,11 @@ class Runner(object):
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)
+            except Exception as e:
+                print('Failed to prepare data for model {}: {}'.format(
+                    model_test.model_name, e))
+                raise
             finally:
-                print('Failed to prepare data for model {}'.format(
-                    model_test.model_name))
                 os.remove(download_file.name)
         return model_dir
 
