@@ -3,7 +3,7 @@
 
 | Linux | Windows |
 |-------|---------|
-| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
+| [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
 
 [Open Neural Network Exchange (ONNX)](http://onnx.ai) is the first step toward an open ecosystem that empowers AI developers
 to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
@@ -48,10 +48,10 @@ Stay up to date with the latest ONNX news. [[Facebook](https://www.facebook.com/
 
 ## Binaries
 
-A binary build of ONNX is available from [Conda](https://conda.io):
+A binary build of ONNX is available from [Conda](https://conda.io), in [conda-forge](https://conda-forge.org/):
 
 ```
-conda install -c ezyang onnx
+conda install -c conda-forge onnx
 ```
 
 ## Docker

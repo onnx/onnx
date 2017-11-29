@@ -145,13 +145,24 @@ class Runner(object):
             os.makedirs(model_dir)
             url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
                 model_test.model_name)
-            with tempfile.NamedTemporaryFile(delete=True) as download_file:
+
+            # On Windows, NamedTemporaryFile can not be opened for a
+            # second time
+            download_file = tempfile.NamedTemporaryFile(delete=False)
+            try:
+                download_file.close()
                 print('Start downloading model {} from {}'.format(
                     model_test.model_name, url))
                 urlretrieve(url, download_file.name)
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)
+            except Exception as e:
+                print('Failed to prepare data for model {}: {}'.format(
+                    model_test.model_name, e))
+                raise
+            finally:
+                os.remove(download_file.name)
         return model_dir
 
     def _add_test(self, category, test_name, test_func, report_item, devices=('CPU', 'CUDA')):

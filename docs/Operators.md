@@ -102,10 +102,10 @@
 * <a href="#ImageScaler"><sub>experimental</sub> ImageScaler</a>
 * <a href="#MeanVarianceNormalization"><sub>experimental</sub> MeanVarianceNormalization</a>
 * <a href="#ParametricSoftplus"><sub>experimental</sub> ParametricSoftplus</a>
-* <a href="#ResizeNearest"><sub>experimental</sub> ResizeNearest</a>
 * <a href="#Scale"><sub>experimental</sub> Scale</a>
 * <a href="#ScaledTanh"><sub>experimental</sub> ScaledTanh</a>
 * <a href="#ThresholdedRelu"><sub>experimental</sub> ThresholdedRelu</a>
+* <a href="#Upsample"><sub>experimental</sub> Upsample</a>
 
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -770,9 +770,9 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
 
-  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
-  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
-  the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+  DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+  This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+  the input tensor where values from the depth dimension are moved in spatial blocks to the height
   and width dimensions.
 
 #### Attributes
@@ -1141,9 +1141,9 @@ expect(node, inputs=[], outputs=[values],
   
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + rt*(Ht-1*Rh + Rbh) + Wbh)
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
   
-    - Ht = (1 - zt) (.) ht + it (.) Ht-1
+    - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
 #### Attributes
 
@@ -2434,7 +2434,7 @@ expect(node, inputs=[a, b], outputs=[c],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
-    pads = [0, 0, 2, 0]
+    pads = [0, 2, 0, 0]
   
     output = [
         [
@@ -3687,8 +3687,8 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
 
-  SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
-  this op outputs a copy of the input tensor where values from the height and width dimensions 
+  SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+  this op outputs a copy of the input tensor where values from the height and width dimensions
   are moved to the depth dimension.
 
 #### Attributes
@@ -4151,8 +4151,8 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Crop"></a><a name="crop">**<sub>experimental</sub> Crop**</a>
 
-  Crop and image to the specified spatial dimensions. If scale is given, 
-  then optionally start the crop offset by the left/top border amounts. 
+  Crop and image to the specified spatial dimensions. If scale is given,
+  then optionally start the crop offset by the left/top border amounts.
   If scale is not provided, crop the borders as provided.
 
 #### Attributes
@@ -4387,7 +4387,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="ImageScaler"></a><a name="imagescaler">**<sub>experimental</sub> ImageScaler**</a>
 
-  Scale and bias the input image. Bias values are stored in 
+  Scale and bias the input image. Bias values are stored in
   the same ordering as the image pixel format.
 
 #### Attributes
@@ -4493,48 +4493,6 @@ expect(node, inputs=[x], outputs=[y],
 </dl>
 
 
-### <a name="ResizeNearest"></a><a name="resizenearest">**<sub>experimental</sub> ResizeNearest**</a>
-
-  Resize the width and height dimensions:
-  output_width = floor(input_width * width_scale),
-  output_height = floor(input_height * height_scale).
-  For example:
-  X = [[[[1, 2],[3, 4]]]],
-  width_scale = 2,
-  height_scale = 2,
-  Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
-
-#### Attributes
-
-<dl>
-<dt><tt>height_scale</tt> : float (required)</dt>
-<dd>The scale along height dimension</dd>
-<dt><tt>width_scale</tt> : float (required)</dt>
-<dd>The scale along width dimension</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>4-D tensor, [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>4-D tensor after resizing, [N,C,H,W]</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
-</dl>
-
-
 ### <a name="Scale"></a><a name="scale">**<sub>experimental</sub> Scale**</a>
 
   Scale takes one input data (Tensor<float>) and produces one output data
@@ -4572,14 +4530,17 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="ScaledTanh"></a><a name="scaledtanh">**<sub>experimental</sub> ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  scale * tanh(x).
+  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
+  by providing the same input and output blobs.
       
 
 #### Attributes
 
 <dl>
-<dt><tt>scale</tt> : float</dt>
-<dd>Scale for tanh</dd>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Scaling value</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Scaling value</dd>
 </dl>
 
 #### Inputs
@@ -4607,13 +4568,13 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="ThresholdedRelu"></a><a name="thresholdedrelu">**<sub>experimental</sub> ThresholdedRelu**</a>
 
   ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+  (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
   is applied to the tensor elementwise.
 
 #### Attributes
 
 <dl>
-<dt><tt>theta</tt> : float</dt>
+<dt><tt>alpha</tt> : float</dt>
 <dd>Threshold value</dd>
 </dl>
 
@@ -4636,6 +4597,65 @@ expect(node, inputs=[x], outputs=[y],
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="Upsample"></a><a name="upsample">**<sub>experimental</sub> Upsample**</a>
+
+  Upsample the input tensor.
+  The width and height of the output tensor are:
+    output_width = floor(input_width * width_scale),
+    output_height = floor(input_height * height_scale).
+  
+  Exmpale:
+    Given `data` tensor, width_scale, height_scale, mode,
+    Upsample the input 4-D tensor in nearest mode:
+  
+    data = [[[
+        [1, 2],
+        [3, 4]
+    ]]]
+    width_scale = 2
+    height_scale = 2
+    mode = "nearest"
+  
+    output = [[[
+        [1, 1, 2, 2],
+        [1, 1, 2, 2],
+        [3, 3, 4, 4],
+        [3, 3, 4, 4]
+    ]]]
+
+#### Attributes
+
+<dl>
+<dt><tt>height_scale</tt> : float (required)</dt>
+<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
+<dt><tt>mode</tt> : string</dt>
+<dd>Two interpolation modes: nearest(default), bilinear</dd>
+<dt><tt>width_scale</tt> : float (required)</dt>
+<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>4-D tensor, [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>4-D tensor after resizing, [N,C,H,W]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
 
 

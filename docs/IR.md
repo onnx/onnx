@@ -33,6 +33,7 @@ The top-level container object in an ONNX model file is a ModelProto object that
 |producer_name|string||Name of framework/tool that generated this model|
 |producer_version|string||Version of the framework/tool that generated this model|
 
+See [versioning documentation](Versioning.md) for more information about the versioning policies.
 Further metadata may be added to a model via its `metadata_props` field (as described further in the Extensibility section below).
 
 ### Graphs
@@ -67,7 +68,7 @@ Edges in the computation graph are established by outputs of one node being refe
 
 Names of tensor values flowing through the graph are unique - a particular name can reference either a graph input or an output of a single node. Reuse of names for several outputs is not allowed.
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically \- that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K, and no control input of N may refer to K.
+The list of nodes defining the top-level computation graph MUST be ordered topologically \- that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
 
 
 
@@ -85,7 +86,7 @@ The following data types are supported by ONNX. Additional data types can be sup
 
 |Group|Name|Description|
 |-----|----|-----------|
-|Floating Point Types|__float16, float32, float64__|Values adhering to the IEEE 754-2008 standard representation of floating-point data.|
+|Floating Point Types|__float16, float (32 bit), double (64 bit)__|Values adhering to the IEEE 754-2008 standard representation of floating-point data.|
 |Signed Integer Types|__int8, int16,int32,int64__|Signed integers are supported for 8-64 bit widths.|
 |Unsigned Integer Types|__uint8,uint16__| Unsigned integers of 8 or 16 bits are supported.|
 |Complex Types|__complex64,complex128__|A complex number with either 32- or 64-bit real and imaginary parts.|

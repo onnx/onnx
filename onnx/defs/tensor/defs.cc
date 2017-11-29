@@ -35,7 +35,7 @@ NOTE: Casting to and from strings is not supported yet.
             "Constrain input types to float tensors.")
     .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain output types to float tensors.");
-            
+
 
 OPERATOR_SCHEMA(Reshape)
     .NumInputs(1)
@@ -278,7 +278,7 @@ Example:
       [2.3, 3.4],
       [4.5, 5.7],
   ]
-  pads = [0, 0, 2, 0]
+  pads = [0, 2, 0, 0]
 
   output = [
       [
@@ -299,16 +299,16 @@ OPERATOR_SCHEMA(SpaceToDepth)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
-    .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically, 
-this op outputs a copy of the input tensor where values from the height and width dimensions 
+    .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
 )DOC")
     .Input(0,
-           "input", 
+           "input",
            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
            ", H is the height and W is the width.", "T")
     .Output(0,
-            "output", 
+            "output",
             "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
@@ -319,17 +319,17 @@ OPERATOR_SCHEMA(DepthToSpace)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
-    .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data. 
-This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of 
-the input tensor where values from the depth dimension are moved in spatial blocks to the height 
+    .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
+the input tensor where values from the depth dimension are moved in spatial blocks to the height
 and width dimensions.
 )DOC")
     .Input(0,
-           "input", 
+           "input",
            "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
            ", H is the height and W is the width.", "T")
     .Output(0,
-            "output", 
+            "output",
             "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
@@ -343,7 +343,7 @@ OPERATOR_SCHEMA(Tile)
            "Input tensor of any shape.", "T")
     .Input(1,
            "tiles",
-           "Number of repeated copies to make of the input tensor.", "T") 
+           "Number of repeated copies to make of the input tensor.", "T")
     .Input(2,
            "axis",
            "Axis along which to repeat.", "T")

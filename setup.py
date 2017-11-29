@@ -27,9 +27,9 @@ PROTOC = find_executable('protoc')
 
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 
-install_requires = {'six'}
-setup_requires = set()
-test_requires = set()
+install_requires = ['six']
+setup_requires = []
+tests_require = []
 
 ################################################################################
 # Version
@@ -236,7 +236,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
             ext.pre_run()
         return setuptools.command.build_ext.build_ext.run(self)
 
-    def build_extensions(self):
+    def build_extension(self, ext):
         try:
             import ninja
         except ImportError:
@@ -246,17 +246,17 @@ class build_ext(setuptools.command.build_ext.build_ext):
             # that to sys.path, but as at this point ninja integration
             # is not well proven yet, let's just fall back to the
             # default build method.
-            return self._build_default()
+            return self._build_default(ext)
         else:
-            return self._build_with_ninja()
+            return self._build_with_ninja(ext)
 
-    def _build_default(self):
-        return setuptools.command.build_ext.build_ext.build_extensions(self)
+    def _build_default(self, ext):
+        return setuptools.command.build_ext.build_ext.build_extension(self, ext)
 
-    def _build_with_ninja(self):
+    def _build_with_ninja(self, ext):
         import ninja
 
-        build_file = os.path.join(TOP_DIR, 'build.ninja')
+        build_file = os.path.join(TOP_DIR, 'build.{}.ninja'.format(ext.name))
         log.debug('Ninja build file at {}'.format(build_file))
         w = ninja.Writer(open(build_file, 'w'))
 
@@ -306,7 +306,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
         with patch(distutils.unixccompiler.UnixCCompiler, '_compile', _compile):
             with patch(distutils.unixccompiler.UnixCCompiler, 'link', link):
                 with patch(self, 'force', True):
-                    self._build_default()
+                    self._build_default(ext)
 
 cmdclass = {
     'build_proto': build_proto,
@@ -402,16 +402,16 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.update(['protobuf', 'numpy'])
+install_requires.extend(['protobuf', 'numpy'])
 
 ################################################################################
 # Test
 ################################################################################
 
-setup_requires.add('pytest-runner')
-test_requires.add('pytest-cov')
-test_requires.add('nbval')
-test_requires.add('tabulate')
+setup_requires.append('pytest-runner')
+tests_require.append('pytest-cov')
+tests_require.append('nbval')
+tests_require.append('tabulate')
 
 ################################################################################
 # Final
@@ -424,9 +424,10 @@ setuptools.setup(
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     packages=packages,
+    include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,
-    tests_require=test_requires,
+    tests_require=tests_require,
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
