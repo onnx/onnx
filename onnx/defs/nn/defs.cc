@@ -407,20 +407,20 @@ Output case #2: Y (test mode)
     .Output(1,
         "mean",
         "The running mean after the BatchNormalization operator. Must be in-place "
-        "with the input mean. Should not be used for testing.", "T")
+        "with the input mean. Should not be used for testing.", "T", OpSchema::Optional)
     .Output(2,
         "var",
         "The running variance after the BatchNormalization operator. Must be "
-        "in-place with the input var. Should not be used for testing.", "T")
+        "in-place with the input var. Should not be used for testing.", "T", OpSchema::Optional)
     .Output(3,
         "saved_mean",
         "Saved mean used during training to speed up gradient "
-        "computation. Should not be used for testing.", "T")
+        "computation. Should not be used for testing.", "T", OpSchema::Optional)
     .Output(4,
         "saved_var",
         "Saved variance used during training to speed up "
-        "gradient computation. Should not be used for testing.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "gradient computation. Should not be used for testing.", "T", OpSchema::Optional)
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(InstanceNormalization)
