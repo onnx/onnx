@@ -414,9 +414,9 @@ class OpSchema {
   int line_ = 0;
   SupportType support_;
   int min_input_ = 0;
-  int max_input_ = std::numeric_limits<int>::max();
+  int max_input_ = 0;
   int min_output_ = 0;
-  int max_output_ = std::numeric_limits<int>::max();
+  int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
