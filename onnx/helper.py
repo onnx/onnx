@@ -11,7 +11,7 @@ from six import text_type, integer_types, binary_type
 
 import google.protobuf.message
 from onnx import TensorProto, AttributeProto, ValueInfoProto, \
-    NodeProto, ModelProto, GraphProto, IR_VERSION
+    NodeProto, ModelProto, GraphProto, OperatorSetIdProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
 
@@ -46,6 +46,7 @@ def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None):
         graph.doc_string = doc_string
     return graph
 
+# TODO: Provide a way to set ONNX-ML operator set version
 def make_model(graph, **kwargs):
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
@@ -53,7 +54,15 @@ def make_model(graph, **kwargs):
     model.ir_version = IR_VERSION
     model.graph.CopyFrom(graph)
 
+    if 'opset_import' in kwargs:
+        model.opset_import.extend(kwargs['opset_import'])
+    else:
+        # Default import
+        imp = model.opset_import.add()
+        imp.version = defs.onnx_opset_version()
+
     for k, v in kwargs.items():
+        # TODO: Does this work with repeated fields?
         setattr(model, k, v)
     return model
 
