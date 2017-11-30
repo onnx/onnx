@@ -188,58 +188,14 @@ class OpSchema {
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
-   * @brief A single input.
-   */
-  OpSchema& NumInputs(int n);
-  /**
-   * @brief Input could be in range [min, max], inclusive.
-   */
-  OpSchema& NumInputs(int min, int max);
-  /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
   OpSchema& NumInputs(std::set<int> allowed_input_nums);
-  /**
-   * @brief Input is checked with a specified function.
-   */
-  OpSchema& NumInputs(std::function<bool(int)> func);
 
-  // Sets the number of outputs, either a fixed number, a min and a max,
-  // or a function that takes in the input number and produces an output
-  // number. Use only one function in the set below.
-  /**
-   * @brief A single output.
-   */
-  OpSchema& NumOutputs(int n);
-  /**
-   * @brief Output could be in range [min, max], inclusive.
-   */
-  OpSchema& NumOutputs(int min, int max);
   /**
    * @brief Output could be one of the values specified in allowed_output_nums.
    */
   OpSchema& NumOutputs(std::set<int> allowed_output_nums);
-  /**
-   * @brief Output is checked with a specified function.
-   */
-  OpSchema& NumOutputs(std::function<bool(int)> func);
-
-  /**
-   * @brief Relationship between inputs and outputs is checked with a specified
-   * function.
-   */
-  OpSchema& NumInputsOutputs(std::function<bool(int, int)> func);
-
-  // Set the function that can calculate the number of output based on the
-  // number of input. Use only one function in the set below.
-  /**
-   * @brief Set the output calculator to a user-defined function.
-   */
-  OpSchema& OutputCalculator(std::function<int(int)> calc);
-  /**
-   * @brief Set the number of outputs to be the same as the number of inputs.
-   */
-  OpSchema& SameNumberOfOutput();
 
   // Sets the rule to allow optional in-place operation.
   OpSchema& AllowConsumed(std::function<std::pair<bool, int>(int)> inplace);
@@ -364,7 +320,8 @@ class OpSchema {
       const int n,
       const std::string& name,
       const std::string& description,
-      const std::string& type_str);
+      const std::string& type_str,
+      FormalParameterOption param_option = Single);
   OpSchema& TypeConstraint(
       const std::string& type_str,
       const std::vector<std::string>& constraints,
@@ -464,10 +421,6 @@ class OpSchema {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  std::function<bool(int, int)> num_inputs_outputs_allowed_ = [](int, int) {
-    return true;
-  };
-  std::function<int(int)> calculate_output_;
   // Is input i allowed/required to be marked consumed_
   // If so, which output idx shares the same buffer with i
   std::function<std::pair<UseType, int>(int)> consumed_ = [](int) {

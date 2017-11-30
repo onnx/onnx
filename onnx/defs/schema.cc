@@ -87,26 +87,6 @@ void OpSchema::Verify(const NodeProto& node) const {
     fail_check(
         "Output size ", node.output_size(), " not in allowed output sizes.");
   }
-  if (!num_inputs_outputs_allowed_(node.input_size(), node.output_size())) {
-    fail_check(
-        "Combination of input size ",
-        node.input_size(),
-        "and output size ",
-        node.output_size(),
-        " not in allowed.");
-  }
-  // If the number of outputs can be calculated, check if the number matches.
-  if (calculate_output_) {
-    int expected_nout = calculate_output_(node.input_size());
-    if (expected_nout != kCannotComputeNumOutputs &&
-        node.output_size() != expected_nout) {
-      fail_check(
-          "Output size ",
-          node.output_size(),
-          " not matching expected output size, which is ",
-          expected_nout);
-    }
-  }
 
   // Check the values of inputs / outputs
   for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
@@ -133,9 +113,30 @@ void OpSchema::Verify(const NodeProto& node) const {
           " is marked single but has an empty string in the graph");
     }
   }
+
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
-    if (node.output(out_idx).empty()) {
-      fail_check("Output ", out_idx, " has an empty string in the graph");
+    if (out_idx >= outputs_.size()) {
+        if (Variadic == outputs_.back().GetOption()) {
+            // The last output formal parameter should be variadic.
+            break;
+        }
+        else {
+            fail_check(
+                "Node (",
+                node.name(),
+                ") has more outputs (",
+                node.output_size(),
+                ") than declared (",
+                outputs_.size(),
+                ") in op definition.");
+        }
+    }
+
+    if (node.output(out_idx).empty() && (Single == outputs_[out_idx].GetOption())) {
+        fail_check(
+            "Output ",
+            out_idx,
+            " is marked single but has an empty string in the graph");
     }
   }
 
@@ -271,65 +272,23 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Phew. All verifications passed.
 }
 
-OpSchema& OpSchema::NumInputs(int min, int max) {
-  min_input_ = min;
-  max_input_ = max;
-  return *this;
-}
-
 OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   since_version_ = v;
   return *this;
 }
 
-OpSchema& OpSchema::NumInputs(int n) {
-  return NumInputs(n, n);
-}
-
-OpSchema& OpSchema::NumInputs(std::function<bool(int)> func) {
-  num_inputs_allowed_ = func;
-  return *this;
-}
-
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  return NumInputs([allowed_input_nums](int n) -> bool {
-    return allowed_input_nums.count(n);
-  });
-}
-
-OpSchema& OpSchema::NumOutputs(int min, int max) {
-  min_output_ = min;
-  max_output_ = max;
-  return *this;
-}
-
-OpSchema& OpSchema::NumOutputs(int n) {
-  return NumOutputs(n, n);
-}
-
-OpSchema& OpSchema::NumOutputs(std::function<bool(int)> func) {
-  num_outputs_allowed_ = func;
+  num_inputs_allowed_ = [allowed_input_nums](int n) -> bool {
+      return allowed_input_nums.count(n);
+  };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  return NumOutputs([allowed_output_nums](int n) -> bool {
-    return allowed_output_nums.count(n);
-  });
-}
-
-OpSchema& OpSchema::NumInputsOutputs(std::function<bool(int, int)> func) {
-  num_inputs_outputs_allowed_ = func;
+  num_outputs_allowed_ = [allowed_output_nums](int n) -> bool {
+      return allowed_output_nums.count(n);
+  };
   return *this;
-}
-
-OpSchema& OpSchema::OutputCalculator(std::function<int(int)> calc) {
-  calculate_output_ = calc;
-  return *this;
-}
-
-OpSchema& OpSchema::SameNumberOfOutput() {
-  return OutputCalculator([](int n) -> int { return n; });
 }
 
 OpSchema& OpSchema::AllowConsumed(
@@ -431,11 +390,12 @@ OpSchema& OpSchema::Output(
     const int n,
     const std::string& name,
     const std::string& description,
-    const std::string& type_str) {
+    const std::string& type_str,
+    OpSchema::FormalParameterOption param_option) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
-  outputs_[n] = FormalParameter(name, description, type_str, Single);
+  outputs_[n] = FormalParameter(name, description, type_str, param_option);
   return *this;
 }
 
@@ -478,16 +438,6 @@ OpSchema& OpSchema::FillUsing(std::function<void(OpSchema&)> populator) {
   return *this;
 }
 
-int OpSchema::CalculateOutput(int num_input) const {
-  if (min_output_ == max_output_) {
-    return min_output_;
-  } else if (calculate_output_) {
-    return calculate_output_(num_input);
-  } else {
-    return kCannotComputeNumOutputs;
-  }
-}
-
 void OpSchema::Finalize() {
 #define ENFORCE(x)                                                          \
   do {                                                                      \
@@ -495,43 +445,47 @@ void OpSchema::Finalize() {
       throw std::logic_error(                                               \
           "ONNX Schema " + name_ + ": failed validating the check: " + #x); \
   } while (0)
-  ENFORCE(min_input_ <= max_input_);
-  ENFORCE(min_output_ <= max_output_);
-  ENFORCE(inputs_.size() >= min_input_);
-  ENFORCE(outputs_.size() >= min_output_);
-  ENFORCE(inputs_.size() <= max_input_);
-  ENFORCE(outputs_.size() <= max_output_);
-  // if max limit is finite - all names should be specified
-  if (max_input_ < std::numeric_limits<int>::max()) {
-    ENFORCE(inputs_.size() == max_input_);
+
+  // Calculate min/max number of inputs.
+  for (int i = 0; i < (int)(inputs_.size()); ++i) {
+    switch (inputs_[i].GetOption()) {
+    case OpSchema::Single:
+      ++min_input_;
+      ++max_input_;
+      break;
+    case OpSchema::Optional:
+      ++max_input_;
+      break;
+    case OpSchema::Variadic:
+      // Only last input formal parameter could be variadic.
+      ENFORCE((inputs_.size() - 1) == i);
+      max_input_ = INT_MAX;
+    }
   }
-  if (max_output_ < std::numeric_limits<int>::max()) {
-    ENFORCE(outputs_.size() == max_output_);
+
+  // Calculate min/max number of outputs.
+  for (int i = 0; i < (int)(outputs_.size()); ++i) {
+    switch (outputs_[i].GetOption()) {
+    case OpSchema::Single:
+      ++min_output_;
+      ++max_output_;
+      break;
+    case OpSchema::Optional:
+      ++max_output_;
+      break;
+    case OpSchema::Variadic:
+      // Only last output formal parameter could be variadic.
+      ENFORCE((outputs_.size() - 1) == i);
+      max_output_ = INT_MAX;
+    }
   }
+
   // all inputs and outputs have names
   for (const auto& it : inputs_) {
     ENFORCE(!(it.GetName().empty()));
   }
   for (const auto& it : outputs_) {
     ENFORCE(!(it.GetName().empty()));
-  }
-
-  // Only the last input could be variadic.
-  for (int i = 0; i < (int)(inputs_.size()) - 1; ++i) {
-    ENFORCE(Variadic != inputs_[i].GetOption());        
-  }
-
-  // TODO: also cover checks for arbitrary number of inputs
-  // allow extra tailing inputs not be present if all inputs at the end are
-  // marked as optional
-  if (max_input_ < std::numeric_limits<int>::max()) {
-    int ind = max_input_;
-    for (auto& input : inputs_) {
-      if (Single != input.GetOption() && ind > 0) {
-        --ind;
-      }
-    }
-    min_input_ = std::min(min_input_, ind);
   }
 
   ParseAndSetTypes(&inputs_);

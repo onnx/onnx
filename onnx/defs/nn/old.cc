@@ -24,8 +24,6 @@ namespace onnx {
         
 OPERATOR_SCHEMA(LpPool)
     .SinceVersion(1)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
  LpPool consumes an input tensor X and applies Lp pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -67,8 +65,6 @@ OPERATOR_SCHEMA(LpPool)
 
 OPERATOR_SCHEMA(GlobalLpPool)
     .SinceVersion(1)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
  the values in the same channel. This is equivalent to LpPool with kernel size
