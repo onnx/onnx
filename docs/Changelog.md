@@ -21,10 +21,10 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (0 - &#8734;)
+#### Inputs
 
 
-#### Outputs (0 - &#8734;)
+#### Outputs
 
 
 #### Type Constraints
@@ -423,7 +423,7 @@ opset_import {
 <dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
 </dl>
 
-#### Outputs (0 - &#8734;)
+#### Outputs (1 - 5)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
@@ -600,7 +600,7 @@ opset_import {
 <dd>Which axis to concat on</dd>
 </dl>
 
-#### Inputs (1 - &#8734;)
+#### Inputs (0 - &#8734;)
 
 <dl>
 <dt><tt>inputs</tt> (variadic) : T</dt>
@@ -2708,7 +2708,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (1 - &#8734;)
+#### Inputs (0 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
@@ -2844,7 +2844,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (1 - &#8734;)
+#### Inputs (0 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
@@ -2924,7 +2924,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (1 - &#8734;)
+#### Inputs (0 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
@@ -4739,7 +4739,7 @@ opset_import {
 <dd>Optional list of output lengths (see also arg 'split')</dd>
 </dl>
 
-#### Outputs (1 - &#8734;)
+#### Outputs (0 - &#8734;)
 
 <dl>
 <dt><tt>outputs...</tt> : T</dt>
@@ -4911,7 +4911,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (1 - &#8734;)
+#### Inputs (0 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
@@ -5411,7 +5411,7 @@ opset_import {
 <dd>The tensor to split</dd>
 </dl>
 
-#### Outputs (1 - &#8734;)
+#### Outputs (0 - &#8734;)
 
 <dl>
 <dt><tt>outputs</tt> : T</dt>
