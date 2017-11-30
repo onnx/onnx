@@ -49,6 +49,19 @@ constexpr int kCannotComputeNumOutputs = -1;
  */
 class OpSchema {
  public:
+  // Formal parameter options.
+  enum FormalParameterOption {
+    // The input formal parameter is single and not optional.
+    // Number of this input is 1.
+    Single = 0,
+    // The input formal parameter is single and optional.
+    // Number of this input is 0 or 1.
+    Optional = 1,
+    // The input formal parameter is variadic.
+    // Number of this input is [0, n].
+    Variadic = 2,
+  };
+
   // Formal parameter represenation, including input/output name, typeStr,
   // description, and type constraints.
   class FormalParameter {
@@ -61,13 +74,13 @@ class OpSchema {
         const DataTypeSet& type_set,
         const std::string& type_str,
         const std::string& description,
-        bool is_optional = false);
+        FormalParameterOption param_option = Single);
 
     explicit FormalParameter(
         const std::string& name,
         const std::string& description,
         const std::string& type_str,
-        bool is_optional = false);
+        FormalParameterOption param_option = Single);
 
     // Get formal parameter name.
     const std::string& GetName() const;
@@ -81,9 +94,8 @@ class OpSchema {
     // Get formal parameter description.
     const std::string& GetDescription() const;
 
-    // Indicates whether this formal parameter is optional or not.
-    // It's applicable for input formal parameter only.
-    bool IsOptional() const;
+    // Get the parameter option, it could be Single, Optional or Variadic.
+    FormalParameterOption GetOption() const;
 
    private:
     friend class OpSchema;
@@ -105,8 +117,8 @@ class OpSchema {
     // Formal parameter description.
     std::string description_;
 
-    // Flag indicates whether this formal parameter is optional or not.
-    bool is_optional_;
+    // Formal parameter option.
+    FormalParameterOption param_option_;
   };
 
   enum class SupportType {
@@ -347,7 +359,7 @@ class OpSchema {
       const std::string& name,
       const std::string& description,
       const std::string& type_str,
-      bool optinal = false);
+      FormalParameterOption param_option = Single);
   OpSchema& Output(
       const int n,
       const std::string& name,

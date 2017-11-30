@@ -96,7 +96,12 @@ def main(args):
           if schema.inputs:
               s += '<dl>\n'
               for input in schema.inputs:
-                  s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, ' (optional)' if input.optional else '', input.typeStr)
+                  option_str = ""
+                  if OpSchema.FormalParameterOption.Optional == input.option:
+                      option_str = " (optional)"
+                  elif OpSchema.FormalParameterOption.Variadic == input.option:
+                      option_str = " (variadic)"
+                  s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
                   s += '<dd>{}</dd>\n'.format(input.description)
               s += '</dl>\n'
 
