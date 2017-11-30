@@ -96,6 +96,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def("has_schema", [](const std::string& op_type) -> bool {
     return OpSchemaRegistry::Schema(op_type) != nullptr;
   });
+  defs.def("schema_version_map", []() -> std::unordered_map<std::string, std::pair<int, int>> {
+    return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
+  });
   defs.def("get_schema", [](const std::string& op_type) -> OpSchema {
     const auto* schema = OpSchemaRegistry::Schema(op_type);
     if (!schema) {
