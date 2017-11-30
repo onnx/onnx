@@ -58,6 +58,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "allowed_type_strs",
           &OpSchema::TypeConstraintParam::allowed_type_strs);
 
+  py::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption")
+      .value("Single", OpSchema::Single)
+      .value("Optional", OpSchema::Optional)
+      .value("Variadic", OpSchema::Variadic);
+
   py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
       .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
@@ -65,7 +70,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "description", &OpSchema::FormalParameter::GetDescription)
       .def_property_readonly(
-          "optional", &OpSchema::FormalParameter::IsOptional);
+          "option", &OpSchema::FormalParameter::GetOption);
 
   py::enum_<OpSchema::AttrType>(op_schema, "AttrType")
       .value("FLOAT", OpSchema::AttrType::FLOAT)
