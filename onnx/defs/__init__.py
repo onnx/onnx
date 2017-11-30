@@ -18,4 +18,8 @@ def get_all_schemas():
     return C.get_all_schemas()
 
 
+def get_all_schemas_with_history():
+    return C.get_all_schemas_with_history()
+
+
 OpSchema = C.OpSchema
