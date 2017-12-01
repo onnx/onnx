@@ -278,9 +278,7 @@ OPERATOR_SCHEMA(Exp)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
-Calculates the exponential of the given input tensor, element-wise. This
-operation can be done in an in-place fashion too, by providing the same input
-and output blobs.
+Calculates the exponential of the given input tensor, element-wise.
 )DOC")
     .Input(0, "input", "Input tensor", "T")
     .Output(
@@ -296,9 +294,7 @@ OPERATOR_SCHEMA(Log)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
-Calculates the natural log of the given input tensor, element-wise. This
-operation can be done in an in-place fashion too, by providing the same input
-and output blobs.
+Calculates the natural log of the given input tensor, element-wise.
 )DOC")
     .Input(0, "input", "Input tensor", "T")
     .Output(
@@ -314,9 +310,7 @@ OPERATOR_SCHEMA(Tanh)
   .NumOutputs(1)
   .AllowConsumed({{0, 0}})
   .SetDoc(R"DOC(
-Calculates the hyperbolic tangent of the given input tensor element-wise. This
-operation can be done in an in-place fashion too, by providing the same input
-and output blobs.
+Calculates the hyperbolic tangent of the given input tensor element-wise.
 )DOC")
     .Input(0, "input", "1-D input tensor", "T")
     .Output(0, "output", "The hyperbolic tangent values of the input tensor "
@@ -399,12 +393,10 @@ OPERATOR_SCHEMA(Max)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
-Element-wise max of each of the input tensors. The first input tensor can be
-used in-place as the output tensor, in which case the max will be done in
-place and results will be accumulated in input0. All inputs and outputs must
+Element-wise max of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
-    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
     .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -414,12 +406,10 @@ OPERATOR_SCHEMA(Min)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
-Element-wise min of each of the input tensors. The first input tensor can be
-used in-place as the output tensor, in which case the max will be done in
-place and results will be accumulated in input0. All inputs and outputs must
+Element-wise min of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
-    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
     .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -429,12 +419,10 @@ OPERATOR_SCHEMA(Sum)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
-Element-wise sum of each of the input tensors. The first input tensor can be
-used in-place as the output tensor, in which case the sum will be done in
-place and results will be accumulated in input0. All inputs and outputs must
+Element-wise sum of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
-    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
     .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -444,12 +432,10 @@ OPERATOR_SCHEMA(Mean)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
-Element-wise mean of each of the input tensors. The first input tensor can be
-used in-place as the output tensor, in which case the sum will be done in
-place and results will be accumulated in input0. All inputs and outputs must
+Element-wise mean of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
-    .Input(0, "data_0", "First of the input tensors. Can be inplace.", "T")
+    .Input(0, "data_0", "List of tensors for Mean.", "T", OpSchema::Variadic)
     .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -461,9 +447,7 @@ OPERATOR_SCHEMA(Clip)
     .SetDoc(R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified with arguments 'min' and 'max'. They default to
-numeric_limits::lowest() and numeric_limits::max() respectively. The clipping
-operation can be done in in-place fashion too, where the input and output blobs
-are the same.
+numeric_limits::lowest() and numeric_limits::max() respectively.
 )DOC")
     .Attr("min", "Minimum value, under which element is replaced by min",
           AttrType::FLOAT)
@@ -493,9 +477,7 @@ OPERATOR_SCHEMA(Softsign)
     .NumInputs(1)
     .NumOutputs(1)
     .SetDoc(R"DOC(
-Calculates the softsign (x/1+|x|) of the given input tensor element-wise. This
-operation can be done in an in-place fashion too, by providing the same input
-and output blobs.
+Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
 )DOC")
     .Input(0, "input", "1-D input tensor", "T")
     .Output(
@@ -526,7 +508,7 @@ OPERATOR_SCHEMA(Gemm)
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
 , input tensor B has dimension (K X N), input tensor C and output tensor Y have
-dimension (M X N). Input tensor C can be used inplace as the output tensor Y.
+dimension (M X N). 
 If attribute broadcast is non-zero, input tensor C will be broadcasted to match
 the dimension requirement. If A can be transposed before doing the computation
 if attribute transA is non-zero, same for B and transB.

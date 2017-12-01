@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 
 
-TestCase = namedtuple('TestCase', ['name', 'url', 'model_name'])
+TestCase = namedtuple('TestCase', ['name', 'url', 'model_name', 'model_dir'])
 
 BASE_URL = 'https://s3.amazonaws.com/download.onnx/models'
 
@@ -27,6 +27,6 @@ def collect_testcases():
     ]
     for test_name, model_name in model_tests:
         url = '{}/{}.tar.gz'.format(BASE_URL, model_name)
-        res.append(TestCase(test_name, url, model_name))
+        res.append(TestCase(test_name, url, model_name, None))
 
     return res

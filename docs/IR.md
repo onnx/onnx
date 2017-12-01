@@ -3,11 +3,11 @@ Open Neural Network Exchange (ONNX)
 
 ONNX is an open specification that consists of the following components:
 
-1)  Definition of an extensible computation graph model.
+1)  A definition of an extensible computation graph model
 
-2)  Definition of built-in operators and standard data types.
+2)  Definitions of built-in operators and standard data types
 
-__Some notes on language in this and all related documents__:
+__Notes on language in this and all related documents__:
 
 1. The use of SHOULD, MUST, MAY and so on in this document is consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
@@ -16,48 +16,60 @@ __Some notes on language in this and all related documents__:
 Extensible computation graph model
 ----------------------------------
 
-ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and 
-manipulate internally. For example, a framework may keep the graph in memory in another format that it finds more efficient to 
-manipulate for optimization passes. We make use of protobuf2 (with oneof, added in protobuf 2.6.1) for the serialized format.
+ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and manipulate. For example, a framework may keep the graph in memory in a format that it finds more efficient to manipulate for optimization passes. We make use of protobuf2 (with oneof, added in protobuf 2.6.1) for the serialized format.
+
+### Model
+
+The top-level container object in an ONNX model file is a ModelProto object that combines a computation graph with the following metadata properties.
+
+#### Model Metadata
+
+|Name|Type|Format|Description|
+|----|----|------|-----------|
+|ir_version|int64||The version of the IR format specification|
+|opset_import|||Custom operator sets imported by the model|
+|domain|string|Valid DNS name|A namespace for the model, following the style of package names, that is, reverse DNS domain name.|
+|model_version|int64||The version of the model|
+|producer_name|string||Name of framework/tool that generated this model|
+|producer_version|string||Version of the framework/tool that generated this model|
+
+See [versioning documentation](Versioning.md) for more information about the versioning policies.
+Further metadata may be added to a model via its `metadata_props` field (as described further in the Extensibility section below).
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph, which MUST be free of cycles. 
-Nodes have one or more inputs and one or more outputs. Each node is a call to an operator.
+Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles. Each node is a call to an operator. Nodes have one or more inputs, one or more outputs, and zero or more attribute-value pairs.
 
-#### Metadata
+#### Model Graph Metadata
 
-The following are the metadata properties of a model graph:
+The following describes the metadata properties of a model graph:
 
 |Name|Type|Format|Description|
 |----|----|------|-----------|
 |name|string|Valid C identifier|A name for the model.|
-|domain|string|Valid DNS name|A namespace for the model, following the style of package names, that is, reverse DNS domain name.|
-|ir_version|int64||The version of the IR format specification|
 |doc_string|string|Free form|A human-readable documentation string intended to summarize the purpose of the model. Markdown is allowed.|
-
 
 #### Names Within a Graph
 
-We organize names into separate namespaces. Names must be unique within a namespace. 
-The namespaces are as follows:
- - Node: These names identify specific nodes in the graph but not necessarily any particular input or output of the node.
- - Graph: These names identify graphs in the protobuf.
- - Attribute: These names identify attribute names for extra attributes that are passed to operators.
- - Operator: These names identify particular operators.
- - Tensor: These names identify intermediate tensor values flowing through the computation of a graph.
+Names are organized into separate namespaces, and must be unique within a namespace. The namespaces include the following:
+ - `Node`: names that identify specific nodes in the graph, but not necessarily any particular input or output of the node.
+ - `Graph`: names that identify graphs in the protobuf.
+ - `Attribute`: names that identify attribute names for extra attributes that are passed to operators.
+ - `Operator`: names that identify particular operators.
+ - `Tensor`: names that identify intermediate tensor values flowing through the computation of a graph.
 
 All names MUST adhere to C identifier syntax rules.
 
 #### Nodes
 
-Computation nodes are comprised of a name, a list of named inputs, a list of named outputs, and a list of attributes.
+Each computation node consists of a name, the identifier of the operator to be invoked, a list of named inputs and outputs, and a list of attribute-value pairs.
 
-Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a 
-subsequent node. 
+Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K 
-follows node N in the graph, none of the data inputs of N may refer to outputs of K; further, no control input of N may refer to K.
+Names of tensor values flowing through the graph are unique - a particular name can reference either a graph input or an output of a single node. Reuse of names for several outputs is not allowed.
+
+The list of nodes defining the top-level computation graph MUST be ordered topologically \- that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
+
 
 
 Built-in Operators and Standard Data Types
@@ -65,7 +77,7 @@ Built-in Operators and Standard Data Types
 
 ### Operators
 
-See [the operator documentation](Operators.md) for details
+See the [operator documentation](Operators.md) for details.
 
 
 ### Standard data types
@@ -74,7 +86,7 @@ The following data types are supported by ONNX. Additional data types can be sup
 
 |Group|Name|Description|
 |-----|----|-----------|
-|Floating Point Types|__float16, float32, float64__|Values adhering to the IEEE 754-2008 standard representation of floating-point data.|
+|Floating Point Types|__float16, float (32 bit), double (64 bit)__|Values adhering to the IEEE 754-2008 standard representation of floating-point data.|
 |Signed Integer Types|__int8, int16,int32,int64__|Signed integers are supported for 8-64 bit widths.|
 |Unsigned Integer Types|__uint8,uint16__| Unsigned integers of 8 or 16 bits are supported.|
 |Complex Types|__complex64,complex128__|A complex number with either 32- or 64-bit real and imaginary parts.|
@@ -82,3 +94,22 @@ The following data types are supported by ONNX. Additional data types can be sup
 |Other|__bool__|Boolean value represent data with only two values, typically _true_ and _false_.|
 |Other|__handle__|Handles are opaque types holding a 64-bit integer.|
 |Collections|__sparse and dense tensor__|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is equivalent to a scalar.|
+
+Extensibility
+-------------
+
+ONNX is expected to evolve over time and provides features that enable users to experiment and implement additions before they are added to the specifications.
+
+### Metadata
+
+A model allows named metadata strings to be added via its `metadata_props` field, typically for use by tools such as converters, indexers, or documentation generators. Names are not prescribed, but some name recommendations are provided for implementations that want to record such concepts.
+
+- `author`: the name of the person(s) who authored the model
+- `company`: the name of the company or organization that authored the model
+- `converted_from`: if converted from a different format, the name of the source format or framework
+- `license`: a human-readable name for a license, if applicable
+- `license_url`: the URL where the license text is provided
+
+### Operators
+
+Operators may be extended via custom domain names in the `opset_import` field.

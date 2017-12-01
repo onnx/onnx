@@ -16,7 +16,7 @@ OPERATOR_SCHEMA(Identity)
     .Output(
         0,
         "output",
-        "Tensor to copy input into. Can be in-place",
+        "Tensor to copy input into.",
         "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -45,10 +45,10 @@ OPERATOR_SCHEMA(ThresholdedRelu)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
-(Tensor<T>) where the rectified linear function, y = x for x > theta, y = 0 otherwise,
+(Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
 is applied to the tensor elementwise.
 )DOC")
-    .Attr("theta",
+    .Attr("alpha",
           "Threshold value",
           AttrType::FLOAT)
     .Input(0, "X", "Input tensor", "T")
@@ -63,12 +63,11 @@ OPERATOR_SCHEMA(ScaledTanh)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-scale * tanh(x). This operation can be done in an in-place fashion too,
+alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
 by providing the same input and output blobs.
     )DOC")
-    .Attr("scale",
-        "Scale for tanh",
-        AttrType::FLOAT)
+    .Attr("alpha", "Scaling value", AttrType::FLOAT)
+    .Attr("beta", "Scaling value", AttrType::FLOAT)
     .Input(0, "input", "1-D input tensor", "T")
     .Output(0, "output", "The scaled hyperbolic tangent values of the input tensor "
         "computed element-wise", "T")
@@ -147,7 +146,7 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         "input",
         "Input tensor (optional) to provide shape information.",
         "T1",
-        true)
+        OpSchema::Optional)
     .Output(
         0,
         "output",
@@ -167,7 +166,7 @@ OPERATOR_SCHEMA(GivenTensorFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(0, 1)
     .NumOutputs(1)
-    .Input(0, "shape", "The shape of filled tensor", "T")
+    .Input(0, "shape", "The shape of filled tensor", "T", OpSchema::Optional)
     .Output(0, "X", "The filled tensor", "T")
     .TypeConstraint(
         "T",
@@ -226,7 +225,7 @@ will throw errors.
         "2D blob of size (KxN) containing fully connected weight "
         "matrix",
         "T")
-    .Input(2, "bias", "1D blob containing bias vector", "T")
+    .Input(2, "B", "1D blob containing bias vector", "T")
     .Output(0, "Y", "2D output tensor", "T")
     .TypeConstraint(
         "T",
@@ -300,7 +299,7 @@ OPERATOR_SCHEMA(ImageScaler)
     .NumInputs(1)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
-    .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in 
+    .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in
 the same ordering as the image pixel format.)DOC")
     .Attr("bias", "Bias applied to each channel, same size as C.", AttrType::FLOATS)
     .Attr("scale", "(float, default 1.0) the scale to apply.", AttrType::FLOAT)
@@ -318,7 +317,7 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
     .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttrType::INT)
-    .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttrType::INT)    
+    .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttrType::INT)
     .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same shape and type as input", "T")
     .TypeConstraint(
@@ -331,8 +330,8 @@ OPERATOR_SCHEMA(Crop)
     .NumInputs(1)
     .NumOutputs(1)
     .AllowConsumed({{0, 0}})
-    .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given, 
-then optionally start the crop offset by the left/top border amounts. 
+    .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
+then optionally start the crop offset by the left/top border amounts.
 If scale is not provided, crop the borders as provided.)DOC")
     .Attr("border", "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).", AttrType::INTS)
     .Attr("scale", "A 1-D values of (height, width).", AttrType::INTS)
@@ -351,31 +350,35 @@ OPERATOR_SCHEMA(Embedding)
     .SetDoc(R"DOC(Turns positive integers (indexes) into dense vectors of fixed size.)DOC")
     .Attr("input_dim", "Size of the input vocabulary.", AttrType::INT)
     .Attr("output_dim", "Dimension of the embedding output vectors.", AttrType::INT)
-    .Attr("weights", "2-D tensor of weights [O,I].", AttrType::TENSOR)    
-    .Input(0, 
-           "input", 
+    .Attr("weights", "2-D tensor of weights [O,I].", AttrType::TENSOR)
+    .Input(0,
+           "input",
            "1-D tensor of integers representing indices in the embedding dictionary "
            "with length [N] and values [0, input_dim -1]", "tensor(int64)")
-    .Output(0, 
-            "output", 
+    .Output(0,
+            "output",
             "Output tensor of computed features [N, O].", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to float tensors.");
 
-OPERATOR_SCHEMA(ResizeNearest)
+OPERATOR_SCHEMA(Upsample)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .NumInputs(1)
     .NumOutputs(1)
     .Attr(
         "width_scale",
-        "The scale along width dimension",
+        "The scale along width dimension. It takes value greater than or equal to 1.",
         AttrType::FLOAT, true)
     .Attr(
         "height_scale",
-        "The scale along height dimension",
+        "The scale along height dimension. It takes value greater than or equal to 1.",
         AttrType::FLOAT, true)
+    .Attr(
+        "mode",
+        "Two interpolation modes: nearest(default), bilinear",
+        AttrType::STRING, false)
     .Input(
         0,
         "X",
@@ -390,12 +393,27 @@ OPERATOR_SCHEMA(ResizeNearest)
         "tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to bool, int32, int64, float16, float, double tensors.")
     .SetDoc(R"DOC(
-Resize the width and height dimensions:
-output_width = floor(input_width * width_scale),
-output_height = floor(input_height * height_scale).
-For example:
-X = [[[[1, 2],[3, 4]]]],
-width_scale = 2,
-height_scale = 2,
-Y = [[[[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]]]]
+Upsample the input tensor.
+The width and height of the output tensor are:
+  output_width = floor(input_width * width_scale),
+  output_height = floor(input_height * height_scale).
+
+Exmpale:
+  Given `data` tensor, width_scale, height_scale, mode,
+  Upsample the input 4-D tensor in nearest mode:
+
+  data = [[[
+      [1, 2],
+      [3, 4]
+  ]]]
+  width_scale = 2
+  height_scale = 2
+  mode = "nearest"
+
+  output = [[[
+      [1, 1, 2, 2],
+      [1, 1, 2, 2],
+      [3, 3, 4, 4],
+      [3, 3, 4, 4]
+  ]]]
 )DOC");

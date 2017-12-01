@@ -37,11 +37,11 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                      "Optional tensor specifying lengths of the sequences in a batch. "
                      "If not specified - assumed all sequences in the batch to have "
                      "length `seq_length`. It has shape `[batch_size]`.", "T1",
-                     true /*optional*/);
+                     OpSchema::Optional);
         schema.Input(5, "initial_h",
                      "Optional initial value of the hidden. If not specified - assumed "
                      "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-                     "T", true /*optional*/);
+                     "T", OpSchema::Optional);
         schema.Output(0, "Y",
                       "A tensor that concats all the intermediate output values of the hidden. "
                       "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
@@ -137,12 +137,12 @@ Equations (Default: f=tanh):
 	   "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
            "(if bidirectional). The tensor has shape "
 	   "`[num_directions, hidden_size, hidden_size]`.", "T")
-    .Input(3, "bias",
+    .Input(3, "B",
 	   "The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` "
            "and `[WBbi, RBbi]` (if bidirectional). The tensor has shape "
            "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
            "to be 0.", "T",
-	   true /*optional*/)
+        OpSchema::Optional)
     .FillUsing(RNNDocGenerator("RNN"));
 
 
@@ -221,9 +221,9 @@ Equations (Default: f=sigmoid, g=tanh):
 
   - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
 
-  - ht = g(Xt*(Wh^T) + rt*(Ht-1*Rh + Rbh) + Wbh)
+  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
 
-  - Ht = (1 - zt) (.) ht + it (.) Ht-1
+  - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC")
     .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
           "for update, reset, and hidden gates. The activation functions must be one "
@@ -238,12 +238,12 @@ Equations (Default: f=sigmoid, g=tanh):
 	   "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
 	   "`[num_directions, 3*hidden_size, hidden_size]`.", "T")
-    .Input(3, "bias",
+    .Input(3, "B",
 	   "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
            "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
            "- assumed to be 0", "T",
-	   true /*optional*/)
+        OpSchema::Optional)
     .FillUsing(RNNDocGenerator("GRU"));
 
 
@@ -351,22 +351,22 @@ Equations (Default: f=sigmoid, g=tanh, h=tanh):
 	   "The recurrence weight tensor. Concatenation of `R[iofc]` and "
 	   "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
            "`[num_directions, 4*hidden_size, hidden_size]`.", "T")
-    .Input(3, "bias",
+    .Input(3, "B",
 	   "The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, "
 	   "and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This "
            "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
 	   "specified - assumed to be 0.", "T",
-	   true /*optional*/)
+       OpSchema::Optional)
     .Input(6, "initial_c",
            "Optional initial value of the cell. If not specified - assumed "
 	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   "T", true /*optional*/)
+	   "T", OpSchema::Optional)
     .Input(7, "P",
 	   "The weight tensor for peepholes. Concatenation of `P[iof]` and "
 	   "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
 	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
 	   "assumed to be 0.", "T",
-	   true /*optional*/)
+       OpSchema::Optional)
     .FillUsing(RNNDocGenerator("LSTM"));
 
 }  // namespace onnx    

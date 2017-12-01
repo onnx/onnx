@@ -87,7 +87,8 @@ namespace onnx {
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
-            schema.NumInputs(1);
+            schema.SinceVersion(2);
+            schema.NumInputs(1);            
             schema.NumOutputs(1);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
@@ -102,8 +103,8 @@ namespace onnx {
                         pads_doc.c_str(),
                         AttrType::INTS);
             schema.Attr("p",
-                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
-                        AttrType::FLOAT);
+                        "p value of the Lp norm used to pool over the input data, default is 2.",
+                        AttrType::INT);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -188,7 +189,7 @@ computes the output.)DOC";
                          "height and width. Note that this is for the 2D image."
                          "Otherwise the size is (N x D1 x D2 ... x Dn)", "T");
             schema.Input(1,
-                         "weights",
+                         "W",
                          "The weight tensor that will be used in the "
                          "convolutions; has size (M x C x kH x kW), where C "
                          "is the number of channels, and kH and kW are the "
@@ -197,8 +198,8 @@ computes the output.)DOC";
                          "kernel shape will be (M x C x k1 x k2 x ... x kn), "
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
-                         "bias",
-                         "Optional 1D bias to be added to the convolution, has size of M.", "T");
+                         "B",
+                         "Optional 1D bias to be added to the convolution, has size of M.", "T", OpSchema::Optional);
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the "
@@ -249,7 +250,7 @@ and computes the output.)DOC";
                          " H and W are the height and width. Note that this is for the 2D image."
                          "Otherwise the size is (N x D1 x D2 ... x Dn)", "T");
             schema.Input(1,
-                         "weights",
+                         "W",
                          "The weight tensor that will be used in the "
                          "convolutions; has size (C x M x kH x kW), where C "
                          "is the number of channels, and kH and kW are the "
@@ -258,8 +259,8 @@ and computes the output.)DOC";
                          "kernel shape will be (C x M x k1 x k2 x ... x kn), "
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
-                         "bias",
-                         "Optional 1D bias to be added to the convolution, has size of C.", "T");
+                         "B",
+                         "Optional 1D bias to be added to the convolution, has size of C.", "T", OpSchema::Optional);
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the convolution. The "
@@ -342,11 +343,12 @@ namespace onnx {
             ReplaceAll(doc, "{op_type}", op_type);
             ReplaceAll(doc, "{op}", op);
             schema.SetDoc(doc);
+            schema.SinceVersion(2);
             schema.NumInputs(1);
             schema.NumOutputs(1);
             schema.Attr("p",
-                        "p value of the Lp norm used to pool over the input data, default is 2.0.",
-                        AttrType::FLOAT);
+                        "p value of the Lp norm used to pool over the input data, default is 2.",
+                        AttrType::INT);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -365,8 +367,9 @@ namespace onnx {
             schema.SetDoc(doc);
         };
     }
-  OPERATOR_SCHEMA(GlobalLpPool)
-  .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
+
+    OPERATOR_SCHEMA(GlobalLpPool)
+        .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
 } // namespace onnx
 
 OPERATOR_SCHEMA(BatchNormalization)
@@ -404,7 +407,7 @@ Output case #2: Y (test mode)
         "The scale as a 1-dimensional tensor of size C to be applied to the "
         "output.", "T")
     .Input(2,
-        "bias",
+        "B",
         "The bias as a 1-dimensional tensor of size C to be applied to the "
         "output.", "T")
     .Input(3,
@@ -443,8 +446,8 @@ OPERATOR_SCHEMA(InstanceNormalization)
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022. 
 
-y = scale * (x - mean) / sqrt(variance + epsilon) + bias, 
-where mean and bias are computed per instance per channel. 
+y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
+where mean and B are computed per instance per channel. 
 
 )DOC")
     .Attr("epsilon",
@@ -457,7 +460,7 @@ where mean and bias are computed per instance per channel.
         "scale",
         "The input 1-dimensional scale tensor of size C.", "T")
     .Input(2,
-        "bias",
+        "B",
         "The input 1-dimensional bias tensor of size C.", "T")
     .Output(0,
         "output",

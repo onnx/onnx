@@ -27,6 +27,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "doc", &OpSchema::doc, py::return_value_policy::reference)
       .def_property_readonly("since_version", &OpSchema::since_version)
       .def_property_readonly("domain", &OpSchema::domain)
+      .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
       .def_property_readonly("max_input", &OpSchema::max_input)
       .def_property_readonly("min_output", &OpSchema::min_output)
@@ -57,6 +58,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "allowed_type_strs",
           &OpSchema::TypeConstraintParam::allowed_type_strs);
 
+  py::enum_<OpSchema::FormalParameterOption>(op_schema, "FormalParameterOption")
+      .value("Single", OpSchema::Single)
+      .value("Optional", OpSchema::Optional)
+      .value("Variadic", OpSchema::Variadic);
+
   py::class_<OpSchema::FormalParameter>(op_schema, "FormalParameter")
       .def_property_readonly("name", &OpSchema::FormalParameter::GetName)
       .def_property_readonly("types", &OpSchema::FormalParameter::GetTypes)
@@ -64,7 +70,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "description", &OpSchema::FormalParameter::GetDescription)
       .def_property_readonly(
-          "optional", &OpSchema::FormalParameter::IsOptional);
+          "option", &OpSchema::FormalParameter::GetOption);
 
   py::enum_<OpSchema::AttrType>(op_schema, "AttrType")
       .value("FLOAT", OpSchema::AttrType::FLOAT)
@@ -90,6 +96,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def("has_schema", [](const std::string& op_type) -> bool {
     return OpSchemaRegistry::Schema(op_type) != nullptr;
   });
+  defs.def("schema_version_map", []() -> std::unordered_map<std::string, std::pair<int, int>> {
+    return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
+  });
   defs.def("get_schema", [](const std::string& op_type) -> OpSchema {
     const auto* schema = OpSchemaRegistry::Schema(op_type);
     if (!schema) {
@@ -100,8 +109,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   defs.def(
       "get_all_schemas",
-      []() -> const std::unordered_map<std::string, OpSchema> {
-        return OpSchemaRegistry::registered_schemas();
+      []() -> const std::vector<OpSchema> {
+        return OpSchemaRegistry::get_all_schemas();
+      });
+
+  defs.def(
+      "get_all_schemas_with_history",
+      []() -> const std::vector<OpSchema> {
+        return OpSchemaRegistry::get_all_schemas_with_history();
       });
 
   // Submodule `checker`

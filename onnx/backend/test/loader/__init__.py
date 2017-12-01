@@ -27,16 +27,18 @@ def load_node_tests(data_dir=os.path.join(DATA_DIR, 'node')):
             node.ParseFromString(f.read())
 
         inputs = []
-        for input_file in sorted(
-                glob.glob(os.path.join(case_dir, 'input_*.pb'))):
+        inputs_num = len(glob.glob(os.path.join(case_dir, 'input_*.pb')))
+        for i in range(inputs_num):
+            input_file = os.path.join(case_dir, 'input_{}.pb'.format(i))
             tensor = onnx.TensorProto()
             with open(input_file, 'rb') as f:
                 tensor.ParseFromString(f.read())
             inputs.append(tensor)
 
         outputs = []
-        for output_file in sorted(
-                glob.glob(os.path.join(case_dir, 'output_*.pb'))):
+        outputs_num = len(glob.glob(os.path.join(case_dir, 'output_*.pb')))
+        for i in range(outputs_num):
+            output_file = os.path.join(case_dir, 'output_{}.pb'.format(i))
             tensor = onnx.TensorProto()
             with open(output_file, 'rb') as f:
                 tensor.ParseFromString(f.read())
@@ -53,11 +55,17 @@ def load_model_tests(data_dir=os.path.join(DATA_DIR, 'model')):
 
     for test_name in os.listdir(data_dir):
         case_dir = os.path.join(data_dir, test_name)
-        with open(os.path.join(case_dir, 'data.json')) as f:
-            data = json.load(f)
-            url = data['url']
-            model_name = data['model_name']
+        if os.path.exists(os.path.join(case_dir, 'model.pb')):
+            url = None
+            model_name = test_name[len('test_')]
+            model_dir = case_dir
+        else:
+            with open(os.path.join(case_dir, 'data.json')) as f:
+                data = json.load(f)
+                url = data['url']
+                model_name = data['model_name']
+                model_dir = None
         testcases.append(
-            ModelTestCase(test_name, url, model_name))
+            ModelTestCase(test_name, url, model_name, model_dir))
 
     return testcases
