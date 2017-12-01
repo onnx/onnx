@@ -705,7 +705,7 @@ opset_import {
 <dd>Which axis to concat on</dd>
 </dl>
 
-#### Inputs (0 - &#8734;)
+#### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>inputs</tt> (variadic) : T</dt>
@@ -2507,7 +2507,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (0 - &#8734;)
+#### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
@@ -2646,7 +2646,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (0 - &#8734;)
+#### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
@@ -2683,7 +2683,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (0 - &#8734;)
+#### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
@@ -4543,7 +4543,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 <dd>The tensor to split</dd>
 </dl>
 
-#### Outputs (0 - &#8734;)
+#### Outputs (1 - &#8734;)
 
 <dl>
 <dt><tt>outputs</tt> : T</dt>
@@ -4719,7 +4719,7 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (0 - &#8734;)
+#### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>

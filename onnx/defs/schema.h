@@ -58,7 +58,7 @@ class OpSchema {
     // Number of this input is 0 or 1.
     Optional = 1,
     // The input formal parameter is variadic.
-    // Number of this input is [0, n].
+    // Number of this input is [1, n].
     Variadic = 2,
   };
 

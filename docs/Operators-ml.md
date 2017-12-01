@@ -301,7 +301,7 @@ opset_import {
 <dd>the size of each input in the input list</dd>
 </dl>
 
-#### Inputs (0 - &#8734;)
+#### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>X</tt> (variadic) : T</dt>
