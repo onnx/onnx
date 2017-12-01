@@ -22,4 +22,8 @@ def get_all_schemas_with_history():
     return C.get_all_schemas_with_history()
 
 
+def onnx_opset_version():
+    return C.schema_version_map()[""][1]
+
+
 OpSchema = C.OpSchema

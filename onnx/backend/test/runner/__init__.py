@@ -197,18 +197,43 @@ class Runner(object):
         model_marker = [None]
 
         def run(test_self, device):
-            model_dir = self._prepare_model_data(model_test)
+            if model_test.model_dir is None:
+                model_dir = self._prepare_model_data(model_test)
+            else:
+                model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.pb')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             prepared_model = self.backend.prepare(model, device)
 
+            # TODO after converting all npz files to protobuf, we can delete this.
             for test_data_npz in glob.glob(
                     os.path.join(model_dir, 'test_data_*.npz')):
                 test_data = np.load(test_data_npz, encoding='bytes')
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
+                self._assert_similar_outputs(ref_outputs, outputs)
+
+            for test_data_dir in glob.glob(
+                    os.path.join(model_dir, "test_data_set*")):
+                inputs = []
+                inputs_num = len(glob.glob(os.path.join(test_data_dir, 'input_*.pb')))
+                for i in range(inputs_num):
+                    input_file = os.path.join(test_data_dir, 'input_{}.pb'.format(i))
+                    tensor = onnx.TensorProto()
+                    with open(input_file, 'rb') as f:
+                        tensor.ParseFromString(f.read())
+                    inputs.append(numpy_helper.to_array(tensor))
+                ref_outputs = []
+                ref_outputs_num = len(glob.glob(os.path.join(test_data_dir, 'output_*.pb')))
+                for i in range(ref_outputs_num):
+                    output_file = os.path.join(test_data_dir, 'output_{}.pb'.format(i))
+                    tensor = onnx.TensorProto()
+                    with open(output_file, 'rb') as f:
+                        tensor.ParseFromString(f.read())
+                    ref_outputs.append(numpy_helper.to_array(tensor))
+                outputs = list(prepared_model.run(inputs))
                 self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test('Model', model_test.name, run, model_marker)
