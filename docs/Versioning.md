@@ -31,7 +31,7 @@ The ONNX versioning principles are based on [Postel's law](https://en.wikipedia.
 2. A consumer of a given ONNX model SHOULD consume an updated ONNX file, provided there are no breaking changes in the new ONNX file's IR version, referenced operator versions, or model version (e.g., the MAJOR version numbers have not changed between the two ONNX files).
 3. A consumer of a given ONNX model MAY consume an updated ONNX file, provided there are one or more breaking changes in the new ONNX file's IR version, referenced operator versions, or model version.
 
-The operational rules specifying how the ONNX project is managed, are documented [here](../RELEASE-MANAGEMENT.md).
+The operational rules specifying how the ONNX project is managed are documented [here](../RELEASE-MANAGEMENT.md).
 
 ### Serializing SemVer version numbers in protobuf
 For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most significant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component.
@@ -42,7 +42,7 @@ The prerelease and build metadata aren't stored in the model.
 
 ## IR versioning
 
-Changes to the file format or abstract graph semantics version atomically. Breaking changes to the format, or semantics of the ONNX specification, require an increment of the MAJOR version.  Non-breaking format or semantic changes that introduce new functionality require an increment of the MINOR version. Non-breaking changes to the specification that simply clarify spec ambiguities require an increment of the PATCH version.
+Changes to the file format or abstract graph semantics version atomically. Breaking changes to the format or semantics of the ONNX specification require an increment of the MAJOR version.  Non-breaking format or semantic changes that introduce new functionality require an increment of the MINOR version. Non-breaking changes to the specification that simply clarify spec ambiguities require an increment of the PATCH version.
 
 The ONNX IR format adheres to the versioning guidelines defined in the [Updating a Message Type](https://developers.google.com/protocol-buffers/docs/proto3#updating) section of the proto3 specification.
 
@@ -60,8 +60,7 @@ ISSUE: define type compatibility rules either here or under model versioning - p
 
 ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation.  Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on. 
 
-A given operator is identified by a three-tuple – domain, op_type, and op_version, written as domain.op_type:op_version in prose (e.g., com.acme.FastConv:3).  Nodes in graphs always refer
-to operators by their three-part identifier.
+A given operator is identified by a three-tuple: (domain, op_type, and op_version). This is written as domain.op_type:op_version in prose (e.g., com.acme.FastConv:3).  Nodes in graphs always refer to operators by their three-part identifier.
 
 Once an operator is published, all implementations of that operator's domain, op_type, op_version MUST adhere to the signature and semantics of the operator at the time of publication. 
 Any change of semantics implies a new operator, which MAY share a domain and op_type with another operator. This includes adding new behavior triggered only by previously unspecified inputs or attributes. These changes in semantics also MUST have a distinct operator id.
