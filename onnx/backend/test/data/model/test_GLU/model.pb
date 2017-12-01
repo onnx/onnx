@@ -1,4 +1,4 @@
-pytorch0.2"com.facebook:þ
+pytorch0.3:þ
 &
 012"Split*
 axisÿÿÿÿÿÿÿÿÿ 
@@ -12,8 +12,8 @@
 /Users/lufang/gitrepos/pytorch/torch/nn/modules/module.py(325): __call__
 /Users/lufang/gitrepos/pytorch/torch/jit/__init__.py(227): trace
 /Users/lufang/gitrepos/pytorch/torch/onnx/__init__.py(120): _export
-convert_tests.py(67): get_modules_constructors
-convert_tests.py(107): <module>
+convert_tests.py(68): get_modules_constructors
+convert_tests.py(108): <module>
 torch-jit-exportZ
 0
 
@@ -22,4 +22,4 @@ convert_tests.py(107): <module>
 4
 
 
-
+B
