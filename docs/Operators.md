@@ -363,7 +363,7 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> : tensor(int32)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
@@ -411,7 +411,7 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : T</dt>
+<dt><tt>reduced</tt> : tensor(int32)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
