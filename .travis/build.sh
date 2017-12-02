@@ -17,8 +17,5 @@ pip install pytest-cov nbval
 pytest
 
 # check auto-gen files up-to-date
-python onnx/defs/gen_doc.py
-python onnx/gen_proto.py
-backend-test-tools generate-data
-git status
+./scripts/autogen.sh
 git diff --exit-code
