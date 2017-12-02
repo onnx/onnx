@@ -9,8 +9,8 @@
 /Users/lufang/gitrepos/pytorch/torch/onnx/__init__.py(120): _export
 test_generator.py(17): generate_testcase
 test_generator.py(155): test_flatten
-test_generator.py(165): main
-test_generator.py(168): <module>
+test_generator.py(176): main
+test_generator.py(180): <module>
 torch-jit-exportZ
 0
 
