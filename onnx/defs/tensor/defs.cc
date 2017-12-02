@@ -7,8 +7,6 @@ using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
 
 OPERATOR_SCHEMA(Cast)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
@@ -38,8 +36,6 @@ NOTE: Casting to and from strings is not supported yet.
 
 
 OPERATOR_SCHEMA(Reshape)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
@@ -57,8 +53,6 @@ from the shape argument.)DOC")
 	            "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Concat)
-.NumInputs(1, INT_MAX)
-.NumOutputs(1)
 .Attr("axis",
     "Which axis to concat on",
     AttrType::INT)
@@ -70,10 +64,8 @@ OPERATOR_SCHEMA(Concat)
 
 OPERATOR_SCHEMA(Split)
     .SinceVersion(2)
-    .NumInputs(1)
-    .NumOutputs(1, INT_MAX)
     .Input(0, "input", "The tensor to split", "T")
-    .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T")
+    .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
     .Attr("axis",
@@ -89,8 +81,6 @@ to equal sized parts.
 )DOC");
 
 OPERATOR_SCHEMA(Slice)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
@@ -149,8 +139,6 @@ Example 2:
             "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Transpose)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Transpose the input tensor similar to numpy.transpose. For example, when
 axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
@@ -166,8 +154,6 @@ will be (2, 1, 3).
             "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Gather)
-    .NumInputs(2)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
@@ -233,8 +219,6 @@ Example 2:
         "Constrain indices to integer types");
 
 OPERATOR_SCHEMA(Squeeze)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr("axes",
           "List of positive integers, indicate the dimensions to squeeze.",
           AttrType::INTS,
@@ -250,8 +234,6 @@ Takes a  parameter `axes` with a list of axes to squeeze.
 
 OPERATOR_SCHEMA(Pad)
     .SinceVersion(2)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr("pads",
           "List of integers indicate the padding element count at the "
           "begining and end of each axis, for 2D it is the number of pixel. "
@@ -294,8 +276,6 @@ Example:
             "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(SpaceToDepth)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
@@ -314,8 +294,6 @@ are moved to the depth dimension.
             "Constrain input types to float tensors.");
 
 OPERATOR_SCHEMA(DepthToSpace)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttrType::INT)
@@ -335,8 +313,6 @@ and width dimensions.
             "Constrain input types to float tensors.");
 
 OPERATOR_SCHEMA(Tile)
-    .NumInputs(3)
-    .NumOutputs(1)
     .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
     .Input(0,
            "input",

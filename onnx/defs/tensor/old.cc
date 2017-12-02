@@ -8,11 +8,9 @@ using namespace onnx;
 
 OPERATOR_SCHEMA(Split)
     .SinceVersion(1)
-    .NumInputs(1, 2)
-    .NumOutputs(1, INT_MAX)
     .Input(0, "input", "The tensor to split", "T")
     .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T", OpSchema::Optional)
-    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T")
+    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
     .Attr("axis",
@@ -29,8 +27,6 @@ to equal sized parts.
 
 OPERATOR_SCHEMA(Pad)
     .SinceVersion(1)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr("paddings",
           "List of integers indicate the padding element count at the "
           "begining and end of each axis, for 2D it is the number of pixel. "

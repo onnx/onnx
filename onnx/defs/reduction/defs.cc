@@ -33,53 +33,33 @@ False instead of True.)DOC";
 }
   
 OPERATOR_SCHEMA(ReduceMax)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("max"));
 
 OPERATOR_SCHEMA(ReduceMin)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("min"));
 
 OPERATOR_SCHEMA(ReduceSum)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("sum"));
 
 OPERATOR_SCHEMA(ReduceSumSquare)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("sum square"));
 
 OPERATOR_SCHEMA(ReduceMean)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("mean"));
 
 OPERATOR_SCHEMA(ReduceProd)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("product"));
 
 OPERATOR_SCHEMA(ReduceLogSum)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("log sum"));
 
 OPERATOR_SCHEMA(ReduceLogSumExp)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("log sum exponent"));
 
 OPERATOR_SCHEMA(ReduceL1)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("L1 norm"));
 
 OPERATOR_SCHEMA(ReduceL2)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ReduceDocGenerator("L2 norm"));
 
     
@@ -109,13 +89,9 @@ The type of the output tensor is integer.)DOC";
 }
 
 OPERATOR_SCHEMA(ArgMax)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ArgReduceDocGenerator("max"));
 
 OPERATOR_SCHEMA(ArgMin)
-    .NumInputs(1)
-    .NumOutputs(1)
     .FillUsing(ArgReduceDocGenerator("min"));
 
 }  // namespace onnx

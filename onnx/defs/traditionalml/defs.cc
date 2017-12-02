@@ -8,8 +8,6 @@ using namespace onnx;
 #ifdef ONNX_ML
 OPERATOR_SCHEMA(ArrayFeatureExtractor)
 .SetDomain("ai.onnx.ml")
-.NumInputs(2)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Select a subset of the data based on the indices passed.
 )DOC")
@@ -28,8 +26,6 @@ OPERATOR_SCHEMA(ArrayFeatureExtractor)
 
 OPERATOR_SCHEMA(Binarizer)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Makes values 1 or 0 based on a single threshold.
 )DOC")
@@ -46,8 +42,6 @@ OPERATOR_SCHEMA(Binarizer)
 
 OPERATOR_SCHEMA(CastMap)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Converts a map to a tensor.  Map key must be int64 and the values will be ordered
     in ascending order based on this key.  Supports dense packing or sparse packing.
@@ -78,8 +72,6 @@ OPERATOR_SCHEMA(CastMap)
 
 OPERATOR_SCHEMA(CategoryMapper)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Convert strings to int64s and vice versa.
     Takes in a map to use for the conversion.
@@ -123,8 +115,6 @@ OPERATOR_SCHEMA(CategoryMapper)
 
 OPERATOR_SCHEMA(DictVectorizer)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Uses an index mapping to convert a dictionary to an array.
     The output array will be equal in length to the index mapping vector parameter.
@@ -147,8 +137,6 @@ OPERATOR_SCHEMA(DictVectorizer)
 
 OPERATOR_SCHEMA(Imputer)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Replace imputs that equal replaceValue/s  with  imputeValue/s.
     All other inputs are copied to the output unchanged.
@@ -169,8 +157,6 @@ OPERATOR_SCHEMA(Imputer)
 
 OPERATOR_SCHEMA(LabelEncoder)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Convert class label to their integral type and vice versa.
     In both cases the operator is instantiated with the list of class strings.
@@ -201,8 +187,6 @@ OPERATOR_SCHEMA(LabelEncoder)
 
 OPERATOR_SCHEMA(LinearClassifier)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(2)
 .SetDoc(R"DOC(
     Linear classifier prediction (choose class)
 )DOC")
@@ -242,8 +226,6 @@ OPERATOR_SCHEMA(LinearClassifier)
 
 OPERATOR_SCHEMA(LinearRegressor)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Generalized linear regression evaluation.
     If targets is set to 1 (default) then univariate regression is performed.
@@ -275,8 +257,6 @@ OPERATOR_SCHEMA(LinearRegressor)
 
 OPERATOR_SCHEMA(Normalizer)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Normalize the input.  There are three normalization modes,
     which have the corresponding formulas:
@@ -294,8 +274,6 @@ OPERATOR_SCHEMA(Normalizer)
 
 OPERATOR_SCHEMA(OneHotEncoder)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Replace the inputs with an array of ones and zeros, where the only
     one is the zero-based category that was passed in.  The total category count 
@@ -318,8 +296,6 @@ OPERATOR_SCHEMA(OneHotEncoder)
 
 OPERATOR_SCHEMA(Scaler)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
 )DOC")
@@ -340,8 +316,6 @@ OPERATOR_SCHEMA(Scaler)
 
 OPERATOR_SCHEMA(SVMClassifier)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(2)
 .SetDoc(R"DOC(
     SVM classifier prediction 
 )DOC")
@@ -392,8 +366,6 @@ OPERATOR_SCHEMA(SVMClassifier)
 
 OPERATOR_SCHEMA(SVMRegressor)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     SVM regression prediction and one-class svm anomaly detection
 )DOC")
@@ -430,8 +402,6 @@ OPERATOR_SCHEMA(SVMRegressor)
 
 OPERATOR_SCHEMA(TreeEnsembleClassifier)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(2)
 .SetDoc(R"DOC(
     Tree Ensemble classifier.  Returns the top class for each input in N.
     All args with nodes_ are fields of a tuple of tree nodes, and 
@@ -516,8 +486,6 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
 
 OPERATOR_SCHEMA(TreeEnsembleRegressor)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.
     All args with nodes_ are fields of a tuple of tree nodes, and 
@@ -592,8 +560,6 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
 
 OPERATOR_SCHEMA(ZipMap)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Makes a map from the input and the attributes.  
     Assumes input 0 are the values, and the keys are specified by the attributes.
@@ -613,8 +579,6 @@ OPERATOR_SCHEMA(ZipMap)
 
 OPERATOR_SCHEMA(FeatureVectorizer)
 .SetDomain("ai.onnx.ml")
-.NumInputs(1, INT_MAX)
-.NumOutputs(1)
 .SetDoc(R"DOC(
     Concatenates input features into one continuous output.  
     Inputlist is a list of input feature names, inputdimensions is the size of each input feature.

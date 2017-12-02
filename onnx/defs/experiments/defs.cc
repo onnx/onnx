@@ -9,8 +9,6 @@ using SupportType = onnx::OpSchema::SupportType;
 
 OPERATOR_SCHEMA(Identity)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc("Identity operator")
     .Input(0, "input", "Input tensor", "T")
     .Output(
@@ -23,8 +21,6 @@ OPERATOR_SCHEMA(Identity)
 
 OPERATOR_SCHEMA(Affine)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Affine takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the affine function, y = alpha * x + beta,
@@ -40,8 +36,6 @@ is applied to the tensor elementwise.
 
 OPERATOR_SCHEMA(ThresholdedRelu)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
@@ -58,8 +52,6 @@ is applied to the tensor elementwise.
 
 OPERATOR_SCHEMA(ScaledTanh)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
@@ -76,8 +68,6 @@ by providing the same input and output blobs.
 
 OPERATOR_SCHEMA(ParametricSoftplus)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
@@ -93,8 +83,6 @@ the tensor elementwise.
 
 OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(0, 1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 The operator fills the elements of the output tensor with a constant value
@@ -164,8 +152,6 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
 
 OPERATOR_SCHEMA(GivenTensorFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(0, 1)
-    .NumOutputs(1)
     .Input(0, "shape", "The shape of filled tensor", "T", OpSchema::Optional)
     .Output(0, "X", "The filled tensor", "T")
     .TypeConstraint(
@@ -180,8 +166,6 @@ OPERATOR_SCHEMA(GivenTensorFill)
 
 OPERATOR_SCHEMA(FC)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(3)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Computes the result of passing an input vector X into a fully
 connected layer with 2D weight matrix W and 1D bias vector b. That is,
@@ -234,8 +218,6 @@ will throw errors.
 
 OPERATOR_SCHEMA(Scale)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Input(0, "input", "Input data to be scaled", "T")
     .Output(0, "output", "Output data after scaling", "T")
     .TypeConstraint(
@@ -251,8 +233,6 @@ Scale takes one input data (Tensor<float>) and produces one output data
 
 OPERATOR_SCHEMA(GRUUnit)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(4)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 GRUUnit computes the activations of a standard GRU,
 in a sequence-length aware fashion.
@@ -296,8 +276,6 @@ and op)DOC");
 
 OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in
 the same ordering as the image pixel format.)DOC")
@@ -312,8 +290,6 @@ the same ordering as the image pixel format.)DOC")
 
 OPERATOR_SCHEMA(MeanVarianceNormalization)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
     .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttrType::INT)
@@ -327,8 +303,6 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
 
 OPERATOR_SCHEMA(Crop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
 then optionally start the crop offset by the left/top border amounts.
@@ -344,8 +318,6 @@ If scale is not provided, crop the borders as provided.)DOC")
 
 OPERATOR_SCHEMA(Embedding)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Turns positive integers (indexes) into dense vectors of fixed size.)DOC")
     .Attr("input_dim", "Size of the input vocabulary.", AttrType::INT)
@@ -365,8 +337,6 @@ OPERATOR_SCHEMA(Embedding)
 
 OPERATOR_SCHEMA(Upsample)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr(
         "width_scale",
         "The scale along width dimension. It takes value greater than or equal to 1.",
