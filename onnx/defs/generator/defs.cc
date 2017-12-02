@@ -7,8 +7,6 @@ using namespace onnx;
 using AttrType = onnx::OpSchema::AttrType;
 
 OPERATOR_SCHEMA(Constant)
-    .NumInputs(0)
-    .NumOutputs(1)
     .SetDoc(R"DOC(A constant tensor.)DOC")
     .Attr(
           "value",
@@ -22,8 +20,6 @@ OPERATOR_SCHEMA(Constant)
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomUniform)
-    .NumInputs(0)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
@@ -60,8 +56,6 @@ TensorProto message.
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormal)
-    .NumInputs(0)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Generate a tensor with random values drawn from a normal distribution. The shape
 of the tensor is specified by the `shape` argument and the parameter of the normal distribution
@@ -99,8 +93,6 @@ TensorProto message.
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomUniformLike)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is computed from the input argument and the range by `low` and `high`.
@@ -138,8 +130,6 @@ TensorProto message.
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormalLike)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Generate a tensor with random values drawn from a normal distribution. The shape
 of the tensor is computed from the input argument and the parameter of the normal distribution

@@ -524,7 +524,7 @@ opset_import {
 <dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
 </dl>
 
-#### Outputs (0 - &#8734;)
+#### Outputs (1 - 5)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
@@ -4932,10 +4932,10 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (0 - &#8734;)
+#### Inputs
 
 
-#### Outputs (0 - &#8734;)
+#### Outputs
 
 
 #### Type Constraints

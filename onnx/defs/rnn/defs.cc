@@ -45,7 +45,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Output(0, "Y",
                       "A tensor that concats all the intermediate output values of the hidden. "
                       "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
-                      "It is optional if `output_sequence` is 0.", "T");
+                      "It is optional if `output_sequence` is 0.", "T", OpSchema::Optional);
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
                       "`[num_directions, batch_size, hidden_size]`.", "T");
@@ -57,8 +57,6 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
 
 
 OPERATOR_SCHEMA(RNN)
-    .NumInputs(3, 6)
-    .NumOutputs(1, 2)
     .SetDoc(R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
@@ -147,8 +145,6 @@ Equations (Default: f=tanh):
 
 
 OPERATOR_SCHEMA(GRU)
-    .NumInputs(3, 6)
-    .NumOutputs(1, 2)
     .SetDoc(R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -248,8 +244,6 @@ Equations (Default: f=sigmoid, g=tanh):
 
 
 OPERATOR_SCHEMA(LSTM)
-    .NumInputs(3, 8)
-    .NumOutputs(1, 2)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.

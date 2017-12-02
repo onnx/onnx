@@ -34,8 +34,6 @@ namespace onnx {
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);            
             schema.SetDoc(doc);
-            schema.NumInputs(1);
-            schema.NumOutputs(1);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
                         AttrType::INTS);
@@ -88,8 +86,6 @@ namespace onnx {
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
             schema.SinceVersion(2);
-            schema.NumInputs(1);            
-            schema.NumOutputs(1);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
                         AttrType::INTS);
@@ -139,8 +135,6 @@ namespace onnx {
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
-            schema.NumInputs(2);
-            schema.NumOutputs(1);
             schema.Attr("pooled_shape",
                         "ROI pool output shape (height, width).",
                         AttrType::INTS);
@@ -179,8 +173,6 @@ The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.NumInputs(2, 3);
-            schema.NumOutputs(1);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; "
@@ -241,8 +233,6 @@ The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.NumInputs(2, 3);
-            schema.NumOutputs(1);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; has size (N x C x H x W)"
@@ -307,8 +297,6 @@ namespace onnx {
             ReplaceAll(doc, "{op_type}", op_type);
             ReplaceAll(doc, "{op}", op);
             schema.SetDoc(doc);
-            schema.NumInputs(1);
-            schema.NumOutputs(1);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -344,8 +332,6 @@ namespace onnx {
             ReplaceAll(doc, "{op}", op);
             schema.SetDoc(doc);
             schema.SinceVersion(2);
-            schema.NumInputs(1);
-            schema.NumOutputs(1);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
                         AttrType::INT);
@@ -373,7 +359,6 @@ namespace onnx {
 } // namespace onnx
 
 OPERATOR_SCHEMA(BatchNormalization)
-    .NumInputs(5)
     .NumOutputs({ 1, 5 })
     .EnforceConsumed({ {3, 1}, {4, 2} })
     .SetDoc(R"DOC(
@@ -422,25 +407,23 @@ Output case #2: Y (test mode)
     .Output(1,
         "mean",
         "The running mean after the BatchNormalization operator. Must be in-place "
-        "with the input mean. Should not be used for testing.", "T")
+        "with the input mean. Should not be used for testing.", "T", OpSchema::Optional)
     .Output(2,
         "var",
         "The running variance after the BatchNormalization operator. Must be "
-        "in-place with the input var. Should not be used for testing.", "T")
+        "in-place with the input var. Should not be used for testing.", "T", OpSchema::Optional)
     .Output(3,
         "saved_mean",
         "Saved mean used during training to speed up gradient "
-        "computation. Should not be used for testing.", "T")
+        "computation. Should not be used for testing.", "T", OpSchema::Optional)
     .Output(4,
         "saved_var",
         "Saved variance used during training to speed up "
-        "gradient computation. Should not be used for testing.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "gradient computation. Should not be used for testing.", "T", OpSchema::Optional)
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(InstanceNormalization)
-    .NumInputs(3)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Carries out instance normalization as described in the paper
@@ -469,8 +452,6 @@ where mean and B are computed per instance per channel.
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(LpNormalization)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Input(0, "input", "Input matrix", "T")
     .Output(0, "output", "Matrix after normalization", "T")
     .TypeConstraint(
@@ -484,8 +465,6 @@ Given a matrix, apply Lp-normalization along the provided axis.
     .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttrType::INT);
 
 OPERATOR_SCHEMA(Dropout)
-    .NumInputs(1)
-    .NumOutputs(1,2)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -504,13 +483,11 @@ the training phase, so during testing nothing needs to be done.
     .Input(0, "data", "The input data as Tensor.", "T")
     .Output(0, "output", "The output.", "T")
     .Output(1, "mask",
-               "The output mask. If is_test is nonzero, this output is not filled.", "T")
+               "The output mask. If is_test is nonzero, this output is not filled.", "T", OpSchema::Optional)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Flatten)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
@@ -533,8 +510,6 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         AttrType::INT);
 
 OPERATOR_SCHEMA(LRN)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr("size", "The number of channels to sum over", AttrType::INT, true)
     .Attr("alpha", "Scaling parameter", AttrType::FLOAT, true)
     .Attr("beta", "The exponent", AttrType::FLOAT, true)
