@@ -8,7 +8,7 @@ way to get these dependencies is via [Anaconda](https://www.anaconda.com/downloa
 conda install -c conda-forge protobuf numpy
 ```
 
-During development, it's convenient to install ONNX in development mode. This can be done by setting environment variable `ONNX_ML=1` for onnx-ml:
+During development, it's convenient to install ONNX in development mode (for ONNX-ML, set environment variable `ONNX_ML=1`):
 
 ```
 git clone --recursive https://github.com/onnx/onnx.git
