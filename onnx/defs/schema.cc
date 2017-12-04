@@ -483,7 +483,7 @@ void OpSchema::Finalize() {
       ++max_output_;
       break;
     case OpSchema::Variadic:
-      // Only last input formal parameter could be variadic.
+      // Only last output formal parameter could be variadic.
       ENFORCE((outputs_.size() - 1) == i);
       min_output_ = max_output_ + 1;
       max_output_ = std::numeric_limits<int>::max();
