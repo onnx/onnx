@@ -447,18 +447,35 @@ void OpSchema::Finalize() {
   } while (0)
 
   // Calculate min/max number of inputs.
-  for (int i = 0; i < (int)(inputs_.size()); ++i) {
+  // <Min number of inputs> = <number of "single" inputs> + <number of "optional"
+  // but not trailing inputs>.
+  // <Max number of inputs> = <number of all inputs or std::numeric_limits<int>::max()
+  // (if the last input is variadic).
+  
+  // Flag indicates whether an optional input is trailing one (there's no single or variadic
+  // input behind).
+  bool trailingOptionalInput = true;
+  for (int i = (int)(inputs_.size() - 1); i >=0; --i) {
     switch (inputs_[i].GetOption()) {
     case OpSchema::Single:
+      trailingOptionalInput = false;
       ++min_input_;
-      ++max_input_;
+      if (std::numeric_limits<int>::max() != max_input_) {
+        ++max_input_;
+      }
       break;
     case OpSchema::Optional:
-      ++max_input_;
+      if (!trailingOptionalInput) {
+        ++min_input_; // "Optional" but not trailing inputs should be represented with "".
+      }
+      if (std::numeric_limits<int>::max() != max_input_) {
+        ++max_input_;
+      }
       break;
     case OpSchema::Variadic:
       // Only last input formal parameter could be variadic.
       ENFORCE((inputs_.size() - 1) == i);
+      trailingOptionalInput = false;
       ++min_input_;
       max_input_ = std::numeric_limits<int>::max();
       break;
@@ -466,18 +483,28 @@ void OpSchema::Finalize() {
   }
 
   // Calculate min/max number of outputs.
-  for (int i = 0; i < (int)(outputs_.size()); ++i) {
+  bool trailingOptionalOutput = true;
+  for (int i = (int)(outputs_.size() - 1); i >= 0; --i) {
     switch (outputs_[i].GetOption()) {
     case OpSchema::Single:
+      trailingOptionalOutput = false;
       ++min_output_;
-      ++max_output_;
+      if (std::numeric_limits<int>::max() != max_output_) {
+        ++max_output_;
+      }
       break;
     case OpSchema::Optional:
-      ++max_output_;
+      if (!trailingOptionalOutput) {
+        ++min_output_; // "Optional" but not trailing outputs should be represented with "".
+      }
+      if (std::numeric_limits<int>::max() != max_output_) {
+        ++max_output_;
+      }
       break;
     case OpSchema::Variadic:
-      // Only last output formal parameter could be variadic.
+      // Only last input formal parameter could be variadic.
       ENFORCE((outputs_.size() - 1) == i);
+      trailingOptionalOutput = false;
       ++min_output_;
       max_output_ = std::numeric_limits<int>::max();
       break;
