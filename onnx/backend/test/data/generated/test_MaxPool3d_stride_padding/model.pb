@@ -1,8 +1,8 @@
-pytorch0.2"com.facebook:£
-M
+pytorch0.3:©
+S
 01"MaxPool*
-kernel_shape@@@ *
-pads@@@ *
+kernel_shape@@@ *
+pads@@@@@@ *
 strides@@@ torch-jit-exportZ
 0
 
@@ -17,4 +17,4 @@ M
 
 
 
-
+B
