@@ -127,7 +127,12 @@ def display_schema(schema, versions):
     if schema.outputs:
         s += '<dl>\n'
         for output in schema.outputs:
-            s += '<dt><tt>{}</tt> : {}</dt>\n'.format(output.name, output.typeStr)
+            option_str = ""
+            if OpSchema.FormalParameterOption.Optional == output.option:
+                option_str = " (optional)"
+            elif OpSchema.FormalParameterOption.Variadic == output.option:
+                option_str = " (variadic)"
+            s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
             s += '<dd>{}</dd>\n'.format(output.description)
         s += '</dl>\n'
 

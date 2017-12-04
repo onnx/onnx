@@ -529,13 +529,13 @@ opset_import {
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>The output 4-dimensional tensor of the same shape as X.</dd>
-<dt><tt>mean</tt> : T</dt>
+<dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
-<dt><tt>var</tt> : T</dt>
+<dt><tt>var</tt> (optional) : T</dt>
 <dd>The running variance after the BatchNormalization operator. Must be in-place with the input var. Should not be used for testing.</dd>
-<dt><tt>saved_mean</tt> : T</dt>
+<dt><tt>saved_mean</tt> (optional) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
-<dt><tt>saved_var</tt> : T</dt>
+<dt><tt>saved_var</tt> (optional) : T</dt>
 <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
 </dl>
 
@@ -1059,7 +1059,7 @@ opset_import {
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> : T</dt>
+<dt><tt>mask</tt> (optional) : T</dt>
 <dd>The output mask. If is_test is nonzero, this output is not filled.</dd>
 </dl>
 
@@ -1416,7 +1416,7 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -2107,7 +2107,7 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -3216,7 +3216,7 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -4546,7 +4546,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs</tt> : T</dt>
+<dt><tt>outputs</tt> (variadic) : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 
