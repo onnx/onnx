@@ -454,58 +454,38 @@ void OpSchema::Finalize() {
   
   // Flag indicates whether an optional input is trailing one (there's no single or variadic
   // input behind).
-  bool trailingOptionalInput = true;
-  for (int i = (int)(inputs_.size() - 1); i >=0; --i) {
+  for (int i = 0; i < (int)(inputs_.size()); ++i) {
     switch (inputs_[i].GetOption()) {
     case OpSchema::Single:
-      trailingOptionalInput = false;
-      ++min_input_;
-      if (std::numeric_limits<int>::max() != max_input_) {
-        ++max_input_;
-      }
+      ++max_input_;
+      min_input_ = max_input_;
       break;
     case OpSchema::Optional:
-      if (!trailingOptionalInput) {
-        ++min_input_; // "Optional" but not trailing inputs should be represented with "".
-      }
-      if (std::numeric_limits<int>::max() != max_input_) {
-        ++max_input_;
-      }
+      ++max_input_;
       break;
     case OpSchema::Variadic:
       // Only last input formal parameter could be variadic.
       ENFORCE((inputs_.size() - 1) == i);
-      trailingOptionalInput = false;
-      ++min_input_;
+      min_input_ = max_input_ + 1;
       max_input_ = std::numeric_limits<int>::max();
       break;
     }
   }
 
   // Calculate min/max number of outputs.
-  bool trailingOptionalOutput = true;
-  for (int i = (int)(outputs_.size() - 1); i >= 0; --i) {
+  for (int i = 0; i < (int)(outputs_.size()); ++i) {
     switch (outputs_[i].GetOption()) {
     case OpSchema::Single:
-      trailingOptionalOutput = false;
-      ++min_output_;
-      if (std::numeric_limits<int>::max() != max_output_) {
-        ++max_output_;
-      }
+      ++max_output_;
+      min_output_ = max_output_;
       break;
     case OpSchema::Optional:
-      if (!trailingOptionalOutput) {
-        ++min_output_; // "Optional" but not trailing outputs should be represented with "".
-      }
-      if (std::numeric_limits<int>::max() != max_output_) {
-        ++max_output_;
-      }
+      ++max_output_;
       break;
     case OpSchema::Variadic:
       // Only last input formal parameter could be variadic.
       ENFORCE((outputs_.size() - 1) == i);
-      trailingOptionalOutput = false;
-      ++min_output_;
+      min_output_ = max_output_ + 1;
       max_output_ = std::numeric_limits<int>::max();
       break;
     }
