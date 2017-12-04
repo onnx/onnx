@@ -18,6 +18,18 @@ from onnx import mapping
 def make_node(
         op_type, inputs, outputs,
         name=None, doc_string=None, **kwargs):
+    """Construct a NodeProto.
+
+    Arguments:
+        op_type (string): The name of the operator to construct
+        inputs (list of string): list of input names
+        outputs (list of string): list of output names
+        name (string, default None): optional unique identifier for NodeProto
+        doc_string (string, default None): optional documentation string for NodeProto
+        **kwargs (dict): the attributes of the node.  The acceptable values
+            are documented in :func:`make_attribute`.
+    """
+
     node = NodeProto()
     node.op_type = op_type
     node.input.extend(inputs)
@@ -46,7 +58,14 @@ def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None):
         graph.doc_string = doc_string
     return graph
 
-# TODO: Provide a way to set ONNX-ML operator set version
+
+def make_opsetid(domain, version):
+    opsetid = OperatorSetIdProto()
+    opsetid.domain = domain
+    opsetid.version = version
+    return opsetid
+
+
 def make_model(graph, **kwargs):
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
@@ -54,8 +73,9 @@ def make_model(graph, **kwargs):
     model.ir_version = IR_VERSION
     model.graph.CopyFrom(graph)
 
-    if 'opset_import' in kwargs:
-        model.opset_import.extend(kwargs['opset_import'])
+    opset_imports = kwargs.pop('opset_imports', None)
+    if opset_imports is not None:
+        model.opset_import.extend(opset_imports)
     else:
         # Default import
         imp = model.opset_import.add()

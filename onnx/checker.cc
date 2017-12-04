@@ -34,7 +34,7 @@ namespace checker {
     }                                         \
   } while (0)
 
-void check_value_info(const ValueInfoProto& value_info, int ir_version) {
+void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
   enforce_non_empty_field(value_info, name);
   enforce_has_field(value_info, type);
   const auto value_case = value_info.type().value_case();
@@ -49,7 +49,7 @@ void check_value_info(const ValueInfoProto& value_info, int ir_version) {
   }
 }
 
-void check_tensor(const TensorProto& tensor, int ir_version) {
+void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check("setting data_type field to UNDEFINED is not allowed");
@@ -136,10 +136,12 @@ void check_tensor(const TensorProto& tensor, int ir_version) {
 #undef check_field
 }
 
-void check_attribute(const AttributeProto& attr, int ir_version) {
+// NB: This is a generic "attribute well-formedness" check, it doesn't
+// actually test if an attribute is valid per a schema
+void check_attribute(const AttributeProto& attr, const CheckerContext& ctx) {
   enforce_non_empty_field(attr, name);
 
-  if (ir_version >= 0x00000002) {
+  if (ctx.ir_version >= 0x00000002) {
     enforce_has_field(attr, type);
   }
 
@@ -182,39 +184,46 @@ void check_attribute(const AttributeProto& attr, int ir_version) {
   }
 
   for (const auto& tensor : attr.tensors()) {
-    check_tensor(tensor, ir_version);
+    check_tensor(tensor, ctx);
   }
   for (const auto& graph : attr.graphs()) {
-    check_graph(graph, ir_version);
+    check_graph(graph, ctx);
   }
 }
 
-void check_node(const NodeProto& node, int ir_version) {
+void check_node(const NodeProto& node, const CheckerContext& ctx) {
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
     fail_check("NodeProto has zero input and zero output.");
   }
 
+  // Resolve domain for node
+  auto dit = ctx.opset_imports.find(node.domain());
+  if (dit == ctx.opset_imports.end()) {
+    fail_check("No opset import for domain '" + node.domain() + "'");
+  }
+  auto domain_version = dit->second;
+
   for (const auto& attr : node.attribute()) {
-    check_attribute(attr, ir_version);
+    check_attribute(attr, ctx);
   }
 
-  const auto* schema = OpSchemaRegistry::Schema(node.op_type());
+  const auto* schema = OpSchemaRegistry::Schema(node.op_type(), node.domain(), domain_version);
   if (!schema) {
     fail_check("No Schema registered for " + node.op_type());
   }
   schema->Verify(node);
 }
 
-void check_graph(const GraphProto& graph, int ir_version) {
+void check_graph(const GraphProto& graph, const CheckerContext& ctx) {
   enforce_non_empty_field(graph, name);
 
   for (const auto& value_info : graph.input()) {
-    check_value_info(value_info, ir_version);
+    check_value_info(value_info, ctx);
   }
   for (const auto& value_info : graph.output()) {
-    check_value_info(value_info, ir_version);
+    check_value_info(value_info, ctx);
   }
 
   std::unordered_set<std::string> output_names{};
@@ -231,7 +240,7 @@ void check_graph(const GraphProto& graph, int ir_version) {
     if (!output_names.count(init.name())) {
       fail_check(init.name() + " in initializer but not in graph input");
     }
-    check_tensor(init, ir_version);
+    check_tensor(init, ctx);
   }
 
   for (const auto& node : graph.node()) {
@@ -265,7 +274,7 @@ void check_graph(const GraphProto& graph, int ir_version) {
       output_names.insert(output);
     }
     try {
-      check_node(node, ir_version);
+      check_node(node, ctx);
     } catch (ValidationError& ex) {
       ex.AppendContext("Bad node spec: " + node.ShortDebugString());
       throw ex;
@@ -273,11 +282,11 @@ void check_graph(const GraphProto& graph, int ir_version) {
   }
 }
 
-void check_model(const ModelProto& model, int ir_version) {
+void check_model(const ModelProto& model) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
-  if (model.ir_version() > ir_version) {
+  if (model.ir_version() > IR_VERSION) {
     fail_check("Your model ir_version is higher than the checker's.");
   }
   if (model.metadata_props_size() > 1) {
@@ -289,7 +298,21 @@ void check_model(const ModelProto& model, int ir_version) {
       }
     }
   }
-  check_graph(model.graph(), model.ir_version());
+  std::unordered_map<std::string, int> versions;
+  CheckerContext ctx;
+  ctx.ir_version = model.ir_version();
+  for (const auto& opset_import : model.opset_import()) {
+    ctx.opset_imports[opset_import.domain()] = opset_import.version();
+  }
+  auto dit = ctx.opset_imports.find("");
+  if (dit == ctx.opset_imports.end()) {
+    if (model.ir_version() >= 3) {
+      fail_check("model with IR version >= 3 must specify opset_import for ONNX");
+    } else {
+      ctx.opset_imports[""] = 1;
+    }
+  }
+  check_graph(model.graph(), ctx);
 }
 
 #undef fail_check

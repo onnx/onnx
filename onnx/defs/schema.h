@@ -486,10 +486,27 @@ class OpSchemaRegistry {
   // Domain with default value "" means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
-      const std::string& domain = "") {
+      const std::string& domain = "",
+      const int domain_version = -1) {
     auto& m = map();
+    // TODO: Better to use find() to avoid doing the lookup twice
+    // Invariant: any map in the schema is non-empty
     if (m.count(key) && m[key].count(domain)) {
-      return &m[key][domain].rbegin()->second;
+      if (domain_version < 0) {
+        // use latest
+        return &m[key][domain].rbegin()->second;
+      } else {
+        auto& submap = m[key][domain];
+        auto next_it = submap.upper_bound(domain_version);
+        if (next_it == submap.begin()) {
+          return nullptr;
+        } else if (next_it == submap.end()) {
+          return &submap.rbegin()->second;
+        } else {
+          --next_it;
+          return &next_it->second;
+        }
+      }
     } else {
       return nullptr;
     }
