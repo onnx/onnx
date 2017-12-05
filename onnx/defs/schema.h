@@ -30,9 +30,6 @@ typedef std::unordered_set<DataType> DataTypeSet;
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
     TypeConstraintMap;
 
-// A const value returned by OpSchema::CalculateOutput() if the number of
-// output cannot be determined.
-constexpr int kCannotComputeNumOutputs = -1;
 
 /**
  * @brief A class to record the schema of an op.
@@ -330,12 +327,6 @@ class OpSchema {
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
-
-  /**
-   * @brief A function to allow one to get the number of outputs based on the
-   * number of inputs, if this schema supports it.
-   */
-  int CalculateOutput(int num_input) const;
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
