@@ -38,7 +38,7 @@ Further metadata may be added to a model via its `metadata_props` field (as desc
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles. Each node is a call to an operator. Nodes have one or more inputs, one or more outputs, and zero or more attribute-value pairs.
+Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles and the list is in topoligically sorted order. Each node is a call to an operator. Nodes have one or more inputs, one or more outputs, and zero or more attribute-value pairs.
 
 #### Model Graph Metadata
 
