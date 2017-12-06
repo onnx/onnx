@@ -246,6 +246,10 @@ void check_graph(const GraphProto& graph, int ir_version) {
     }
     // check for SSA form
     for (const auto& output : node.output()) {
+      // optional output
+      if (output.empty()) {
+        continue;
+      }
       if (output_names.count(output)) {
         fail_check(
             "Graph must be in SSA form, however '",
