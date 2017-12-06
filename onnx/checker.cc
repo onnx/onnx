@@ -216,24 +216,50 @@ void check_graph(const GraphProto& graph, int ir_version) {
   for (const auto& value_info : graph.output()) {
     check_value_info(value_info, ir_version);
   }
+
+  std::unordered_set<std::string> output_names{};
+  for (const auto& value_info : graph.input()) {
+    output_names.insert(value_info.name());
+  }
+  for (const auto& init : graph.initializer()) {
+    if (!output_names.count(init.name())) {
+      fail_check(init.name() + " in initializer but not in graph input");
+    }
+    check_tensor(init, ir_version);
+  }
+
   for (const auto& node : graph.node()) {
+    // nodes must be in topologically sorted order
+    for (const auto& input : node.input()) {
+      // explicit optional input
+      if (input.empty()) {
+        continue;
+      }
+      if (!output_names.count(input)) {
+        fail_check(
+            "Nodes in a graph must be topologically sorted, however input '",
+            input,
+            "' of node: \n",
+            node.ShortDebugString(),
+            "\n is not output of any previous nodes.");
+      }
+    }
+    // check for SSA form
+    for (const auto& output : node.output()) {
+      if (output_names.count(output)) {
+        fail_check(
+            "Graph must be in SSA form, however '",
+            output,
+            "' has been used as output names multiple times.");
+      }
+      output_names.insert(output);
+    }
     try {
       check_node(node, ir_version);
     } catch (ValidationError& ex) {
       ex.AppendContext("Bad node spec: " + node.ShortDebugString());
       throw ex;
     }
-   }
-
-  std::unordered_set<std::string> input_names{};
-  for (const auto& value_info : graph.input()) {
-    input_names.insert(value_info.name());
-  }
-  for (const auto& init : graph.initializer()) {
-    if (!input_names.count(init.name())) {
-      fail_check(init.name() + " in initializer but not in graph input");
-    }
-    check_tensor(init, ir_version);
   }
 }
 
