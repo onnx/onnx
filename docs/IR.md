@@ -38,7 +38,11 @@ Further metadata may be added to a model via its `metadata_props` field (as desc
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles. Each node is a call to an operator. Nodes have one or more inputs, one or more outputs, and zero or more attribute-value pairs.
+Each computation dataflow graph is structured as a list of nodes that form a graph. Each node is a call to an operator. Nodes have zero or more inputs, one or more outputs, and zero or more attribute-value pairs. Additionally, a valid ONNX graph must fullfil the following requirements:
+
+- The graph MUST be free of cycles.
+- The graph MUST be in SSA (static single assignment) form, meaning outputs of all nodes are unique.
+- The nodes list MUST be in topologically sorted order, meaning if input of node `N2` is the output of node `N1`, `N2` must appear after `N1` in the nodes list.
 
 #### Model Graph Metadata
 
