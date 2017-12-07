@@ -219,6 +219,12 @@ void check_graph(const GraphProto& graph, int ir_version) {
 
   std::unordered_set<std::string> output_names{};
   for (const auto& value_info : graph.input()) {
+    if (output_names.count(value_info.name())) {
+      fail_check(
+          "Graph must be in SSA form, however '",
+          value_info.name(),
+          "' has been used as graph input names multiple times.");
+    }
     output_names.insert(value_info.name());
   }
   for (const auto& init : graph.initializer()) {
