@@ -412,7 +412,7 @@ opset_import {
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW or NHWC depending on the order parameter.</dd>
+<dd>The input 4-dimensional tensor of shape NCHW.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
 <dt><tt>B</tt> : T</dt>
