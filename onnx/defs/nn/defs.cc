@@ -385,8 +385,7 @@ Output case #2: Y (test mode)
         AttrType::FLOAT)
     .Input(0,
         "X",
-        "The input 4-dimensional tensor of shape NCHW or NHWC depending "
-        "on the order parameter.", "T")
+        "The input 4-dimensional tensor of shape NCHW.", "T")
     .Input(1,
         "scale",
         "The scale as a 1-dimensional tensor of size C to be applied to the "
