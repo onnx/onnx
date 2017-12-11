@@ -5381,9 +5381,8 @@ opset_import {
 ### <a name="Split-2"></a>**Split-2**</a>
 
   Split a tensor into a list of tensors, along the specified
-  'axis'. The lengths of the split can be specified using argument 'axis' or
-  optional second input blob to the operator. Otherwise, the tensor is split
-  to equal sized parts.
+  'axis'. Lengths of the parts can be specified using argument 'split'.
+  Otherwise, the tensor is split to equal sized parts.
 
 #### Versioning
 
