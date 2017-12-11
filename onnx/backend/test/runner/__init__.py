@@ -17,7 +17,7 @@ import numpy as np
 import onnx
 from onnx import helper, numpy_helper
 from six.moves.urllib.request import urlretrieve
-from ..loader import load_node_tests, load_model_tests, load_generated_tests
+from ..loader import load_node_tests, load_model_tests
 from .item import TestItem
 
 
@@ -38,11 +38,11 @@ class Runner(object):
         for nt in load_node_tests():
             self._add_node_test(nt)
 
-        for mt in load_model_tests():
-            self._add_model_test(mt)
+        for rt in load_model_tests(kind='real'):
+            self._add_model_test(rt, 'Real')
 
-        for gt in load_generated_tests():
-            self._add_model_test(gt, generated=True)
+        for gt in load_model_tests(kind='pytorch-converted'):
+            self._add_model_test(gt, 'PyTorchConverted')
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -194,7 +194,7 @@ class Runner(object):
         for device in devices:
             add_device_test(device)
 
-    def _add_model_test(self, model_test, generated=False):
+    def _add_model_test(self, model_test, kind):
         # model is loaded at runtime, note sometimes it could even
         # never loaded if the test skipped
         model_marker = [None]
@@ -239,10 +239,7 @@ class Runner(object):
                 outputs = list(prepared_model.run(inputs))
                 self._assert_similar_outputs(ref_outputs, outputs)
 
-        if generated:
-            self._add_test('Generated', model_test.name, run, model_marker)
-        else:
-            self._add_test('Model', model_test.name, run, model_marker)
+        self._add_test(kind + 'Model', model_test.name, run, model_marker)
 
     def _add_node_test(self, node_test):
 
