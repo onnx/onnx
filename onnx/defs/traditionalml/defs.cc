@@ -134,7 +134,7 @@ OPERATOR_SCHEMA(DictVectorizer)
     " allowed types.")
 .TypeConstraint(
     "T2",
-    { "tensor(int64)", "tensor(float)", "tensor(double)"},
+    { "tensor(int64)", "tensor(float)", "tensor(double)", "tensor(string)"},
     " allowed types.")
 .Attr("string_vocabulary", "The vocabulary vector", AttrType::STRINGS)
 .Attr("int64_vocabulary", "The vocabulary vector", AttrType::INTS);

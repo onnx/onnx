@@ -249,7 +249,7 @@ opset_import {
 <dl>
 <dt><tt>T1</tt> : map(string, int64), map(int64, string), map(int64, float), map(int64, double), map(string, float), map(string, double)</dt>
 <dd> allowed types.</dd>
-<dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
