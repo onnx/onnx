@@ -5381,12 +5381,8 @@ opset_import {
 ### <a name="Split-2"></a>**Split-2**</a>
 
   Split a tensor into a list of tensors, along the specified
-  'axis'. Either 'split' or 'num_split' must be defined. If 'split'
-  is defined, the length of 'split' is the number of partitions, and the elements
-  of 'split' specify the sizes of the partitions. If 'num_split' is defined,
-  it specifies the number of output partitions. The size of each output
-  partition is 'input.shape[axis]/num_split'. We require that 'num_split' evenly
-  divide 'input.shape[axis]'. 
+  'axis'. Lengths of the parts can be specified using argument 'split'.
+  Otherwise, the tensor is split to equal sized parts.
 
 #### Versioning
 
@@ -5403,7 +5399,58 @@ opset_import {
 <dl>
 <dt><tt>axis</tt> : int</dt>
 <dd>Which axis to split on</dd>
-<dt><tt>num_split</tt> : list of ints</dt>
+<dt><tt>split</tt> : list of ints</dt>
+<dd>length of each output</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The tensor to split</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic) : T</dt>
+<dd>One or more outputs forming list of tensors after splitting</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+</dl>
+
+## Version 3 of the default ONNX operator set
+### <a name="Split-3"></a>**Split-3**</a>
+
+  Split a tensor into a list of tensors, along the specified
+  'axis'. Either 'split' or 'num_split' must be defined. If 'split'
+  is defined, the length of 'split' is the number of partitions, and the elements
+  of 'split' specify the sizes of the partitions. If 'num_split' is defined,
+  it specifies the number of output partitions. The size of each output
+  partition is 'input.shape[axis]/num_split'. We require that 'num_split' evenly
+  divide 'input.shape[axis]'. 
+
+#### Versioning
+
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 3
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Which axis to split on</dd>
+<dt><tt>num_split</tt> : int</dt>
 <dd>Optional, the number of outputs.</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>Optional, lengths for the outputs</dd>

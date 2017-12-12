@@ -63,14 +63,14 @@ OPERATOR_SCHEMA(Concat)
         "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(Split)
-    .SinceVersion(2)
+    .SinceVersion(3)
     .Input(0, "input", "The tensor to split", "T")
     .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
     .Attr("axis", "Which axis to split on", AttrType::INT)
     .Attr("split", "Optional, lengths for the outputs", AttrType::INTS)
-    .Attr("num_split", "Optional, the number of outputs.", AttrType::INTS)
+    .Attr("num_split", "Optional, the number of outputs.", AttrType::INT)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Either 'split' or 'num_split' must be defined. If 'split'
 is defined, the length of 'split' is the number of partitions, and the elements

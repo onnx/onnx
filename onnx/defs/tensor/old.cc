@@ -7,6 +7,23 @@ using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
 
 OPERATOR_SCHEMA(Split)
+    .SinceVersion(2)
+    .Input(0, "input", "The tensor to split", "T")
+    .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input types to float tensors.")
+    .Attr("axis",
+          "Which axis to split on",
+          AttrType::INT)
+    .Attr("split",
+          "length of each output",
+          AttrType::INTS)
+    .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
+'axis'. Lengths of the parts can be specified using argument 'split'.
+Otherwise, the tensor is split to equal sized parts.
+)DOC");
+
+OPERATOR_SCHEMA(Split)
     .SinceVersion(1)
     .Input(0, "input", "The tensor to split", "T")
     .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T", OpSchema::Optional)

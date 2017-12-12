@@ -4520,22 +4520,22 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 
-Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
+Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a href="Changelog.md#Split-2">Split-2</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
 <dd>Which axis to split on</dd>
-<dt><tt>num_split</tt> : list of ints</dt>
+<dt><tt>num_split</tt> : int</dt>
 <dd>Optional, the number of outputs.</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>Optional, lengths for the outputs</dd>
