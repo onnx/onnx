@@ -68,15 +68,16 @@ OPERATOR_SCHEMA(Split)
     .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
-    .Attr("axis",
-          "Which axis to split on",
-          AttrType::INT)
-    .Attr("split",
-          "length of each output",
-          AttrType::INTS)
+    .Attr("axis", "Which axis to split on", AttrType::INT)
+    .Attr("split", "Optional, lengths for the outputs", AttrType::INTS)
+    .Attr("num_split", "Optional, the number of outputs.", AttrType::INTS)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
-'axis'. Lengths of the parts can be specified using argument 'split'.
-Otherwise, the tensor is split to equal sized parts.
+'axis'. One and only one of 'split' and 'num_split' must be defined. If 'split'
+is defined, the length of 'split' is the number of partitions, and the elements
+of 'split' specify the sizes of the partitions. If 'num_split' is defined,
+it specifies the number of output partitions. The size of each output
+partition is 'input.shape[axis]/num_split'. We require that 'num_split' evenly
+divide 'input.shape[axis]'. 
 )DOC");
 
 OPERATOR_SCHEMA(Slice)
