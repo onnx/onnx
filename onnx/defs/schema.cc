@@ -7,6 +7,7 @@
 #include "onnx/checker.h"
 
 namespace onnx {
+
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
     const DataTypeSet& allowed_type_set,

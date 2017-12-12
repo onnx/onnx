@@ -141,7 +141,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 void check_attribute(const AttributeProto& attr, const CheckerContext& ctx) {
   enforce_non_empty_field(attr, name);
 
-  if (ctx.ir_version >= 0x00000002) {
+  if (ctx.get_ir_version() >= 0x00000002) {
     enforce_has_field(attr, type);
   }
 
@@ -199,8 +199,9 @@ void check_node(const NodeProto& node, const CheckerContext& ctx) {
   }
 
   // Resolve domain for node
-  auto dit = ctx.opset_imports.find(node.domain());
-  if (dit == ctx.opset_imports.end()) {
+  const auto& opset_imports = ctx.get_opset_imports();
+  auto dit = opset_imports.find(node.domain());
+  if (dit == opset_imports.end()) {
     fail_check("No opset import for domain '" + node.domain() + "'");
   }
   auto domain_version = dit->second;
@@ -209,7 +210,7 @@ void check_node(const NodeProto& node, const CheckerContext& ctx) {
     check_attribute(attr, ctx);
   }
 
-  const auto* schema = OpSchemaRegistry::Schema(node.op_type(), node.domain(), domain_version);
+  const auto* schema = OpSchemaRegistry::Schema(node.op_type(), domain_version, node.domain());
   if (!schema) {
     fail_check("No Schema registered for " + node.op_type());
   }
@@ -300,18 +301,20 @@ void check_model(const ModelProto& model) {
   }
   std::unordered_map<std::string, int> versions;
   CheckerContext ctx;
-  ctx.ir_version = model.ir_version();
+  ctx.set_ir_version(model.ir_version());
+  std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    ctx.opset_imports[opset_import.domain()] = opset_import.version();
+    opset_imports[opset_import.domain()] = opset_import.version();
   }
-  auto dit = ctx.opset_imports.find("");
-  if (dit == ctx.opset_imports.end()) {
+  auto dit = opset_imports.find(ONNX_DOMAIN);
+  if (dit == opset_imports.end()) {
     if (model.ir_version() >= 3) {
       fail_check("model with IR version >= 3 must specify opset_import for ONNX");
     } else {
-      ctx.opset_imports[""] = 1;
+      opset_imports[ONNX_DOMAIN] = 1;
     }
   }
+  ctx.set_opset_imports(opset_imports);
   check_graph(model.graph(), ctx);
 }
 

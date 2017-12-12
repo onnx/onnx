@@ -23,6 +23,8 @@ namespace onnx {
 
 using OperatorSetVersion = int;
 
+const char* const ONNX_DOMAIN = "";
+
 typedef std::unordered_set<DataType> DataTypeSet;
 
 // Type constraint map. Key is type string. Value is data type set and
@@ -210,7 +212,7 @@ class OpSchema {
   OpSchema& SetDoc(const std::string& doc);
 
   // Functions to specify domain for the operator schema.
-  // Default domain value ("") means it's ONNX domain.
+  // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
   OpSchema& SetDomain(const std::string& domain);
 
   // Note: this enum is structurally identical to the
@@ -395,7 +397,7 @@ class OpSchema {
   std::string file_;
   std::string doc_;
   // Default domain value ("") means it's ONNX domain.
-  std::string domain_ = "";
+  std::string domain_ = ONNX_DOMAIN;
   std::map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;
@@ -437,7 +439,7 @@ class OpSchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[""] = std::make_pair(1, 2);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 2);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -483,41 +485,24 @@ class OpSchemaRegistry {
   };
 
   // Return the latest schema for an operator in specified domain.
-  // Domain with default value "" means ONNX.
+  // Domain with default value ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
-      const std::string& domain = "",
-      const int domain_version = -1) {
+      const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
-    // TODO: Better to use find() to avoid doing the lookup twice
-    // Invariant: any map in the schema is non-empty
     if (m.count(key) && m[key].count(domain)) {
-      if (domain_version < 0) {
-        // use latest
-        return &m[key][domain].rbegin()->second;
-      } else {
-        auto& submap = m[key][domain];
-        auto next_it = submap.upper_bound(domain_version);
-        if (next_it == submap.begin()) {
-          return nullptr;
-        } else if (next_it == submap.end()) {
-          return &submap.rbegin()->second;
-        } else {
-          --next_it;
-          return &next_it->second;
-        }
-      }
+      return &m[key][domain].rbegin()->second;
     } else {
       return nullptr;
     }
   }
 
   // Return the schema with biggest version, which is not greater than specified
-  // <maxInclusiveVersion> in specified domain. Domain with default value "" means ONNX.
+  // <maxInclusiveVersion> in specified domain. Domain with default value ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
       const int maxInclusiveVersion,
-      const std::string& domain = "") {
+      const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       auto pos = m[key][domain].lower_bound(maxInclusiveVersion);

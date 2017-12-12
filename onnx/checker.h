@@ -28,13 +28,13 @@ class ValidationError : public std::runtime_error {
 #define fail_check(...) \
   throw onnx::checker::ValidationError(onnx::MakeString(__VA_ARGS__));
 
-struct CheckerContext {
+class CheckerContext {
   int ir_version;
   std::unordered_map<std::string, int> opset_imports;
-  int get_ir_version() { return ir_version; }
+public:
+  int get_ir_version() const { return ir_version; }
   void set_ir_version(int v) { ir_version = v; }
-  // NB: Does a copy
-  const std::unordered_map<std::string, int>& get_opset_imports() {
+  const std::unordered_map<std::string, int>& get_opset_imports() const {
     return opset_imports;
   }
   void set_opset_imports(const std::unordered_map<std::string, int>& imps) {
