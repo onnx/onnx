@@ -256,21 +256,23 @@ opset_import {
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> : T1</dt>
 <dd>The input dictionary</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : tensor(int64)</dt>
+<dt><tt>Y</tt> : T2</dt>
 <dd>The tensor</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : map(string, int64), map(int64, string)</dt>
+<dt><tt>T1</tt> : map(string, int64), map(int64, string), map(int64, float), map(int64, double), map(string, float), map(string, double)</dt>
+<dd> allowed types.</dd>
+<dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
