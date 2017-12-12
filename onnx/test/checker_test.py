@@ -119,6 +119,19 @@ class TestChecker(unittest.TestCase):
 
         checker.check_model(model)
 
+    def test_check_old_model(self):
+        node = helper.make_node(
+            "Pad", ["X"], ["Y"], paddings=(0,0,0,0))
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        onnx_id = helper.make_opsetid("", 1)
+        model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
+
+        checker.check_model(model)
+
     def test_check_tensor(self):
         tensor = self._sample_float_tensor
         checker.check_tensor(tensor)

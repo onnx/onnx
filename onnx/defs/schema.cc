@@ -7,6 +7,7 @@
 #include "onnx/checker.h"
 
 namespace onnx {
+
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
     const DataTypeSet& allowed_type_set,
@@ -54,6 +55,7 @@ OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
+
   // Check the number of inputs.
   if (node.input_size() < min_input_ || node.input_size() > max_input_) {
     fail_check(
@@ -89,7 +91,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   }
 
   // Check the values of inputs / outputs
-  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
+  for (size_t in_idx = 0; in_idx < static_cast<size_t>(node.input_size()); ++in_idx) {
     if (in_idx >= inputs_.size()) {
       if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
         // The last input formal parameter should be variadic.
@@ -114,7 +116,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
-  for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
+  for (size_t out_idx = 0; out_idx < static_cast<size_t>(node.output_size()); ++out_idx) {
     if (out_idx >= outputs_.size()) {
         if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
             // The last output formal parameter should be variadic.
@@ -454,7 +456,7 @@ void OpSchema::Finalize() {
   
   // Flag indicates whether an optional input is trailing one (there's no single or variadic
   // input behind).
-  for (int i = 0; i < (int)(inputs_.size()); ++i) {
+  for (size_t i = 0; i < inputs_.size(); ++i) {
     switch (inputs_[i].GetOption()) {
     case OpSchema::Single:
       ++max_input_;
@@ -473,7 +475,7 @@ void OpSchema::Finalize() {
   }
 
   // Calculate min/max number of outputs.
-  for (int i = 0; i < (int)(outputs_.size()); ++i) {
+  for (size_t i = 0; i < outputs_.size(); ++i) {
     switch (outputs_[i].GetOption()) {
     case OpSchema::Single:
       ++max_output_;
