@@ -75,8 +75,12 @@ compile_commands.json
 
 # generated files
 onnx/version.py
+compile_commands.json
 
 # test generated files
 .cache
 .coverage
 onnx/examples/.coverage.nbval
+
+# autocomplete
+.ycm_extra_conf.py
