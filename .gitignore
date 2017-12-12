@@ -71,6 +71,7 @@ onnx.egg-info
 *.ninja
 .ninja_deps
 .ninja_log
+compile_commands.json
 
 # generated files
 onnx/version.py
