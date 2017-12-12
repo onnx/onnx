@@ -50,7 +50,7 @@ def load_node_tests(data_dir=os.path.join(DATA_DIR, 'node')):
     return testcases
 
 
-def load_model_tests(data_dir=os.path.join(DATA_DIR, 'model')):
+def _load_model_tests(data_dir):
     testcases = []
 
     for test_name in os.listdir(data_dir):
@@ -69,3 +69,10 @@ def load_model_tests(data_dir=os.path.join(DATA_DIR, 'model')):
             ModelTestCase(test_name, url, model_name, model_dir))
 
     return testcases
+
+
+def load_model_tests(data_dir=os.path.join(DATA_DIR, 'model'), kind=None):
+    supported_kinds = ['real', 'pytorch-converted']
+    if kind not in supported_kinds:
+        raise ValueError("kind must be one of {}".format(supported_kinds))
+    return _load_model_tests(os.path.join(data_dir, kind))

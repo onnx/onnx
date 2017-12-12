@@ -18,49 +18,62 @@ from onnx import (ValueInfoProto,
                   ModelProto,
                   IR_VERSION)
 import onnx.onnx_cpp2py_export.checker as C
+import onnx.defs
 
 
+# TODO: This thing where we reserialize the protobuf back into the
+# string, only to deserialize it at the call site, is really goofy.
+# Stop doing that.
+
+
+# NB: Please don't edit this context!
+DEFAULT_CONTEXT=C.CheckerContext()
+DEFAULT_CONTEXT.ir_version = IR_VERSION
+# TODO: Maybe ONNX-ML should also be defaulted?
+DEFAULT_CONTEXT.opset_imports = { '': onnx.defs.onnx_opset_version() }
+
+
+# TODO: This really doesn't seem worth the metaprogramming...
 def _create_checker(proto_type):
     def decorator(py_func):
         @functools.wraps(py_func)
-        def checker(proto, ir_version=IR_VERSION):
+        def checker(proto, ctx=DEFAULT_CONTEXT):
             if not isinstance(proto, proto_type):
                 raise RuntimeError(
                     'You cannot pass an object that is not of type {}'.format(
                         proto_type.__name__))
             return getattr(C, py_func.__name__)(
-                proto.SerializeToString(), ir_version)
+                proto.SerializeToString(), ctx)
         return checker
     return decorator
 
 
 @_create_checker(ValueInfoProto)
-def check_value_info(value_info, ir_version=IR_VERSION):
+def check_value_info(value_info, ctx=DEFAULT_CONTEXT):
     pass
 
 
 @_create_checker(TensorProto)
-def check_tensor(tensor, ir_version=IR_VERSION):
+def check_tensor(tensor, ctx=DEFAULT_CONTEXT):
     pass
 
 
 @_create_checker(AttributeProto)
-def check_attribute(attr, ir_version=IR_VERSION):
+def check_attribute(attr, ctx=DEFAULT_CONTEXT):
     pass
 
 
 @_create_checker(NodeProto)
-def check_node(node, ir_version=IR_VERSION):
+def check_node(node, ctx=DEFAULT_CONTEXT):
     pass
 
 
 @_create_checker(GraphProto)
-def check_graph(graph, ir_version=IR_VERSION):
+def check_graph(graph, ctx=DEFAULT_CONTEXT):
     pass
 
 
-@_create_checker(ModelProto)
-def check_model(model, ir_version=IR_VERSION):
-    pass
+def check_model(model):
+    C.check_model(model.SerializeToString())
 
 ValidationError = C.ValidationError

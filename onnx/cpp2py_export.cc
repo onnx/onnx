@@ -123,47 +123,53 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto checker = onnx_cpp2py_export.def_submodule("checker");
   checker.doc() = "Checker submodule";
 
+  py::class_<checker::CheckerContext> checker_context(checker, "CheckerContext");
+  checker_context
+      .def(py::init<>())
+      .def_property("ir_version", &checker::CheckerContext::get_ir_version, &checker::CheckerContext::set_ir_version)
+      .def_property("opset_imports", &checker::CheckerContext::get_opset_imports, &checker::CheckerContext::set_opset_imports);
+
   py::register_exception<checker::ValidationError>(checker, "ValidationError");
 
   checker.def(
-      "check_value_info", [](const py::bytes& bytes, int ir_version) -> void {
+      "check_value_info", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         std::unique_ptr<ValueInfoProto> proto(new ValueInfoProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_value_info(*proto, ir_version);
+        checker::check_value_info(*proto, ctx);
       });
 
   checker.def(
-      "check_tensor", [](const py::bytes& bytes, int ir_version) -> void {
+      "check_tensor", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         std::unique_ptr<TensorProto> proto(new TensorProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_tensor(*proto, ir_version);
+        checker::check_tensor(*proto, ctx);
       });
 
   checker.def(
-      "check_attribute", [](const py::bytes& bytes, int ir_version) -> void {
+      "check_attribute", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         std::unique_ptr<AttributeProto> proto(new AttributeProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_attribute(*proto, ir_version);
+        checker::check_attribute(*proto, ctx);
       });
 
-  checker.def("check_node", [](const py::bytes& bytes, int ir_version) -> void {
+  checker.def("check_node", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
     std::unique_ptr<NodeProto> proto(new NodeProto());
     ParseProtoFromPyBytes(proto.get(), bytes);
-    checker::check_node(*proto, ir_version);
+    checker::check_node(*proto, ctx);
   });
 
   checker.def(
-      "check_graph", [](const py::bytes& bytes, int ir_version) -> void {
+      "check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         std::unique_ptr<GraphProto> proto(new GraphProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_graph(*proto, ir_version);
+        checker::check_graph(*proto, ctx);
       });
 
   checker.def(
-      "check_model", [](const py::bytes& bytes, int ir_version) -> void {
+      "check_model", [](const py::bytes& bytes) -> void {
         std::unique_ptr<ModelProto> proto(new ModelProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_model(*proto, ir_version);
+        checker::check_model(*proto);
       });
 }
 

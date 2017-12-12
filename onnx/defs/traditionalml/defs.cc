@@ -126,11 +126,15 @@ OPERATOR_SCHEMA(DictVectorizer)
     For example: if the ``string_vocabulary`` parameter is set to ``["a", "c", "b", "z"]``,
     then an input of ``{"a": 4, "c": 8}`` will produce an output of ``[4, 8, 0, 0]``.
     )DOC")
-.Input(0, "X", "The input dictionary", "T")
-.Output(0, "Y", "The tensor", "tensor(int64)")
+.Input(0, "X", "The input dictionary", "T1")
+.Output(0, "Y", "The tensor", "T2")
 .TypeConstraint(
-    "T",
-    { "map(string, int64)", "map(int64, string)" },
+    "T1",
+    { "map(string, int64)", "map(int64, string)", "map(int64, float)", "map(int64, double)", "map(string, float)", "map(string, double)"},
+    " allowed types.")
+.TypeConstraint(
+    "T2",
+    { "tensor(int64)", "tensor(float)", "tensor(double)", "tensor(string)"},
     " allowed types.")
 .Attr("string_vocabulary", "The vocabulary vector", AttrType::STRINGS)
 .Attr("int64_vocabulary", "The vocabulary vector", AttrType::INTS);
