@@ -5381,7 +5381,7 @@ opset_import {
 ### <a name="Split-2"></a>**Split-2**</a>
 
   Split a tensor into a list of tensors, along the specified
-  'axis'. One and only one of 'split' and 'num_split' must be defined. If 'split'
+  'axis'. Either 'split' or 'num_split' must be defined. If 'split'
   is defined, the length of 'split' is the number of partitions, and the elements
   of 'split' specify the sizes of the partitions. If 'num_split' is defined,
   it specifies the number of output partitions. The size of each output
