@@ -21,14 +21,26 @@ opset_import {
 }
 ~~~~
 
-#### Inputs
+#### Inputs (1 - &#8734;)
 
+<dl>
+<dt><tt>input</tt> (variadic) : T</dt>
+<dd>Arbitrary input</dd>
+</dl>
 
-#### Outputs
+#### Outputs (1 - &#8734;)
 
+<dl>
+<dt><tt>output</tt> (variadic) : T</dt>
+<dd>Arbitrary output</dd>
+</dl>
 
 #### Type Constraints
 
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
+</dl>
 
 ### <a name="Abs-1"></a>**Abs-1**</a>
 
