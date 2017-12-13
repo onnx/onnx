@@ -272,7 +272,13 @@ OPERATOR_SCHEMA(ATen)
     .SetDoc(R"DOC(
 Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
-and op)DOC");
+and op)DOC")
+    .Input(0, "input", "Arbitrary input", "T", OpSchema::Variadic)
+    .Output(0, "output", "Arbitrary output", "T", OpSchema::Variadic)
+    .TypeConstraint("T",
+        { "tensor(bool)", "tensor(int32)", "tensor(int64)",
+        "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain output types to bool, int32, int64, float16, float, double tensors.");
 
 OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
