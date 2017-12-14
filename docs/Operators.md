@@ -446,6 +446,24 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>include_last_pixel</tt> : int</dt>
+<dd>
+This attribute is primarily to support CoreML model. This is an optional int flag and only valid if `pads` is set and set symmetric (mean xi_begin == yi_begin for all i). If include_last_pixel equal to 1 and pads is symmetric, then we will update the 
+output dimension of this OP in order to ensure that the last application of the kernel always includes the last pixel of the input image.
+
+Here the details:
+
+From https://apple.github.io/coremltools/coremlspecification/sections/NeuralNetwork.html#poolinglayerparams
+                                                                       
+    padding0 = pads[at x0_begin] + pads[at x0_end]
+    padding1 = pads[at x1_begin] + pads[at x1_end]
+    H_out = ceil((H_in + 2 * padding0 - kernel_shape[0])/strides[0]) + 1)
+    if (padding0 > 0 or padding1 > 0)
+        if ((H_out - 1) * strides[0] >= H_in + padding0) {
+            H_out = H_out - 1
+        }
+    }
+</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -2385,6 +2403,24 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>include_last_pixel</tt> : int</dt>
+<dd>
+This attribute is primarily to support CoreML model. This is an optional int flag and only valid if `pads` is set and set symmetric (mean xi_begin == yi_begin for all i). If include_last_pixel equal to 1 and pads is symmetric, then we will update the 
+output dimension of this OP in order to ensure that the last application of the kernel always includes the last pixel of the input image.
+
+Here the details:
+
+From https://apple.github.io/coremltools/coremlspecification/sections/NeuralNetwork.html#poolinglayerparams
+                                                                       
+    padding0 = pads[at x0_begin] + pads[at x0_end]
+    padding1 = pads[at x1_begin] + pads[at x1_end]
+    H_out = ceil((H_in + 2 * padding0 - kernel_shape[0])/strides[0]) + 1)
+    if (padding0 > 0 or padding1 > 0)
+        if ((H_out - 1) * strides[0] >= H_in + padding0) {
+            H_out = H_out - 1
+        }
+    }
+</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int</dt>
@@ -2552,6 +2588,24 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>include_last_pixel</tt> : int</dt>
+<dd>
+This attribute is primarily to support CoreML model. This is an optional int flag and only valid if `pads` is set and set symmetric (mean xi_begin == yi_begin for all i). If include_last_pixel equal to 1 and pads is symmetric, then we will update the 
+output dimension of this OP in order to ensure that the last application of the kernel always includes the last pixel of the input image.
+
+Here the details:
+
+From https://apple.github.io/coremltools/coremlspecification/sections/NeuralNetwork.html#poolinglayerparams
+                                                                       
+    padding0 = pads[at x0_begin] + pads[at x0_end]
+    padding1 = pads[at x1_begin] + pads[at x1_end]
+    H_out = ceil((H_in + 2 * padding0 - kernel_shape[0])/strides[0]) + 1)
+    if (padding0 > 0 or padding1 > 0)
+        if ((H_out - 1) * strides[0] >= H_in + padding0) {
+            H_out = H_out - 1
+        }
+    }
+</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
