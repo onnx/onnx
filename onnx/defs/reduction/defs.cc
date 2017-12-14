@@ -4,8 +4,6 @@
 #include "onnx/defs/schema.h"
 #include <functional>
 
-using AttrType = onnx::OpSchema::AttrType;
-
 namespace onnx {
 
 std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
@@ -21,10 +19,10 @@ False instead of True.)DOC";
         schema.SetDoc(doc);
         schema.Attr("axes",
                     "A list of integers, along which to reduce.",
-                    AttrType::INTS);
+                    AttributeProto::INTS);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
-                    AttrType::INT);
+                    AttributeProto::INT);
         schema.Input(0, "data", "An input tensor.", "T");
         schema.Output(0, "reduced", "Reduced output tensor.", "T");
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, 
@@ -78,10 +76,10 @@ The type of the output tensor is integer.)DOC";
         schema.SetDoc(doc);
         schema.Attr("axis",
                     "The axis in which to compute the arg indices",
-                    AttrType::INT);
+                    AttributeProto::INT);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
-                    AttrType::INT);
+                    AttributeProto::INT);
         schema.Input(0, "data", "An input tensor.", "T");
         schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int32)");
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output types to float tensors.");

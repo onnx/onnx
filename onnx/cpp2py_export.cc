@@ -72,17 +72,17 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "option", &OpSchema::FormalParameter::GetOption);
 
-  py::enum_<OpSchema::AttrType>(op_schema, "AttrType")
-      .value("FLOAT", OpSchema::AttrType::FLOAT)
-      .value("INT", OpSchema::AttrType::INT)
-      .value("STRING", OpSchema::AttrType::STRING)
-      .value("TENSOR", OpSchema::AttrType::TENSOR)
-      .value("GRAPH", OpSchema::AttrType::GRAPH)
-      .value("FLOATS", OpSchema::AttrType::FLOATS)
-      .value("INTS", OpSchema::AttrType::INTS)
-      .value("STRINGS", OpSchema::AttrType::STRINGS)
-      .value("TENSORS", OpSchema::AttrType::TENSORS)
-      .value("GRAPHS", OpSchema::AttrType::GRAPHS);
+  py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
+      .value("FLOAT", AttributeProto::FLOAT)
+      .value("INT", AttributeProto::INT)
+      .value("STRING", AttributeProto::STRING)
+      .value("TENSOR", AttributeProto::TENSOR)
+      .value("GRAPH", AttributeProto::GRAPH)
+      .value("FLOATS", AttributeProto::FLOATS)
+      .value("INTS", AttributeProto::INTS)
+      .value("STRINGS", AttributeProto::STRINGS)
+      .value("TENSORS", AttributeProto::TENSORS)
+      .value("GRAPHS", AttributeProto::GRAPHS);
 
   py::enum_<OpSchema::SupportType>(op_schema, "SupportType")
       .value("COMMON", OpSchema::SupportType::COMMON)

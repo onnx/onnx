@@ -3,7 +3,6 @@
 
 #include "onnx/defs/schema.h"
 
-using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
 #ifdef ONNX_ML
 OPERATOR_SCHEMA(ArrayFeatureExtractor)
@@ -38,7 +37,7 @@ OPERATOR_SCHEMA(Binarizer)
 .Attr(
     "threshold",
     "Values greater than this are set to 1, else set to 0",
-    AttrType::FLOAT);
+    AttributeProto::FLOAT);
 
 OPERATOR_SCHEMA(CastMap)
 .SetDomain("ai.onnx.ml")
@@ -60,15 +59,15 @@ OPERATOR_SCHEMA(CastMap)
 .Attr(
     "cast_to",
     "what to cast output to, enum 'TO_FLOAT', 'TO_STRING', 'TO_INT64', default is 'TO_FLOAT'",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "map_form",
     "whether to only output as many values as are in the input, or position the input based on using the key of the map as the index of the output (sparse), enum 'DENSE', 'SPARSE', default is 'DENSE'",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "max_map",
     "if map_form packing is SPARSE, what is the total length of each output in N (max index value)",
-    AttrType::INT);
+    AttributeProto::INT);
 
 OPERATOR_SCHEMA(CategoryMapper)
 .SetDomain("ai.onnx.ml")
@@ -99,19 +98,19 @@ OPERATOR_SCHEMA(CategoryMapper)
 .Attr(
     "cats_strings",
     "strings part of the input map, must be same size and the ints",
-    AttrType::STRINGS)
+    AttributeProto::STRINGS)
 .Attr(
     "cats_int64s",
     "ints part of the input map, must be same size and the strings",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "default_string",
     "string value to use if the int is not in the map",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "default_int64",
     "int value to use if the string is not in the map",
-    AttrType::INT);
+    AttributeProto::INT);
 
 OPERATOR_SCHEMA(DictVectorizer)
 .SetDomain("ai.onnx.ml")
@@ -136,8 +135,8 @@ OPERATOR_SCHEMA(DictVectorizer)
     "T2",
     { "tensor(int64)", "tensor(float)", "tensor(double)", "tensor(string)"},
     " allowed types.")
-.Attr("string_vocabulary", "The vocabulary vector", AttrType::STRINGS)
-.Attr("int64_vocabulary", "The vocabulary vector", AttrType::INTS);
+.Attr("string_vocabulary", "The vocabulary vector", AttributeProto::STRINGS)
+.Attr("int64_vocabulary", "The vocabulary vector", AttributeProto::INTS);
 
 OPERATOR_SCHEMA(Imputer)
 .SetDomain("ai.onnx.ml")
@@ -154,10 +153,10 @@ OPERATOR_SCHEMA(Imputer)
     "T",
     { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
     " allowed types.")
-.Attr("imputed_value_floats", "value to change to", AttrType::FLOATS)
-.Attr("replaced_value_float", "value that needs replacing", AttrType::FLOAT)
-.Attr("imputed_value_int64s", "value to change to", AttrType::INTS)
-.Attr("replaced_value_int64", "value that needs replacing", AttrType::INT);
+.Attr("imputed_value_floats", "value to change to", AttributeProto::FLOATS)
+.Attr("replaced_value_float", "value that needs replacing", AttributeProto::FLOAT)
+.Attr("imputed_value_int64s", "value to change to", AttributeProto::INTS)
+.Attr("replaced_value_int64", "value that needs replacing", AttributeProto::INT);
 
 OPERATOR_SCHEMA(LabelEncoder)
 .SetDomain("ai.onnx.ml")
@@ -179,15 +178,15 @@ OPERATOR_SCHEMA(LabelEncoder)
 .Attr(
     "classes_strings",
     "List of class label strings to be encoded as int64s",
-    AttrType::STRINGS)
+    AttributeProto::STRINGS)
 .Attr(
     "default_int64",
     "Default value if not in class list as int64",
-    AttrType::INT)
+    AttributeProto::INT)
 .Attr(
     "default_string",
     "Default value if not in class list as string",
-    AttrType::STRING);
+    AttributeProto::STRING);
 
 OPERATOR_SCHEMA(LinearClassifier)
 .SetDomain("ai.onnx.ml")
@@ -209,24 +208,24 @@ OPERATOR_SCHEMA(LinearClassifier)
     "T2",
     { "tensor(string)", "tensor(int64)" },
     " allowed types.")
-.Attr("coefficients", "weights of the model(s)", AttrType::FLOATS)
-.Attr("intercepts", "weights of the intercepts (if used)", AttrType::FLOATS)
+.Attr("coefficients", "weights of the model(s)", AttributeProto::FLOATS)
+.Attr("intercepts", "weights of the intercepts (if used)", AttributeProto::FLOATS)
 .Attr(
     "multi_class",
     "whether to do OvR or multinomial (0=OvR and is default)",
-    AttrType::INT)
+    AttributeProto::INT)
 .Attr(
     "classlabels_strings",
     "class labels if using string labels",
-    AttrType::STRINGS)
+    AttributeProto::STRINGS)
 .Attr(
     "classlabels_ints",
     "class labels if using int labels",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "post_transform",
     "enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
-    AttrType::STRING);
+    AttributeProto::STRING);
 
 OPERATOR_SCHEMA(LinearRegressor)
 .SetDomain("ai.onnx.ml")
@@ -251,13 +250,13 @@ OPERATOR_SCHEMA(LinearRegressor)
 .Attr(
     "post_transform",
     "enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
-    AttrType::STRING)
-.Attr("coefficients", "weights of the model(s)", AttrType::FLOATS)
-.Attr("intercepts", "weights of the intercepts (if used)", AttrType::FLOATS)
+    AttributeProto::STRING)
+.Attr("coefficients", "weights of the model(s)", AttributeProto::FLOATS)
+.Attr("intercepts", "weights of the intercepts (if used)", AttributeProto::FLOATS)
 .Attr(
     "targets",
     "total number of regression targets (default is 1)",
-    AttrType::INT);
+    AttributeProto::INT);
 
 OPERATOR_SCHEMA(Normalizer)
 .SetDomain("ai.onnx.ml")
@@ -274,7 +273,7 @@ OPERATOR_SCHEMA(Normalizer)
     "T",
     { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
     " allowed types.")
-.Attr("norm", "0=Lmax, 1=L1, 2=L2", AttrType::STRING);
+.Attr("norm", "0=Lmax, 1=L1, 2=L2", AttributeProto::STRING);
 
 OPERATOR_SCHEMA(OneHotEncoder)
 .SetDomain("ai.onnx.ml")
@@ -291,12 +290,12 @@ OPERATOR_SCHEMA(OneHotEncoder)
 .Input(0, "X", "Data to be encoded", "T")
 .Output(0, "Y", "encoded output data", "tensor(float)")
 .TypeConstraint("T", { "tensor(string)", "tensor(int64)" }, " allowed types.")
-.Attr("cats_int64s", "list of cateogries, ints", AttrType::INT)
-.Attr("cats_strings", "list of cateogries, strings", AttrType::STRINGS)
+.Attr("cats_int64s", "list of cateogries, ints", AttributeProto::INT)
+.Attr("cats_strings", "list of cateogries, strings", AttributeProto::STRINGS)
 .Attr(
     "zeros",
     "if true and category is not present, will return all zeros, if false and missing category, operator will return false",
-    AttrType::INT);
+    AttributeProto::INT);
 
 OPERATOR_SCHEMA(Scaler)
 .SetDomain("ai.onnx.ml")
@@ -312,11 +311,11 @@ OPERATOR_SCHEMA(Scaler)
 .Attr(
     "scale",
     "second, multiply by this, can be length of features or length 1",
-    AttrType::FLOATS)
+    AttributeProto::FLOATS)
 .Attr(
     "offset",
     "first, offset by this, must be same length as scale",
-    AttrType::FLOATS);
+    AttributeProto::FLOATS);
 
 OPERATOR_SCHEMA(SVMClassifier)
 .SetDomain("ai.onnx.ml")
@@ -341,32 +340,32 @@ OPERATOR_SCHEMA(SVMClassifier)
 .Attr(
     "kernel_type",
     "enum LINEAR, POLY, RBF, SIGMOID, defaults to linear",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "kernel_params",
     "Tensor of 3 elements containing gamma, coef0, degree in that order.  Zero if unused for the kernel.",
-    AttrType::FLOATS)
-.Attr("vectors_per_class", "", AttrType::INTS)
-.Attr("support_vectors", "", AttrType::FLOATS)
-.Attr("coefficients", "", AttrType::FLOATS)
-.Attr("prob_a", "First set of probability coefficients", AttrType::FLOATS)
+    AttributeProto::FLOATS)
+.Attr("vectors_per_class", "", AttributeProto::INTS)
+.Attr("support_vectors", "", AttributeProto::FLOATS)
+.Attr("coefficients", "", AttributeProto::FLOATS)
+.Attr("prob_a", "First set of probability coefficients", AttributeProto::FLOATS)
 .Attr(
     "prob_b",
     "Second set of probability coefficients, must be same size as prob_a, if these are provided then output Z are probability estimates.",
-    AttrType::FLOATS)
-.Attr("rho", "", AttrType::FLOATS)
+    AttributeProto::FLOATS)
+.Attr("rho", "", AttributeProto::FLOATS)
 .Attr(
     "post_transform",
     "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "classlabels_strings",
     "class labels if using string labels",
-    AttrType::STRINGS)
+    AttributeProto::STRINGS)
 .Attr(
     "classlabels_ints",
     "class labels if using int labels",
-    AttrType::INTS);
+    AttributeProto::INTS);
 
 OPERATOR_SCHEMA(SVMRegressor)
 .SetDomain("ai.onnx.ml")
@@ -386,23 +385,23 @@ OPERATOR_SCHEMA(SVMRegressor)
 .Attr(
     "kernel_type",
     "enum LINEAR, POLY, RBF, SIGMOID, defaults to linear",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "kernel_params",
     "Tensor of 3 elements containing gamma, coef0, degree in that order.  Zero if unused for the kernel.",
-    AttrType::FLOATS)
-.Attr("support_vectors", "chosen support vectors", AttrType::FLOATS)
+    AttributeProto::FLOATS)
+.Attr("support_vectors", "chosen support vectors", AttributeProto::FLOATS)
 .Attr(
     "one_class",
     "bool whether the regression is a one class svm or not, defaults to false",
-    AttrType::INT)
-.Attr("coefficients", "support vector coefficients", AttrType::FLOATS)
-.Attr("n_supports", "number of support vectors", AttrType::INT)
+    AttributeProto::INT)
+.Attr("coefficients", "support vector coefficients", AttributeProto::FLOATS)
+.Attr("n_supports", "number of support vectors", AttributeProto::INT)
 .Attr(
     "post_transform",
     "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
-    AttrType::STRING)
-.Attr("rho", "", AttrType::FLOATS);
+    AttributeProto::STRING)
+.Attr("rho", "", AttributeProto::FLOATS);
 
 OPERATOR_SCHEMA(TreeEnsembleClassifier)
 .SetDomain("ai.onnx.ml")
@@ -434,59 +433,59 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
     "T2",
     { "tensor(string)", "tensor(int64)" },
     " allowed types.")
-.Attr("nodes_treeids", "tree id for this node", AttrType::INTS)
+.Attr("nodes_treeids", "tree id for this node", AttributeProto::INTS)
 .Attr(
     "nodes_nodeids",
     "node id for this node, node ids may restart at zero for each tree (but not required).",
-    AttrType::INTS)
-.Attr("nodes_featureids", "feature id for this node", AttrType::INTS)
+    AttributeProto::INTS)
+.Attr("nodes_featureids", "feature id for this node", AttributeProto::INTS)
 .Attr(
     "nodes_values",
     "thresholds to do the splitting on for this node.",
-    AttrType::FLOATS)
-.Attr("nodes_hitrates", "", AttrType::FLOATS)
+    AttributeProto::FLOATS)
+.Attr("nodes_hitrates", "", AttributeProto::FLOATS)
 .Attr(
     "nodes_modes",
     "enum of behavior for this node 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'",
-    AttrType::STRINGS)
+    AttributeProto::STRINGS)
 .Attr(
     "nodes_truenodeids",
     "child node if expression is true",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "nodes_falsenodeids",
     "child node if expression is false",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "nodes_missing_value_tracks_true",
     "for each node, decide if the value is missing (nan) then use true branch, this field can be left unset and will assume false for all nodes",
-    AttrType::INTS)
-.Attr("class_treeids", "tree that this node is in", AttrType::INTS)
-.Attr("class_nodeids", "node id that this weight is for", AttrType::INTS)
+    AttributeProto::INTS)
+.Attr("class_treeids", "tree that this node is in", AttributeProto::INTS)
+.Attr("class_nodeids", "node id that this weight is for", AttributeProto::INTS)
 .Attr(
     "class_ids",
     "index of the class list that this weight is for",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "class_weights",
     "the weight for the class in class_id",
-    AttrType::FLOATS)
+    AttributeProto::FLOATS)
 .Attr(
     "classlabels_strings",
     "class labels if using string labels",
-    AttrType::STRINGS)
+    AttributeProto::STRINGS)
 .Attr(
     "classlabels_int64s",
     "class labels if using int labels",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "post_transform",
     "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "base_values",
     "base values for classification, added to final class score, size must be the same as classes or can be left unassigned (assumed 0)",
-    AttrType::FLOATS);
+    AttributeProto::FLOATS);
 
 OPERATOR_SCHEMA(TreeEnsembleRegressor)
 .SetDomain("ai.onnx.ml")
@@ -508,59 +507,59 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
     "T",
     { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
     " allowed types.")
-.Attr("nodes_treeids", "tree id for this node", AttrType::INTS)
+.Attr("nodes_treeids", "tree id for this node", AttributeProto::INTS)
 .Attr(
     "nodes_nodeids",
     "node id for this node, node ids must restart at zero for each tree and increase sequentially.",
-    AttrType::INTS)
-.Attr("nodes_featureids", "feature id for this node", AttrType::INTS)
+    AttributeProto::INTS)
+.Attr("nodes_featureids", "feature id for this node", AttributeProto::INTS)
 .Attr(
     "nodes_values",
     "thresholds to do the splitting on for this node.",
-    AttrType::FLOATS)
+    AttributeProto::FLOATS)
 .Attr(
     "nodes_hitrates",
     "popularity of the node, used for performance and may be omitted",
-    AttrType::FLOATS)
+    AttributeProto::FLOATS)
 .Attr(
     "nodes_modes",
     "enum of behavior for this node as enum of BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF",
-    AttrType::STRINGS)
+    AttributeProto::STRINGS)
 .Attr(
     "nodes_truenodeids",
     "child node if expression is true",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "nodes_falsenodeids",
     "child node if expression is false",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "nodes_missing_value_tracks_true",
     "for each node, decide if the value is missing (nan) then use true branch, this field can be left unset and will assume false for all nodes",
-    AttrType::INTS)
-.Attr("target_treeids", "tree that this node is in", AttrType::INTS)
-.Attr("target_nodeids", "node id that this weight is for", AttrType::INTS)
+    AttributeProto::INTS)
+.Attr("target_treeids", "tree that this node is in", AttributeProto::INTS)
+.Attr("target_nodeids", "node id that this weight is for", AttributeProto::INTS)
 .Attr(
     "target_ids",
     "index of the class list that this weight is for",
-    AttrType::INTS)
+    AttributeProto::INTS)
 .Attr(
     "target_weights",
     "the weight for the class in target_id",
-    AttrType::FLOATS)
-.Attr("n_targets", "total number of targets", AttrType::INT)
+    AttributeProto::FLOATS)
+.Attr("n_targets", "total number of targets", AttributeProto::INT)
 .Attr(
     "post_transform",
     "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "aggregate_function",
     " enum, how to aggregate leaf values within a target, AVERAGE,SUM,MIN,MAX",
-    AttrType::STRING)
+    AttributeProto::STRING)
 .Attr(
     "base_values",
     "base values for regression, added to final score, size must be the same as n_outputs or can be left unassigned (assumed 0)",
-    AttrType::FLOATS);
+    AttributeProto::FLOATS);
 
 OPERATOR_SCHEMA(ZipMap)
 .SetDomain("ai.onnx.ml")
@@ -578,8 +577,8 @@ OPERATOR_SCHEMA(ZipMap)
     "T",
     { "map(string, float)", "map(int64, float)" },
     " allowed types.")
-.Attr("classlabels_strings", "keys if using string keys", AttrType::STRINGS)
-.Attr("classlabels_int64s", "keys if using int keys", AttrType::INTS);
+.Attr("classlabels_strings", "keys if using string keys", AttributeProto::STRINGS)
+.Attr("classlabels_int64s", "keys if using int keys", AttributeProto::INTS);
 
 OPERATOR_SCHEMA(FeatureVectorizer)
 .SetDomain("ai.onnx.ml")
@@ -593,6 +592,6 @@ OPERATOR_SCHEMA(FeatureVectorizer)
 .Input(0, "X", "ordered input tensors", "T", OpSchema::Variadic)
 .Output(0, "Y", "Full output array, in order assigned in the inputlist, as floats", "T")
 .TypeConstraint("T", { "tensor(float)" }, " allowed types.")
-.Attr("inputdimensions", "the size of each input in the input list", AttrType::INT);
+.Attr("inputdimensions", "the size of each input in the input list", AttributeProto::INT);
 
 #endif
