@@ -3,7 +3,6 @@
 
 #include "onnx/defs/schema.h"
 
-using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
 
 namespace onnx {
@@ -12,24 +11,24 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
-                    AttrType::STRING);
-        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
+                    AttributeProto::STRING);
+        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT);
         schema.Attr("activation_alpha",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
                     "in LSTM.",
-                    AttrType::FLOATS);
+                    AttributeProto::FLOATS);
         schema.Attr("activation_beta",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
                     "in LSTM.",
-                    AttrType::FLOATS);
+                    AttributeProto::FLOATS);
         schema.Attr("output_sequence",
                     "The sequence output for the hidden is optional if 0. Default 0.",
-                    AttrType::INT);
+                    AttributeProto::INT);
         schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
                     "in the range of [-threshold, +threshold] and is applied to the input "
-                    "of activations. No clip if not specified.", AttrType::FLOAT);
+                    "of activations. No clip if not specified.", AttributeProto::FLOAT);
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
@@ -126,7 +125,7 @@ Equations (Default: f=tanh):
     .Attr("activations", "One (or two if bidirectional) activation function for "
           "input gate. The activation function must be one of the activation "
           "functions specified above. Optional: Default `tanh` if not specified.",
-          AttrType::STRINGS)
+          AttributeProto::STRINGS)
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
@@ -225,7 +224,7 @@ Equations (Default: f=sigmoid, g=tanh):
           "for update, reset, and hidden gates. The activation functions must be one "
           "of the activation functions specified above. Optional: See the equations "
           "for default if not specified.",
-          AttrType::STRINGS)
+          AttributeProto::STRINGS)
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
@@ -334,9 +333,9 @@ Equations (Default: f=sigmoid, g=tanh, h=tanh):
           "for input, output, forget, cell, and hidden. The activation functions must "
           "be one of the activation functions specified above. Optional: See the equations "
           "for default if not specified.",
-          AttrType::STRINGS)
+          AttributeProto::STRINGS)
     .Attr("input_forget", "Couple the input and forget gates if 1, default 0.",
-          AttrType::INT)	  
+          AttributeProto::INT)	  
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[iofc]` and "
            "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "

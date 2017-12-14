@@ -4,14 +4,12 @@
 #include "onnx/defs/schema.h"
 using namespace onnx;
 
-using AttrType = onnx::OpSchema::AttrType;
-
 OPERATOR_SCHEMA(Constant)
     .SetDoc(R"DOC(A constant tensor.)DOC")
     .Attr(
           "value",
           "The value for the elements of the output tensor.",
-          AttrType::TENSOR)
+          AttributeProto::TENSOR)
     .Output(
             0,
             "output",
@@ -31,23 +29,23 @@ TensorProto message.
     .Attr(
           "low",
           "Lower boundary of the output values.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "high",
           "Upper boundary of the output values.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
-          AttrType::INT)
+          AttributeProto::INT)
     .Attr(
           "shape",
           "The shape of the output tensor.",
-          AttrType::INTS)
+          AttributeProto::INTS)
     .Output(
             0,
             "output",
@@ -68,23 +66,23 @@ TensorProto message.
     .Attr(
           "mean",
           "The mean of the normal distribution.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "scale",
           "The standard deviation of the normal distribution.",
-           AttrType::FLOAT)
+           AttributeProto::FLOAT)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
-          AttrType::INT)
+          AttributeProto::INT)
     .Attr(
           "shape",
           "The shape of the output tensor.",
-          AttrType::INTS)
+          AttributeProto::INTS)
     .Output(
             0,
             "output",
@@ -104,20 +102,20 @@ TensorProto message.
     .Attr(
           "low",
           "Lower boundary of the output values.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "high",
           "Upper boundary of the output values.",
-           AttrType::FLOAT)
+           AttributeProto::FLOAT)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
           "the data type of the input tensor.",
-           AttrType::INT)
+           AttributeProto::INT)
     .Input(
            0,
            "input",
@@ -142,20 +140,20 @@ TensorProto message.
     .Attr(
           "mean",
           "The mean of the normal distribution.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "scale",
           "The standard deviation of the normal distribution.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Attr(
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
           "the data type of the input tensor.",
-          AttrType::INT)
+          AttributeProto::INT)
     .Input(
            0,
            "input",

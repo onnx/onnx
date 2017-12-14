@@ -154,13 +154,13 @@ void OpSchema::Verify(const NodeProto& node) const {
     };
 
     const auto& search = attributes_.find(name);
-    AttrType expected_type;
+    AttributeProto::AttributeType expected_type;
     if (search != attributes_.end()) {
       expected_type = search->second.type;
     } else if (allows_unchecked_attributes_) {
       continue;
     } else if (name == "consumed_inputs") {
-      expected_type = AttrType::INTS;
+      expected_type = AttributeProto::INTS;
       consume_attr = &attr_proto;
       if (attr_proto.ints().size() != node.input_size()) {
         fail_check(
@@ -175,55 +175,55 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
 
     switch (expected_type) {
-      case AttrType::FLOAT:
+      case AttributeProto::FLOAT:
         if (!attr_proto.has_f()) {
           fail_check("Attribute '", name, "' is expected to have field 'f'");
         }
         break;
-      case AttrType::INT:
+      case AttributeProto::INT:
         if (!attr_proto.has_i()) {
           fail_check("Attribute '", name, "' is expected to have field 'i'");
         }
         break;
-      case AttrType::STRING:
+      case AttributeProto::STRING:
         if (!attr_proto.has_s()) {
           fail_check("Attribute '", name, "' is expected to have field 's'");
         }
         break;
-      case AttrType::TENSOR:
+      case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
           fail_check("Attribute '", name, "' is expected to have field 't'");
         }
         break;
-      case AttrType::GRAPH:
+      case AttributeProto::GRAPH:
         if (!attr_proto.has_g()) {
           fail_check("Attribute '", name, "' is expected to have field 'g'");
         }
         break;
-      case AttrType::FLOATS:
+      case AttributeProto::FLOATS:
         if (!attr_proto.floats_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'floats'");
         }
         break;
-      case AttrType::INTS:
+      case AttributeProto::INTS:
         if (!attr_proto.ints_size()) {
           fail_check("Attribute '", name, "' is expected to have field 'ints'");
         }
         break;
-      case AttrType::STRINGS:
+      case AttributeProto::STRINGS:
         if (!attr_proto.strings_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'strings'");
         }
         break;
-      case AttrType::TENSORS:
+      case AttributeProto::TENSORS:
         if (!attr_proto.tensors_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'tensors'");
         }
         break;
-      case AttrType::GRAPHS:
+      case AttributeProto::GRAPHS:
         if (!attr_proto.graphs_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'graphs'");
@@ -364,7 +364,7 @@ OpSchema& OpSchema::Attr(const Attribute& attr) {
 OpSchema& OpSchema::Attr(
     const char* name,
     const char* description,
-    AttrType type,
+    AttributeProto::AttributeType type,
     bool required) {
   Attr(Attribute{name, description, type, required});
   return *this;
