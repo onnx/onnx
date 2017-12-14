@@ -3,7 +3,6 @@
 
 #include "onnx/defs/schema.h"
 
-using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
 
 namespace onnx {
@@ -32,19 +31,19 @@ OPERATOR_SCHEMA(LpPool)
  data into the output tensor Y for further processing.)DOC")
     .Attr("kernel_shape",
           "The size of the kernel along each axis.",
-          AttrType::INTS)
+          AttributeProto::INTS)
     .Attr("strides",
           "Stride along each axis.",
-          AttrType::INTS)
+          AttributeProto::INTS)
     .Attr("auto_pad",
           auto_pad_doc.c_str(),
-          AttrType::STRING)
+          AttributeProto::STRING)
     .Attr("pads",
           pads_doc.c_str(),
-          AttrType::INTS)
+          AttributeProto::INTS)
     .Attr("p",
           "p value of the Lp norm used to pool over the input data, default is 2.0.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Input(0,
            "X",
            "Input data tensor from the previous operator; "
@@ -71,7 +70,7 @@ OPERATOR_SCHEMA(GlobalLpPool)
  equal to the spatial dimension of input tensor.)DOC")
     .Attr("p",
           "p value of the Lp norm used to pool over the input data, default is 2.0.",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .Input(0,
            "X",
            "Input data tensor from the previous operator; "

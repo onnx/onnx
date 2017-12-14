@@ -3,7 +3,6 @@
 
 #include "onnx/defs/schema.h"
 
-using AttrType = onnx::OpSchema::AttrType;
 using namespace onnx;
 
 OPERATOR_SCHEMA(Split)
@@ -15,10 +14,10 @@ OPERATOR_SCHEMA(Split)
             "Constrain input types to float tensors.")
     .Attr("axis",
           "Which axis to split on",
-          AttrType::INT)
+          AttributeProto::INT)
     .Attr("split",
           "length of each output",
-          AttrType::INTS)
+          AttributeProto::INTS)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. The lengths of the split can be specified using argument 'axis' or
 optional second input blob to the operator. Otherwise, the tensor is split
@@ -34,14 +33,14 @@ OPERATOR_SCHEMA(Pad)
           "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
           "added at the begining of axis `i` and xi_end, the number of pixels added at "
           "the end of axis `i`.",
-          AttrType::INTS,
+          AttributeProto::INTS,
           true)
     .Attr("mode",
           "Three modes: constant(default), reflect, edge",
-          AttrType::STRING)
+          AttributeProto::STRING)
     .Attr("value",
           "One float, indicates the value to be filled, default is 0",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT)
     .SetDoc(R"DOC(
 Given `data` tensor, paddings, mode, and value.
 

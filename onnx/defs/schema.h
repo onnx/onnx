@@ -218,7 +218,7 @@ class OpSchema {
   // Note: this enum is structurally identical to the
   // AttributeProto.AttributeType enum defined in onnx.proto.  If you rev one,
   // you likely need to rev the other.
-  enum class AttrType {
+  /*enum class AttrType {
     FLOAT,
     INT,
     STRING,
@@ -230,6 +230,7 @@ class OpSchema {
     TENSORS,
     GRAPHS
   };
+  */
 
   enum class UseType {
     DEFAULT, // read only use of an input
@@ -243,7 +244,7 @@ class OpSchema {
     Attribute(
         const char* name_,
         const char* description_,
-        AttrType type_,
+        AttributeProto::AttributeType type_,
         bool required_)
         : name(name_),
           description(description_),
@@ -252,7 +253,7 @@ class OpSchema {
 
     const std::string name;
     const std::string description;
-    AttrType type;
+    AttributeProto::AttributeType type;
     bool required;
   };
 
@@ -260,7 +261,7 @@ class OpSchema {
   OpSchema& Attr(
       const char* name,
       const char* description,
-      AttrType type,
+      AttributeProto::AttributeType type,
       bool required = false);
   OpSchema& AllowUncheckedAttributes();
 
