@@ -4511,28 +4511,34 @@ opset_import {
 ### <a name="Split"></a><a name="split">**Split**</a>
 
   Split a tensor into a list of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using argument 'split'.
-  Otherwise, the tensor is split to equal sized parts.
+  'axis'. Either 'split' or 'num_split' must be defined. If 'split'
+  is defined, the length of 'split' is the number of partitions, and the elements
+  of 'split' specify the sizes of the partitions. If 'num_split' is defined,
+  it specifies the number of output partitions. The size of each output
+  partition is 'input.shape[axis]/num_split'. We require that 'num_split' evenly
+  divide 'input.shape[axis]'. 
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 
-Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
+Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>, <a href="Changelog.md#Split-2">Split-2</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
 <dd>Which axis to split on</dd>
+<dt><tt>num_split</tt> : int</dt>
+<dd>Optional, the number of outputs.</dd>
 <dt><tt>split</tt> : list of ints</dt>
-<dd>length of each output</dd>
+<dd>Optional, lengths for the outputs</dd>
 </dl>
 
 #### Inputs
