@@ -1423,35 +1423,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=sigmoid, g=tanh):
+  Equations (Default: f=Sigmoid, g=Tanh):
   
     - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
   
@@ -2270,35 +2266,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=sigmoid, g=tanh, h=tanh):
+  Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   
     - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
   
@@ -3369,35 +3361,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=tanh):
+  Equations (Default: f=Tanh):
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
@@ -3419,7 +3407,7 @@ opset_import {
 <dt><tt>activation_beta</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `tanh` if not specified.</dd>
+<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
