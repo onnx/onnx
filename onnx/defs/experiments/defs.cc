@@ -345,15 +345,15 @@ OPERATOR_SCHEMA(Upsample)
     .Attr(
         "width_scale",
         "The scale along width dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT, true)
+        AttributeProto::FLOAT)
     .Attr(
         "height_scale",
         "The scale along height dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT, true)
+        AttributeProto::FLOAT)
     .Attr(
         "mode",
         "Two interpolation modes: nearest(default), bilinear",
-        AttributeProto::STRING, false)
+        AttributeProto::STRING)
     .Input(
         0,
         "X",

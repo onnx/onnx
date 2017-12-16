@@ -33,8 +33,7 @@ OPERATOR_SCHEMA(Pad)
           "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
           "added at the begining of axis `i` and xi_end, the number of pixels added at "
           "the end of axis `i`.",
-          AttributeProto::INTS,
-          true)
+          AttributeProto::INTS)
     .Attr("mode",
           "Three modes: constant(default), reflect, edge",
           AttributeProto::STRING)
