@@ -40,10 +40,10 @@ namespace onnx {
                         AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
-                        AttributeProto::STRING);
+                        "NOTSET");
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        std::vector<int64_t>{});
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -92,10 +92,10 @@ namespace onnx {
                         AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
-                        AttributeProto::STRING);
+                        "NOTSET");
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        std::vector<int64_t>{});
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
                         AttributeProto::INT);
@@ -202,19 +202,19 @@ computes the output.)DOC";
                          AttributeProto::INTS);
             schema.Attr("dilations",
                         "dilation value along each axis of the filter.",
-                        AttributeProto::INTS);
+                        std::vector<int64_t>{});
             schema.Attr("strides",
                         "stride along each axis.",
                         AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
-                        AttributeProto::STRING);
+                        "NOTSET");
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        std::vector<int64_t>{});
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
-                        AttributeProto::INT);
+                        static_cast<int64_t>(1));
         };
     }
 
@@ -270,10 +270,10 @@ and computes the output.)DOC";
                         AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
-                        AttributeProto::STRING);
+                        "NOTSET");
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        std::vector<int64_t>{});
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
                         AttributeProto::INT);
@@ -370,17 +370,17 @@ Output case #2: Y (test mode)
     .Attr("spatial",
         "If true, compute the mean and variance across all spatial elements "
         "If false, compute the mean and variance across per feature.",
-        AttributeProto::INT)
+        static_cast<int64_t>(1))
     .Attr("is_test",
         "If set to nonzero, run spatial batch normalization in test mode.",
-        AttributeProto::INT)
+        static_cast<int64_t>(0))
     .Attr("epsilon",
         "The epsilon value to use to avoid division by zero.",
-        AttributeProto::FLOAT)
+        1e-5f)
     .Attr("momentum",
         "Factor used in computing the running mean and variance."
         "e.g., running_mean = running_mean * momentum + mean * (1 - momentum)",
-        AttributeProto::FLOAT)
+        0.9f)
     .Input(0,
         "X",
         "The input 4-dimensional tensor of shape NCHW.", "T")

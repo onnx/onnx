@@ -41,7 +41,7 @@ TensorProto message.
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
-          AttributeProto::INT)
+          static_cast<int64_t>(1))
     .Attr(
           "shape",
           "The shape of the output tensor.",
@@ -78,7 +78,7 @@ TensorProto message.
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
-          AttributeProto::INT)
+          static_cast<int64_t>(1))
     .Attr(
           "shape",
           "The shape of the output tensor.",
@@ -115,7 +115,7 @@ TensorProto message.
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
           "the data type of the input tensor.",
-           AttributeProto::INT)
+          static_cast<int64_t>(1))
     .Input(
            0,
            "input",
@@ -153,7 +153,7 @@ TensorProto message.
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
           "the data type of the input tensor.",
-          AttributeProto::INT)
+          static_cast<int64_t>(1))
     .Input(
            0,
            "input",

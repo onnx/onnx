@@ -54,7 +54,7 @@ from the shape argument.)DOC")
 OPERATOR_SCHEMA(Concat)
 .Attr("axis",
     "Which axis to concat on",
-    AttributeProto::INT)
+    static_cast<int64_t>(-1))
     .SetDoc("Concatenate a list of tensors into a single tensor")
     .Input(0, "inputs", "List of tensors for concatenation", "T", OpSchema::Variadic)
     .Output(0, "concat_result", "Concatenated tensor", "T")
@@ -72,7 +72,7 @@ OPERATOR_SCHEMA(Split)
           AttributeProto::INT)
     .Attr("split",
           "length of each output",
-          AttributeProto::INTS)
+          std::vector<int64_t>{})
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
 Otherwise, the tensor is split to equal sized parts.
@@ -123,7 +123,7 @@ Example 2:
           "Axes that `starts` and `ends` apply to. "
           "It's optional. If not present, will be treated as "
           "[0, 1, ..., len(`starts`) - 1].",
-          AttributeProto::INTS)
+          std::vector<int64_t>{})
     .Attr("starts",
           "Starting indices of corresponding axis in `axes`",
           AttributeProto::INTS)
@@ -197,7 +197,7 @@ Example 2:
         "axis",
         "Which axis to gather on, defaults to 0. Negative value means "
         "counting dimensions from the back. Accepted range in [-r, r-1]",
-        AttributeProto::INT)
+        static_cast<int64_t>(0))
     .Input(0, "data", "Tensor of rank r >= 1.", "T")
     .Input(
         1,
@@ -217,7 +217,7 @@ Example 2:
 OPERATOR_SCHEMA(Squeeze)
     .Attr("axes",
           "List of positive integers, indicate the dimensions to squeeze.",
-          AttributeProto::INTS)
+          std::vector<int64_t>{})
     .SetDoc(R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
@@ -242,7 +242,7 @@ OPERATOR_SCHEMA(Pad)
           "constant")
     .Attr("value",
           "One float, indicates the value to be filled, default is 0",
-          AttributeProto::FLOAT)
+          0.0f)
     .SetDoc(R"DOC(
 Given `data` tensor, pads, mode, and value.
 

@@ -37,10 +37,10 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.SetDoc(doc);
     schema.Attr("broadcast",
                 "Pass 1 to enable broadcasting",
-                AttributeProto::INT);
+                static_cast<int64_t>(0));
     schema.Attr("axis",
                 "If set, defines the broadcast dimensions. See doc for details.",
-                AttributeProto::INT);
+                static_cast<int64_t>(-1));
     schema.Input(
         0,
         "A",
@@ -81,7 +81,7 @@ will throw errors.
         "(int) default to 1; describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
         "the batch_size",
-        AttributeProto::INT);
+        static_cast<int64_t>(1));
     schema.Input(0, "input",
          "The input tensor that's coerced into a 2D matrix of size (NxD) "
          "as described above.", "T");
@@ -456,19 +456,19 @@ if attribute transA is non-zero, same for B and transB.
         "Constrain input and output types to float tensors.")
     .Attr("transA",
           "Whether A should be transposed",
-          AttributeProto::INT)
+          static_cast<int64_t>(0))
     .Attr("transB",
           "Whether B should be transposed",
-          AttributeProto::INT)
+          static_cast<int64_t>(0))
     .Attr("broadcast",
           "Whether C should be broadcasted",
-          AttributeProto::INT)
+          static_cast<int64_t>(0))
     .Attr("alpha",
           "Scalar multiplier for the product of input tensors A * B",
-          AttributeProto::FLOAT)
+          1.0f)
     .Attr("beta",
           "Scalar multiplier for input tensor C",
-          AttributeProto::FLOAT);
+          1.0f);
 
 
 OPERATOR_SCHEMA(MatMul)
