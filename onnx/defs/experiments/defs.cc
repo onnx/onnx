@@ -353,7 +353,7 @@ OPERATOR_SCHEMA(Upsample)
     .Attr(
         "mode",
         "Two interpolation modes: nearest(default), bilinear",
-        AttributeProto::STRING)
+        AttributeProto::STRING, "nearest")
     .Input(
         0,
         "X",
