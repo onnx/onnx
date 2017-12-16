@@ -252,7 +252,6 @@ class OpSchema {
 
   OpSchema& Attr(const Attribute& attr);
 
-
   // Register "optional" attribute with default value.
 #define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)            \
   OpSchema& Attr(const std::string& name,                   \
