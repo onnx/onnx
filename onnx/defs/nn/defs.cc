@@ -4,7 +4,6 @@
 #include "onnx/defs/schema.h"
 using namespace onnx;
 
-
 namespace onnx {
     static std::string pads_doc = "Padding for the begining and ending along each axis, it can take any value greater "
                                   "than or equal to 0. The value represent the number of pixels added to the begining "

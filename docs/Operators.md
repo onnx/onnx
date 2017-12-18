@@ -427,7 +427,7 @@ opset_import {
 
   AveragePool consumes an input tensor X and applies average pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a 
+   average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -1861,10 +1861,10 @@ opset_import {
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
 
   Carries out instance normalization as described in the paper
-  https://arxiv.org/abs/1607.08022. 
+  https://arxiv.org/abs/1607.08022.
   
-  y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
-  where mean and B are computed per instance per channel. 
+  y = scale * (x - mean) / sqrt(variance + epsilon) + B,
+  where mean and B are computed per instance per channel.
   
 
 #### Versioning
@@ -2356,7 +2356,7 @@ opset_import {
 
   LpPool consumes an input tensor X and applies Lp pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset 
+   Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2525,7 +2525,7 @@ opset_import {
 
   MaxPool consumes an input tensor X and applies max pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a 
+   max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2576,8 +2576,8 @@ opset_import {
 
 ### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
 
-  ROI max pool consumes an input tensor X and region of interests (RoIs) to 
-   apply max pooling across each RoI, to produce output 4-D tensor of shape 
+  ROI max pool consumes an input tensor X and region of interests (RoIs) to
+   apply max pooling across each RoI, to produce output 4-D tensor of shape
    (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
 #### Versioning
