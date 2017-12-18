@@ -83,7 +83,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>threshold</tt> : float</dt>
+<dt><tt>threshold</tt> : float (required)</dt>
 <dd>Values greater than this are set to 1, else set to 0</dd>
 </dl>
 
@@ -129,11 +129,11 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>cast_to</tt> : string</dt>
+<dt><tt>cast_to</tt> : string (required)</dt>
 <dd>what to cast output to, enum 'TO_FLOAT', 'TO_STRING', 'TO_INT64', default is 'TO_FLOAT'</dd>
-<dt><tt>map_form</tt> : string</dt>
+<dt><tt>map_form</tt> : string (required)</dt>
 <dd>whether to only output as many values as are in the input, or position the input based on using the key of the map as the index of the output (sparse), enum 'DENSE', 'SPARSE', default is 'DENSE'</dd>
-<dt><tt>max_map</tt> : int</dt>
+<dt><tt>max_map</tt> : int (required)</dt>
 <dd>if map_form packing is SPARSE, what is the total length of each output in N (max index value)</dd>
 </dl>
 
@@ -186,13 +186,13 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>cats_int64s</tt> : list of ints</dt>
+<dt><tt>cats_int64s</tt> : list of ints (required)</dt>
 <dd>ints part of the input map, must be same size and the strings</dd>
-<dt><tt>cats_strings</tt> : list of strings</dt>
+<dt><tt>cats_strings</tt> : list of strings (required)</dt>
 <dd>strings part of the input map, must be same size and the ints</dd>
-<dt><tt>default_int64</tt> : int</dt>
+<dt><tt>default_int64</tt> : int (required)</dt>
 <dd>int value to use if the string is not in the map</dd>
-<dt><tt>default_string</tt> : string</dt>
+<dt><tt>default_string</tt> : string (required)</dt>
 <dd>string value to use if the int is not in the map</dd>
 </dl>
 
@@ -247,9 +247,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>int64_vocabulary</tt> : list of ints</dt>
+<dt><tt>int64_vocabulary</tt> : list of ints (required)</dt>
 <dd>The vocabulary vector</dd>
-<dt><tt>string_vocabulary</tt> : list of strings</dt>
+<dt><tt>string_vocabulary</tt> : list of strings (required)</dt>
 <dd>The vocabulary vector</dd>
 </dl>
 
@@ -299,7 +299,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>inputdimensions</tt> : int</dt>
+<dt><tt>inputdimensions</tt> : int (required)</dt>
 <dd>the size of each input in the input list</dd>
 </dl>
 
@@ -347,13 +347,13 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>imputed_value_floats</tt> : list of floats</dt>
+<dt><tt>imputed_value_floats</tt> : list of floats (required)</dt>
 <dd>value to change to</dd>
-<dt><tt>imputed_value_int64s</tt> : list of ints</dt>
+<dt><tt>imputed_value_int64s</tt> : list of ints (required)</dt>
 <dd>value to change to</dd>
-<dt><tt>replaced_value_float</tt> : float</dt>
+<dt><tt>replaced_value_float</tt> : float (required)</dt>
 <dd>value that needs replacing</dd>
-<dt><tt>replaced_value_int64</tt> : int</dt>
+<dt><tt>replaced_value_int64</tt> : int (required)</dt>
 <dd>value that needs replacing</dd>
 </dl>
 
@@ -399,11 +399,11 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>classes_strings</tt> : list of strings</dt>
+<dt><tt>classes_strings</tt> : list of strings (required)</dt>
 <dd>List of class label strings to be encoded as int64s</dd>
-<dt><tt>default_int64</tt> : int</dt>
+<dt><tt>default_int64</tt> : int (required)</dt>
 <dd>Default value if not in class list as int64</dd>
-<dt><tt>default_string</tt> : string</dt>
+<dt><tt>default_string</tt> : string (required)</dt>
 <dd>Default value if not in class list as string</dd>
 </dl>
 
@@ -449,17 +449,17 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>classlabels_ints</tt> : list of ints</dt>
+<dt><tt>classlabels_ints</tt> : list of ints (required)</dt>
 <dd>class labels if using int labels</dd>
-<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dt><tt>classlabels_strings</tt> : list of strings (required)</dt>
 <dd>class labels if using string labels</dd>
-<dt><tt>coefficients</tt> : list of floats</dt>
+<dt><tt>coefficients</tt> : list of floats (required)</dt>
 <dd>weights of the model(s)</dd>
-<dt><tt>intercepts</tt> : list of floats</dt>
+<dt><tt>intercepts</tt> : list of floats (required)</dt>
 <dd>weights of the intercepts (if used)</dd>
-<dt><tt>multi_class</tt> : int</dt>
+<dt><tt>multi_class</tt> : int (required)</dt>
 <dd>whether to do OvR or multinomial (0=OvR and is default)</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (required)</dt>
 <dd>enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT</dd>
 </dl>
 
@@ -512,13 +512,13 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>coefficients</tt> : list of floats</dt>
+<dt><tt>coefficients</tt> : list of floats (required)</dt>
 <dd>weights of the model(s)</dd>
-<dt><tt>intercepts</tt> : list of floats</dt>
+<dt><tt>intercepts</tt> : list of floats (required)</dt>
 <dd>weights of the intercepts (if used)</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (required)</dt>
 <dd>enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT</dd>
-<dt><tt>targets</tt> : int</dt>
+<dt><tt>targets</tt> : int (required)</dt>
 <dd>total number of regression targets (default is 1)</dd>
 </dl>
 
@@ -566,7 +566,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>norm</tt> : string</dt>
+<dt><tt>norm</tt> : string (required)</dt>
 <dd>0=Lmax, 1=L1, 2=L2</dd>
 </dl>
 
@@ -617,11 +617,11 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>cats_int64s</tt> : int</dt>
+<dt><tt>cats_int64s</tt> : int (required)</dt>
 <dd>list of cateogries, ints</dd>
-<dt><tt>cats_strings</tt> : list of strings</dt>
+<dt><tt>cats_strings</tt> : list of strings (required)</dt>
 <dd>list of cateogries, strings</dd>
-<dt><tt>zeros</tt> : int</dt>
+<dt><tt>zeros</tt> : int (required)</dt>
 <dd>if true and category is not present, will return all zeros, if false and missing category, operator will return false</dd>
 </dl>
 
@@ -665,27 +665,27 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>classlabels_ints</tt> : list of ints</dt>
+<dt><tt>classlabels_ints</tt> : list of ints (required)</dt>
 <dd>class labels if using int labels</dd>
-<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dt><tt>classlabels_strings</tt> : list of strings (required)</dt>
 <dd>class labels if using string labels</dd>
-<dt><tt>coefficients</tt> : list of floats</dt>
+<dt><tt>coefficients</tt> : list of floats (required)</dt>
 <dd></dd>
-<dt><tt>kernel_params</tt> : list of floats</dt>
+<dt><tt>kernel_params</tt> : list of floats (required)</dt>
 <dd>Tensor of 3 elements containing gamma, coef0, degree in that order.  Zero if unused for the kernel.</dd>
-<dt><tt>kernel_type</tt> : string</dt>
+<dt><tt>kernel_type</tt> : string (required)</dt>
 <dd>enum LINEAR, POLY, RBF, SIGMOID, defaults to linear</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (required)</dt>
 <dd>post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT</dd>
-<dt><tt>prob_a</tt> : list of floats</dt>
+<dt><tt>prob_a</tt> : list of floats (required)</dt>
 <dd>First set of probability coefficients</dd>
-<dt><tt>prob_b</tt> : list of floats</dt>
+<dt><tt>prob_b</tt> : list of floats (required)</dt>
 <dd>Second set of probability coefficients, must be same size as prob_a, if these are provided then output Z are probability estimates.</dd>
-<dt><tt>rho</tt> : list of floats</dt>
+<dt><tt>rho</tt> : list of floats (required)</dt>
 <dd></dd>
-<dt><tt>support_vectors</tt> : list of floats</dt>
+<dt><tt>support_vectors</tt> : list of floats (required)</dt>
 <dd></dd>
-<dt><tt>vectors_per_class</tt> : list of ints</dt>
+<dt><tt>vectors_per_class</tt> : list of ints (required)</dt>
 <dd></dd>
 </dl>
 
@@ -733,21 +733,21 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>coefficients</tt> : list of floats</dt>
+<dt><tt>coefficients</tt> : list of floats (required)</dt>
 <dd>support vector coefficients</dd>
-<dt><tt>kernel_params</tt> : list of floats</dt>
+<dt><tt>kernel_params</tt> : list of floats (required)</dt>
 <dd>Tensor of 3 elements containing gamma, coef0, degree in that order.  Zero if unused for the kernel.</dd>
-<dt><tt>kernel_type</tt> : string</dt>
+<dt><tt>kernel_type</tt> : string (required)</dt>
 <dd>enum LINEAR, POLY, RBF, SIGMOID, defaults to linear</dd>
-<dt><tt>n_supports</tt> : int</dt>
+<dt><tt>n_supports</tt> : int (required)</dt>
 <dd>number of support vectors</dd>
-<dt><tt>one_class</tt> : int</dt>
+<dt><tt>one_class</tt> : int (required)</dt>
 <dd>bool whether the regression is a one class svm or not, defaults to false</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (required)</dt>
 <dd>post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT</dd>
-<dt><tt>rho</tt> : list of floats</dt>
+<dt><tt>rho</tt> : list of floats (required)</dt>
 <dd></dd>
-<dt><tt>support_vectors</tt> : list of floats</dt>
+<dt><tt>support_vectors</tt> : list of floats (required)</dt>
 <dd>chosen support vectors</dd>
 </dl>
 
@@ -791,9 +791,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>offset</tt> : list of floats</dt>
+<dt><tt>offset</tt> : list of floats (required)</dt>
 <dd>first, offset by this, must be same length as scale</dd>
-<dt><tt>scale</tt> : list of floats</dt>
+<dt><tt>scale</tt> : list of floats (required)</dt>
 <dd>second, multiply by this, can be length of features or length 1</dd>
 </dl>
 
@@ -847,39 +847,39 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>base_values</tt> : list of floats</dt>
+<dt><tt>base_values</tt> : list of floats (required)</dt>
 <dd>base values for classification, added to final class score, size must be the same as classes or can be left unassigned (assumed 0)</dd>
-<dt><tt>class_ids</tt> : list of ints</dt>
+<dt><tt>class_ids</tt> : list of ints (required)</dt>
 <dd>index of the class list that this weight is for</dd>
-<dt><tt>class_nodeids</tt> : list of ints</dt>
+<dt><tt>class_nodeids</tt> : list of ints (required)</dt>
 <dd>node id that this weight is for</dd>
-<dt><tt>class_treeids</tt> : list of ints</dt>
+<dt><tt>class_treeids</tt> : list of ints (required)</dt>
 <dd>tree that this node is in</dd>
-<dt><tt>class_weights</tt> : list of floats</dt>
+<dt><tt>class_weights</tt> : list of floats (required)</dt>
 <dd>the weight for the class in class_id</dd>
-<dt><tt>classlabels_int64s</tt> : list of ints</dt>
+<dt><tt>classlabels_int64s</tt> : list of ints (required)</dt>
 <dd>class labels if using int labels</dd>
-<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dt><tt>classlabels_strings</tt> : list of strings (required)</dt>
 <dd>class labels if using string labels</dd>
-<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
+<dt><tt>nodes_falsenodeids</tt> : list of ints (required)</dt>
 <dd>child node if expression is false</dd>
-<dt><tt>nodes_featureids</tt> : list of ints</dt>
+<dt><tt>nodes_featureids</tt> : list of ints (required)</dt>
 <dd>feature id for this node</dd>
-<dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dt><tt>nodes_hitrates</tt> : list of floats (required)</dt>
 <dd></dd>
-<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints (required)</dt>
 <dd>for each node, decide if the value is missing (nan) then use true branch, this field can be left unset and will assume false for all nodes</dd>
-<dt><tt>nodes_modes</tt> : list of strings</dt>
+<dt><tt>nodes_modes</tt> : list of strings (required)</dt>
 <dd>enum of behavior for this node 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
-<dt><tt>nodes_nodeids</tt> : list of ints</dt>
+<dt><tt>nodes_nodeids</tt> : list of ints (required)</dt>
 <dd>node id for this node, node ids may restart at zero for each tree (but not required).</dd>
-<dt><tt>nodes_treeids</tt> : list of ints</dt>
+<dt><tt>nodes_treeids</tt> : list of ints (required)</dt>
 <dd>tree id for this node</dd>
-<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
+<dt><tt>nodes_truenodeids</tt> : list of ints (required)</dt>
 <dd>child node if expression is true</dd>
-<dt><tt>nodes_values</tt> : list of floats</dt>
+<dt><tt>nodes_values</tt> : list of floats (required)</dt>
 <dd>thresholds to do the splitting on for this node.</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (required)</dt>
 <dd>post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT</dd>
 </dl>
 
@@ -936,39 +936,39 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>aggregate_function</tt> : string</dt>
+<dt><tt>aggregate_function</tt> : string (required)</dt>
 <dd> enum, how to aggregate leaf values within a target, AVERAGE,SUM,MIN,MAX</dd>
-<dt><tt>base_values</tt> : list of floats</dt>
+<dt><tt>base_values</tt> : list of floats (required)</dt>
 <dd>base values for regression, added to final score, size must be the same as n_outputs or can be left unassigned (assumed 0)</dd>
-<dt><tt>n_targets</tt> : int</dt>
+<dt><tt>n_targets</tt> : int (required)</dt>
 <dd>total number of targets</dd>
-<dt><tt>nodes_falsenodeids</tt> : list of ints</dt>
+<dt><tt>nodes_falsenodeids</tt> : list of ints (required)</dt>
 <dd>child node if expression is false</dd>
-<dt><tt>nodes_featureids</tt> : list of ints</dt>
+<dt><tt>nodes_featureids</tt> : list of ints (required)</dt>
 <dd>feature id for this node</dd>
-<dt><tt>nodes_hitrates</tt> : list of floats</dt>
+<dt><tt>nodes_hitrates</tt> : list of floats (required)</dt>
 <dd>popularity of the node, used for performance and may be omitted</dd>
-<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
+<dt><tt>nodes_missing_value_tracks_true</tt> : list of ints (required)</dt>
 <dd>for each node, decide if the value is missing (nan) then use true branch, this field can be left unset and will assume false for all nodes</dd>
-<dt><tt>nodes_modes</tt> : list of strings</dt>
+<dt><tt>nodes_modes</tt> : list of strings (required)</dt>
 <dd>enum of behavior for this node as enum of BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF</dd>
-<dt><tt>nodes_nodeids</tt> : list of ints</dt>
+<dt><tt>nodes_nodeids</tt> : list of ints (required)</dt>
 <dd>node id for this node, node ids must restart at zero for each tree and increase sequentially.</dd>
-<dt><tt>nodes_treeids</tt> : list of ints</dt>
+<dt><tt>nodes_treeids</tt> : list of ints (required)</dt>
 <dd>tree id for this node</dd>
-<dt><tt>nodes_truenodeids</tt> : list of ints</dt>
+<dt><tt>nodes_truenodeids</tt> : list of ints (required)</dt>
 <dd>child node if expression is true</dd>
-<dt><tt>nodes_values</tt> : list of floats</dt>
+<dt><tt>nodes_values</tt> : list of floats (required)</dt>
 <dd>thresholds to do the splitting on for this node.</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (required)</dt>
 <dd>post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT</dd>
-<dt><tt>target_ids</tt> : list of ints</dt>
+<dt><tt>target_ids</tt> : list of ints (required)</dt>
 <dd>index of the class list that this weight is for</dd>
-<dt><tt>target_nodeids</tt> : list of ints</dt>
+<dt><tt>target_nodeids</tt> : list of ints (required)</dt>
 <dd>node id that this weight is for</dd>
-<dt><tt>target_treeids</tt> : list of ints</dt>
+<dt><tt>target_treeids</tt> : list of ints (required)</dt>
 <dd>tree that this node is in</dd>
-<dt><tt>target_weights</tt> : list of floats</dt>
+<dt><tt>target_weights</tt> : list of floats (required)</dt>
 <dd>the weight for the class in target_id</dd>
 </dl>
 
@@ -1017,9 +1017,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>classlabels_int64s</tt> : list of ints</dt>
+<dt><tt>classlabels_int64s</tt> : list of ints (required)</dt>
 <dd>keys if using int keys</dd>
-<dt><tt>classlabels_strings</tt> : list of strings</dt>
+<dt><tt>classlabels_strings</tt> : list of strings (required)</dt>
 <dd>keys if using string keys</dd>
 </dl>
 

@@ -295,9 +295,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
+<dt><tt>broadcast</tt> : int (required)</dt>
 <dd>Enable broadcasting</dd>
 </dl>
 
@@ -347,9 +347,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>The axis in which to compute the arg indices</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -395,9 +395,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>The axis in which to compute the arg indices</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -446,11 +446,11 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
+<dt><tt>strides</tt> : list of ints (required)</dt>
 <dd>Stride along each axis.</dd>
 </dl>
 
@@ -571,7 +571,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>to</tt> : string</dt>
+<dt><tt>to</tt> : string (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
@@ -656,9 +656,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float</dt>
+<dt><tt>max</tt> : float (required)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float</dt>
+<dt><tt>min</tt> : float (required)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -744,7 +744,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>value</tt> : tensor</dt>
+<dt><tt>value</tt> : tensor (required)</dt>
 <dd>The value for the elements of the output tensor.</dd>
 </dl>
 
@@ -816,11 +816,11 @@ opset_import {
 <dd>dilation value along each axis of the filter.</dd>
 <dt><tt>group</tt> : int</dt>
 <dd>number of groups input channels and output channels are divided into</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The shape of the convolution kernel.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
+<dt><tt>strides</tt> : list of ints (required)</dt>
 <dd>stride along each axis.</dd>
 </dl>
 
@@ -870,17 +870,17 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>dilations</tt> : list of ints</dt>
+<dt><tt>dilations</tt> : list of ints (required)</dt>
 <dd>dilation value along each axis of the filter.</dd>
-<dt><tt>group</tt> : int</dt>
+<dt><tt>group</tt> : int (required)</dt>
 <dd>number of groups input channels and output channels are divided into</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The shape of the convolution kernel.</dd>
-<dt><tt>output_shape</tt> : list of ints</dt>
+<dt><tt>output_shape</tt> : list of ints (required)</dt>
 <dd>The shape of the output.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
+<dt><tt>strides</tt> : list of ints (required)</dt>
 <dd>stride along each axis.</dd>
 </dl>
 
@@ -930,7 +930,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>blocksize</tt> : int</dt>
+<dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
 </dl>
 
@@ -1041,9 +1041,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>is_test</tt> : int</dt>
+<dt><tt>is_test</tt> : int (required)</dt>
 <dd>(int, default 0) if nonzero, run dropout in test mode where the output is simply Y = X.</dd>
-<dt><tt>ratio</tt> : float</dt>
+<dt><tt>ratio</tt> : float (required)</dt>
 <dd>(float, default 0.5) the ratio of random dropout</dd>
 </dl>
 
@@ -1091,7 +1091,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Coefficient of ELU default to 1.0.</dd>
 </dl>
 
@@ -1139,9 +1139,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
+<dt><tt>broadcast</tt> : int (required)</dt>
 <dd>Enable broadcasting</dd>
 </dl>
 
@@ -1226,7 +1226,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output</dd>
 </dl>
 
@@ -1380,19 +1380,19 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dt><tt>activation_alpha</tt> : list of floats (required)</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
-<dt><tt>activation_beta</tt> : list of floats</dt>
+<dt><tt>activation_beta</tt> : list of floats (required)</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
-<dt><tt>activations</tt> : list of strings</dt>
+<dt><tt>activations</tt> : list of strings (required)</dt>
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
-<dt><tt>clip</tt> : float</dt>
+<dt><tt>clip</tt> : float (required)</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string</dt>
+<dt><tt>direction</tt> : string (required)</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
-<dt><tt>hidden_size</tt> : int</dt>
+<dt><tt>hidden_size</tt> : int (required)</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>output_sequence</tt> : int</dt>
+<dt><tt>output_sequence</tt> : int (required)</dt>
 <dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
@@ -1640,7 +1640,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 #### Attributes
 
 <dl>
-<dt><tt>p</tt> : int</dt>
+<dt><tt>p</tt> : int (required)</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 </dl>
 
@@ -1726,9 +1726,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
+<dt><tt>broadcast</tt> : int (required)</dt>
 <dd>Enable broadcasting</dd>
 </dl>
 
@@ -1777,9 +1777,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
+<dt><tt>beta</tt> : float (required)</dt>
 <dd>Value of beta</dd>
 </dl>
 
@@ -1884,7 +1884,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float</dt>
+<dt><tt>epsilon</tt> : float (required)</dt>
 <dd>The epsilon value to use to avoid division by zero.</dd>
 </dl>
 
@@ -1937,7 +1937,7 @@ opset_import {
 <dd>Scaling parameter</dd>
 <dt><tt>beta</tt> : float (required)</dt>
 <dd>The exponent</dd>
-<dt><tt>bias</tt> : float</dt>
+<dt><tt>bias</tt> : float (required)</dt>
 <dd>Default to 1</dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
@@ -2065,21 +2065,21 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dt><tt>activation_alpha</tt> : list of floats (required)</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
-<dt><tt>activation_beta</tt> : list of floats</dt>
+<dt><tt>activation_beta</tt> : list of floats (required)</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
-<dt><tt>activations</tt> : list of strings</dt>
+<dt><tt>activations</tt> : list of strings (required)</dt>
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
-<dt><tt>clip</tt> : float</dt>
+<dt><tt>clip</tt> : float (required)</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string</dt>
+<dt><tt>direction</tt> : string (required)</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
-<dt><tt>hidden_size</tt> : int</dt>
+<dt><tt>hidden_size</tt> : int (required)</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>input_forget</tt> : int</dt>
+<dt><tt>input_forget</tt> : int (required)</dt>
 <dd>Couple the input and forget gates if 1, default 0.</dd>
-<dt><tt>output_sequence</tt> : int</dt>
+<dt><tt>output_sequence</tt> : int (required)</dt>
 <dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
@@ -2142,7 +2142,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Coefficient of leakage</dd>
 </dl>
 
@@ -2190,9 +2190,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
+<dt><tt>broadcast</tt> : int (required)</dt>
 <dd>Enable broadcasting</dd>
 </dl>
 
@@ -2332,9 +2332,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
-<dt><tt>p</tt> : int</dt>
+<dt><tt>p</tt> : int (required)</dt>
 <dd>(int64, default 2) the order of the normalization, only 1 or 2 are supported.</dd>
 </dl>
 
@@ -2385,13 +2385,13 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>p</tt> : int</dt>
+<dt><tt>p</tt> : int (required)</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
+<dt><tt>strides</tt> : list of ints (required)</dt>
 <dd>Stride along each axis.</dd>
 </dl>
 
@@ -2552,11 +2552,11 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
+<dt><tt>strides</tt> : list of ints (required)</dt>
 <dd>Stride along each axis.</dd>
 </dl>
 
@@ -2601,9 +2601,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>pooled_shape</tt> : list of ints</dt>
+<dt><tt>pooled_shape</tt> : list of ints (required)</dt>
 <dd>ROI pool output shape (height, width).</dd>
-<dt><tt>spatial_scale</tt> : float</dt>
+<dt><tt>spatial_scale</tt> : float (required)</dt>
 <dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
 </dl>
 
@@ -2865,9 +2865,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
+<dt><tt>broadcast</tt> : int (required)</dt>
 <dd>Enable broadcasting</dd>
 </dl>
 
@@ -3180,19 +3180,19 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dt><tt>activation_alpha</tt> : list of floats (required)</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
-<dt><tt>activation_beta</tt> : list of floats</dt>
+<dt><tt>activation_beta</tt> : list of floats (required)</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
-<dt><tt>activations</tt> : list of strings</dt>
+<dt><tt>activations</tt> : list of strings (required)</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `tanh` if not specified.</dd>
-<dt><tt>clip</tt> : float</dt>
+<dt><tt>clip</tt> : float (required)</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string</dt>
+<dt><tt>direction</tt> : string (required)</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
-<dt><tt>hidden_size</tt> : int</dt>
+<dt><tt>hidden_size</tt> : int (required)</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>output_sequence</tt> : int</dt>
+<dt><tt>output_sequence</tt> : int (required)</dt>
 <dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
@@ -3257,13 +3257,13 @@ opset_import {
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>The data type for the elements of the output tensor.</dd>
-<dt><tt>mean</tt> : float</dt>
+<dt><tt>mean</tt> : float (required)</dt>
 <dd>The mean of the normal distribution.</dd>
-<dt><tt>scale</tt> : float</dt>
+<dt><tt>scale</tt> : float (required)</dt>
 <dd>The standard deviation of the normal distribution.</dd>
-<dt><tt>seed</tt> : float</dt>
+<dt><tt>seed</tt> : float (required)</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
+<dt><tt>shape</tt> : list of ints (required)</dt>
 <dd>The shape of the output tensor.</dd>
 </dl>
 
@@ -3310,11 +3310,11 @@ opset_import {
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>mean</tt> : float</dt>
+<dt><tt>mean</tt> : float (required)</dt>
 <dd>The mean of the normal distribution.</dd>
-<dt><tt>scale</tt> : float</dt>
+<dt><tt>scale</tt> : float (required)</dt>
 <dd>The standard deviation of the normal distribution.</dd>
-<dt><tt>seed</tt> : float</dt>
+<dt><tt>seed</tt> : float (required)</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
 
@@ -3364,13 +3364,13 @@ opset_import {
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>The data type for the elements of the output tensor.</dd>
-<dt><tt>high</tt> : float</dt>
+<dt><tt>high</tt> : float (required)</dt>
 <dd>Upper boundary of the output values.</dd>
-<dt><tt>low</tt> : float</dt>
+<dt><tt>low</tt> : float (required)</dt>
 <dd>Lower boundary of the output values.</dd>
-<dt><tt>seed</tt> : float</dt>
+<dt><tt>seed</tt> : float (required)</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
+<dt><tt>shape</tt> : list of ints (required)</dt>
 <dd>The shape of the output tensor.</dd>
 </dl>
 
@@ -3416,11 +3416,11 @@ opset_import {
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
-<dt><tt>high</tt> : float</dt>
+<dt><tt>high</tt> : float (required)</dt>
 <dd>Upper boundary of the output values.</dd>
-<dt><tt>low</tt> : float</dt>
+<dt><tt>low</tt> : float (required)</dt>
 <dd>Lower boundary of the output values.</dd>
-<dt><tt>seed</tt> : float</dt>
+<dt><tt>seed</tt> : float (required)</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
 
@@ -3508,7 +3508,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3558,7 +3558,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3608,7 +3608,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3658,7 +3658,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3708,7 +3708,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3758,7 +3758,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3808,7 +3808,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3858,7 +3858,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3908,7 +3908,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -3958,7 +3958,7 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
-<dt><tt>keepdims</tt> : int</dt>
+<dt><tt>keepdims</tt> : int (required)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
 
@@ -4067,7 +4067,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>shape</tt> : list of ints</dt>
+<dt><tt>shape</tt> : list of ints (required)</dt>
 <dd>New shape</dd>
 </dl>
 
@@ -4113,9 +4113,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Coefficient of SELU default to 1.6732.</dd>
-<dt><tt>gamma</tt> : float</dt>
+<dt><tt>gamma</tt> : float (required)</dt>
 <dd>Coefficient of SELU default to 1.0507.</dd>
 </dl>
 
@@ -4482,7 +4482,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>blocksize</tt> : int</dt>
+<dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
 </dl>
 
@@ -4529,7 +4529,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>Which axis to split on</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
@@ -4613,7 +4613,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>List of positive integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
@@ -4835,7 +4835,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>perm</tt> : list of ints</dt>
+<dt><tt>perm</tt> : list of ints (required)</dt>
 <dd>A list of integers. By default, reverse the dimensions, otherwise permute the axes according to the values given.</dd>
 </dl>
 
@@ -4883,9 +4883,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
+<dt><tt>broadcast</tt> : int (required)</dt>
 <dd>Enable broadcasting</dd>
 </dl>
 
@@ -4972,9 +4972,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
+<dt><tt>beta</tt> : float (required)</dt>
 <dd>Value of beta</dd>
 </dl>
 
@@ -5089,9 +5089,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>border</tt> : list of ints</dt>
+<dt><tt>border</tt> : list of ints (required)</dt>
 <dd>A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).</dd>
-<dt><tt>scale</tt> : list of ints</dt>
+<dt><tt>scale</tt> : list of ints (required)</dt>
 <dd>A 1-D values of (height, width).</dd>
 </dl>
 
@@ -5134,11 +5134,11 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>input_dim</tt> : int</dt>
+<dt><tt>input_dim</tt> : int (required)</dt>
 <dd>Size of the input vocabulary.</dd>
-<dt><tt>output_dim</tt> : int</dt>
+<dt><tt>output_dim</tt> : int (required)</dt>
 <dd>Dimension of the embedding output vectors.</dd>
-<dt><tt>weights</tt> : tensor</dt>
+<dt><tt>weights</tt> : tensor (required)</dt>
 <dd>2-D tensor of weights [O,I].</dd>
 </dl>
 
@@ -5197,9 +5197,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>(int32_t) default to 1; describes the axis of the inputs; defaults to one because the 0th axis most likely describes the batch_size</dd>
-<dt><tt>axis_w</tt> : int</dt>
+<dt><tt>axis_w</tt> : int (required)</dt>
 <dd>(int32_t) default to 1; describes the axis of the weights; defaults to one because the 0th axis most likely describes the batch_size</dd>
 </dl>
 
@@ -5251,7 +5251,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>drop_states</tt> : int</dt>
+<dt><tt>drop_states</tt> : int (required)</dt>
 <dd>Bool to determine if hidden state is zeroes or passed along for timesteps past the given sequence_length.</dd>
 </dl>
 
@@ -5304,7 +5304,7 @@ opset_import {
 <dd></dd>
 <dt><tt>shape</tt> : list of ints</dt>
 <dd></dd>
-<dt><tt>values</tt> : list of floats</dt>
+<dt><tt>values</tt> : list of floats (required)</dt>
 <dd></dd>
 </dl>
 
@@ -5384,9 +5384,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>bias</tt> : list of floats</dt>
+<dt><tt>bias</tt> : list of floats (required)</dt>
 <dd>Bias applied to each channel, same size as C.</dd>
-<dt><tt>scale</tt> : float</dt>
+<dt><tt>scale</tt> : float (required)</dt>
 <dd>(float, default 1.0) the scale to apply.</dd>
 </dl>
 
@@ -5429,9 +5429,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>across_channels</tt> : int</dt>
+<dt><tt>across_channels</tt> : int (required)</dt>
 <dd>If 1, mean and variance are computed across channels. Default is 0.</dd>
-<dt><tt>normalize_variance</tt> : int</dt>
+<dt><tt>normalize_variance</tt> : int (required)</dt>
 <dd>If 0, normalize the mean only.  Default is 1.</dd>
 </dl>
 
@@ -5476,9 +5476,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Value of alpha</dd>
-<dt><tt>beta</tt> : float</dt>
+<dt><tt>beta</tt> : float (required)</dt>
 <dd>Value of beta</dd>
 </dl>
 
@@ -5522,7 +5522,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>scale</tt> : float</dt>
+<dt><tt>scale</tt> : float (required)</dt>
 <dd>(float, default 1.0) the scale to apply.</dd>
 </dl>
 
@@ -5568,9 +5568,9 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Scaling value</dd>
-<dt><tt>beta</tt> : float</dt>
+<dt><tt>beta</tt> : float (required)</dt>
 <dd>Scaling value</dd>
 </dl>
 
@@ -5615,7 +5615,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Threshold value</dd>
 </dl>
 
