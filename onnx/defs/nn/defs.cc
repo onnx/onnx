@@ -4,6 +4,7 @@
 #include "onnx/defs/schema.h"
 using namespace onnx;
 
+
 namespace onnx {
     static std::string pads_doc = "Padding for the begining and ending along each axis, it can take any value greater "
                                   "than or equal to 0. The value represent the number of pixels added to the begining "
@@ -26,11 +27,11 @@ namespace onnx {
             std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
- {opName} pooling consisting of computing the {opName} on all values of a 
+ {opName} pooling consisting of computing the {opName} on all values of a
  subset of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
-            ReplaceAll(doc, "{opName}", opName);            
+            ReplaceAll(doc, "{opName}", opName);
             schema.SetDoc(doc);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
@@ -69,7 +70,7 @@ namespace onnx {
 
     OPERATOR_SCHEMA(MaxPool)
         .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
-        
+
 } // namespace onnx
 
 namespace onnx {
@@ -78,7 +79,7 @@ namespace onnx {
             std::string doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
- Lp pooling consisting of computing the Lp norm on all values of a subset 
+ Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
@@ -128,8 +129,8 @@ namespace onnx {
     std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
- ROI {name} pool consumes an input tensor X and region of interests (RoIs) to 
- apply {name} pooling across each RoI, to produce output 4-D tensor of shape 
+ ROI {name} pool consumes an input tensor X and region of interests (RoIs) to
+ apply {name} pooling across each RoI, to produce output 4-D tensor of shape
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
@@ -424,10 +425,10 @@ OPERATOR_SCHEMA(InstanceNormalization)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Carries out instance normalization as described in the paper
-https://arxiv.org/abs/1607.08022. 
+https://arxiv.org/abs/1607.08022.
 
-y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
-where mean and B are computed per instance per channel. 
+y = scale * (x - mean) / sqrt(variance + epsilon) + B,
+where mean and B are computed per instance per channel.
 
 )DOC")
     .Attr("epsilon",
