@@ -1080,7 +1080,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (required)</dt>
+<dt><tt>alpha</tt> : float</dt>
 <dd>Coefficient of ELU default to 1.0.</dd>
 </dl>
 

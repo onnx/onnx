@@ -369,63 +369,83 @@ OpSchema& OpSchema::Attr(
   return *this;
 }
 
-#define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attr_type)   \
-    OpSchema& OpSchema::Attr(const std::string& name,           \
-            const std::string& description,                     \
-            const type& default_value)                          \
-    {                                                           \
-        AttributeProto a;                                       \
-        a.set_name(name);                                       \
-        a.set_##field(default_value);                           \
-        a.set_type(attr_type);                                  \
-        Attr(Attribute(name, description, a));                  \
-        return *this;                                           \
-    }                                                           \
+#define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)        \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const type& default_value)                              \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        a.set_##field(default_value);                               \
+        a.set_type(attr_type);                                      \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
 
-#define ATTR_SETTER_WITH_LIST_VALUE(type, field, attr_type)     \
-    OpSchema& OpSchema::Attr(const std::string& name,           \
-            const std::string& description,                     \
-            const std::vector<type>& default_value)             \
-    {                                                           \
-        AttributeProto a;                                       \
-        a.set_name(name);                                       \
-        a.set_type(attr_type);                                  \
-        for (const auto& v : default_value)                     \
-        {                                                       \
-            a.add_##field(v);                                   \
-        }                                                       \
-        Attr(Attribute(name, description, a));                  \
-        return *this;                                           \
-    }                                                           \
+#define ATTR_SETTER_WITH_LIST_VALUE(type, field, attrtype)          \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const std::vector<type>& default_value)                 \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        a.set_type(attr_type);                                      \
+        for (const auto& v : default_value)                         \
+        {                                                           \
+            a.add_##field(v);                                       \
+        }                                                           \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
 
-#define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attr_type)   \
-    OpSchema& OpSchema::Attr(const std::string& name,           \
-            const std::string& description,                     \
-            const type& default_value)                          \
-    {                                                           \
-        AttributeProto a;                                       \
-        a.set_name(name);                                       \
-        *(a.mutable_##field()) = default_value;                 \
-        a.set_type(attr_type);                                  \
-        Attr(Attribute(name, description, a));                  \
-        return *this;                                           \
-    }                                                           \
+#define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype) \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const type& default_value)                              \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        *(a.mutable_##field()) = default_value;                     \
+        a.set_type(attr_type);                                      \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
 
-#define ATTR_SETTER_WITH_LIST_COMPLEXVALUE(type, field, attr_type)     \
-    OpSchema& OpSchema::Attr(const std::string& name,           \
-            const std::string& description,                     \
-            const std::vector<type>& default_value)             \
-    {                                                           \
-        AttributeProto a;                                       \
-        a.set_name(name);                                       \
-        a.set_type(attr_type);                                  \
-        for (const auto& v : default_value)                     \
-        {                                                       \
-            *(a.add_##field()) = v;                             \
-        }                                                       \
-        Attr(Attribute(name, description, a));                  \
-        return *this;                                           \
-    }                                                           \
+#define ATTR_SETTER_WITH_LIST_COMPLEXVALUE(type, field, attrtype)   \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const std::vector<type>& default_value)                 \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        a.set_type(attr_type);                                      \
+        for (const auto& v : default_value)                         \
+        {                                                           \
+            *(a.add_##field()) = v;                                 \
+        }                                                           \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
 
 ATTR_SETTER_WITH_SINGLE_VALUE(int64_t, i, AttributeProto::INT)
 ATTR_SETTER_WITH_SINGLE_VALUE(float, f, AttributeProto::FLOAT)

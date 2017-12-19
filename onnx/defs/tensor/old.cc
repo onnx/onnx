@@ -36,9 +36,11 @@ OPERATOR_SCHEMA(Pad)
           AttributeProto::INTS)
     .Attr("mode",
           "Three modes: constant(default), reflect, edge",
+          AttributeProto::STRING,
           "constant")
     .Attr("value",
           "One float, indicates the value to be filled, default is 0",
+          AttributeProto::FLOAT,
           0.0f)
     .SetDoc(R"DOC(
 Given `data` tensor, paddings, mode, and value.

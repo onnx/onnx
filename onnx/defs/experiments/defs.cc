@@ -106,27 +106,32 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
     .Attr(
         "value",
         "The value for the elements of the output tensor.",
+        AttributeProto::FLOAT,
         0.0f)
     .Attr(
         "dtype",
         "The data type for the elements of the output tensor."
         "Strictly must be one of the types from DataType enum in TensorProto.",
-        static_cast<int64_t>(1))
+        AttributeProto::INT,
+        static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
         "shape",
         "The shape of the output tensor."
         "Cannot set the shape argument and pass in an input at the same time.",
+        AttributeProto::INTS,
         std::vector<int64_t>{})
     .Attr(
         "extra_shape",
         "The additional dimensions appended at the end of the shape indicated"
         "by the input blob."
         "Cannot set the extra_shape argument when there is no input blob.",
+        AttributeProto::INTS,
         std::vector<int64_t>{})
     .Attr(
         "input_as_shape",
         "1D tensor containing the desired output shape.  First input must be in "
         "CPU context.",
+        AttributeProto::INT,
         static_cast<int64_t>(0))
     .Input(
         0,
@@ -158,9 +163,9 @@ OPERATOR_SCHEMA(GivenTensorFill)
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .Attr("values", "", AttributeProto::FLOATS)
-    .Attr("shape", "", std::vector<int64_t>{})
-    .Attr("input_as_shape", "", static_cast<int64_t>(0))
-    .Attr("extra_shape", "", std::vector<int64_t>{})
+    .Attr("shape", "", AttributeProto::INTS, std::vector<int64_t>{})
+    .Attr("input_as_shape", "", AttributeProto::INT, static_cast<int64_t>(0))
+    .Attr("extra_shape", "", AttributeProto::INTS, std::vector<int64_t>{})
     .AllowConsumed({{0, 0}});
 
 OPERATOR_SCHEMA(FC)
@@ -353,6 +358,7 @@ OPERATOR_SCHEMA(Upsample)
     .Attr(
         "mode",
         "Two interpolation modes: nearest(default), bilinear",
+        AttributeProto::STRING,
         "nearest")
     .Input(
         0,

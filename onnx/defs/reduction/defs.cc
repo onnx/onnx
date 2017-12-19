@@ -19,6 +19,7 @@ False instead of True.)DOC";
         schema.SetDoc(doc);
         schema.Attr("axes",
                     "A list of integers, along which to reduce.",
+                    AttributeProto::INTS,
                     std::vector<int64_t>{});
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
