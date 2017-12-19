@@ -30,7 +30,7 @@ Integrating the ONNX Backend Test suite into your CI is simple. The following ar
 
 - [onnx-caffe2 onnx backend test](https://github.com/onnx/onnx-caffe2/blob/master/tests/onnx_backend_test.py)
 
-- [onnx-tensorflow onnx backend test](https://github.com/onnx/onnx-tensorflow/blob/master/test/onnx_backend_test.py)
+- [onnx-tensorflow onnx backend test](https://github.com/onnx/onnx-tensorflow/blob/master/test/backend/test_onnx_backend.py)
 
 - [onnx-coreml onnx backend test](https://github.com/onnx/onnx-coreml/blob/master/tests/onnx_backend_test.py)
 
