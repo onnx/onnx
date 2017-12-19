@@ -54,7 +54,6 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     };
 }
 
-
 OPERATOR_SCHEMA(RNN)
     .SetDoc(R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
@@ -235,6 +234,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 
 OPERATOR_SCHEMA(LSTM)
+    .SinceVersion(2)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
@@ -348,6 +348,8 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
 	   "assumed to be 0.", "T",
        OpSchema::Optional)
-    .FillUsing(RNNDocGenerator("LSTM"));
-
+    .FillUsing(RNNDocGenerator("LSTM"))
+    .Output(2, "Y_c",
+            "The last output value of the cell. It has shape "
+            "`[num_directions, batch_size, hidden_size]`.", "T");
 }  // namespace onnx

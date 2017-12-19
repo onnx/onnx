@@ -5260,6 +5260,161 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="LSTM-2"></a>**LSTM-2**</a>
+
+  Computes an one-layer LSTM. This operator is usually supported via some
+  custom implementation such as CuDNN.
+  
+  Notations:
+  
+  `X` - input tensor
+  
+  `i` - input gate
+  
+  `o` - output gate
+  
+  `f` - forget gate
+  
+  `c` - cell gate
+  
+  `t` - time step (t-1 means previous time step)
+  
+  `W[iofc]` - W parameter weight matrix for input, output, forget, and cell gates
+  
+  `R[iofc]` - R recurrence weight matrix for input, output, forget, and cell gates
+  
+  `Wb[iofc]` - W bias vectors for input, output, forget, and cell gates
+  
+  `Rb[iofc]` - R bias vectors for input, output, forget, and cell gates
+  
+  `P[iof]`  - P peephole weight vector for input, output, and forget gates
+  
+  `WB[iofc]` - W parameter weight matrix for backward input, output, forget, and cell gates
+  
+  `RB[iofc]` - R recurrence weight matrix for backward input, output, forget, and cell gates
+  
+  `WBb[iofc]` - W bias vectors for backward input, output, forget, and cell gates
+  
+  `RBb[iofc]` - R bias vectors for backward input, output, forget, and cell gates
+  
+  `PB[iof]`  - P peephole weight vector for backward input, output, and forget gates
+  
+  `H` - Hidden state
+  
+  `num_directions` - 2 if direction == bidirectional else 1
+  
+  Activation functions:
+  
+    Relu(x)                - max(0, x)
+  
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
+    Sigmoid(x)             - 1/(1 + e^{-x})
+  
+    (NOTE: Below are optional)
+  
+    Affine(x)              - alpha*x + beta
+  
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    ThresholdedRelu(x)     - x if x >= alpha else 0
+  
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
+  
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+  
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    Softsign(x)            - x/(1 + |x|)
+  
+    Softplus(x)            - log(1 + e^x)
+  
+  Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
+  
+    - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+  
+    - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+  
+    - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
+  
+    - Ct = ft (.) Ct-1 + it (.) ct
+  
+    - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
+  
+    - Ht = ot (.) h(Ct)
+
+#### Versioning
+
+This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 2
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
+<dt><tt>direction</tt> : string</dt>
+<dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+<dt><tt>input_forget</tt> : int</dt>
+<dd>Couple the input and forget gates if 1, default 0.</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
+</dl>
+
+#### Inputs (3 - 8)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>The weight tensor for the gates. Concatenation of `W[iofc]` and `WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape `[num_directions, 4*hidden_size, input_size]`.</dd>
+<dt><tt>R</tt> : T</dt>
+<dd>The recurrence weight tensor. Concatenation of `R[iofc]` and `RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 4*hidden_size, hidden_size]`.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not specified - assumed to be 0.</dd>
+<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>initial_c</tt> (optional) : T</dt>
+<dd>Optional initial value of the cell. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>P</tt> (optional) : T</dt>
+<dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> (optional) : T</dt>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
+<dt><tt>Y_h</tt> : T</dt>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>Y_c</tt> : T</dt>
+<dd>The last output value of the cell. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int32)</dt>
+<dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
 ### <a name="LpPool-2"></a>**LpPool-2**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across the
