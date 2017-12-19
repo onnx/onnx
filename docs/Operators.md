@@ -427,7 +427,7 @@ opset_import {
 
   AveragePool consumes an input tensor X and applies average pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a 
+   average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -1329,35 +1329,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=sigmoid, g=tanh):
+  Equations (Default: f=Sigmoid, g=Tanh):
   
     - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
   
@@ -1865,10 +1861,10 @@ opset_import {
 ### <a name="InstanceNormalization"></a><a name="instancenormalization">**InstanceNormalization**</a>
 
   Carries out instance normalization as described in the paper
-  https://arxiv.org/abs/1607.08022. 
+  https://arxiv.org/abs/1607.08022.
   
-  y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
-  where mean and B are computed per instance per channel. 
+  y = scale * (x - mean) / sqrt(variance + epsilon) + B,
+  where mean and B are computed per instance per channel.
   
 
 #### Versioning
@@ -2010,35 +2006,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=sigmoid, g=tanh, h=tanh):
+  Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   
     - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
   
@@ -2364,7 +2356,7 @@ opset_import {
 
   LpPool consumes an input tensor X and applies Lp pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset 
+   Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2533,7 +2525,7 @@ opset_import {
 
   MaxPool consumes an input tensor X and applies max pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a 
+   max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2584,8 +2576,8 @@ opset_import {
 
 ### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
 
-  ROI max pool consumes an input tensor X and region of interests (RoIs) to 
-   apply max pooling across each RoI, to produce output 4-D tensor of shape 
+  ROI max pool consumes an input tensor X and region of interests (RoIs) to
+   apply max pooling across each RoI, to produce output 4-D tensor of shape
    (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
 #### Versioning
@@ -3135,35 +3127,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=tanh):
+  Equations (Default: f=Tanh):
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
@@ -3185,7 +3173,7 @@ opset_import {
 <dt><tt>activation_beta</tt> : list of floats (required)</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings (required)</dt>
-<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `tanh` if not specified.</dd>
+<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float (required)</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string (required)</dt>
