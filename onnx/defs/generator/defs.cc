@@ -9,7 +9,8 @@ OPERATOR_SCHEMA(Constant)
     .Attr(
           "value",
           "The value for the elements of the output tensor.",
-          AttributeProto::TENSOR)
+          AttributeProto::TENSOR,
+          false)
     .Output(
             0,
             "output",

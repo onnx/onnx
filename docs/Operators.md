@@ -744,7 +744,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>value</tt> : tensor (required)</dt>
+<dt><tt>value</tt> : tensor</dt>
 <dd>The value for the elements of the output tensor.</dd>
 </dl>
 

@@ -61,12 +61,12 @@ OPERATOR_SCHEMA(CastMap)
     "cast_to",
     "what to cast output to, enum 'TO_FLOAT', 'TO_STRING', 'TO_INT64', default is 'TO_FLOAT'",
     AttributeProto::STRING,
-    "TO_FLOAT")
+    std::string("TO_FLOAT"))
 .Attr(
     "map_form",
     "whether to only output as many values as are in the input, or position the input based on using the key of the map as the index of the output (sparse), enum 'DENSE', 'SPARSE', default is 'DENSE'",
     AttributeProto::STRING,
-    "DENSE")
+    std::string("DENSE"))
 .Attr(
     "max_map",
     "if map_form packing is SPARSE, what is the total length of each output in N (max index value)",
@@ -112,7 +112,8 @@ OPERATOR_SCHEMA(CategoryMapper)
 .Attr(
     "default_string",
     "string value to use if the int is not in the map",
-    AttributeProto::STRING)
+    AttributeProto::STRING,
+    false)
 .Attr(
     "default_int64",
     "int value to use if the string is not in the map",
@@ -360,7 +361,7 @@ OPERATOR_SCHEMA(SVMClassifier)
     "kernel_type",
     "enum LINEAR, POLY, RBF, SIGMOID, defaults to linear",
     AttributeProto::STRING,
-    "LINEAR")
+    std::string("LINEAR"))
 .Attr(
     "kernel_params",
     "Tensor of 3 elements containing gamma, coef0, degree in that order.  Zero if unused for the kernel.",
@@ -411,7 +412,7 @@ OPERATOR_SCHEMA(SVMRegressor)
     "kernel_type",
     "enum LINEAR, POLY, RBF, SIGMOID, defaults to linear",
     AttributeProto::STRING,
-    "LINEAR")
+    std::string("LINEAR"))
 .Attr(
     "kernel_params",
     "Tensor of 3 elements containing gamma, coef0, degree in that order.  Zero if unused for the kernel.",
