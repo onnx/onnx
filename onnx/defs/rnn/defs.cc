@@ -7,6 +7,7 @@ using namespace onnx;
 
 namespace onnx {
 
+// Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
@@ -351,5 +352,5 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
     .FillUsing(RNNDocGenerator("LSTM"))
     .Output(2, "Y_c",
             "The last output value of the cell. It has shape "
-            "`[num_directions, batch_size, hidden_size]`.", "T");
+            "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
 }  // namespace onnx
