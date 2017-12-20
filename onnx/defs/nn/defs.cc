@@ -383,7 +383,8 @@ Output case #2: Y (test mode)
         AttributeProto::FLOAT)
     .Input(0,
         "X",
-        "The input 4-dimensional tensor of shape NCHW.", "T")
+        "The input 4-dimensional tensor of shape NCHW for 2D BatchNormalization "
+        "or 5-dimensional tensor of shape NCHWD for 3D BatchNormalization.", "T")
     .Input(1,
         "scale",
         "The scale as a 1-dimensional tensor of size C to be applied to the "
@@ -400,7 +401,7 @@ Output case #2: Y (test mode)
         "var",
         "The running variance (training) or the estimated "
         "variance (testing) as a 1-dimensional tensor of size C.", "T")
-    .Output(0, "Y", "The output 4-dimensional tensor of the same shape as X.", "T")
+    .Output(0, "Y", "The output tensor of the same shape as X.", "T")
     .Output(1,
         "mean",
         "The running mean after the BatchNormalization operator. Must be in-place "
