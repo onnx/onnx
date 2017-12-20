@@ -227,11 +227,12 @@ class OpSchema {
     Attribute(
         const std::string& name_,
         const std::string& description_,
-        AttributeProto::AttributeType type_)
+        AttributeProto::AttributeType type_,
+        bool required_)
         : name(name_),
           description(description_),
           type(type_),
-          required(true) {}
+          required(required_) {}
 
     Attribute(
         const std::string& name_,
@@ -256,9 +257,11 @@ class OpSchema {
 #define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)            \
   OpSchema& Attr(const std::string& name,                   \
               const std::string& description,               \
+              AttributeProto::AttributeType type,           \
               const TypeName& defaultValue);                \
   OpSchema& Attr(const std::string& name,                   \
               const std::string& description,               \
+              AttributeProto::AttributeType type,           \
               const std::vector<TypeName>& defaultValue);   \
 
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
@@ -271,7 +274,8 @@ class OpSchema {
   OpSchema& Attr(
       const std::string& name,
       const std::string& description,
-      AttributeProto::AttributeType type);
+      AttributeProto::AttributeType type,
+      bool required = true);
   OpSchema& AllowUncheckedAttributes();
 
   // Type constraint.

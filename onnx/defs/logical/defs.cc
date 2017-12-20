@@ -19,9 +19,10 @@ detailed description of the broadcasting rules.
 )DOC";
         ReplaceAll(doc, "{name}", name);
         schema.SetDoc(doc);
-        schema.Attr("broadcast", "Enable broadcasting", AttributeProto::INT);
+        schema.Attr("broadcast", "Enable broadcasting", AttributeProto::INT, false);
         schema.Attr("axis", "If set, defines the broadcast dimensions.",
-                    AttributeProto::INT);
+                    AttributeProto::INT,
+                    false);
         schema.Input(0, "A", "Left input tensor for the logical operator.", "T");
         schema.Input(1, "B", "Right input tensor for the logical operator.", "T");
         schema.Output(0, "C", "Result tensor.", "T1");

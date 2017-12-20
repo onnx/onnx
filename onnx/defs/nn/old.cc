@@ -31,19 +31,24 @@ OPERATOR_SCHEMA(LpPool)
  data into the output tensor Y for further processing.)DOC")
     .Attr("kernel_shape",
           "The size of the kernel along each axis.",
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          false)
     .Attr("strides",
           "Stride along each axis.",
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          false)
     .Attr("auto_pad",
           auto_pad_doc.c_str(),
-          AttributeProto::STRING)
+          AttributeProto::STRING,
+          std::string("NOTSET"))
     .Attr("pads",
           pads_doc.c_str(),
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          false)
     .Attr("p",
           "p value of the Lp norm used to pool over the input data, default is 2.0.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          2.0f)
     .Input(0,
            "X",
            "Input data tensor from the previous operator; "
@@ -70,7 +75,8 @@ OPERATOR_SCHEMA(GlobalLpPool)
  equal to the spatial dimension of input tensor.)DOC")
     .Attr("p",
           "p value of the Lp norm used to pool over the input data, default is 2.0.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          2.0f)
     .Input(0,
            "X",
            "Input data tensor from the previous operator; "

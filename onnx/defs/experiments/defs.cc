@@ -25,8 +25,8 @@ Affine takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the affine function, y = alpha * x + beta,
 is applied to the tensor elementwise.
 )DOC")
-    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT)
-    .Attr("beta" , "Value of beta", AttributeProto::FLOAT)
+    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT, false)
+    .Attr("beta" , "Value of beta", AttributeProto::FLOAT, false)
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -43,7 +43,8 @@ is applied to the tensor elementwise.
 )DOC")
     .Attr("alpha",
           "Threshold value",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -57,8 +58,8 @@ Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
 alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
 by providing the same input and output blobs.
     )DOC")
-    .Attr("alpha", "Scaling value", AttributeProto::FLOAT)
-    .Attr("beta", "Scaling value", AttributeProto::FLOAT)
+    .Attr("alpha", "Scaling value", AttributeProto::FLOAT, false)
+    .Attr("beta", "Scaling value", AttributeProto::FLOAT, false)
     .Input(0, "input", "1-D input tensor", "T")
     .Output(0, "output", "The scaled hyperbolic tangent values of the input tensor "
         "computed element-wise", "T")
@@ -73,8 +74,8 @@ ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
 the tensor elementwise.
 )DOC")
-    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT)
-    .Attr("beta", "Value of beta", AttributeProto::FLOAT)
+    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT, false)
+    .Attr("beta", "Value of beta", AttributeProto::FLOAT, false)
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -106,28 +107,33 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
     .Attr(
         "value",
         "The value for the elements of the output tensor.",
-        0.0f)
+        AttributeProto::FLOAT,
+        false)
     .Attr(
         "dtype",
         "The data type for the elements of the output tensor."
         "Strictly must be one of the types from DataType enum in TensorProto.",
-        static_cast<int64_t>(1))
+        AttributeProto::INT,
+        static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
         "shape",
         "The shape of the output tensor."
         "Cannot set the shape argument and pass in an input at the same time.",
-        std::vector<int64_t>{})
+        AttributeProto::INTS,
+        false)
     .Attr(
         "extra_shape",
         "The additional dimensions appended at the end of the shape indicated"
         "by the input blob."
         "Cannot set the extra_shape argument when there is no input blob.",
-        std::vector<int64_t>{})
+        AttributeProto::INTS,
+        false)
     .Attr(
         "input_as_shape",
         "1D tensor containing the desired output shape.  First input must be in "
         "CPU context.",
-        static_cast<int64_t>(0))
+        AttributeProto::INT,
+        false)
     .Input(
         0,
         "input",
@@ -157,10 +163,10 @@ OPERATOR_SCHEMA(GivenTensorFill)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .Attr("values", "", AttributeProto::FLOATS)
-    .Attr("shape", "", std::vector<int64_t>{})
-    .Attr("input_as_shape", "", static_cast<int64_t>(0))
-    .Attr("extra_shape", "", std::vector<int64_t>{})
+    .Attr("values", "", AttributeProto::FLOATS, false)
+    .Attr("shape", "", AttributeProto::INTS, false)
+    .Attr("input_as_shape", "", AttributeProto::INT, false)
+    .Attr("extra_shape", "", AttributeProto::INTS, false)
     .AllowConsumed({{0, 0}});
 
 OPERATOR_SCHEMA(FC)
@@ -189,13 +195,15 @@ will throw errors.
         "(int32_t) default to 1; describes the axis of the inputs; "
         "defaults to one because the 0th axis most likely describes "
         "the batch_size",
-        AttributeProto::INT)
+        AttributeProto::INT,
+        false)
     .Attr(
         "axis_w",
         "(int32_t) default to 1; describes the axis of the weights; "
         "defaults to one because the 0th axis most likely describes "
         "the batch_size",
-        AttributeProto::INT)
+        AttributeProto::INT,
+        false)
     .Input(
         0,
         "X",
@@ -228,7 +236,7 @@ OPERATOR_SCHEMA(Scale)
 Scale takes one input data (Tensor<float>) and produces one output data
 (Tensor<float>) whose value is the input data tensor scaled element-wise.
 )DOC")
-    .Attr("scale", "(float, default 1.0) the scale to apply.", AttributeProto::FLOAT);
+    .Attr("scale", "(float, default 1.0) the scale to apply.", AttributeProto::FLOAT, false);
 
 OPERATOR_SCHEMA(GRUUnit)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
@@ -244,7 +252,8 @@ value at X[t][n] >= seqLengths[n].
         "drop_states",
         "Bool to determine if hidden state is zeroes or passed "
         "along for timesteps past the given sequence_length.",
-        AttributeProto::INT)
+        AttributeProto::INT,
+        false)
     .Input(0, "hidden_prev", "The previous GRU hidden state.", "T")
     .Input(
         1,
@@ -284,8 +293,8 @@ OPERATOR_SCHEMA(ImageScaler)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in
 the same ordering as the image pixel format.)DOC")
-    .Attr("bias", "Bias applied to each channel, same size as C.", AttributeProto::FLOATS)
-    .Attr("scale", "(float, default 1.0) the scale to apply.", AttributeProto::FLOAT)
+    .Attr("bias", "Bias applied to each channel, same size as C.", AttributeProto::FLOATS, false)
+    .Attr("scale", "(float, default 1.0) the scale to apply.", AttributeProto::FLOAT, 1.0f)
     .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same shape and type as input", "T")
     .TypeConstraint(
@@ -297,8 +306,8 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
-    .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttributeProto::INT)
-    .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttributeProto::INT)
+    .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttributeProto::INT, static_cast<int64_t>(0))
+    .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttributeProto::INT, static_cast<int64_t>(1))
     .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same shape and type as input", "T")
     .TypeConstraint(
@@ -312,8 +321,8 @@ OPERATOR_SCHEMA(Crop)
     .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
 then optionally start the crop offset by the left/top border amounts.
 If scale is not provided, crop the borders as provided.)DOC")
-    .Attr("border", "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).", AttributeProto::INTS)
-    .Attr("scale", "A 1-D values of (height, width).", AttributeProto::INTS)
+    .Attr("border", "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).", AttributeProto::INTS, false)
+    .Attr("scale", "A 1-D values of (height, width).", AttributeProto::INTS, false)
     .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same type as input, with H and W dimensions reduced.", "T")
     .TypeConstraint(
@@ -325,9 +334,9 @@ OPERATOR_SCHEMA(Embedding)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Turns positive integers (indexes) into dense vectors of fixed size.)DOC")
-    .Attr("input_dim", "Size of the input vocabulary.", AttributeProto::INT)
-    .Attr("output_dim", "Dimension of the embedding output vectors.", AttributeProto::INT)
-    .Attr("weights", "2-D tensor of weights [O,I].", AttributeProto::TENSOR)
+    .Attr("input_dim", "Size of the input vocabulary.", AttributeProto::INT, false)
+    .Attr("output_dim", "Dimension of the embedding output vectors.", AttributeProto::INT, false)
+    .Attr("weights", "2-D tensor of weights [O,I].", AttributeProto::TENSOR, false)
     .Input(0,
            "input",
            "1-D tensor of integers representing indices in the embedding dictionary "
@@ -345,15 +354,18 @@ OPERATOR_SCHEMA(Upsample)
     .Attr(
         "width_scale",
         "The scale along width dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT)
+        AttributeProto::FLOAT,
+        false)
     .Attr(
         "height_scale",
         "The scale along height dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT)
+        AttributeProto::FLOAT,
+        false)
     .Attr(
         "mode",
         "Two interpolation modes: nearest(default), bilinear",
-        "nearest")
+        AttributeProto::STRING,
+        std::string("nearest"))
     .Input(
         0,
         "X",

@@ -37,10 +37,12 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.SetDoc(doc);
     schema.Attr("broadcast",
                 "Pass 1 to enable broadcasting",
+                AttributeProto::INT,
                 static_cast<int64_t>(0));
     schema.Attr("axis",
                 "If set, defines the broadcast dimensions. See doc for details.",
-                static_cast<int64_t>(-1));
+                AttributeProto::INT,
+                false);
     schema.Input(
         0,
         "A",
@@ -81,6 +83,7 @@ will throw errors.
         "(int) default to 1; describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
         "the batch_size",
+        AttributeProto::INT,
         static_cast<int64_t>(1));
     schema.Input(0, "input",
          "The input tensor that's coerced into a 2D matrix of size (NxD) "
@@ -196,7 +199,8 @@ the tensor elementwise.
 OPERATOR_SCHEMA(LeakyRelu)
     .Attr("alpha",
           "Coefficient of leakage",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -212,10 +216,12 @@ OPERATOR_SCHEMA(Selu)
     .AllowConsumed({{0, 0}})
     .Attr("alpha",
           "Coefficient of SELU default to 1.6732.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          1.6732f)
     .Attr("gamma",
           "Coefficient of SELU default to 1.0507.",
-           AttributeProto::FLOAT)
+           AttributeProto::FLOAT,
+           1.0507f)
     .SetDoc(R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
@@ -231,7 +237,8 @@ OPERATOR_SCHEMA(Elu)
     .AllowConsumed({{0, 0}})
     .Attr("alpha",
           "Coefficient of ELU default to 1.0.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          1.0f)
     .SetDoc(R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
@@ -330,10 +337,12 @@ OPERATOR_SCHEMA(HardSigmoid)
   .AllowConsumed({{0, 0}})
   .Attr("alpha",
         "Value of alpha",
-        AttributeProto::FLOAT)
+        AttributeProto::FLOAT,
+        false)
   .Attr("beta",
         "Value of beta",
-        AttributeProto::FLOAT)
+        AttributeProto::FLOAT,
+        false)
   .SetDoc(R"DOC(
 HardSigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
@@ -396,9 +405,11 @@ specified with arguments 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max() respectively.
 )DOC")
     .Attr("min", "Minimum value, under which element is replaced by min",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr("max", "Maximum value, above which element is replaced by max",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -456,18 +467,23 @@ if attribute transA is non-zero, same for B and transB.
         "Constrain input and output types to float tensors.")
     .Attr("transA",
           "Whether A should be transposed",
+          AttributeProto::INT,
           static_cast<int64_t>(0))
     .Attr("transB",
           "Whether B should be transposed",
+          AttributeProto::INT,
           static_cast<int64_t>(0))
     .Attr("broadcast",
           "Whether C should be broadcasted",
+          AttributeProto::INT,
           static_cast<int64_t>(0))
     .Attr("alpha",
           "Scalar multiplier for the product of input tensors A * B",
+          AttributeProto::FLOAT,
           1.0f)
     .Attr("beta",
           "Scalar multiplier for input tensor C",
+          AttributeProto::FLOAT,
           1.0f);
 
 

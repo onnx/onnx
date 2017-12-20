@@ -29,23 +29,28 @@ TensorProto message.
     .Attr(
           "low",
           "Lower boundary of the output values.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "high",
           "Upper boundary of the output values.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
-          static_cast<int64_t>(1))
+          AttributeProto::INT,
+          static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
           "shape",
           "The shape of the output tensor.",
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          false)
     .Output(
             0,
             "output",
@@ -66,23 +71,28 @@ TensorProto message.
     .Attr(
           "mean",
           "The mean of the normal distribution.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "scale",
           "The standard deviation of the normal distribution.",
-           AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
-          static_cast<int64_t>(1))
+          AttributeProto::INT,
+          static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
           "shape",
           "The shape of the output tensor.",
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          false)
     .Output(
             0,
             "output",
@@ -102,20 +112,24 @@ TensorProto message.
     .Attr(
           "low",
           "Lower boundary of the output values.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "high",
           "Upper boundary of the output values.",
-           AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
           "the data type of the input tensor.",
-          static_cast<int64_t>(1))
+          AttributeProto::INT,
+          static_cast<int64_t>(TensorProto::FLOAT))
     .Input(
            0,
            "input",
@@ -140,20 +154,24 @@ TensorProto message.
     .Attr(
           "mean",
           "The mean of the normal distribution.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "scale",
           "The standard deviation of the normal distribution.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          false)
     .Attr(
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
           "the data type of the input tensor.",
-          static_cast<int64_t>(1))
+          AttributeProto::INT,
+          static_cast<int64_t>(TensorProto::FLOAT))
     .Input(
            0,
            "input",
