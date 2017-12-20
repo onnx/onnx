@@ -131,12 +131,10 @@ Example 2:
           false)
     .Attr("starts",
           "Starting indices of corresponding axis in `axes`",
-          AttributeProto::INTS,
-          false)
+          AttributeProto::INTS)
     .Attr("ends",
           "Ending indices (exclusive) of corresponding axis in axes`",
-          AttributeProto::INTS,
-          false)
+          AttributeProto::INTS)
     .Output(0, "output", "Sliced data tensor.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
@@ -226,8 +224,7 @@ Example 2:
 OPERATOR_SCHEMA(Squeeze)
     .Attr("axes",
           "List of positive integers, indicate the dimensions to squeeze.",
-          AttributeProto::INTS,
-          false)
+          AttributeProto::INTS)
     .SetDoc(R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
@@ -246,8 +243,7 @@ OPERATOR_SCHEMA(Pad)
           "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
           "added at the begining of axis `i` and xi_end, the number of pixels added at "
           "the end of axis `i`.",
-          AttributeProto::INTS,
-          false)
+          AttributeProto::INTS)
     .Attr("mode",
           "Three modes: constant(default), reflect, edge",
           AttributeProto::STRING,

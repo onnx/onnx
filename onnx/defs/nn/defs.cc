@@ -521,9 +521,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         static_cast<int64_t>(1));
 
 OPERATOR_SCHEMA(LRN)
-    .Attr("size", "The number of channels to sum over", AttributeProto::INT, false)
-    .Attr("alpha", "Scaling parameter", AttributeProto::FLOAT, false)
-    .Attr("beta", "The exponent", AttributeProto::FLOAT, false)
+    .Attr("size", "The number of channels to sum over", AttributeProto::INT)
+    .Attr("alpha", "Scaling parameter", AttributeProto::FLOAT)
+    .Attr("beta", "The exponent", AttributeProto::FLOAT)
     .Attr("bias", "Default to 1", AttributeProto::FLOAT, 1.0f)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")

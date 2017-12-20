@@ -1478,7 +1478,7 @@ opset_import {
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string (required)</dt>
+<dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
@@ -2190,13 +2190,13 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float</dt>
+<dt><tt>alpha</tt> : float (required)</dt>
 <dd>Scaling parameter</dd>
-<dt><tt>beta</tt> : float</dt>
+<dt><tt>beta</tt> : float (required)</dt>
 <dd>The exponent</dd>
 <dt><tt>bias</tt> : float</dt>
 <dd>Default to 1</dd>
-<dt><tt>size</tt> : int</dt>
+<dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
 </dl>
 
@@ -2325,7 +2325,7 @@ opset_import {
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string (required)</dt>
+<dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
@@ -3214,7 +3214,7 @@ opset_import {
 <dl>
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
-<dt><tt>paddings</tt> : list of ints</dt>
+<dt><tt>paddings</tt> : list of ints (required)</dt>
 <dd>List of integers indicate the padding element count at the begining and end of each axis, for 2D it is the number of pixel. `paddings` rank should be double of the input's rank. `paddings` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
@@ -3410,7 +3410,7 @@ opset_import {
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
-<dt><tt>direction</tt> : string (required)</dt>
+<dt><tt>direction</tt> : string</dt>
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
@@ -4505,9 +4505,9 @@ opset_import {
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
 <dd>Axes that `starts` and `ends` apply to. It's optional. If not present, will be treated as [0, 1, ..., len(`starts`) - 1].</dd>
-<dt><tt>ends</tt> : list of ints</dt>
+<dt><tt>ends</tt> : list of ints (required)</dt>
 <dd>Ending indices (exclusive) of corresponding axis in axes`</dd>
-<dt><tt>starts</tt> : list of ints</dt>
+<dt><tt>starts</tt> : list of ints (required)</dt>
 <dd>Starting indices of corresponding axis in `axes`</dd>
 </dl>
 
@@ -4808,7 +4808,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>List of positive integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
@@ -5133,11 +5133,11 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>height_scale</tt> : float</dt>
+<dt><tt>height_scale</tt> : float (required)</dt>
 <dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
 <dt><tt>mode</tt> : string</dt>
 <dd>Two interpolation modes: nearest(default), bilinear</dd>
-<dt><tt>width_scale</tt> : float</dt>
+<dt><tt>width_scale</tt> : float (required)</dt>
 <dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
 </dl>
 
@@ -5351,7 +5351,7 @@ opset_import {
 <dl>
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
-<dt><tt>pads</tt> : list of ints</dt>
+<dt><tt>pads</tt> : list of ints (required)</dt>
 <dd>List of integers indicate the padding element count at the begining and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
