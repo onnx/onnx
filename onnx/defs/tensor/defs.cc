@@ -20,7 +20,8 @@ NOTE: Casting to and from strings is not supported yet.
           "to",
           "The data type to which the elements of the input tensor are cast."
           "Strictly must be one of the types from DataType enum in TensorProto",
-          AttributeProto::STRING)
+          AttributeProto::STRING,
+          OPTIONAL)
     .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
@@ -45,7 +46,7 @@ At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is going to be copied
 from the shape argument.)DOC")
-    .Attr("shape", "New shape", AttributeProto::INTS)
+    .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "reshaped", "Reshaped data.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -54,7 +55,8 @@ from the shape argument.)DOC")
 OPERATOR_SCHEMA(Concat)
 .Attr("axis",
     "Which axis to concat on",
-    AttributeProto::INT)
+    AttributeProto::INT,
+    OPTIONAL)
     .SetDoc("Concatenate a list of tensors into a single tensor")
     .Input(0, "inputs", "List of tensors for concatenation", "T", OpSchema::Variadic)
     .Output(0, "concat_result", "Concatenated tensor", "T")
@@ -69,10 +71,12 @@ OPERATOR_SCHEMA(Split)
             "Constrain input types to float tensors.")
     .Attr("axis",
           "Which axis to split on",
-          AttributeProto::INT)
+          AttributeProto::INT,
+          OPTIONAL)
     .Attr("split",
           "length of each output",
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
 Otherwise, the tensor is split to equal sized parts.
@@ -123,15 +127,14 @@ Example 2:
           "Axes that `starts` and `ends` apply to. "
           "It's optional. If not present, will be treated as "
           "[0, 1, ..., len(`starts`) - 1].",
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          OPTIONAL)
     .Attr("starts",
           "Starting indices of corresponding axis in `axes`",
-          AttributeProto::INTS,
-          true)
+          AttributeProto::INTS)
     .Attr("ends",
           "Ending indices (exclusive) of corresponding axis in axes`",
-          AttributeProto::INTS,
-          true)
+          AttributeProto::INTS)
     .Output(0, "output", "Sliced data tensor.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
@@ -145,7 +148,8 @@ will be (2, 1, 3).
     .Attr("perm",
           "A list of integers. By default, reverse the dimensions, "
           "otherwise permute the axes according to the values given.",
-          AttributeProto::INTS)
+          AttributeProto::INTS,
+          OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "transposed", "Transposed output.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -199,7 +203,8 @@ Example 2:
         "axis",
         "Which axis to gather on, defaults to 0. Negative value means "
         "counting dimensions from the back. Accepted range in [-r, r-1]",
-        AttributeProto::INT)
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
     .Input(0, "data", "Tensor of rank r >= 1.", "T")
     .Input(
         1,
@@ -219,8 +224,7 @@ Example 2:
 OPERATOR_SCHEMA(Squeeze)
     .Attr("axes",
           "List of positive integers, indicate the dimensions to squeeze.",
-          AttributeProto::INTS,
-          true)
+          AttributeProto::INTS)
     .SetDoc(R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
@@ -239,14 +243,15 @@ OPERATOR_SCHEMA(Pad)
           "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
           "added at the begining of axis `i` and xi_end, the number of pixels added at "
           "the end of axis `i`.",
-          AttributeProto::INTS,
-          true)
+          AttributeProto::INTS)
     .Attr("mode",
           "Three modes: constant(default), reflect, edge",
-          AttributeProto::STRING)
+          AttributeProto::STRING,
+          std::string("constant"))
     .Attr("value",
           "One float, indicates the value to be filled, default is 0",
-          AttributeProto::FLOAT)
+          AttributeProto::FLOAT,
+          0.0f)
     .SetDoc(R"DOC(
 Given `data` tensor, pads, mode, and value.
 
@@ -276,7 +281,8 @@ Example:
 OPERATOR_SCHEMA(SpaceToDepth)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
-          AttributeProto::INT)
+          AttributeProto::INT,
+          OPTIONAL)
     .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
@@ -294,7 +300,8 @@ are moved to the depth dimension.
 OPERATOR_SCHEMA(DepthToSpace)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
-          AttributeProto::INT)
+          AttributeProto::INT,
+          OPTIONAL)
     .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
