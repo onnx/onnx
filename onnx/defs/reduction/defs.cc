@@ -20,7 +20,7 @@ False instead of True.)DOC";
         schema.Attr("axes",
                     "A list of integers, along which to reduce.",
                     AttributeProto::INTS,
-                    false);
+                    OPTIONAL);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
                     AttributeProto::INT,
@@ -79,7 +79,7 @@ The type of the output tensor is integer.)DOC";
         schema.Attr("axis",
                     "The axis in which to compute the arg indices",
                     AttributeProto::INT,
-                    false);
+                    OPTIONAL);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
                     AttributeProto::INT,

@@ -13,26 +13,26 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                     "Must be one of forward (default), reverse, or bidirectional.",
                     AttributeProto::STRING,
                     std::string("foward"));
-        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, false);
+        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL);
         schema.Attr("activation_alpha",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
                     "in LSTM.",
                     AttributeProto::FLOATS,
-                    false);
+                    OPTIONAL);
         schema.Attr("activation_beta",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
                     "in LSTM.",
                     AttributeProto::FLOATS,
-                    false);
+                    OPTIONAL);
         schema.Attr("output_sequence",
                     "The sequence output for the hidden is optional if 0. Default 0.",
                     AttributeProto::INT,
                     static_cast<int64_t>(0));
         schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
                     "in the range of [-threshold, +threshold] and is applied to the input "
-                    "of activations. No clip if not specified.", AttributeProto::FLOAT, false);
+                    "of activations. No clip if not specified.", AttributeProto::FLOAT, OPTIONAL);
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
@@ -126,7 +126,7 @@ Equations (Default: f=Tanh):
           "input gate. The activation function must be one of the activation "
           "functions specified above. Optional: Default `Tanh` if not specified.",
           AttributeProto::STRINGS,
-          false)
+          OPTIONAL)
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
@@ -222,7 +222,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
           "of the activation functions specified above. Optional: See the equations "
           "for default if not specified.",
           AttributeProto::STRINGS,
-          false)
+          OPTIONAL)
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
@@ -328,7 +328,7 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
           "be one of the activation functions specified above. Optional: See the equations "
           "for default if not specified.",
           AttributeProto::STRINGS,
-          false)
+          OPTIONAL)
     .Attr("input_forget", "Couple the input and forget gates if 1, default 0.",
           AttributeProto::INT,
           static_cast<int64_t>(0))

@@ -34,10 +34,10 @@ namespace onnx {
             schema.SetDoc(doc);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
                         "Stride along each axis.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
@@ -45,7 +45,7 @@ namespace onnx {
             schema.Attr("pads",
                         pads_doc.c_str(),
                         AttributeProto::INTS,
-                        false);
+                        OPTIONAL);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -88,20 +88,20 @@ namespace onnx {
             schema.SinceVersion(2);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
                         "Stride along each axis.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
-                        AttributeProto::INT, false);
+                        AttributeProto::INT, OPTIONAL);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -138,10 +138,10 @@ namespace onnx {
             schema.SetDoc(doc);
             schema.Attr("pooled_shape",
                         "ROI pool output shape (height, width).",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("spatial_scale",
                         "Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.",
-                        AttributeProto::FLOAT, false);
+                        AttributeProto::FLOAT, OPTIONAL);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -202,23 +202,23 @@ computes the output.)DOC";
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
-                         AttributeProto::INTS, false);
+                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
                         "dilation value along each axis of the filter.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
                         "stride along each axis.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
-                        AttributeProto::INT, false);
+                        AttributeProto::INT, OPTIONAL);
         };
     }
 
@@ -262,26 +262,26 @@ and computes the output.)DOC";
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
-                         AttributeProto::INTS, false);
+                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("output_shape",
                         "The shape of the output.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
                         "dilation value along each axis of the filter.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
                         "stride along each axis.",
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS, false);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into",
-                        AttributeProto::INT, false);
+                        AttributeProto::INT, OPTIONAL);
         };
     }
 
@@ -338,7 +338,7 @@ namespace onnx {
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
                         AttributeProto::INT,
-                        false);
+                        OPTIONAL);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -443,7 +443,7 @@ where mean and B are computed per instance per channel.
     .Attr("epsilon",
         "The epsilon value to use to avoid division by zero.",
         AttributeProto::FLOAT,
-        false)
+        OPTIONAL)
     .Input(0,
         "input",
         "The input 4-dimensional tensor of shape NCHW.", "T")

@@ -32,11 +32,11 @@ OPERATOR_SCHEMA(LpPool)
     .Attr("kernel_shape",
           "The size of the kernel along each axis.",
           AttributeProto::INTS,
-          false)
+          OPTIONAL)
     .Attr("strides",
           "Stride along each axis.",
           AttributeProto::INTS,
-          false)
+          OPTIONAL)
     .Attr("auto_pad",
           auto_pad_doc.c_str(),
           AttributeProto::STRING,
@@ -44,7 +44,7 @@ OPERATOR_SCHEMA(LpPool)
     .Attr("pads",
           pads_doc.c_str(),
           AttributeProto::INTS,
-          false)
+          OPTIONAL)
     .Attr("p",
           "p value of the Lp norm used to pool over the input data, default is 2.0.",
           AttributeProto::FLOAT,

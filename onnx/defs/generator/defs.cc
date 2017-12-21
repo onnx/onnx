@@ -10,7 +10,7 @@ OPERATOR_SCHEMA(Constant)
           "value",
           "The value for the elements of the output tensor.",
           AttributeProto::TENSOR,
-          false)
+          OPTIONAL)
     .Output(
             0,
             "output",
@@ -31,17 +31,17 @@ TensorProto message.
           "low",
           "Lower boundary of the output values.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "high",
           "Upper boundary of the output values.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
@@ -51,7 +51,7 @@ TensorProto message.
           "shape",
           "The shape of the output tensor.",
           AttributeProto::INTS,
-          false)
+          OPTIONAL)
     .Output(
             0,
             "output",
@@ -73,17 +73,17 @@ TensorProto message.
           "mean",
           "The mean of the normal distribution.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "scale",
           "The standard deviation of the normal distribution.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "dtype",
           "The data type for the elements of the output tensor.",
@@ -93,7 +93,7 @@ TensorProto message.
           "shape",
           "The shape of the output tensor.",
           AttributeProto::INTS,
-          false)
+          OPTIONAL)
     .Output(
             0,
             "output",
@@ -114,17 +114,17 @@ TensorProto message.
           "low",
           "Lower boundary of the output values.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "high",
           "Upper boundary of the output values.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
@@ -156,17 +156,17 @@ TensorProto message.
           "mean",
           "The mean of the normal distribution.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "scale",
           "The standard deviation of the normal distribution.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr(
           "dtype",
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"

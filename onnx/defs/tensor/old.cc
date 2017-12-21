@@ -15,11 +15,11 @@ OPERATOR_SCHEMA(Split)
     .Attr("axis",
           "Which axis to split on",
           AttributeProto::INT,
-          false)
+          OPTIONAL)
     .Attr("split",
           "length of each output",
           AttributeProto::INTS,
-          false)
+          OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. The lengths of the split can be specified using argument 'axis' or
 optional second input blob to the operator. Otherwise, the tensor is split

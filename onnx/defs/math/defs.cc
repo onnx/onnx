@@ -42,7 +42,7 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.Attr("axis",
                 "If set, defines the broadcast dimensions. See doc for details.",
                 AttributeProto::INT,
-                false);
+                OPTIONAL);
     schema.Input(
         0,
         "A",
@@ -200,7 +200,7 @@ OPERATOR_SCHEMA(LeakyRelu)
     .Attr("alpha",
           "Coefficient of leakage",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -338,11 +338,11 @@ OPERATOR_SCHEMA(HardSigmoid)
   .Attr("alpha",
         "Value of alpha",
         AttributeProto::FLOAT,
-        false)
+        OPTIONAL)
   .Attr("beta",
         "Value of beta",
         AttributeProto::FLOAT,
-        false)
+        OPTIONAL)
   .SetDoc(R"DOC(
 HardSigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
@@ -406,10 +406,10 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
 )DOC")
     .Attr("min", "Minimum value, under which element is replaced by min",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Attr("max", "Maximum value, above which element is replaced by max",
           AttributeProto::FLOAT,
-          false)
+          OPTIONAL)
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },

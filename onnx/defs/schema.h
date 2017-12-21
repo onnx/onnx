@@ -24,6 +24,7 @@ namespace onnx {
 using OperatorSetVersion = int;
 
 const char* const ONNX_DOMAIN = "";
+const bool OPTIONAL = false;
 
 typedef std::unordered_set<DataType> DataTypeSet;
 
