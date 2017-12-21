@@ -19,10 +19,12 @@ False instead of True.)DOC";
         schema.SetDoc(doc);
         schema.Attr("axes",
                     "A list of integers, along which to reduce.",
-                    AttributeProto::INTS);
+                    AttributeProto::INTS,
+                    OPTIONAL);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
-                    AttributeProto::INT);
+                    AttributeProto::INT,
+                    static_cast<int64_t>(1));
         schema.Input(0, "data", "An input tensor.", "T");
         schema.Output(0, "reduced", "Reduced output tensor.", "T");
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, 
@@ -76,10 +78,12 @@ The type of the output tensor is integer.)DOC";
         schema.SetDoc(doc);
         schema.Attr("axis",
                     "The axis in which to compute the arg indices",
-                    AttributeProto::INT);
+                    AttributeProto::INT,
+                    OPTIONAL);
         schema.Attr("keepdims",
                     "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
-                    AttributeProto::INT);
+                    AttributeProto::INT,
+                    static_cast<int64_t>(1));
         schema.Input(0, "data", "An input tensor.", "T");
         schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int32)");
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output types to float tensors.");
