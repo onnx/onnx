@@ -126,7 +126,7 @@ OPERATOR_SCHEMA(DictVectorizer)
     Uses an index mapping to convert a dictionary to an array.
     The output array will be equal in length to the index mapping vector parameter.
     All keys in the input dictionary must be present in the index mapping vector.
-    For each item in the input dictionary, insert its value in the ouput array.
+    For each item in the input dictionary, insert its value in the output array.
     The position of the insertion is determined by the position of the item's key
     in the index mapping. Any keys not present in the input dictionary, will be
     zero in the output array.  Use either string_vocabulary or int64_vocabulary, not both.
@@ -296,12 +296,12 @@ OPERATOR_SCHEMA(OneHotEncoder)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Replace the inputs with an array of ones and zeros, where the only
-    one is the zero-based category that was passed in.  The total category count 
-    will determine the length of the vector. For example if we pass a 
-    tensor with a single value of 4, and a category count of 8, the 
+    one is the zero-based category that was passed in.  The total category count
+    will determine the length of the vector. For example if we pass a
+    tensor with a single value of 4, and a category count of 8, the
     output will be a tensor with 0,0,0,0,1,0,0,0 .
 
-    This operator assumes every input in X is of the same category set 
+    This operator assumes every input in X is of the same category set
     (meaning there is only one category count).
 )DOC")
 .Input(0, "X", "Data to be encoded", "T")
@@ -340,7 +340,7 @@ OPERATOR_SCHEMA(Scaler)
 OPERATOR_SCHEMA(SVMClassifier)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
-    SVM classifier prediction 
+    SVM classifier prediction
 )DOC")
 .Input(0, "X", "Data to be classified", "T1")
 .Output(0, "Y", "Classification outputs (one class per example)", "T2")
@@ -437,13 +437,13 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Tree Ensemble classifier.  Returns the top class for each input in N.
-    All args with nodes_ are fields of a tuple of tree nodes, and 
+    All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
-    tuple across these inputs.  Each node id can appear only once 
+    tuple across these inputs.  Each node id can appear only once
     for each tree id.
     All fields prefixed with class_ are tuples of votes at the leaves.
     A leaf may have multiple votes, where each vote is weighted by
-    the associated class_weights index.  
+    the associated class_weights index.
     It is expected that either classlabels_strings or classlabels_int64s
     will be passed and the class_ids are an index into this list.
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
@@ -533,13 +533,13 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.
-    All args with nodes_ are fields of a tuple of tree nodes, and 
+    All args with nodes_ are fields of a tuple of tree nodes, and
     it is assumed they are the same length, and an index i will decode the
-    tuple across these inputs.  Each node id can appear only once 
+    tuple across these inputs.  Each node id can appear only once
     for each tree id.
     All fields prefixed with target_ are tuples of votes at the leaves.
     A leaf may have multiple votes, where each vote is weighted by
-    the associated target_weights index.  
+    the associated target_weights index.
     All trees must have their node ids start at 0 and increment by 1.
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 )DOC")
@@ -618,10 +618,10 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
 OPERATOR_SCHEMA(ZipMap)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
-    Makes a map from the input and the attributes.  
+    Makes a map from the input and the attributes.
     Assumes input 0 are the values, and the keys are specified by the attributes.
     Must provide keys in either classlabels_strings or classlabels_int64s (but not both).
-    Input 0 may have a batch size larger than 1, 
+    Input 0 may have a batch size larger than 1,
     but each input in the batch must be the size of the keys specified by the attributes.
     The order of the input and attributes determines the key-value mapping.
 )DOC")
@@ -637,7 +637,7 @@ OPERATOR_SCHEMA(ZipMap)
 OPERATOR_SCHEMA(FeatureVectorizer)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
-    Concatenates input features into one continuous output.  
+    Concatenates input features into one continuous output.
     Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
     Inputs will be written to the output in the order of the input arguments.
     All inputs are tensors of float.  Any feature that is not a tensor of float should
