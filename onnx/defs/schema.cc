@@ -229,6 +229,8 @@ void OpSchema::Verify(const NodeProto& node) const {
               "Attribute '", name, "' is expected to have field 'graphs'");
         }
         break;
+      default:
+        fail_check("Attribute '", name, " has unknown expected type");
     }
   }
   for (const auto& pair : attributes_) {
@@ -542,7 +544,7 @@ void OpSchema::Finalize() {
   // but not trailing inputs>.
   // <Max number of inputs> = <number of all inputs or std::numeric_limits<int>::max()
   // (if the last input is variadic).
-  
+
   // Flag indicates whether an optional input is trailing one (there's no single or variadic
   // input behind).
   for (size_t i = 0; i < inputs_.size(); ++i) {

@@ -30,10 +30,10 @@ OPERATOR_SCHEMA(Pad)
     .SinceVersion(1)
     .Attr("paddings",
           "List of integers indicate the padding element count at the "
-          "begining and end of each axis, for 2D it is the number of pixel. "
+          "beginning and end of each axis, for 2D it is the number of pixel. "
           "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
           "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-          "added at the begining of axis `i` and xi_end, the number of pixels added at "
+          "added at the beginning of axis `i` and xi_end, the number of pixels added at "
           "the end of axis `i`.",
           AttributeProto::INTS)
     .Attr("mode",
