@@ -690,18 +690,20 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 3
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>Which axis to concat on</dd>
 </dl>
 

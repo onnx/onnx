@@ -25,6 +25,7 @@ using OperatorSetVersion = int;
 
 const char* const ONNX_DOMAIN = "";
 const bool OPTIONAL = false;
+const bool REQUIRED = true;
 
 typedef std::unordered_set<DataType> DataTypeSet;
 
@@ -454,7 +455,7 @@ class OpSchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 2);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 3);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
