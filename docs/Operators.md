@@ -701,7 +701,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>Which axis to concat on</dd>
 </dl>
 
@@ -1359,19 +1359,23 @@ opset_import {
   
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+  
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 3
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 
 #### Attributes
 
@@ -1388,6 +1392,8 @@ opset_import {
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>linear_before_reset</tt> : int</dt>
+<dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
 <dt><tt>output_sequence</tt> : int</dt>
 <dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>

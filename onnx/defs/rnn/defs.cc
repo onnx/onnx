@@ -213,7 +213,9 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
   - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
 
-  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
+  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+
+  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC")
@@ -223,6 +225,12 @@ Equations (Default: f=Sigmoid, g=Tanh):
           "for default if not specified.",
           AttributeProto::STRINGS,
           OPTIONAL)
+    .SinceVersion(3)
+    .Attr("linear_before_reset", "When computing the output of the hidden gate, "
+          "apply the linear transformation before multiplying by the output of the "
+          "reset gate.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
