@@ -454,7 +454,9 @@ class OpSchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 2);
+      constexpr int min_version = 1;
+      constexpr int max_version = 3;
+      map_[ONNX_DOMAIN] = std::make_pair(min_version, max_version);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {

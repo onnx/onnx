@@ -1409,12 +1409,12 @@ opset_import {
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
-#### Outputs
+#### Outputs (0 - 2)
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
-<dt><tt>Y_h</tt> : T</dt>
+<dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
@@ -2046,11 +2046,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 
@@ -2098,12 +2098,12 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
-#### Outputs (2 - 3)
+#### Outputs (0 - 3)
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
-<dt><tt>Y_h</tt> : T</dt>
+<dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>Y_c</tt> (optional) : T</dt>
 <dd>The last output value of the cell. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -3205,12 +3205,12 @@ opset_import {
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
-#### Outputs
+#### Outputs (0 - 2)
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
-<dt><tt>Y_h</tt> : T</dt>
+<dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
