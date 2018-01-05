@@ -24,6 +24,7 @@ namespace onnx {
 using OperatorSetVersion = int;
 
 const char* const ONNX_DOMAIN = "";
+const bool OPTIONAL = false;
 
 typedef std::unordered_set<DataType> DataTypeSet;
 
@@ -215,23 +216,6 @@ class OpSchema {
   // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
   OpSchema& SetDomain(const std::string& domain);
 
-  // Note: this enum is structurally identical to the
-  // AttributeProto.AttributeType enum defined in onnx.proto.  If you rev one,
-  // you likely need to rev the other.
-  /*enum class AttrType {
-    FLOAT,
-    INT,
-    STRING,
-    TENSOR,
-    GRAPH,
-    FLOATS,
-    INTS,
-    STRINGS,
-    TENSORS,
-    GRAPHS
-  };
-  */
-
   enum class UseType {
     DEFAULT, // read only use of an input
     CONSUME_ALLOWED, // allowed to be marked consumed by a "consumed_inputs"
@@ -242,8 +226,8 @@ class OpSchema {
 
   struct Attribute {
     Attribute(
-        const char* name_,
-        const char* description_,
+        const std::string& name_,
+        const std::string& description_,
         AttributeProto::AttributeType type_,
         bool required_)
         : name(name_),
@@ -251,18 +235,48 @@ class OpSchema {
           type(type_),
           required(required_) {}
 
+    Attribute(
+        const std::string& name_,
+        const std::string& description_,
+        AttributeProto default_value_)
+        : name(name_),
+        description(description_),
+        type(default_value_.type()),
+        required(false),
+        default_value(default_value_) {}
+
     const std::string name;
     const std::string description;
     AttributeProto::AttributeType type;
     bool required;
+    AttributeProto default_value;
   };
 
   OpSchema& Attr(const Attribute& attr);
+
+  // Register "optional" attribute with default value.
+#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)            \
+  OpSchema& Attr(const std::string& name,                   \
+              const std::string& description,               \
+              AttributeProto::AttributeType type,           \
+              const TypeName& defaultValue);                \
+  OpSchema& Attr(const std::string& name,                   \
+              const std::string& description,               \
+              AttributeProto::AttributeType type,           \
+              const std::vector<TypeName>& defaultValue);   \
+
+  ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(float)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
+
+  // Register "required" attribute without default value.
   OpSchema& Attr(
-      const char* name,
-      const char* description,
+      const std::string& name,
+      const std::string& description,
       AttributeProto::AttributeType type,
-      bool required = false);
+      bool required = true);
   OpSchema& AllowUncheckedAttributes();
 
   // Type constraint.
@@ -427,7 +441,7 @@ class OpSchema {
 typedef std::unordered_map<
     std::string,
     std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>
-    OpName_Domain_Version_Schema_Map;    
+    OpName_Domain_Version_Schema_Map;
 
 /**
  * @brief A registry to hold all the operator schemas.

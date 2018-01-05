@@ -229,6 +229,8 @@ void OpSchema::Verify(const NodeProto& node) const {
               "Attribute '", name, "' is expected to have field 'graphs'");
         }
         break;
+      default:
+        fail_check("Attribute '", name, " has unknown expected type");
     }
   }
   for (const auto& pair : attributes_) {
@@ -362,13 +364,102 @@ OpSchema& OpSchema::Attr(const Attribute& attr) {
 }
 
 OpSchema& OpSchema::Attr(
-    const char* name,
-    const char* description,
+    const std::string& name,
+    const std::string& description,
     AttributeProto::AttributeType type,
     bool required) {
   Attr(Attribute{name, description, type, required});
   return *this;
 }
+
+#define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)        \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const type& default_value)                              \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        a.set_##field(default_value);                               \
+        a.set_type(attr_type);                                      \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
+
+#define ATTR_SETTER_WITH_LIST_VALUE(type, field, attrtype)          \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const std::vector<type>& default_value)                 \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        a.set_type(attr_type);                                      \
+        for (const auto& v : default_value)                         \
+        {                                                           \
+            a.add_##field(v);                                       \
+        }                                                           \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
+
+#define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype) \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const type& default_value)                              \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        *(a.mutable_##field()) = default_value;                     \
+        a.set_type(attr_type);                                      \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
+
+#define ATTR_SETTER_WITH_LIST_COMPLEXVALUE(type, field, attrtype)   \
+    OpSchema& OpSchema::Attr(const std::string& name,               \
+            const std::string& description,                         \
+            AttributeProto::AttributeType attr_type,                \
+            const std::vector<type>& default_value)                 \
+    {                                                               \
+        if (attrtype != attr_type) {                                \
+            std::cerr << "Attribute specification type mismatch.";  \
+            abort();                                                \
+        }                                                           \
+        AttributeProto a;                                           \
+        a.set_name(name);                                           \
+        a.set_type(attr_type);                                      \
+        for (const auto& v : default_value)                         \
+        {                                                           \
+            *(a.add_##field()) = v;                                 \
+        }                                                           \
+        Attr(Attribute(name, description, a));                      \
+        return *this;                                               \
+    }                                                               \
+
+ATTR_SETTER_WITH_SINGLE_VALUE(int64_t, i, AttributeProto::INT)
+ATTR_SETTER_WITH_SINGLE_VALUE(float, f, AttributeProto::FLOAT)
+ATTR_SETTER_WITH_SINGLE_VALUE(std::string, s, AttributeProto::STRING)
+ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(TensorProto, t, AttributeProto::TENSOR)
+ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(GraphProto, g, AttributeProto::GRAPH)
+ATTR_SETTER_WITH_LIST_VALUE(int64_t, ints, AttributeProto::INTS)
+ATTR_SETTER_WITH_LIST_VALUE(float, floats, AttributeProto::FLOATS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(std::string, strings, AttributeProto::STRINGS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(TensorProto, tensors, AttributeProto::TENSORS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(GraphProto, graphs, AttributeProto::GRAPHS)
 
 OpSchema& OpSchema::AllowUncheckedAttributes() {
   allows_unchecked_attributes_ = true;
@@ -453,7 +544,7 @@ void OpSchema::Finalize() {
   // but not trailing inputs>.
   // <Max number of inputs> = <number of all inputs or std::numeric_limits<int>::max()
   // (if the last input is variadic).
-  
+
   // Flag indicates whether an optional input is trailing one (there's no single or variadic
   // input behind).
   for (size_t i = 0; i < inputs_.size(); ++i) {
