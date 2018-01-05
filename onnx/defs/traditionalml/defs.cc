@@ -303,11 +303,14 @@ OPERATOR_SCHEMA(OneHotEncoder)
 
     This operator assumes every input in X is of the same category set
     (meaning there is only one category count).
+	
+	If the input is a tensor of float, int32, or double, the data will be cast
+    to int64s and the cats_int64s category list will be used for the lookups.
 )DOC")
 .Input(0, "X", "Data to be encoded", "T")
 .Output(0, "Y", "encoded output data", "tensor(float)")
-.TypeConstraint("T", { "tensor(string)", "tensor(int64)" }, " allowed types.")
-.Attr("cats_int64s", "list of cateogries, ints", AttributeProto::INT, OPTIONAL)
+.TypeConstraint("T", { "tensor(string)", "tensor(int64)","tensor(int32)", "tensor(float)","tensor(double)" }, " allowed types.")
+.Attr("cats_int64s", "list of cateogries, ints", AttributeProto::INTS, OPTIONAL)
 .Attr("cats_strings", "list of cateogries, strings", AttributeProto::STRINGS, OPTIONAL)
 .Attr(
     "zeros",
