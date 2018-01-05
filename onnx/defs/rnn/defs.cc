@@ -52,7 +52,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                       "It is optional if `output_sequence` is 0.", "T", OpSchema::Optional);
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
-                      "`[num_directions, batch_size, hidden_size]`.", "T");
+                      "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                               "Constrain input and output types to float tensors.");
         schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
@@ -241,7 +241,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 
 OPERATOR_SCHEMA(LSTM)
-    .SinceVersion(2)
+    .SinceVersion(3)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
