@@ -7,6 +7,7 @@
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/py_utils.h"
+#include "onnx/optimizer/wrapper.h"
 
 namespace onnx {
 
@@ -171,6 +172,16 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         std::unique_ptr<ModelProto> proto(new ModelProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
         checker::check_model(*proto);
+      });
+
+
+  // Submodule `optimizer`
+  auto optimizer = onnx_cpp2py_export.def_submodule("optimizer");
+  optimizer.doc() = "Optimizer submodule";
+
+  optimizer.def(
+      "optimize", [](std::string& content, bool init, bool predict) {
+          return py::bytes(optimization::Optimize(content, init, predict));
       });
 }
 
