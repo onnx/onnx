@@ -45,7 +45,7 @@ Tensor tensorProtoToTensor(const onnx::TensorProto & tp) {
   case onnx::TensorProto_DataType_UINT32:
   case onnx::TensorProto_DataType_UINT64: {
     ret.uint64s().reserve(tp.uint64_data_size());
-    for (uint i = 0; i < tp.uint64_data_size(); i++) {
+    for (int i = 0; i < tp.uint64_data_size(); i++) {
       ret.uint64s().push_back(tp.uint64_data(i));
     }
     break;
