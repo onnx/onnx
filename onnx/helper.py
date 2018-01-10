@@ -240,9 +240,11 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
 
     tensor_shape_proto = tensor_type_proto.shape
 
-    # This is needed, otherwise in case of the shape variable is empty
-    # (which can happen when the value is a scalar), the whole "shape"
-    # field will be absent in the final proto.
+    # You might think this is a no-op (extending a normal Python list by []
+    # certainly is), but protobuf lists work a little differently; if a field is never
+    # set, it is omitted from the resulting protobuf; a list that is explicitly
+    # set to be empty will get an (empty) entry in the protobuf. This difference
+    # is visible to our consumers, so make sure we emit an empty shape!
     tensor_shape_proto.dim.extend([])
 
     for d in shape:
