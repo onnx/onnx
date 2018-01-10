@@ -240,9 +240,9 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
 
     tensor_shape_proto = tensor_type_proto.shape
 
-    # This is needed, otherwise in case of the shape is empty (which
-    # can happen when the value is a scalar), the whole "shape" field
-    # will be absent in the final proto.
+    # This is needed, otherwise in case of the shape variable is empty
+    # (which can happen when the value is a scalar), the whole "shape"
+    # field will be absent in the final proto.
     tensor_shape_proto.dim.extend([])
 
     for d in shape:
