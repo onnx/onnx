@@ -264,7 +264,14 @@ and computes the output.)DOC";
                         "The shape of the convolution kernel.",
                          AttributeProto::INTS, OPTIONAL);
             schema.Attr("output_shape",
-                        "The shape of the output.",
+                        "The shape of the output."
+                        " output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] +"
+                        " kernel_shape[i] - pads[start_i] - pads[end_i]",
+                        AttributeProto::INTS, OPTIONAL);
+            schema.Attr("output_padding",
+                        "The zero-padding added to one side of the output."
+                        " This is also called adjs/adjustment in some frameworks."
+                        " If output_shape is set, this attribute will be ignored.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
                         "dilation value along each axis of the filter.",
