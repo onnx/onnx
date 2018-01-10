@@ -272,6 +272,14 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
+    def test_make_tensor_value_info(self):
+        vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))
+        checker.check_value_info(vi)
+
+        # scalar value
+        vi = helper.make_tensor_value_info('Y', TensorProto.FLOAT, ())
+        checker.check_value_info(vi)
+
 
 if __name__ == '__main__':
     unittest.main()

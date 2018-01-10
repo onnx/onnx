@@ -238,9 +238,15 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
     tensor_type_proto = value_info_proto.type.tensor_type
     tensor_type_proto.elem_type = elem_type
 
-    tensor_shape_proto = tensor_type_proto.shape.dim
+    tensor_shape_proto = tensor_type_proto.shape
+
+    # This is needed, otherwise in case of the shape is empty (which
+    # can happen when the value is a scalar), the whole "shape" field
+    # will be absent in the final proto.
+    tensor_shape_proto.dim.extend([])
+
     for d in shape:
-        dim = tensor_shape_proto.add()
+        dim = tensor_shape_proto.dim.add()
         if isinstance(d, integer_types):
             dim.dim_value = d
         elif isinstance(d, text_type):
