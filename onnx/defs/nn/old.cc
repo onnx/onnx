@@ -90,5 +90,5 @@ OPERATOR_SCHEMA(GlobalLpPool)
             "Y",
             "Output data tensor from pooling across the input "
             "tensor. Dimensions will be N x C x 1 x 1", "T")
-.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                    "Constrain input and output types to float tensors.");
