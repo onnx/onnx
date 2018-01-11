@@ -140,7 +140,7 @@ class Runner(object):
                 rtol=1e-3)
 
     def _prepare_model_data(self, model_test):
-        onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', '~/.onnx'))
+        onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
         model_dir = os.path.join(models_dir, model_test.model_name)
