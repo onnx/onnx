@@ -1872,7 +1872,7 @@ opset_import {
   https://arxiv.org/abs/1607.08022.
   
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
-  where mean and B are computed per instance per channel.
+  where mean and variance are computed per instance per channel.
   
 
 #### Versioning
