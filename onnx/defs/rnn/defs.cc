@@ -7,6 +7,7 @@ using namespace onnx;
 
 namespace onnx {
 
+// Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
@@ -51,13 +52,12 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                       "It is optional if `output_sequence` is 0.", "T", OpSchema::Optional);
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
-                      "`[num_directions, batch_size, hidden_size]`.", "T");
+                      "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                               "Constrain input and output types to float tensors.");
         schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
     };
 }
-
 
 OPERATOR_SCHEMA(RNN)
     .SetDoc(R"DOC(
@@ -364,6 +364,8 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
 	   "assumed to be 0.", "T",
        OpSchema::Optional)
-    .FillUsing(RNNDocGenerator("LSTM"));
-
+    .FillUsing(RNNDocGenerator("LSTM"))
+    .Output(2, "Y_c",
+            "The last output value of the cell. It has shape "
+            "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
 }  // namespace onnx
