@@ -249,7 +249,6 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 
 OPERATOR_SCHEMA(LSTM)
-    .SinceVersion(3)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
