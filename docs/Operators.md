@@ -701,7 +701,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>Which axis to concat on</dd>
 </dl>
 
@@ -876,8 +876,10 @@ opset_import {
 <dd>number of groups input channels and output channels are divided into</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel.</dd>
+<dt><tt>output_padding</tt> : list of ints</dt>
+<dd>The zero-padding added to one side of the output. This is also called adjs/adjustment in some frameworks. If output_shape is set, this attribute will be ignored.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
-<dd>The shape of the output.</dd>
+<dd>The shape of the output. output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
@@ -1359,17 +1361,19 @@ opset_import {
   
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+  
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 3
 }
 ~~~~
 
@@ -1388,6 +1392,8 @@ opset_import {
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>linear_before_reset</tt> : int</dt>
+<dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
 <dt><tt>output_sequence</tt> : int</dt>
 <dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
@@ -1864,7 +1870,7 @@ opset_import {
   https://arxiv.org/abs/1607.08022.
   
   y = scale * (x - mean) / sqrt(variance + epsilon) + B,
-  where mean and B are computed per instance per channel.
+  where mean and variance are computed per instance per channel.
   
 
 #### Versioning
@@ -2053,8 +2059,6 @@ opset_import {
   version = 3
 }
 ~~~~
-
-Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 
 #### Attributes
 
