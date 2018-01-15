@@ -118,6 +118,8 @@ class Protobuf(Dependency):
             includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
         elif use_conda:
             includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
+        else:
+            print("Warning: Environment Variable PROTOBUF_INCDIR or CONDA_PREFIX is not set, which may cause protobuf including folder error.")
 
         self.libraries = libs
         self.include_dirs = includes
