@@ -32,20 +32,20 @@ namespace onnx {
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);
             schema.SetDoc(doc);
+            schema.SinceVersion(2);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("strides",
                         "Stride along each axis.",
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS,
-                        OPTIONAL);
+                        AttributeProto::INTS);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -85,23 +85,23 @@ namespace onnx {
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
-            schema.SinceVersion(2);
+            schema.SinceVersion(3);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("strides",
                         "Stride along each axis.",
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
-                        AttributeProto::INT, OPTIONAL);
+                        AttributeProto::INT, static_cast<int64_t>(2));
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -136,12 +136,13 @@ namespace onnx {
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
+            schema.SinceVersion(2);
             schema.Attr("pooled_shape",
                         "ROI pool output shape (height, width).",
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("spatial_scale",
-                        "Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.",
-                        AttributeProto::FLOAT, OPTIONAL);
+                        "Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling, default is 1.0f.",
+                        AttributeProto::FLOAT, 1.f);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -174,6 +175,7 @@ The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
+            schema.SinceVersion(2);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; "
@@ -202,23 +204,23 @@ computes the output.)DOC";
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
-                         AttributeProto::INTS, OPTIONAL);
+                         AttributeProto::INTS);
             schema.Attr("dilations",
                         "dilation value along each axis of the filter.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
                         "stride along each axis.",
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("group",
-                        "number of groups input channels and output channels are divided into",
-                        AttributeProto::INT, OPTIONAL);
+                        "number of groups input channels and output channels are divided into, default is 1.",
+                        AttributeProto::INT, static_cast<int64_t>(1));
         };
     }
 
@@ -235,6 +237,7 @@ The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
+            schema.SinceVersion(2);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; has size (N x C x H x W)"
@@ -262,7 +265,7 @@ and computes the output.)DOC";
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
-                         AttributeProto::INTS, OPTIONAL);
+                         AttributeProto::INTS);
             schema.Attr("output_shape",
                         "The shape of the output."
                         " output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] +"
@@ -278,17 +281,17 @@ and computes the output.)DOC";
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
                         "stride along each axis.",
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS, OPTIONAL);
+                        AttributeProto::INTS);
             schema.Attr("group",
-                        "number of groups input channels and output channels are divided into",
-                        AttributeProto::INT, OPTIONAL);
+                        "number of groups input channels and output channels are divided into, default is 1.",
+                        AttributeProto::INT, static_cast<int64_t>(1));
         };
     }
 
@@ -345,7 +348,7 @@ namespace onnx {
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
                         AttributeProto::INT,
-                        OPTIONAL);
+                        static_cast<int64_t>(2));
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -382,20 +385,21 @@ Output case #2: Y (test mode)
     )DOC")
     .Attr("spatial",
         "If true, compute the mean and variance across all spatial elements "
-        "If false, compute the mean and variance across per feature.",
+        "If false, compute the mean and variance across per feature."
+        "Default is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1))
     .Attr("is_test",
-        "If set to nonzero, run spatial batch normalization in test mode.",
+        "If set to nonzero, run spatial batch normalization in test mode, default is 0.",
         AttributeProto::INT,
         static_cast<int64_t>(0))
     .Attr("epsilon",
-        "The epsilon value to use to avoid division by zero.",
+        "The epsilon value to use to avoid division by zero, default is 1e-5f.",
         AttributeProto::FLOAT,
         1e-5f)
     .Attr("momentum",
         "Factor used in computing the running mean and variance."
-        "e.g., running_mean = running_mean * momentum + mean * (1 - momentum)",
+        "e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.",
         AttributeProto::FLOAT,
         0.9f)
     .Input(0,
@@ -448,9 +452,9 @@ where mean and variance are computed per instance per channel.
 
 )DOC")
     .Attr("epsilon",
-        "The epsilon value to use to avoid division by zero.",
+        "The epsilon value to use to avoid division by zero, default is 1e-5f.",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        1e-5f)
     .Input(0,
         "input",
         "The input 4-dimensional tensor of shape NCHW.", "T")
@@ -531,7 +535,7 @@ OPERATOR_SCHEMA(LRN)
     .Attr("size", "The number of channels to sum over", AttributeProto::INT)
     .Attr("alpha", "Scaling parameter", AttributeProto::FLOAT)
     .Attr("beta", "The exponent", AttributeProto::FLOAT)
-    .Attr("bias", "Default to 1", AttributeProto::FLOAT, 1.0f)
+    .Attr("bias", "Default to 1.f", AttributeProto::FLOAT, 1.0f)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output "
