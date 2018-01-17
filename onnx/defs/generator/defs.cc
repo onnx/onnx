@@ -9,8 +9,7 @@ OPERATOR_SCHEMA(Constant)
     .Attr(
           "value",
           "The value for the elements of the output tensor.",
-          AttributeProto::TENSOR,
-          OPTIONAL)
+          AttributeProto::TENSOR)
     .Output(
             0,
             "output",
@@ -50,8 +49,7 @@ TensorProto message.
     .Attr(
           "shape",
           "The shape of the output tensor.",
-          AttributeProto::INTS,
-          OPTIONAL)
+          AttributeProto::INTS)
     .Output(
             0,
             "output",
@@ -92,8 +90,7 @@ TensorProto message.
     .Attr(
           "shape",
           "The shape of the output tensor.",
-          AttributeProto::INTS,
-          OPTIONAL)
+          AttributeProto::INTS)
     .Output(
             0,
             "output",
@@ -134,7 +131,7 @@ TensorProto message.
     .Input(
            0,
            "input",
-           "Input tensor to provide shape information.", "T")
+           "Input tensor to provide shape information.", "tensor(int32)")
     .Output(
             0,
             "output",
@@ -176,7 +173,7 @@ TensorProto message.
     .Input(
            0,
            "input",
-           "Input tensor to provide shape information.", "T")
+           "Input tensor to provide shape information.", "tensor(int32)")
     .Output(
             0,
             "output",

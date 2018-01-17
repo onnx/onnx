@@ -126,7 +126,7 @@ Equations (Default: f=Tanh):
           "input gate. The activation function must be one of the activation "
           "functions specified above. Optional: Default `Tanh` if not specified.",
           AttributeProto::STRINGS,
-          OPTIONAL)
+          std::vector<std::string>{"Tanh", "Tanh"})
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
