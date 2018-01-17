@@ -34,7 +34,9 @@ Check ONNX design choices and internals:
 * [Net Drawer ONNX vizualizer](https://github.com/onnx/tutorials/blob/master/tutorials/VisualizingAModel.md)
 
 # Contribute
-ONNX is a community project.  We encourage you to join the effort and contribute feedback, ideas, and code. Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) to get started.
+ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
+Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md)
+and [call for contributions](https://github.com/onnx/onnx/issues/426) to get started.
 
 # Discuss
 We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use Gitter for more real-time discussion:
