@@ -101,7 +101,7 @@ namespace onnx {
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
-                        AttributeProto::INT, OPTIONAL);
+                        AttributeProto::INT, static_cast<int64_t>(2));
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -345,7 +345,7 @@ namespace onnx {
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
                         AttributeProto::INT,
-                        OPTIONAL);
+                        static_cast<int64_t>(2));
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "

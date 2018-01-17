@@ -19,7 +19,7 @@ detailed description of the broadcasting rules.
 )DOC";
         ReplaceAll(doc, "{name}", name);
         schema.SetDoc(doc);
-        schema.Attr("broadcast", "Enable broadcasting", AttributeProto::INT, OPTIONAL);
+        schema.Attr("broadcast", "Enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));
         schema.Attr("axis", "If set, defines the broadcast dimensions.",
                     AttributeProto::INT,
                     OPTIONAL);

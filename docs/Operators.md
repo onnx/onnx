@@ -744,7 +744,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>value</tt> : tensor</dt>
+<dt><tt>value</tt> : tensor (required)</dt>
 <dd>The value for the elements of the output tensor.</dd>
 </dl>
 
@@ -3261,7 +3261,7 @@ opset_import {
 <dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
+<dt><tt>shape</tt> : list of ints (required)</dt>
 <dd>The shape of the output tensor.</dd>
 </dl>
 
@@ -3319,7 +3319,7 @@ opset_import {
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> : tensor(int32)</dt>
 <dd>Input tensor to provide shape information.</dd>
 </dl>
 
@@ -3368,7 +3368,7 @@ opset_import {
 <dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
+<dt><tt>shape</tt> : list of ints (required)</dt>
 <dd>The shape of the output tensor.</dd>
 </dl>
 
@@ -3425,7 +3425,7 @@ opset_import {
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> : tensor(int32)</dt>
 <dd>Input tensor to provide shape information.</dd>
 </dl>
 
