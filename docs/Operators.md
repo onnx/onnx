@@ -801,15 +801,15 @@ expect(node, inputs=[], outputs=[values],
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 
-Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
+Other versions of this operator: <a href="Changelog.md#Conv-2">Conv-2</a>
 
 #### Attributes
 
@@ -820,7 +820,7 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 <dd>dilation value along each axis of the filter.</dd>
 <dt><tt>group</tt> : int</dt>
 <dd>number of groups input channels and output channels are divided into, default is 1.</dd>
-<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel.</dd>
 <dt><tt>pads</tt> : list of ints (required)</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
@@ -861,15 +861,15 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 
-Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTranspose-1</a>
+Other versions of this operator: <a href="Changelog.md#ConvTranspose-2">ConvTranspose-2</a>
 
 #### Attributes
 
@@ -880,7 +880,7 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTran
 <dd>dilation value along each axis of the filter.</dd>
 <dt><tt>group</tt> : int</dt>
 <dd>number of groups input channels and output channels are divided into, default is 1.</dd>
-<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel.</dd>
 <dt><tt>output_padding</tt> : list of ints</dt>
 <dd>The zero-padding added to one side of the output. This is also called adjs/adjustment in some frameworks. If output_shape is set, this attribute will be ignored.</dd>

@@ -175,7 +175,7 @@ The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.SinceVersion(2);
+            schema.SinceVersion(3);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; "
@@ -204,7 +204,7 @@ computes the output.)DOC";
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
-                         AttributeProto::INTS);
+                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
                         "dilation value along each axis of the filter.",
                         AttributeProto::INTS, OPTIONAL);
@@ -237,7 +237,7 @@ The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.SinceVersion(2);
+            schema.SinceVersion(3);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; has size (N x C x H x W)"
@@ -265,7 +265,7 @@ and computes the output.)DOC";
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
-                         AttributeProto::INTS);
+                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("output_shape",
                         "The shape of the output."
                         " output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] +"
