@@ -217,7 +217,7 @@ private:
       return v->name == name;
     });
     ONNX_ASSERTM(!required || it != values_.end(),
-        "%s:%u: %s: required undefined attribute '%s'", __FILE__, __LINE__, __func__, symbolToString(name));
+        "%s:%u: %s: required undefined attribute '%s'", __FILE__, __LINE__, __func__, name.toString());
     return it;
   }
 };
@@ -675,7 +675,7 @@ public:
   }
   template<typename T>
   T* expect() {
-    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", symbolToString(T::Kind), symbolToString(kind()));
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", T::Kind.toString(), kind().toString());
     return static_cast<T*>(this);
   }
 
