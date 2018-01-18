@@ -1,9 +1,9 @@
-#include "onnx/optimizer/assertions.h"
+#include "onnx/assertions.h"
 
-namespace onnx { namespace optimization {
+namespace onnx {
 
 // Intrusive doubly linked lists with sane reverse iterators.
-// The header file is named generic_graph_node_list.h because it is ONLY
+// The header file is named graph_node_list.h because it is ONLY
 // used for Graph's Node lists, and if you want to use it for other
 // things, you will have to do some refactoring.
 //
@@ -50,7 +50,7 @@ struct generic_graph_node_list_iterator {
   T * operator*() const { return cur; }
   T * operator->() const { return cur; }
   generic_graph_node_list_iterator & operator++() {
-    JIT_ASSERT(cur);
+    ONNX_ASSERT(cur);
     cur = cur->next_in_graph[d];
     return *this;
   }
@@ -60,7 +60,7 @@ struct generic_graph_node_list_iterator {
     return old;
   }
   generic_graph_node_list_iterator & operator--() {
-    JIT_ASSERT(cur);
+    ONNX_ASSERT(cur);
     cur = cur->next_in_graph[reverseDir()];
     return *this;
   }
@@ -141,12 +141,12 @@ static inline bool operator!=(generic_graph_node_list_iterator<T> a, generic_gra
   return *a != *b;
 }
 
-}}
+} // namespace onnx
 
 namespace std {
 
 template<typename T>
-struct iterator_traits<onnx::optimization::generic_graph_node_list_iterator<T>> {
+struct iterator_traits<onnx::generic_graph_node_list_iterator<T>> {
   using difference_type = int64_t;
   using value_type = T*;
   using pointer = T**;
@@ -154,4 +154,4 @@ struct iterator_traits<onnx::optimization::generic_graph_node_list_iterator<T>> 
   using iterator_category = bidirectional_iterator_tag;
 };
 
-}
+} // namespace std
