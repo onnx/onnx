@@ -180,8 +180,13 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   optimizer.doc() = "Optimizer submodule";
 
   optimizer.def(
-      "optimize", [](std::string& content, bool init, bool predict) {
-          return py::bytes(optimization::Optimize(content, init, predict));
+      "optimize", [](std::string& content, std::list<std::string>& names) {
+          return py::bytes(optimization::Optimize(content, names));
+      });
+
+  optimizer.def(
+      "split", [](std::string& content, bool init, bool predict) {
+          return py::bytes(optimization::Split(content, init, predict));
       });
 }
 

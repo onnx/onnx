@@ -3,10 +3,10 @@
 #include <string>
 #include <unordered_map>
 #include <mutex>
-#include "onnx/optimizer/assertions.h"
-#include "onnx/optimizer/interned_strings.h"
+#include "onnx/assertions.h"
+#include "onnx/interned_strings.h"
 
-namespace onnx { namespace optimization {
+namespace onnx {
 
 struct InternedStrings {
   InternedStrings()
@@ -45,7 +45,7 @@ private:
   const char * customString(Symbol sym) {
     std::lock_guard<std::mutex> guard(mutex_);
     auto it = sym_to_string_.find(sym);
-    JIT_ASSERT(it != sym_to_string_.end());
+    ONNX_ASSERT(it != sym_to_string_.end());
     return it->second.c_str();
   }
   std::unordered_map<std::string, Symbol> string_to_sym_;
@@ -66,4 +66,4 @@ Symbol stringToSymbol(const std::string & s) {
   return globalStrings().symbol(s);
 }
 
-}}
+} // namespace onnx

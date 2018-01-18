@@ -2,7 +2,7 @@
 
 #include "onnx/onnx_pb.h"
 
-namespace onnx { namespace optimization {
+namespace onnx {
 
 struct Tensor {
 private:
@@ -138,4 +138,4 @@ public:
   }
 };
 
-}}
+} // namespace onnx

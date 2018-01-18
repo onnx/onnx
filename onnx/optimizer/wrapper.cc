@@ -1,29 +1,15 @@
+#include "onnx/py_utils.h" // Keep this at the top to avoid the compilation warning.
+
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
-#include "onnx/optimizer/export.h"
-#include "onnx/optimizer/import.h"
+#include "onnx/ir_pb_converter.h"
 #include "onnx/optimizer/optimize.h"
 #include "onnx/optimizer/wrapper.h"
 
 namespace onnx { namespace optimization {
 
-// copied from https://github.com/onnx/onnx/blob/master/onnx/proto_utils.h
-template <typename Proto>
-bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
-  // Total bytes hard limit / warning limit are set to 1GB and 512MB
-  // respectively.
-  ::google::protobuf::io::CodedInputStream coded_stream(
-      new google::protobuf::io::ArrayInputStream(buffer, length));
-  coded_stream.SetTotalBytesLimit(1024LL << 20, 512LL << 20);
-  return proto->ParseFromCodedStream(&coded_stream);
-}
-
-std::string Optimize(const std::string& content, bool init, bool predict) {
-  onnx::ModelProto mp_in;
-  ParseProtoFromBytes(&mp_in, content.c_str(), content.size());
-  onnx::ModelProto mp_out;
-
+void PrepareOutput(const onnx::ModelProto& mp_in, onnx::ModelProto& mp_out) {
   if (mp_in.has_producer_name()) {
     mp_out.set_ir_version(mp_in.ir_version());
   }
@@ -62,11 +48,49 @@ std::string Optimize(const std::string& content, bool init, bool predict) {
       pp_out->set_value(pp_in.value());
     }
   }
+}
 
-  std::shared_ptr<onnx::optimization::Graph> g = onnx::optimization::ImportModel(mp_in);
+std::string Optimize(const std::string& content, std::list<std::string>& names) {
+  onnx::ModelProto mp_in;
+  ParseProtoFromBytes(&mp_in, content.c_str(), content.size());
+  onnx::ModelProto mp_out;
+  PrepareOutput(mp_in, mp_out);
+
+  std::shared_ptr<onnx::Graph> g = onnx::ImportModelProto(mp_in);
   std::string out;
   if (g.get() == nullptr) {
-    std::cerr << "Warning: optimize-onnx is unable to parse input model" << std::endl;
+    std::cerr << "Warning: onnx optimizer is unable to parse input model" << std::endl;
+    // If we can't parse the file, just return the original content.
+    out = content;
+  } else {
+    for (auto s : names) {
+      if (s == "fuse_consecutive_transposes") {
+        fuse_consecutive_transposes(g);
+      } else if (s == "eliminate_nop_transpose") {
+        eliminate_nop_transpose(g);
+      } else if (s == "fuse_transpose_into_gemm") {
+        fuse_transpose_into_gemm(g);
+      } else{
+        std::cerr << "Warning: onnx optimier doesn't recognize pass name "
+          << s << std::endl;
+      }
+    }
+    ExportModelProto(&mp_out, g);
+    mp_out.SerializeToString(&out);
+  }
+  return out;
+}
+
+std::string Split(const std::string& content, bool init, bool predict) {
+  onnx::ModelProto mp_in;
+  ParseProtoFromBytes(&mp_in, content.c_str(), content.size());
+  onnx::ModelProto mp_out;
+  PrepareOutput(mp_in, mp_out);
+
+  std::shared_ptr<onnx::Graph> g = onnx::ImportModelProto(mp_in);
+  std::string out;
+  if (g.get() == nullptr) {
+    std::cerr << "Warning: onnx optimizer is unable to parse input model" << std::endl;
 
     // If we can't parse the file, give an empty init graph and copy
     // the input graph into the predict graph.
@@ -76,8 +100,8 @@ std::string Optimize(const std::string& content, bool init, bool predict) {
       out = content;
     }
   } else {
-    onnx::optimization::optimize(g, init, predict);
-    onnx::optimization::encodeGraph(&mp_out, g);
+    split_init_and_predict(g, init, predict);
+    ExportModelProto(&mp_out, g);
     mp_out.SerializeToString(&out);
   }
   return out;

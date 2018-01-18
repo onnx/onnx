@@ -1,13 +1,11 @@
-#include "onnx/optimizer/assertions.h"
+#include "onnx/assertions.h"
 
 #include <cstdarg>
 #include <cstdio>
 
-namespace torch {
+namespace onnx {
 
-void
-barf(const char *fmt, ...)
-{
+void barf(const char *fmt, ...) {
   char msg[2048];
   va_list args;
 
@@ -18,4 +16,4 @@ barf(const char *fmt, ...)
   throw assert_error(msg);
 }
 
-}
+} // namespace onnx
