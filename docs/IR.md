@@ -80,6 +80,10 @@ The representation distinguishes between two kinds of values: attribute values, 
 
 The types of the inputs and outputs of the model must be specified, including the shapes of tensors. While the ranks of input and output tensors are statically specified, the sizes of specific dimensions (axis) may be statically unknown and are indicated so using symbolic identifiers in the shape. 
 
+#### Optional Inputs
+
+Some Operators have inputs that are marked as optional. There are two ways to leave an optional input unspecified. The first is to simply not provide that input. However, this is not always possible - for example, if you wish to leave the fourth input unspecified, but still provide a value for the fifth input. Therefore, any input with a name of the empty string is treated as an unspecified optional input.
+
 Built-in Operators and Standard Data Types
 ------------------------------------------
 
