@@ -9,3 +9,4 @@ from __future__ import unicode_literals
 import onnx.onnx_cpp2py_export.optimizer as C
 
 optimize = C.optimize
+split = C.split

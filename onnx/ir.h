@@ -1,27 +1,228 @@
 #pragma once
 
-#include <iostream>
-#include <memory>
-#include <vector>
 #include <atomic>
 #include <algorithm>
-#include <unordered_set>
-#include <functional>
 #include <cstdint>
+#include <functional>
+#include <iostream>
+#include <memory>
 #include <sstream>
+#include <stdint.h>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
-#include "onnx/optimizer/utils/disallow_copy.h"
-#include "onnx/optimizer/utils/array_ref.h"
+#include "onnx/array_ref.h"
+#include "onnx/assertions.h"
+#include "onnx/interned_strings.h"
+#include "onnx/graph_node_list.h"
+#include "onnx/tensor.h"
 
-#include "onnx/optimizer/generic_if.h"
-#include "onnx/optimizer/assertions.h"
-#include "onnx/optimizer/interned_strings.h"
-#include "onnx/optimizer/attributes.h"
-#include "onnx/optimizer/resource_guard.h"
-#include "onnx/optimizer/type.h"
-#include "onnx/optimizer/graph_node_list.h"
+#define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
+  TypeName(const TypeName&) = delete; \
+  void operator=(const TypeName&) = delete
 
-namespace onnx { namespace optimization {
+namespace onnx {
+
+class ResourceGuard {
+  std::function<void()> _destructor;
+  bool _released;
+
+public:
+  ResourceGuard(std::function<void()> destructor)
+    : _destructor(std::move(destructor))
+    , _released(false) {}
+
+  ~ResourceGuard() {
+    if (!_released) _destructor();
+  }
+
+  void release() {
+    _released = true;
+  }
+};
+
+
+struct Dimension {
+  Dimension(bool is_int, int64_t dim, std::string param)
+    : is_int(is_int), dim(dim), param(std::move(param))
+  { }
+
+  bool is_int;
+  int64_t dim;
+  std::string param;
+};
+
+
+enum class AttributeKind {
+  f,fs,i,is,s,ss,t,ts,g,gs
+};
+
+static inline const char * toString(AttributeKind kind) {
+  static const char* names[] = {"f","fs","i","is","s","ss","t","ts","g","gs"};
+  ONNX_ASSERT(size_t(kind) < sizeof(names)/sizeof(AttributeKind));
+  return names[int(kind)];
+}
+
+struct AttributeValue {
+  AttributeValue(Symbol name)
+  : name(name) {}
+  using Ptr = std::unique_ptr<AttributeValue>;
+  Symbol name;
+  virtual AttributeKind kind() const = 0;
+  virtual Ptr clone() const = 0;
+  virtual ~AttributeValue() {}
+};
+
+template<typename T, AttributeKind Kind>
+struct ScalarAttributeValue : public AttributeValue {
+  using ConstructorType = const T &;
+  using ValueType = T;
+  ScalarAttributeValue(Symbol name, ConstructorType value_)
+  : AttributeValue(name), value_(value_) {}
+  ValueType & value() {
+    return value_;
+  }
+  virtual Ptr clone() const override {
+    return Ptr(new ScalarAttributeValue(name, value_));
+  }
+  virtual AttributeKind kind() const override { return Kind; }
+private:
+  ValueType value_;
+};
+
+template<typename T, AttributeKind Kind>
+struct VectorAttributeValue : public AttributeValue {
+  using ConstructorType = const std::vector<T> &&;
+  using ValueType = std::vector<T>;
+  VectorAttributeValue(Symbol name, ConstructorType value_)
+  : AttributeValue(name), value_(std::move(value_)) {}
+  ValueType & value() {
+    return value_;
+  }
+  virtual AttributeKind kind() const override { return Kind; }
+  virtual std::unique_ptr<AttributeValue> clone() const override {
+    auto copy = value_;
+    return Ptr(new VectorAttributeValue(name, std::move(copy)));
+  }
+private:
+  ValueType value_;
+};
+
+using FloatAttr = ScalarAttributeValue<double,AttributeKind::f>;
+using FloatsAttr = VectorAttributeValue<double,AttributeKind::fs>;
+using IntAttr = ScalarAttributeValue<int64_t,AttributeKind::i>;
+using IntsAttr = VectorAttributeValue<int64_t,AttributeKind::is>;
+using StringAttr = ScalarAttributeValue<std::string,AttributeKind::s>;
+using StringsAttr = VectorAttributeValue<std::string,AttributeKind::ss>;
+using TensorAttr = ScalarAttributeValue<Tensor,AttributeKind::t>;
+using TensorsAttr = VectorAttributeValue<Tensor,AttributeKind::ts>;
+struct Graph;
+using GraphAttr = ScalarAttributeValue<std::shared_ptr<Graph>,AttributeKind::g>;
+using GraphsAttr = VectorAttributeValue<std::shared_ptr<Graph>,AttributeKind::gs>;
+
+
+// CRTP so that Node which inherits Attributes can be return for
+// method chaining e.g:
+// Node * n = g->create(kSelect)->set_i(kOffset,3)->set_f(kValue,3.5);
+// we return Derived* pointers because Nodes are normally held as pointers.
+template<typename Derived>
+struct Attributes {
+  Attributes() {}
+  void copyAttributes(const Attributes & rhs) {
+    values_.clear();
+    for(auto & i : rhs.values_) {
+      values_.push_back(i->clone());
+    }
+  }
+  bool hasAttribute(Symbol name) const {
+    return find(name,false) != values_.end();
+  }
+  AttributeKind kindOf(Symbol name) const {
+    return (*find(name,true))->kind();
+  }
+  Derived* removeAttribute(Symbol name) {
+    values_.erase(find(name,true));
+    return This();
+  }
+  bool hasAttributes() const {
+    return values_.size() > 0;
+  }
+  // The names are returned in order, since name actually is the index.
+  std::vector<Symbol> attributeNames() const {
+    std::vector<Symbol> names;
+    for(auto & a : values_)
+      names.push_back(a->name);
+    return names;
+  }
+
+  #define CREATE_ACCESSOR(Kind, method) \
+  Derived* method##_(Symbol name, Kind##Attr::ConstructorType v) { \
+    return set<Kind##Attr>(name,std::forward<Kind##Attr::ConstructorType>(v)); \
+  } \
+  const Kind##Attr::ValueType& method(Symbol name) const { \
+    return get<Kind##Attr>(name); \
+  }
+  CREATE_ACCESSOR(Float,f)
+  CREATE_ACCESSOR(Floats,fs)
+  CREATE_ACCESSOR(String,s)
+  CREATE_ACCESSOR(Strings,ss)
+  CREATE_ACCESSOR(Int,i)
+  CREATE_ACCESSOR(Ints,is)
+  CREATE_ACCESSOR(Tensor,t)
+  CREATE_ACCESSOR(Tensors,ts)
+  CREATE_ACCESSOR(Graph,g)
+  CREATE_ACCESSOR(Graphs,gs)
+
+  #undef CREATE_ACCESSOR
+
+private:
+  Derived* This() {
+    return static_cast<Derived*>(this);
+  }
+  template<typename T>
+  Derived* set(Symbol name, typename T::ConstructorType v) {
+    auto it = find(name, false);
+    auto nv = AVPtr(new T(name, std::forward<typename T::ConstructorType>(v)));
+    if(it == values_.end()) {
+      values_.push_back(std::move(nv));
+    } else {
+      *it = std::move(nv);
+    }
+    return This();
+  }
+  template<typename T>
+  typename T::ValueType & get(Symbol name) const {
+    auto it = find(name, true);
+    T* child = dynamic_cast<T*>(it->get());
+    ONNX_ASSERT(child != nullptr);
+    return child->value();
+  }
+  using AVPtr = AttributeValue::Ptr;
+  // NB: For determinism, we use a vector rather than a hash map.  This does
+  // mean that lookups are O(n), so you shouldn't use Attributes to store
+  // a big pile of messages.
+  std::vector<AVPtr> values_;
+  using iterator = std::vector<AVPtr>::iterator;
+  iterator find(Symbol name, bool required) {
+    auto it = std::find_if(values_.begin(), values_.end(),[&](const AVPtr & v) {
+      return v->name == name;
+    });
+    ONNX_ASSERT(!required || it != values_.end());
+    return it;
+  }
+  using const_iterator = std::vector<AVPtr>::const_iterator;
+  const_iterator find(Symbol name, bool required) const {
+    auto it = std::find_if(values_.begin(), values_.end(),[&](const AVPtr & v) {
+      return v->name == name;
+    });
+    ONNX_ASSERTM(!required || it != values_.end(),
+        "%s:%u: %s: required undefined attribute '%s'", __FILE__, __LINE__, __func__, symbolToString(name));
+    return it;
+  }
+};
+
+
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -59,7 +260,7 @@ using use_list = std::vector<Use>;
 using NodeKind = Symbol;
 
 struct Value {
-  TH_DISALLOW_COPY_AND_ASSIGN(Value);
+  ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
   Value(Node * node_, size_t offset_);
 private:
   friend struct Node;
@@ -151,7 +352,7 @@ public:
 };
 
 struct Node : public Attributes<Node> {
-  TH_DISALLOW_COPY_AND_ASSIGN(Node);
+  ONNX_DISALLOW_COPY_AND_ASSIGN(Node);
   friend struct Graph;
   friend struct Value;
   friend graph_node_list;
@@ -259,7 +460,7 @@ public:
     return false;
   }
   void replaceAllUsesWith(Node * n) {
-    JIT_ASSERT(outputs().size() == n->outputs().size());
+    ONNX_ASSERT(outputs().size() == n->outputs().size());
     size_t nOutputs = outputs().size();
     for(size_t i = 0; i < nOutputs; i++) {
       outputs()[i]->replaceAllUsesWith(n->outputs()[i]);
@@ -268,15 +469,15 @@ public:
   // lots of things like chunk have a single input or singel output, so we have a
   // helper to make accessing it easier
   Value * input() {
-    JIT_ASSERT(inputs_.size() == 1);
+    ONNX_ASSERT(inputs_.size() == 1);
     return inputs_.at(0);
   }
   Value * output() {
-    JIT_ASSERT(outputs_.size() == 1);
+    ONNX_ASSERT(outputs_.size() == 1);
     return outputs_.at(0);
   }
   const  Value * input() const {
-    JIT_ASSERT(inputs_.size() == 1);
+    ONNX_ASSERT(inputs_.size() == 1);
     return inputs_.at(0);
   }
   // Access a particular input.  This is a checked index.
@@ -308,7 +509,7 @@ public:
   // Execute: %3.addInput(%4)
   // Result:  %3 = f(%1, %2, %4)
   Value* addInput(Value * node) {
-    JIT_ASSERT(graph_ == node->owningGraph());
+    ONNX_ASSERT(graph_ == node->owningGraph());
     node->uses_.emplace_back(this, inputs_.size());
     inputs_.push_back(node);
     return node;
@@ -321,7 +522,7 @@ public:
   // Execute: %3.replaceInput(1, %4)
   // Result:  %3 = f(%1, %4)
   Value * replaceInput(size_t i, Value * newValue) {
-    JIT_ASSERT(newValue->owningGraph() == graph_);
+    ONNX_ASSERT(newValue->owningGraph() == graph_);
     Value * old = dropInput(i);
     inputs_[i] = newValue;
     newValue->uses_.emplace_back(this, i);
@@ -335,8 +536,8 @@ public:
   // Execute: %3.replaceInputWith(%1, %4)
   // Result:  %3 = f(%4, %2, %4)
   void replaceInputWith(Value * from, Value * to) {
-    JIT_ASSERT(from->owningGraph() == graph_);
-    JIT_ASSERT(to->owningGraph() == graph_);
+    ONNX_ASSERT(from->owningGraph() == graph_);
+    ONNX_ASSERT(to->owningGraph() == graph_);
     size_t i = 0;
     for(auto input : inputs()) {
       if(input == from)
@@ -363,7 +564,7 @@ public:
   //          %5 = h(%1)
   //          %4 = g(%3)
   Node* insertBefore(Node * n) {
-    JIT_ASSERT(n->inGraphList());
+    ONNX_ASSERT(n->inGraphList());
     insertAfter(n->prev());
     return this;
   }
@@ -379,7 +580,7 @@ public:
   //          %4 = g(%3)
   //          %5 = h(%1)
   Node* insertAfter(Node * n) {
-    JIT_ASSERT(!inGraphList() && n->inGraphList());
+    ONNX_ASSERT(!inGraphList() && n->inGraphList());
     Node * next = n->next();
     n->next() = this;
     this->prev() = n;
@@ -474,7 +675,7 @@ public:
   }
   template<typename T>
   T* expect() {
-    JIT_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", symbolToString(T::Kind), symbolToString(kind()));
+    ONNX_ASSERTM(T::Kind == kind(), "expected a %s but found a %s", symbolToString(T::Kind), symbolToString(kind()));
     return static_cast<T*>(this);
   }
 
@@ -486,7 +687,7 @@ private:
     // O(N) on the use list, but unless we get nodes with +100 uses
     // vector traversal still is probably faster than linked list
     auto use_it = std::find(input_uses.begin(), input_uses.end(), Use(this, i));
-    JIT_ASSERT(use_it != input_uses.end());
+    ONNX_ASSERT(use_it != input_uses.end());
     return use_it;
   }
 
@@ -494,7 +695,7 @@ private:
   // is only used internally to Node before setting it to a new value
   // or erasing the entry from the list.
   Value* dropInput(size_t i) {
-    JIT_ASSERT(i < inputs_.size());
+    ONNX_ASSERT(i < inputs_.size());
     auto input_node = inputs_[i];
     auto use_it = findUseForInput(i);
     input_node->uses_.erase(use_it);
@@ -503,11 +704,11 @@ private:
   }
 
   bool inGraphList() const {
-    JIT_ASSERT(next() != nullptr || prev() == nullptr);
+    ONNX_ASSERT(next() != nullptr || prev() == nullptr);
     return next() != nullptr;
   }
   void removeFromList() {
-    JIT_ASSERT(inGraphList());
+    ONNX_ASSERT(inGraphList());
     Node * next = this->next();
     Node * prev = this->prev();
     prev->next() = next;
@@ -537,7 +738,7 @@ protected:
 };
 
 struct Graph {
-TH_DISALLOW_COPY_AND_ASSIGN(Graph);
+ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 friend struct Value;
 private:
@@ -689,13 +890,13 @@ public:
   }
 
   Node * appendNode(Node * n) {
-    JIT_ASSERT(n->graph_ == this && !n->inGraphList());
+    ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
     n->insertBefore(output_);
     return n;
   }
 
   Node * prependNode(Node * n) {
-    JIT_ASSERT(n->graph_ == this && !n->inGraphList());
+    ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
     n->insertAfter(output_);
     return n;
   }
@@ -740,13 +941,13 @@ private:
 
   void freeNode(Node * n) {
     auto it = all_nodes.find(n);
-    JIT_ASSERT(it != all_nodes.end());
+    ONNX_ASSERT(it != all_nodes.end());
     delete *it;
     all_nodes.erase(it);
   }
   void freeValue(Value * v) {
     auto it = all_values.find(v);
-    JIT_ASSERT(it != all_values.end());
+    ONNX_ASSERT(it != all_values.end());
     all_values.erase(it);
   }
 };
@@ -769,7 +970,7 @@ inline const Graph * Value::owningGraph() const {
 }
 
 inline void Value::replaceAllUsesWith(Value * newValue) {
-  JIT_ASSERT(owningGraph() == newValue->owningGraph());
+  ONNX_ASSERT(owningGraph() == newValue->owningGraph());
   for(auto u : uses()) {
     u.user->inputs_[u.offset] = newValue;
     newValue->uses_.push_back(u);
@@ -787,8 +988,8 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
 }
 
 inline void Node::eraseOutput(size_t i) {
-  JIT_ASSERT(i < outputs_.size());
-  JIT_ASSERT(outputs_[i]->uses().size() == 0);
+  ONNX_ASSERT(i < outputs_.size());
+  ONNX_ASSERT(outputs_[i]->uses().size() == 0);
   Value * n = outputs_[i];
   outputs_.erase(outputs_.begin() + i);
   owningGraph()->freeValue(n);
@@ -798,7 +999,7 @@ inline void Node::eraseOutput(size_t i) {
 }
 
 inline void Node::destroy() {
-  JIT_ASSERT(inGraphList());
+  ONNX_ASSERT(inGraphList());
   while(outputs().size() > 0)
     eraseOutput(outputs().size() - 1);
   removeAllInputs();
@@ -821,4 +1022,4 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
 }
 
-}} // namespace onnx::optimization
+} // namespace onnx

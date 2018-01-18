@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace onnx { namespace optimization {
+namespace onnx {
 
 using Symbol = uint32_t;
 
@@ -135,4 +135,4 @@ enum BuiltinSymbol {
 const char * symbolToString(Symbol s);
 Symbol stringToSymbol(const std::string & s);
 
-}}
+} // namespace onnx
