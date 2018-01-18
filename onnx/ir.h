@@ -18,11 +18,30 @@
 #include "onnx/graph_node_list.h"
 #include "onnx/tensor.h"
 
+
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete; \
   void operator=(const TypeName&) = delete
 
+
 namespace onnx {
+
+// Graph represents one "function" of computation.
+// It uses a simple ownership model where the graph owns all the nodes inside it.
+// All references inside the graph are raw pointers.
+// Destroying the Graph will invalidate any pointers to nodes in the graph.
+struct Graph;
+
+
+// Node is the base class of the IR graph. It represents one computation
+// and dependencies on a list of Values. The "prim-ops", so to speak.
+struct Node;
+
+
+// A Value represents an input or output to node that is either a
+// Tensor or an opaque Handle object, as determined by type().
+struct Value;
+
 
 class ResourceGuard {
   std::function<void()> _destructor;
@@ -45,8 +64,8 @@ public:
 
 struct Dimension {
   Dimension(bool is_int, int64_t dim, std::string param)
-    : is_int(is_int), dim(dim), param(std::move(param))
-  { }
+    : is_int(is_int), dim(dim), param(std::move(param)) {
+  }
 
   bool is_int;
   int64_t dim;
@@ -55,14 +74,18 @@ struct Dimension {
 
 
 enum class AttributeKind {
-  f,fs,i,is,s,ss,t,ts,g,gs
+  // float, float list, int, int list, string, string list,
+  // tensor, tensor list, subgraph, subgraph list
+  f, fs, i, is, s, ss, t, ts, g, gs
 };
 
+
 static inline const char * toString(AttributeKind kind) {
-  static const char* names[] = {"f","fs","i","is","s","ss","t","ts","g","gs"};
-  ONNX_ASSERT(size_t(kind) < sizeof(names)/sizeof(AttributeKind));
+  static const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs"};
+  ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(AttributeKind));
   return names[int(kind)];
 }
+
 
 struct AttributeValue {
   AttributeValue(Symbol name)
@@ -73,6 +96,7 @@ struct AttributeValue {
   virtual Ptr clone() const = 0;
   virtual ~AttributeValue() {}
 };
+
 
 template<typename T, AttributeKind Kind>
 struct ScalarAttributeValue : public AttributeValue {
@@ -87,9 +111,11 @@ struct ScalarAttributeValue : public AttributeValue {
     return Ptr(new ScalarAttributeValue(name, value_));
   }
   virtual AttributeKind kind() const override { return Kind; }
+
 private:
   ValueType value_;
 };
+
 
 template<typename T, AttributeKind Kind>
 struct VectorAttributeValue : public AttributeValue {
@@ -109,6 +135,7 @@ private:
   ValueType value_;
 };
 
+
 using FloatAttr = ScalarAttributeValue<double,AttributeKind::f>;
 using FloatsAttr = VectorAttributeValue<double,AttributeKind::fs>;
 using IntAttr = ScalarAttributeValue<int64_t,AttributeKind::i>;
@@ -117,7 +144,6 @@ using StringAttr = ScalarAttributeValue<std::string,AttributeKind::s>;
 using StringsAttr = VectorAttributeValue<std::string,AttributeKind::ss>;
 using TensorAttr = ScalarAttributeValue<Tensor,AttributeKind::t>;
 using TensorsAttr = VectorAttributeValue<Tensor,AttributeKind::ts>;
-struct Graph;
 using GraphAttr = ScalarAttributeValue<std::shared_ptr<Graph>,AttributeKind::g>;
 using GraphsAttr = VectorAttributeValue<std::shared_ptr<Graph>,AttributeKind::gs>;
 
@@ -224,20 +250,6 @@ private:
 
 
 
-// Graph represents one "function" of computation.
-// It uses a simple ownership model where the graph owns all the nodes inside it.
-// All references inside the graph are raw pointers.
-// Destroying the Graph will invalidate any pointers to nodes in the graph.
-struct Graph;
-
-// Node is the base class of the IR graph. It represents one computation
-// and dependencies on a list of Values. The "prim-ops", so to speak.
-struct Node;
-
-// A Value represents an input or output to node that is either a
-// Tensor or an opaque Handle object, as determined by type().
-struct Value;
-
 // Each use is represented by this type, see Node::uses()
 // 'user' is the consumer of the value, offset is the index into
 // 'user's input this where the produces will be found.
@@ -247,6 +259,7 @@ struct Use {
   Node * user;
   size_t offset;
 };
+
 static inline bool operator==(const Use & a, const Use & b) {
   return a.user == b.user && a.offset == b.offset;
 }
@@ -259,9 +272,11 @@ using value_list = std::vector<Value*>;
 using use_list = std::vector<Use>;
 using NodeKind = Symbol;
 
+
 struct Value {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
   Value(Node * node_, size_t offset_);
+
 private:
   friend struct Node;
   friend struct Graph;
@@ -274,6 +289,7 @@ private:
   std::string unique_name_;
   onnx::TensorProto_DataType elem_type_;
   std::vector<Dimension> sizes_;
+
 public:
   Value* setElemType(onnx::TensorProto_DataType elem_type) {
     elem_type_ = elem_type;
@@ -295,7 +311,6 @@ public:
   bool has_name() const {
     return has_name_;
   }
-
   std::string uniqueName() const {
     if(unique_name_.size() > 0)
       return unique_name_;
@@ -351,6 +366,7 @@ public:
 
 };
 
+
 struct Node : public Attributes<Node> {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Node);
   friend struct Graph;
@@ -359,6 +375,7 @@ struct Node : public Attributes<Node> {
   friend const_graph_node_list;
   friend graph_node_list_iterator;
   friend const_graph_node_list_iterator;
+
 private:
   // each node but Return/Param
   // is associated with exactly one place in the node list...
@@ -385,8 +402,10 @@ private:
   std::string name_;
   bool has_doc_string_;
   std::string doc_string_;
+
 protected:
   Node(Graph * graph_, NodeKind kind_); //defined after graph
+
 public:
   bool has_name() {
     return has_name_;
@@ -680,6 +699,7 @@ public:
   }
 
   virtual ~Node() {}
+
 private:
   // Lookup iterator in use list of _input i_ that corresponds to its use of _this_
   use_list::iterator findUseForInput(size_t i) {
@@ -716,6 +736,7 @@ private:
     this->next() = nullptr;
     this->prev() = nullptr;
   }
+
 protected:
   // subclasses must override
   // this function is used by createClone to initialize a new version
@@ -741,6 +762,7 @@ struct Graph {
 ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 friend struct Value;
+
 private:
   // only used to keep track of allocated nodes
   // actual representation of Graph is done with
@@ -766,6 +788,7 @@ private:
   std::string name_;
   bool has_doc_string_;
   std::string doc_string_;
+
 public:
   Graph()
   : next_unique_(0)
