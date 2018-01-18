@@ -809,7 +809,7 @@ opset_import {
 }
 ~~~~
 
-Other versions of this operator: <a href="Changelog.md#Conv-2">Conv-2</a>
+Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 
 #### Attributes
 
@@ -869,7 +869,7 @@ opset_import {
 }
 ~~~~
 
-Other versions of this operator: <a href="Changelog.md#ConvTranspose-2">ConvTranspose-2</a>
+Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTranspose-1</a>
 
 #### Attributes
 

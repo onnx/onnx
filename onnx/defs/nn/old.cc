@@ -248,7 +248,7 @@ OPERATOR_SCHEMA(Conv)
     .SetDoc(R"DOC(
 The convolution operator consumes an input tensor and a filter, and
 computes the output.)DOC")
-    .SinceVersion(2)
+    .SinceVersion(1)
     .Input(0,
            "X",
            "Input data tensor from previous layer; "
@@ -299,7 +299,7 @@ OPERATOR_SCHEMA(ConvTranspose)
     .SetDoc(R"DOC(
 The convolution transpose operator consumes an input tensor and filter,
 and computes the output.)DOC")
-    .SinceVersion(2)
+    .SinceVersion(1)
     .Input(0,
            "X",
            "Input data tensor from previous layer; has size (N x C x H x W)"
