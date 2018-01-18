@@ -6,8 +6,6 @@
 
 namespace onnx {
 
-using Symbol = uint32_t;
-
 #define FORALL_BUILTIN_SYMBOLS(_) \
 _(PythonOp) \
 _(CppOp) \
@@ -40,6 +38,7 @@ _(Scale) \
 _(Transpose) \
 _(Reshape) \
 _(split) \
+_(chunk) \
 _(Offset) \
 _(value) \
 _(Subgraph) \
@@ -95,6 +94,7 @@ _(div) \
 _(eq) \
 _(equal) \
 _(exp) \
+_(expm1) \
 _(floor) \
 _(fmod) \
 _(frac) \
@@ -122,7 +122,8 @@ _(sub) \
 _(tan) \
 _(trunc) \
 _(zeros) \
-_(exponent)
+_(exponent) \
+_(device)
 
 enum BuiltinSymbol {
   #define DEFINE_SYMBOL(s) \
@@ -132,7 +133,46 @@ enum BuiltinSymbol {
   kLastSymbol, //where we start counting for new symbols
 };
 
-const char * symbolToString(Symbol s);
-Symbol stringToSymbol(const std::string & s);
+
+struct Symbol {
+  Symbol() {}
+  /*implicit*/ Symbol(BuiltinSymbol value)
+  : value(value) {}
+  explicit Symbol(const std::string & s);
+  explicit Symbol(uint32_t value)
+  : value(value) {}
+
+  operator uint32_t() const {
+    return value;
+  }
+  const char * toString() const;
+private:
+  uint32_t value;
+};
+
+static inline bool operator==(Symbol lhs, Symbol rhs) {
+  return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
+}
+// necessary to prevent ambiguous overload resolutions
+static inline bool operator==(BuiltinSymbol lhs, Symbol rhs) {
+  return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
+}
+static inline bool operator==(Symbol lhs, BuiltinSymbol rhs) {
+  return static_cast<uint32_t>(lhs) == static_cast<uint32_t>(rhs);
+}
+
+inline Symbol operator "" _sym(const char * s, size_t) {
+  return Symbol(s);
+}
 
 } // namespace onnx
+
+// make symbol behave like an integer in hash tables
+namespace std {
+  template<>
+  struct hash<onnx::Symbol> {
+    std::size_t operator()(onnx::Symbol s) const {
+      return std::hash<uint32_t>()(static_cast<uint32_t>(s));
+    }
+  };
+} // namespace std

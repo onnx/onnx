@@ -86,7 +86,7 @@ Tensor tensorProtoToTensor(const onnx::TensorProto & tp) {
 }
 
 void convertAttribute(const onnx::AttributeProto & ap, Node * n) {
-  Symbol sym = stringToSymbol(ap.name());
+  Symbol sym = Symbol(ap.name());
   switch(ap.type()) {
   case onnx::AttributeProto_AttributeType_FLOAT:
     n->f_(sym, ap.f());
@@ -215,7 +215,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const onnx::GraphProto& gp) {
 
   for (int i = 0; i < gp.node_size(); i++) {
     auto np = gp.node(i);
-    auto * n = g->create(stringToSymbol(np.op_type()), /* num_outputs = */ np.output_size());
+    auto * n = g->create(Symbol(np.op_type()), /* num_outputs = */ np.output_size());
     g->appendNode(n);
     for (int j = 0; j < np.output_size(); j++) {
       auto out = n->outputs()[j];
@@ -356,7 +356,7 @@ void encodeTensor(onnx::TensorProto * p, const Tensor & tensor) {
 
 void addAttribute(onnx::NodeProto * n_p, Node * n, Symbol name) {
   auto attr = n_p->add_attribute();
-  attr->set_name(symbolToString(name));
+  attr->set_name(name.toString());
   switch(n->kindOf(name)) {
     case AttributeKind::f:
       attr->set_f(n->f(name));
@@ -466,7 +466,7 @@ void encodeGraph(onnx::GraphProto * p_g, const std::shared_ptr<Graph> & g) {
     for(auto output : node->outputs()) {
       p_n->add_output(value_name(output));
     }
-    p_n->set_op_type(symbolToString(node->kind()));
+    p_n->set_op_type(node->kind().toString());
     for(auto attr_name : node->attributeNames()) {
       addAttribute(p_n, node, attr_name);
     }

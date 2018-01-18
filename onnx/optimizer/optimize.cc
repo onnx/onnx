@@ -13,7 +13,7 @@ static const char* impure_operators[] = {
 
 static bool is_pure_operator(Node * n) {
   for (auto x : impure_operators) {
-    if (n->kind() == stringToSymbol(x)) {
+    if (n->kind() == Symbol(x)) {
       return false;
     }
   }
