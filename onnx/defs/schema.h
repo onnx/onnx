@@ -41,7 +41,7 @@ typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
  *
  * To register an OpSchema, one can use the macro OPERATOR_SCHEMA(name) and
  * then append the various functions in the class. For example, for an op
- * that itakes in two inputs, one output, and the first input and output
+ * that takes in two inputs, one output, and the first input and output
  * could be in-place, can be written as
  *
  *     OPERATOR_SCHEMA(name)
