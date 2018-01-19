@@ -433,11 +433,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 
@@ -450,10 +450,10 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints (required)</dt>
-<dd>Stride along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs
@@ -801,15 +801,13 @@ expect(node, inputs=[], outputs=[values],
 
 #### Versioning
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 3
+  version = 1
 }
 ~~~~
-
-Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 
 #### Attributes
 
@@ -817,15 +815,15 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each axis of the filter. If not presents, back-ends should consider dilations as 1.</dd>
 <dt><tt>group</tt> : int</dt>
 <dd>number of groups input channels and output channels are divided into, default is 1.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
-<dd>The shape of the convolution kernel.</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints (required)</dt>
-<dd>stride along each axis.</dd>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -861,15 +859,13 @@ Other versions of this operator: <a href="Changelog.md#Conv-1">Conv-1</a>
 
 #### Versioning
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 3
+  version = 1
 }
 ~~~~
-
-Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTranspose-1</a>
 
 #### Attributes
 
@@ -877,19 +873,19 @@ Other versions of this operator: <a href="Changelog.md#ConvTranspose-1">ConvTran
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each axis of the filter. If not presents, back-ends should consider dilations as 1.</dd>
 <dt><tt>group</tt> : int</dt>
 <dd>number of groups input channels and output channels are divided into, default is 1.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
-<dd>The shape of the convolution kernel.</dd>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>output_padding</tt> : list of ints</dt>
 <dd>The zero-padding added to one side of the output. This is also called adjs/adjustment in some frameworks. If output_shape is set, this attribute will be ignored.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
 <dd>The shape of the output. output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints (required)</dt>
-<dd>stride along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -2397,10 +2393,10 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>, <
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints (required)</dt>
-<dd>Stride along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs
@@ -2547,11 +2543,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 
@@ -2564,10 +2560,10 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
-<dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
-<dt><tt>strides</tt> : list of ints (required)</dt>
-<dd>Stride along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs
@@ -2600,11 +2596,11 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 
 #### Versioning
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 2
+  version = 3
 }
 ~~~~
 

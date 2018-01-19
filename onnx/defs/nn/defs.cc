@@ -11,7 +11,8 @@ namespace onnx {
                                   "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
                                   "added at the beginning of axis `i` and xi_end, the number of pixels added at "
                                   "the end of axis `i`. This attribute cannot be used simultaneously with "
-                                  "auto_pad attribute.";
+                                  "auto_pad attribute. If pads attribute is not present,"
+								  "back-ends should consider padding values as 0.";
     static std::string auto_pad_doc = "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                                       "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
                                       "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
@@ -32,20 +33,20 @@ namespace onnx {
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);
             schema.SetDoc(doc);
-            schema.SinceVersion(2);
+            schema.SinceVersion(3);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
             schema.Attr("strides",
-                        "Stride along each axis.",
-                        AttributeProto::INTS);
+                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -90,15 +91,15 @@ namespace onnx {
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
             schema.Attr("strides",
-                        "Stride along each axis.",
-                        AttributeProto::INTS);
+                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
                         AttributeProto::INT, static_cast<int64_t>(2));
@@ -136,7 +137,7 @@ namespace onnx {
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
-            schema.SinceVersion(2);
+            schema.SinceVersion(3);
             schema.Attr("pooled_shape",
                         "ROI pool output shape (height, width).",
                         AttributeProto::INTS);
@@ -175,7 +176,6 @@ The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.SinceVersion(3);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; "
@@ -203,21 +203,21 @@ computes the output.)DOC";
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
-                        "The shape of the convolution kernel.",
+                        "The shape of the convolution kernel. If not present, should be inferred from input W.",
                          AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
-                        "dilation value along each axis of the filter.",
+                        "dilation value along each axis of the filter. If not presents, back-ends should consider dilations as 1.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
-                        "stride along each axis.",
-                        AttributeProto::INTS);
+                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into, default is 1.",
                         AttributeProto::INT, static_cast<int64_t>(1));
@@ -237,7 +237,6 @@ The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
             schema.SetDoc(doc);
-            schema.SinceVersion(3);
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; has size (N x C x H x W)"
@@ -264,7 +263,7 @@ and computes the output.)DOC";
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
-                        "The shape of the convolution kernel.",
+                        "The shape of the convolution kernel. If not present, should be inferred from input W.",
                          AttributeProto::INTS, OPTIONAL);
             schema.Attr("output_shape",
                         "The shape of the output."
@@ -277,18 +276,18 @@ and computes the output.)DOC";
                         " If output_shape is set, this attribute will be ignored.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
-                        "dilation value along each axis of the filter.",
+                        "dilation value along each axis of the filter. If not presents, back-ends should consider dilations as 1.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
-                        "stride along each axis.",
-                        AttributeProto::INTS);
+                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
                         AttributeProto::STRING,
                         std::string("NOTSET"));
             schema.Attr("pads",
                         pads_doc.c_str(),
-                        AttributeProto::INTS);
+                        AttributeProto::INTS, OPTIONAL);
             schema.Attr("group",
                         "number of groups input channels and output channels are divided into, default is 1.",
                         AttributeProto::INT, static_cast<int64_t>(1));
