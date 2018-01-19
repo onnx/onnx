@@ -327,6 +327,55 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>and</summary>
+
+```python
+node = onnx.helper.make_node(
+    'And',
+    inputs=['x', 'y'],
+    outputs=['and'],
+)
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+z = np.logical_and(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_and')
+```
+
+</details>
+
+
+<details>
+<summary>and_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'And',
+    inputs=['x', 'y'],
+    outputs=['and'],
+    broadcast=1,
+)
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(5) > 0).astype(np.bool)
+z = np.logical_and(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_and_bcast1d')
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(4, 5) > 0).astype(np.bool)
+z = np.logical_and(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_and_bcast2d')
+```
+
+</details>
+
+
 ### <a name="ArgMax"></a><a name="argmax">**ArgMax**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
@@ -2845,6 +2894,37 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>not</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Not',
+    inputs=['x'],
+    outputs=['not'],
+)
+
+# 2d
+x = (np.random.randn(3, 4) > 0).astype(np.bool)
+expect(node, inputs=[x], outputs=[np.logical_not(x)],
+       name='test_not_2d')
+
+# 3d
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+expect(node, inputs=[x], outputs=[np.logical_not(x)],
+       name='test_not_3d')
+
+# 4d
+x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
+expect(node, inputs=[x], outputs=[np.logical_not(x)],
+       name='test_not_4d')
+```
+
+</details>
+
+
 ### <a name="Or"></a><a name="or">**Or**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
@@ -2897,6 +2977,55 @@ opset_import {
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>or</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Or',
+    inputs=['x', 'y'],
+    outputs=['or'],
+)
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+z = np.logical_or(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_or')
+```
+
+</details>
+
+
+<details>
+<summary>or_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Or',
+    inputs=['x', 'y'],
+    outputs=['or'],
+    broadcast=1,
+)
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(5) > 0).astype(np.bool)
+z = np.logical_or(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_or_bcast1d')
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(4, 5) > 0).astype(np.bool)
+z = np.logical_or(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_or_bcast2d')
+```
+
+</details>
 
 
 ### <a name="PRelu"></a><a name="prelu">**PRelu**</a>
@@ -4911,6 +5040,55 @@ opset_import {
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>xor</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Xor',
+    inputs=['x', 'y'],
+    outputs=['xor'],
+)
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+z = np.logical_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_xor')
+```
+
+</details>
+
+
+<details>
+<summary>xor_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Xor',
+    inputs=['x', 'y'],
+    outputs=['xor'],
+    broadcast=1,
+)
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(5) > 0).astype(np.bool)
+z = np.logical_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_xor_bcast1d')
+
+x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
+y = (np.random.randn(4, 5) > 0).astype(np.bool)
+z = np.logical_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_xor_bcast2d')
+```
+
+</details>
 
 
 ### <sub>experimental</sub> <a name="ATen"></a><a name="aten">**ATen**</a>
