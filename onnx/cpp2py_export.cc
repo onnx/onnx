@@ -7,7 +7,7 @@
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/py_utils.h"
-#include "onnx/optimizer/wrapper.h"
+#include "onnx/optimizer/optimize.h"
 
 namespace onnx {
 
@@ -184,10 +184,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           return py::bytes(optimization::Optimize(content, names));
       });
 
-  optimizer.def(
-      "split", [](std::string& content, bool init, bool predict) {
-          return py::bytes(optimization::Split(content, init, predict));
-      });
 }
 
 } // namespace onnx

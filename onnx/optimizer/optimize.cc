@@ -1,229 +1,52 @@
 #include "onnx/optimizer/optimize.h"
 
-#include <queue>
-
 namespace onnx { namespace optimization {
 
-static const char* impure_operators[] = {
-  "RandomNormal",
-  "RandomNormalLike",
-  "RandomUniform",
-  "RandomUniformLike"
-};
-
-static bool is_pure_operator(Node * n) {
-  for (auto x : impure_operators) {
-    if (n->kind() == Symbol(x)) {
-      return false;
+void PrepareOutput(const onnx::ModelProto& mp_in, onnx::ModelProto& mp_out) {
+  if (mp_in.has_producer_name()) {
+    mp_out.set_ir_version(mp_in.ir_version());
+  }
+  if (mp_in.has_producer_name()) {
+    mp_out.set_producer_name(mp_in.producer_name());
+  }
+  if (mp_in.has_producer_version()) {
+    mp_out.set_producer_version(mp_in.producer_version());
+  }
+  if (mp_in.has_domain()) {
+    mp_out.set_domain(mp_in.domain());
+  }
+  if (mp_in.has_model_version()) {
+    mp_out.set_model_version(mp_in.model_version());
+  }
+  if (mp_in.has_doc_string()) {
+    mp_out.set_doc_string(mp_in.doc_string());
+  }
+  for (int i = 0; i < mp_in.opset_import_size(); i++) {
+    auto& oi_in = mp_in.opset_import(i);
+    auto* oi_out = mp_out.add_opset_import();
+    if (oi_in.has_domain()) {
+      oi_out->set_domain(oi_in.domain());
+    }
+    if (oi_in.has_version()) {
+      oi_out->set_version(oi_in.version());
     }
   }
-  return true;
-}
-
-static bool is_nop_transpose(const std::vector<int64_t> & perm) {
-  for (size_t i = 0; i < perm.size(); i++)
-    if (perm[i] != (int)i)
-      return false;
-  return true;
-}
-
-// returns a vector `ret` such that transposing by `ret` is equivalent
-// to transposing by `t1` and then by `t2`
-static std::vector<int64_t> compose_transposes(const std::vector<int64_t> & t1,
-                                               const std::vector<int64_t> & t2) {
-  ONNX_ASSERT(t1.size() == t2.size());
-  std::vector<int64_t> ret;
-  for (size_t i = 0; i < t1.size(); i++) {
-    ONNX_ASSERT(   t1[i]  < (int)t2.size());
-    ONNX_ASSERT(t2[t1[i]] < (int)t2.size());
-    ret.push_back(t2[t1[i]]);
-  }
-  return ret;
-}
-
-void fuse_consecutive_transposes(std::shared_ptr<Graph>& graph) {
-  for (auto it = graph->begin(); it != graph->end(); ++it) {
-    auto* n = *it;
-
-    if (n->kind() == kTranspose && n->input()->node()->kind() == kTranspose) {
-      auto origInput = n->input();
-      n->is_(kperm, compose_transposes(origInput->node()->is(kperm), n->is(kperm)));
-      n->replaceInput(0, origInput->node()->input());
-      if (origInput->uses().size() == 0) {
-        origInput->node()->destroy();
-      }
-      continue;
+  for (int i = 0; i < mp_in.metadata_props_size(); i++) {
+    auto& pp_in = mp_in.metadata_props(i);
+    auto* pp_out = mp_out.add_metadata_props();
+    if (pp_in.has_key()) {
+      pp_out->set_key(pp_in.key());
+    }
+    if (pp_in.has_value()) {
+      pp_out->set_value(pp_in.value());
     }
   }
 }
 
-void eliminate_nop_transpose(std::shared_ptr<Graph>& graph) {
-  for (auto it = graph->begin(); it != graph->end(); ++it) {
-    auto* n = *it;
+static Optimizer _optimizer;
 
-    if (n->kind() == kTranspose) {
-      if (is_nop_transpose(n->is(kperm))) {
-        n->replaceAllUsesWith(n->input()->node());
-        it.destroyCurrent();
-        continue;
-      }
-    }
-  }
+std::string Optimize(const std::string& content, std::list<std::string>& names) {
+  return _optimizer.optimize(content, names);
 }
 
-void fuse_transpose_into_gemm(std::shared_ptr<Graph>& graph) {
-  static const std::vector<int64_t> simple_trans_perm({1,0});
-
-  for (auto it = graph->begin(); it != graph->end(); ++it) {
-    auto* n = *it;
-
-    if (n->kind() == kGemm) {
-      for (size_t i : {0,1}) {
-        auto inp = n->inputs()[i];
-        auto trans = i == 0 ? ktransA : ktransB;
-        if (inp->node()->kind() == kTranspose && inp->node()->is(kperm) == simple_trans_perm) {
-          n->replaceInput(i, inp->node()->input());
-          n->i_(trans, n->hasAttribute(trans) ? !n->i(trans) : 1);
-          if (inp->uses().size() == 0) {
-            inp->node()->destroy();
-          }
-        }
-      }
-    }
-  }
-}
-
-// Split the graph into 'init' and 'predict' nets. This is kind of
-// like constant folding, except that rather than actually execute the
-// constant computations, we simply split them out into a separate
-// graph. Nodes that have any transitive dependency on the
-// initializers, or on impure operators, must remain in the predict
-// net. All others may be moved to the init net.
-//
-// This function destructively mutates the graph into either the init
-// or the predict net. If you want both, which you probably do,
-// arrange to call it twice.
-//
-// NOTE POTENTIAL BREAKAGE:
-//
-// The ONNX spec provides no guarantees about "staging", i.e. which
-// inputs change on every invocation vs which generally stay the same.
-// Here we make the assumption that inputs which have an initializer
-// value provided for them vary only between invocations of the init
-// net, and are constant across runs of the predict net.
-//
-void split_init_and_predict(std::shared_ptr<Graph> graph, bool init, bool predict) {
-  // The first step is to identify which Values are reachable from
-  // either of
-  //   - inputs without corresponding initializers
-  //   - impure operators
-  // Any such Values belong to the predict net. Nodes belong to the
-  // predict net if they are impure or if any of their inputs do.
-
-  std::unordered_set<Value *> predict_net_values;
-
-  auto value_belongs_to_predict_net = [&](Value * v) {
-    return predict_net_values.count(v) > 0;
-  };
-  auto node_belongs_to_predict_net = [&](Node * n) {
-    return !is_pure_operator(n) ||
-        std::any_of(n->inputs().begin(),
-                    n->inputs().end(),
-                    value_belongs_to_predict_net);
-  };
-
-  {
-    std::unordered_set<std::string> initializer_names(
-      graph->initializer_names().begin(),
-      graph->initializer_names().end());
-
-    for (Value * v : graph->inputs()) {
-      if (initializer_names.count(v->uniqueName()) == 0) {
-        predict_net_values.insert(v);
-      }
-    }
-  }
-
-  for (Node * n : graph->nodes()) {
-    if (node_belongs_to_predict_net(n)) {
-      for (Value * v : n->outputs()) {
-        predict_net_values.insert(v);
-      }
-    }
-  }
-
-  // Any Value which is not itself in the predict net, but which
-  // is used by a Node which is, becomes an output of the init
-  // graph and an input of the predict net
-  std::unordered_set<Value *> new_interface;
-  for (Node * n : graph->nodes()) {
-    if (node_belongs_to_predict_net(n)) {
-      for (Value * v : n->inputs()) {
-        if (!value_belongs_to_predict_net(v)) {
-          new_interface.insert(v);
-        }
-      }
-    }
-  }
-
-  if (init) {
-    // Add new outputs corresponding to the boundary between init and
-    // predict nets, ensuring that we don't duplicate outputs.
-    for (Value * v : graph->outputs()) {
-      new_interface.erase(v);
-    }
-    for (Value * v : new_interface) {
-      graph->registerOutput(v);
-    }
-
-    // Remove outputs that belong to the predict net.
-    for (auto i = graph->outputs().size(); i--;) {
-      if (value_belongs_to_predict_net(graph->outputs()[i])) {
-        graph->return_node()->removeInput(i);
-      }
-    }
-
-    // Delete nodes that belong to the predict net, in reverse
-    // topological order.
-    for (auto it = graph->nodes().rbegin(); it != graph->nodes().rend(); it++) {
-      if (node_belongs_to_predict_net(*it)) {
-        it.destroyCurrent();
-      }
-    }
-
-    // Remove inputs that belong to the predict net.
-    for (auto i = graph->inputs().size(); i--;) {
-      if (value_belongs_to_predict_net(graph->inputs()[i])) {
-        graph->eraseInput(i);
-      }
-    }
-  } else if (predict) {
-    // Add new inputs, ensuring that we don't introduce duplicates.
-    // Also cut the boundary between init and predict net by replacing
-    // the Values along the boundary with replaceAllUsesWith.
-    for (Value * v : graph->inputs()) {
-      new_interface.erase(v);
-    }
-    for (Value * v : new_interface) {
-      Value * newv = graph->addInput()->copyMetadata(v);
-      v->replaceAllUsesWith(newv);
-    }
-
-    // Delete nodes that aren't in the predict net, in reverse
-    // topological order.
-    for (auto it = graph->nodes().rbegin(); it != graph->nodes().rend(); it++) {
-      if (!node_belongs_to_predict_net(*it)) {
-        it.destroyCurrent();
-      }
-    }
-
-    // Remove inputs that aren't used by the predict net.
-    for (auto i = graph->inputs().size(); i--;) {
-      if (graph->inputs()[i]->uses().empty()) {
-        graph->eraseInput(i);
-      }
-    }
-  }
-}
-
-}} // namespace onnx::optimization
+}}
