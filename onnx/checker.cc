@@ -55,8 +55,6 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     fail_check("setting data_type field to UNDEFINED is not allowed");
   }
 
-  enforce_has_repeated_field(tensor, dims);
-
   int num_value_fields = 0;
 
   const char* value_field = nullptr;
@@ -181,6 +179,14 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx) {
 
   if (used_fields != 1) {
     fail_check("Attribute should contain one and only one value field.");
+  }
+
+  if (attr.has_t()) {
+    check_tensor(attr.t(), ctx);
+  }
+
+  if (attr.has_g()) {
+    check_graph(attr.g(), ctx);
   }
 
   for (const auto& tensor : attr.tensors()) {
