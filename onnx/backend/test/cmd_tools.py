@@ -42,7 +42,7 @@ def generate_data(args):
     # model tests
     model_cases = model_test.collect_testcases()
     for case in model_cases:
-        output_dir = os.path.join(args.output, 'model', case.name)
+        output_dir = os.path.join(args.output, 'model', 'real', case.name)
         prepare_dir(output_dir)
         with open(os.path.join(output_dir, 'data.json'), 'w') as f:
             json.dump({
