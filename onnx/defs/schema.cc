@@ -11,12 +11,11 @@ namespace onnx {
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
     const DataTypeSet& allowed_type_set,
-    const std::string& type_str,
     const std::string& description,
     FormalParameterOption param_option)
     : name_(name),
       type_set_(allowed_type_set),
-      type_str_(type_str),
+      type_str_(""),
       description_(description),
       param_option_(param_option) {}
 
@@ -479,6 +478,19 @@ OpSchema& OpSchema::Input(
   return *this;
 }
 
+OpSchema& OpSchema::Input(
+    const int n,
+    const std::string& name,
+    const std::string& description,
+    DataTypeSet dtype_set,
+    OpSchema::FormalParameterOption param_option) {
+    if (int(inputs_.size()) <= n) {
+        inputs_.resize(n + 1);
+    }
+    inputs_[n] = FormalParameter(name, dtype_set, description, param_option);
+    return *this;
+}
+
 OpSchema& OpSchema::Output(
     const int n,
     const std::string& name,
@@ -492,35 +504,66 @@ OpSchema& OpSchema::Output(
   return *this;
 }
 
+OpSchema& OpSchema::Output(
+    const int n,
+    const std::string& name,
+    const std::string& description,
+    DataTypeSet dtype_set,
+    OpSchema::FormalParameterOption param_option) {
+    if (int(outputs_.size()) <= n) {
+        outputs_.resize(n + 1);
+    }
+    outputs_[n] = FormalParameter(name, dtype_set, description, param_option);
+    return *this;
+}
+
+//OpSchema& OpSchema::TypeConstraint(
+//    const std::string& type_str,
+//    const std::vector<std::string>& constraints,
+//    const std::string& description) {
+//  assert(type_constraints_.end() == type_constraints_.find(type_str));
+//  DataTypeSet d;
+//  for (const auto& t : constraints) {
+//    d.insert(Utils::DataTypeUtils::ToType(t));
+//  }
+//  type_constraints_.insert(
+//      std::make_pair(type_str, std::make_pair(d, description)));
+//  type_constraint_params_.push_back(
+//      TypeConstraintParam(type_str, constraints, description));
+//  return *this;
+//}
+
 OpSchema& OpSchema::TypeConstraint(
     const std::string& type_str,
-    const std::vector<std::string>& constraints,
+    DataTypeSet constraints,
     const std::string& description) {
-  assert(type_constraints_.end() == type_constraints_.find(type_str));
-  DataTypeSet d;
-  for (const auto& t : constraints) {
-    d.insert(Utils::DataTypeUtils::ToType(t));
-  }
-  type_constraints_.insert(
-      std::make_pair(type_str, std::make_pair(d, description)));
-  type_constraint_params_.push_back(
-      TypeConstraintParam(type_str, constraints, description));
-  return *this;
+    assert(type_constraints_.end() == type_constraints_.find(type_str));
+    type_constraints_.insert(
+        std::make_pair(type_str, std::make_pair(constraints, description)));
+    std::vector<std::string> constraintStrs;
+    for (const auto& t : constraints) {
+        constraintStrs.push_back(*t);
+    }
+    type_constraint_params_.push_back(
+        TypeConstraintParam(type_str, constraintStrs, description));
+    return *this;
 }
 
 void OpSchema::ParseAndSetTypes(
     /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
   for (auto& formal_parameter : *formal_parameters) {
     auto& type = formal_parameter.GetTypeStr();
-    DataTypeSet allowed_types;
-    auto it = type_constraints_.find(type);
-    if (it != type_constraints_.end()) {
-      allowed_types = it->second.first;
-    } else {
-      allowed_types.emplace(Utils::DataTypeUtils::ToType(type));
+    // Either type string or type sets should be specified.
+    assert(type.empty() ^ (formal_parameter.GetTypes().size() <= 0));
+    
+    if (type.empty()) {
+        // Type sets already specified.
+        continue;
     }
 
-    formal_parameter.MutableTypes() = allowed_types;
+    auto it = type_constraints_.find(type);
+    assert(it != type_constraints_.end());
+    formal_parameter.MutableTypes() = it->second.first;
   }
 }
 

@@ -47,9 +47,9 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
                       "`[num_directions, batch_size, hidden_size]`.", "T");
-        schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                               "Constrain input and output types to float tensors.");
-        schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
+        schema.TypeConstraint("T1", { TensorType<TensorProto::INT32>::Type() }, "Constrain seq_lens to integer tensor.");
     };
 }
 

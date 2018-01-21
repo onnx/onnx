@@ -17,11 +17,6 @@ environment:
   CONDA_PREFIX: C:\Miniconda36
 
   matrix:
-  # onnx
-  - ONNX_ML: 0
-
-  # onnx-ml
-  - ONNX_ML: 1
 
 install:
 - cmd: git submodule update --init --recursive

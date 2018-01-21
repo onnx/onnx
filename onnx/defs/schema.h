@@ -14,7 +14,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <vector>
 
 #include "data_type_utils.h"
@@ -23,16 +23,14 @@ namespace onnx {
 
 using OperatorSetVersion = int;
 
-const char* const ONNX_DOMAIN = "";
 const bool OPTIONAL = false;
 
-typedef std::unordered_set<DataType> DataTypeSet;
+typedef std::set<DataType> DataTypeSet;
 
 // Type constraint map. Key is type string. Value is data type set and
 // description.
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
     TypeConstraintMap;
-
 
 /**
  * @brief A class to record the schema of an op.
@@ -72,7 +70,6 @@ class OpSchema {
     explicit FormalParameter(
         const std::string& name,
         const DataTypeSet& type_set,
-        const std::string& type_str,
         const std::string& description,
         FormalParameterOption param_option = Single);
 
@@ -330,15 +327,36 @@ class OpSchema {
       const std::string& description,
       const std::string& type_str,
       FormalParameterOption param_option = Single);
+
+  OpSchema& Input(
+      const int n,
+      const std::string& name,
+      const std::string& description,
+      DataTypeSet dtype_set,
+      FormalParameterOption param_option = Single);
+
   OpSchema& Output(
       const int n,
       const std::string& name,
       const std::string& description,
       const std::string& type_str,
       FormalParameterOption param_option = Single);
-  OpSchema& TypeConstraint(
+
+  OpSchema& Output(
+      const int n,
+      const std::string& name,
+      const std::string& description,
+      DataTypeSet dtype_set,
+      FormalParameterOption param_option = Single);
+
+  /*OpSchema& TypeConstraint(
       const std::string& type_str,
       const std::vector<std::string>& constraints,
+      const std::string& description);*/
+
+  OpSchema& TypeConstraint(
+      const std::string& type_str,
+      DataTypeSet constraints,
       const std::string& description);
 
   // Calls the passed function with `this` as an argument. Useful for

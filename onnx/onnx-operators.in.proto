@@ -4,11 +4,7 @@
 syntax = "proto2";
 
 package onnx;
-// #if ONNX-ML
-import "onnx-ml.proto";
-// #else
 import "onnx.proto";
-// #endif
 
 //
 // This file contains the proto definitions for OperatorSetProto and

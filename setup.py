@@ -35,8 +35,6 @@ SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 PROTOC = find_executable('protoc')
 
-ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
-
 install_requires = ['six']
 setup_requires = []
 tests_require = []
@@ -172,10 +170,7 @@ class build_proto(ONNXCommand):
 
         stems = ['onnx', 'onnx-operators']
         for stem in stems:
-            if ONNX_ML:
-                proto_base = '{}-ml'.format(stem)
-            else:
-                proto_base = stem
+            proto_base = stem
 
             proto = os.path.join(SRC_DIR, '{}.proto'.format(proto_base))
             # "-" is invalid in python module name, replaces '-' with '_'
@@ -291,8 +286,6 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
     if platform.system() == 'Windows':
         extra_compile_args.append('/MT')
     macros = []
-    if ONNX_ML:
-        macros = [('ONNX_ML', '1')]
     return ExtType(
         name=name,
         define_macros = macros,
@@ -308,16 +301,6 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
-        if ONNX_ML:
-            # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx.pb.cc"), os.path.join(SRC_DIR, "onnx-operators.pb.cc")]
-        else:
-            # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx-ml.pb.cc"), os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc")]
-
-        for source_filter in sources_filter:
-            if source_filter in self.sources:
-                self.sources.remove(source_filter)
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []

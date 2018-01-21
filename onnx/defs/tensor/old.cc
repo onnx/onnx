@@ -10,7 +10,7 @@ OPERATOR_SCHEMA(Split)
     .Input(0, "input", "The tensor to split", "T")
     .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T", OpSchema::Optional)
     .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input types to float tensors.")
     .Attr("axis",
           "Which axis to split on",
@@ -67,5 +67,5 @@ Example:
 )DOC")
     .Input(0, "data", "Input tensor.", "T")
     .Output(0, "output", "Tensor after padding.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input and output types to float tensors.");

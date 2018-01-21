@@ -64,7 +64,7 @@ OPERATOR_SCHEMA(LpPool)
             "Output data tensor from Lp pooling across the input "
             "tensor. Dimensions will vary based on various kernel, stride, and pad "
             "sizes.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                     "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(GlobalLpPool)
@@ -90,5 +90,5 @@ OPERATOR_SCHEMA(GlobalLpPool)
             "Y",
             "Output data tensor from pooling across the input "
             "tensor. Dimensions will be N x C x 1 x 1", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                     "Constrain input and output types to float tensors.");

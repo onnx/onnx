@@ -14,7 +14,7 @@ OPERATOR_SCHEMA(Constant)
             0,
             "output",
             "Output tensor containing the same value of the provided tensor.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomUniform)
@@ -54,7 +54,7 @@ TensorProto message.
             0,
             "output",
             "Output tensor of random values drawn from uniform distribution", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormal)
@@ -95,7 +95,7 @@ TensorProto message.
             0,
             "output",
             "Output tensor of random values drawn from normal distribution", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomUniformLike)
@@ -131,12 +131,12 @@ TensorProto message.
     .Input(
            0,
            "input",
-           "Input tensor to provide shape information.", "tensor(int32)")
+           "Input tensor to provide shape information.", { TensorType<TensorProto::INT32>::Type() })
     .Output(
             0,
             "output",
             "Output tensor of random values drawn from uniform distribution", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormalLike)
@@ -173,10 +173,10 @@ TensorProto message.
     .Input(
            0,
            "input",
-           "Input tensor to provide shape information.", "tensor(int32)")
+           "Input tensor to provide shape information.", { TensorType<TensorProto::INT32>::Type() })
     .Output(
             0,
             "output",
             "Output tensor of random values drawn from normal distribution", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");

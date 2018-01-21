@@ -31,7 +31,7 @@ way to get these dependencies is via [Anaconda](https://www.anaconda.com/downloa
 conda install -c conda-forge protobuf numpy
 ```
 
-You can then install ONNX from PyPi (Note: set environment variable `ONNX_ML=1` for onnx-ml):
+You can then install ONNX from PyPi:
 
 ```
 pip install onnx

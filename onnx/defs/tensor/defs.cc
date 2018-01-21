@@ -29,9 +29,9 @@ NOTE: Casting to and from strings is not supported yet.
         "Output tensor with the same shape as input with type "
         "specified by the 'to' argument",
         "T2")
-    .TypeConstraint("T1", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T1", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input types to float tensors.")
-    .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T2", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain output types to float tensors.");
 
 
@@ -49,7 +49,7 @@ from the shape argument.)DOC")
     .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "reshaped", "Reshaped data.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
 	            "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Concat)
@@ -59,14 +59,14 @@ OPERATOR_SCHEMA(Concat)
     .SetDoc("Concatenate a list of tensors into a single tensor")
     .Input(0, "inputs", "List of tensors for concatenation", "T", OpSchema::Variadic)
     .Output(0, "concat_result", "Concatenated tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(Split)
     .SinceVersion(2)
     .Input(0, "input", "The tensor to split", "T")
     .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input types to float tensors.")
     .Attr("axis",
           "Which axis to split on",
@@ -135,7 +135,7 @@ Example 2:
           "Ending indices (exclusive) of corresponding axis in axes`",
           AttributeProto::INTS)
     .Output(0, "output", "Sliced data tensor.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Transpose)
@@ -151,7 +151,7 @@ will be (2, 1, 3).
           OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "transposed", "Transposed output.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Gather)
@@ -213,11 +213,11 @@ Example 2:
     .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        {TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type()},
         "Constrain input and output types to float tensors.")
     .TypeConstraint(
         "Tind",
-        {"tensor(int32)", "tensor(int64)"},
+        {TensorType<TensorProto::INT32>::Type(), TensorType<TensorProto::INT64>::Type()},
         "Constrain indices to integer types");
 
 OPERATOR_SCHEMA(Squeeze)
@@ -230,7 +230,7 @@ Takes a  parameter `axes` with a list of axes to squeeze.
 )DOC")
     .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
     .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Pad)
@@ -274,7 +274,7 @@ Example:
 )DOC")
     .Input(0, "data", "Input tensor.", "T")
     .Output(0, "output", "Tensor after padding.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(SpaceToDepth)
@@ -293,7 +293,7 @@ are moved to the depth dimension.
     .Output(0,
             "output",
             "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input types to float tensors.");
 
 OPERATOR_SCHEMA(DepthToSpace)
@@ -313,7 +313,7 @@ and width dimensions.
     .Output(0,
             "output",
             "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input types to float tensors.");
 
 OPERATOR_SCHEMA(Tile)
@@ -330,5 +330,5 @@ OPERATOR_SCHEMA(Tile)
     .Output(0,
             "output",
             "Output tensor of same shape and type as input.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input types to float tensors.");

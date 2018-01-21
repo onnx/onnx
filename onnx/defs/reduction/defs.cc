@@ -27,7 +27,7 @@ False instead of True.)DOC";
                     static_cast<int64_t>(1));
         schema.Input(0, "data", "An input tensor.", "T");
         schema.Output(0, "reduced", "Reduced output tensor.", "T");
-        schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
             "Constrain input and output types to float tensors.");
     };
 }
@@ -85,8 +85,8 @@ The type of the output tensor is integer.)DOC";
                     AttributeProto::INT,
                     static_cast<int64_t>(1));
         schema.Input(0, "data", "An input tensor.", "T");
-        schema.Output(0, "reduced", "Reduced output tensor with integer data type.", "tensor(int32)");
-        schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output types to float tensors.");
+        schema.Output(0, "reduced", "Reduced output tensor with integer data type.", { TensorType<TensorProto::INT32>::Type() });
+        schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() }, "Constrain input and output types to float tensors.");
     };
 }
 

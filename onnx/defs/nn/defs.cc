@@ -61,7 +61,7 @@ namespace onnx {
                           "Output data tensor from average or max pooling across "
                           "the input tensor. Dimensions will vary based "
                           "on various kernel, stride, and pad sizes.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                 "Constrain input and output types to float tensors.");
         };
     }
@@ -117,7 +117,7 @@ namespace onnx {
                           "Output data tensor from Lp pooling across the input "
                           "tensor. Dimensions will vary based on various kernel, stride, and pad "
                           "sizes.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                 "Constrain input and output types to float tensors.");
         };
     }
@@ -157,7 +157,7 @@ namespace onnx {
             schema.Output(0,
                           "Y",
                           "RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                 "Constrain input and output types to float tensors.");
         };
     }
@@ -198,7 +198,7 @@ computes the output.)DOC";
                           "Output data tensor that contains the result of the "
                           "convolution. The output dimensions are functions "
                           "of the kernel size, stride size, and pad lengths.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
@@ -258,7 +258,7 @@ and computes the output.)DOC";
                           "Output data tensor that contains the result of the convolution. The "
                           "output dimensions are functions of the kernel size, stride size, "
                           "and pad lengths.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                 "Constrain input and output types to float tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel.",
@@ -320,7 +320,7 @@ namespace onnx {
                           "Y",
                           "Output data tensor from pooling across the input "
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                 "Constrain input and output types to float tensors.");
             schema.SetDoc(doc);
         };
@@ -359,7 +359,7 @@ namespace onnx {
                           "Y",
                           "Output data tensor from pooling across the input "
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
                 "Constrain input and output types to float tensors.");
             schema.SetDoc(doc);
         };
@@ -434,7 +434,7 @@ Output case #2: Y (test mode)
         "saved_var",
         "Saved variance used during training to speed up "
         "gradient computation. Should not be used for testing.", "T", OpSchema::Optional)
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)"},
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type()},
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(InstanceNormalization)
@@ -463,7 +463,7 @@ where mean and variance are computed per instance per channel.
     .Output(0,
         "output",
         "The output 4-dimensional tensor of the same shape as input.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(LpNormalization)
@@ -471,7 +471,7 @@ OPERATOR_SCHEMA(LpNormalization)
     .Output(0, "output", "Matrix after normalization", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        {TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type()},
         "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
@@ -501,7 +501,7 @@ the training phase, so during testing nothing needs to be done.
     .Output(0, "output", "The output.", "T")
     .Output(1, "mask",
                "The output mask. If is_test is nonzero, this output is not filled.", "T", OpSchema::Optional)
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Flatten)
@@ -518,7 +518,7 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         "with input dimensions up to axis flattened to the outer dimension "
         "of the output and remaining input dimensions flattened into the inner "
         "dimension of the output.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.")
     .Attr(
         "axis",
@@ -534,7 +534,7 @@ OPERATOR_SCHEMA(LRN)
     .Attr("bias", "Default to 1", AttributeProto::FLOAT, 1.0f)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output "
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() }, "Constrain input and output "
         " types to float tensors.")
     .SetDoc(R"DOC(
 Local Response Normalization. It normalizes over local input regions.

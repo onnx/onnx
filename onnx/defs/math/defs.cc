@@ -53,7 +53,7 @@ Performs element-wise binary {name} (with limited broadcast support).
         "Second operand. With broadcasting can be of smaller size than A. "
         "If broadcasting is disabled it should be of the same size.", "T");
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
-    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
   };
 }
@@ -90,7 +90,7 @@ will throw errors.
          "as described above.", "T");
     schema.Output(0, "output", "The softmax normalized output values with the same "
           "shape as input tensor.", "T");
-    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    schema.TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
   };
 }
@@ -121,7 +121,7 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Abs)
@@ -133,7 +133,7 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Reciprocal)
@@ -145,7 +145,7 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Floor)
@@ -157,7 +157,7 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Ceil)
@@ -169,7 +169,7 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Sqrt)
@@ -181,7 +181,7 @@ the tensor elementwise. If x is negative, then it will return NaN.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Relu)
@@ -193,7 +193,7 @@ the tensor elementwise.
 )DOC")
   .Input(0, "X", "Input tensor", "T")
   .Output(0, "Y", "Output tensor", "T")
-  .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+  .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(LeakyRelu)
@@ -209,7 +209,7 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Selu)
@@ -230,7 +230,7 @@ is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Elu)
@@ -247,7 +247,7 @@ Elu takes one input data (Tensor<T>) and produces one output data
 )DOC")
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Exp)
@@ -261,7 +261,7 @@ Calculates the exponential of the given input tensor, element-wise.
         "output",
         "The exponential of the input tensor computed "
         "element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Log)
@@ -275,7 +275,7 @@ Calculates the natural log of the given input tensor, element-wise.
         "output",
         "The natural log of the input tensor computed "
         "element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Tanh)
@@ -286,7 +286,7 @@ Calculates the hyperbolic tangent of the given input tensor element-wise.
     .Input(0, "input", "1-D input tensor", "T")
     .Output(0, "output", "The hyperbolic tangent values of the input tensor "
                "computed element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Pow)
@@ -299,7 +299,7 @@ is applied to the data tensor elementwise.
     .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, "
                    "the exponent component.", "T")
     .Output(0, "Z", "Output tensor (same size as X)", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(PRelu)
@@ -318,7 +318,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
         "Slope tensor. If `Slope` is of size 1, the value is shared"
         "across different channels", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Sigmoid)
@@ -330,7 +330,7 @@ tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(HardSigmoid)
@@ -350,7 +350,7 @@ is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Max)
@@ -361,7 +361,7 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
     .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Min)
@@ -372,7 +372,7 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
     .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Sum)
@@ -383,7 +383,7 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
     .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Mean)
@@ -394,7 +394,7 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Mean.", "T", OpSchema::Variadic)
     .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Clip)
@@ -412,7 +412,7 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
           OPTIONAL)
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Softmax)
@@ -434,7 +434,7 @@ Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
         "output",
         "The softsign (x/1+|x|) values of the input tensor computed element-wise",
         "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Softplus)
@@ -445,7 +445,7 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Gemm)
@@ -463,7 +463,7 @@ if attribute transA is non-zero, same for B and transB.
     .Input(2, "C", "Input tensor C, can be inplace.", "T")
     .AllowConsumed({{2, 0}})
     .Output(0, "Y", "Output tensor.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.")
     .Attr("transA",
           "Whether A should be transposed",
@@ -491,7 +491,7 @@ OPERATOR_SCHEMA(MatMul)
     .Input(0, "A", "N-dimensional matrix A", "T")
     .Input(1, "B", "N-dimensional matrix B", "T")
     .Output(0, "Y", "Matrix multiply results from A * B", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
         "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
