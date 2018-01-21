@@ -18,33 +18,6 @@ const char* const ONNX_DOMAIN = "";
 // String pointer as unique TypeProto identifier.
 typedef const std::string* DataType;
 
-//template<int elemT>
-//struct ElementType {
-//};
-//
-//#define ElementType_String(enum_t, string_t)                        \
-//template<>                                                          \
-//struct ElementType<enum_t> {                                        \
-//    static const std::string str;                                   \
-//};                                                                  \
-//const std::string ElementType<enum_t>::str = string_t;              \
-//
-//ElementType_String(TensorProto_DataType_FLOAT, "float")
-//ElementType_String(TensorProto_DataType_FLOAT16, "float16")
-//ElementType_String(TensorProto_DataType_DOUBLE, "double")
-//ElementType_String(TensorProto_DataType_INT8, "int8")
-//ElementType_String(TensorProto_DataType_INT16, "int16")
-//ElementType_String(TensorProto_DataType_INT32, "int32")
-//ElementType_String(TensorProto_DataType_INT64, "int64")
-//ElementType_String(TensorProto_DataType_UINT8, "uint8")
-//ElementType_String(TensorProto_DataType_UINT16, "uint16")
-//ElementType_String(TensorProto_DataType_UINT32, "uint32")
-//ElementType_String(TensorProto_DataType_UINT64, "uint64")
-//ElementType_String(TensorProto_DataType_COMPLEX64, "complext64")
-//ElementType_String(TensorProto_DataType_COMPLEX128, "complext128")
-//ElementType_String(TensorProto_DataType_STRING, "string")
-//ElementType_String(TensorProto_DataType_BOOL, "bool")
-
 template<int elemT>
 struct TensorType {
     static DataType Type() {
@@ -55,7 +28,6 @@ struct TensorType {
 private:
 
     TensorType() {
-        //tensor_type_key = "tensor(" + ElementType<elemT>::str + ")";
         tensor_type_key = "tensor(" + Utils::DataTypeUtils::GetElementTypeStr(static_cast<TensorProto_DataType>(elemT)) + ")";
         TypeProto tensor_type;
         tensor_type.mutable_tensor_type()->set_elem_type((TensorProto_DataType)elemT);
@@ -106,7 +78,8 @@ class DataTypeUtils {
           GetTypeStrToProtoMap()[*type_key] = type_proto;
       }
       else {
-          // TODO: error.
+          // One type is prevented from being registered multiple times
+          // from different domain intentionally.
           assert(false);
       }
   }

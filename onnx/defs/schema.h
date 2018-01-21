@@ -106,7 +106,7 @@ class OpSchema {
     // It should contain at least one element if this formal parameter is good.
     DataTypeSet type_set_;
 
-    // The <parameter type> string specified when registring an op.
+    // The <parameter type> string specified when registering an op.
     // It could be a supported data type or a type constraint key, which
     // maps to a set of supported data types.
     std::string type_str_;
@@ -154,7 +154,7 @@ class OpSchema {
   }
 
   /**
-   * @brief Returns the docstring of the op schema.
+   * @brief Returns the doc string of the op schema.
    */
   inline const char* doc() const {
     return doc_.empty() ? nullptr : doc_.c_str();
@@ -166,7 +166,7 @@ class OpSchema {
    */
   void Verify(const NodeProto& node) const;
 
-  // Functions to set the property of the operator schemas.
+  // Functions to set the property of the operator schema.
   // Sets the number of inputs, either a fixed number or a min and a max.
 
   /**
@@ -198,7 +198,7 @@ class OpSchema {
   OpSchema& AllowConsumed(std::function<std::pair<bool, int>(int)> inplace);
   OpSchema& AllowConsumed(std::unordered_map<int, int> inplace);
   OpSchema& AllowOneToOneConsumed();
-  // Sets the rule to enforce in-place opeartion.
+  // Sets the rule to enforce in-place operation.
   OpSchema& EnforceConsumed(std::function<std::pair<bool, int>(int)> inplace);
   OpSchema& EnforceConsumed(std::unordered_map<int, int> inplace);
   OpSchema& EnforceOneToOneConsumed();
@@ -294,33 +294,16 @@ class OpSchema {
     // Type parameter description.
     std::string description;
   };
-
-  // Grammar for type strings used in Input(), Output().
-  // <type> ::= <data_type> |
-  //            tensor(<data_type>) |
-  //            seq(<type>) |
-  //            map(<data_type>, <type>) |
-  //            <type_parameter>
-  // <data_type> :: = float | int32 | string | bool | uint8
-  //                | int8 | uint16 | int16 | int64 | float16 | double
-  // <type_parameter> ::= any type parameter string, say "T".
-  //
-  // NOTE: 1) <type_parameter> will always be together with a type constraints
-  // specification.
-  //       2) <type> ::= <data_type> means the data is scalar (zero dimension).
-  //
+  
+  // Set inputs/outputs for operator schema, including name, allowed types,
+  // description and parameter option (a formal parameter could be single, optional,
+  // or variadic.
   // Example:
   // OPERATOR_SCHEMA(Sum)
-  // .Input(0, "input_a", "the first input", "T")
-  // .Input(1, "input_b", "the second input", "T")
-  // .Output(0, "sum", "the sum of two numbers", "T")
-  // .TypeConstraint("T", {"float", "double", "int32"}, "allowed data types for
-  // sum.")
-  //
-  // Optional = true means that the input might have empty input value
-  // (represented as "") in the graph even though the later inputs have values.
-  // It's useful for complex situation when there are several independent
-  // optional inputs.
+  // .Input(0, "input_a", "the first input", "T", OpSchema::Variadic)
+  // .Output(0, "sum", "the sum of all inputs", "T")
+  // .TypeConstraint("T", {TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type()},
+  //  "allowed data types for sum.")
   OpSchema& Input(
       const int n,
       const std::string& name,
@@ -348,11 +331,6 @@ class OpSchema {
       const std::string& description,
       DataTypeSet dtype_set,
       FormalParameterOption param_option = Single);
-
-  /*OpSchema& TypeConstraint(
-      const std::string& type_str,
-      const std::vector<std::string>& constraints,
-      const std::string& description);*/
 
   OpSchema& TypeConstraint(
       const std::string& type_str,
@@ -360,7 +338,7 @@ class OpSchema {
       const std::string& description);
 
   // Calls the passed function with `this` as an argument. Useful for
-  // adding docs for temlated/macro ops.
+  // adding docs for template/macro ops.
   OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
