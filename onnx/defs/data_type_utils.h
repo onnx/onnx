@@ -18,6 +18,43 @@ const char* const ONNX_DOMAIN = "";
 // String pointer as unique TypeProto identifier.
 typedef const std::string* DataType;
 
+namespace Utils {
+// Data type utility, which maintains a global type string to TypeProto map.
+// DataType (string pointer) is used as unique data type identifier for
+// efficiency.
+class DataTypeUtils {
+ public:
+  
+  static void Register(DataType type_key, const TypeProto& type_proto) {
+      static std::mutex mutex;
+      std::lock_guard<std::mutex> lock(mutex);
+      if (GetTypeStrToProtoMap().find(*type_key) == GetTypeStrToProtoMap().end()) {
+          GetTypeStrToProtoMap()[*type_key] = type_proto;
+      }
+      else {
+          // One type is prevented from being registered multiple times
+          // from different domain intentionally.
+          assert(false);
+      }
+  }
+
+  static DataType ToType(const std::string& type_str);
+
+  static DataType ToType(const TypeProto& type_proto);
+
+  static const TypeProto& ToTypeProto(const DataType& data_type);
+
+  static std::string GetElementTypeStr(TensorProto_DataType elem_type);
+
+ private:
+
+  static std::string ToString(const TypeProto& type_proto);
+
+  static std::unordered_map<std::string, TypeProto>& GetTypeStrToProtoMap();
+
+};
+} // namespace Utils
+
 template<int elemT>
 struct TensorType {
     static DataType Type() {
@@ -63,43 +100,6 @@ private:
 
     std::string abs_type_key;
 };
-
-namespace Utils {
-// Data type utility, which maintains a global type string to TypeProto map.
-// DataType (string pointer) is used as unique data type identifier for
-// efficiency.
-class DataTypeUtils {
- public:
-  
-  static void Register(DataType type_key, const TypeProto& type_proto) {
-      static std::mutex mutex;
-      std::lock_guard<std::mutex> lock(mutex);
-      if (GetTypeStrToProtoMap().find(*type_key) == GetTypeStrToProtoMap().end()) {
-          GetTypeStrToProtoMap()[*type_key] = type_proto;
-      }
-      else {
-          // One type is prevented from being registered multiple times
-          // from different domain intentionally.
-          assert(false);
-      }
-  }
-
-  static DataType ToType(const std::string& type_str);
-
-  static DataType ToType(const TypeProto& type_proto);
-
-  static const TypeProto& ToTypeProto(const DataType& data_type);
-
-  static std::string GetElementTypeStr(TensorProto_DataType elem_type);
-
- private:
-
-  static std::string ToString(const TypeProto& type_proto);
-
-  static std::unordered_map<std::string, TypeProto>& GetTypeStrToProtoMap();
-
-};
-} // namespace Utils
 } // namespace onnx
 
 #endif // ! ONNX_DATA_TYPE_UTILS_H
