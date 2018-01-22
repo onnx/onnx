@@ -218,7 +218,8 @@ void check_node(const NodeProto& node, const CheckerContext& ctx) {
 
   const auto* schema = OpSchemaRegistry::Schema(node.op_type(), domain_version, node.domain());
   if (!schema) {
-    fail_check("No Schema registered for " + node.op_type());
+    fail_check("No Schema registered for " + node.op_type() +
+			" with domain_version of " + std::to_string(domain_version));
   }
   schema->Verify(node);
 }
