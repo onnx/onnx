@@ -21,7 +21,7 @@ namespace onnx {
         }
 
         DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
-            auto& type_str = ToString(type_proto);
+            auto type_str = ToString(type_proto);
             return ToType(type_str);
         }
 
