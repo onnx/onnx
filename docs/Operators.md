@@ -433,15 +433,13 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 3
+  version = 1
 }
 ~~~~
-
-Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>
 
 #### Attributes
 
@@ -2374,15 +2372,15 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 3
+  version = 2
 }
 ~~~~
 
-Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>, <a href="Changelog.md#LpPool-2">LpPool-2</a>
+Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 #### Attributes
 
@@ -2543,15 +2541,13 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 3
+  version = 1
 }
 ~~~~
-
-Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 
 #### Attributes
 
@@ -2596,15 +2592,13 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 
 #### Versioning
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 3
+  version = 1
 }
 ~~~~
-
-Other versions of this operator: <a href="Changelog.md#MaxRoiPool-1">MaxRoiPool-1</a>
 
 #### Attributes
 

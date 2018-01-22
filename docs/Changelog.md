@@ -337,9 +337,9 @@ opset_import {
 
 ### <a name="AveragePool-1"></a>**AveragePool-1**</a>
 
-  AveragePool consumes an input tensor X and applies AveragePool pooling across the
+  AveragePool consumes an input tensor X and applies average pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   AveragePool pooling consisting of computing the AveragePool on all values of a
+   average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -358,12 +358,12 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs
@@ -2743,9 +2743,9 @@ opset_import {
 
 ### <a name="MaxPool-1"></a>**MaxPool-1**</a>
 
-  MaxPool consumes an input tensor X and applies MaxPool pooling across the
+  MaxPool consumes an input tensor X and applies max pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   MaxPool pooling consisting of computing the MaxPool on all values of a
+   max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2764,12 +2764,12 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs
@@ -2812,10 +2812,10 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>pooled_shape</tt> : list of ints</dt>
+<dt><tt>pooled_shape</tt> : list of ints (required)</dt>
 <dd>ROI pool output shape (height, width).</dd>
 <dt><tt>spatial_scale</tt> : float</dt>
-<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling</dd>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling, default is 1.0f.</dd>
 </dl>
 
 #### Inputs
@@ -5291,14 +5291,14 @@ opset_import {
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int</dt>
-<dd>p value of the Lp norm used to pool over the input data</dd>
+<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
 </dl>
 
 #### Inputs
@@ -5433,58 +5433,6 @@ opset_import {
 </dl>
 
 ## Version 3 of the default ONNX operator set
-### <a name="AveragePool-3"></a>**AveragePool-3**</a>
-
-  AveragePool consumes an input tensor X and applies average pooling across the
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
-
-#### Versioning
-
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 3
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
-<dd>The size of the kernel along each axis.</dd>
-<dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="GRU-3"></a>**GRU-3**</a>
 
   Computes an one-layer GRU. This operator is usually supported via some custom
@@ -5624,159 +5572,5 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
-</dl>
-
-### <a name="LpPool-3"></a>**LpPool-3**</a>
-
-  LpPool consumes an input tensor X and applies Lp pooling across the
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset
-   of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
-
-#### Versioning
-
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 3
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
-<dd>The size of the kernel along each axis.</dd>
-<dt><tt>p</tt> : int</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
-<dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from Lp pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="MaxPool-3"></a>**MaxPool-3**</a>
-
-  MaxPool consumes an input tensor X and applies max pooling across the
-   the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a
-   subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
-
-#### Versioning
-
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 3
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
-<dd>The size of the kernel along each axis.</dd>
-<dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If pads attribute is not present,back-ends should consider padding values as 0.</dd>
-<dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not presents, back-ends should consider strides as 1.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="MaxRoiPool-3"></a>**MaxRoiPool-3**</a>
-
-  ROI max pool consumes an input tensor X and region of interests (RoIs) to
-   apply max pooling across each RoI, to produce output 4-D tensor of shape
-   (num_rois, channels, pooled_shape[0], pooled_shape[1]).
-
-#### Versioning
-
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 3
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>pooled_shape</tt> : list of ints (required)</dt>
-<dd>ROI pool output shape (height, width).</dd>
-<dt><tt>spatial_scale</tt> : float</dt>
-<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling, default is 1.0f.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
-<dt><tt>rois</tt> : T</dt>
-<dd>RoIs (Regions of Interest) to pool over. Should be a 2-D tensor of shape (num_rois, 5) given as [[batch_id, x1, y1, x2, y2], ...].</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 

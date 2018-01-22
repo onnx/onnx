@@ -33,7 +33,6 @@ namespace onnx {
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);
             schema.SetDoc(doc);
-            schema.SinceVersion(3);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
@@ -86,7 +85,7 @@ namespace onnx {
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
-            schema.SinceVersion(3);
+            schema.SinceVersion(2);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
@@ -137,7 +136,6 @@ namespace onnx {
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
             ReplaceAll(doc, "{name}", name);
             schema.SetDoc(doc);
-            schema.SinceVersion(3);
             schema.Attr("pooled_shape",
                         "ROI pool output shape (height, width).",
                         AttributeProto::INTS);
