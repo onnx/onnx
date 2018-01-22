@@ -37,7 +37,7 @@ namespace onnx {
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
             schema.Attr("strides",
-                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
