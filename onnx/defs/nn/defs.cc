@@ -11,8 +11,7 @@ namespace onnx {
                                   "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
                                   "added at the beginning of axis `i` and xi_end, the number of pixels added at "
                                   "the end of axis `i`. This attribute cannot be used simultaneously with "
-                                  "auto_pad attribute. If pads attribute is not present,"
-								  "back-ends should consider padding values as 0.";
+                                  "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.";
     static std::string auto_pad_doc = "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
                                       "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
                                       "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
@@ -90,7 +89,7 @@ namespace onnx {
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
             schema.Attr("strides",
-                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        "Stride along each axis. If not present, the stride defaults to 0 along each axis.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
@@ -204,10 +203,10 @@ computes the output.)DOC";
                         "The shape of the convolution kernel. If not present, should be inferred from input W.",
                          AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
-                        "dilation value along each axis of the filter. If not presents, back-ends should consider dilations as 1.",
+                        "dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
-                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
@@ -274,10 +273,10 @@ and computes the output.)DOC";
                         " If output_shape is set, this attribute will be ignored.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("dilations",
-                        "dilation value along each axis of the filter. If not presents, back-ends should consider dilations as 1.",
+                        "dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("strides",
-                        "Stride along each axis. If not presents, back-ends should consider strides as 1.",
+                        "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
                         AttributeProto::INTS, OPTIONAL);
             schema.Attr("auto_pad",
                         auto_pad_doc.c_str(),
