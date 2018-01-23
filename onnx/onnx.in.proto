@@ -379,6 +379,7 @@ message TensorShapeProto {
       int64 dim_value = 1;
       string dim_param = 2;   // namespace Shape
     };
+    optional string standard_denotation = 3;
   };
   repeated Dimension dim = 1;
 }

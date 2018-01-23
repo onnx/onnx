@@ -248,6 +248,19 @@ class TestHelperNodeFunctions(unittest.TestCase):
         dupe.value = 'Other'
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
+    def test_shape_denotation(self):
+        shape_denotation = [helper.StandardDenotation.DATA_BATCH,
+                            helper.StandardDenotation.DATA_CHANNEL,
+                            helper.StandardDenotation.DATA_SPATIAL,
+                            helper.StandardDenotation.DATA_SPATIAL]
+        tensor = helper.make_tensor_value_info("X",
+                                                TensorProto.FLOAT,
+                                                [2, 2, 2, 2],
+                                                shape_denotation=shape_denotation)
+
+        for i, d in enumerate(tensor.type.tensor_type.shape.dim):
+            self.assertEqual(d.standard_denotation, shape_denotation[i])
+
 class TestHelperTensorFunctions(unittest.TestCase):
 
     def test_make_tensor(self):

@@ -228,7 +228,7 @@ def get_attribute_value(attr):
         raise ValueError("Unsupported ONNX attribute: {}".format(onnx_arg))
 
 
-def make_tensor_value_info(name, elem_type, shape, doc_string=""):
+def make_tensor_value_info(name, elem_type, shape, doc_string="", shape_denotation=None):
     """Makes a TypeProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
@@ -247,8 +247,15 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
     # is visible to our consumers, so make sure we emit an empty shape!
     tensor_shape_proto.dim.extend([])
 
-    for d in shape:
-        dim = tensor_shape_proto.dim.add()
+    tensor_shape_proto = tensor_type_proto.shape.dim
+    if shape_denotation:
+        if len(shape_denotation) != len(shape):
+            raise ValueError(
+                'Invalid shape_denotation. '
+                'Must be of the same length as shape.')
+
+    for i, d in enumerate(shape):
+        dim = tensor_shape_proto.add()
         if isinstance(d, integer_types):
             dim.dim_value = d
         elif isinstance(d, text_type):
@@ -257,6 +264,9 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
             raise ValueError(
                 'Invalid item in shape: {}. '
                 'Needs to of integer_types or text_type.'.format(d))
+
+        if shape_denotation:
+            dim.standard_denotation = shape_denotation[i]
 
     return value_info_proto
 
@@ -419,3 +429,11 @@ def strip_doc_string(proto):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
                 strip_doc_string(getattr(proto, descriptor.name))
+
+class StandardDenotation(object):
+    DATA_BATCH = "DATA_BATCH"
+    DATA_CHANNEL = "DATA_CHANNEL"
+    DATA_SPATIAL = "DATA_SPATIAL"
+    FILTER_IN_CHANNEL = "FILTER_IN_CHANNEL"
+    FILTER_OUT_CHANNEL = "FILTER_OUT_CHANNEL"
+    FILTER_SPATIAL = "FILTER_SPATIAL"
