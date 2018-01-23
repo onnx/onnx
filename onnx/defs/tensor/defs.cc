@@ -17,11 +17,11 @@ throws an Enforce error.
 NOTE: Casting to and from strings is not supported yet.
 )DOC")
     .Attr(
-          "to",
-          "The data type to which the elements of the input tensor are cast."
-          "Strictly must be one of the types from DataType enum in TensorProto",
-          AttributeProto::STRING,
-          OPTIONAL)
+        "to",
+        "The data type to which the elements of the input tensor are cast."
+        "Strictly must be one of the types from DataType enum in TensorProto",
+        AttributeProto::STRING,
+        OPTIONAL)
     .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
@@ -29,11 +29,18 @@ NOTE: Casting to and from strings is not supported yet.
         "Output tensor with the same shape as input with type "
         "specified by the 'to' argument",
         "T2")
-    .TypeConstraint("T1", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input types to float tensors.")
-    .TypeConstraint("T2", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain output types to float tensors.");
-
+    .TypeConstraint(
+        "T1",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input types to float tensors.")
+    .TypeConstraint(
+        "T2",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(Reshape)
     .AllowConsumed({{0, 0}})
@@ -49,33 +56,47 @@ from the shape argument.)DOC")
     .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "reshaped", "Reshaped data.", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-	            "Constrain input and output types to float tensors.");
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Concat)
-.Attr("axis",
-    "Which axis to concat on",
-    AttributeProto::INT)
+    .Attr("axis", "Which axis to concat on", AttributeProto::INT)
     .SetDoc("Concatenate a list of tensors into a single tensor")
-    .Input(0, "inputs", "List of tensors for concatenation", "T", OpSchema::Variadic)
+    .Input(
+        0,
+        "inputs",
+        "List of tensors for concatenation",
+        "T",
+        OpSchema::Variadic)
     .Output(0, "concat_result", "Concatenated tensor", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
         "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(Split)
     .SinceVersion(2)
     .Input(0, "input", "The tensor to split", "T")
-    .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input types to float tensors.")
-    .Attr("axis",
-          "Which axis to split on",
-          AttributeProto::INT,
-          OPTIONAL)
-    .Attr("split",
-          "length of each output",
-          AttributeProto::INTS,
-          OPTIONAL)
+    .Output(
+        0,
+        "outputs",
+        "One or more outputs forming list of tensors after splitting",
+        "T",
+        OpSchema::Variadic)
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input types to float tensors.")
+    .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL)
+    .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
 Otherwise, the tensor is split to equal sized parts.
@@ -122,21 +143,28 @@ Example 2:
 
 )DOC")
     .Input(0, "data", "Tensor of data to extract slices from.", "T")
-    .Attr("axes",
-          "Axes that `starts` and `ends` apply to. "
-          "It's optional. If not present, will be treated as "
-          "[0, 1, ..., len(`starts`) - 1].",
-          AttributeProto::INTS,
-          OPTIONAL)
-    .Attr("starts",
-          "Starting indices of corresponding axis in `axes`",
-          AttributeProto::INTS)
-    .Attr("ends",
-          "Ending indices (exclusive) of corresponding axis in axes`",
-          AttributeProto::INTS)
+    .Attr(
+        "axes",
+        "Axes that `starts` and `ends` apply to. "
+        "It's optional. If not present, will be treated as "
+        "[0, 1, ..., len(`starts`) - 1].",
+        AttributeProto::INTS,
+        OPTIONAL)
+    .Attr(
+        "starts",
+        "Starting indices of corresponding axis in `axes`",
+        AttributeProto::INTS)
+    .Attr(
+        "ends",
+        "Ending indices (exclusive) of corresponding axis in axes`",
+        AttributeProto::INTS)
     .Output(0, "output", "Sliced data tensor.", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input and output types to float tensors.");
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Transpose)
     .SetDoc(R"DOC(
@@ -144,15 +172,20 @@ Transpose the input tensor similar to numpy.transpose. For example, when
 axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
 will be (2, 1, 3).
 )DOC")
-    .Attr("perm",
-          "A list of integers. By default, reverse the dimensions, "
-          "otherwise permute the axes according to the values given.",
-          AttributeProto::INTS,
-          OPTIONAL)
+    .Attr(
+        "perm",
+        "A list of integers. By default, reverse the dimensions, "
+        "otherwise permute the axes according to the values given.",
+        AttributeProto::INTS,
+        OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "transposed", "Transposed output.", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input and output types to float tensors.");
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Gather)
     .SetDoc(R"DOC(
@@ -213,44 +246,54 @@ Example 2:
     .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type()},
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
         "Constrain input and output types to float tensors.")
     .TypeConstraint(
         "Tind",
-        {TensorType<TensorProto::INT32>::Type(), TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_INT32, DataType::Tensor_INT64},
         "Constrain indices to integer types");
 
 OPERATOR_SCHEMA(Squeeze)
-    .Attr("axes",
-          "List of positive integers, indicate the dimensions to squeeze.",
-          AttributeProto::INTS)
+    .Attr(
+        "axes",
+        "List of positive integers, indicate the dimensions to squeeze.",
+        AttributeProto::INTS)
     .SetDoc(R"DOC(
 Remove single-dimensional entries from the shape of a tensor.
 Takes a  parameter `axes` with a list of axes to squeeze.
 )DOC")
     .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
     .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input and output types to float tensors.");
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Pad)
     .SinceVersion(2)
-    .Attr("pads",
-          "List of integers indicate the padding element count at the "
-          "beginning and end of each axis, for 2D it is the number of pixel. "
-          "`pads` rank should be double of the input's rank. `pads` format should be as follow "
-          "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-          "added at the beginning of axis `i` and xi_end, the number of pixels added at "
-          "the end of axis `i`.",
-          AttributeProto::INTS)
-    .Attr("mode",
-          "Three modes: constant(default), reflect, edge",
-          AttributeProto::STRING,
-          std::string("constant"))
-    .Attr("value",
-          "One float, indicates the value to be filled, default is 0",
-          AttributeProto::FLOAT,
-          0.0f)
+    .Attr(
+        "pads",
+        "List of integers indicate the padding element count at the "
+        "beginning and end of each axis, for 2D it is the number of pixel. "
+        "`pads` rank should be double of the input's rank. `pads` format should be as follow "
+        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+        "added at the beginning of axis `i` and xi_end, the number of pixels added at "
+        "the end of axis `i`.",
+        AttributeProto::INTS)
+    .Attr(
+        "mode",
+        "Three modes: constant(default), reflect, edge",
+        AttributeProto::STRING,
+        std::string("constant"))
+    .Attr(
+        "value",
+        "One float, indicates the value to be filled, default is 0",
+        AttributeProto::FLOAT,
+        0.0f)
     .SetDoc(R"DOC(
 Given `data` tensor, pads, mode, and value.
 
@@ -274,61 +317,85 @@ Example:
 )DOC")
     .Input(0, "data", "Input tensor.", "T")
     .Output(0, "output", "Tensor after padding.", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input and output types to float tensors.");
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(SpaceToDepth)
-    .Attr("blocksize",
-          "Blocks of [blocksize, blocksize] are moved.",
-          AttributeProto::INT,
-          OPTIONAL)
-    .SetDoc(R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
+    .Attr(
+        "blocksize",
+        "Blocks of [blocksize, blocksize] are moved.",
+        AttributeProto::INT,
+        OPTIONAL)
+    .SetDoc(
+        R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
 are moved to the depth dimension.
 )DOC")
-    .Input(0,
-           "input",
-           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
-           ", H is the height and W is the width.", "T")
-    .Output(0,
-            "output",
-            "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input types to float tensors.");
+    .Input(
+        0,
+        "input",
+        "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+        ", H is the height and W is the width.",
+        "T")
+    .Output(
+        0,
+        "output",
+        "Output tensor of [N, C * blocksize * blocksize, H/blocksize, W/blocksize].",
+        "T")
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input types to float tensors.");
 
 OPERATOR_SCHEMA(DepthToSpace)
-    .Attr("blocksize",
-          "Blocks of [blocksize, blocksize] are moved.",
-          AttributeProto::INT,
-          OPTIONAL)
-    .SetDoc(R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
+    .Attr(
+        "blocksize",
+        "Blocks of [blocksize, blocksize] are moved.",
+        AttributeProto::INT,
+        OPTIONAL)
+    .SetDoc(
+        R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
 the input tensor where values from the depth dimension are moved in spatial blocks to the height
 and width dimensions.
 )DOC")
-    .Input(0,
-           "input",
-           "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
-           ", H is the height and W is the width.", "T")
-    .Output(0,
-            "output",
-            "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input types to float tensors.");
+    .Input(
+        0,
+        "input",
+        "Input tensor of [N,C,H,W], where N is the batch axis, C is the channel or depth"
+        ", H is the height and W is the width.",
+        "T")
+    .Output(
+        0,
+        "output",
+        "Output tensor of [N, C/(blocksize * blocksize), H * blocksize, W * blocksize].",
+        "T")
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input types to float tensors.");
 
 OPERATOR_SCHEMA(Tile)
     .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
-    .Input(0,
-           "input",
-           "Input tensor of any shape.", "T")
-    .Input(1,
-           "tiles",
-           "Number of repeated copies to make of the input tensor.", "T")
-    .Input(2,
-           "axis",
-           "Axis along which to repeat.", "T")
-    .Output(0,
-            "output",
-            "Output tensor of same shape and type as input.", "T")
-    .TypeConstraint("T", { TensorType<TensorProto::FLOAT16>::Type(), TensorType<TensorProto::FLOAT>::Type(), TensorType<TensorProto::DOUBLE>::Type() },
-            "Constrain input types to float tensors.");
+    .Input(0, "input", "Input tensor of any shape.", "T")
+    .Input(
+        1,
+        "tiles",
+        "Number of repeated copies to make of the input tensor.",
+        "T")
+    .Input(2, "axis", "Axis along which to repeat.", "T")
+    .Output(0, "output", "Output tensor of same shape and type as input.", "T")
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input types to float tensors.");

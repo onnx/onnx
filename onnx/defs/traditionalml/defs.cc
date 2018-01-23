@@ -14,16 +14,13 @@ OPERATOR_SCHEMA(ArrayFeatureExtractor)
     .Output(0, "Z", "Selected output data as an array", "T1")
     .TypeConstraint(
         "T1",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type(),
-         TensorType<TensorProto::STRING>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32,
+         DataType::Tensor_STRING},
         "allowed types.")
-    .TypeConstraint(
-        "T2",
-        {TensorType<TensorProto::INT64>::Type()},
-        " Index value types .");
+    .TypeConstraint("T2", {DataType::Tensor_INT64}, " Index value types .");
 
 OPERATOR_SCHEMA(Binarizer)
     .SetDomain("ai.onnx.ml")
@@ -34,10 +31,10 @@ OPERATOR_SCHEMA(Binarizer)
     .Output(0, "Y", "Binarized output data", "T")
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .Attr(
         "threshold",
@@ -60,9 +57,9 @@ OPERATOR_SCHEMA(CastMap)
         " allowed input types.")
     .TypeConstraint(
         "T2",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_INT64},
         " allowed output types.")
     .Attr(
         "cast_to",
@@ -100,13 +97,11 @@ OPERATOR_SCHEMA(CategoryMapper)
         "T2")
     .TypeConstraint(
         "T1",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING, DataType::Tensor_INT64},
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING, DataType::Tensor_INT64},
         " allowed types.")
     .Attr(
         "cats_strings",
@@ -155,10 +150,10 @@ OPERATOR_SCHEMA(DictVectorizer)
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::STRING>::Type()},
+        {DataType::Tensor_INT64,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_STRING},
         " allowed types.")
     .Attr(
         "string_vocabulary",
@@ -184,10 +179,10 @@ OPERATOR_SCHEMA(Imputer)
     .Output(0, "Y", "Imputed output data", "T")
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .Attr(
         "imputed_value_floats",
@@ -221,13 +216,11 @@ OPERATOR_SCHEMA(LabelEncoder)
     .Output(0, "Y", "Encoded output data", "T2")
     .TypeConstraint(
         "T1",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING, DataType::Tensor_INT64},
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING, DataType::Tensor_INT64},
         " allowed types.")
     .Attr(
         "classes_strings",
@@ -256,18 +249,17 @@ OPERATOR_SCHEMA(LinearClassifier)
         1,
         "Z",
         "Classification scores (N,E - one score for each class, for each example",
-        {TensorType<TensorProto::FLOAT>::Type()})
+        {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T1",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING, DataType::Tensor_INT64},
         " allowed types.")
     .Attr(
         "coefficients",
@@ -315,13 +307,13 @@ OPERATOR_SCHEMA(LinearRegressor)
         0,
         "Y",
         "Regression outputs (one per target, per example",
-        {TensorType<TensorProto::FLOAT>::Type()})
+        {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .Attr(
         "post_transform",
@@ -354,17 +346,13 @@ OPERATOR_SCHEMA(Normalizer)
     L2  .. math::  z = ||x||_2 = \sqrt{\sum_{i=1}^{n} x_i^2}
 )DOC")
     .Input(0, "X", "Data to be encoded", "T")
-    .Output(
-        0,
-        "Y",
-        "encoded output data",
-        {TensorType<TensorProto::FLOAT>::Type()})
+    .Output(0, "Y", "encoded output data", {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .Attr("norm", "0=Lmax, 1=L1, 2=L2", AttributeProto::STRING, OPTIONAL);
 
@@ -384,18 +372,14 @@ OPERATOR_SCHEMA(OneHotEncoder)
     to int64s and the cats_int64s category list will be used for the lookups.
 )DOC")
     .Input(0, "X", "Data to be encoded", "T")
-    .Output(
-        0,
-        "Y",
-        "encoded output data",
-        {TensorType<TensorProto::FLOAT>::Type()})
+    .Output(0, "Y", "encoded output data", {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type(),
-         TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type()},
+        {DataType::Tensor_STRING,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
         " allowed types.")
     .Attr(
         "cats_int64s",
@@ -419,17 +403,13 @@ OPERATOR_SCHEMA(Scaler)
     Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
 )DOC")
     .Input(0, "X", "Data to be scaled", "T")
-    .Output(
-        0,
-        "Y",
-        "Scaled output data",
-        {TensorType<TensorProto::FLOAT>::Type()})
+    .Output(0, "Y", "Scaled output data", {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .Attr(
         "scale",
@@ -453,18 +433,17 @@ OPERATOR_SCHEMA(SVMClassifier)
         1,
         "Z",
         "Class scores (one per class per example), if prob_a and prob_b are provided they are probabilities for each class otherwise they are raw scores.",
-        {TensorType<TensorProto::FLOAT>::Type()})
+        {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T1",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING, DataType::Tensor_INT64},
         " allowed types.")
     .Attr(
         "kernel_type",
@@ -516,13 +495,13 @@ OPERATOR_SCHEMA(SVMRegressor)
         0,
         "Y",
         "Regression outputs (one score per target per example)",
-        {TensorType<TensorProto::FLOAT>::Type()})
+        {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .Attr(
         "kernel_type",
@@ -582,18 +561,17 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
         1,
         "Z",
         "N,E the class score for each class, for each point",
-        {TensorType<TensorProto::FLOAT>::Type()})
+        {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T1",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .TypeConstraint(
         "T2",
-        {TensorType<TensorProto::STRING>::Type(),
-         TensorType<TensorProto::INT64>::Type()},
+        {DataType::Tensor_STRING, DataType::Tensor_INT64},
         " allowed types.")
     .Attr(
         "nodes_treeids",
@@ -692,13 +670,13 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
     Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 )DOC")
     .Input(0, "X", "Input N,F", "T")
-    .Output(0, "Y", "N classes", {TensorType<TensorProto::FLOAT>::Type()})
+    .Output(0, "Y", "N classes", {DataType::Tensor_FLOAT})
     .TypeConstraint(
         "T",
-        {TensorType<TensorProto::FLOAT>::Type(),
-         TensorType<TensorProto::DOUBLE>::Type(),
-         TensorType<TensorProto::INT64>::Type(),
-         TensorType<TensorProto::INT32>::Type()},
+        {DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE,
+         DataType::Tensor_INT64,
+         DataType::Tensor_INT32},
         " allowed types.")
     .Attr(
         "nodes_treeids",
@@ -792,7 +770,7 @@ OPERATOR_SCHEMA(ZipMap)
     but each input in the batch must be the size of the keys specified by the attributes.
     The order of the input and attributes determines the key-value mapping.
 )DOC")
-    .Input(0, "X", "The input values", {TensorType<TensorProto::FLOAT>::Type()})
+    .Input(0, "X", "The input values", {DataType::Tensor_FLOAT})
     .Output(0, "Z", "The output map", "T")
     .TypeConstraint(
         "T",
@@ -824,10 +802,7 @@ OPERATOR_SCHEMA(FeatureVectorizer)
         "Y",
         "Full output array, in order assigned in the inputlist, as floats",
         "T")
-    .TypeConstraint(
-        "T",
-        {TensorType<TensorProto::FLOAT>::Type()},
-        " allowed types.")
+    .TypeConstraint("T", {DataType::Tensor_FLOAT}, " allowed types.")
     .Attr(
         "inputdimensions",
         "the size of each input in the input list",
