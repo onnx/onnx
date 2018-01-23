@@ -13,7 +13,7 @@ from collections import defaultdict
 
 from onnx import defs
 from onnx.defs import OpSchema
-from onnx.backend.test.case.node import collect_snippets
+from onnx.backend.test.case import collect_snippets
 
 SNIPPETS = collect_snippets()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')

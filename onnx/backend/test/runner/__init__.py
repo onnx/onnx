@@ -41,6 +41,9 @@ class Runner(object):
         for rt in load_model_tests(kind='real'):
             self._add_model_test(rt, 'Real')
 
+        for rt in load_model_tests(kind='simple'):
+            self._add_model_test(rt, 'Simple')
+
         for gt in load_model_tests(kind='pytorch-converted'):
             self._add_model_test(gt, 'PyTorchConverted')
 

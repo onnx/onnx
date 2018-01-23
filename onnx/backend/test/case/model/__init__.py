@@ -4,15 +4,38 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from collections import namedtuple
+import sys
 
+from ..utils import import_recursive
 
-TestCase = namedtuple('TestCase', ['name', 'url', 'model_name', 'model_dir'])
+TestCase = namedtuple('TestCase', [
+    'name', 'model_name',
+    'url',
+    'model_dir',
+    'model', 'data_sets',
+    'kind',
+])
+
+_SimpleModelTestCases = []
+
+def expect(model, inputs, outputs, name=None):
+    name = name or model.graph.name
+    _SimpleModelTestCases.append(
+        TestCase(
+            name=name,
+            model_name=model.graph.name,
+            url=None,
+            model_dir=None,
+            model=model,
+            data_sets=[(inputs, outputs)],
+            kind='simple',
+        ))
+
 
 BASE_URL = 'https://s3.amazonaws.com/download.onnx/models'
 
-
 def collect_testcases():
-    res = []
+    real_model_testcases = []
 
     model_tests = [
         ('test_bvlc_alexnet', 'bvlc_alexnet'),
@@ -25,8 +48,20 @@ def collect_testcases():
         ('test_vgg16', 'vgg16'),
         ('test_vgg19', 'vgg19'),
     ]
+
     for test_name, model_name in model_tests:
         url = '{}/{}.tar.gz'.format(BASE_URL, model_name)
-        res.append(TestCase(test_name, url, model_name, None))
+        real_model_testcases.append(TestCase(
+            name=test_name,
+            model_name=model_name,
+            url=url,
+            model_dir=None,
+            model=None,
+            data_sets=None,
+            kind='real',
+        ))
 
-    return res
+
+    import_recursive(sys.modules[__name__])
+
+    return real_model_testcases + _SimpleModelTestCases
