@@ -3383,11 +3383,11 @@ opset_import {
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor.</dd>
+<dd>The data type for the elements of the output tensor. Default is TensorProto::FLOAT.</dd>
 <dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution.</dd>
+<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution.</dd>
+<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -3408,7 +3408,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
@@ -3438,9 +3438,9 @@ opset_import {
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution.</dd>
+<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution.</dd>
+<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -3463,7 +3463,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
@@ -3490,11 +3490,11 @@ opset_import {
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor.</dd>
+<dd>The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.</dd>
 <dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values.</dd>
+<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
 <dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values.</dd>
+<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -3515,7 +3515,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
@@ -3544,9 +3544,9 @@ opset_import {
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values.</dd>
+<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
 <dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values.</dd>
+<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -3569,7 +3569,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
