@@ -601,9 +601,7 @@ opset_import {
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
-  in the 'DataType' enum field in the TensorProto message. If the 'to' argument
-  is not provided or is not one of the enumerated types in DataType, Caffe2
-  throws an Enforce error.
+  in the 'DataType' enum field in the TensorProto message.
   
   NOTE: Casting to and from strings is not supported yet.
 
@@ -620,7 +618,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>to</tt> : string</dt>
+<dt><tt>to</tt> : string (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
