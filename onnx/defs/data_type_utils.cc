@@ -8,17 +8,19 @@
 namespace onnx {
 namespace Utils {
 
-std::unordered_map<std::string, TypeProto>&
-DataTypeUtils::GetTypeStrToProtoMap() {
-  static std::unordered_map<std::string, TypeProto> map;
+std::unordered_map<std::string, PDataType>&
+DataTypeUtils::GetTypeIdToDataMap() {
+  static std::unordered_map<std::string, PDataType> map;
   return map;
 }
 
-void DataTypeUtils::Register(DataType type_key, const TypeProto& type_proto) {
+void DataTypeUtils::Register(PDataType p_data_type) {
+  assert(nullptr != p_data_type);
   static std::mutex mutex;
   std::lock_guard<std::mutex> lock(mutex);
-  if (GetTypeStrToProtoMap().find(*type_key) == GetTypeStrToProtoMap().end()) {
-    GetTypeStrToProtoMap()[*type_key] = type_proto;
+  if (GetTypeIdToDataMap().find(p_data_type->Id()) ==
+      GetTypeIdToDataMap().end()) {
+    GetTypeIdToDataMap()[p_data_type->Id()] = p_data_type;
   } else {
     // One type is prevented from being registered multiple times
     // from different domain intentionally.
@@ -26,24 +28,18 @@ void DataTypeUtils::Register(DataType type_key, const TypeProto& type_proto) {
   }
 }
 
-DataType DataTypeUtils::ToType(const std::string& type_str) {
-  auto it = GetTypeStrToProtoMap().find(type_str);
-  assert(it != GetTypeStrToProtoMap().end());
-  return &(it->first);
-}
-
-DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
-  auto type_str = ToString(type_proto);
-  return ToType(type_str);
-}
-
-const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
-  auto it = GetTypeStrToProtoMap().find(*data_type);
-  assert(it != GetTypeStrToProtoMap().end());
+PDataType DataTypeUtils::ToType(const std::string& type_id) {
+  auto it = GetTypeIdToDataMap().find(type_id);
+  assert(it != GetTypeIdToDataMap().end());
   return it->second;
 }
 
-std::string DataTypeUtils::ToString(const TypeProto& type_proto) {
+PDataType DataTypeUtils::ToType(const TypeProto& type_proto) {
+  auto type_id = GetId(type_proto);
+  return ToType(type_id);
+}
+
+std::string DataTypeUtils::GetId(const TypeProto& type_proto) {
   switch (type_proto.value_case()) {
     case TypeProto::ValueCase::kTensorType: {
       // Tensor type.
@@ -104,48 +100,71 @@ std::string DataTypeUtils::GetElementTypeStr(TensorProto_DataType elem_type) {
 } // namespace Utils
 
 template <typename T>
-DataType Abstract<T>::Type(const std::string& domain) {
-  static Abstract abs_type(domain);
-  return abs_type.TypeInternal();
+PDataType Abstract<T>::Type(
+    const std::string& name,
+    const std::string& domain) {
+  static Abstract abs_type(name, domain);
+  return &abs_type;
 }
 
 template <int elemT>
-DataType TensorType<elemT>::Type() {
+PDataType TensorType<elemT>::Type() {
   static TensorType tensor_type;
-  return tensor_type.TypeInternal();
+  return &tensor_type;
 }
 
-template DataType TensorType<TensorProto_DataType_FLOAT>::Type();
-template DataType TensorType<TensorProto_DataType_UINT8>::Type();
-template DataType TensorType<TensorProto_DataType_INT8>::Type();
-template DataType TensorType<TensorProto_DataType_UINT16>::Type();
-template DataType TensorType<TensorProto_DataType_INT16>::Type();
-template DataType TensorType<TensorProto_DataType_INT32>::Type();
-template DataType TensorType<TensorProto_DataType_INT64>::Type();
-template DataType TensorType<TensorProto_DataType_STRING>::Type();
-template DataType TensorType<TensorProto_DataType_BOOL>::Type();
-template DataType TensorType<TensorProto_DataType_FLOAT16>::Type();
-template DataType TensorType<TensorProto_DataType_DOUBLE>::Type();
-template DataType TensorType<TensorProto_DataType_UINT32>::Type();
-template DataType TensorType<TensorProto_DataType_UINT64>::Type();
-template DataType TensorType<TensorProto_DataType_COMPLEX64>::Type();
-template DataType TensorType<TensorProto_DataType_COMPLEX128>::Type();
+const std::string& DataType::Domain() const {
+  return domain;
+}
+const std::string& DataType::Id() const {
+  return id;
+}
+const std::string& DataType::Description() const {
+  return description;
+}
+const TypeProto& DataType::ToProto() const {
+  return type_proto;
+}
 
-template DataType Abstract<std::map<int64_t, std::string>>::Type(
-    const std::string& domain);
-template DataType Abstract<std::map<int64_t, float>>::Type(
-    const std::string& domain);
-template DataType Abstract<std::map<std::string, int64_t>>::Type(
-    const std::string& domain);
-template DataType Abstract<std::map<int64_t, std::string>>::Type(
-    const std::string& domain);
-template DataType Abstract<std::map<int64_t, float>>::Type(
-    const std::string& domain);
-template DataType Abstract<std::map<int64_t, double>>::Type(
-    const std::string& domain);
-template DataType Abstract<std::map<std::string, float>>::Type(
-    const std::string& domain);
-template DataType Abstract<std::map<std::string, double>>::Type(
-    const std::string& domain);
+PDataType DataType::Tensor_FLOAT =
+    TensorType<TensorProto_DataType_FLOAT>::Type();
+PDataType DataType::Tensor_UINT8 =
+    TensorType<TensorProto_DataType_UINT8>::Type();
+PDataType DataType::Tensor_INT8 = TensorType<TensorProto_DataType_INT8>::Type();
+PDataType DataType::Tensor_UINT16 =
+    TensorType<TensorProto_DataType_UINT16>::Type();
+PDataType DataType::Tensor_INT16 =
+    TensorType<TensorProto_DataType_INT16>::Type();
+PDataType DataType::Tensor_INT32 =
+    TensorType<TensorProto_DataType_INT32>::Type();
+PDataType DataType::Tensor_INT64 =
+    TensorType<TensorProto_DataType_INT64>::Type();
+PDataType DataType::Tensor_STRING =
+    TensorType<TensorProto_DataType_STRING>::Type();
+PDataType DataType::Tensor_BOOL = TensorType<TensorProto_DataType_BOOL>::Type();
+PDataType DataType::Tensor_FLOAT16 =
+    TensorType<TensorProto_DataType_FLOAT16>::Type();
+PDataType DataType::Tensor_DOUBLE =
+    TensorType<TensorProto_DataType_DOUBLE>::Type();
+PDataType DataType::Tensor_UINT32 =
+    TensorType<TensorProto_DataType_UINT32>::Type();
+PDataType DataType::Tensor_UINT64 =
+    TensorType<TensorProto_DataType_UINT64>::Type();
+PDataType DataType::Tensor_COMPLEX64 =
+    TensorType<TensorProto_DataType_COMPLEX64>::Type();
+PDataType DataType::Tensor_COMPLEX128 =
+    TensorType<TensorProto_DataType_COMPLEX128>::Type();
 
+PDataType DataType::Map_Int64_String =
+    Abstract<std::map<int64_t, std::string>>::Type("map(int64, string)");
+PDataType DataType::Map_Int64_Float =
+    Abstract<std::map<int64_t, float>>::Type("map(int64, float)");
+PDataType DataType::Map_String_Int64 =
+    Abstract<std::map<std::string, int64_t>>::Type("map(string, int64)");
+PDataType DataType::Map_Int64_Double =
+    Abstract<std::map<int64_t, double>>::Type("map(int64, double)");
+PDataType DataType::Map_String_Float =
+    Abstract<std::map<std::string, float>>::Type("map(string, float)");
+PDataType DataType::Map_String_Double =
+    Abstract<std::map<std::string, double>>::Type("map(string, double)");
 } // namespace onnx

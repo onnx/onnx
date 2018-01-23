@@ -56,8 +56,7 @@ OPERATOR_SCHEMA(CastMap)
     .Output(0, "Y", "encoded output data", "T2")
     .TypeConstraint(
         "T1",
-        {Abstract<std::map<int64_t, std::string>>::Type(),
-         Abstract<std::map<int64_t, float>>::Type()},
+        {DataType::Map_Int64_String, DataType::Map_Int64_Float},
         " allowed input types.")
     .TypeConstraint(
         "T2",
@@ -147,12 +146,12 @@ OPERATOR_SCHEMA(DictVectorizer)
     .Output(0, "Y", "The tensor", "T2")
     .TypeConstraint(
         "T1",
-        {Abstract<std::map<std::string, int64_t>>::Type(),
-         Abstract<std::map<int64_t, std::string>>::Type(),
-         Abstract<std::map<int64_t, float>>::Type(),
-         Abstract<std::map<int64_t, double>>::Type(),
-         Abstract<std::map<std::string, float>>::Type(),
-         Abstract<std::map<std::string, double>>::Type()},
+        {DataType::Map_String_Int64,
+         DataType::Map_Int64_String,
+         DataType::Map_Int64_Float,
+         DataType::Map_Int64_Double,
+         DataType::Map_String_Float,
+         DataType::Map_String_Double},
         " allowed types.")
     .TypeConstraint(
         "T2",
@@ -797,8 +796,7 @@ OPERATOR_SCHEMA(ZipMap)
     .Output(0, "Z", "The output map", "T")
     .TypeConstraint(
         "T",
-        {Abstract<std::map<std::string, float>>::Type(),
-         Abstract<std::map<int64_t, float>>::Type()},
+        {DataType::Map_String_Float, DataType::Map_Int64_Float},
         " allowed types.")
     .Attr(
         "classlabels_strings",

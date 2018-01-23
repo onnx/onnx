@@ -39,8 +39,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
-<dd> allowed types.</dd>
+<dt><tt>T1</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double), tensor(string)</dt>
+<dd>allowed types.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd> Index value types .</dd>
 </dl>
@@ -84,7 +84,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -135,7 +135,7 @@ opset_import {
 <dl>
 <dt><tt>T1</tt> : map(int64, string), map(int64, float)</dt>
 <dd> allowed input types.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(float), tensor(int64)</dt>
+<dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(string)</dt>
 <dd> allowed output types.</dd>
 </dl>
 
@@ -191,9 +191,9 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T1</tt> : tensor(int64), tensor(string)</dt>
 <dd> allowed types.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T2</tt> : tensor(int64), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -247,7 +247,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : map(string, int64), map(int64, string), map(int64, float), map(int64, double), map(string, float), map(string, double)</dt>
+<dt><tt>T1</tt> : map(int64, string), map(int64, float), map(string, float), map(int64, double), map(string, int64), map(string, double)</dt>
 <dd> allowed types.</dd>
 <dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double), tensor(string)</dt>
 <dd> allowed types.</dd>
@@ -349,7 +349,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -398,9 +398,9 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T1</tt> : tensor(int64), tensor(string)</dt>
 <dd> allowed types.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T2</tt> : tensor(int64), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -455,9 +455,9 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T1</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T2</tt> : tensor(int64), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -511,7 +511,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -558,7 +558,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -615,7 +615,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(string), tensor(int64), tensor(int32), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -680,9 +680,9 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T1</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T2</tt> : tensor(int64), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -739,7 +739,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -784,7 +784,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -871,9 +871,9 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T1</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
-<dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T2</tt> : tensor(int64), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -957,7 +957,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
+<dt><tt>T</tt> : tensor(int64), tensor(float), tensor(int32), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
@@ -1007,7 +1007,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : map(string, float), map(int64, float)</dt>
+<dt><tt>T</tt> : map(int64, float), map(string, float)</dt>
 <dd> allowed types.</dd>
 </dl>
 

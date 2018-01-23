@@ -550,7 +550,7 @@ OpSchema& OpSchema::TypeConstraint(
       std::make_pair(type_str, std::make_pair(constraints, description)));
   std::vector<std::string> constraintStrs;
   for (const auto& t : constraints) {
-    constraintStrs.push_back(*t);
+    constraintStrs.push_back(t->Description());
   }
   type_constraint_params_.push_back(
       TypeConstraintParam(type_str, constraintStrs, description));
@@ -568,12 +568,15 @@ void OpSchema::ParseAndSetTypes(
       // Type sets already specified.
       // Set the type string for doc generation.
       std::string type_str = "";
-      for (auto dtype : formal_parameter.GetTypes())
-      {
-          type_str = type_str + *dtype;
+      for (auto dtype : formal_parameter.GetTypes()) {
+        if (type_str.empty()) {
+          type_str = dtype->Description();
+        } else {
+          type_str = type_str + ", " + dtype->Description();
+        }
       }
-    }
-    else { 
+      formal_parameter.SetTypeStr(type_str);
+    } else {
       auto it = type_constraints_.find(type);
       assert(it != type_constraints_.end());
       formal_parameter.MutableTypes() = it->second.first;

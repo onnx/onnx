@@ -14,9 +14,10 @@ namespace onnx {
 
 // ONNX domain.
 const char* const ONNX_DOMAIN = "";
+struct DataType;
 
-// String pointer as unique TypeProto identifier.
-typedef const std::string* DataType;
+// DataType pointer as unique TypeProto identifier.
+typedef const DataType* PDataType;
 
 namespace Utils {
 // Data type utility, which maintains a global type string to TypeProto map.
@@ -24,65 +25,94 @@ namespace Utils {
 // efficiency.
 class DataTypeUtils {
  public:
-  static void Register(DataType type_key, const TypeProto& type_proto);
+  static void Register(PDataType p_data_type);
 
-  static DataType ToType(const std::string& type_str);
+  static PDataType ToType(const std::string& type_id);
 
-  static DataType ToType(const TypeProto& type_proto);
-
-  static const TypeProto& ToTypeProto(const DataType& data_type);
+  static PDataType ToType(const TypeProto& type_proto);
 
   static std::string GetElementTypeStr(TensorProto_DataType elem_type);
 
  private:
-  static std::string ToString(const TypeProto& type_proto);
+  static std::string GetId(const TypeProto& type_proto);
 
-  static std::unordered_map<std::string, TypeProto>& GetTypeStrToProtoMap();
+  static std::unordered_map<std::string, PDataType>& GetTypeIdToDataMap();
 };
 } // namespace Utils
 
+struct DataType {
+  virtual ~DataType() {}
+  const std::string& Domain() const;
+  const std::string& Id() const;
+  const std::string& Description() const;
+  const TypeProto& ToProto() const;
+
+  static PDataType Tensor_FLOAT;
+  static PDataType Tensor_UINT8;
+  static PDataType Tensor_INT8;
+  static PDataType Tensor_UINT16;
+  static PDataType Tensor_INT16;
+  static PDataType Tensor_INT32;
+  static PDataType Tensor_INT64;
+  static PDataType Tensor_STRING;
+  static PDataType Tensor_BOOL;
+  static PDataType Tensor_FLOAT16;
+  static PDataType Tensor_DOUBLE;
+  static PDataType Tensor_UINT32;
+  static PDataType Tensor_UINT64;
+  static PDataType Tensor_COMPLEX64;
+  static PDataType Tensor_COMPLEX128;
+  static PDataType Map_Int64_String;
+  static PDataType Map_Int64_Float;
+  static PDataType Map_String_Int64;
+  static PDataType Map_Int64_Double;
+  static PDataType Map_String_Float;
+  static PDataType Map_String_Double;
+
+ protected:
+  std::string description;
+  std::string domain;
+  std::string id;
+  TypeProto type_proto;
+};
+
 template <int elemT>
-struct TensorType {
-  static DataType Type();
+struct TensorType : public DataType {
+  static PDataType Type();
 
  private:
   TensorType() {
-    tensor_type_key = "tensor(" +
+    domain = ONNX_DOMAIN;
+    description = "tensor(" +
         Utils::DataTypeUtils::GetElementTypeStr(
-                          static_cast<TensorProto_DataType>(elemT)) +
+                      static_cast<TensorProto_DataType>(elemT)) +
         ")";
-    TypeProto tensor_type;
-    tensor_type.mutable_tensor_type()->set_elem_type(
+    id = description;
+    type_proto.mutable_tensor_type()->set_elem_type(
         (TensorProto_DataType)elemT);
-    Utils::DataTypeUtils::Register(TypeInternal(), tensor_type);
+    Utils::DataTypeUtils::Register(this);
   }
-
-  DataType TypeInternal() const {
-    return &tensor_type_key;
-  }
-
-  std::string tensor_type_key;
 };
 
 template <typename T>
-struct Abstract {
-  static DataType Type(const std::string& domain = ONNX_DOMAIN);
+struct Abstract : public DataType {
+  static PDataType Type(
+      const std::string& description,
+      const std::string& domain = ONNX_DOMAIN);
 
  private:
-  Abstract(const std::string& domain = ONNX_DOMAIN) {
-    abs_type_key = std::string(typeid(T).name());
-    TypeProto abs_type;
-    abs_type.mutable_abs_type()->set_domain(domain);
-    abs_type.mutable_abs_type()->set_identifier(abs_type_key);
-    Utils::DataTypeUtils::Register(TypeInternal(), abs_type);
+  Abstract(
+      const std::string& description_,
+      const std::string& domain_ = ONNX_DOMAIN) {
+    domain = domain_;
+    description = description_;
+    id = std::string(typeid(T).name());
+    type_proto.mutable_abs_type()->set_domain(domain);
+    type_proto.mutable_abs_type()->set_identifier(id);
+    Utils::DataTypeUtils::Register(this);
   }
-
-  DataType TypeInternal() const {
-    return &abs_type_key;
-  }
-
-  std::string abs_type_key;
 };
+
 } // namespace onnx
 
 #endif // ! ONNX_DATA_TYPE_UTILS_H

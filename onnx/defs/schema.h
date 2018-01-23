@@ -24,7 +24,7 @@ using OperatorSetVersion = int;
 
 const bool OPTIONAL = false;
 
-typedef std::set<DataType> DataTypeSet;
+typedef std::set<PDataType> DataTypeSet;
 
 // Type constraint map. Key is type string. Value is data type set and
 // description.
@@ -97,7 +97,7 @@ class OpSchema {
     friend class OpSchema;
 
     DataTypeSet& MutableTypes();
-    
+
     void SetTypeStr(const std::string& type_str);
 
     // Formal parameter name.
