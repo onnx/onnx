@@ -70,6 +70,7 @@ struct DataType {
   static PDataType Map_String_Double;
 
  protected:
+  DataType() {}
   std::string description;
   std::string domain;
   std::string id;
