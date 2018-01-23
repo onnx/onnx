@@ -73,11 +73,11 @@ enum Version {
   // - For vendor extensions, added domain in NodeProto
   IR_VERSION_2017_11_3 = 0x00000003;
   
-  // IR VERSION 1.0.3 published on Jan 23, 2018
+  // IR VERSION 1.0.0 published on Jan 23, 2018
   // Merged onnx.proto with onnx-ml.proto.
   // Removed Sequence and Map type for onnx ml.
   // Added Abstract for any opaque type.
-  IR_VERSION = 0x01000003;
+  IR_VERSION = 0x01000000;
 }
 
 // A named attribute containing either singular float, integer, string
