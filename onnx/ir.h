@@ -44,25 +44,31 @@ struct Value;
 
 
 class ResourceGuard {
-  std::function<void()> _destructor;
-  bool _released;
+  std::function<void()> destructor_;
+  bool released_;
 
 public:
   ResourceGuard(std::function<void()> destructor)
-    : _destructor(std::move(destructor))
-    , _released(false) {}
+    : destructor_(std::move(destructor))
+    , released_(false) {}
 
   ~ResourceGuard() {
-    if (!_released) _destructor();
+    if (!released_) destructor_();
   }
 
   void release() {
-    _released = true;
+    released_ = true;
   }
 };
 
 
 struct Dimension {
+  Dimension(int dim)
+    : is_int(true), dim(dim) {
+  }
+  Dimension(std::string param)
+    : is_int(false), param(param) {
+  }
   Dimension(bool is_int, int64_t dim, std::string param)
     : is_int(is_int), dim(dim), param(std::move(param)) {
   }
@@ -495,7 +501,7 @@ public:
     ONNX_ASSERT(outputs_.size() == 1);
     return outputs_.at(0);
   }
-  const  Value * input() const {
+  const Value * input() const {
     ONNX_ASSERT(inputs_.size() == 1);
     return inputs_.at(0);
   }
