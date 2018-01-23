@@ -523,7 +523,10 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
     .Attr(
         "axis",
         "(Default to 1) Indicate up to which input dimensions "
-        "(exclusive) should be flattened to the outer dimension of the output",
+        "(exclusive) should be flattened to the outer dimension of the output. "
+        "The value for axis must be in the range [0, R], where R is the rank of the input tensor. "
+        "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
+        "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
         AttributeProto::INT,
         static_cast<int64_t>(1));
 
