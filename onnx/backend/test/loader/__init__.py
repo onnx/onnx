@@ -17,6 +17,8 @@ DATA_DIR = os.path.join(
 
 
 def load_node_tests(data_dir=os.path.join(DATA_DIR, 'node')):
+    '''Load node test cases from on-disk data files.
+    '''
     testcases = []
 
     for test_name in os.listdir(data_dir):
@@ -54,6 +56,9 @@ def load_node_tests(data_dir=os.path.join(DATA_DIR, 'node')):
 
 
 def load_model_tests(data_dir=os.path.join(DATA_DIR, 'model'), kind=None):
+    '''Load model test cases from on-disk data files.
+    '''
+
     supported_kinds = os.listdir(data_dir)
     if kind not in supported_kinds:
         raise ValueError("kind must be one of {}".format(supported_kinds))

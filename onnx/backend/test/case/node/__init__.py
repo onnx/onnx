@@ -18,5 +18,7 @@ def expect(*args, **kwargs):
 
 
 def collect_testcases():
+    '''Collect node test cases defined in python/numpy code.
+    '''
     import_recursive(sys.modules[__name__])
     return TestCases

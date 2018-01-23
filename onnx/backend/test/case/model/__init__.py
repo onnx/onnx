@@ -35,6 +35,9 @@ def expect(model, inputs, outputs, name=None):
 BASE_URL = 'https://s3.amazonaws.com/download.onnx/models'
 
 def collect_testcases():
+    '''Collect model test cases defined in python/numpy code and in model zoo.
+    '''
+
     real_model_testcases = []
 
     model_tests = [
