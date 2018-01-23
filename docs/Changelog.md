@@ -38,7 +38,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int64), tensor(float16), tensor(float), tensor(int32), tensor(bool), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
 
@@ -732,9 +732,9 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int64), tensor(float), tensor(int32), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain input types to float, int32, int64, bool tensors.</dd>
-<dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(int32), tensor(bool)</dt>
+<dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
 <dd>Constrain output types to float, int32, int64, bool tensors.</dd>
 </dl>
 
@@ -1660,7 +1660,7 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>Tind</tt> : tensor(int64), tensor(int32)</dt>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
 
@@ -5164,7 +5164,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int64), tensor(float16), tensor(float), tensor(int32), tensor(bool), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
 

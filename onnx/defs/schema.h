@@ -24,7 +24,7 @@ using OperatorSetVersion = int;
 
 const bool OPTIONAL = false;
 
-typedef std::set<PDataType> DataTypeSet;
+typedef std::vector<PDataType> DataTypeSet;
 
 // Type constraint map. Key is type string. Value is data type set and
 // description.
