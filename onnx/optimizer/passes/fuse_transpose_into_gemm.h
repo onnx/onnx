@@ -9,10 +9,10 @@ struct FuseTransposeIntoGemm : public OptimizePass {
     : OptimizePass("fuse_transpose_into_gemm", API_TYPE::ir) {
   }
 
-  void fuse_transpose_into_gemm(std::shared_ptr<Graph>& graph) {
+  void fuse_transpose_into_gemm(Graph& graph) {
     static const std::vector<int64_t> simple_trans_perm({1,0});
 
-    for (auto it = graph->begin(); it != graph->end(); ++it) {
+    for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
 
       if (n->kind() == kGemm) {
@@ -31,7 +31,7 @@ struct FuseTransposeIntoGemm : public OptimizePass {
     }
   }
 
-  virtual void optimize(std::shared_ptr<Graph>& graph) {
+  virtual void optimize(Graph& graph) {
     fuse_transpose_into_gemm(graph);
   }
 };
