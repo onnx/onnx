@@ -1,7 +1,5 @@
 #pragma once
 
-#include "onnx/py_utils.h" // Keep this at the top to avoid the compilation warning.
-
 #include <list>
 
 #include "onnx/ir.h"
@@ -10,6 +8,7 @@
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/split.h"
+#include "onnx/proto_utils.h"
 
 namespace onnx { namespace optimization {
 
