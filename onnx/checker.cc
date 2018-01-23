@@ -55,8 +55,6 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
     fail_check("setting data_type field to UNDEFINED is not allowed");
   }
 
-  enforce_has_repeated_field(tensor, dims);
-
   int num_value_fields = 0;
 
   const char* value_field = nullptr;
@@ -183,6 +181,14 @@ void check_attribute(const AttributeProto& attr, const CheckerContext& ctx) {
     fail_check("Attribute should contain one and only one value field.");
   }
 
+  if (attr.has_t()) {
+    check_tensor(attr.t(), ctx);
+  }
+
+  if (attr.has_g()) {
+    check_graph(attr.g(), ctx);
+  }
+
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
   }
@@ -212,7 +218,8 @@ void check_node(const NodeProto& node, const CheckerContext& ctx) {
 
   const auto* schema = OpSchemaRegistry::Schema(node.op_type(), domain_version, node.domain());
   if (!schema) {
-    fail_check("No Schema registered for " + node.op_type());
+    fail_check("No Schema registered for " + node.op_type() +
+			" with domain_version of " + std::to_string(domain_version));
   }
   schema->Verify(node);
 }
