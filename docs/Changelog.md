@@ -1105,52 +1105,6 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Embedding-1"></a>**Embedding-1**</a>
-
-  Turns positive integers (indexes) into dense vectors of fixed size.
-
-#### Versioning
-
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>input_dim</tt> : int</dt>
-<dd>Size of the input vocabulary.</dd>
-<dt><tt>output_dim</tt> : int</dt>
-<dd>Dimension of the embedding output vectors.</dd>
-<dt><tt>weights</tt> : tensor</dt>
-<dd>2-D tensor of weights [O,I].</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : tensor(int64)</dt>
-<dd>1-D tensor of integers representing indices in the embedding dictionary with length [N] and values [0, input_dim -1]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output tensor of computed features [N, O].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
-</dl>
-
 ### <a name="Equal-1"></a>**Equal-1**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
