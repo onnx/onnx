@@ -20,7 +20,7 @@ struct OptimizePass {
 
   virtual void optimize(onnx::ModelProto& mp) {}
 
-  virtual void optimize(std::shared_ptr<Graph>& graph) {}
+  virtual void optimize(Graph& graph) {}
 
 };
 

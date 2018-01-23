@@ -16,8 +16,8 @@ struct EliminateNopTranspose : public OptimizePass {
     return true;
   }
 
-  void eliminate_nop_transpose(std::shared_ptr<Graph>& graph) {
-    for (auto it = graph->begin(); it != graph->end(); ++it) {
+  void eliminate_nop_transpose(Graph& graph) {
+    for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
 
       if (n->kind() == kTranspose) {
@@ -44,8 +44,8 @@ struct EliminateNopTranspose : public OptimizePass {
     return ret;
   }
 
-  void fuse_consecutive_transposes(std::shared_ptr<Graph>& graph) {
-    for (auto it = graph->begin(); it != graph->end(); ++it) {
+  void fuse_consecutive_transposes(Graph& graph) {
+    for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
 
       if (n->kind() == kTranspose && n->input()->node()->kind() == kTranspose) {
@@ -60,7 +60,7 @@ struct EliminateNopTranspose : public OptimizePass {
     }
   }
 
-  virtual void optimize(std::shared_ptr<Graph>& graph) {
+  virtual void optimize(Graph& graph) {
     fuse_consecutive_transposes(graph);
   }
 };

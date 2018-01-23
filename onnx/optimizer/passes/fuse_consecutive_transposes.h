@@ -23,8 +23,8 @@ struct FuseConsecutiveTransposes : public OptimizePass {
     return ret;
   }
 
-  void fuse_consecutive_transposes(std::shared_ptr<Graph>& graph) {
-    for (auto it = graph->begin(); it != graph->end(); ++it) {
+  void fuse_consecutive_transposes(Graph& graph) {
+    for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
 
       if (n->kind() == kTranspose && n->input()->node()->kind() == kTranspose) {
@@ -39,7 +39,7 @@ struct FuseConsecutiveTransposes : public OptimizePass {
     }
   }
 
-  virtual void optimize(std::shared_ptr<Graph>& graph) {
+  virtual void optimize(Graph& graph) {
     fuse_consecutive_transposes(graph);
   }
 };

@@ -39,7 +39,7 @@ static bool is_pure_operator(Node * n) {
 // value provided for them vary only between invocations of the init
 // net, and are constant across runs of the predict net.
 //
-static void split_init_and_predict(std::shared_ptr<Graph> graph, bool init, bool predict) {
+static void split_init_and_predict(Graph& graph, bool init, bool predict) {
   // The first step is to identify which Values are reachable from
   // either of
   //   - inputs without corresponding initializers
@@ -61,17 +61,17 @@ static void split_init_and_predict(std::shared_ptr<Graph> graph, bool init, bool
 
   {
     std::unordered_set<std::string> initializer_names(
-      graph->initializer_names().begin(),
-      graph->initializer_names().end());
+      graph.initializer_names().begin(),
+      graph.initializer_names().end());
 
-    for (Value * v : graph->inputs()) {
+    for (Value * v : graph.inputs()) {
       if (initializer_names.count(v->uniqueName()) == 0) {
         predict_net_values.insert(v);
       }
     }
   }
 
-  for (Node * n : graph->nodes()) {
+  for (Node * n : graph.nodes()) {
     if (node_belongs_to_predict_net(n)) {
       for (Value * v : n->outputs()) {
         predict_net_values.insert(v);
@@ -83,7 +83,7 @@ static void split_init_and_predict(std::shared_ptr<Graph> graph, bool init, bool
   // is used by a Node which is, becomes an output of the init
   // graph and an input of the predict net
   std::unordered_set<Value *> new_interface;
-  for (Node * n : graph->nodes()) {
+  for (Node * n : graph.nodes()) {
     if (node_belongs_to_predict_net(n)) {
       for (Value * v : n->inputs()) {
         if (!value_belongs_to_predict_net(v)) {
@@ -96,58 +96,58 @@ static void split_init_and_predict(std::shared_ptr<Graph> graph, bool init, bool
   if (init) {
     // Add new outputs corresponding to the boundary between init and
     // predict nets, ensuring that we don't duplicate outputs.
-    for (Value * v : graph->outputs()) {
+    for (Value * v : graph.outputs()) {
       new_interface.erase(v);
     }
     for (Value * v : new_interface) {
-      graph->registerOutput(v);
+      graph.registerOutput(v);
     }
 
     // Remove outputs that belong to the predict net.
-    for (auto i = graph->outputs().size(); i--;) {
-      if (value_belongs_to_predict_net(graph->outputs()[i])) {
-        graph->return_node()->removeInput(i);
+    for (auto i = graph.outputs().size(); i--;) {
+      if (value_belongs_to_predict_net(graph.outputs()[i])) {
+        graph.return_node()->removeInput(i);
       }
     }
 
     // Delete nodes that belong to the predict net, in reverse
     // topological order.
-    for (auto it = graph->nodes().rbegin(); it != graph->nodes().rend(); it++) {
+    for (auto it = graph.nodes().rbegin(); it != graph.nodes().rend(); it++) {
       if (node_belongs_to_predict_net(*it)) {
         it.destroyCurrent();
       }
     }
 
     // Remove inputs that belong to the predict net.
-    for (auto i = graph->inputs().size(); i--;) {
-      if (value_belongs_to_predict_net(graph->inputs()[i])) {
-        graph->eraseInput(i);
+    for (auto i = graph.inputs().size(); i--;) {
+      if (value_belongs_to_predict_net(graph.inputs()[i])) {
+        graph.eraseInput(i);
       }
     }
   } else if (predict) {
     // Add new inputs, ensuring that we don't introduce duplicates.
     // Also cut the boundary between init and predict net by replacing
     // the Values along the boundary with replaceAllUsesWith.
-    for (Value * v : graph->inputs()) {
+    for (Value * v : graph.inputs()) {
       new_interface.erase(v);
     }
     for (Value * v : new_interface) {
-      Value * newv = graph->addInput()->copyMetadata(v);
+      Value * newv = graph.addInput()->copyMetadata(v);
       v->replaceAllUsesWith(newv);
     }
 
     // Delete nodes that aren't in the predict net, in reverse
     // topological order.
-    for (auto it = graph->nodes().rbegin(); it != graph->nodes().rend(); it++) {
+    for (auto it = graph.nodes().rbegin(); it != graph.nodes().rend(); it++) {
       if (!node_belongs_to_predict_net(*it)) {
         it.destroyCurrent();
       }
     }
 
     // Remove inputs that aren't used by the predict net.
-    for (auto i = graph->inputs().size(); i--;) {
-      if (graph->inputs()[i]->uses().empty()) {
-        graph->eraseInput(i);
+    for (auto i = graph.inputs().size(); i--;) {
+      if (graph.inputs()[i]->uses().empty()) {
+        graph.eraseInput(i);
       }
     }
   }
@@ -158,7 +158,7 @@ struct SplitInit : public OptimizePass {
     : OptimizePass("split_init", API_TYPE::ir) {
   }
 
-  virtual void optimize(std::shared_ptr<Graph>& graph) {
+  virtual void optimize(Graph& graph) {
     split_init_and_predict(graph, true, false);
   }
 };
@@ -168,7 +168,7 @@ struct SplitPredict : public OptimizePass {
     : OptimizePass("split_predict", API_TYPE::ir) {
   }
 
-  virtual void optimize(std::shared_ptr<Graph>& graph) {
+  virtual void optimize(Graph& graph) {
     split_init_and_predict(graph, false, true);
   }
 };

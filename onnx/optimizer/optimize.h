@@ -31,45 +31,42 @@ struct Optimizer {
     passes[sp->name] = std::move(sp);
   }
 
-  std::string optimize(const std::string& content, std::list<std::string>& names) {
+  std::unique_ptr<onnx::ModelProto> optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::list<std::string>& names) {
 
-    onnx::ModelProto mp_in;
-    ParseProtoFromBytes(&mp_in, content.c_str(), content.size());
-    std::shared_ptr<onnx::Graph> g = onnx::ImportModelProto(mp_in);
-    std::string out;
+    std::shared_ptr<onnx::Graph> g(std::move(onnx::ImportModelProto(*mp_in)));
 
     if (g.get() == nullptr) {
-      std::cerr << "Warning: onnx optimizer is unable to parse input model" << std::endl;
-      // If we can't parse the file, just return the original content.
-      out = content;
-    } else {
-      for (auto & name : names) {
-        auto it = passes.find(name);
-        if (it != passes.end()) {
-          auto& pass = it->second;
-          if (pass->type == API_TYPE::proto) {
-            // Operate on ModelProto.
-            onnx::ModelProto temp_out;
-            PrepareOutput(mp_in, temp_out);
-            ExportModelProto(&temp_out, g);
-            pass->optimize(temp_out);
-            g = onnx::ImportModelProto(mp_in);
-          } else {
-            // Operate on Graph (IR).
-            pass->optimize(g);
-          }
-        }
-      }
-      onnx::ModelProto mp_out;
-      PrepareOutput(mp_in, mp_out);
-      ExportModelProto(&mp_out, g);
-      mp_out.SerializeToString(&out);
+      std::cerr << "Warning: onnx optimizer is unable to parse input model. "
+        << "(The IR version of the ONNX model may be too old.)" << std::endl;
+      // If we can't parse the file, just return the input.
+      return mp_in;
     }
 
-    return out;
+    for (auto & name : names) {
+      auto it = passes.find(name);
+      if (it != passes.end()) {
+        auto& pass = it->second;
+        if (pass->type == API_TYPE::proto) {
+          // Operate on ModelProto.
+          std::unique_ptr<onnx::ModelProto> temp_out(new ModelProto());
+          PrepareOutput(*mp_in, *temp_out);
+          ExportModelProto(temp_out.get(), g);
+          pass->optimize(*temp_out);
+          g = onnx::ImportModelProto(*temp_out);
+          mp_in = std::move(temp_out);
+        } else {
+          // Operate on Graph (IR).
+          pass->optimize(*g);
+        }
+      }
+    }
+    std::unique_ptr<onnx::ModelProto> mp_out(new ModelProto());
+    PrepareOutput(*mp_in, *mp_out);
+    ExportModelProto(mp_out.get(), g);
+    return mp_out;
   }
 };
 
-std::string Optimize(const std::string& content, std::list<std::string>& names);
+std::unique_ptr<onnx::ModelProto> Optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::list<std::string>& names);
 
 }}

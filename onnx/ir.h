@@ -423,7 +423,7 @@ public:
     has_name_ = true;
     name_ = name;
   }
-  bool has_doc_string() {
+  bool has_doc_string() const {
     return has_doc_string_;
   }
   const std::string& docString() {
