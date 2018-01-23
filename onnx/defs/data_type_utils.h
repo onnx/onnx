@@ -24,18 +24,7 @@ namespace Utils {
 // efficiency.
 class DataTypeUtils {
  public:
-  static void Register(DataType type_key, const TypeProto& type_proto) {
-    static std::mutex mutex;
-    std::lock_guard<std::mutex> lock(mutex);
-    if (GetTypeStrToProtoMap().find(*type_key) ==
-        GetTypeStrToProtoMap().end()) {
-      GetTypeStrToProtoMap()[*type_key] = type_proto;
-    } else {
-      // One type is prevented from being registered multiple times
-      // from different domain intentionally.
-      assert(false);
-    }
-  }
+  static void Register(DataType type_key, const TypeProto& type_proto);
 
   static DataType ToType(const std::string& type_str);
 
@@ -54,10 +43,7 @@ class DataTypeUtils {
 
 template <int elemT>
 struct TensorType {
-  static DataType Type() {
-    static TensorType tensor_type;
-    return tensor_type.TypeInternal();
-  }
+  static DataType Type();
 
  private:
   TensorType() {
@@ -80,10 +66,7 @@ struct TensorType {
 
 template <typename T>
 struct Abstract {
-  static DataType Type(const std::string& domain = ONNX_DOMAIN) {
-    static Abstract abs_type(domain);
-    return abs_type.TypeInternal();
-  }
+  static DataType Type(const std::string& domain = ONNX_DOMAIN);
 
  private:
   Abstract(const std::string& domain = ONNX_DOMAIN) {
