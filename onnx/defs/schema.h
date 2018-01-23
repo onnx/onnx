@@ -97,6 +97,8 @@ class OpSchema {
     friend class OpSchema;
 
     DataTypeSet& MutableTypes();
+    
+    void SetTypeStr(const std::string& type_str);
 
     // Formal parameter name.
     std::string name_;

@@ -41,6 +41,10 @@ DataTypeSet& OpSchema::FormalParameter::MutableTypes() {
   return type_set_;
 }
 
+void OpSchema::FormalParameter::SetTypeStr(const std::string& type_str) {
+  type_str_ = type_str;
+}
+
 const std::string& OpSchema::FormalParameter::GetTypeStr() const {
   return type_str_;
 }
@@ -562,12 +566,18 @@ void OpSchema::ParseAndSetTypes(
 
     if (type.empty()) {
       // Type sets already specified.
-      continue;
+      // Set the type string for doc generation.
+      std::string type_str = "";
+      for (auto dtype : formal_parameter.GetTypes())
+      {
+          type_str = type_str + *dtype;
+      }
     }
-
-    auto it = type_constraints_.find(type);
-    assert(it != type_constraints_.end());
-    formal_parameter.MutableTypes() = it->second.first;
+    else { 
+      auto it = type_constraints_.find(type);
+      assert(it != type_constraints_.end());
+      formal_parameter.MutableTypes() = it->second.first;
+    }
   }
 }
 
