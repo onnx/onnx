@@ -66,7 +66,7 @@ OPERATOR_SCHEMA(Less)
 
 OPERATOR_SCHEMA(Equal)
     .FillUsing(BinaryLogicDocGenerator("equal"))
-    .TypeConstraint("T", { "tensor(bool)", "tensor(int)", "tensor(int32)" },
+    .TypeConstraint("T", { "tensor(bool)", "tensor(int32)", "tensor(int64)" },
                     "Constrains input to integral tensors.")
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
