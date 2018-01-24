@@ -6,7 +6,7 @@ namespace onnx { namespace optimization {
 
 struct FuseConsecutiveTransposes : public OptimizePass {
   explicit FuseConsecutiveTransposes()
-    : OptimizePass("fuse_consecutive_transposes", API_TYPE::ir) {
+    : OptimizePass("fuse_consecutive_transposes", API_TYPE::IR) {
   }
 
   // returns a vector `ret` such that transposing by `ret` is equivalent

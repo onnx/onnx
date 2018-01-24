@@ -6,7 +6,7 @@ namespace onnx { namespace optimization {
 
 struct EliminateNopTranspose : public OptimizePass {
   explicit EliminateNopTranspose()
-    : OptimizePass("eliminate_nop_transpose", API_TYPE::ir) {
+    : OptimizePass("eliminate_nop_transpose", API_TYPE::IR) {
   }
 
   static bool is_nop_transpose(const std::vector<int64_t> & perm) {
