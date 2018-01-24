@@ -20,8 +20,8 @@ class Equal(Base):
             outputs=['less'],
         )
 
-        x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = np.random.randn(3, 4, 5).astype(np.float32)
+        x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
+        y = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
         z = np.equal(x, y)
         expect(node, inputs=[x, y], outputs=[z],
                name='test_equal')
@@ -35,8 +35,8 @@ class Equal(Base):
             broadcast=1,
         )
 
-        x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = np.random.randn(5).astype(np.float32)
+        x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
+        y = (np.random.randn(5) * 10).astype(np.int32)
         z = np.equal(x, y)
         expect(node, inputs=[x, y], outputs=[z],
                name='test_equal_bcast')
