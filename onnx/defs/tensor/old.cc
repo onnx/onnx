@@ -8,18 +8,26 @@ using namespace onnx;
 OPERATOR_SCHEMA(Split)
     .SinceVersion(1)
     .Input(0, "input", "The tensor to split", "T")
-    .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T", OpSchema::Optional)
-    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-            "Constrain input types to float tensors.")
-    .Attr("axis",
-          "Which axis to split on",
-          AttributeProto::INT,
-          OPTIONAL)
-    .Attr("split",
-          "length of each output",
-          AttributeProto::INTS,
-          OPTIONAL)
+    .Input(
+        1,
+        "split",
+        "Optional list of output lengths (see also arg 'split')",
+        "T",
+        OpSchema::Optional)
+    .Output(
+        0,
+        "outputs...",
+        "One or more outputs forming list of tensors after splitting",
+        "T",
+        OpSchema::Variadic)
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input types to float tensors.")
+    .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL)
+    .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. The lengths of the split can be specified using argument 'axis' or
 optional second input blob to the operator. Otherwise, the tensor is split
@@ -28,22 +36,25 @@ to equal sized parts.
 
 OPERATOR_SCHEMA(Pad)
     .SinceVersion(1)
-    .Attr("paddings",
-          "List of integers indicate the padding element count at the "
-          "beginning and end of each axis, for 2D it is the number of pixel. "
-          "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
-          "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-          "added at the beginning of axis `i` and xi_end, the number of pixels added at "
-          "the end of axis `i`.",
-          AttributeProto::INTS)
-    .Attr("mode",
-          "Three modes: constant(default), reflect, edge",
-          AttributeProto::STRING,
-          std::string("constant"))
-    .Attr("value",
-          "One float, indicates the value to be filled, default is 0",
-          AttributeProto::FLOAT,
-          0.0f)
+    .Attr(
+        "paddings",
+        "List of integers indicate the padding element count at the "
+        "beginning and end of each axis, for 2D it is the number of pixel. "
+        "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
+        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+        "added at the beginning of axis `i` and xi_end, the number of pixels added at "
+        "the end of axis `i`.",
+        AttributeProto::INTS)
+    .Attr(
+        "mode",
+        "Three modes: constant(default), reflect, edge",
+        AttributeProto::STRING,
+        std::string("constant"))
+    .Attr(
+        "value",
+        "One float, indicates the value to be filled, default is 0",
+        AttributeProto::FLOAT,
+        0.0f)
     .SetDoc(R"DOC(
 Given `data` tensor, paddings, mode, and value.
 
@@ -67,5 +78,9 @@ Example:
 )DOC")
     .Input(0, "data", "Input tensor.", "T")
     .Output(0, "output", "Tensor after padding.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-            "Constrain input and output types to float tensors.");
+    .TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input and output types to float tensors.");

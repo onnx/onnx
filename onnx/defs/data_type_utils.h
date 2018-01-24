@@ -11,58 +11,109 @@
 #include "onnx/onnx_pb.h"
 
 namespace onnx {
-// String pointer as unique TypeProto identifier.
-typedef const std::string* DataType;
+
+// ONNX domain.
+const char* const ONNX_DOMAIN = "";
+struct DataType;
+
+// DataType pointer as unique TypeProto identifier.
+typedef const DataType* PDataType;
 
 namespace Utils {
-
 // Data type utility, which maintains a global type string to TypeProto map.
 // DataType (string pointer) is used as unique data type identifier for
 // efficiency.
-//
-// Grammar for data type string:
-// <type> ::= <data_type> |
-//            tensor(<data_type>) |
-//            seq(<type>) |
-//            map(<data_type>, <type>)
-// <data_type> :: = float | int32 | string | bool | uint8
-//                | int8 | uint16 | int16 | int64 | float16 | double
-//
-// NOTE: <type> ::= <data_type> means the data is scalar (zero dimension).
-//
-// Example: float, tensor(float), etc.
-//
 class DataTypeUtils {
  public:
-  static DataType ToType(const std::string& type_str);
+  static void Register(PDataType p_data_type);
 
-  static DataType ToType(const TypeProto& type_proto);
+  static PDataType ToType(const std::string& type_id);
 
-  static const TypeProto& ToTypeProto(const DataType& data_type);
+  static PDataType ToType(const TypeProto& type_proto);
+
+  static std::string GetElementTypeStr(TensorProto_DataType elem_type);
 
  private:
-  static void FromString(const std::string& type_str, TypeProto& type_proto);
+  static std::string GetId(const TypeProto& type_proto);
 
-  static void FromDataTypeString(
-      const std::string& type_str,
-      TensorProto::DataType& tensor_data_type);
-
-  static std::string ToString(
-      const TypeProto& type_proto,
-      const std::string& left = "",
-      const std::string& right = "");
-
-  static std::string ToDataTypeString(
-      const TensorProto::DataType& tensor_data_type);
-
-  static bool IsValidDataTypeString(const std::string& type_str);
-
-  static std::unordered_map<std::string, TypeProto>& GetTypeStrToProtoMap();
-
-  // Returns lock used for concurrent updates to TypeStrToProtoMap.
-  static std::mutex& GetTypeStrLock();
+  static std::unordered_map<std::string, PDataType>& GetTypeIdToDataMap();
 };
 } // namespace Utils
+
+struct DataType {
+  virtual ~DataType() {}
+  const std::string& Domain() const;
+  const std::string& Id() const;
+  const std::string& Description() const;
+  const TypeProto& ToProto() const;
+
+  static PDataType Tensor_FLOAT;
+  static PDataType Tensor_UINT8;
+  static PDataType Tensor_INT8;
+  static PDataType Tensor_UINT16;
+  static PDataType Tensor_INT16;
+  static PDataType Tensor_INT32;
+  static PDataType Tensor_INT64;
+  static PDataType Tensor_STRING;
+  static PDataType Tensor_BOOL;
+  static PDataType Tensor_FLOAT16;
+  static PDataType Tensor_DOUBLE;
+  static PDataType Tensor_UINT32;
+  static PDataType Tensor_UINT64;
+  static PDataType Tensor_COMPLEX64;
+  static PDataType Tensor_COMPLEX128;
+  static PDataType Map_Int64_String;
+  static PDataType Map_Int64_Float;
+  static PDataType Map_String_Int64;
+  static PDataType Map_Int64_Double;
+  static PDataType Map_String_Float;
+  static PDataType Map_String_Double;
+
+ protected:
+  DataType() {}
+  std::string description;
+  std::string domain;
+  std::string id;
+  TypeProto type_proto;
+};
+
+template <int elemT>
+struct TensorType : public DataType {
+  static PDataType Type();
+
+ private:
+  TensorType() {
+    domain = ONNX_DOMAIN;
+    description = "tensor(" +
+        Utils::DataTypeUtils::GetElementTypeStr(
+                      static_cast<TensorProto_DataType>(elemT)) +
+        ")";
+    id = description;
+    type_proto.mutable_tensor_type()->set_elem_type(
+        (TensorProto_DataType)elemT);
+    Utils::DataTypeUtils::Register(this);
+  }
+};
+
+template <typename T>
+struct Abstract : public DataType {
+  static PDataType Type(
+      const std::string& description,
+      const std::string& domain = ONNX_DOMAIN);
+
+ private:
+  Abstract(
+      const std::string& description_,
+      const std::string& domain_ = ONNX_DOMAIN) {
+    domain = domain_;
+    description = description_;
+    id = std::string(typeid(T).name());
+    type_proto.mutable_abs_type()->set_domain(domain);
+    type_proto.mutable_abs_type()->set_identifier(id);
+    Utils::DataTypeUtils::Register(this);
+  }
+};
+
 } // namespace onnx
 
 #endif // ! ONNX_DATA_TYPE_UTILS_H

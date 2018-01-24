@@ -71,7 +71,13 @@ enum Version {
   //    - Added new message OperatorSetIdProto
   //    - Added opset_import in ModelProto
   // - For vendor extensions, added domain in NodeProto
-  IR_VERSION = 0x00000003;
+  IR_VERSION_2017_11_3 = 0x00000003;
+  
+  // IR VERSION 1.0.0 published on Jan 23, 2018
+  // Merged onnx.proto with onnx-ml.proto.
+  // Removed Sequence and Map type for onnx ml.
+  // Added Abstract for any opaque type.
+  IR_VERSION = 0x01000000;
 }
 
 // A named attribute containing either singular float, integer, string
@@ -79,9 +85,6 @@ enum Version {
 // An AttributeProto MUST contain the name field, and *only one* of the
 // following content fields, effectively enforcing a C/C++ union equivalent.
 message AttributeProto {
-
-  // Note: this enum is structurally identical to the OpSchema::AttrType
-  // enum defined in schema.h.  If you rev one, you likely need to rev the other.
   enum AttributeType {
     UNDEFINED = 0;
     FLOAT = 1;
@@ -147,7 +150,7 @@ message NodeProto {
   repeated string output = 2;   // namespace Value
 
   // An optional identifier for this node in a graph.
-  // This field MAY be absent in ths version of the IR.
+  // This field MAY be absent in this version of the IR.
   optional string name = 3;     // namespace Node
 
   // The symbolic identifier of the Operator to execute.
@@ -156,8 +159,6 @@ message NodeProto {
   optional string domain = 7;   // namespace Domain
 
   // Additional named attributes.
-  // NOTE: Simply using ValueProto.NameValuePairProto is the most general
-  //       solution.  I kept AttributeProto to minimize churn on CI results.
   repeated AttributeProto attribute = 5;
 
   // A human-readable documentation for this node. Markdown is allowed.
@@ -393,44 +394,28 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
-// #if ONNX-ML
-
-  // repeated T
-  message Sequence {
-  // The type and optional shape of each element of the sequence.
-  // This field MUST be present for this version of the IR.
-    optional TypeProto elem_type = 1;
-  };
-
-  // map<K,V>
-  message Map {
-  // This field MUST be present for this version of the IR.
-  // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
-    optional TensorProto.DataType key_type = 1;
-  // This field MUST be present for this version of the IR.
-    optional TypeProto value_type = 2;
-  };
-
-// #endif
+  // This is designed for handling non-tensor types.
+  // For example, Map, Sequence, etc. 
+  message Abstract {
+    // Domain with empty string means ONNX domain.
+    // This field MUST be present for this version of the IR.
+    optional string domain = 1;
+    // This field MUST be present for this version of the IR.
+    optional string identifier = 2;
+  }
 
   oneof value {
     // The type of a tensor.
     Tensor tensor_type = 1;
+    
+    // The type of an abstract data structure.
+    Abstract abs_type = 6;
 
-// #if ONNX-ML
-
-    // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
-    //        as input and output to graphs and nodes. These types are needed to naturally
-    //        support classical ML operators.  DNN operators SHOULD restrict their input
-    //        and output types to tensors.
-
+    // Following types/ids are deprecated.
     // The type of a sequence.
-    Sequence sequence_type = 4;
-
+    // Sequence sequence_type = 4;
     // The type of a map.
-    Map map_type = 5;
-
-// #endif
+    // Map map_type = 5;
   }
 }
 

@@ -14,7 +14,6 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
-#include <unordered_set>
 #include <vector>
 
 #include "data_type_utils.h"
@@ -23,16 +22,14 @@ namespace onnx {
 
 using OperatorSetVersion = int;
 
-const char* const ONNX_DOMAIN = "";
 const bool OPTIONAL = false;
 
-typedef std::unordered_set<DataType> DataTypeSet;
+typedef std::vector<PDataType> DataTypeSet;
 
 // Type constraint map. Key is type string. Value is data type set and
 // description.
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
     TypeConstraintMap;
-
 
 /**
  * @brief A class to record the schema of an op.
@@ -72,7 +69,6 @@ class OpSchema {
     explicit FormalParameter(
         const std::string& name,
         const DataTypeSet& type_set,
-        const std::string& type_str,
         const std::string& description,
         FormalParameterOption param_option = Single);
 
@@ -102,6 +98,8 @@ class OpSchema {
 
     DataTypeSet& MutableTypes();
 
+    void SetTypeStr(const std::string& type_str);
+
     // Formal parameter name.
     std::string name_;
 
@@ -109,7 +107,7 @@ class OpSchema {
     // It should contain at least one element if this formal parameter is good.
     DataTypeSet type_set_;
 
-    // The <parameter type> string specified when registring an op.
+    // The <parameter type> string specified when registering an op.
     // It could be a supported data type or a type constraint key, which
     // maps to a set of supported data types.
     std::string type_str_;
@@ -157,7 +155,7 @@ class OpSchema {
   }
 
   /**
-   * @brief Returns the docstring of the op schema.
+   * @brief Returns the doc string of the op schema.
    */
   inline const char* doc() const {
     return doc_.empty() ? nullptr : doc_.c_str();
@@ -169,7 +167,7 @@ class OpSchema {
    */
   void Verify(const NodeProto& node) const;
 
-  // Functions to set the property of the operator schemas.
+  // Functions to set the property of the operator schema.
   // Sets the number of inputs, either a fixed number or a min and a max.
 
   /**
@@ -201,7 +199,7 @@ class OpSchema {
   OpSchema& AllowConsumed(std::function<std::pair<bool, int>(int)> inplace);
   OpSchema& AllowConsumed(std::unordered_map<int, int> inplace);
   OpSchema& AllowOneToOneConsumed();
-  // Sets the rule to enforce in-place opeartion.
+  // Sets the rule to enforce in-place operation.
   OpSchema& EnforceConsumed(std::function<std::pair<bool, int>(int)> inplace);
   OpSchema& EnforceConsumed(std::unordered_map<int, int> inplace);
   OpSchema& EnforceOneToOneConsumed();
@@ -240,10 +238,10 @@ class OpSchema {
         const std::string& description_,
         AttributeProto default_value_)
         : name(name_),
-        description(description_),
-        type(default_value_.type()),
-        required(false),
-        default_value(default_value_) {}
+          description(description_),
+          type(default_value_.type()),
+          required(false),
+          default_value(default_value_) {}
 
     const std::string name;
     const std::string description;
@@ -255,15 +253,17 @@ class OpSchema {
   OpSchema& Attr(const Attribute& attr);
 
   // Register "optional" attribute with default value.
-#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)            \
-  OpSchema& Attr(const std::string& name,                   \
-              const std::string& description,               \
-              AttributeProto::AttributeType type,           \
-              const TypeName& defaultValue);                \
-  OpSchema& Attr(const std::string& name,                   \
-              const std::string& description,               \
-              AttributeProto::AttributeType type,           \
-              const std::vector<TypeName>& defaultValue);   \
+#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName) \
+  OpSchema& Attr(                                \
+      const std::string& name,                   \
+      const std::string& description,            \
+      AttributeProto::AttributeType type,        \
+      const TypeName& defaultValue);             \
+  OpSchema& Attr(                                \
+      const std::string& name,                   \
+      const std::string& description,            \
+      AttributeProto::AttributeType type,        \
+      const std::vector<TypeName>& defaultValue);
 
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
   ATTR_SETTER_WITH_DEFAULT_VALUE(float)
@@ -298,51 +298,49 @@ class OpSchema {
     std::string description;
   };
 
-  // Grammar for type strings used in Input(), Output().
-  // <type> ::= <data_type> |
-  //            tensor(<data_type>) |
-  //            seq(<type>) |
-  //            map(<data_type>, <type>) |
-  //            <type_parameter>
-  // <data_type> :: = float | int32 | string | bool | uint8
-  //                | int8 | uint16 | int16 | int64 | float16 | double
-  // <type_parameter> ::= any type parameter string, say "T".
-  //
-  // NOTE: 1) <type_parameter> will always be together with a type constraints
-  // specification.
-  //       2) <type> ::= <data_type> means the data is scalar (zero dimension).
-  //
-  // Example:
-  // OPERATOR_SCHEMA(Sum)
-  // .Input(0, "input_a", "the first input", "T")
-  // .Input(1, "input_b", "the second input", "T")
-  // .Output(0, "sum", "the sum of two numbers", "T")
-  // .TypeConstraint("T", {"float", "double", "int32"}, "allowed data types for
-  // sum.")
-  //
-  // Optional = true means that the input might have empty input value
-  // (represented as "") in the graph even though the later inputs have values.
-  // It's useful for complex situation when there are several independent
-  // optional inputs.
+  // Set inputs/outputs for operator schema, including name, allowed types,
+  // description and parameter option (a formal parameter could be single,
+  // optional, or variadic. Example: OPERATOR_SCHEMA(Sum) .Input(0, "input_a",
+  // "the first input", "T", OpSchema::Variadic) .Output(0, "sum", "the sum of
+  // all inputs", "T") .TypeConstraint("T",
+  // {TensorType<TensorProto::FLOAT>::Type(),
+  // TensorType<TensorProto::DOUBLE>::Type()},
+  //  "allowed data types for sum.")
   OpSchema& Input(
       const int n,
       const std::string& name,
       const std::string& description,
       const std::string& type_str,
       FormalParameterOption param_option = Single);
+
+  OpSchema& Input(
+      const int n,
+      const std::string& name,
+      const std::string& description,
+      DataTypeSet dtype_set,
+      FormalParameterOption param_option = Single);
+
   OpSchema& Output(
       const int n,
       const std::string& name,
       const std::string& description,
       const std::string& type_str,
       FormalParameterOption param_option = Single);
+
+  OpSchema& Output(
+      const int n,
+      const std::string& name,
+      const std::string& description,
+      DataTypeSet dtype_set,
+      FormalParameterOption param_option = Single);
+
   OpSchema& TypeConstraint(
       const std::string& type_str,
-      const std::vector<std::string>& constraints,
+      DataTypeSet constraints,
       const std::string& description);
 
   // Calls the passed function with `this` as an argument. Useful for
-  // adding docs for temlated/macro ops.
+  // adding docs for template/macro ops.
   OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
@@ -513,7 +511,8 @@ class OpSchemaRegistry {
   }
 
   // Return the schema with biggest version, which is not greater than specified
-  // <maxInclusiveVersion> in specified domain. Domain with default value ONNX_DOMAIN means ONNX.
+  // <maxInclusiveVersion> in specified domain. Domain with default value
+  // ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
       const int maxInclusiveVersion,
@@ -579,11 +578,13 @@ class OpSchemaRegistry {
   }
 };
 
-#define OPERATOR_SCHEMA(name)   OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
-#define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define OPERATOR_SCHEMA_UNIQ(Counter, name)                                         \
-  static onnx::OpSchemaRegistry::OpSchemaRegisterOnce(                              \
-      op_schema_register_once##name##Counter) = OpSchema(#name, __FILE__, __LINE__)
+#define OPERATOR_SCHEMA(name) OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
+#define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) \
+  OPERATOR_SCHEMA_UNIQ(Counter, name)
+#define OPERATOR_SCHEMA_UNIQ(Counter, name)            \
+  static onnx::OpSchemaRegistry::OpSchemaRegisterOnce( \
+      op_schema_register_once##name##Counter) =        \
+      OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);

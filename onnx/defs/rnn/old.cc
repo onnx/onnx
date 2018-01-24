@@ -3,54 +3,90 @@
 using namespace onnx;
 
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
-    return [=](OpSchema& schema) {
-        schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
-                    "Must be one of forward (default), reverse, or bidirectional.",
-                    AttributeProto::STRING,
-                    std::string("foward"));
-        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL);
-        schema.Attr("activation_alpha",
-                    "Optional scaling values used by some activation functions. The values "
-                    "are consumed in the order of activation functions, for example (f, g, h) "
-                    "in LSTM.",
-                    AttributeProto::FLOATS,
-                    OPTIONAL);
-        schema.Attr("activation_beta",
-                    "Optional scaling values used by some activation functions. The values "
-                    "are consumed in the order of activation functions, for example (f, g, h) "
-                    "in LSTM.",
-                    AttributeProto::FLOATS,
-                    OPTIONAL);
-        schema.Attr("output_sequence",
-                    "The sequence output for the hidden is optional if 0. Default 0.",
-                    AttributeProto::INT,
-                    static_cast<int64_t>(0));
-        schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
-                    "in the range of [-threshold, +threshold] and is applied to the input "
-                    "of activations. No clip if not specified.", AttributeProto::FLOAT, OPTIONAL);
-        schema.Input(0, "X",
-                     "The input sequences packed (and potentially padded) into one 3-D "
-                     "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
-        schema.Input(4, "sequence_lens",
-                     "Optional tensor specifying lengths of the sequences in a batch. "
-                     "If not specified - assumed all sequences in the batch to have "
-                     "length `seq_length`. It has shape `[batch_size]`.", "T1",
-                     OpSchema::Optional);
-        schema.Input(5, "initial_h",
-                     "Optional initial value of the hidden. If not specified - assumed "
-                     "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-                     "T", OpSchema::Optional);
-        schema.Output(0, "Y",
-                      "A tensor that concats all the intermediate output values of the hidden. "
-                      "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
-                      "It is optional if `output_sequence` is 0.", "T", OpSchema::Optional);
-        schema.Output(1, "Y_h",
-                      "The last output value of the hidden. It has shape "
-                      "`[num_directions, batch_size, hidden_size]`.", "T");
-        schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                              "Constrain input and output types to float tensors.");
-        schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
-    };
+  return [=](OpSchema& schema) {
+    schema.Attr(
+        "direction",
+        "Specify if the RNN is forward, reverse, or bidirectional. "
+        "Must be one of forward (default), reverse, or bidirectional.",
+        AttributeProto::STRING,
+        std::string("foward"));
+    schema.Attr(
+        "hidden_size",
+        "Number of neurons in the hidden layer",
+        AttributeProto::INT,
+        OPTIONAL);
+    schema.Attr(
+        "activation_alpha",
+        "Optional scaling values used by some activation functions. The values "
+        "are consumed in the order of activation functions, for example (f, g, h) "
+        "in LSTM.",
+        AttributeProto::FLOATS,
+        OPTIONAL);
+    schema.Attr(
+        "activation_beta",
+        "Optional scaling values used by some activation functions. The values "
+        "are consumed in the order of activation functions, for example (f, g, h) "
+        "in LSTM.",
+        AttributeProto::FLOATS,
+        OPTIONAL);
+    schema.Attr(
+        "output_sequence",
+        "The sequence output for the hidden is optional if 0. Default 0.",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
+    schema.Attr(
+        "clip",
+        "Cell clip threshold. Clipping bounds the elements of a tensor "
+        "in the range of [-threshold, +threshold] and is applied to the input "
+        "of activations. No clip if not specified.",
+        AttributeProto::FLOAT,
+        OPTIONAL);
+    schema.Input(
+        0,
+        "X",
+        "The input sequences packed (and potentially padded) into one 3-D "
+        "tensor with the shape of `[seq_length, batch_size, input_size]`.",
+        "T");
+    schema.Input(
+        4,
+        "sequence_lens",
+        "Optional tensor specifying lengths of the sequences in a batch. "
+        "If not specified - assumed all sequences in the batch to have "
+        "length `seq_length`. It has shape `[batch_size]`.",
+        "T1",
+        OpSchema::Optional);
+    schema.Input(
+        5,
+        "initial_h",
+        "Optional initial value of the hidden. If not specified - assumed "
+        "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
+        "T",
+        OpSchema::Optional);
+    schema.Output(
+        0,
+        "Y",
+        "A tensor that concats all the intermediate output values of the hidden. "
+        "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
+        "It is optional if `output_sequence` is 0.",
+        "T",
+        OpSchema::Optional);
+    schema.Output(
+        1,
+        "Y_h",
+        "The last output value of the hidden. It has shape "
+        "`[num_directions, batch_size, hidden_size]`.",
+        "T");
+    schema.TypeConstraint(
+        "T",
+        {DataType::Tensor_FLOAT16,
+         DataType::Tensor_FLOAT,
+         DataType::Tensor_DOUBLE},
+        "Constrain input and output types to float tensors.");
+    schema.TypeConstraint(
+        "T1",
+        {DataType::Tensor_INT32},
+        "Constrain seq_lens to integer tensor.");
+  };
 }
 
 OPERATOR_SCHEMA(GRU)
@@ -128,29 +164,42 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC")
-    .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
-          "for update, reset, and hidden gates. The activation functions must be one "
-          "of the activation functions specified above. Optional: See the equations "
-          "for default if not specified.",
-          AttributeProto::STRINGS,
-          OPTIONAL)
-    .Attr("linear_before_reset", "When computing the output of the hidden gate, "
-          "apply the linear transformation before multiplying by the output of the "
-          "reset gate.",
-          AttributeProto::INT,
-          OPTIONAL)
-    .Input(1, "W",
-	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
-	   "(if bidirectional) along dimension 0. This tensor has shape "
-	   "`[num_directions, 3*hidden_size, input_size]`.", "T")
-    .Input(2, "R",
-	   "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
-	   "(if bidirectional) along dimension 0. This tensor has shape "
-	   "`[num_directions, 3*hidden_size, hidden_size]`.", "T")
-    .Input(3, "B",
-	   "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
-           "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
-           "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
-           "- assumed to be 0", "T",
+    .Attr(
+        "activations",
+        "A list of 2 (or 4 if bidirectional) activation functions "
+        "for update, reset, and hidden gates. The activation functions must be one "
+        "of the activation functions specified above. Optional: See the equations "
+        "for default if not specified.",
+        AttributeProto::STRINGS,
+        OPTIONAL)
+    .Attr(
+        "linear_before_reset",
+        "When computing the output of the hidden gate, "
+        "apply the linear transformation before multiplying by the output of the "
+        "reset gate.",
+        AttributeProto::INT,
+        OPTIONAL)
+    .Input(
+        1,
+        "W",
+        "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
+        "(if bidirectional) along dimension 0. This tensor has shape "
+        "`[num_directions, 3*hidden_size, input_size]`.",
+        "T")
+    .Input(
+        2,
+        "R",
+        "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
+        "(if bidirectional) along dimension 0. This tensor has shape "
+        "`[num_directions, 3*hidden_size, hidden_size]`.",
+        "T")
+    .Input(
+        3,
+        "B",
+        "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
+        "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
+        "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
+        "- assumed to be 0",
+        "T",
         OpSchema::Optional)
     .FillUsing(RNNDocGenerator("GRU"));

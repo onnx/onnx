@@ -40,7 +40,7 @@ opset_import {
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
-<dd> allowed types.</dd>
+<dd>allowed types.</dd>
 <dt><tt>T2</tt> : tensor(int64)</dt>
 <dd> Index value types .</dd>
 </dl>
