@@ -24,8 +24,9 @@ class Flatten(Base):
                 outputs=['b'],
                 axis=i,
             )
-            newshape = (1, -1) if i == 0 else (np.prod(shape[0:i]).astype(int), -1)
-            b= np.reshape(a, newshape)
+
+            new_shape = (1, -1) if i == 0 else (np.prod(shape[0:i]).astype(int), -1)
+            b= np.reshape(a, new_shape)
             expect(node, inputs=[a], outputs=[b],
                name='test_flatten_axis' + str(i))
 
@@ -40,7 +41,7 @@ class Flatten(Base):
         shape = (5, 4, 3, 2)
         axis_default_value = 1
         a = np.random.random_sample(shape).astype(np.float32)
-        newshape = (1, -1) if axis_default_value == 0 else (np.prod(shape[0:axis_default_value]).astype(int), -1)
-        b= np.reshape(a, newshape)
+        new_shape = (5, 24)
+        b= np.reshape(a, new_shape)
         expect(node, inputs=[a], outputs=[b],
                name='test_flatten_default_axis')
