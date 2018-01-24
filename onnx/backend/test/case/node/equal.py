@@ -17,7 +17,7 @@ class Equal(Base):
         node = onnx.helper.make_node(
             'Equal',
             inputs=['x', 'y'],
-            outputs=['less'],
+            outputs=['z'],
         )
 
         x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
@@ -31,7 +31,7 @@ class Equal(Base):
         node = onnx.helper.make_node(
             'Equal',
             inputs=['x', 'y'],
-            outputs=['equal'],
+            outputs=['z'],
             broadcast=1,
         )
 

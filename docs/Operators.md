@@ -1228,7 +1228,7 @@ opset_import {
 node = onnx.helper.make_node(
     'Equal',
     inputs=['x', 'y'],
-    outputs=['less'],
+    outputs=['z'],
 )
 
 x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
@@ -1248,7 +1248,7 @@ expect(node, inputs=[x, y], outputs=[z],
 node = onnx.helper.make_node(
     'Equal',
     inputs=['x', 'y'],
-    outputs=['equal'],
+    outputs=['z'],
     broadcast=1,
 )
 
