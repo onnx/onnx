@@ -14,7 +14,7 @@ struct OptimizePass {
   std::string name;
   API_TYPE type;
 
-  explicit OptimizePass(const std::string name, API_TYPE type)
+  explicit OptimizePass(const std::string& name, API_TYPE type)
     : name(name), type(type) {
   }
 
