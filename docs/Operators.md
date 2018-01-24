@@ -95,7 +95,6 @@
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
   * <sub>experimental</sub> <a href="#ConstantFill">ConstantFill</a>
   * <sub>experimental</sub> <a href="#Crop">Crop</a>
-  * <sub>experimental</sub> <a href="#Embedding">Embedding</a>
   * <sub>experimental</sub> <a href="#FC">FC</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
@@ -3381,11 +3380,11 @@ opset_import {
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor.</dd>
+<dd>The data type for the elements of the output tensor. Default is TensorProto::FLOAT.</dd>
 <dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution.</dd>
+<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution.</dd>
+<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -3406,7 +3405,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
@@ -3436,9 +3435,9 @@ opset_import {
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution.</dd>
+<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution.</dd>
+<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -3461,7 +3460,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
@@ -3488,11 +3487,11 @@ opset_import {
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor.</dd>
+<dd>The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.</dd>
 <dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values.</dd>
+<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
 <dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values.</dd>
+<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -3513,7 +3512,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
@@ -3542,9 +3541,9 @@ opset_import {
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values.</dd>
+<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
 <dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values.</dd>
+<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -3567,7 +3566,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
@@ -5288,53 +5287,6 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="Embedding"></a><a name="embedding">**Embedding**</a>
-
-  Turns positive integers (indexes) into dense vectors of fixed size.
-
-#### Versioning
-
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>input_dim</tt> : int</dt>
-<dd>Size of the input vocabulary.</dd>
-<dt><tt>output_dim</tt> : int</dt>
-<dd>Dimension of the embedding output vectors.</dd>
-<dt><tt>weights</tt> : tensor</dt>
-<dd>2-D tensor of weights [O,I].</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : tensor(int64)</dt>
-<dd>1-D tensor of integers representing indices in the embedding dictionary with length [N] and values [0, input_dim -1]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output tensor of computed features [N, O].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 
