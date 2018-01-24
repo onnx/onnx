@@ -1,7 +1,7 @@
-#include "onnx/assertions.h"
-
 #include <cstdarg>
 #include <cstdio>
+
+#include "onnx/common/assertions.h"
 
 namespace onnx {
 

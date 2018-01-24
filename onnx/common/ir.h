@@ -12,11 +12,11 @@
 #include <unordered_set>
 #include <vector>
 
-#include "onnx/array_ref.h"
-#include "onnx/assertions.h"
-#include "onnx/interned_strings.h"
-#include "onnx/graph_node_list.h"
-#include "onnx/tensor.h"
+#include "onnx/common/array_ref.h"
+#include "onnx/common/assertions.h"
+#include "onnx/common/interned_strings.h"
+#include "onnx/common/graph_node_list.h"
+#include "onnx/common/tensor.h"
 
 
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
