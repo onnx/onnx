@@ -6,7 +6,7 @@
 namespace onnx { namespace optimization {
 
 enum class API_TYPE {
-  proto, ir
+  PROTO, IR
 };
 
 struct OptimizePass {

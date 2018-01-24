@@ -45,7 +45,7 @@ struct Optimizer {
       ONNX_ASSERTM(it != passes.end(), "pass %s is unknown.", name.c_str());
       if (it != passes.end()) {
         auto& pass = it->second;
-        if (pass->type == API_TYPE::proto) {
+        if (pass->type == API_TYPE::PROTO) {
           // Operate on ModelProto.
           std::unique_ptr<onnx::ModelProto> temp_out(new ModelProto());
           PrepareOutput(*mp_in, *temp_out);

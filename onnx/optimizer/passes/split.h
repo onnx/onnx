@@ -155,7 +155,7 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
 
 struct SplitInit : public OptimizePass {
   explicit SplitInit()
-    : OptimizePass("split_init", API_TYPE::ir) {
+    : OptimizePass("split_init", API_TYPE::IR) {
   }
 
   virtual void optimize(Graph& graph) {
@@ -165,7 +165,7 @@ struct SplitInit : public OptimizePass {
 
 struct SplitPredict : public OptimizePass {
   explicit SplitPredict()
-    : OptimizePass("split_predict", API_TYPE::ir) {
+    : OptimizePass("split_predict", API_TYPE::IR) {
   }
 
   virtual void optimize(Graph& graph) {
