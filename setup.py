@@ -307,7 +307,7 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
-        self.sources = recursive_glob(SRC_DIR, '*.cc') + recursive_glob(SRC_DIR, '*.cpp')
+        self.sources = recursive_glob(SRC_DIR, '*.cc')
         if ONNX_ML:
             # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
             sources_filter = [
