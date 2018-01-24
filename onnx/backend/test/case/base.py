@@ -6,18 +6,11 @@ from __future__ import unicode_literals
 from collections import namedtuple, defaultdict
 import inspect
 import os
+import sys
 from textwrap import dedent
 
 import numpy as np
 from six import add_metaclass
-
-TestCases = []
-
-TestCase = namedtuple('TestCase', ['node', 'inputs', 'outputs', 'name'])
-
-def expect(*args, **kwargs):
-    TestCases.append(TestCase(*args, **kwargs))
-
 
 def process_snippet(op_name, name, export):
     snippet_name = name[len('export_'):] or op_name.lower()

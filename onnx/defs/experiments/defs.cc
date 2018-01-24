@@ -330,25 +330,6 @@ If scale is not provided, crop the borders as provided.)DOC")
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Embedding)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
-    .SetDoc(R"DOC(Turns positive integers (indexes) into dense vectors of fixed size.)DOC")
-    .Attr("input_dim", "Size of the input vocabulary.", AttributeProto::INT, OPTIONAL)
-    .Attr("output_dim", "Dimension of the embedding output vectors.", AttributeProto::INT, OPTIONAL)
-    .Attr("weights", "2-D tensor of weights [O,I].", AttributeProto::TENSOR, OPTIONAL)
-    .Input(0,
-           "input",
-           "1-D tensor of integers representing indices in the embedding dictionary "
-           "with length [N] and values [0, input_dim -1]", "tensor(int64)")
-    .Output(0,
-            "output",
-            "Output tensor of computed features [N, O].", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain output types to float tensors.");
-
 OPERATOR_SCHEMA(Upsample)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .Attr(
