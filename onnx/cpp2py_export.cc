@@ -183,7 +183,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "optimize", [](const py::bytes& bytes, std::vector<std::string>& names) {
         std::unique_ptr<ModelProto> proto(new ModelProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
-        std::unique_ptr<ModelProto> result(std::move(optimization::Optimize(std::move(proto), names)));
+        std::unique_ptr<ModelProto> result(optimization::Optimize(std::move(proto), names));
         std::string out;
         result->SerializeToString(&out);
         return py::bytes(out);
