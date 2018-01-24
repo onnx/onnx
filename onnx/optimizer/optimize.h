@@ -1,7 +1,7 @@
 #pragma once
 
-#include "onnx/ir.h"
-#include "onnx/ir_pb_converter.h"
+#include "onnx/common/ir.h"
+#include "onnx/common/ir_pb_converter.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"

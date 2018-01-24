@@ -1,7 +1,7 @@
 #pragma once
 
+#include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"
-#include "onnx/ir.h"
 
 namespace onnx { namespace optimization {
 

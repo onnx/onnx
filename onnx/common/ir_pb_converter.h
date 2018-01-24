@@ -1,6 +1,6 @@
 #pragma once
 
-#include "onnx/ir.h"
+#include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"
 
 namespace onnx {

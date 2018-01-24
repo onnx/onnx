@@ -1,4 +1,4 @@
-#include "onnx/assertions.h"
+#include "onnx/common/assertions.h"
 
 namespace onnx {
 
