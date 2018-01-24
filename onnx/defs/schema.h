@@ -454,7 +454,8 @@ class OpSchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 2);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 3);
+      map_["ai.onnx.ml"] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -492,7 +493,32 @@ class OpSchemaRegistry {
                   << ") from file " << op_schema.file() << " line "
                   << op_schema.line()
                   << ", but it is already registered from file "
-                  << schema.file() << " line " << schema.line();
+                  << schema.file() << " line " << schema.line() << std::endl;
+        abort();
+      }
+
+      auto ver_range_map = DomainToVersionRange::Instance().Map();
+      auto ver_range_it = ver_range_map.find(op_domain);
+      if (ver_range_it == ver_range_map.end()) {
+        std::cerr << "Trying to register schema with name " << op_name
+                  << " (domain: " << op_domain << " version: " << ver
+                  << ") from file " << op_schema.file() << " line "
+                  << op_schema.line() << ", but it its domain is not"
+                  << "known by the checker." << std::endl;
+        abort();
+      }
+      auto lower_bound_incl = ver_range_it->second.first;
+      auto upper_bound_incl = ver_range_it->second.second;
+      if (!(lower_bound_incl <= ver && upper_bound_incl >= ver)) {
+        std::cerr << "Trying to register schema with name " << op_name
+                  << " (domain: " << op_domain << " version: " << ver
+                  << ") from file " << op_schema.file() << " line "
+                  << op_schema.line() << ", but it its version is not"
+                  << "in the inclusive range [" << lower_bound_incl << ", "
+                  << upper_bound_incl << "] (usually, this means you "
+                  << "bumped the operator version but "
+                  << "forgot to update the version range in DomainToVersionRange "
+                  << "in onnx/defs/schema.h)." << std::endl;
         abort();
       }
       m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
