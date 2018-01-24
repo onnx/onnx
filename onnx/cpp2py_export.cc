@@ -180,7 +180,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   optimizer.doc() = "Optimizer submodule";
 
   optimizer.def(
-      "optimize", [](const py::bytes& bytes, std::list<std::string>& names) {
+      "optimize", [](const py::bytes& bytes, std::vector<std::string>& names) {
         std::unique_ptr<ModelProto> proto(new ModelProto());
         ParseProtoFromPyBytes(proto.get(), bytes);
         std::unique_ptr<ModelProto> result(std::move(optimization::Optimize(std::move(proto), names)));

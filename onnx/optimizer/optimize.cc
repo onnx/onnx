@@ -46,7 +46,7 @@ void PrepareOutput(const onnx::ModelProto& mp_in, onnx::ModelProto& mp_out) {
 static Optimizer _optimizer;
 
 std::unique_ptr<onnx::ModelProto> Optimize(
-    std::unique_ptr<onnx::ModelProto> mp_in, std::list<std::string>& names) {
+    std::unique_ptr<onnx::ModelProto> mp_in, std::vector<std::string>& names) {
   return _optimizer.optimize(std::move(mp_in), names);
 }
 
