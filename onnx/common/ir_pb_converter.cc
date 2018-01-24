@@ -165,9 +165,9 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const onnx::TensorShapeProto
   dims.reserve(tsp.dim_size());
   for (int i = 0; i < tsp.dim_size(); i++) {
     if (tsp.dim(i).has_dim_value()) {
-      dims.push_back(Dimension(true, tsp.dim(i).dim_value(), ""));
+      dims.push_back(Dimension(static_cast<int>(tsp.dim(i).dim_value())));
     } else {
-      dims.push_back(Dimension(false, -1, tsp.dim(i).dim_param()));
+      dims.push_back(Dimension(tsp.dim(i).dim_param()));
     }
   }
   return dims;
