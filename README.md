@@ -67,7 +67,7 @@ way to get these dependencies is via
 [Anaconda](https://www.anaconda.com/download/):
 
 ```
-# Use conda-forge protobuf, as defaults doesn't come with protoc
+# Use conda-forge protobuf, as default doesn't come with protoc
 conda install -c conda-forge protobuf numpy
 ```
 

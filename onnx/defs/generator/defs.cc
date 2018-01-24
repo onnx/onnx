@@ -28,14 +28,14 @@ TensorProto message.
 )DOC")
     .Attr(
           "low",
-          "Lower boundary of the output values.",
+          "Lower boundary of the output values. If not specified, default is 0.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          0.0f)
     .Attr(
           "high",
-          "Upper boundary of the output values.",
+          "Upper boundary of the output values. If not specified, default is 1.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          1.0f)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -43,7 +43,7 @@ TensorProto message.
           OPTIONAL)
     .Attr(
           "dtype",
-          "The data type for the elements of the output tensor.",
+          "The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.",
           AttributeProto::INT,
           static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
@@ -55,7 +55,7 @@ TensorProto message.
             "output",
             "Output tensor of random values drawn from uniform distribution", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+        "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormal)
     .SetDoc(R"DOC(
@@ -69,14 +69,14 @@ TensorProto message.
 )DOC")
     .Attr(
           "mean",
-          "The mean of the normal distribution.",
+          "The mean of the normal distribution. If not specified, default is 0.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          0.0f)
     .Attr(
           "scale",
-          "The standard deviation of the normal distribution.",
+          "The standard deviation of the normal distribution. If not specified, default is 1.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          1.0f)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -84,7 +84,7 @@ TensorProto message.
           OPTIONAL)
     .Attr(
           "dtype",
-          "The data type for the elements of the output tensor.",
+          "The data type for the elements of the output tensor. Default is TensorProto::FLOAT.",
           AttributeProto::INT,
           static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
@@ -96,7 +96,7 @@ TensorProto message.
             "output",
             "Output tensor of random values drawn from normal distribution", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+        "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomUniformLike)
     .SetDoc(R"DOC(
@@ -109,14 +109,14 @@ TensorProto message.
 )DOC")
     .Attr(
           "low",
-          "Lower boundary of the output values.",
+          "Lower boundary of the output values. If not specified, default is 0.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          0.0f)
     .Attr(
           "high",
-          "Upper boundary of the output values.",
+          "Upper boundary of the output values. If not specified, default is 1.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          1.0f)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -127,7 +127,7 @@ TensorProto message.
           "(Optional) The data type for the elements of the output tensor, if not specified, we will use"
           "the data type of the input tensor.",
           AttributeProto::INT,
-          static_cast<int64_t>(TensorProto::FLOAT))
+          OPTIONAL)
     .Input(
            0,
            "input",
@@ -137,7 +137,7 @@ TensorProto message.
             "output",
             "Output tensor of random values drawn from uniform distribution", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+        "Constrain output types to float tensors.");
 
 OPERATOR_SCHEMA(RandomNormalLike)
     .SetDoc(R"DOC(
@@ -151,14 +151,14 @@ TensorProto message.
 )DOC")
     .Attr(
           "mean",
-          "The mean of the normal distribution.",
+          "The mean of the normal distribution. If not specified, default is 0.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          0.0f)
     .Attr(
           "scale",
-          "The standard deviation of the normal distribution.",
+          "The standard deviation of the normal distribution. If not specified, default is 1.",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          1.0f)
     .Attr(
           "seed",
           "(Optional) Seed to the random generator, if not specified we will auto generate one.",
@@ -179,4 +179,4 @@ TensorProto message.
             "output",
             "Output tensor of random values drawn from normal distribution", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+        "Constrain output types to float tensors.");

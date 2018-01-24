@@ -6,7 +6,8 @@ from __future__ import unicode_literals
 import numpy as np
 
 import onnx
-from .base import Base, expect
+from ..base import Base
+from . import expect
 
 
 class Or(Base):
