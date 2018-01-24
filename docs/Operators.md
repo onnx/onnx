@@ -1222,6 +1222,49 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>equal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Equal',
+    inputs=['x', 'y'],
+    outputs=['less'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_equal')
+```
+
+</details>
+
+
+<details>
+<summary>equal_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Equal',
+    inputs=['x', 'y'],
+    outputs=['equal'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.equal(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_equal_bcast')
+```
+
+</details>
+
+
 ### <a name="Exp"></a><a name="exp">**Exp**</a>
 
   Calculates the exponential of the given input tensor, element-wise.
@@ -1811,6 +1854,49 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>greater</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Greater',
+    inputs=['x', 'y'],
+    outputs=['greater'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater')
+```
+
+</details>
+
+
+<details>
+<summary>greater_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Greater',
+    inputs=['x', 'y'],
+    outputs=['greater'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.greater(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_greater_bcast')
+```
+
+</details>
+
+
 ### <a name="HardSigmoid"></a><a name="hardsigmoid">**HardSigmoid**</a>
 
   HardSigmoid takes one input data (Tensor<T>) and produces one output data
@@ -2271,6 +2357,49 @@ opset_import {
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>less</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Less',
+    inputs=['x', 'y'],
+    outputs=['less'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less')
+```
+
+</details>
+
+
+<details>
+<summary>less_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Less',
+    inputs=['x', 'y'],
+    outputs=['less'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = np.less(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_less_bcast')
+```
+
+</details>
 
 
 ### <a name="Log"></a><a name="log">**Log**</a>
