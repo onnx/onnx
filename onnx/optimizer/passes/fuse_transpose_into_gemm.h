@@ -6,7 +6,7 @@ namespace onnx { namespace optimization {
 
 struct FuseTransposeIntoGemm : public OptimizePass {
   explicit FuseTransposeIntoGemm()
-    : OptimizePass("fuse_transpose_into_gemm", API_TYPE::ir) {
+    : OptimizePass("fuse_transpose_into_gemm", API_TYPE::IR) {
   }
 
   void fuse_transpose_into_gemm(Graph& graph) {
