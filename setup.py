@@ -124,10 +124,12 @@ class Protobuf(Dependency):
         self.libraries = libs
         self.include_dirs = includes
 
+
 class Pybind11(Dependency):
     def __init__(self):
         super(Pybind11, self).__init__()
         self.include_dirs = [os.path.join(TP_DIR, 'pybind11', 'include')]
+
 
 ################################################################################
 # Customized commands
@@ -310,10 +312,16 @@ class ONNXCpp2PyExtension(setuptools.Extension):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
         if ONNX_ML:
             # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx.pb.cc"), os.path.join(SRC_DIR, "onnx-operators.pb.cc")]
+            sources_filter = [
+                os.path.join(SRC_DIR, "onnx.pb.cc"),
+                os.path.join(SRC_DIR, "onnx-operators.pb.cc"),
+            ]
         else:
             # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx-ml.pb.cc"), os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc")]
+            sources_filter = [
+                os.path.join(SRC_DIR, "onnx-ml.pb.cc"),
+                os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc"),
+            ]
 
         for source_filter in sources_filter:
             if source_filter in self.sources:

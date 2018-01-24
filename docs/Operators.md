@@ -1318,7 +1318,7 @@ opset_import {
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output</dd>
+<dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [0, R], where R is the rank of the input tensor. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
 </dl>
 
 #### Inputs
@@ -1341,6 +1341,54 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>flatten</summary>
+
+```python
+shape = (2, 3, 4, 5)
+a = np.random.random_sample(shape).astype(np.float32)
+
+for i in range(len(shape)):
+    node = onnx.helper.make_node(
+        'Flatten',
+        inputs=['a'],
+        outputs=['b'],
+        axis=i,
+    )
+
+    new_shape = (1, -1) if i == 0 else (np.prod(shape[0:i]).astype(int), -1)
+    b= np.reshape(a, new_shape)
+    expect(node, inputs=[a], outputs=[b],
+       name='test_flatten_axis' + str(i))
+```
+
+</details>
+
+
+<details>
+<summary>flatten_with_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Flatten',
+    inputs=['a'],
+    outputs=['b'],
+)
+
+shape = (5, 4, 3, 2)
+axis_default_value = 1
+a = np.random.random_sample(shape).astype(np.float32)
+new_shape = (5, 24)
+b= np.reshape(a, new_shape)
+expect(node, inputs=[a], outputs=[b],
+       name='test_flatten_default_axis')
+```
+
+</details>
 
 
 ### <a name="Floor"></a><a name="floor">**Floor**</a>
