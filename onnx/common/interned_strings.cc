@@ -3,8 +3,9 @@
 #include <string>
 #include <unordered_map>
 #include <mutex>
-#include "onnx/assertions.h"
-#include "onnx/interned_strings.h"
+
+#include "onnx/common/assertions.h"
+#include "onnx/common/interned_strings.h"
 
 namespace onnx {
 
