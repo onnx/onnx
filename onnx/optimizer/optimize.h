@@ -1,7 +1,5 @@
 #pragma once
 
-#include <list>
-
 #include "onnx/ir.h"
 #include "onnx/ir_pb_converter.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
@@ -31,7 +29,7 @@ struct Optimizer {
     passes[sp->name] = std::move(sp);
   }
 
-  std::unique_ptr<onnx::ModelProto> optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::list<std::string>& names) {
+  std::unique_ptr<onnx::ModelProto> optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::vector<std::string>& names) {
 
     std::shared_ptr<onnx::Graph> g(std::move(onnx::ImportModelProto(*mp_in)));
 
@@ -44,6 +42,7 @@ struct Optimizer {
 
     for (auto & name : names) {
       auto it = passes.find(name);
+      ONNX_ASSERTM(it != passes.end(), "pass %s is unknown.", name.c_str());
       if (it != passes.end()) {
         auto& pass = it->second;
         if (pass->type == API_TYPE::proto) {
@@ -67,6 +66,6 @@ struct Optimizer {
   }
 };
 
-std::unique_ptr<onnx::ModelProto> Optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::list<std::string>& names);
+std::unique_ptr<onnx::ModelProto> Optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::vector<std::string>& names);
 
 }}
