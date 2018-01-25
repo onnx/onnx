@@ -5,7 +5,7 @@ Generating the Build System
 Prerequisites:
 - Tools
   - CMake: https://cmake.org/download/
-  - Git
+  - Git: https://git-scm.com/downloads
   - Visual Studio (2015)
 
 Steps:
