@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import helper, ModelProto, TensorProto
+from onnx import checker, helper, ModelProto, TensorProto
 
 import onnx.optimizer
 import unittest
@@ -11,11 +11,12 @@ import unittest
 class TestOptimizer(unittest.TestCase):
 
     def _optimized(self, graph, name):
-        orig_model = helper.make_model(graph, producer_name='onnx-to-caffe2-test')
+        orig_model = helper.make_model(graph, producer_name='onnx-test')
         orig_model_str = orig_model.SerializeToString()
         optimized_model_str = onnx.optimizer.optimize(orig_model_str, [name])
         optimized_model = ModelProto()
         optimized_model.ParseFromString(optimized_model_str)
+        checker.check_model(optimized_model)
         return optimized_model
 
     def test_nop_transpose(self):
@@ -57,6 +58,7 @@ class TestOptimizer(unittest.TestCase):
         optimized_model = self._optimized(graph, "fuse_transpose_into_gemm")
 
         assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Gemm"
 
 
 if __name__ == '__main__':
