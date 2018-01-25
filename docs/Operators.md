@@ -683,6 +683,27 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>ceil</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Ceil',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.ceil(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_ceil')
+```
+
+</details>
+
+
 ### <a name="Clip"></a><a name="clip">**Clip**</a>
 
   Clip operator limits the given input within an interval. The interval is
@@ -1298,6 +1319,27 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>exp</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Exp',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.exp(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_exp')
+```
+
+</details>
+
+
 ### <a name="Flatten"></a><a name="flatten">**Flatten**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -1427,6 +1469,27 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>floor</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Floor',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.floor(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_floor')
+```
+
+</details>
 
 
 ### <a name="GRU"></a><a name="gru">**GRU**</a>
@@ -2483,6 +2546,27 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>log</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Log',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.exp(np.random.randn(3, 4, 5).astype(np.float32))
+y = np.log(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_log')
+```
+
+</details>
+
+
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
   The operator computes the logsoftmax normalized values for each layer in the batch
@@ -3030,6 +3114,27 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Neg',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.multiply(x, -1)
+expect(node, inputs=[x], outputs=[y],
+       name='test_neg')
+```
+
+</details>
 
 
 ### <a name="Not"></a><a name="not">**Not**</a>
@@ -3785,6 +3890,26 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>reciprocal</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Reciprocal',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.reciprocal(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_reciprocal')
+```
+
+</details>
+
+
 ### <a name="ReduceL1"></a><a name="reducel1">**ReduceL1**</a>
 
   Computes the L1 norm of the input tensor's element along the provided axes. The resulted
@@ -4480,6 +4605,27 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>sigmoid</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sigmoid',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = 1.0 / (1.0 + np.exp(np.multiply(x, -1)))
+expect(node, inputs=[x], outputs=[y],
+       name='test_sigmoid')
+```
+
+</details>
+
+
 ### <a name="Slice"></a><a name="slice">**Slice**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
@@ -4896,6 +5042,27 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>sqrt</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sqrt',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.abs(np.random.randn(3, 4, 5).astype(np.float32))
+y = np.sqrt(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sqrt')
+```
+
+</details>
+
+
 ### <a name="Squeeze"></a><a name="squeeze">**Squeeze**</a>
 
   Remove single-dimensional entries from the shape of a tensor.
@@ -5075,6 +5242,27 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>tanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.tanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_tanh')
+```
+
+</details>
 
 
 ### <a name="Tile"></a><a name="tile">**Tile**</a>
