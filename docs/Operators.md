@@ -896,6 +896,103 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>conv</summary>
+
+```python
+
+x = np.array([[[  0.,   1.,   2.,   3.,   4.], # (1, 5, 5) input tensor
+               [  5.,   6.,   7.,   8.,   9.],
+               [ 10.,  11.,  12.,  13.,  14.],
+               [ 15.,  16.,  17.,  18.,  19.],
+               [ 20.,  21.,  22.,  23.,  24.]]])
+W = np.array([[[[ 1.,  1.,  1.], # (1, 1, 3, 3) Tensor for convolution weights
+                [ 1.,  1.,  1.],
+                [ 1.,  1.,  1.]]]])
+
+# Convolution with padding
+node_with_padding = onnx.helper.make_node(
+    'Conv',
+    inputs=['x', 'W'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[1, 1, 1, 1], # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
+)
+y_with_padding = np.array([[[  12.,   21.,   27.,   33.,   24.], # (1, 5, 5) output tensor
+                            [  33.,   54.,   63.,   72.,   51.],
+                            [  63.,   99.,  108.,  117.,   81.],
+                            [  93.,  144.,  153.,  162.,  111.],
+                            [  72.,  111.,  117.,  123.,   84.]]])
+expect(node_with_padding, inputs=[x, W], outputs=[y_with_padding],
+   name='test_basic_conv_with_padding')
+
+# Convolution without padding
+node_without_padding = onnx.helper.make_node(
+    'Conv',
+    inputs=['x', 'W'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[0, 0, 0, 0], # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
+)
+y_without_padding = np.array([[[  54.,   63.,   72.], # (1, 3, 3) output tensor
+                               [  99.,  108.,  117.],
+                               [ 144.,  153.,  162.]]])
+expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
+   name='test_basic_conv_without_padding')
+```
+
+</details>
+
+
+<details>
+<summary>conv_with_strides</summary>
+
+```python
+
+x = np.array([[[  0.,   1.,   2.,   3.,   4.], # (1, 5, 5) input tensor
+               [  5.,   6.,   7.,   8.,   9.],
+               [ 10.,  11.,  12.,  13.,  14.],
+               [ 15.,  16.,  17.,  18.,  19.],
+               [ 20.,  21.,  22.,  23.,  24.]]])
+W = np.array([[[[ 1.,  1.,  1.],  # (1, 1, 3, 3) Tensor for convolution weights
+                [ 1.,  1.,  1.],
+                [ 1.,  1.,  1.]]]])
+
+# Convolution with strides=2 and padding
+node_with_padding = onnx.helper.make_node(
+    'Conv',
+    inputs=['x', 'W'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[1, 1, 1, 1],
+    strides=[2, 2], # Default values for other attributes: dilations=[1, 1], groups=1
+)
+y_with_padding = np.array([[[  12.,   27.,   24.], # (1, 3, 3) output tensor
+                            [  63.,  108.,   81.],
+                            [  72.,  117.,   84.]]])
+expect(node_with_padding, inputs=[x, W], outputs=[y_with_padding],
+   name='test_conv_with_strides_padding')
+
+# Convolution with strides=2 and no padding
+node_without_padding = onnx.helper.make_node(
+    'Conv',
+    inputs=['x', 'W'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[0, 0, 0, 0],
+    strides=[2, 2], # Default values for other attributes: dilations=[1, 1], groups=1
+)
+y_without_padding = np.array([[[  54.,   72.], # (1, 2, 2) output tensor
+                               [ 144.,  162.]]])
+expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
+   name='test_conv_with_strides_no_padding')
+```
+
+</details>
+
+
 ### <a name="ConvTranspose"></a><a name="convtranspose">**ConvTranspose**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
@@ -1376,11 +1473,10 @@ for i in range(len(shape)):
 node = onnx.helper.make_node(
     'Flatten',
     inputs=['a'],
-    outputs=['b'],
+    outputs=['b'], # Default value for axis: axis=1
 )
 
 shape = (5, 4, 3, 2)
-axis_default_value = 1
 a = np.random.random_sample(shape).astype(np.float32)
 new_shape = (5, 24)
 b= np.reshape(a, new_shape)
