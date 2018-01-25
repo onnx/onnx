@@ -1212,8 +1212,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -1228,11 +1228,11 @@ opset_import {
 node = onnx.helper.make_node(
     'Equal',
     inputs=['x', 'y'],
-    outputs=['less'],
+    outputs=['z'],
 )
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(3, 4, 5).astype(np.float32)
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
+y = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_equal')
@@ -1248,12 +1248,12 @@ expect(node, inputs=[x, y], outputs=[z],
 node = onnx.helper.make_node(
     'Equal',
     inputs=['x', 'y'],
-    outputs=['equal'],
+    outputs=['z'],
     broadcast=1,
 )
 
-x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
+x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
+y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_equal_bcast')

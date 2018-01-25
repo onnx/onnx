@@ -1152,8 +1152,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
