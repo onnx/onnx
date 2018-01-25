@@ -27,7 +27,7 @@ class Elu(Base):
                name='test_elu')
 
     @staticmethod
-    def export_elu_deault():
+    def export_elu_default():
         default_alpha = 1.0
         node = onnx.helper.make_node(
             'Elu',
@@ -37,5 +37,5 @@ class Elu(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
         expect(node, inputs=[x], outputs=[y],
-               name='test_elu_deault')
+               name='test_elu_default')
 

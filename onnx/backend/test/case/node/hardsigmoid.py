@@ -28,9 +28,9 @@ class HardSigmoid(Base):
                name='test_hardsigmoid')
 
     @staticmethod
-    def export_hardsigmoid_deault():
+    def export_hardsigmoid_default():
         default_alpha = 0.2
-        default_beta=0.5
+        default_beta = 0.5
         node = onnx.helper.make_node(
             'HardSigmoid',
             inputs=['x'],
@@ -39,5 +39,5 @@ class HardSigmoid(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x * default_alpha + default_beta, 0, 1)
         expect(node, inputs=[x], outputs=[y],
-               name='test_hardsigmoid_deault')
+               name='test_hardsigmoid_default')
 

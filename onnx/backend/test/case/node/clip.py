@@ -28,7 +28,7 @@ class Clip(Base):
                name='test_clip')
 
     @staticmethod
-    def export_clip_deault():
+    def export_clip_default():
         node = onnx.helper.make_node(
             'Clip',
             inputs=['x'],
@@ -38,7 +38,7 @@ class Clip(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, 0.0, np.inf)
         expect(node, inputs=[x], outputs=[y],
-               name='test_clip_deault_min')
+               name='test_clip_default_min')
 
         node = onnx.helper.make_node(
             'Clip',
@@ -49,5 +49,5 @@ class Clip(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, -np.inf, 0.0)
         expect(node, inputs=[x], outputs=[y],
-               name='test_clip_deault_max')
+               name='test_clip_default_max')
 

@@ -754,7 +754,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
-<summary>clip_deault</summary>
+<summary>clip_default</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -766,7 +766,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, 0.0, np.inf)
 expect(node, inputs=[x], outputs=[y],
-       name='test_clip_deault_min')
+       name='test_clip_default_min')
 
 node = onnx.helper.make_node(
     'Clip',
@@ -777,7 +777,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -np.inf, 0.0)
 expect(node, inputs=[x], outputs=[y],
-       name='test_clip_deault_max')
+       name='test_clip_default_max')
 ```
 
 </details>
@@ -1135,6 +1135,7 @@ node = onnx.helper.make_node(
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(3, 4, 5).astype(np.float32)
+y[y==0] = 1
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div')
@@ -1156,6 +1157,7 @@ node = onnx.helper.make_node(
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.random.randn(5).astype(np.float32)
+y[y==0] = 1
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div_bcast')
@@ -1284,7 +1286,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
-<summary>elu_deault</summary>
+<summary>elu_default</summary>
 
 ```python
 default_alpha = 1.0
@@ -1296,7 +1298,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
 expect(node, inputs=[x], outputs=[y],
-       name='test_elu_deault')
+       name='test_elu_default')
 ```
 
 </details>
@@ -2150,11 +2152,11 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
-<summary>hardsigmoid_deault</summary>
+<summary>hardsigmoid_default</summary>
 
 ```python
 default_alpha = 0.2
-default_beta=0.5
+default_beta = 0.5
 node = onnx.helper.make_node(
     'HardSigmoid',
     inputs=['x'],
@@ -2163,7 +2165,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x * default_alpha + default_beta, 0, 1)
 expect(node, inputs=[x], outputs=[y],
-       name='test_hardsigmoid_deault')
+       name='test_hardsigmoid_default')
 ```
 
 </details>
@@ -2552,10 +2554,10 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
-<summary>leakyrelu_deault</summary>
+<summary>leakyrelu_default</summary>
 
 ```python
-default_alpha=0.01
+default_alpha = 0.01
 node = onnx.helper.make_node(
     'LeakyRelu',
     inputs=['x'],
@@ -2564,7 +2566,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * default_alpha
 expect(node, inputs=[x], outputs=[y],
-       name='test_leakyrelu_deault')
+       name='test_leakyrelu_default')
 ```
 
 </details>
@@ -4772,7 +4774,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
-<summary>selu_deault</summary>
+<summary>selu_default</summary>
 
 ```python
 default_alpha = 1.6732
@@ -4785,7 +4787,7 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, 0, np.inf) * default_gamma + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
 expect(node, inputs=[x], outputs=[y],
-       name='test_selu_deault')
+       name='test_selu_default')
 ```
 
 </details>

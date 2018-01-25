@@ -21,6 +21,7 @@ class Div(Base):
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.random.randn(3, 4, 5).astype(np.float32)
+        y[y==0] = 1
         z = x / y
         expect(node, inputs=[x, y], outputs=[z],
                name='test_div')
@@ -36,6 +37,7 @@ class Div(Base):
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.random.randn(5).astype(np.float32)
+        y[y==0] = 1
         z = x / y
         expect(node, inputs=[x, y], outputs=[z],
                name='test_div_bcast')

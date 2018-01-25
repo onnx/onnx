@@ -26,8 +26,8 @@ class LeakyRelu(Base):
                name='test_leakyrelu')
 
     @staticmethod
-    def export_leakyrelu_deault():
-        default_alpha=0.01
+    def export_leakyrelu_default():
+        default_alpha = 0.01
         node = onnx.helper.make_node(
             'LeakyRelu',
             inputs=['x'],
@@ -36,5 +36,5 @@ class LeakyRelu(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * default_alpha
         expect(node, inputs=[x], outputs=[y],
-               name='test_leakyrelu_deault')
+               name='test_leakyrelu_default')
 

@@ -28,7 +28,7 @@ class Selu(Base):
                name='test_selu')
 
     @staticmethod
-    def export_selu_deault():
+    def export_selu_default():
         default_alpha = 1.6732
         default_gamma = 1.0507
         node = onnx.helper.make_node(
@@ -39,5 +39,5 @@ class Selu(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, 0, np.inf) * default_gamma + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
         expect(node, inputs=[x], outputs=[y],
-               name='test_selu_deault')
+               name='test_selu_default')
 
