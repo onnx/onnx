@@ -215,6 +215,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const onnx::GraphProto& gp) {
     // be representable in the graph IR.
     auto * n = g->create(kUndefined, 1);
     g->appendNode(n);
+    n->outputs()[0]->setUniqueName("");
     value_by_name_of[""] = n->outputs()[0];
   }
 
@@ -440,7 +441,7 @@ void encodeTypeProtoTensorType(onnx::TypeProto_Tensor* tensor_type, Value* n) {
 }
 
 void encodeValueInfo(onnx::ValueInfoProto* v, Value* n) {
-  if (n->has_name()) {
+  if (n->has_unique_name()) {
     v->set_name(value_name(n));
   }
   onnx::TypeProto* t = v->mutable_type();
