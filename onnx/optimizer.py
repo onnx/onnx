@@ -1,3 +1,6 @@
+# ATTENTION: The code in this file is highly EXPERIMENTAL.
+# Adventurous users should note that the APIs will probably change.
+
 """onnx optimizer
 
 This enables users to optimize their models.

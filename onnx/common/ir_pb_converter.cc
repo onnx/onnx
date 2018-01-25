@@ -1,3 +1,6 @@
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
 #include "onnx/common/ir_pb_converter.h"
 
 namespace onnx {
