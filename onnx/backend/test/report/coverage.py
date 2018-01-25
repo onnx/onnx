@@ -102,4 +102,4 @@ class Coverage(object):
         writer.write(tabulate(
             rows,
             headers=['Operator', 'Attributes\n(name: #values)'],
-            tablefmt="fancy_grid"))
+            tablefmt='plain'))
