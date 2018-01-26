@@ -54,4 +54,5 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     TensorProto.UINT32: 'uint64_data',
     TensorProto.UINT64: 'uint64_data',
     TensorProto.STRING: 'string_data',
+    TensorProto.BOOL: 'int32_data',
 }
