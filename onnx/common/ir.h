@@ -818,6 +818,9 @@ public:
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
   }
+  void clearInitializers() {
+    initializers_.clear();
+  }
   const std::vector<Tensor>& initializers() {
     return initializers_;
   }
