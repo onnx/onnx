@@ -41,7 +41,7 @@ def make_node(
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
-            for key, value in kwargs.items())
+            for key, value in sorted(kwargs.items()))
     return node
 
 
