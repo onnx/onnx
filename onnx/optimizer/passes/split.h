@@ -103,6 +103,9 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
       new_interface.erase(v);
     }
     for (Value * v : new_interface) {
+      if (v->node()->kind() == kUndefined) {
+        continue;
+      }
       graph.registerOutput(v);
     }
 
@@ -153,6 +156,9 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
         graph.eraseInput(i);
       }
     }
+
+    // Remove all initializers, they are already in the init net.
+    graph.clearInitializers();
   }
 }
 

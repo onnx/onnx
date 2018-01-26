@@ -14,6 +14,8 @@ enum class API_TYPE {
 
 struct OptimizePass {
 
+  virtual ~OptimizePass() {}
+
   std::string name;
   API_TYPE type;
 
