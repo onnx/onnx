@@ -21,6 +21,6 @@ class Neg(Base):
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = np.multiply(x, -1)
+        y = np.negative(x)
         expect(node, inputs=[x], outputs=[y],
                name='test_neg')

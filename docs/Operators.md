@@ -3129,7 +3129,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.multiply(x, -1)
+y = np.negative(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_neg')
 ```
@@ -3901,7 +3901,9 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
 )
+
 x = np.random.randn(3, 4, 5).astype(np.float32)
+x[x==0] = 1
 y = np.reciprocal(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_reciprocal')
@@ -4618,7 +4620,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = 1.0 / (1.0 + np.exp(np.multiply(x, -1)))
+y = 1.0 / (1.0 + np.exp(np.negative(x)))
 expect(node, inputs=[x], outputs=[y],
        name='test_sigmoid')
 ```
