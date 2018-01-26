@@ -1134,8 +1134,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(3, 4, 5).astype(np.float32)
-y[y==0] = 1
+y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div')
@@ -1156,8 +1155,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-y[y==0] = 1
+y = np.random.rand(5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div_bcast')
