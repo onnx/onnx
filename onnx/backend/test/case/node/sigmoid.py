@@ -21,6 +21,6 @@ class Sigmoid(Base):
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = 1.0 / (1.0 + np.exp(np.multiply(x, -1)))
+        y = 1.0 / (1.0 + np.exp(np.negative(x)))
         expect(node, inputs=[x], outputs=[y],
                name='test_sigmoid')
