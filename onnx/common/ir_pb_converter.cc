@@ -207,6 +207,17 @@ std::unique_ptr<Graph> graphProtoToGraph(const onnx::GraphProto& gp) {
   // inputs.
   std::unordered_map<Node*, std::vector<std::string>> inputs_by_node;
 
+  {
+    // ONNX represents optional arguments in two ways
+    //  - they are simply not privided
+    //  - OR the empty string is passed as the input name
+    // This is to handle that second case, which needs a dummy node to
+    // be representable in the graph IR.
+    auto * n = g->create(kUndefined, 1);
+    g->appendNode(n);
+    value_by_name_of[""] = n->outputs()[0];
+  }
+
   for (int i = 0; i < gp.input_size(); i++) {
     auto vip = gp.input(i);
     auto v = g->addInput();
@@ -457,14 +468,17 @@ void encodeGraph(onnx::GraphProto * p_g, const std::shared_ptr<Graph> & g) {
     encodeValueInfo(v, output);
   }
   for (auto node : g->nodes()) {
-    if (node->kind() == kUndefined && !node->hasUses()) {
-      // Undefined nodes never show up in ONNX; they're just a tool
-      // to help symbolics do the right thing.
+    if (node->kind() == kUndefined) {
+      // Undefined nodes are used to represent optional inputs that are not provided.
       continue;
     }
     auto p_n = p_g->add_node();
     for(auto input : node->inputs()) {
-      p_n->add_input(value_name(input));
+      if (input->node()->kind() == kUndefined) {
+        p_n->add_input("");
+      } else {
+        p_n->add_input(value_name(input));
+      }
     }
     for(auto output : node->outputs()) {
       p_n->add_output(value_name(output));
