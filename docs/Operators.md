@@ -3692,27 +3692,6 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-<details>
-<summary>pow_broadcast</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Pow',
-    inputs=['x', 'y'],
-    outputs=['z'],
-    broadcast=1,
-)
-
-x = np.arange(60).reshape(3, 4, 5).astype(np.float32)
-y = np.random.randn(5).astype(np.float32)
-z = np.power(x, y)
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_bcast')
-```
-
-</details>
-
-
 ### <a name="RNN"></a><a name="rnn">**RNN**</a>
 
   Computes an one-layer simple RNN. This operator is usually supported
