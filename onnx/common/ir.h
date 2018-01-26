@@ -1,3 +1,6 @@
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
 #pragma once
 
 #include <atomic>
@@ -814,6 +817,9 @@ public:
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
+  }
+  void clearInitializers() {
+    initializers_.clear();
   }
   const std::vector<Tensor>& initializers() {
     return initializers_;

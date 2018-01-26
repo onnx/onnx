@@ -110,6 +110,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 
       case TensorProto::INT32:
       case TensorProto::UINT16:
+      case TensorProto::BOOL:
         check_field(int32_data);
         break;
 
