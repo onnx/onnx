@@ -91,8 +91,8 @@ void OpSchema::Verify(const NodeProto& node) const {
   }
 
   // Check the values of inputs / outputs
-  for (size_t in_idx = 0; in_idx < static_cast<size_t>(node.input_size()); ++in_idx) {
-    if (in_idx >= inputs_.size()) {
+  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
+    if (in_idx >= static_cast<int>(inputs_.size())) {
       if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
         // The last input formal parameter should be variadic.
         break;
@@ -116,8 +116,8 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
-  for (size_t out_idx = 0; out_idx < static_cast<size_t>(node.output_size()); ++out_idx) {
-    if (out_idx >= outputs_.size()) {
+  for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
+    if (out_idx >= static_cast<int>(outputs_.size())) {
         if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
             // The last output formal parameter should be variadic.
             break;

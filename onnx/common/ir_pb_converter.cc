@@ -373,13 +373,13 @@ void addAttribute(onnx::NodeProto * n_p, Node * n, Symbol name) {
   attr->set_name(name.toString());
   switch(n->kindOf(name)) {
     case AttributeKind::f:
-      attr->set_f(n->f(name));
+      attr->set_f(static_cast<float>(n->f(name)));
       attr->set_type(onnx::AttributeProto_AttributeType_FLOAT);
       break;
     case AttributeKind::fs:
       attr->set_type(onnx::AttributeProto_AttributeType_FLOATS);
       for(auto & v : n->fs(name))
-        attr->add_floats(v);
+        attr->add_floats(static_cast<float>(v));
       break;
     case AttributeKind::i:
       attr->set_type(onnx::AttributeProto_AttributeType_INT);

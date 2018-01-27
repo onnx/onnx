@@ -55,6 +55,10 @@ list(REMOVE_ITEM onnx_src ${onnx_exclude_src})
 add_library(onnxir ${PROTO_SRCS} ${PROTO_HDRS} ${onnx_src})
 
 if (WIN32)
+    target_compile_options(onnxir PRIVATE
+        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+        /wd4503 # identifier' : decorated name length exceeded, name was truncated
+    )
     set(onnx_static_library_flags
         -IGNORE:4221 # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
     )

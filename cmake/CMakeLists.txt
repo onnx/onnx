@@ -10,9 +10,6 @@ set(CMAKE_CXX_STANDARD 11)
 # External dependencies
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/external)
 set(ONNXIR_ROOT ${PROJECT_SOURCE_DIR}/..)
-include(protobuf)
-include(onnx.cmake)
-
 if (WIN32)
     # parallel build
     add_compile_options(/MP)
@@ -20,10 +17,11 @@ if (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /WX")
     set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /WX")
 endif()
-
+include(protobuf)
 include_directories(
     ${ONNXIR_ROOT}
     ${CMAKE_CURRENT_BINARY_DIR}
     # External dependencies.
     ${PROTOBUF_INCLUDE_DIRS}
 )
+include(onnx.cmake)
