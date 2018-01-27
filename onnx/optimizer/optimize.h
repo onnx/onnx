@@ -11,7 +11,7 @@
 #include "onnx/optimizer/passes/split.h"
 #include "onnx/proto_utils.h"
 
-namespace onnx { namespace optimization {
+namespace ONNX_NAMESPACE { namespace optimization {
 
 void PrepareOutput(const onnx::ModelProto& mp_in, onnx::ModelProto& mp_out);
 

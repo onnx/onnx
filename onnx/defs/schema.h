@@ -19,7 +19,7 @@
 
 #include "data_type_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 using OperatorSetVersion = int;
 
@@ -613,4 +613,4 @@ class OpSchemaRegistry {
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

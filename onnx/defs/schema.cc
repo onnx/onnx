@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
@@ -665,4 +665,4 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
   }
   return numReplaced;
 }
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

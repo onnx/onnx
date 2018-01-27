@@ -4,9 +4,9 @@
 #include "onnx/defs/schema.h"
 #include <functional>
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 const char* kBroadcastDoc = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
@@ -110,7 +110,7 @@ OPERATOR_SCHEMA(Mul)
 OPERATOR_SCHEMA(Div)
     .AllowConsumed({{0, 0}, {1, 0}})
     .FillUsing(MathDocGenerator("division"));
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE
 
 OPERATOR_SCHEMA(Neg)
     .AllowConsumed({{0, 0}})

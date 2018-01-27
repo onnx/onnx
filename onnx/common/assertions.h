@@ -6,7 +6,7 @@
 #include <exception>
 #include <string>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 struct assert_error final : public std::exception {
   const std::string msg;
@@ -17,7 +17,7 @@ struct assert_error final : public std::exception {
 [[noreturn]]
 void barf(const char *fmt, ...);
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
 #if defined(__GNUC__) || defined(__ICL) || defined(__clang__)
 #define ONNX_EXPECT(x, y) (__builtin_expect((x), (y)))

@@ -3,7 +3,7 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 #ifdef ONNX_ML
 OPERATOR_SCHEMA(ArrayFeatureExtractor)
 .SetDomain("ai.onnx.ml")

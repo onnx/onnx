@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
 using SupportType = onnx::OpSchema::SupportType;
 

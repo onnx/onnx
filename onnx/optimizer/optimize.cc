@@ -3,7 +3,7 @@
 
 #include "onnx/optimizer/optimize.h"
 
-namespace onnx { namespace optimization {
+namespace ONNX_NAMESPACE { namespace optimization {
 
 void PrepareOutput(const onnx::ModelProto& mp_in, onnx::ModelProto& mp_out) {
   if (mp_in.has_producer_name()) {

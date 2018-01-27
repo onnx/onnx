@@ -5,7 +5,7 @@
 
 #include "onnx/onnx_pb.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 struct Tensor {
 private:
@@ -141,4 +141,4 @@ public:
   }
 };
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

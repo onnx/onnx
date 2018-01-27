@@ -3,7 +3,7 @@
 
 #include "onnx/common/ir_pb_converter.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
 std::unique_ptr<Graph> graphProtoToGraph(const onnx::GraphProto& gp);
@@ -508,4 +508,4 @@ void ExportModelProto(onnx::ModelProto* p_m, const std::shared_ptr<Graph>& g) {
   encodeGraph(p_g, g);
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

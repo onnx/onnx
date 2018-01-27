@@ -27,7 +27,7 @@
   void operator=(const TypeName&) = delete
 
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -1054,4 +1054,4 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

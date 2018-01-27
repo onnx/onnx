@@ -4,7 +4,7 @@
 
 #include <unordered_set>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace checker {
 
 #define enforce_has_field(proto, field)                                     \
@@ -332,4 +332,4 @@ void check_model(const ModelProto& model) {
 #undef enforce_non_empty_field
 
 } // namespace checker
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

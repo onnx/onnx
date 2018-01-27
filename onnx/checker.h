@@ -5,7 +5,7 @@
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace checker {
 class ValidationError : public std::runtime_error {
  public:
@@ -51,4 +51,4 @@ void check_node(const NodeProto& node, const CheckerContext&);
 void check_graph(const GraphProto& graph, const CheckerContext&);
 void check_model(const ModelProto& model);
 } // namespace checker
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
