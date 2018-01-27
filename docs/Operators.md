@@ -695,6 +695,11 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
+x = np.array([-1.5, 1.2]).astype(np.float32)
+y = np.ceil(x) #expected output [-1., 2.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_ceil_example')
+
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.ceil(x)
 expect(node, inputs=[x], outputs=[y],
@@ -1331,6 +1336,11 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.exp(x) #expected output [0.36787945, 1., 2.71828175]
+expect(node, inputs=[x], outputs=[y],
+       name='test_exp_example')
+
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.exp(x)
 expect(node, inputs=[x], outputs=[y],
@@ -1482,6 +1492,11 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
 )
+
+x = np.array([-1.5, 1.2, 2]).astype(np.float32)
+y = np.floor(x) #expected output [-2., 1., 2.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_floor_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.floor(x)
@@ -2558,6 +2573,11 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
+x = np.array([1, 10]).astype(np.float32)
+y = np.log(x) #expected output [0., 2.30258512]
+expect(node, inputs=[x], outputs=[y],
+       name='test_log_example')
+
 x = np.exp(np.random.randn(3, 4, 5).astype(np.float32))
 y = np.log(x)
 expect(node, inputs=[x], outputs=[y],
@@ -3127,6 +3147,11 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
 )
+
+x = np.array([-4, 2]).astype(np.float32)
+y = np.negative(x) #expected output [4., -2.],
+expect(node, inputs=[x], outputs=[y],
+       name='test_neg_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.negative(x)
@@ -3902,6 +3927,11 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
+x = np.array([-4, 2]).astype(np.float32)
+y = np.reciprocal(x) #expected output [-0.25, 0.5],
+expect(node, inputs=[x], outputs=[y],
+       name='test_reciprocal_example')
+
 x = np.random.rand(3, 4, 5).astype(np.float32) + 0.5
 y = np.reciprocal(x)
 expect(node, inputs=[x], outputs=[y],
@@ -4618,6 +4648,11 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = 1.0 / (1.0 + np.exp(np.negative(x))) #expected output [0.26894143, 0.5, 0.7310586]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sigmoid_example')
+
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = 1.0 / (1.0 + np.exp(np.negative(x)))
 expect(node, inputs=[x], outputs=[y],
@@ -5055,6 +5090,11 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 
+x = np.array([1, 4, 9]).astype(np.float32)
+y = np.sqrt(x) #expected output [1., 2., 3.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sqrt_example')
+
 x = np.abs(np.random.randn(3, 4, 5).astype(np.float32))
 y = np.sqrt(x)
 expect(node, inputs=[x], outputs=[y],
@@ -5256,6 +5296,11 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
 )
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.tanh(x) #expected output [-0.76159418, 0., 0.76159418]
+expect(node, inputs=[x], outputs=[y],
+       name='test_tanh_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.tanh(x)

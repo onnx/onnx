@@ -20,6 +20,11 @@ class Tanh(Base):
             outputs=['y'],
         )
 
+        x = np.array([-1, 0, 1]).astype(np.float32)
+        y = np.tanh(x) #expected output [-0.76159418, 0., 0.76159418]
+        expect(node, inputs=[x], outputs=[y],
+               name='test_tanh_example')
+
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.tanh(x)
         expect(node, inputs=[x], outputs=[y],
