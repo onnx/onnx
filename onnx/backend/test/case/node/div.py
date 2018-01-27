@@ -19,6 +19,12 @@ class Div(Base):
             outputs=['z'],
         )
 
+        x = np.array([3, 4]).astype(np.float32)
+        y = np.array([1, 2]).astype(np.float32)
+        z = x / y #expected output [3., 2.]
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_div_example')
+
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
         z = x / y

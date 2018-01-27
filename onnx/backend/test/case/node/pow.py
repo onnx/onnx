@@ -19,6 +19,12 @@ class Pow(Base):
             outputs=['z'],
         )
 
+        x = np.array([1, 2, 3]).astype(np.float32)
+        y = np.array([4, 5, 6]).astype(np.float32)
+        z = np.power(x, y) #expected output [1., 32., 729.]
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_pow_example')
+
         x = np.arange(60).reshape(3, 4, 5).astype(np.float32)
         y = np.random.randn(3, 4, 5).astype(np.float32)
         z = np.power(x, y)

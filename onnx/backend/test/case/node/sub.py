@@ -19,6 +19,12 @@ class Sub(Base):
             outputs=['z'],
         )
 
+        x = np.array([1, 2, 3]).astype(np.float32)
+        y = np.array([3, 2, 1]).astype(np.float32)
+        z = x - y #expected output [-2., 0., 2.]
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_sub_example')
+
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.random.randn(3, 4, 5).astype(np.float32)
         z = x - y

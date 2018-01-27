@@ -22,6 +22,11 @@ class HardSigmoid(Base):
             beta=0.6
         )
 
+        x = np.array([-1, 0, 1]).astype(np.float32)
+        y = np.clip(x * 0.5 + 0.6, 0, 1) #expected output [0.1, 0.6, 1.]
+        expect(node, inputs=[x], outputs=[y],
+               name='test_hardsigmoid_example')
+
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x * 0.5 + 0.6, 0, 1)
         expect(node, inputs=[x], outputs=[y],

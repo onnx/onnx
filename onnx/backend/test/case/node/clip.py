@@ -22,6 +22,11 @@ class Clip(Base):
             max=1.0
         )
 
+        x = np.array([-2, 0, 2]).astype(np.float32)
+        y = np.clip(x, -1, 1) #expected output [-1., 0., 1.]
+        expect(node, inputs=[x], outputs=[y],
+               name='test_clip_example')
+
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, -1.0, 1.0)
         expect(node, inputs=[x], outputs=[y],
