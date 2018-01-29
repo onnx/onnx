@@ -41,13 +41,10 @@ file(GLOB_RECURSE onnx_src
 )
 
 file(GLOB_RECURSE onnx_exclude_src
-    "${ONNXIR_ROOT}/onnx/py_utils.h"
     "${ONNXIR_ROOT}/onnx/onnx.pb.h"
     "${ONNXIR_ROOT}/onnx/onnx.pb.cc"
     "${ONNXIR_ROOT}/onnx/onnx-operators.pb.h"
     "${ONNXIR_ROOT}/onnx/onnx-operators.pb.cc"
-    "${ONNXIR_ROOT}/onnx/proto_utils.h"
-    "${ONNXIR_ROOT}/onnx/cpp2py_export.cc"
 )
 
 list(REMOVE_ITEM onnx_src ${onnx_exclude_src})

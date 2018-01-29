@@ -17,11 +17,14 @@ if (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /WX")
     set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /WX")
 endif()
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pybind11 ${CMAKE_CURRENT_BINARY_DIR}/pybind11)
 include(protobuf)
 include_directories(
     ${ONNXIR_ROOT}
     ${CMAKE_CURRENT_BINARY_DIR}
     # External dependencies.
     ${PROTOBUF_INCLUDE_DIRS}
+    ${PYBIND11_INCLUDE_DIR}
+    ${PYTHON_INCLUDE_DIRS}
 )
 include(onnx.cmake)
