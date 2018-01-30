@@ -193,7 +193,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const py::bytes& bytes, const std::vector<std::string>& names) {
         ModelProto proto{};
         ParseProtoFromPyBytes(proto, bytes);
-        auto const result = optimization::Optimize(proto, names);
+        auto const result = optimization::Optimize(std::move(proto), names);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);
