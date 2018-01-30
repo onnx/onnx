@@ -846,6 +846,64 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>clip</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+    min=-1.0,
+    max=1.0
+)
+
+x = np.array([-2, 0, 2]).astype(np.float32)
+y = np.clip(x, -1, 1) #expected output [-1., 0., 1.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, -1.0, 1.0)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip')
+```
+
+</details>
+
+
+<details>
+<summary>clip_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+    min=0.0
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0.0, np.inf)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_min')
+
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+    max=0.0
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, -np.inf, 0.0)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_max')
+```
+
+</details>
+
+
 ### <a name="Concat"></a><a name="concat">**Concat**</a>
 
   Concatenate a list of tensors into a single tensor
@@ -1184,6 +1242,55 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>div</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Div',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([3, 4]).astype(np.float32)
+y = np.array([1, 2]).astype(np.float32)
+z = x / y #expected output [3., 2.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_div_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.rand(3, 4, 5).astype(np.float32) + 1.0
+z = x / y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_div')
+```
+
+</details>
+
+
+<details>
+<summary>div_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Div',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.rand(5).astype(np.float32) + 1.0
+z = x / y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_div_bcast')
+```
+
+</details>
+
+
 ### <a name="Dropout"></a><a name="dropout">**Dropout**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -1279,6 +1386,53 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>elu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Elu',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=2.0
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+#expected output [-1.2642411, 0., 1.]
+y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+expect(node, inputs=[x], outputs=[y],
+       name='test_elu_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
+expect(node, inputs=[x], outputs=[y],
+       name='test_elu')
+```
+
+</details>
+
+
+<details>
+<summary>elu_default</summary>
+
+```python
+default_alpha = 1.0
+node = onnx.helper.make_node(
+    'Elu',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
+expect(node, inputs=[x], outputs=[y],
+       name='test_elu_default')
+```
+
+</details>
 
 
 ### <a name="Equal"></a><a name="equal">**Equal**</a>
@@ -2130,9 +2284,9 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
+<dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
+<dd>Value of beta default to 0.5</dd>
 </dl>
 
 #### Inputs
@@ -2155,6 +2309,54 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>hardsigmoid</summary>
+
+```python
+node = onnx.helper.make_node(
+    'HardSigmoid',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=0.5,
+    beta=0.6
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.clip(x * 0.5 + 0.6, 0, 1) #expected output [0.1, 0.6, 1.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardsigmoid_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x * 0.5 + 0.6, 0, 1)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardsigmoid')
+```
+
+</details>
+
+
+<details>
+<summary>hardsigmoid_default</summary>
+
+```python
+default_alpha = 0.2
+default_beta = 0.5
+node = onnx.helper.make_node(
+    'HardSigmoid',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x * default_alpha + default_beta, 0, 1)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardsigmoid_default')
+```
+
+</details>
 
 
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
@@ -2493,7 +2695,7 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of leakage</dd>
+<dd>Coefficient of leakage default to 0.01.</dd>
 </dl>
 
 #### Inputs
@@ -2516,6 +2718,53 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>leakyrelu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LeakyRelu',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=0.1
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+#expected output [-0.1, 0., 1.]
+y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * 0.1
+expect(node, inputs=[x], outputs=[y],
+       name='test_leakyrelu_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * 0.1
+expect(node, inputs=[x], outputs=[y],
+       name='test_leakyrelu')
+```
+
+</details>
+
+
+<details>
+<summary>leakyrelu_default</summary>
+
+```python
+default_alpha = 0.01
+node = onnx.helper.make_node(
+    'LeakyRelu',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * default_alpha
+expect(node, inputs=[x], outputs=[y],
+       name='test_leakyrelu_default')
+```
+
+</details>
 
 
 ### <a name="Less"></a><a name="less">**Less**</a>
@@ -3188,6 +3437,55 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>mul</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mul',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([4, 5, 6]).astype(np.float32)
+z = x * y #expected output [4., 10., 18.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mul_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mul')
+```
+
+</details>
+
+
+<details>
+<summary>mul_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Mul',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = x * y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_mul_bcast')
+```
+
+</details>
+
+
 ### <a name="Neg"></a><a name="neg">**Neg**</a>
 
   Neg takes one input data (Tensor<T>) and produces one output data
@@ -3713,6 +4011,34 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>pow</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pow',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([4, 5, 6]).astype(np.float32)
+z = np.power(x, y) #expected output [1., 32., 729.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_example')
+
+x = np.arange(60).reshape(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = np.power(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow')
+```
+
+</details>
 
 
 ### <a name="RNN"></a><a name="rnn">**RNN**</a>
@@ -4778,6 +5104,55 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>selu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Selu',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=2.0,
+    gamma=3.0
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+#expected output [-3.79272318, 0., 3.]
+y = np.clip(x, 0, np.inf) * 3.0 + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
+expect(node, inputs=[x], outputs=[y],
+       name='test_selu_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf) * 3.0 + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
+expect(node, inputs=[x], outputs=[y],
+       name='test_selu')
+```
+
+</details>
+
+
+<details>
+<summary>selu_default</summary>
+
+```python
+default_alpha = 1.6732
+default_gamma = 1.0507
+node = onnx.helper.make_node(
+    'Selu',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf) * default_gamma + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
+expect(node, inputs=[x], outputs=[y],
+       name='test_selu_default')
+```
+
+</details>
+
+
 ### <a name="Sigmoid"></a><a name="sigmoid">**Sigmoid**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
@@ -5390,6 +5765,55 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>sub</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sub',
+    inputs=['x', 'y'],
+    outputs=['z'],
+)
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([3, 2, 1]).astype(np.float32)
+z = x - y #expected output [-2., 0., 2.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_sub_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(3, 4, 5).astype(np.float32)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_sub')
+```
+
+</details>
+
+
+<details>
+<summary>sub_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sub',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    broadcast=1,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.random.randn(5).astype(np.float32)
+z = x - y
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_sub_bcast')
+```
+
+</details>
 
 
 ### <a name="Sum"></a><a name="sum">**Sum**</a>
