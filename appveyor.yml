@@ -41,6 +41,7 @@ build_script:
 # Will figure out and fix it in separate PR.
 #- cmd: C:\Miniconda36\Scripts\backend-test-tools generate-data
 - cmd: git diff --exit-code
+- cmd: ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
