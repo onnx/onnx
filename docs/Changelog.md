@@ -1916,9 +1916,9 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
+<dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
+<dd>Value of beta default to 0.5</dd>
 </dl>
 
 #### Inputs
@@ -2354,7 +2354,7 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of leakage</dd>
+<dd>Coefficient of leakage default to 0.01.</dd>
 </dl>
 
 #### Inputs
