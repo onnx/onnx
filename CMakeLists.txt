@@ -7,9 +7,7 @@ project(onnxir C CXX)
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
 
-# External dependencies
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/external)
-set(ONNXIR_ROOT ${PROJECT_SOURCE_DIR}/..)
+set(ONNXIR_ROOT ${PROJECT_SOURCE_DIR})
 if (WIN32)
     # parallel build
     add_compile_options(/MP)
@@ -17,7 +15,7 @@ if (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /WX")
     set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /WX")
 endif()
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pybind11 ${CMAKE_CURRENT_BINARY_DIR}/pybind11)
+add_subdirectory(third_party/pybind11)
 FIND_PACKAGE(Protobuf REQUIRED)
 include_directories(
     ${ONNXIR_ROOT}
