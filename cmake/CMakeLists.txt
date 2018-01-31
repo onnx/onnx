@@ -18,7 +18,6 @@ if (WIN32)
     set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /WX")
 endif()
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../third_party/pybind11 ${CMAKE_CURRENT_BINARY_DIR}/pybind11)
-INCLUDE(FindProtobuf)
 FIND_PACKAGE(Protobuf REQUIRED)
 include_directories(
     ${ONNXIR_ROOT}
