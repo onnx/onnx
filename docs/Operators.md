@@ -5057,6 +5057,38 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>reshape</summary>
+
+```python
+original_shape = (2, 3, 4)
+test_cases = {
+    'rearrange':(4,2,3),
+    'reduced_dims':(3,8),
+    'extended_dims':(3,2,2,2),
+    'integer_dim':24,
+    'negative_dim':(6,-1,2)
+    }
+data = np.random.random_sample(original_shape).astype(np.float32)
+
+for test_name,test_shape in test_cases.items():
+    node = onnx.helper.make_node(
+        'Reshape',
+        inputs=['data'],
+        outputs=['reshaped'],
+        shape=test_shape,
+    )
+
+    reshaped = np.reshape(data, test_shape)
+    expect(node, inputs=[data], outputs=[reshaped],
+       name='test_reshape_' + test_name)
+```
+
+</details>
+
+
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
