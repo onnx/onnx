@@ -222,7 +222,8 @@ std::unique_ptr<Graph> graphProtoToGraph(const onnx::GraphProto& gp) {
   for (int i = 0; i < gp.input_size(); i++) {
     auto vip = gp.input(i);
     auto v = g->addInput();
-    v->setElemType(vip.type().tensor_type().elem_type());
+    auto type = g->getTypeFromId(vip.type().tensor_type().elem_type());
+    v->setElemType(type);
     v->setSizes(tensorShapeProtoToDimensions(vip.type().tensor_type().shape()));
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
@@ -235,7 +236,8 @@ std::unique_ptr<Graph> graphProtoToGraph(const onnx::GraphProto& gp) {
     for (int j = 0; j < np.output_size(); j++) {
       auto out = n->outputs()[j];
       // we don't know the real type here, so that's done in a later pass
-      out->setElemType(onnx::TensorProto_DataType_UNDEFINED);
+      auto type = g->getTypeFromId(onnx::TensorProto_DataType_UNDEFINED);
+      out->setElemType(type);
       out->setUniqueName(np.output(j));
       value_by_name_of[np.output(j)] = out;
     }
@@ -265,13 +267,15 @@ std::unique_ptr<Graph> graphProtoToGraph(const onnx::GraphProto& gp) {
   }
 
   for (int i = 0; i < gp.output_size(); i++) {
-    value_by_name_of[gp.output(i).name()]->setElemType(gp.output(i).type().tensor_type().elem_type());
+    auto type = g->getTypeFromId(gp.output(i).type().tensor_type().elem_type());
+    value_by_name_of[gp.output(i).name()]->setElemType(type);
     value_by_name_of[gp.output(i).name()]->setSizes(tensorShapeProtoToDimensions(gp.output(i).type().tensor_type().shape()));
     g->registerOutput(value_by_name_of[gp.output(i).name()]);
   }
 
   for (int i = 0; i < gp.value_info_size(); i++) {
-    value_by_name_of[gp.value_info(i).name()]->setElemType(gp.value_info(i).type().tensor_type().elem_type());
+    auto type = g->getTypeFromId(gp.value_info(i).type().tensor_type().elem_type());
+    value_by_name_of[gp.value_info(i).name()]->setElemType(type);
     value_by_name_of[gp.value_info(i).name()]->setSizes(tensorShapeProtoToDimensions(gp.value_info(i).type().tensor_type().shape()));
   }
 
@@ -428,7 +432,7 @@ void addAttribute(onnx::NodeProto * n_p, Node * n, Symbol name) {
 }
 
 void encodeTypeProtoTensorType(onnx::TypeProto_Tensor* tensor_type, Value* n) {
-  tensor_type->set_elem_type(n->elemType());
+  tensor_type->set_elem_type(onnx::TensorProto_DataType(n->elemType().id()));
   onnx::TensorShapeProto* shape = tensor_type->mutable_shape();
   for (const Dimension& d : n->sizes()) {
     auto dim = shape->add_dim();

@@ -19,6 +19,7 @@ struct Optimizer {
   std::map<std::string, std::unique_ptr<OptimizePass>> passes;
 
   Optimizer() {
+
     // Register the optimization passes to the optimizer.
     std::unique_ptr<FuseConsecutiveTransposes> fct(new FuseConsecutiveTransposes());
     passes[fct->name] = std::move(fct);
@@ -35,6 +36,17 @@ struct Optimizer {
   std::unique_ptr<onnx::ModelProto> optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::vector<std::string>& names) {
 
     std::shared_ptr<onnx::Graph> g(onnx::ImportModelProto(*mp_in));
+
+    // Register the types needed for the optimization passes.
+    const auto message = TensorProto();
+    const google::protobuf::Descriptor* descriptor = message.GetDescriptor();
+    const google::protobuf::EnumDescriptor* enum_type = descriptor->FindEnumTypeByName("DataType");
+    for (auto i =0; i < enum_type->value_count() ; ++i) {
+      auto enum_inst = enum_type->value(i);
+      auto enum_name = enum_inst->name();
+      auto enum_value = enum_inst->number();
+      g->registerType(enum_value, enum_name);
+    }
 
     if (g.get() == nullptr) {
       std::cerr << "Warning: onnx optimizer is unable to parse input model. "

@@ -20,6 +20,7 @@
 #include "onnx/common/interned_strings.h"
 #include "onnx/common/graph_node_list.h"
 #include "onnx/common/tensor.h"
+#include "onnx/common/type.h"
 
 
 #define ONNX_DISALLOW_COPY_AND_ASSIGN(TypeName) \
@@ -293,15 +294,15 @@ private:
   use_list uses_;
   bool has_unique_name_;
   std::string unique_name_;
-  onnx::TensorProto_DataType elem_type_;
+  RuntimeTypeRegistry::type elem_type_;
   std::vector<Dimension> sizes_;
 
 public:
-  Value* setElemType(onnx::TensorProto_DataType elem_type) {
+  Value* setElemType(RuntimeTypeRegistry::type elem_type) {
     elem_type_ = elem_type;
     return this;
   }
-  onnx::TensorProto_DataType elemType() const {
+  RuntimeTypeRegistry::type elemType() const {
     return elem_type_;
   }
   Value* setSizes(const std::vector<Dimension>& sizes) {
@@ -795,6 +796,8 @@ private:
   bool has_doc_string_;
   std::string doc_string_;
 
+  RuntimeTypeRegistry elem_type_registry_;
+
 public:
   Graph()
   : next_unique_(0)
@@ -931,6 +934,14 @@ public:
     ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
     n->insertAfter(output_);
     return n;
+  }
+
+  void registerType(size_t id, std::string name) {
+    elem_type_registry_.set(id, name);
+  }
+
+  RuntimeTypeRegistry::type getTypeFromId(size_t id) {
+    return elem_type_registry_.get(id);
   }
 
   ~Graph() {
