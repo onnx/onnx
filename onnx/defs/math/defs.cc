@@ -496,3 +496,42 @@ OPERATOR_SCHEMA(MatMul)
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC");
+
+OPERATOR_SCHEMA(TopK)
+    .SetDoc(R"DOC(
+Retrieve the top-K elements along a specified axis. Given an input tensor of
+shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+  -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+    which contains the values of the top k elements along the specified axis
+  -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+   contains the indices of the top k elements (original indices from the input
+   tensor).
+
+Given two equivalent values, this operator uses the indices along the axis  as
+ a tiebreaker. That is, the element with the lower index will appear first.
+)DOC")
+    .Input(0, "X", "Tensor of shape [a_1, a_2, ..., a_n, r]", "T")
+    .Output(
+        0,
+        "Values",
+        "Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] "
+        "containing top K values from the input tensor",
+        "T")
+    .Output(
+        1,
+        "Indices",
+        "Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] "
+        "containing the corresponding input tensor indices for the top K "
+        "values.",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
+    .Attr(
+      "axis",
+      "Dimension on which to do the sort. Default -1, which indicates the last"
+      " axis",
+      AttributeProto::INT,
+      static_cast<int64_t>(-1));
