@@ -225,6 +225,10 @@ class OpSchema {
   };
 
   struct Attribute {
+    Attribute()
+        : name("unknown"),
+          description("unknown") {}
+
     Attribute(
         const std::string& name_,
         const std::string& description_,
@@ -245,8 +249,8 @@ class OpSchema {
         required(false),
         default_value(default_value_) {}
 
-    const std::string name;
-    const std::string description;
+    std::string name;
+    std::string description;
     AttributeProto::AttributeType type;
     bool required;
     AttributeProto default_value;
@@ -281,6 +285,9 @@ class OpSchema {
 
   // Type constraint.
   struct TypeConstraintParam {
+    TypeConstraintParam()
+        : description("unknown") {}
+
     TypeConstraintParam(
         const std::string& type_param_str_,
         const std::vector<std::string>& allowed_type_strs_,
