@@ -1,3 +1,6 @@
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
 #pragma once
 
 #include "onnx/optimizer/passes/optimize_pass.h"
@@ -100,6 +103,9 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
       new_interface.erase(v);
     }
     for (Value * v : new_interface) {
+      if (v->node()->kind() == kUndefined) {
+        continue;
+      }
       graph.registerOutput(v);
     }
 
@@ -125,6 +131,13 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
       }
     }
   } else if (predict) {
+    // When creating the predict net, 'undefined' nodes will
+    // naturally go into the init net. We need to have a place to
+    // copy the ones we want to keep in the predict net.
+    auto * optionalInputDummyNode = graph.create(kUndefined, 1);
+    graph.appendNode(optionalInputDummyNode);
+    optionalInputDummyNode->outputs()[0]->setUniqueName("");
+
     // Add new inputs, ensuring that we don't introduce duplicates.
     // Also cut the boundary between init and predict net by replacing
     // the Values along the boundary with replaceAllUsesWith.
@@ -132,16 +145,24 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
       new_interface.erase(v);
     }
     for (Value * v : new_interface) {
-      Value * newv = graph.addInput()->copyMetadata(v);
-      v->replaceAllUsesWith(newv);
+      if (v->node()->kind() == kUndefined) {
+        v->replaceAllUsesWith(optionalInputDummyNode->outputs()[0]);
+      } else {
+        Value * newv = graph.addInput()->copyMetadata(v);
+        v->replaceAllUsesWith(newv);
+      }
     }
 
     // Delete nodes that aren't in the predict net, in reverse
     // topological order.
     for (auto it = graph.nodes().rbegin(); it != graph.nodes().rend(); it++) {
-      if (!node_belongs_to_predict_net(*it)) {
-        it.destroyCurrent();
+      if (*it == optionalInputDummyNode) {
+        continue;
       }
+      if (node_belongs_to_predict_net(*it)) {
+        continue;
+      }
+      it.destroyCurrent();
     }
 
     // Remove inputs that aren't used by the predict net.
@@ -150,6 +171,9 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
         graph.eraseInput(i);
       }
     }
+
+    // Remove all initializers, they are already in the init net.
+    graph.clearInitializers();
   }
 }
 

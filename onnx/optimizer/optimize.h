@@ -1,3 +1,6 @@
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
 #pragma once
 
 #include "onnx/common/ir.h"
@@ -31,7 +34,7 @@ struct Optimizer {
 
   std::unique_ptr<onnx::ModelProto> optimize(std::unique_ptr<onnx::ModelProto> mp_in, std::vector<std::string>& names) {
 
-    std::shared_ptr<onnx::Graph> g(std::move(onnx::ImportModelProto(*mp_in)));
+    std::shared_ptr<onnx::Graph> g(onnx::ImportModelProto(*mp_in));
 
     if (g.get() == nullptr) {
       std::cerr << "Warning: onnx optimizer is unable to parse input model. "

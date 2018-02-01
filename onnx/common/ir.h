@@ -1,3 +1,6 @@
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
 #pragma once
 
 #include <atomic>
@@ -288,7 +291,7 @@ private:
   size_t unique_ = 0;          // unique id
   size_t stage_ = 0;           // 0-forward, 1-backward, 2-double-backward,...
   use_list uses_;
-  bool has_name_;
+  bool has_unique_name_;
   std::string unique_name_;
   onnx::TensorProto_DataType elem_type_;
   std::vector<Dimension> sizes_;
@@ -311,16 +314,16 @@ public:
   size_t unique() const {
     return unique_;
   }
-  bool has_name() const {
-    return has_name_;
+  bool has_unique_name() const {
+    return has_unique_name_;
   }
   std::string uniqueName() const {
-    if(unique_name_.size() > 0)
+    if(has_unique_name())
       return unique_name_;
     return std::to_string(unique());
   }
   Value* setUniqueName(const std::string & name) {
-    has_name_ = true;
+    has_unique_name_ = true;
     unique_name_ = name;
     return this;
   }
@@ -361,7 +364,7 @@ public:
   Value* copyMetadata(Value * from) {
     setElemType(from->elemType());
     setSizes(from->sizes());
-    if (!from->unique_name_.empty()) {
+    if (from->has_unique_name()) {
       setUniqueName(from->uniqueName());
     }
     return this;
@@ -815,6 +818,9 @@ public:
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
   }
+  void clearInitializers() {
+    initializers_.clear();
+  }
   const std::vector<Tensor>& initializers() {
     return initializers_;
   }
@@ -983,7 +989,7 @@ inline Value::Value(Node * node_, size_t offset_)
   offset_(offset_),
   unique_(node_->graph_->next_unique_++),
   stage_(node_->graph_->new_node_stage_),
-  has_name_(true) {
+  has_unique_name_(false) {
   node_->graph_->all_values.emplace(this);
 }
 

@@ -1,3 +1,6 @@
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
 #pragma once
 
 #include "onnx/common/ir.h"
@@ -10,6 +13,8 @@ enum class API_TYPE {
 };
 
 struct OptimizePass {
+
+  virtual ~OptimizePass() {}
 
   std::string name;
   API_TYPE type;

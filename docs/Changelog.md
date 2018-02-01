@@ -1152,8 +1152,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -1916,9 +1916,9 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
+<dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
+<dd>Value of beta default to 0.5</dd>
 </dl>
 
 #### Inputs
@@ -2354,7 +2354,7 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of leakage</dd>
+<dd>Coefficient of leakage default to 0.01.</dd>
 </dl>
 
 #### Inputs
@@ -5045,6 +5045,54 @@ opset_import {
 <dl>
 <dt><tt>transposed</tt> : T</dt>
 <dd>Transposed output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Unsqueeze-1"></a>**Unsqueeze-1**</a>
+
+  Insert single-dimensional entries to the shape of a tensor.
+  Takes one required argument `axes`, a list of dimensions that will be inserted.
+  Dimension indices in `axes` are as seen in the output tensor. For example:
+  
+    Given a tensor such that tensor with shape [3, 4, 5], then
+    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (required)</dt>
+<dd>List of positive integers, indicate the dimensions to be inserted</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Original tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>expanded</tt> : T</dt>
+<dd>Reshaped tensor with same data as input.</dd>
 </dl>
 
 #### Type Constraints
