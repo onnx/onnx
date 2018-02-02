@@ -90,6 +90,7 @@
   * <a href="#Tanh">Tanh</a>
   * <a href="#Tile">Tile</a>
   * <a href="#Transpose">Transpose</a>
+  * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Xor">Xor</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
@@ -5820,6 +5821,28 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>squeeze</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Squeeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[0],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.squeeze(x, axis=0)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_squeeze')
+```
+
+</details>
+
+
 ### <a name="Sub"></a><a name="sub">**Sub**</a>
 
   Performs element-wise binary subtraction (with limited broadcast support).
@@ -6154,6 +6177,77 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
+
+  Insert single-dimensional entries to the shape of a tensor.
+  Takes one required argument `axes`, a list of dimensions that will be inserted.
+  Dimension indices in `axes` are as seen in the output tensor. For example:
+  
+    Given a tensor such that tensor with shape [3, 4, 5], then
+    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (required)</dt>
+<dd>List of positive integers, indicate the dimensions to be inserted</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Original tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>expanded</tt> : T</dt>
+<dd>Reshaped tensor with same data as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>squeeze</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Unsqueeze',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[0],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.expand_dims(x, axis=0)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_unsqueeze')
+```
+
+</details>
 
 
 ### <a name="Xor"></a><a name="xor">**Xor**</a>
