@@ -35,11 +35,10 @@ class Flatten(Base):
         node = onnx.helper.make_node(
             'Flatten',
             inputs=['a'],
-            outputs=['b'],
+            outputs=['b'], # Default value for axis: axis=1
         )
         
         shape = (5, 4, 3, 2)
-        axis_default_value = 1
         a = np.random.random_sample(shape).astype(np.float32)
         new_shape = (5, 24)
         b= np.reshape(a, new_shape)
