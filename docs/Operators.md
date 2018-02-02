@@ -1082,10 +1082,10 @@ x = np.array([[[[  0.,   1.,   2.,   3.,   4.], # (1, 1, 5, 5) input tensor
                 [  5.,   6.,   7.,   8.,   9.],
                 [ 10.,  11.,  12.,  13.,  14.],
                 [ 15.,  16.,  17.,  18.,  19.],
-                [ 20.,  21.,  22.,  23.,  24.]]]])
+                [ 20.,  21.,  22.,  23.,  24.]]]]).astype(np.float32)
 W = np.array([[[[ 1.,  1.,  1.], # (1, 1, 3, 3) tensor for convolution weights
                 [ 1.,  1.,  1.],
-                [ 1.,  1.,  1.]]]])
+                [ 1.,  1.,  1.]]]]).astype(np.float32)
 
 # Convolution with padding
 node_with_padding = onnx.helper.make_node(
@@ -1099,7 +1099,7 @@ y_with_padding = np.array([[[[  12.,   21.,   27.,   33.,   24.], # (1, 1, 5, 5)
                              [  33.,   54.,   63.,   72.,   51.],
                              [  63.,   99.,  108.,  117.,   81.],
                              [  93.,  144.,  153.,  162.,  111.],
-                             [  72.,  111.,  117.,  123.,   84.]]]])
+                             [  72.,  111.,  117.,  123.,   84.]]]]).astype(np.float32)
 expect(node_with_padding, inputs=[x, W], outputs=[y_with_padding],
    name='test_basic_conv_with_padding')
 
@@ -1113,7 +1113,7 @@ node_without_padding = onnx.helper.make_node(
 )
 y_without_padding = np.array([[[[  54.,   63.,   72.], # (1, 1, 3, 3) output tensor
                                 [  99.,  108.,  117.],
-                                [ 144.,  153.,  162.]]]])
+                                [ 144.,  153.,  162.]]]]).astype(np.float32)
 expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
    name='test_basic_conv_without_padding')
 ```
@@ -1132,10 +1132,10 @@ x = np.array([[[[  0.,   1.,   2.,   3.,   4.],  # (1, 1, 7, 5) input tensor
                 [ 15.,  16.,  17.,  18.,  19.],
                 [ 20.,  21.,  22.,  23.,  24.],
                 [ 25.,  26.,  27.,  28.,  29.],
-                [ 30.,  31.,  32.,  33.,  34.]]]])
+                [ 30.,  31.,  32.,  33.,  34.]]]]).astype(np.float32)
 W = np.array([[[[ 1.,  1.,  1.],  # (1, 1, 3, 3) tensor for convolution weights
                 [ 1.,  1.,  1.],
-                [ 1.,  1.,  1.]]]])
+                [ 1.,  1.,  1.]]]]).astype(np.float32)
 
 # Convolution with strides=2 and padding
 node_with_padding = onnx.helper.make_node(
@@ -1149,7 +1149,7 @@ node_with_padding = onnx.helper.make_node(
 y_with_padding = np.array([[[[  12.,   27.,   24.], # (1, 1, 4, 3) output tensor
                              [  63.,  108.,   81.],
                              [ 123.,  198.,  141.],
-                             [ 112.,  177.,  124.]]]])
+                             [ 112.,  177.,  124.]]]]).astype(np.float32)
 expect(node_with_padding, inputs=[x, W], outputs=[y_with_padding],
    name='test_conv_with_strides_padding')
 
@@ -1164,7 +1164,7 @@ node_without_padding = onnx.helper.make_node(
 )
 y_without_padding = np.array([[[[  54.,   72.], # (1, 1, 3, 2) output tensor
                                 [ 144., 162.],
-                                [ 234.,  252.]]]])
+                                [ 234.,  252.]]]]).astype(np.float32)
 expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
    name='test_conv_with_strides_no_padding')
 
@@ -1180,7 +1180,7 @@ node_with_asymmetric_padding = onnx.helper.make_node(
 y_with_asymmetric_padding = np.array([[[[  21.,   33.], # (1, 1, 4, 2) output tensor
                                         [  99.,  117.],
                                         [ 189.,  207.],
-                                        [ 171.,  183.]]]])
+                                        [ 171.,  183.]]]]).astype(np.float32)
 expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_padding],
    name='test_conv_with_strides_and_asymmetric_padding')
 ```
