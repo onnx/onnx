@@ -3197,6 +3197,45 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>max</summary>
+
+```python
+data_0 = np.array([3, 2, 1]).astype(np.float32)
+data_1 = np.array([1, 4, 4]).astype(np.float32)
+data_2 = np.array([2, 5, 3]).astype(np.float32)
+result = np.array([3, 5, 4]).astype(np.float32)
+node = onnx.helper.make_node(
+    'Max',
+    inputs=['data_0', 'data_1', 'data_2'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1, data_2], outputs=[result],
+       name='test_max_example')
+
+node = onnx.helper.make_node(
+    'Max',
+    inputs=['data_0'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0], outputs=[data_0],
+       name='test_max_one_input')
+
+result = np.maximum(data_0, data_1)
+node = onnx.helper.make_node(
+    'Max',
+    inputs=['data_0', 'data_1'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1], outputs=[result],
+       name='test_max_two_inputs')
+```
+
+</details>
+
+
 ### <a name="MaxPool"></a><a name="maxpool">**MaxPool**</a>
 
   MaxPool consumes an input tensor X and applies max pooling across the
@@ -3336,6 +3375,45 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>mean</summary>
+
+```python
+data_0 = np.array([3, 0, 2]).astype(np.float32)
+data_1 = np.array([1, 3, 4]).astype(np.float32)
+data_2 = np.array([2, 6, 6]).astype(np.float32)
+result = np.array([2, 3, 4]).astype(np.float32)
+node = onnx.helper.make_node(
+    'Mean',
+    inputs=['data_0', 'data_1', 'data_2'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1, data_2], outputs=[result],
+       name='test_mean_example')
+
+node = onnx.helper.make_node(
+    'Mean',
+    inputs=['data_0'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0], outputs=[data_0],
+       name='test_mean_one_input')
+
+result = np.divide(np.add(data_0, data_1), 2.)
+node = onnx.helper.make_node(
+    'Mean',
+    inputs=['data_0', 'data_1'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1], outputs=[result],
+       name='test_mean_two_inputs')
+```
+
+</details>
+
+
 ### <a name="Min"></a><a name="min">**Min**</a>
 
   Element-wise min of each of the input tensors. All inputs and outputs must
@@ -3371,6 +3449,45 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>min</summary>
+
+```python
+data_0 = np.array([3, 2, 1]).astype(np.float32)
+data_1 = np.array([1, 4, 4]).astype(np.float32)
+data_2 = np.array([2, 5, 0]).astype(np.float32)
+result = np.array([1, 2, 0]).astype(np.float32)
+node = onnx.helper.make_node(
+    'Min',
+    inputs=['data_0', 'data_1', 'data_2'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1, data_2], outputs=[result],
+       name='test_min_example')
+
+node = onnx.helper.make_node(
+    'Min',
+    inputs=['data_0'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0], outputs=[data_0],
+       name='test_min_one_input')
+
+result = np.minimum(data_0, data_1)
+node = onnx.helper.make_node(
+    'Min',
+    inputs=['data_0', 'data_1'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1], outputs=[result],
+       name='test_min_two_inputs')
+```
+
+</details>
 
 
 ### <a name="Mul"></a><a name="mul">**Mul**</a>
@@ -5851,6 +5968,45 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>sum</summary>
+
+```python
+data_0 = np.array([3, 0, 2]).astype(np.float32)
+data_1 = np.array([1, 3, 4]).astype(np.float32)
+data_2 = np.array([2, 6, 6]).astype(np.float32)
+result = np.array([6, 9, 12]).astype(np.float32)
+node = onnx.helper.make_node(
+    'Sum',
+    inputs=['data_0', 'data_1', 'data_2'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1, data_2], outputs=[result],
+       name='test_sum_example')
+
+node = onnx.helper.make_node(
+    'Sum',
+    inputs=['data_0'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0], outputs=[data_0],
+       name='test_sum_one_input')
+
+result = np.add(data_0, data_1)
+node = onnx.helper.make_node(
+    'Sum',
+    inputs=['data_0', 'data_1'],
+    outputs=['result'],
+)
+expect(node, inputs=[data_0, data_1], outputs=[result],
+       name='test_sum_two_inputs')
+```
+
+</details>
 
 
 ### <a name="Tanh"></a><a name="tanh">**Tanh**</a>
