@@ -5596,6 +5596,42 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>split</summary>
+
+```python
+shape = (6,6)
+test_cases = {
+    'num_splits_1': 2,
+    'num_splits_2': 3,
+    'size_splits_1':[6],
+    'size_splits_2':[2,4],
+    'size_splits_3':[1,2,3]
+    }
+
+input = np.random.random_sample(shape).astype(np.float32)
+
+for i in range(len(shape)):
+    for test_case, s in test_cases.items():
+        args = ['output' + str(k) for k in range(len(s) if isinstance(s, list) else s)]
+        node = onnx.helper.make_node(
+            'Split',
+            inputs=['input'],
+            outputs=[*args],
+            axis=i,
+            split=s
+        )
+
+        output = np.split(input, np.cumsum(s[:-1]) if isinstance(s,list) else s , i)
+        expect(node, inputs=[input], outputs=[*output],
+        name='test_split_' + test_case + '_axis_' + str(i))
+```
+
+</details>
+
+
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
