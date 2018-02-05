@@ -14,7 +14,7 @@ private:
   int64_t segment_end_;
   bool has_name_;
   std::string name_;
-  onnx::TensorProto_DataType elem_type_;
+  ONNX_NAMESPACE::TensorProto_DataType elem_type_;
   std::vector<int64_t> sizes_;
 
   std::vector<float> float_data_;
@@ -33,7 +33,7 @@ public:
   , segment_begin_(0)
   , segment_end_(0)
   , has_name_(false)
-  , elem_type_(onnx::TensorProto_DataType_UNDEFINED)
+  , elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED)
   , is_raw_data_(false)
   {}
 
@@ -44,11 +44,11 @@ public:
     return sizes_;
   }
 
-  const onnx::TensorProto_DataType elem_type() const {
+  const ONNX_NAMESPACE::TensorProto_DataType elem_type() const {
     return elem_type_;
   }
 
-  onnx::TensorProto_DataType& elem_type() {
+  ONNX_NAMESPACE::TensorProto_DataType& elem_type() {
     return elem_type_;
   }
 

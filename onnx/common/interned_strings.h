@@ -173,8 +173,8 @@ inline Symbol operator "" _sym(const char * s, size_t) {
 // make symbol behave like an integer in hash tables
 namespace std {
   template<>
-  struct hash<onnx::Symbol> {
-    std::size_t operator()(onnx::Symbol s) const {
+  struct hash<ONNX_NAMESPACE::Symbol> {
+    std::size_t operator()(ONNX_NAMESPACE::Symbol s) const {
       return std::hash<uint32_t>()(static_cast<uint32_t>(s));
     }
   };

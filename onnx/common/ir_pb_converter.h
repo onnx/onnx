@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE {
 
-void ExportModelProto(onnx::ModelProto* p_m, const std::shared_ptr<Graph>& g);
-std::unique_ptr<Graph> ImportModelProto(const onnx::ModelProto& mp);
+void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Graph>& g);
+std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp);
 
 } // namespace ONNX_NAMESPACE

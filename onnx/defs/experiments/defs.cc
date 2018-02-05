@@ -4,7 +4,7 @@
 #include "onnx/defs/schema.h"
 using namespace ONNX_NAMESPACE;
 
-using SupportType = onnx::OpSchema::SupportType;
+using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
 OPERATOR_SCHEMA(Identity)
     .SetSupportLevel(SupportType::EXPERIMENTAL)

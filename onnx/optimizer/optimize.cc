@@ -5,7 +5,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-void PrepareOutput(const onnx::ModelProto& mp_in, onnx::ModelProto& mp_out) {
+void PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in, ONNX_NAMESPACE::ModelProto& mp_out) {
   if (mp_in.has_producer_name()) {
     mp_out.set_ir_version(mp_in.ir_version());
   }
@@ -48,8 +48,8 @@ void PrepareOutput(const onnx::ModelProto& mp_in, onnx::ModelProto& mp_out) {
 
 static Optimizer _optimizer;
 
-std::unique_ptr<onnx::ModelProto> Optimize(
-    std::unique_ptr<onnx::ModelProto> mp_in, std::vector<std::string>& names) {
+std::unique_ptr<ONNX_NAMESPACE::ModelProto> Optimize(
+    std::unique_ptr<ONNX_NAMESPACE::ModelProto> mp_in, std::vector<std::string>& names) {
   return _optimizer.optimize(std::move(mp_in), names);
 }
 

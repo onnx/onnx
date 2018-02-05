@@ -32,3 +32,4 @@ git diff --exit-code
 # other libraries who statically link with onnx can hide onnx symbols
 # in a private namespace.
 ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
+! grep -R --include='*.cc' --include='*.h' 'onnx::' .

@@ -149,7 +149,7 @@ static inline bool operator!=(generic_graph_node_list_iterator<T> a, generic_gra
 namespace std {
 
 template<typename T>
-struct iterator_traits<onnx::generic_graph_node_list_iterator<T>> {
+struct iterator_traits<ONNX_NAMESPACE::generic_graph_node_list_iterator<T>> {
   using difference_type = int64_t;
   using value_type = T*;
   using pointer = T**;

@@ -27,7 +27,7 @@ void barf(const char *fmt, ...);
 
 #define ONNX_ASSERT(cond) \
   if (ONNX_EXPECT(!(cond), 0)) { \
-    ::onnx::barf("%s:%u: %s: Assertion `%s` failed.", __FILE__, __LINE__, __func__, #cond); \
+    ::ONNX_NAMESPACE::barf("%s:%u: %s: Assertion `%s` failed.", __FILE__, __LINE__, __func__, #cond); \
   }
 
 // The trailing ' ' argument is a hack to deal with the extra comma when ... is empty.
@@ -38,7 +38,7 @@ void barf(const char *fmt, ...);
 // Note: msg must be a string literal
 #define _ONNX_ASSERTM(cond, msg, ...) \
   if (ONNX_EXPECT(!(cond), 0)) { \
-    ::onnx::barf("%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, __VA_ARGS__); \
+    ::ONNX_NAMESPACE::barf("%s:%u: %s: Assertion `%s` failed: " msg, __FILE__, __LINE__, __func__, #cond, __VA_ARGS__); \
   }
 
 #define ONNX_EXPECTM(...) _ONNX_EXPECTM(__VA_ARGS__, " ")
@@ -46,5 +46,5 @@ void barf(const char *fmt, ...);
 // Note: msg must be a string literal
 #define _ONNX_EXPECTM(cond, msg, ...) \
   if (ONNX_EXPECT(!(cond), 0)) { \
-    ::onnx::barf("%s:%u: %s: " msg, __FILE__, __LINE__, __func__, __VA_ARGS__); \
+    ::ONNX_NAMESPACE::barf("%s:%u: %s: " msg, __FILE__, __LINE__, __func__, __VA_ARGS__); \
   }

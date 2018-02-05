@@ -608,7 +608,7 @@ class OpSchemaRegistry {
 #define OPERATOR_SCHEMA(name)   OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
 #define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) OPERATOR_SCHEMA_UNIQ(Counter, name)
 #define OPERATOR_SCHEMA_UNIQ(Counter, name)                                         \
-  static onnx::OpSchemaRegistry::OpSchemaRegisterOnce(                              \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce(                              \
       op_schema_register_once##name##Counter) = OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
