@@ -33,7 +33,6 @@ typedef std::unordered_set<DataType> DataTypeSet;
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
     TypeConstraintMap;
 
-
 /**
  * @brief A class to record the schema of an op.
  *
@@ -240,10 +239,10 @@ class OpSchema {
         const std::string& description_,
         AttributeProto default_value_)
         : name(name_),
-        description(description_),
-        type(default_value_.type()),
-        required(false),
-        default_value(default_value_) {}
+          description(description_),
+          type(default_value_.type()),
+          required(false),
+          default_value(default_value_) {}
 
     const std::string name;
     const std::string description;
@@ -254,16 +253,18 @@ class OpSchema {
 
   OpSchema& Attr(const Attribute& attr);
 
-  // Register "optional" attribute with default value.
-#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)            \
-  OpSchema& Attr(const std::string& name,                   \
-              const std::string& description,               \
-              AttributeProto::AttributeType type,           \
-              const TypeName& defaultValue);                \
-  OpSchema& Attr(const std::string& name,                   \
-              const std::string& description,               \
-              AttributeProto::AttributeType type,           \
-              const std::vector<TypeName>& defaultValue);   \
+// Register "optional" attribute with default value.
+#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName) \
+  OpSchema& Attr(                                \
+      const std::string& name,                   \
+      const std::string& description,            \
+      AttributeProto::AttributeType type,        \
+      const TypeName& defaultValue);             \
+  OpSchema& Attr(                                \
+      const std::string& name,                   \
+      const std::string& description,            \
+      AttributeProto::AttributeType type,        \
+      const std::vector<TypeName>& defaultValue);
 
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
   ATTR_SETTER_WITH_DEFAULT_VALUE(float)
@@ -340,6 +341,10 @@ class OpSchema {
       const std::string& type_str,
       const std::vector<std::string>& constraints,
       const std::string& description);
+
+  // Convenience members for types
+  static const std::vector<std::string> all_integral_types;
+  static const std::vector<std::string> all_tensor_types;
 
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
@@ -539,7 +544,8 @@ class OpSchemaRegistry {
   }
 
   // Return the schema with biggest version, which is not greater than specified
-  // <maxInclusiveVersion> in specified domain. Domain with default value ONNX_DOMAIN means ONNX.
+  // <maxInclusiveVersion> in specified domain. Domain with default value
+  // ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
       const int maxInclusiveVersion,
@@ -605,11 +611,13 @@ class OpSchemaRegistry {
   }
 };
 
-#define OPERATOR_SCHEMA(name)   OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
-#define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define OPERATOR_SCHEMA_UNIQ(Counter, name)                                         \
-  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce(                              \
-      op_schema_register_once##name##Counter) = OpSchema(#name, __FILE__, __LINE__)
+#define OPERATOR_SCHEMA(name) OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
+#define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) \
+  OPERATOR_SCHEMA_UNIQ(Counter, name)
+#define OPERATOR_SCHEMA_UNIQ(Counter, name)            \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
+      op_schema_register_once##name##Counter) =        \
+      OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
