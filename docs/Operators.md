@@ -752,11 +752,12 @@ test_cases = [
     ('FLOAT16','FLOAT'),
     ('FLOAT16','DOUBLE'),
     ('DOUBLE','FLOAT'),
-    ('DOUBLE','FLOAT16'),
-]
+    ('DOUBLE','FLOAT16')
+]   
 
 for case in test_cases:
-    from_type, to_type = case[0], case[1]
+    from_type = case[0]
+    to_type = case[1]
     input = np.random.random_sample(shape).astype(type_map[getattr(TensorProto, from_type)])
     node = onnx.helper.make_node(
         'Cast',
