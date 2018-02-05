@@ -5299,13 +5299,13 @@ opset_import {
 <summary>reshape</summary>
 
 ```python
-original_shape = (2, 3, 4)
+original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims':(4,2,3),
-    'reduced_dims':(3,8),
-    'extended_dims':(3,2,2,2),
-    'one_dim':(24),
-    'negative_dim':(6,-1,2)
+    'reordered_dims':[4,2,3],
+    'reduced_dims':[3,8],
+    'extended_dims':[3,2,2,2],
+    'one_dim':[24],
+    'negative_dim':[6,-1,2]
     }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
