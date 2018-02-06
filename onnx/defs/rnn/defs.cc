@@ -3,9 +3,9 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 // Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
@@ -368,4 +368,4 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
     .Output(2, "Y_c",
             "The last output value of the cell. It has shape "
             "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE

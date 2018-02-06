@@ -6332,6 +6332,52 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>all_permutations</summary>
+
+```python
+shape = (2,3,4)
+data = np.random.random_sample(shape).astype(np.float32)
+permutations = list(itertools.permutations(np.arange(len(shape))))
+
+for i in range(len(permutations)):
+    node = onnx.helper.make_node(
+        'Transpose',
+        inputs=['data'],
+        outputs=['transposed'],
+        perm=permutations[i]
+    )            
+    transposed = np.transpose(data, permutations[i])
+    expect(node, inputs=[data], outputs=[transposed],
+        name='test_transpose_all_permutations_' + str(i))            
+```
+
+</details>
+
+
+<details>
+<summary>default</summary>
+
+```python
+shape = (2, 3, 4)
+data = np.random.random_sample(shape).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Transpose',
+    inputs=['data'],
+    outputs=['transposed']
+)
+
+transposed = np.transpose(data)
+expect(node, inputs=[data], outputs=[transposed],
+    name='test_transpose_default')
+```
+
+</details>
+
+
 ### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>
 
   Insert single-dimensional entries to the shape of a tensor.

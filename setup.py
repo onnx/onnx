@@ -282,7 +282,7 @@ class ONNXExtension(setuptools.Extension):
     def pre_run(self):
         pass
 
-def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects):
+def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects, define_macros):
     include_dirs = sum([dep.include_dirs for dep in dependencies], [TOP_DIR])
     libraries = sum([dep.libraries for dep in dependencies], [])
     extra_compile_args=['-std=c++11']
@@ -292,12 +292,9 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
     if platform.system() == 'Windows':
         extra_compile_args.append('/MT')
-    macros = []
-    if ONNX_ML:
-        macros = [('ONNX_ML', '1')]
     return ExtType(
         name=name,
-        define_macros = macros,
+        define_macros=define_macros,
         sources=sources,
         include_dirs=include_dirs,
         libraries=libraries,
@@ -349,13 +346,18 @@ if build_for_release and platform.system() == 'Linux':
 else:
     cpp2py_deps.append(Protobuf())
 
+define_macros = [('ONNX_NAMESPACE', os.getenv('ONNX_NAMESPACE', 'onnx'))]
+if ONNX_ML:
+    define_macros.append(('ONNX_ML', '1'))
+
 ext_modules = [
     create_extension(ONNXCpp2PyExtension,
                      str('onnx.onnx_cpp2py_export'),
                      sources=[], # sources will be propagated in pre_run
                      dependencies=cpp2py_deps,
                      extra_link_args=cpp2py_link_args,
-                     extra_objects=cpp2py_extra_objects)
+                     extra_objects=cpp2py_extra_objects,
+                     define_macros=define_macros)
 ]
 
 ################################################################################

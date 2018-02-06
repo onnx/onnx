@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 inline void MakeStringInternal(std::stringstream& /*ss*/) {}
 
 template <typename T>
@@ -33,4 +33,4 @@ inline std::string MakeString(const std::string& str) {
 inline std::string MakeString(const char* c_str) {
   return std::string(c_str);
 }
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
