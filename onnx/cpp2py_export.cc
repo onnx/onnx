@@ -9,7 +9,7 @@
 #include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 namespace py = pybind11;
 
@@ -200,4 +200,4 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       });
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
