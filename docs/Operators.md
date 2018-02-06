@@ -5628,8 +5628,7 @@ expect(node, inputs=[x], outputs=[y],
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
-  dimension. If the value passed to start or end is larger than the `n` (the number
-  of elements in this dimension), it represents `n`. If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  dimension.
   
   Example 1:
   
@@ -5652,11 +5651,11 @@ expect(node, inputs=[x], outputs=[y],
         [1, 2, 3, 4],
         [5, 6, 7, 8],
     ]
-    starts = [0, 1]
-    ends = [-1, 1000]
+    starts = [0]
+    ends = [-1]
   
     result = [
-        [2, 3, 4],
+        [1, 2, 3, 4],
     ]
   
 
