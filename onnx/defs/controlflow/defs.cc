@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-using SupportType = onnx::OpSchema::SupportType;
+using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
 OPERATOR_SCHEMA(If)
     .SetSupportLevel(SupportType::EXPERIMENTAL)

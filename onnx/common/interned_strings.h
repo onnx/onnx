@@ -7,7 +7,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 #define FORALL_BUILTIN_SYMBOLS(_) \
 _(PythonOp) \
@@ -168,13 +168,13 @@ inline Symbol operator "" _sym(const char * s, size_t) {
   return Symbol(s);
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
 // make symbol behave like an integer in hash tables
 namespace std {
   template<>
-  struct hash<onnx::Symbol> {
-    std::size_t operator()(onnx::Symbol s) const {
+  struct hash<ONNX_NAMESPACE::Symbol> {
+    std::size_t operator()(ONNX_NAMESPACE::Symbol s) const {
       return std::hash<uint32_t>()(static_cast<uint32_t>(s));
     }
   };

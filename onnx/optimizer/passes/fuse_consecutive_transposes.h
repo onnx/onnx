@@ -5,7 +5,7 @@
 
 #include "onnx/optimizer/passes/optimize_pass.h"
 
-namespace onnx { namespace optimization {
+namespace ONNX_NAMESPACE { namespace optimization {
 
 struct FuseConsecutiveTransposes : public OptimizePass {
   explicit FuseConsecutiveTransposes()
@@ -47,4 +47,4 @@ struct FuseConsecutiveTransposes : public OptimizePass {
   }
 };
 
-}} // namespace onnx::optimization
+}} // namespace ONNX_NAMESPACE::optimization

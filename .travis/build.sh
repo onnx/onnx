@@ -8,7 +8,7 @@ onnx_dir="$PWD"
 # install onnx
 cd $onnx_dir
 ccache -z
-pip install -v .
+ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -v .
 ccache -s
 
 # onnx tests
@@ -27,3 +27,9 @@ python onnx/gen_proto.py
 backend-test-tools generate-data
 git status
 git diff --exit-code
+
+# Do not hardcode onnx's namespace in the c++ source code, so that
+# other libraries who statically link with onnx can hide onnx symbols
+# in a private namespace.
+! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
+! grep -R --include='*.cc' --include='*.h' 'onnx::' .

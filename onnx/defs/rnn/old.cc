@@ -1,6 +1,6 @@
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {

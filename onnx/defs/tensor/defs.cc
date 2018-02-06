@@ -3,7 +3,7 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
 OPERATOR_SCHEMA(Cast)
     .SetDoc(R"DOC(

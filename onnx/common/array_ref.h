@@ -21,7 +21,7 @@
 #include <array>
 #include <vector>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
   /// ArrayRef - Represent a constant reference to an array (0 or more elements
   /// consecutively in memory), i.e. a start pointer and a length.  It allows
   /// various APIs to take consecutive elements easily and conveniently.
@@ -181,4 +181,4 @@ namespace onnx {
     /// @}
   };
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

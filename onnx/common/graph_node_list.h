@@ -3,7 +3,7 @@
 
 #include "onnx/common/assertions.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 // Intrusive doubly linked lists with sane reverse iterators.
 // The header file is named graph_node_list.h because it is ONLY
@@ -144,12 +144,12 @@ static inline bool operator!=(generic_graph_node_list_iterator<T> a, generic_gra
   return *a != *b;
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
 namespace std {
 
 template<typename T>
-struct iterator_traits<onnx::generic_graph_node_list_iterator<T>> {
+struct iterator_traits<ONNX_NAMESPACE::generic_graph_node_list_iterator<T>> {
   using difference_type = int64_t;
   using value_type = T*;
   using pointer = T**;

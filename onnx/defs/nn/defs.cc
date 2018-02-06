@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     static std::string pads_doc = "Padding for the beginning and ending along each axis, it can take any value greater "
                                   "than or equal to 0. The value represent the number of pixels added to the beginning "
                                   "and end part of the corresponding axis. `pads` format should be as follow "
@@ -20,7 +20,7 @@ namespace onnx {
                                       "encouraged to use explicit padding specified in the pads attribute.";
 }
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -71,9 +71,9 @@ namespace onnx {
     OPERATOR_SCHEMA(MaxPool)
         .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -124,9 +124,9 @@ namespace onnx {
     OPERATOR_SCHEMA(LpPool)
         .FillUsing(LpPoolOpSchemaGenerator("LpPool"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -163,9 +163,9 @@ namespace onnx {
 
     OPERATOR_SCHEMA(MaxRoiPool)
         .FillUsing(RoiPoolOpSchemaGenerator("max"));
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -224,9 +224,9 @@ computes the output.)DOC";
     OPERATOR_SCHEMA(Conv)
         .FillUsing(ConvOpSchemaGenerator("a filter"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(const char* filter_desc) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -294,9 +294,9 @@ and computes the output.)DOC";
     OPERATOR_SCHEMA(ConvTranspose)
         .FillUsing(ConvTransposeOpSchemaGenerator("a filter"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
   std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char* op_type, const char* op) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -328,9 +328,9 @@ namespace onnx {
   .FillUsing(GlobalPoolingOpSchemaGenerator("AveragePool", "average"));
   OPERATOR_SCHEMA(GlobalMaxPool)
   .FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max"));
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
   std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const char* op_type, const char* op) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -366,7 +366,7 @@ namespace onnx {
 
     OPERATOR_SCHEMA(GlobalLpPool)
         .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
 OPERATOR_SCHEMA(BatchNormalization)
     .NumOutputs({ 1, 5 })

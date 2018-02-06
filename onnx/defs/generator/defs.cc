@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
 OPERATOR_SCHEMA(Constant)
     .SetDoc(R"DOC(A constant tensor.)DOC")
