@@ -4,7 +4,7 @@
 #include "onnx/defs/schema.h"
 #include <functional>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
@@ -63,9 +63,9 @@ OPERATOR_SCHEMA(ReduceL2)
     .FillUsing(ReduceDocGenerator("L2 norm"));
 
 
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
@@ -96,4 +96,4 @@ OPERATOR_SCHEMA(ArgMax)
 OPERATOR_SCHEMA(ArgMin)
     .FillUsing(ArgReduceDocGenerator("min"));
 
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE

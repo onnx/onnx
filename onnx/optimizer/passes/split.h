@@ -5,7 +5,7 @@
 
 #include "onnx/optimizer/passes/optimize_pass.h"
 
-namespace onnx { namespace optimization {
+namespace ONNX_NAMESPACE { namespace optimization {
 
 static const char* impure_operators[] = {
   "RandomNormal",
@@ -197,4 +197,4 @@ struct SplitPredict : public OptimizePass {
   }
 };
 
-}} // namespace onnx::optimization
+}} // namespace ONNX_NAMESPACE::optimization

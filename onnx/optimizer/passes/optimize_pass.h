@@ -6,7 +6,7 @@
 #include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"
 
-namespace onnx { namespace optimization {
+namespace ONNX_NAMESPACE { namespace optimization {
 
 enum class API_TYPE {
   PROTO, IR
@@ -23,11 +23,11 @@ struct OptimizePass {
     : name(name), type(type) {
   }
 
-  virtual void optimize(onnx::ModelProto& mp) {}
+  virtual void optimize(ONNX_NAMESPACE::ModelProto& mp) {}
 
   virtual void optimize(Graph& graph) {}
 
 };
 
 
-}} // namespace onnx::optimization
+}} // namespace ONNX_NAMESPACE::optimization

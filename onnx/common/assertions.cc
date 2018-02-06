@@ -6,7 +6,7 @@
 
 #include "onnx/common/assertions.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 void barf(const char *fmt, ...) {
   char msg[2048];
@@ -19,4 +19,4 @@ void barf(const char *fmt, ...) {
   throw assert_error(msg);
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
