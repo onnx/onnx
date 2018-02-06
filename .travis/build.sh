@@ -5,13 +5,10 @@ source "$scripts_dir/common";
 
 onnx_dir="$PWD"
 
-# use a random string as the onnx namespace
-onnx_namespace=$(cat /dev/random | LC_CTYPE=C tr -dc "[:alpha:]" | head -c 8)
-
 # install onnx
 cd $onnx_dir
 ccache -z
-ONNX_NAMESPACE="$onnx_namespace" pip install -v .
+ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -v .
 ccache -s
 
 # onnx tests
