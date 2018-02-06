@@ -47,6 +47,40 @@ class Slice(Base):
                name='test_slice_neg')
 
     @staticmethod
+    def export_slice_start_out_of_bounds():
+        node = onnx.helper.make_node(
+            'Slice',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[1],
+            starts=[1000],
+            ends=[-1],
+        )
+
+        x = np.random.randn(20, 10, 5).astype(np.float32)
+        y = x[:, 1000:-1]
+
+        expect(node, inputs=[x], outputs=[y],
+               name='test_slice_end_out_of_bounds')
+
+    @staticmethod
+    def export_slice_end_out_of_bounds():
+        node = onnx.helper.make_node(
+            'Slice',
+            inputs=['x'],
+            outputs=['y'],
+            axes=[1],
+            starts=[1],
+            ends=[1000],
+        )
+
+        x = np.random.randn(20, 10, 5).astype(np.float32)
+        y = x[:, 1:1000]
+
+        expect(node, inputs=[x], outputs=[y],
+               name='test_slice_end_out_of_bounds')
+
+    @staticmethod
     def export_slice_default_axes():
         node = onnx.helper.make_node(
             'Slice',
