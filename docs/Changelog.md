@@ -1988,7 +1988,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -2558,7 +2558,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4798,7 +4798,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4847,7 +4847,7 @@ opset_import {
 
 ### <a name="Softsign-1"></a>**Softsign-1**</a>
 
-  Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
+  Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
 #### Versioning
 
@@ -4870,7 +4870,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softsign (x/1+|x|) values of the input tensor computed element-wise</dd>
+<dd>The softsign (x/(1+|x|)) values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints

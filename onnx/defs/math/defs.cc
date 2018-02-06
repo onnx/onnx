@@ -88,7 +88,7 @@ will throw errors.
     schema.Input(0, "input",
          "The input tensor that's coerced into a 2D matrix of size (NxD) "
          "as described above.", "T");
-    schema.Output(0, "output", "The softmax normalized output values with the same "
+    schema.Output(0, "output", "The normalized output values with the same "
           "shape as input tensor.", "T");
     schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -426,13 +426,13 @@ OPERATOR_SCHEMA(Hardmax)
 
 OPERATOR_SCHEMA(Softsign)
     .SetDoc(R"DOC(
-Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
+Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 )DOC")
     .Input(0, "input", "1-D input tensor", "T")
     .Output(
         0,
         "output",
-        "The softsign (x/1+|x|) values of the input tensor computed element-wise",
+        "The softsign (x/(1+|x|)) values of the input tensor computed element-wise",
         "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
