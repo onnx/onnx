@@ -20,6 +20,16 @@ import subprocess
 import sys
 from textwrap import dedent
 
+from tools.ninja_builder import NinjaBuilder, ninja_build_ext
+import glob
+import json
+
+try:
+    import ninja
+    WITH_NINJA = True
+except ImportError:
+    WITH_NINJA = False
+
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
@@ -108,14 +118,18 @@ class Protobuf(Dependency):
             includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
         elif use_conda:
             includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
+        else:
+            print("Warning: Environment Variable PROTOBUF_INCDIR or CONDA_PREFIX is not set, which may cause protobuf including folder error.")
 
         self.libraries = libs
         self.include_dirs = includes
+
 
 class Pybind11(Dependency):
     def __init__(self):
         super(Pybind11, self).__init__()
         self.include_dirs = [os.path.join(TP_DIR, 'pybind11', 'include')]
+
 
 ################################################################################
 # Customized commands
@@ -226,87 +240,30 @@ class build_py(setuptools.command.build_py.build_py):
 class develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command('create_version')
-        return setuptools.command.develop.develop.run(self)
+        setuptools.command.develop.develop.run(self)
+        self.create_compile_commands()
+
+    def create_compile_commands(self):
+        def load(filename):
+            with open(filename) as f:
+                return json.load(f)
+        ninja_files = glob.glob('build/*_compile_commands.json')
+        all_commands = [entry for f in ninja_files for entry in load(f)]
+        with open('compile_commands.json', 'w') as f:
+            json.dump(all_commands, f, indent=2)
 
 
-class build_ext(setuptools.command.build_ext.build_ext):
+build_ext_parent = ninja_build_ext if WITH_NINJA \
+    else setuptools.command.build_ext.build_ext
+
+
+class build_ext(build_ext_parent):
     def run(self):
         self.run_command('build_proto')
         for ext in self.extensions:
             ext.pre_run()
         return setuptools.command.build_ext.build_ext.run(self)
 
-    def build_extension(self, ext):
-        try:
-            import ninja
-        except ImportError:
-            # Once PEP 518 is in, we can specify ninja as a build time
-            # requires. Technically, we can make it work without the
-            # PEP by installing ninja to a temp directory and insert
-            # that to sys.path, but as at this point ninja integration
-            # is not well proven yet, let's just fall back to the
-            # default build method.
-            return self._build_default(ext)
-        else:
-            return self._build_with_ninja(ext)
-
-    def _build_default(self, ext):
-        return setuptools.command.build_ext.build_ext.build_extension(self, ext)
-
-    def _build_with_ninja(self, ext):
-        import ninja
-
-        build_file = os.path.join(TOP_DIR, 'build.{}.ninja'.format(ext.name))
-        log.debug('Ninja build file at {}'.format(build_file))
-        w = ninja.Writer(open(build_file, 'w'))
-
-        w.rule('compile', '$cmd')
-        w.rule('link', '$cmd')
-
-        @contextmanager
-        def patch(obj, attr_name, val):
-            orig_val = getattr(obj, attr_name)
-            setattr(obj, attr_name, val)
-            yield
-            setattr(obj, attr_name, orig_val)
-
-        orig_compile = distutils.unixccompiler.UnixCCompiler._compile
-        orig_link = distutils.unixccompiler.UnixCCompiler.link
-
-        def _compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts):
-            depfile = os.path.splitext(obj)[0] + '.d'
-            def spawn(cmd):
-                w.build(
-                    [obj], 'compile', [src],
-                    variables={
-                        'cmd': cmd,
-                        'depfile': depfile,
-                        'deps': 'gcc'
-                    })
-
-            extra_postargs.extend(['-MMD', '-MF', depfile])
-            with patch(self, 'spawn', spawn):
-                orig_compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts)
-
-        def link(self, target_desc, objects,
-             output_filename, output_dir=None, libraries=None,
-             library_dirs=None, runtime_library_dirs=None,
-             export_symbols=None, debug=0, extra_preargs=None,
-             extra_postargs=None, build_temp=None, target_lang=None):
-
-            w.close()
-            ninja._program('ninja', ['-f', build_file])
-
-            orig_link(self, target_desc, objects,
-                      output_filename, output_dir, libraries,
-                      library_dirs, runtime_library_dirs,
-                      export_symbols, debug, extra_preargs,
-                      extra_postargs, build_temp, target_lang)
-
-        with patch(distutils.unixccompiler.UnixCCompiler, '_compile', _compile):
-            with patch(distutils.unixccompiler.UnixCCompiler, 'link', link):
-                with patch(self, 'force', True):
-                    self._build_default(ext)
 
 cmdclass = {
     'build_proto': build_proto,
@@ -325,7 +282,7 @@ class ONNXExtension(setuptools.Extension):
     def pre_run(self):
         pass
 
-def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects):
+def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects, define_macros):
     include_dirs = sum([dep.include_dirs for dep in dependencies], [TOP_DIR])
     libraries = sum([dep.libraries for dep in dependencies], [])
     extra_compile_args=['-std=c++11']
@@ -335,12 +292,9 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
     if platform.system() == 'Windows':
         extra_compile_args.append('/MT')
-    macros = []
-    if ONNX_ML:
-        macros = [('ONNX_ML', '1')]
     return ExtType(
         name=name,
-        define_macros = macros,
+        define_macros=define_macros,
         sources=sources,
         include_dirs=include_dirs,
         libraries=libraries,
@@ -355,10 +309,16 @@ class ONNXCpp2PyExtension(setuptools.Extension):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
         if ONNX_ML:
             # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx.pb.cc"), os.path.join(SRC_DIR, "onnx-operators.pb.cc")]
+            sources_filter = [
+                os.path.join(SRC_DIR, "onnx.pb.cc"),
+                os.path.join(SRC_DIR, "onnx-operators.pb.cc"),
+            ]
         else:
             # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx-ml.pb.cc"), os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc")]
+            sources_filter = [
+                os.path.join(SRC_DIR, "onnx-ml.pb.cc"),
+                os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc"),
+            ]
 
         for source_filter in sources_filter:
             if source_filter in self.sources:
@@ -386,13 +346,18 @@ if build_for_release and platform.system() == 'Linux':
 else:
     cpp2py_deps.append(Protobuf())
 
+define_macros = [('ONNX_NAMESPACE', os.getenv('ONNX_NAMESPACE', 'onnx'))]
+if ONNX_ML:
+    define_macros.append(('ONNX_ML', '1'))
+
 ext_modules = [
     create_extension(ONNXCpp2PyExtension,
                      str('onnx.onnx_cpp2py_export'),
                      sources=[], # sources will be propagated in pre_run
                      dependencies=cpp2py_deps,
                      extra_link_args=cpp2py_link_args,
-                     extra_objects=cpp2py_extra_objects)
+                     extra_objects=cpp2py_extra_objects,
+                     define_macros=define_macros)
 ]
 
 ################################################################################

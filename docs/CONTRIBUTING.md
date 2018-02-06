@@ -54,8 +54,8 @@ to begin the tests.
 
 # Other developer documentation
 
-* [How to implement ONNX backend (ONNX to something converter)](Implementing%20an%20ONNX%20backend.md)
-* [Backend test infrastructure and how to add tests](ONNX%20Backend%20Test.md)
+* [How to implement ONNX backend (ONNX to something converter)](ImplementingAnOnnxBackend.md)
+* [Backend test infrastructure and how to add tests](OnnxBackendTest.md)
 
 # License
 

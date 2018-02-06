@@ -3,33 +3,37 @@
 
 #include "onnx/defs/schema.h"
 
-using AttrType = onnx::OpSchema::AttrType;
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
+// Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
-                    AttrType::STRING);
-        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttrType::INT);
+                    AttributeProto::STRING,
+                    std::string("foward"));
+        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL);
         schema.Attr("activation_alpha",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
                     "in LSTM.",
-                    AttrType::FLOATS);
+                    AttributeProto::FLOATS,
+                    OPTIONAL);
         schema.Attr("activation_beta",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
                     "in LSTM.",
-                    AttrType::FLOATS);
+                    AttributeProto::FLOATS,
+                    OPTIONAL);
         schema.Attr("output_sequence",
                     "The sequence output for the hidden is optional if 0. Default 0.",
-                    AttrType::INT);
+                    AttributeProto::INT,
+                    static_cast<int64_t>(0));
         schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
                     "in the range of [-threshold, +threshold] and is applied to the input "
-                    "of activations. No clip if not specified.", AttrType::FLOAT);
+                    "of activations. No clip if not specified.", AttributeProto::FLOAT, OPTIONAL);
         schema.Input(0, "X",
                      "The input sequences packed (and potentially padded) into one 3-D "
                      "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
@@ -45,20 +49,17 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Output(0, "Y",
                       "A tensor that concats all the intermediate output values of the hidden. "
                       "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
-                      "It is optional if `output_sequence` is 0.", "T");
+                      "It is optional if `output_sequence` is 0.", "T", OpSchema::Optional);
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
-                      "`[num_directions, batch_size, hidden_size]`.", "T");
+                      "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                               "Constrain input and output types to float tensors.");
         schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
     };
 }
 
-
 OPERATOR_SCHEMA(RNN)
-    .NumInputs(3, 6)
-    .NumOutputs(1, 2)
     .SetDoc(R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
@@ -93,42 +94,39 @@ Notations:
 
 Activation functions:
 
-  relu(x)                - max(0, x)
+  Relu(x)                - max(0, x)
 
-  tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
 
-  sigmoid(x)             - 1/(1 + e^{-x})
+  Sigmoid(x)             - 1/(1 + e^{-x})
 
   (NOTE: Below are optional)
 
-  linear(x)              - alpha*x + beta
+  Affine(x)              - alpha*x + beta
 
-  leakyRelu(x)           - x if x >= 0 else alpha * x
+  LeakyRelu(x)           - x if x >= 0 else alpha * x
 
-  thresholdedRelu(x)     - x if x >= alpha else 0
+  ThresholdedRelu(x)     - x if x >= alpha else 0
 
-  pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  ScaledTanh(x)          - alpha*Tanh(beta*x)
 
-  scaledTanh(x)          - alpha*tanh(beta*x)
+  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
 
-  sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
 
-  elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  Softsign(x)            - x/(1 + |x|)
 
-  softsign(x)            - x/(1 + |x|)
+  Softplus(x)            - log(1 + e^x)
 
-  softplus(x)            - log(1 + e^x)
-
-  parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-
-Equations (Default: f=tanh):
+Equations (Default: f=Tanh):
 
   - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 )DOC")
     .Attr("activations", "One (or two if bidirectional) activation function for "
           "input gate. The activation function must be one of the activation "
-          "functions specified above. Optional: Default `tanh` if not specified.",
-          AttrType::STRINGS)
+          "functions specified above. Optional: Default `Tanh` if not specified.",
+          AttributeProto::STRINGS,
+          std::vector<std::string>{"Tanh", "Tanh"})
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
@@ -147,8 +145,6 @@ Equations (Default: f=tanh):
 
 
 OPERATOR_SCHEMA(GRU)
-    .NumInputs(3, 6)
-    .NumOutputs(1, 2)
     .SetDoc(R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -187,41 +183,39 @@ Notations:
 
 Activation functions:
 
-  relu(x)                - max(0, x)
+  Relu(x)                - max(0, x)
 
-  tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
 
-  sigmoid(x)             - 1/(1 + e^{-x})
+  Sigmoid(x)             - 1/(1 + e^{-x})
 
   (NOTE: Below are optional)
 
-  linear(x)              - alpha*x + beta
+  Affine(x)              - alpha*x + beta
 
-  leakyRelu(x)           - x if x >= 0 else alpha * x
+  LeakyRelu(x)           - x if x >= 0 else alpha * x
 
-  thresholdedRelu(x)     - x if x >= alpha else 0
+  ThresholdedRelu(x)     - x if x >= alpha else 0
 
-  pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  ScaledTanh(x)          - alpha*Tanh(beta*x)
 
-  scaledTanh(x)          - alpha*tanh(beta*x)
+  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
 
-  sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
 
-  elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  Softsign(x)            - x/(1 + |x|)
 
-  softsign(x)            - x/(1 + |x|)
+  Softplus(x)            - log(1 + e^x)
 
-  softplus(x)            - log(1 + e^x)
-
-  parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-
-Equations (Default: f=sigmoid, g=tanh):
+Equations (Default: f=Sigmoid, g=Tanh):
 
   - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
 
   - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
 
-  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
+  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+
+  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC")
@@ -229,7 +223,14 @@ Equations (Default: f=sigmoid, g=tanh):
           "for update, reset, and hidden gates. The activation functions must be one "
           "of the activation functions specified above. Optional: See the equations "
           "for default if not specified.",
-          AttrType::STRINGS)
+          AttributeProto::STRINGS,
+          OPTIONAL)
+    .SinceVersion(3)
+    .Attr("linear_before_reset", "When computing the output of the hidden gate, "
+          "apply the linear transformation before multiplying by the output of the "
+          "reset gate.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
@@ -248,8 +249,6 @@ Equations (Default: f=sigmoid, g=tanh):
 
 
 OPERATOR_SCHEMA(LSTM)
-    .NumInputs(3, 8)
-    .NumOutputs(1, 2)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
@@ -294,35 +293,31 @@ Notations:
 
 Activation functions:
 
-  relu(x)                - max(0, x)
+  Relu(x)                - max(0, x)
 
-  tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
 
-  sigmoid(x)             - 1/(1 + e^{-x})
+  Sigmoid(x)             - 1/(1 + e^{-x})
 
   (NOTE: Below are optional)
 
-  linear(x)              - alpha*x + beta
+  Affine(x)              - alpha*x + beta
 
-  leakyRelu(x)           - x if x >= 0 else alpha * x
+  LeakyRelu(x)           - x if x >= 0 else alpha * x
 
-  thresholdedRelu(x)     - x if x >= alpha else 0
+  ThresholdedRelu(x)     - x if x >= alpha else 0
 
-  pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+  ScaledTanh(x)          - alpha*Tanh(beta*x)
 
-  scaledTanh(x)          - alpha*tanh(beta*x)
+  HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
 
-  sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+  Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
 
-  elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  Softsign(x)            - x/(1 + |x|)
 
-  softsign(x)            - x/(1 + |x|)
+  Softplus(x)            - log(1 + e^x)
 
-  softplus(x)            - log(1 + e^x)
-
-  parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-
-Equations (Default: f=sigmoid, g=tanh, h=tanh):
+Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
   - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
 
@@ -340,9 +335,11 @@ Equations (Default: f=sigmoid, g=tanh, h=tanh):
           "for input, output, forget, cell, and hidden. The activation functions must "
           "be one of the activation functions specified above. Optional: See the equations "
           "for default if not specified.",
-          AttrType::STRINGS)
+          AttributeProto::STRINGS,
+          OPTIONAL)
     .Attr("input_forget", "Couple the input and forget gates if 1, default 0.",
-          AttrType::INT)	  
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[iofc]` and "
            "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
@@ -367,6 +364,8 @@ Equations (Default: f=sigmoid, g=tanh, h=tanh):
 	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
 	   "assumed to be 0.", "T",
        OpSchema::Optional)
-    .FillUsing(RNNDocGenerator("LSTM"));
-
-}  // namespace onnx    
+    .FillUsing(RNNDocGenerator("LSTM"))
+    .Output(2, "Y_c",
+            "The last output value of the cell. It has shape "
+            "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
+}  // namespace ONNX_NAMESPACE

@@ -3,24 +3,23 @@
 
 #include "onnx/defs/schema.h"
 
-using AttrType = onnx::OpSchema::AttrType;
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
 OPERATOR_SCHEMA(Split)
     .SinceVersion(1)
-    .NumInputs(1, 2)
-    .NumOutputs(1, INT_MAX)
     .Input(0, "input", "The tensor to split", "T")
     .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T", OpSchema::Optional)
-    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T")
+    .Output(0, "outputs...", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.")
     .Attr("axis",
           "Which axis to split on",
-          AttrType::INT)
+          AttributeProto::INT,
+          OPTIONAL)
     .Attr("split",
           "length of each output",
-          AttrType::INTS)
+          AttributeProto::INTS,
+          OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. The lengths of the split can be specified using argument 'axis' or
 optional second input blob to the operator. Otherwise, the tensor is split
@@ -29,23 +28,22 @@ to equal sized parts.
 
 OPERATOR_SCHEMA(Pad)
     .SinceVersion(1)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr("paddings",
           "List of integers indicate the padding element count at the "
-          "begining and end of each axis, for 2D it is the number of pixel. "
+          "beginning and end of each axis, for 2D it is the number of pixel. "
           "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
           "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-          "added at the begining of axis `i` and xi_end, the number of pixels added at "
+          "added at the beginning of axis `i` and xi_end, the number of pixels added at "
           "the end of axis `i`.",
-          AttrType::INTS,
-          true)
+          AttributeProto::INTS)
     .Attr("mode",
           "Three modes: constant(default), reflect, edge",
-          AttrType::STRING)
+          AttributeProto::STRING,
+          std::string("constant"))
     .Attr("value",
           "One float, indicates the value to be filled, default is 0",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT,
+          0.0f)
     .SetDoc(R"DOC(
 Given `data` tensor, paddings, mode, and value.
 

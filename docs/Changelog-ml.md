@@ -202,7 +202,7 @@ opset_import {
   Uses an index mapping to convert a dictionary to an array.
       The output array will be equal in length to the index mapping vector parameter.
       All keys in the input dictionary must be present in the index mapping vector.
-      For each item in the input dictionary, insert its value in the ouput array.
+      For each item in the input dictionary, insert its value in the output array.
       The position of the insertion is determined by the position of the item's key
       in the index mapping. Any keys not present in the input dictionary, will be
       zero in the output array.  Use either string_vocabulary or int64_vocabulary, not both.
@@ -233,27 +233,29 @@ opset_import {
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T</dt>
+<dt><tt>X</tt> : T1</dt>
 <dd>The input dictionary</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : tensor(int64)</dt>
+<dt><tt>Y</tt> : T2</dt>
 <dd>The tensor</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : map(string, int64), map(int64, string)</dt>
+<dt><tt>T1</tt> : map(string, int64), map(int64, string), map(int64, float), map(int64, double), map(string, float), map(string, double)</dt>
+<dd> allowed types.</dd>
+<dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double), tensor(string)</dt>
 <dd> allowed types.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**</a>
 
-  Concatenates input features into one continuous output.  
+  Concatenates input features into one continuous output.
       Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
       Inputs will be written to the output in the order of the input arguments.
       All inputs are tensors of float.  Any feature that is not a tensor of float should
@@ -563,13 +565,16 @@ opset_import {
 ### <a name="ai.onnx.ml.OneHotEncoder-1"></a>**ai.onnx.ml.OneHotEncoder-1**</a>
 
   Replace the inputs with an array of ones and zeros, where the only
-      one is the zero-based category that was passed in.  The total category count 
-      will determine the length of the vector. For example if we pass a 
-      tensor with a single value of 4, and a category count of 8, the 
+      one is the zero-based category that was passed in.  The total category count
+      will determine the length of the vector. For example if we pass a
+      tensor with a single value of 4, and a category count of 8, the
       output will be a tensor with 0,0,0,0,1,0,0,0 .
   
-      This operator assumes every input in X is of the same category set 
+      This operator assumes every input in X is of the same category set
       (meaning there is only one category count).
+  	
+  	If the input is a tensor of float, int32, or double, the data will be cast
+      to int64s and the cats_int64s category list will be used for the lookups.
 
 #### Versioning
 
@@ -585,7 +590,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>cats_int64s</tt> : int</dt>
+<dt><tt>cats_int64s</tt> : list of ints</dt>
 <dd>list of cateogries, ints</dd>
 <dt><tt>cats_strings</tt> : list of strings</dt>
 <dd>list of cateogries, strings</dd>
@@ -610,13 +615,13 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(string), tensor(int64), tensor(int32), tensor(float), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.SVMClassifier-1"></a>**ai.onnx.ml.SVMClassifier-1**</a>
 
-  SVM classifier prediction 
+  SVM classifier prediction
 
 #### Versioning
 
@@ -786,13 +791,13 @@ opset_import {
 ### <a name="ai.onnx.ml.TreeEnsembleClassifier-1"></a>**ai.onnx.ml.TreeEnsembleClassifier-1**</a>
 
   Tree Ensemble classifier.  Returns the top class for each input in N.
-      All args with nodes_ are fields of a tuple of tree nodes, and 
+      All args with nodes_ are fields of a tuple of tree nodes, and
       it is assumed they are the same length, and an index i will decode the
-      tuple across these inputs.  Each node id can appear only once 
+      tuple across these inputs.  Each node id can appear only once
       for each tree id.
       All fields prefixed with class_ are tuples of votes at the leaves.
       A leaf may have multiple votes, where each vote is weighted by
-      the associated class_weights index.  
+      the associated class_weights index.
       It is expected that either classlabels_strings or classlabels_int64s
       will be passed and the class_ids are an index into this list.
       Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
@@ -875,13 +880,13 @@ opset_import {
 ### <a name="ai.onnx.ml.TreeEnsembleRegressor-1"></a>**ai.onnx.ml.TreeEnsembleRegressor-1**</a>
 
   Tree Ensemble regressor.  Returns the regressed values for each input in N.
-      All args with nodes_ are fields of a tuple of tree nodes, and 
+      All args with nodes_ are fields of a tuple of tree nodes, and
       it is assumed they are the same length, and an index i will decode the
-      tuple across these inputs.  Each node id can appear only once 
+      tuple across these inputs.  Each node id can appear only once
       for each tree id.
       All fields prefixed with target_ are tuples of votes at the leaves.
       A leaf may have multiple votes, where each vote is weighted by
-      the associated target_weights index.  
+      the associated target_weights index.
       All trees must have their node ids start at 0 and increment by 1.
       Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 
@@ -958,10 +963,10 @@ opset_import {
 
 ### <a name="ai.onnx.ml.ZipMap-1"></a>**ai.onnx.ml.ZipMap-1**</a>
 
-  Makes a map from the input and the attributes.  
+  Makes a map from the input and the attributes.
       Assumes input 0 are the values, and the keys are specified by the attributes.
       Must provide keys in either classlabels_strings or classlabels_int64s (but not both).
-      Input 0 may have a batch size larger than 1, 
+      Input 0 may have a batch size larger than 1,
       but each input in the batch must be the size of the keys specified by the attributes.
       The order of the input and attributes determines the key-value mapping.
 

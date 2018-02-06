@@ -19,9 +19,12 @@
 
 #include "data_type_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 using OperatorSetVersion = int;
+
+const char* const ONNX_DOMAIN = "";
+const bool OPTIONAL = false;
 
 typedef std::unordered_set<DataType> DataTypeSet;
 
@@ -30,10 +33,6 @@ typedef std::unordered_set<DataType> DataTypeSet;
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
     TypeConstraintMap;
 
-// A const value returned by OpSchema::CalculateOutput() if the number of
-// output cannot be determined.
-constexpr int kCannotComputeNumOutputs = -1;
-
 /**
  * @brief A class to record the schema of an op.
  *
@@ -41,7 +40,7 @@ constexpr int kCannotComputeNumOutputs = -1;
  *
  * To register an OpSchema, one can use the macro OPERATOR_SCHEMA(name) and
  * then append the various functions in the class. For example, for an op
- * that itakes in two inputs, one output, and the first input and output
+ * that takes in two inputs, one output, and the first input and output
  * could be in-place, can be written as
  *
  *     OPERATOR_SCHEMA(name)
@@ -58,7 +57,7 @@ class OpSchema {
     // Number of this input is 0 or 1.
     Optional = 1,
     // The input formal parameter is variadic.
-    // Number of this input is [0, n].
+    // Number of this input is [1, n].
     Variadic = 2,
   };
 
@@ -188,58 +187,14 @@ class OpSchema {
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
-   * @brief A single input.
-   */
-  OpSchema& NumInputs(int n);
-  /**
-   * @brief Input could be in range [min, max], inclusive.
-   */
-  OpSchema& NumInputs(int min, int max);
-  /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
   OpSchema& NumInputs(std::set<int> allowed_input_nums);
-  /**
-   * @brief Input is checked with a specified function.
-   */
-  OpSchema& NumInputs(std::function<bool(int)> func);
 
-  // Sets the number of outputs, either a fixed number, a min and a max,
-  // or a function that takes in the input number and produces an output
-  // number. Use only one function in the set below.
-  /**
-   * @brief A single output.
-   */
-  OpSchema& NumOutputs(int n);
-  /**
-   * @brief Output could be in range [min, max], inclusive.
-   */
-  OpSchema& NumOutputs(int min, int max);
   /**
    * @brief Output could be one of the values specified in allowed_output_nums.
    */
   OpSchema& NumOutputs(std::set<int> allowed_output_nums);
-  /**
-   * @brief Output is checked with a specified function.
-   */
-  OpSchema& NumOutputs(std::function<bool(int)> func);
-
-  /**
-   * @brief Relationship between inputs and outputs is checked with a specified
-   * function.
-   */
-  OpSchema& NumInputsOutputs(std::function<bool(int, int)> func);
-
-  // Set the function that can calculate the number of output based on the
-  // number of input. Use only one function in the set below.
-  /**
-   * @brief Set the output calculator to a user-defined function.
-   */
-  OpSchema& OutputCalculator(std::function<int(int)> calc);
-  /**
-   * @brief Set the number of outputs to be the same as the number of inputs.
-   */
-  OpSchema& SameNumberOfOutput();
 
   // Sets the rule to allow optional in-place operation.
   OpSchema& AllowConsumed(std::function<std::pair<bool, int>(int)> inplace);
@@ -257,24 +212,8 @@ class OpSchema {
   OpSchema& SetDoc(const std::string& doc);
 
   // Functions to specify domain for the operator schema.
-  // Default domain value ("") means it's ONNX domain.
+  // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
   OpSchema& SetDomain(const std::string& domain);
-
-  // Note: this enum is structurally identical to the
-  // AttributeProto.AttributeType enum defined in onnx.proto.  If you rev one,
-  // you likely need to rev the other.
-  enum class AttrType {
-    FLOAT,
-    INT,
-    STRING,
-    TENSOR,
-    GRAPH,
-    FLOATS,
-    INTS,
-    STRINGS,
-    TENSORS,
-    GRAPHS
-  };
 
   enum class UseType {
     DEFAULT, // read only use of an input
@@ -286,27 +225,59 @@ class OpSchema {
 
   struct Attribute {
     Attribute(
-        const char* name_,
-        const char* description_,
-        AttrType type_,
+        const std::string& name_,
+        const std::string& description_,
+        AttributeProto::AttributeType type_,
         bool required_)
         : name(name_),
           description(description_),
           type(type_),
           required(required_) {}
 
+    Attribute(
+        const std::string& name_,
+        const std::string& description_,
+        AttributeProto default_value_)
+        : name(name_),
+          description(description_),
+          type(default_value_.type()),
+          required(false),
+          default_value(default_value_) {}
+
     const std::string name;
     const std::string description;
-    AttrType type;
+    AttributeProto::AttributeType type;
     bool required;
+    AttributeProto default_value;
   };
 
   OpSchema& Attr(const Attribute& attr);
+
+// Register "optional" attribute with default value.
+#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName) \
+  OpSchema& Attr(                                \
+      const std::string& name,                   \
+      const std::string& description,            \
+      AttributeProto::AttributeType type,        \
+      const TypeName& defaultValue);             \
+  OpSchema& Attr(                                \
+      const std::string& name,                   \
+      const std::string& description,            \
+      AttributeProto::AttributeType type,        \
+      const std::vector<TypeName>& defaultValue);
+
+  ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(float)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(std::string)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(TensorProto)
+  ATTR_SETTER_WITH_DEFAULT_VALUE(GraphProto)
+
+  // Register "required" attribute without default value.
   OpSchema& Attr(
-      const char* name,
-      const char* description,
-      AttrType type,
-      bool required = false);
+      const std::string& name,
+      const std::string& description,
+      AttributeProto::AttributeType type,
+      bool required = true);
   OpSchema& AllowUncheckedAttributes();
 
   // Type constraint.
@@ -364,21 +335,20 @@ class OpSchema {
       const int n,
       const std::string& name,
       const std::string& description,
-      const std::string& type_str);
+      const std::string& type_str,
+      FormalParameterOption param_option = Single);
   OpSchema& TypeConstraint(
       const std::string& type_str,
       const std::vector<std::string>& constraints,
       const std::string& description);
 
+  // Convenience members for types
+  static const std::vector<std::string> all_integral_types;
+  static const std::vector<std::string> all_tensor_types;
+
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
   OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
-
-  /**
-   * @brief A function to allow one to get the number of outputs based on the
-   * number of inputs, if this schema supports it.
-   */
-  int CalculateOutput(int num_input) const;
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
@@ -447,7 +417,7 @@ class OpSchema {
   std::string file_;
   std::string doc_;
   // Default domain value ("") means it's ONNX domain.
-  std::string domain_ = "";
+  std::string domain_ = ONNX_DOMAIN;
   std::map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;
@@ -457,17 +427,13 @@ class OpSchema {
   int line_ = 0;
   SupportType support_;
   int min_input_ = 0;
-  int max_input_ = std::numeric_limits<int>::max();
+  int max_input_ = 0;
   int min_output_ = 0;
-  int max_output_ = std::numeric_limits<int>::max();
+  int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  std::function<bool(int, int)> num_inputs_outputs_allowed_ = [](int, int) {
-    return true;
-  };
-  std::function<int(int)> calculate_output_;
   // Is input i allowed/required to be marked consumed_
   // If so, which output idx shares the same buffer with i
   std::function<std::pair<UseType, int>(int)> consumed_ = [](int) {
@@ -480,7 +446,7 @@ class OpSchema {
 typedef std::unordered_map<
     std::string,
     std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>
-    OpName_Domain_Version_Schema_Map;    
+    OpName_Domain_Version_Schema_Map;
 
 /**
  * @brief A registry to hold all the operator schemas.
@@ -493,7 +459,8 @@ class OpSchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[""] = std::make_pair(1, 2);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 3);
+      map_["ai.onnx.ml"] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -531,7 +498,32 @@ class OpSchemaRegistry {
                   << ") from file " << op_schema.file() << " line "
                   << op_schema.line()
                   << ", but it is already registered from file "
-                  << schema.file() << " line " << schema.line();
+                  << schema.file() << " line " << schema.line() << std::endl;
+        abort();
+      }
+
+      auto ver_range_map = DomainToVersionRange::Instance().Map();
+      auto ver_range_it = ver_range_map.find(op_domain);
+      if (ver_range_it == ver_range_map.end()) {
+        std::cerr << "Trying to register schema with name " << op_name
+                  << " (domain: " << op_domain << " version: " << ver
+                  << ") from file " << op_schema.file() << " line "
+                  << op_schema.line() << ", but it its domain is not"
+                  << "known by the checker." << std::endl;
+        abort();
+      }
+      auto lower_bound_incl = ver_range_it->second.first;
+      auto upper_bound_incl = ver_range_it->second.second;
+      if (!(lower_bound_incl <= ver && upper_bound_incl >= ver)) {
+        std::cerr << "Trying to register schema with name " << op_name
+                  << " (domain: " << op_domain << " version: " << ver
+                  << ") from file " << op_schema.file() << " line "
+                  << op_schema.line() << ", but it its version is not"
+                  << "in the inclusive range [" << lower_bound_incl << ", "
+                  << upper_bound_incl << "] (usually, this means you "
+                  << "bumped the operator version but "
+                  << "forgot to update the version range in DomainToVersionRange "
+                  << "in onnx/defs/schema.h)." << std::endl;
         abort();
       }
       m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
@@ -539,10 +531,10 @@ class OpSchemaRegistry {
   };
 
   // Return the latest schema for an operator in specified domain.
-  // Domain with default value "" means ONNX.
+  // Domain with default value ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
-      const std::string& domain = "") {
+      const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       return &m[key][domain].rbegin()->second;
@@ -552,11 +544,12 @@ class OpSchemaRegistry {
   }
 
   // Return the schema with biggest version, which is not greater than specified
-  // <maxInclusiveVersion> in specified domain. Domain with default value "" means ONNX.
+  // <maxInclusiveVersion> in specified domain. Domain with default value
+  // ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
       const int maxInclusiveVersion,
-      const std::string& domain = "") {
+      const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       auto pos = m[key][domain].lower_bound(maxInclusiveVersion);
@@ -618,10 +611,14 @@ class OpSchemaRegistry {
   }
 };
 
-#define OPERATOR_SCHEMA(name)                          \
-  static onnx::OpSchemaRegistry::OpSchemaRegisterOnce( \
-      op_schema_register_once##name) = OpSchema(#name, __FILE__, __LINE__)
+#define OPERATOR_SCHEMA(name) OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
+#define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) \
+  OPERATOR_SCHEMA_UNIQ(Counter, name)
+#define OPERATOR_SCHEMA_UNIQ(Counter, name)            \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
+      op_schema_register_once##name##Counter) =        \
+      OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

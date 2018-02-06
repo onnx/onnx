@@ -21,14 +21,26 @@ opset_import {
 }
 ~~~~
 
-#### Inputs (0 - &#8734;)
+#### Inputs (1 - &#8734;)
 
+<dl>
+<dt><tt>input</tt> (variadic) : T</dt>
+<dd>Arbitrary input</dd>
+</dl>
 
-#### Outputs (0 - &#8734;)
+#### Outputs (1 - &#8734;)
 
+<dl>
+<dt><tt>output</tt> (variadic) : T</dt>
+<dd>Arbitrary output</dd>
+</dl>
 
 #### Type Constraints
 
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
+</dl>
 
 ### <a name="Abs-1"></a>**Abs-1**</a>
 
@@ -232,7 +244,7 @@ opset_import {
 ### <a name="ArgMax-1"></a>**ArgMax-1**</a>
 
   Computes the indices of the max elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
+  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
@@ -279,7 +291,7 @@ opset_import {
 ### <a name="ArgMin-1"></a>**ArgMin-1**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
-  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1. 
+  provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
@@ -327,7 +339,7 @@ opset_import {
 
   AveragePool consumes an input tensor X and applies average pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   average pooling consisting of computing the average on all values of a 
+   average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -345,13 +357,13 @@ opset_import {
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -399,20 +411,20 @@ opset_import {
 
 <dl>
 <dt><tt>epsilon</tt> : float</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
+<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int</dt>
-<dd>If set to nonzero, run spatial batch normalization in test mode.</dd>
+<dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
 <dt><tt>momentum</tt> : float</dt>
-<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum)</dd>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int</dt>
-<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.</dd>
+<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW or NHWC depending on the order parameter.</dd>
+<dd>The input 4-dimensional tensor of shape NCHW.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
 <dt><tt>B</tt> : T</dt>
@@ -423,18 +435,18 @@ opset_import {
 <dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
 </dl>
 
-#### Outputs (0 - &#8734;)
+#### Outputs (1 - 5)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>The output 4-dimensional tensor of the same shape as X.</dd>
-<dt><tt>mean</tt> : T</dt>
+<dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
-<dt><tt>var</tt> : T</dt>
+<dt><tt>var</tt> (optional) : T</dt>
 <dd>The running variance after the BatchNormalization operator. Must be in-place with the input var. Should not be used for testing.</dd>
-<dt><tt>saved_mean</tt> : T</dt>
+<dt><tt>saved_mean</tt> (optional) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
-<dt><tt>saved_var</tt> : T</dt>
+<dt><tt>saved_var</tt> (optional) : T</dt>
 <dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
 </dl>
 
@@ -450,9 +462,7 @@ opset_import {
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
-  in the 'DataType' enum field in the TensorProto message. If the 'to' argument
-  is not provided or is not one of the enumerated types in DataType, Caffe2
-  throws an Enforce error.
+  in the 'DataType' enum field in the TensorProto message.
   
   NOTE: Casting to and from strings is not supported yet.
 
@@ -469,7 +479,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>to</tt> : string</dt>
+<dt><tt>to</tt> : string (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
@@ -596,7 +606,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int</dt>
+<dt><tt>axis</tt> : int (required)</dt>
 <dd>Which axis to concat on</dd>
 </dl>
 
@@ -638,7 +648,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>value</tt> : tensor</dt>
+<dt><tt>value</tt> : tensor (required)</dt>
 <dd>The value for the elements of the output tensor.</dd>
 </dl>
 
@@ -747,17 +757,17 @@ opset_import {
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int</dt>
-<dd>number of groups input channels and output channels are divided into</dd>
+<dd>number of groups input channels and output channels are divided into, default is 1.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
-<dd>The shape of the convolution kernel.</dd>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>stride along each axis.</dd>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -804,19 +814,21 @@ opset_import {
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter.</dd>
+<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int</dt>
-<dd>number of groups input channels and output channels are divided into</dd>
+<dd>number of groups input channels and output channels are divided into, default is 1.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
-<dd>The shape of the convolution kernel.</dd>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
+<dt><tt>output_padding</tt> : list of ints</dt>
+<dd>The zero-padding added to one side of the output. This is also called adjs/adjustment in some frameworks. If output_shape is set, this attribute will be ignored.</dd>
 <dt><tt>output_shape</tt> : list of ints</dt>
-<dd>The shape of the output.</dd>
+<dd>The shape of the output. output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>stride along each axis.</dd>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -1037,7 +1049,7 @@ opset_import {
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
-<dt><tt>mask</tt> : T</dt>
+<dt><tt>mask</tt> (optional) : T</dt>
 <dd>The output mask. If is_test is nonzero, this output is not filled.</dd>
 </dl>
 
@@ -1093,52 +1105,6 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Embedding-1"></a>**Embedding-1**</a>
-
-  Turns positive integers (indexes) into dense vectors of fixed size.
-
-#### Versioning
-
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>input_dim</tt> : int</dt>
-<dd>Size of the input vocabulary.</dd>
-<dt><tt>output_dim</tt> : int</dt>
-<dd>Dimension of the embedding output vectors.</dd>
-<dt><tt>weights</tt> : tensor</dt>
-<dd>2-D tensor of weights [O,I].</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : tensor(int64)</dt>
-<dd>1-D tensor of integers representing indices in the embedding dictionary with length [N] and values [0, input_dim -1]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output tensor of computed features [N, O].</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
-</dl>
-
 ### <a name="Equal-1"></a>**Equal-1**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
@@ -1186,8 +1152,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrains input to float tensors.</dd>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
@@ -1311,7 +1277,7 @@ opset_import {
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output</dd>
+<dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [0, R], where R is the rank of the input tensor. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
 </dl>
 
 #### Inputs
@@ -1411,41 +1377,39 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=sigmoid, g=tanh):
+  Equations (Default: f=Sigmoid, g=Tanh):
   
     - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
   
     - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+  
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
@@ -1474,6 +1438,8 @@ opset_import {
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
+<dt><tt>linear_before_reset</tt> : int</dt>
+<dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
 <dt><tt>output_sequence</tt> : int</dt>
 <dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
@@ -1495,10 +1461,10 @@ opset_import {
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
-#### Outputs (1 - 2)
+#### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
 <dt><tt>Y_h</tt> : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
@@ -1658,7 +1624,7 @@ opset_import {
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
   Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
-  dimension (M X N). 
+  dimension (M X N).
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
   the dimension requirement. If A can be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
@@ -1950,9 +1916,9 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Value of alpha</dd>
+<dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Value of beta</dd>
+<dd>Value of beta default to 0.5</dd>
 </dl>
 
 #### Inputs
@@ -2067,6 +2033,52 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="If-1"></a>**If-1**</a>
+
+  If conditional
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>else_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is false. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the then_branch.</dd>
+<dt><tt>then_branch</tt> : graph (required)</dt>
+<dd>Graph to run if condition is true. Has N outputs: values you wish to be live-out to the enclosing scope. The number of outputs must match the number of outputs in the else_branch.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>cond</tt> : B</dt>
+<dd>Condition for the if</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>outputs</tt> (variadic) : V</dt>
+<dd>Values that are live-out to the enclosing scope.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Only bool</dd>
+</dl>
+
 ### <a name="ImageScaler-1"></a>**ImageScaler-1**</a>
 
   Scale and bias the input image. Bias values are stored in
@@ -2115,10 +2127,10 @@ opset_import {
 ### <a name="InstanceNormalization-1"></a>**InstanceNormalization-1**</a>
 
   Carries out instance normalization as described in the paper
-  https://arxiv.org/abs/1607.08022. 
+  https://arxiv.org/abs/1607.08022.
   
-  y = scale * (x - mean) / sqrt(variance + epsilon) + B, 
-  where mean and B are computed per instance per channel. 
+  y = scale * (x - mean) / sqrt(variance + epsilon) + B,
+  where mean and variance are computed per instance per channel.
   
 
 #### Versioning
@@ -2135,7 +2147,7 @@ opset_import {
 
 <dl>
 <dt><tt>epsilon</tt> : float</dt>
-<dd>The epsilon value to use to avoid division by zero.</dd>
+<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 </dl>
 
 #### Inputs
@@ -2187,7 +2199,7 @@ opset_import {
 <dt><tt>beta</tt> : float (required)</dt>
 <dd>The exponent</dd>
 <dt><tt>bias</tt> : float</dt>
-<dd>Default to 1</dd>
+<dd>Default to 1.f</dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
 </dl>
@@ -2258,35 +2270,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=sigmoid, g=tanh, h=tanh):
+  Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   
     - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
   
@@ -2352,13 +2360,15 @@ opset_import {
 <dd>The weight tensor for peepholes. Concatenation of `P[iof]` and `PB[iof]` (if bidirectional) along dimension 0. It has shape `[num_directions, 3*hidde_size]`. Optional: If not specified - assumed to be 0.</dd>
 </dl>
 
-#### Outputs (1 - 2)
+#### Outputs (0 - 3)
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
-<dt><tt>Y_h</tt> : T</dt>
+<dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+<dt><tt>Y_c</tt> (optional) : T</dt>
+<dd>The last output value of the cell. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
 #### Type Constraints
@@ -2390,7 +2400,7 @@ opset_import {
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of leakage</dd>
+<dd>Coefficient of leakage default to 0.01.</dd>
 </dl>
 
 #### Inputs
@@ -2558,6 +2568,220 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Loop-1"></a>**Loop-1**</a>
+
+  Generic Looping construct. This loop has multiple termination conditions:
+  
+  1) Trip count. Iteration count specified at runtime. Set by
+     specifying the input M. Optional. Set to empty string to omit.
+     Note that a static trip count (specified at graph construction time) can be
+     specified by passing in a constant node for input M.
+  2) Loop termination condition. This is an input to the op that determines
+     whether to run the first interation and also a loop-carried dependency for
+     the body graph. The body graph must yield a value for the condition variable,
+     whether this input is provided or not.
+  
+  This table summarizes the operating modes of this operator with equivalent
+  C-style code:
+  
+      Operator inputs defined as (max_trip_count, condition_var).
+  
+      input ("", ""):
+          for (int i=0; ; ++i) {
+            cond = ... // Note this value is ignored, but is required in the body
+          }
+  
+      input ("", cond) // Note this is analogous to a while loop
+          bool cond = ...;
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input ("", 1) // Note this is analogous to a do-while loop
+          bool cond = true
+          for (int i=0; cond; ++i) {
+            cond = ...;
+          }
+  
+      input (trip_count, "") // Note this is analogous to a for loop
+          int trip_count = ...
+          for (int i=0; i < trip_count; ++i) {
+            cond = ...; // ignored
+          }
+  
+      input (trip_count, cond)
+          int trip_count = ...;
+          bool cond = ...;
+          for (int i=0; i < trip_count && cond; ++i) {
+            cond = ...;
+          }
+  
+  
+  *Sample usage - cond as well as trip count*
+  
+      graph predict-net {
+        %a = Constant[value = <Scalar Tensor [3]>]()
+        %b = Constant[value = <Scalar Tensor [6]>]()
+        %keepgoing = Constant[value = <Scalar Tensor [1]>]()
+        %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
+        %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
+        return
+      }
+  
+      graph body-net (
+        %i[INT32, scalar]
+        %keepgoing[BOOL, scalar]
+        %b[INT32, scalar]
+      ) {
+        %my_local = Add(%a, %b)
+        %b_out = Sub(%a, %b)
+        %keepgoing_out = Greater(%my_local, %b_out)
+        %user_defined_vals = Add(%b, %b)
+        return %keepgoing_out, %b_out, %user_defined_vals
+      }
+  
+  *Sample equivalent C code*
+  
+      {
+        /* User-defined code (enclosing scope) */
+        int a = 3, b = 6;
+        bool keepgoing = true; // Analogous to input cond
+        /* End user-defined code */
+  
+        /* Implicitly-defined code */
+        const int max_trip_count = 10; // Analogous to input M
+        int user_defined_vals[]; // Imagine this is resizable
+        /* End implicitly-defined code */
+        for (int i=0; i < max_trip_count && keepgoing; ++i) {
+          /* User-defined code (loop body) */
+          int my_local = a + b; // Reading values in the enclosing scope is fine
+          b = a - b; // writes fine if we specify b as a loop-carried dependency
+          keepgoing = my_local > b; // keepgoing is a loop-carried dependency
+          user_defined_vals[i] = b + b;
+          /* End user-defined code */
+        }
+        // my_local = 123; // Can't do this. my_local was defined in the the body
+  
+        // These below values are live-out from the loop and therefore accessible
+        b_out; user_defined_vals; keepgoing_out;
+      }
+  
+  There are several things of note in this code snippet:
+  
+  1) Values from the enclosing scope (i.e. variable a here) are in scope and can
+     be referenced in the inputs of the loop.
+  2) Any variables which you wish to make available in the enclosing scope (i.e.
+     the variables b and keepgoing) must be declared as either loop-carried
+     dependencies (both at the op inputs and output and at the body net input and
+     output) or scan_outputs.
+  3) Values created in the body cannot be accessed in the enclosing scope.
+  
+  Note that the semantics of this op support "diagonal" or "wavefront" execution.
+  (See Step 3 here for an example:
+  https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
+  Frontends should emit multi-layer RNNs as a series of While operators (with
+  time being the inner looping dimension), with each successive layer consuming
+  the scan_outputs from the previous layer, possibly going through several
+  point-wise operators (e.g. dropout, residual connections, linear layer).
+  Concretely, the (possibly transformed) scan_outputs are referenced by the
+  subsequent layer as a LoopIndexTensor operating on a value in scope, not
+  necessarily a loop-carried dependency. Backends can recognize this pattern and
+  are permitted to schedule the execution of the multi-layer network in a
+  pipelined/"wavefront" fashion.
+  
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
+</dl>
+
+#### Inputs (3 - &#8734;)
+
+<dl>
+<dt><tt>M</tt> : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. pass empty string to skip.</dd>
+<dt><tt>cond</tt> : B</dt>
+<dd>A boolean termination condition. Pass empty string to skip.</dd>
+<dt><tt>v_initial</tt> (variadic) : V</dt>
+<dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>v_final_and_scan_outputs</tt> (variadic) : V</dt>
+<dd>Final N loop carried dependency values then K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>I</tt> : int64</dt>
+<dd>Only int64</dd>
+<dt><tt>B</tt> : bool</dt>
+<dd>Only bool</dd>
+</dl>
+
+### <a name="LoopIndexTensor-1"></a>**LoopIndexTensor-1**</a>
+
+  This is a special operator only valid inside the loop that supports the common case behavior of accessing the correct element of the input sequence in an RNN. This operator MUST be directly given the passed-in iteration number to the body of a Loop graph. This signals to back-ends that this is a direct indexing operation, with no transforms applied to the index.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Axis on which to index</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>T</tt> : T</dt>
+<dd>Tensor to be indexed (has N dimensions)</dd>
+<dt><tt>loop_idx</tt> : I</dt>
+<dd>Loop index provided as input to the body graph</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>O</tt> : T</dt>
+<dd>Tensor of N - 1 dims that is a sub tensor of T</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>All Tensor types</dd>
+<dt><tt>I</tt> : int32</dt>
+<dd>Indices</dd>
+</dl>
+
 ### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
@@ -2606,7 +2830,7 @@ opset_import {
 
   LpPool consumes an input tensor X and applies Lp pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset 
+   Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2624,13 +2848,13 @@ opset_import {
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : float</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.0.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis.</dd>
 </dl>
@@ -2733,7 +2957,7 @@ opset_import {
 
   MaxPool consumes an input tensor X and applies max pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   max pooling consisting of computing the max on all values of a 
+   max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -2751,13 +2975,13 @@ opset_import {
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -2783,8 +3007,8 @@ opset_import {
 
 ### <a name="MaxRoiPool-1"></a>**MaxRoiPool-1**</a>
 
-  ROI max pool consumes an input tensor X and region of interests (RoIs) to 
-   apply max pooling across each RoI, to produce output 4-D tensor of shape 
+  ROI max pool consumes an input tensor X and region of interests (RoIs) to
+   apply max pooling across each RoI, to produce output 4-D tensor of shape
    (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
 #### Versioning
@@ -2800,10 +3024,10 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>pooled_shape</tt> : list of ints</dt>
+<dt><tt>pooled_shape</tt> : list of ints (required)</dt>
 <dd>ROI pool output shape (height, width).</dd>
 <dt><tt>spatial_scale</tt> : float</dt>
-<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling, default is 1.0f.</dd>
 </dl>
 
 #### Inputs
@@ -3211,7 +3435,7 @@ opset_import {
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>paddings</tt> : list of ints (required)</dt>
-<dd>List of integers indicate the padding element count at the begining and end of each axis, for 2D it is the number of pixel. `paddings` rank should be double of the input's rank. `paddings` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dd>List of integers indicate the padding element count at the beginning and end of each axis, for 2D it is the number of pixel. `paddings` rank should be double of the input's rank. `paddings` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>
@@ -3357,35 +3581,31 @@ opset_import {
   
   Activation functions:
   
-    relu(x)                - max(0, x)
+    Relu(x)                - max(0, x)
   
-    tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
   
-    sigmoid(x)             - 1/(1 + e^{-x})
+    Sigmoid(x)             - 1/(1 + e^{-x})
   
     (NOTE: Below are optional)
   
-    linear(x)              - alpha*x + beta
+    Affine(x)              - alpha*x + beta
   
-    leakyRelu(x)           - x if x >= 0 else alpha * x
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
   
-    thresholdedRelu(x)     - x if x >= alpha else 0
+    ThresholdedRelu(x)     - x if x >= alpha else 0
   
-    pRelu(xi)              - xi if xi >= 0 else alpha[i]* xi over dim 0
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
   
-    scaledTanh(x)          - alpha*tanh(beta*x)
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
   
-    sigmoidHard(x)         - min(max(alpha*x + beta, 0), 1)
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
   
-    elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+    Softsign(x)            - x/(1 + |x|)
   
-    softsign(x)            - x/(1 + |x|)
+    Softplus(x)            - log(1 + e^x)
   
-    softplus(x)            - log(1 + e^x)
-  
-    parametricSoftplus(xi) - alpha[i]*log(1 + e^{beta[i]* xi}) over dim 0
-  
-  Equations (Default: f=tanh):
+  Equations (Default: f=Tanh):
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
@@ -3407,7 +3627,7 @@ opset_import {
 <dt><tt>activation_beta</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
-<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `tanh` if not specified.</dd>
+<dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
 <dt><tt>direction</tt> : string</dt>
@@ -3435,12 +3655,12 @@ opset_import {
 <dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
-#### Outputs (1 - 2)
+#### Outputs (0 - 2)
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> (optional) : T</dt>
 <dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
-<dt><tt>Y_h</tt> : T</dt>
+<dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
 
@@ -3477,14 +3697,14 @@ opset_import {
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor.</dd>
+<dd>The data type for the elements of the output tensor. Default is TensorProto::FLOAT.</dd>
 <dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution.</dd>
+<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution.</dd>
+<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
+<dt><tt>shape</tt> : list of ints (required)</dt>
 <dd>The shape of the output tensor.</dd>
 </dl>
 
@@ -3502,7 +3722,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 ### <a name="RandomNormalLike-1"></a>**RandomNormalLike-1**</a>
@@ -3531,9 +3751,9 @@ opset_import {
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>mean</tt> : float</dt>
-<dd>The mean of the normal distribution.</dd>
+<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
 <dt><tt>scale</tt> : float</dt>
-<dd>The standard deviation of the normal distribution.</dd>
+<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -3541,7 +3761,7 @@ opset_import {
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> : tensor(int32)</dt>
 <dd>Input tensor to provide shape information.</dd>
 </dl>
 
@@ -3556,7 +3776,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 ### <a name="RandomUniform-1"></a>**RandomUniform-1**</a>
@@ -3582,14 +3802,14 @@ opset_import {
 
 <dl>
 <dt><tt>dtype</tt> : int</dt>
-<dd>The data type for the elements of the output tensor.</dd>
+<dd>The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.</dd>
 <dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values.</dd>
+<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
 <dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values.</dd>
+<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
+<dt><tt>shape</tt> : list of ints (required)</dt>
 <dd>The shape of the output tensor.</dd>
 </dl>
 
@@ -3607,7 +3827,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 ### <a name="RandomUniformLike-1"></a>**RandomUniformLike-1**</a>
@@ -3635,9 +3855,9 @@ opset_import {
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>high</tt> : float</dt>
-<dd>Upper boundary of the output values.</dd>
+<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
 <dt><tt>low</tt> : float</dt>
-<dd>Lower boundary of the output values.</dd>
+<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -3645,7 +3865,7 @@ opset_import {
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : T</dt>
+<dt><tt>input</tt> : tensor(int32)</dt>
 <dd>Input tensor to provide shape information.</dd>
 </dl>
 
@@ -3660,7 +3880,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 ### <a name="Reciprocal-1"></a>**Reciprocal-1**</a>
@@ -3703,7 +3923,7 @@ opset_import {
 ### <a name="ReduceL1-1"></a>**ReduceL1-1**</a>
 
   Computes the L1 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -3752,7 +3972,7 @@ opset_import {
 ### <a name="ReduceL2-1"></a>**ReduceL2-1**</a>
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -3801,7 +4021,7 @@ opset_import {
 ### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**</a>
 
   Computes the log sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -3850,7 +4070,7 @@ opset_import {
 ### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**</a>
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -3899,7 +4119,7 @@ opset_import {
 ### <a name="ReduceMax-1"></a>**ReduceMax-1**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -3948,7 +4168,7 @@ opset_import {
 ### <a name="ReduceMean-1"></a>**ReduceMean-1**</a>
 
   Computes the mean of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -3997,7 +4217,7 @@ opset_import {
 ### <a name="ReduceMin-1"></a>**ReduceMin-1**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -4046,7 +4266,7 @@ opset_import {
 ### <a name="ReduceProd-1"></a>**ReduceProd-1**</a>
 
   Computes the product of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -4095,7 +4315,7 @@ opset_import {
 ### <a name="ReduceSum-1"></a>**ReduceSum-1**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -4144,7 +4364,7 @@ opset_import {
 ### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**</a>
 
   Computes the sum square of the input tensor's element along the provided axes. The resulted
-  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then 
+  tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
   the resulted tensor have the reduced dimension pruned.
   
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
@@ -4742,7 +4962,7 @@ opset_import {
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs...</tt> : T</dt>
+<dt><tt>outputs...</tt> (variadic) : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 
@@ -5094,6 +5314,54 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Unsqueeze-1"></a>**Unsqueeze-1**</a>
+
+  Insert single-dimensional entries to the shape of a tensor.
+  Takes one required argument `axes`, a list of dimensions that will be inserted.
+  Dimension indices in `axes` are as seen in the output tensor. For example:
+  
+    Given a tensor such that tensor with shape [3, 4, 5], then
+    Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+  
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axes</tt> : list of ints (required)</dt>
+<dd>List of positive integers, indicate the dimensions to be inserted</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Original tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>expanded</tt> : T</dt>
+<dd>Reshaped tensor with same data as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Upsample-1"></a>**Upsample-1**</a>
 
   Upsample the input tensor.
@@ -5264,7 +5532,7 @@ opset_import {
 
   LpPool consumes an input tensor X and applies Lp pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
-   Lp pooling consisting of computing the Lp norm on all values of a subset 
+   Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
@@ -5282,15 +5550,15 @@ opset_import {
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the ouput size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the begining for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
-<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int</dt>
 <dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
-<dd>Padding for the begining and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the begining and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute.</dd>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis.</dd>
+<dd>Stride along each axis. If not present, the stride defaults to 0 along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -5352,7 +5620,7 @@ opset_import {
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>List of integers indicate the padding element count at the begining and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the begining of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dd>List of integers indicate the padding element count at the beginning and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>
@@ -5381,9 +5649,8 @@ opset_import {
 ### <a name="Split-2"></a>**Split-2**</a>
 
   Split a tensor into a list of tensors, along the specified
-  'axis'. The lengths of the split can be specified using argument 'axis' or
-  optional second input blob to the operator. Otherwise, the tensor is split
-  to equal sized parts.
+  'axis'. Lengths of the parts can be specified using argument 'split'.
+  Otherwise, the tensor is split to equal sized parts.
 
 #### Versioning
 
@@ -5414,7 +5681,7 @@ opset_import {
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs</tt> : T</dt>
+<dt><tt>outputs</tt> (variadic) : T</dt>
 <dd>One or more outputs forming list of tensors after splitting</dd>
 </dl>
 
@@ -5423,5 +5690,147 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
+</dl>
+
+## Version 3 of the default ONNX operator set
+### <a name="GRU-3"></a>**GRU-3**</a>
+
+  Computes an one-layer GRU. This operator is usually supported via some custom
+  implementation such as CuDNN.
+  
+  Notations:
+  
+  `X` - input tensor
+  
+  `z` - update gate
+  
+  `r` - reset gate
+  
+  `h` - hidden gate
+  
+  `t` - time step (t-1 means previous time step)
+  
+  `W[zrh]` - W parameter weight matrix for update, reset, and hidden gates
+  
+  `R[zrh]` - R recurrence weight matrix for update, reset, and hidden gates
+  
+  `Wb[zrh]` - W bias vectors for update, reset, and hidden gates
+  
+  `Rb[zrh]` - R bias vectors for update, reset, and hidden gates
+  
+  `WB[zrh]` - W parameter weight matrix for backward update, reset, and hidden gates
+  
+  `RB[zrh]` - R recurrence weight matrix for backward update, reset, and hidden gates
+  
+  `WBb[zrh]` - W bias vectors for backward update, reset, and hidden gates
+  
+  `RBb[zrh]` - R bias vectors for backward update, reset, and hidden gates
+  
+  `H` - Hidden state
+  
+  `num_directions` - 2 if direction == bidirectional else 1
+  
+  Activation functions:
+  
+    Relu(x)                - max(0, x)
+  
+    Tanh(x)                - (1 - e^{-2x})/(1 + e^{-2x})
+  
+    Sigmoid(x)             - 1/(1 + e^{-x})
+  
+    (NOTE: Below are optional)
+  
+    Affine(x)              - alpha*x + beta
+  
+    LeakyRelu(x)           - x if x >= 0 else alpha * x
+  
+    ThresholdedRelu(x)     - x if x >= alpha else 0
+  
+    ScaledTanh(x)          - alpha*Tanh(beta*x)
+  
+    HardSigmoid(x)         - min(max(alpha*x + beta, 0), 1)
+  
+    Elu(x)                 - x if x >= 0 else alpha*(e^x - 1)
+  
+    Softsign(x)            - x/(1 + |x|)
+  
+    Softplus(x)            - log(1 + e^x)
+  
+  Equations (Default: f=Sigmoid, g=Tanh):
+  
+    - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
+  
+    - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
+  
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+  
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
+  
+    - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+
+#### Versioning
+
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 3
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>activation_alpha</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activation_beta</tt> : list of floats</dt>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dt><tt>activations</tt> : list of strings</dt>
+<dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
+<dt><tt>clip</tt> : float</dt>
+<dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
+<dt><tt>direction</tt> : string</dt>
+<dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
+<dt><tt>hidden_size</tt> : int</dt>
+<dd>Number of neurons in the hidden layer</dd>
+<dt><tt>linear_before_reset</tt> : int</dt>
+<dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
+<dt><tt>output_sequence</tt> : int</dt>
+<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
+</dl>
+
+#### Inputs (3 - 6)
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input sequences packed (and potentially padded) into one 3-D tensor with the shape of `[seq_length, batch_size, input_size]`.</dd>
+<dt><tt>W</tt> : T</dt>
+<dd>The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, input_size]`.</dd>
+<dt><tt>R</tt> : T</dt>
+<dd>The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 3*hidden_size, hidden_size]`.</dd>
+<dt><tt>B</tt> (optional) : T</dt>
+<dd>The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and `[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor has shape `[num_directions, 6*hidden_size]`. Optional: If not specified - assumed to be 0</dd>
+<dt><tt>sequence_lens</tt> (optional) : T1</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If not specified - assumed all sequences in the batch to have length `seq_length`. It has shape `[batch_size]`.</dd>
+<dt><tt>initial_h</tt> (optional) : T</dt>
+<dd>Optional initial value of the hidden. If not specified - assumed to be 0. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Outputs (0 - 2)
+
+<dl>
+<dt><tt>Y</tt> (optional) : T</dt>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
+<dt><tt>Y_h</tt> (optional) : T</dt>
+<dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int32)</dt>
+<dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 

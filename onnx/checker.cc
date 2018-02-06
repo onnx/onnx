@@ -4,7 +4,7 @@
 
 #include <unordered_set>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace checker {
 
 #define enforce_has_field(proto, field)                                     \
@@ -34,7 +34,7 @@ namespace checker {
     }                                         \
   } while (0)
 
-void check_value_info(const ValueInfoProto& value_info, int ir_version) {
+void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
   enforce_non_empty_field(value_info, name);
   enforce_has_field(value_info, type);
   const auto value_case = value_info.type().value_case();
@@ -49,13 +49,11 @@ void check_value_info(const ValueInfoProto& value_info, int ir_version) {
   }
 }
 
-void check_tensor(const TensorProto& tensor, int ir_version) {
+void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check("setting data_type field to UNDEFINED is not allowed");
   }
-
-  enforce_has_repeated_field(tensor, dims);
 
   int num_value_fields = 0;
 
@@ -112,6 +110,7 @@ void check_tensor(const TensorProto& tensor, int ir_version) {
 
       case TensorProto::INT32:
       case TensorProto::UINT16:
+      case TensorProto::BOOL:
         check_field(int32_data);
         break;
 
@@ -136,10 +135,15 @@ void check_tensor(const TensorProto& tensor, int ir_version) {
 #undef check_field
 }
 
-void check_attribute(const AttributeProto& attr, int ir_version) {
+// NB: This is a generic "attribute well-formedness" check, it doesn't
+// actually test if an attribute is valid per a schema
+void check_attribute(
+    const AttributeProto& attr,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(attr, name);
 
-  if (ir_version >= 0x00000002) {
+  if (ctx.get_ir_version() >= 0x00000002) {
     enforce_has_field(attr, type);
   }
 
@@ -181,79 +185,168 @@ void check_attribute(const AttributeProto& attr, int ir_version) {
     fail_check("Attribute should contain one and only one value field.");
   }
 
+  if (attr.has_t()) {
+    check_tensor(attr.t(), ctx);
+  }
+
+  if (attr.has_g()) {
+    check_graph(attr.g(), ctx, lex_ctx);
+  }
+
   for (const auto& tensor : attr.tensors()) {
-    check_tensor(tensor, ir_version);
+    check_tensor(tensor, ctx);
   }
   for (const auto& graph : attr.graphs()) {
-    check_graph(graph, ir_version);
+    check_graph(graph, ctx, lex_ctx);
   }
 }
 
-void check_node(const NodeProto& node, int ir_version) {
+void check_node(
+    const NodeProto& node,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
     fail_check("NodeProto has zero input and zero output.");
   }
 
+  // Resolve domain for node
+  const auto& opset_imports = ctx.get_opset_imports();
+  auto dit = opset_imports.find(node.domain());
+  if (dit == opset_imports.end()) {
+    fail_check("No opset import for domain '" + node.domain() + "'");
+  }
+  auto domain_version = dit->second;
+
   for (const auto& attr : node.attribute()) {
-    check_attribute(attr, ir_version);
+    check_attribute(attr, ctx, lex_ctx);
   }
 
-  const auto* schema = OpSchemaRegistry::Schema(node.op_type());
+  const auto* schema =
+      OpSchemaRegistry::Schema(node.op_type(), domain_version, node.domain());
   if (!schema) {
-    fail_check("No Schema registered for " + node.op_type());
+    fail_check(
+        "No Schema registered for " + node.op_type() +
+        " with domain_version of " + std::to_string(domain_version));
   }
   schema->Verify(node);
 }
 
-void check_graph(const GraphProto& graph, int ir_version) {
+void check_graph(
+    const GraphProto& graph,
+    const CheckerContext& ctx,
+    const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(graph, name);
 
   for (const auto& value_info : graph.input()) {
-    check_value_info(value_info, ir_version);
+    check_value_info(value_info, ctx);
   }
   for (const auto& value_info : graph.output()) {
-    check_value_info(value_info, ir_version);
+    check_value_info(value_info, ctx);
   }
+
+  std::unordered_set<std::string> output_names{};
+  // Inherit values avaiailable in outer scope
+  // Note that we do not allow shadowing, so the presence of an already-defined
+  // name is always an error.
+  for (const auto& value_info : graph.input()) {
+    if (output_names.count(value_info.name())) {
+      fail_check(
+          "Graph must be in SSA form, however '",
+          value_info.name(),
+          "' has been used as graph input names multiple times.");
+    }
+    output_names.insert(value_info.name());
+  }
+  output_names.insert(
+      parent_lex.output_names.begin(), parent_lex.output_names.end());
+  for (const auto& init : graph.initializer()) {
+    if (!output_names.count(init.name())) {
+      fail_check(init.name() + " in initializer but not in graph input");
+    }
+    check_tensor(init, ctx);
+  }
+
   for (const auto& node : graph.node()) {
+    // nodes must be in topologically sorted order
+    for (const auto& input : node.input()) {
+      // explicit optional input
+      if (input.empty()) {
+        continue;
+      }
+      if (!output_names.count(input)) {
+        fail_check(
+            "Nodes in a graph must be topologically sorted, however input '",
+            input,
+            "' of node: \n",
+            node.ShortDebugString(),
+            "\n is not output of any previous nodes.");
+      }
+    }
+    // This needs to happen before SSA check since we don't want to recurse and
+    // find that outputs from control flow ops are colliding with names in the
+    // inner block
+    LexicalScopeContext lex_ctx;
+    lex_ctx.output_names = output_names;
     try {
-      check_node(node, ir_version);
+      check_node(node, ctx, lex_ctx);
     } catch (ValidationError& ex) {
       ex.AppendContext("Bad node spec: " + node.ShortDebugString());
       throw ex;
     }
-   }
-
-  std::unordered_set<std::string> input_names{};
-  for (const auto& value_info : graph.input()) {
-    input_names.insert(value_info.name());
-  }
-  for (const auto& init : graph.initializer()) {
-    if (!input_names.count(init.name())) {
-      fail_check(init.name() + " in initializer but not in graph input");
+    // check for SSA form
+    for (const auto& output : node.output()) {
+      // optional output
+      if (output.empty()) {
+        continue;
+      }
+      if (output_names.count(output)) {
+        fail_check(
+            "Graph must be in SSA form, however '",
+            output,
+            "' has been used as output names multiple times.");
+      }
+      output_names.insert(output);
     }
-    check_tensor(init, ir_version);
   }
 }
 
-void check_model(const ModelProto& model, int ir_version) {
+void check_model(const ModelProto& model) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
-  if (model.ir_version() > ir_version) {
+  if (model.ir_version() > IR_VERSION) {
     fail_check("Your model ir_version is higher than the checker's.");
   }
   if (model.metadata_props_size() > 1) {
     std::unordered_set<std::string> keys;
-    for (const StringStringEntryProto &entry : model.metadata_props()) {
+    for (const StringStringEntryProto& entry : model.metadata_props()) {
       auto i = keys.insert(entry.key());
       if (!i.second) {
         fail_check("Your model has duplicate keys in metadata_props.");
       }
     }
   }
-  check_graph(model.graph(), model.ir_version());
+  std::unordered_map<std::string, int> versions;
+  CheckerContext ctx;
+  ctx.set_ir_version(model.ir_version());
+  std::unordered_map<std::string, int> opset_imports;
+  for (const auto& opset_import : model.opset_import()) {
+    opset_imports[opset_import.domain()] = opset_import.version();
+  }
+  auto dit = opset_imports.find(ONNX_DOMAIN);
+  if (dit == opset_imports.end()) {
+    if (model.ir_version() >= 3) {
+      fail_check(
+          "model with IR version >= 3 must specify opset_import for ONNX");
+    } else {
+      opset_imports[ONNX_DOMAIN] = 1;
+    }
+  }
+  ctx.set_opset_imports(opset_imports);
+  LexicalScopeContext lex_ctx;
+  check_graph(model.graph(), ctx, lex_ctx);
 }
 
 #undef fail_check
@@ -262,4 +355,4 @@ void check_model(const ModelProto& model, int ir_version) {
 #undef enforce_non_empty_field
 
 } // namespace checker
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

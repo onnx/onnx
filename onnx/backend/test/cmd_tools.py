@@ -42,14 +42,34 @@ def generate_data(args):
     # model tests
     model_cases = model_test.collect_testcases()
     for case in model_cases:
-        output_dir = os.path.join(args.output, 'model', case.name)
+        output_dir = os.path.join(
+            args.output, 'model', case.kind, case.name)
         prepare_dir(output_dir)
-        with open(os.path.join(output_dir, 'data.json'), 'w') as f:
-            json.dump({
-                'url': case.url,
-                'model_name': case.model_name,
-            }, f, sort_keys=True)
-
+        if case.kind == 'real':
+            with open(os.path.join(output_dir, 'data.json'), 'w') as f:
+                json.dump({
+                    'url': case.url,
+                    'model_name': case.model_name,
+                }, f, sort_keys=True)
+        else:
+            with open(os.path.join(output_dir, 'model.pb'), 'wb') as f:
+                f.write(case.model.SerializeToString())
+            for i, (inputs, outputs) in enumerate(case.data_sets):
+                data_set_dir = os.path.join(
+                    output_dir, 'test_data_set_{}'.format(i))
+                prepare_dir(data_set_dir)
+                for j, input_np in enumerate(inputs):
+                    tensor = numpy_helper.from_array(
+                        input_np, case.model.graph.input[i].name)
+                    with open(os.path.join(
+                            data_set_dir, 'input_{}.pb'.format(j)), 'wb') as f:
+                        f.write(tensor.SerializeToString())
+                for j, output_np in enumerate(outputs):
+                    tensor = numpy_helper.from_array(
+                        output_np, case.model.graph.output[i].name)
+                    with open(os.path.join(
+                            data_set_dir, 'output_{}.pb'.format(i)), 'wb') as f:
+                        f.write(tensor.SerializeToString())
 
 def parse_args():
     parser = argparse.ArgumentParser('backend-test-tools')

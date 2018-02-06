@@ -6,6 +6,11 @@ python:
   - "2.7"
   - "3.6"
 
+addons:
+  apt:
+    packages:
+      - dos2unix
+
 install:
   - ./.travis/install.sh
 

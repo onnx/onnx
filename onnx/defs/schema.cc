@@ -6,7 +6,8 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
+
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
     const DataTypeSet& allowed_type_set,
@@ -87,35 +88,15 @@ void OpSchema::Verify(const NodeProto& node) const {
     fail_check(
         "Output size ", node.output_size(), " not in allowed output sizes.");
   }
-  if (!num_inputs_outputs_allowed_(node.input_size(), node.output_size())) {
-    fail_check(
-        "Combination of input size ",
-        node.input_size(),
-        "and output size ",
-        node.output_size(),
-        " not in allowed.");
-  }
-  // If the number of outputs can be calculated, check if the number matches.
-  if (calculate_output_) {
-    int expected_nout = calculate_output_(node.input_size());
-    if (expected_nout != kCannotComputeNumOutputs &&
-        node.output_size() != expected_nout) {
-      fail_check(
-          "Output size ",
-          node.output_size(),
-          " not matching expected output size, which is ",
-          expected_nout);
-    }
-  }
 
   // Check the values of inputs / outputs
-  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
+  for (size_t in_idx = 0; in_idx < static_cast<size_t>(node.input_size());
+       ++in_idx) {
     if (in_idx >= inputs_.size()) {
-      if (Variadic == inputs_.back().GetOption()) {
+      if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
         // The last input formal parameter should be variadic.
         break;
-      }
-      else {
+      } else {
         fail_check(
             "Node (",
             node.name(),
@@ -133,9 +114,31 @@ void OpSchema::Verify(const NodeProto& node) const {
           " is marked single but has an empty string in the graph");
     }
   }
-  for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
-    if (node.output(out_idx).empty()) {
-      fail_check("Output ", out_idx, " has an empty string in the graph");
+
+  for (size_t out_idx = 0; out_idx < static_cast<size_t>(node.output_size());
+       ++out_idx) {
+    if (out_idx >= outputs_.size()) {
+      if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
+        // The last output formal parameter should be variadic.
+        break;
+      } else {
+        fail_check(
+            "Node (",
+            node.name(),
+            ") has more outputs (",
+            node.output_size(),
+            ") than declared (",
+            outputs_.size(),
+            ") in op definition.");
+      }
+    }
+
+    if (node.output(out_idx).empty() &&
+        (Single == outputs_[out_idx].GetOption())) {
+      fail_check(
+          "Output ",
+          out_idx,
+          " is marked single but has an empty string in the graph");
     }
   }
 
@@ -151,13 +154,13 @@ void OpSchema::Verify(const NodeProto& node) const {
     };
 
     const auto& search = attributes_.find(name);
-    AttrType expected_type;
+    AttributeProto::AttributeType expected_type;
     if (search != attributes_.end()) {
       expected_type = search->second.type;
     } else if (allows_unchecked_attributes_) {
       continue;
     } else if (name == "consumed_inputs") {
-      expected_type = AttrType::INTS;
+      expected_type = AttributeProto::INTS;
       consume_attr = &attr_proto;
       if (attr_proto.ints().size() != node.input_size()) {
         fail_check(
@@ -172,60 +175,62 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
 
     switch (expected_type) {
-      case AttrType::FLOAT:
+      case AttributeProto::FLOAT:
         if (!attr_proto.has_f()) {
           fail_check("Attribute '", name, "' is expected to have field 'f'");
         }
         break;
-      case AttrType::INT:
+      case AttributeProto::INT:
         if (!attr_proto.has_i()) {
           fail_check("Attribute '", name, "' is expected to have field 'i'");
         }
         break;
-      case AttrType::STRING:
+      case AttributeProto::STRING:
         if (!attr_proto.has_s()) {
           fail_check("Attribute '", name, "' is expected to have field 's'");
         }
         break;
-      case AttrType::TENSOR:
+      case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
           fail_check("Attribute '", name, "' is expected to have field 't'");
         }
         break;
-      case AttrType::GRAPH:
+      case AttributeProto::GRAPH:
         if (!attr_proto.has_g()) {
           fail_check("Attribute '", name, "' is expected to have field 'g'");
         }
         break;
-      case AttrType::FLOATS:
+      case AttributeProto::FLOATS:
         if (!attr_proto.floats_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'floats'");
         }
         break;
-      case AttrType::INTS:
+      case AttributeProto::INTS:
         if (!attr_proto.ints_size()) {
           fail_check("Attribute '", name, "' is expected to have field 'ints'");
         }
         break;
-      case AttrType::STRINGS:
+      case AttributeProto::STRINGS:
         if (!attr_proto.strings_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'strings'");
         }
         break;
-      case AttrType::TENSORS:
+      case AttributeProto::TENSORS:
         if (!attr_proto.tensors_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'tensors'");
         }
         break;
-      case AttrType::GRAPHS:
+      case AttributeProto::GRAPHS:
         if (!attr_proto.graphs_size()) {
           fail_check(
               "Attribute '", name, "' is expected to have field 'graphs'");
         }
         break;
+      default:
+        fail_check("Attribute '", name, " has unknown expected type");
     }
   }
   for (const auto& pair : attributes_) {
@@ -271,65 +276,23 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Phew. All verifications passed.
 }
 
-OpSchema& OpSchema::NumInputs(int min, int max) {
-  min_input_ = min;
-  max_input_ = max;
-  return *this;
-}
-
 OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   since_version_ = v;
   return *this;
 }
 
-OpSchema& OpSchema::NumInputs(int n) {
-  return NumInputs(n, n);
-}
-
-OpSchema& OpSchema::NumInputs(std::function<bool(int)> func) {
-  num_inputs_allowed_ = func;
-  return *this;
-}
-
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  return NumInputs([allowed_input_nums](int n) -> bool {
+  num_inputs_allowed_ = [allowed_input_nums](int n) -> bool {
     return allowed_input_nums.count(n);
-  });
-}
-
-OpSchema& OpSchema::NumOutputs(int min, int max) {
-  min_output_ = min;
-  max_output_ = max;
-  return *this;
-}
-
-OpSchema& OpSchema::NumOutputs(int n) {
-  return NumOutputs(n, n);
-}
-
-OpSchema& OpSchema::NumOutputs(std::function<bool(int)> func) {
-  num_outputs_allowed_ = func;
+  };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  return NumOutputs([allowed_output_nums](int n) -> bool {
+  num_outputs_allowed_ = [allowed_output_nums](int n) -> bool {
     return allowed_output_nums.count(n);
-  });
-}
-
-OpSchema& OpSchema::NumInputsOutputs(std::function<bool(int, int)> func) {
-  num_inputs_outputs_allowed_ = func;
+  };
   return *this;
-}
-
-OpSchema& OpSchema::OutputCalculator(std::function<int(int)> calc) {
-  calculate_output_ = calc;
-  return *this;
-}
-
-OpSchema& OpSchema::SameNumberOfOutput() {
-  return OutputCalculator([](int n) -> int { return n; });
 }
 
 OpSchema& OpSchema::AllowConsumed(
@@ -401,13 +364,106 @@ OpSchema& OpSchema::Attr(const Attribute& attr) {
 }
 
 OpSchema& OpSchema::Attr(
-    const char* name,
-    const char* description,
-    AttrType type,
+    const std::string& name,
+    const std::string& description,
+    AttributeProto::AttributeType type,
     bool required) {
   Attr(Attribute{name, description, type, required});
   return *this;
 }
+
+#define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype) \
+  OpSchema& OpSchema::Attr(                                  \
+      const std::string& name,                               \
+      const std::string& description,                        \
+      AttributeProto::AttributeType attr_type,               \
+      const type& default_value) {                           \
+    if (attrtype != attr_type) {                             \
+      std::cerr << "Attribute specification type mismatch."; \
+      abort();                                               \
+    }                                                        \
+    AttributeProto a;                                        \
+    a.set_name(name);                                        \
+    a.set_##field(default_value);                            \
+    a.set_type(attr_type);                                   \
+    Attr(Attribute(name, description, a));                   \
+    return *this;                                            \
+  }
+
+#define ATTR_SETTER_WITH_LIST_VALUE(type, field, attrtype)   \
+  OpSchema& OpSchema::Attr(                                  \
+      const std::string& name,                               \
+      const std::string& description,                        \
+      AttributeProto::AttributeType attr_type,               \
+      const std::vector<type>& default_value) {              \
+    if (attrtype != attr_type) {                             \
+      std::cerr << "Attribute specification type mismatch."; \
+      abort();                                               \
+    }                                                        \
+    AttributeProto a;                                        \
+    a.set_name(name);                                        \
+    a.set_type(attr_type);                                   \
+    for (const auto& v : default_value) {                    \
+      a.add_##field(v);                                      \
+    }                                                        \
+    Attr(Attribute(name, description, a));                   \
+    return *this;                                            \
+  }
+
+#define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype) \
+  OpSchema& OpSchema::Attr(                                         \
+      const std::string& name,                                      \
+      const std::string& description,                               \
+      AttributeProto::AttributeType attr_type,                      \
+      const type& default_value) {                                  \
+    if (attrtype != attr_type) {                                    \
+      std::cerr << "Attribute specification type mismatch.";        \
+      abort();                                                      \
+    }                                                               \
+    AttributeProto a;                                               \
+    a.set_name(name);                                               \
+    *(a.mutable_##field()) = default_value;                         \
+    a.set_type(attr_type);                                          \
+    Attr(Attribute(name, description, a));                          \
+    return *this;                                                   \
+  }
+
+#define ATTR_SETTER_WITH_LIST_COMPLEXVALUE(type, field, attrtype) \
+  OpSchema& OpSchema::Attr(                                       \
+      const std::string& name,                                    \
+      const std::string& description,                             \
+      AttributeProto::AttributeType attr_type,                    \
+      const std::vector<type>& default_value) {                   \
+    if (attrtype != attr_type) {                                  \
+      std::cerr << "Attribute specification type mismatch.";      \
+      abort();                                                    \
+    }                                                             \
+    AttributeProto a;                                             \
+    a.set_name(name);                                             \
+    a.set_type(attr_type);                                        \
+    for (const auto& v : default_value) {                         \
+      *(a.add_##field()) = v;                                     \
+    }                                                             \
+    Attr(Attribute(name, description, a));                        \
+    return *this;                                                 \
+  }
+
+ATTR_SETTER_WITH_SINGLE_VALUE(int64_t, i, AttributeProto::INT)
+ATTR_SETTER_WITH_SINGLE_VALUE(float, f, AttributeProto::FLOAT)
+ATTR_SETTER_WITH_SINGLE_VALUE(std::string, s, AttributeProto::STRING)
+ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(TensorProto, t, AttributeProto::TENSOR)
+ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(GraphProto, g, AttributeProto::GRAPH)
+ATTR_SETTER_WITH_LIST_VALUE(int64_t, ints, AttributeProto::INTS)
+ATTR_SETTER_WITH_LIST_VALUE(float, floats, AttributeProto::FLOATS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(
+    std::string,
+    strings,
+    AttributeProto::STRINGS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(
+    TensorProto,
+    tensors,
+    AttributeProto::TENSORS)
+ATTR_SETTER_WITH_LIST_COMPLEXVALUE(GraphProto, graphs, AttributeProto::GRAPHS)
 
 OpSchema& OpSchema::AllowUncheckedAttributes() {
   allows_unchecked_attributes_ = true;
@@ -431,11 +487,12 @@ OpSchema& OpSchema::Output(
     const int n,
     const std::string& name,
     const std::string& description,
-    const std::string& type_str) {
+    const std::string& type_str,
+    OpSchema::FormalParameterOption param_option) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
-  outputs_[n] = FormalParameter(name, description, type_str, Single);
+  outputs_[n] = FormalParameter(name, description, type_str, param_option);
   return *this;
 }
 
@@ -454,6 +511,29 @@ OpSchema& OpSchema::TypeConstraint(
       TypeConstraintParam(type_str, constraints, description));
   return *this;
 }
+
+const std::vector<std::string> OpSchema::all_integral_types = {"float",
+                                                               "int32",
+                                                               "string",
+                                                               "bool",
+                                                               "uint8",
+                                                               "int8",
+                                                               "uint16",
+                                                               "int16",
+                                                               "int64",
+                                                               "float16",
+                                                               "double"};
+const std::vector<std::string> OpSchema::all_tensor_types = {"tensor(float)",
+                                                             "tensor(int32)",
+                                                             "tensor(string)",
+                                                             "tensor(bool)",
+                                                             "tensor(uint8)",
+                                                             "tensor(int8)",
+                                                             "tensor(uint16)",
+                                                             "tensor(int16)",
+                                                             "tensor(int64)",
+                                                             "tensor(float16)",
+                                                             "tensor(double)"};
 
 void OpSchema::ParseAndSetTypes(
     /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
@@ -478,16 +558,6 @@ OpSchema& OpSchema::FillUsing(std::function<void(OpSchema&)> populator) {
   return *this;
 }
 
-int OpSchema::CalculateOutput(int num_input) const {
-  if (min_output_ == max_output_) {
-    return min_output_;
-  } else if (calculate_output_) {
-    return calculate_output_(num_input);
-  } else {
-    return kCannotComputeNumOutputs;
-  }
-}
-
 void OpSchema::Finalize() {
 #define ENFORCE(x)                                                          \
   do {                                                                      \
@@ -495,43 +565,58 @@ void OpSchema::Finalize() {
       throw std::logic_error(                                               \
           "ONNX Schema " + name_ + ": failed validating the check: " + #x); \
   } while (0)
-  ENFORCE(min_input_ <= max_input_);
-  ENFORCE(min_output_ <= max_output_);
-  ENFORCE(inputs_.size() >= min_input_);
-  ENFORCE(outputs_.size() >= min_output_);
-  ENFORCE(inputs_.size() <= max_input_);
-  ENFORCE(outputs_.size() <= max_output_);
-  // if max limit is finite - all names should be specified
-  if (max_input_ < std::numeric_limits<int>::max()) {
-    ENFORCE(inputs_.size() == max_input_);
+
+  // Calculate min/max number of inputs.
+  // <Min number of inputs> = <number of "single" inputs> + <number of
+  // "optional" but not trailing inputs>. <Max number of inputs> = <number of
+  // all inputs or std::numeric_limits<int>::max() (if the last input is
+  // variadic).
+
+  // Flag indicates whether an optional input is trailing one (there's no single
+  // or variadic input behind).
+  for (size_t i = 0; i < inputs_.size(); ++i) {
+    switch (inputs_[i].GetOption()) {
+      case OpSchema::Single:
+        ++max_input_;
+        min_input_ = max_input_;
+        break;
+      case OpSchema::Optional:
+        ++max_input_;
+        break;
+      case OpSchema::Variadic:
+        // Only last input formal parameter could be variadic.
+        ENFORCE((inputs_.size() - 1) == i);
+        min_input_ = max_input_ + 1;
+        max_input_ = std::numeric_limits<int>::max();
+        break;
+    }
   }
-  if (max_output_ < std::numeric_limits<int>::max()) {
-    ENFORCE(outputs_.size() == max_output_);
+
+  // Calculate min/max number of outputs.
+  for (size_t i = 0; i < outputs_.size(); ++i) {
+    switch (outputs_[i].GetOption()) {
+      case OpSchema::Single:
+        ++max_output_;
+        min_output_ = max_output_;
+        break;
+      case OpSchema::Optional:
+        ++max_output_;
+        break;
+      case OpSchema::Variadic:
+        // Only last output formal parameter could be variadic.
+        ENFORCE((outputs_.size() - 1) == i);
+        min_output_ = max_output_ + 1;
+        max_output_ = std::numeric_limits<int>::max();
+        break;
+    }
   }
+
   // all inputs and outputs have names
   for (const auto& it : inputs_) {
     ENFORCE(!(it.GetName().empty()));
   }
   for (const auto& it : outputs_) {
     ENFORCE(!(it.GetName().empty()));
-  }
-
-  // Only the last input could be variadic.
-  for (int i = 0; i < (int)(inputs_.size()) - 1; ++i) {
-    ENFORCE(Variadic != inputs_[i].GetOption());        
-  }
-
-  // TODO: also cover checks for arbitrary number of inputs
-  // allow extra tailing inputs not be present if all inputs at the end are
-  // marked as optional
-  if (max_input_ < std::numeric_limits<int>::max()) {
-    int ind = max_input_;
-    for (auto& input : inputs_) {
-      if (Single != input.GetOption() && ind > 0) {
-        --ind;
-      }
-    }
-    min_input_ = std::min(min_input_, ind);
   }
 
   ParseAndSetTypes(&inputs_);
@@ -607,4 +692,4 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
   }
   return numReplaced;
 }
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

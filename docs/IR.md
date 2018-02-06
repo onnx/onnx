@@ -38,7 +38,11 @@ Further metadata may be added to a model via its `metadata_props` field (as desc
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph. These nodes MUST be free of cycles. Each node is a call to an operator. Nodes have one or more inputs, one or more outputs, and zero or more attribute-value pairs.
+Each computation dataflow graph is structured as a list of nodes that form a graph. Each node is a call to an operator. Nodes have zero or more inputs, one or more outputs, and zero or more attribute-value pairs. Additionally, a valid ONNX graph must fullfil the following requirements:
+
+- The graph MUST be free of cycles.
+- The graph MUST be in SSA (static single assignment) form, meaning outputs of all nodes are unique.
+- The nodes list MUST be in topologically sorted order, meaning if input of node `N2` is the output of node `N1`, `N2` must appear after `N1` in the nodes list.
 
 #### Model Graph Metadata
 
@@ -70,7 +74,15 @@ Names of tensor values flowing through the graph are unique - a particular name 
 
 The list of nodes defining the top-level computation graph MUST be ordered topologically \- that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
 
+#### Values
 
+The representation distinguishes between two kinds of values: attribute values, which are statically known, and runtime values. The type of values permitted in the two cases are different. The permitted types of attribute values are indicated by the enumeration `AttributeType`, while the permitted types of runtime values are described by `TypeProto`. 
+
+The types of the inputs and outputs of the model must be specified, including the shapes of tensors. While the ranks of input and output tensors are statically specified, the sizes of specific dimensions (axis) may be statically unknown and are indicated so using symbolic identifiers in the shape. 
+
+#### Optional Inputs
+
+Some Operators have inputs that are marked as optional. There are two ways to leave an optional input unspecified. The first is to simply not provide that input. However, this is not always possible - for example, if you wish to leave the fourth input unspecified, but still provide a value for the fifth input. Therefore, any input with a name of the empty string is treated as an unspecified optional input.
 
 Built-in Operators and Standard Data Types
 ------------------------------------------

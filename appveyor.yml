@@ -15,6 +15,7 @@ clone_depth: 2
 environment:
   ONNXPY_DIR: C:\Python36
   CONDA_PREFIX: C:\Miniconda36
+  ONNX_NAMESPACE: ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
   matrix:
   # onnx

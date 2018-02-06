@@ -2,15 +2,12 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-using AttrType = onnx::OpSchema::AttrType;
-using SupportType = onnx::OpSchema::SupportType;
+using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
 OPERATOR_SCHEMA(Identity)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc("Identity operator")
     .Input(0, "input", "Input tensor", "T")
     .Output(
@@ -23,15 +20,13 @@ OPERATOR_SCHEMA(Identity)
 
 OPERATOR_SCHEMA(Affine)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Affine takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the affine function, y = alpha * x + beta,
 is applied to the tensor elementwise.
 )DOC")
-    .Attr("alpha", "Value of alpha", AttrType::FLOAT)
-    .Attr("beta" , "Value of beta", AttrType::FLOAT)
+    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT, OPTIONAL)
+    .Attr("beta" , "Value of beta", AttributeProto::FLOAT, OPTIONAL)
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -40,8 +35,6 @@ is applied to the tensor elementwise.
 
 OPERATOR_SCHEMA(ThresholdedRelu)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
@@ -50,7 +43,8 @@ is applied to the tensor elementwise.
 )DOC")
     .Attr("alpha",
           "Threshold value",
-          AttrType::FLOAT)
+          AttributeProto::FLOAT,
+          OPTIONAL)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -58,16 +52,14 @@ is applied to the tensor elementwise.
 
 OPERATOR_SCHEMA(ScaledTanh)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
 alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
 by providing the same input and output blobs.
     )DOC")
-    .Attr("alpha", "Scaling value", AttrType::FLOAT)
-    .Attr("beta", "Scaling value", AttrType::FLOAT)
+    .Attr("alpha", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
+    .Attr("beta", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
     .Input(0, "input", "1-D input tensor", "T")
     .Output(0, "output", "The scaled hyperbolic tangent values of the input tensor "
         "computed element-wise", "T")
@@ -76,16 +68,14 @@ by providing the same input and output blobs.
 
 OPERATOR_SCHEMA(ParametricSoftplus)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
 the tensor elementwise.
 )DOC")
-    .Attr("alpha", "Value of alpha", AttrType::FLOAT)
-    .Attr("beta", "Value of beta", AttrType::FLOAT)
+    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT, OPTIONAL)
+    .Attr("beta", "Value of beta", AttributeProto::FLOAT, OPTIONAL)
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -93,8 +83,6 @@ the tensor elementwise.
 
 OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(0, 1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 The operator fills the elements of the output tensor with a constant value
@@ -119,28 +107,33 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
     .Attr(
         "value",
         "The value for the elements of the output tensor.",
-        AttrType::FLOAT)
+        AttributeProto::FLOAT,
+        OPTIONAL)
     .Attr(
         "dtype",
         "The data type for the elements of the output tensor."
         "Strictly must be one of the types from DataType enum in TensorProto.",
-        AttrType::INT)
+        AttributeProto::INT,
+        static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
         "shape",
         "The shape of the output tensor."
         "Cannot set the shape argument and pass in an input at the same time.",
-        AttrType::INTS)
+        AttributeProto::INTS,
+        OPTIONAL)
     .Attr(
         "extra_shape",
         "The additional dimensions appended at the end of the shape indicated"
         "by the input blob."
         "Cannot set the extra_shape argument when there is no input blob.",
-        AttrType::INTS)
+        AttributeProto::INTS,
+        OPTIONAL)
     .Attr(
         "input_as_shape",
         "1D tensor containing the desired output shape.  First input must be in "
         "CPU context.",
-        AttrType::INT)
+        AttributeProto::INT,
+        OPTIONAL)
     .Input(
         0,
         "input",
@@ -164,24 +157,20 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
 
 OPERATOR_SCHEMA(GivenTensorFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(0, 1)
-    .NumOutputs(1)
     .Input(0, "shape", "The shape of filled tensor", "T", OpSchema::Optional)
     .Output(0, "X", "The filled tensor", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .Attr("values", "", AttrType::FLOATS)
-    .Attr("shape", "", AttrType::INTS)
-    .Attr("input_as_shape", "", AttrType::INT)
-    .Attr("extra_shape", "", AttrType::INTS)
+    .Attr("values", "", AttributeProto::FLOATS, OPTIONAL)
+    .Attr("shape", "", AttributeProto::INTS, OPTIONAL)
+    .Attr("input_as_shape", "", AttributeProto::INT, OPTIONAL)
+    .Attr("extra_shape", "", AttributeProto::INTS, OPTIONAL)
     .AllowConsumed({{0, 0}});
 
 OPERATOR_SCHEMA(FC)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(3)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 Computes the result of passing an input vector X into a fully
 connected layer with 2D weight matrix W and 1D bias vector b. That is,
@@ -206,13 +195,15 @@ will throw errors.
         "(int32_t) default to 1; describes the axis of the inputs; "
         "defaults to one because the 0th axis most likely describes "
         "the batch_size",
-        AttrType::INT)
+        AttributeProto::INT,
+        OPTIONAL)
     .Attr(
         "axis_w",
         "(int32_t) default to 1; describes the axis of the weights; "
         "defaults to one because the 0th axis most likely describes "
         "the batch_size",
-        AttrType::INT)
+        AttributeProto::INT,
+        OPTIONAL)
     .Input(
         0,
         "X",
@@ -234,8 +225,6 @@ will throw errors.
 
 OPERATOR_SCHEMA(Scale)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Input(0, "input", "Input data to be scaled", "T")
     .Output(0, "output", "Output data after scaling", "T")
     .TypeConstraint(
@@ -247,12 +236,10 @@ OPERATOR_SCHEMA(Scale)
 Scale takes one input data (Tensor<float>) and produces one output data
 (Tensor<float>) whose value is the input data tensor scaled element-wise.
 )DOC")
-    .Attr("scale", "(float, default 1.0) the scale to apply.", AttrType::FLOAT);
+    .Attr("scale", "(float, default 1.0) the scale to apply.", AttributeProto::FLOAT, 1.0f);
 
 OPERATOR_SCHEMA(GRUUnit)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(4)
-    .NumOutputs(1)
     .SetDoc(R"DOC(
 GRUUnit computes the activations of a standard GRU,
 in a sequence-length aware fashion.
@@ -265,7 +252,8 @@ value at X[t][n] >= seqLengths[n].
         "drop_states",
         "Bool to determine if hidden state is zeroes or passed "
         "along for timesteps past the given sequence_length.",
-        AttrType::INT)
+        AttributeProto::INT,
+        OPTIONAL)
     .Input(0, "hidden_prev", "The previous GRU hidden state.", "T")
     .Input(
         1,
@@ -292,17 +280,21 @@ OPERATOR_SCHEMA(ATen)
     .SetDoc(R"DOC(
 Experimental allowing ATen operations to be accessed directly from Caffe2
 to allow for quick prototyping when ONNX is missing standard versions of
-and op)DOC");
+and op)DOC")
+    .Input(0, "input", "Arbitrary input", "T", OpSchema::Variadic)
+    .Output(0, "output", "Arbitrary output", "T", OpSchema::Variadic)
+    .TypeConstraint("T",
+        { "tensor(bool)", "tensor(int32)", "tensor(int64)",
+        "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain output types to bool, int32, int64, float16, float, double tensors.");
 
 OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in
 the same ordering as the image pixel format.)DOC")
-    .Attr("bias", "Bias applied to each channel, same size as C.", AttrType::FLOATS)
-    .Attr("scale", "(float, default 1.0) the scale to apply.", AttrType::FLOAT)
+    .Attr("bias", "Bias applied to each channel, same size as C.", AttributeProto::FLOATS, OPTIONAL)
+    .Attr("scale", "(float, default 1.0) the scale to apply.", AttributeProto::FLOAT, 1.0f)
     .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same shape and type as input", "T")
     .TypeConstraint(
@@ -312,12 +304,10 @@ the same ordering as the image pixel format.)DOC")
 
 OPERATOR_SCHEMA(MeanVarianceNormalization)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
-    .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttrType::INT)
-    .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttrType::INT)
+    .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttributeProto::INT, static_cast<int64_t>(0))
+    .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttributeProto::INT, static_cast<int64_t>(1))
     .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same shape and type as input", "T")
     .TypeConstraint(
@@ -327,14 +317,12 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
 
 OPERATOR_SCHEMA(Crop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
 then optionally start the crop offset by the left/top border amounts.
 If scale is not provided, crop the borders as provided.)DOC")
-    .Attr("border", "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).", AttrType::INTS)
-    .Attr("scale", "A 1-D values of (height, width).", AttrType::INTS)
+    .Attr("border", "A 1-D values of (leftBorder, topBorder, rightBorder, bottomBorder).", AttributeProto::INTS, OPTIONAL)
+    .Attr("scale", "A 1-D values of (height, width).", AttributeProto::INTS, OPTIONAL)
     .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
     .Output(0, "output", "Result, has same type as input, with H and W dimensions reduced.", "T")
     .TypeConstraint(
@@ -342,43 +330,21 @@ If scale is not provided, crop the borders as provided.)DOC")
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Embedding)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
-    .AllowConsumed({{0, 0}})
-    .SetDoc(R"DOC(Turns positive integers (indexes) into dense vectors of fixed size.)DOC")
-    .Attr("input_dim", "Size of the input vocabulary.", AttrType::INT)
-    .Attr("output_dim", "Dimension of the embedding output vectors.", AttrType::INT)
-    .Attr("weights", "2-D tensor of weights [O,I].", AttrType::TENSOR)
-    .Input(0,
-           "input",
-           "1-D tensor of integers representing indices in the embedding dictionary "
-           "with length [N] and values [0, input_dim -1]", "tensor(int64)")
-    .Output(0,
-            "output",
-            "Output tensor of computed features [N, O].", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain output types to float tensors.");
-
 OPERATOR_SCHEMA(Upsample)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .NumInputs(1)
-    .NumOutputs(1)
     .Attr(
         "width_scale",
         "The scale along width dimension. It takes value greater than or equal to 1.",
-        AttrType::FLOAT, true)
+        AttributeProto::FLOAT)
     .Attr(
         "height_scale",
         "The scale along height dimension. It takes value greater than or equal to 1.",
-        AttrType::FLOAT, true)
+        AttributeProto::FLOAT)
     .Attr(
         "mode",
         "Two interpolation modes: nearest(default), bilinear",
-        AttrType::STRING, false)
+        AttributeProto::STRING,
+        std::string("nearest"))
     .Input(
         0,
         "X",

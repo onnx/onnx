@@ -6,6 +6,9 @@ from __future__ import unicode_literals
 import onnx.onnx_cpp2py_export.defs as C
 
 
+ONNX_DOMAIN = ""
+
+
 def has(op_type):
     return C.has_schema(op_type)
 
@@ -23,7 +26,7 @@ def get_all_schemas_with_history():
 
 
 def onnx_opset_version():
-    return C.schema_version_map()[""][1]
+    return C.schema_version_map()[ONNX_DOMAIN][1]
 
 
 OpSchema = C.OpSchema

@@ -58,19 +58,46 @@ ISSUE: define type compatibility rules either here or under model versioning - p
 
 ## Operator versioning
 
-ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation.  Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on. 
+ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation.  Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on.
 
-A given operator is identified by a three-tuple: (domain, op_type, and op_version). This is written as domain.op_type:op_version in prose (e.g., com.acme.FastConv:3).  Nodes in graphs always refer to operators by their three-part identifier.
+A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`).  Nodes in graphs always refer to operators by their three-part identifier.
 
-Once an operator is published, all implementations of that operator's domain, op_type, op_version MUST adhere to the signature and semantics of the operator at the time of publication. 
-Any change of semantics implies a new operator, which MAY share a domain and op_type with another operator. This includes adding new behavior triggered only by previously unspecified inputs or attributes. These changes in semantics also MUST have a distinct operator id.
+The semantics of an operator MAY be extended in a backwards-compatible
+way without requiring the `op_version` of an operator to be increased.
+A backwards compatible semantics change is defined to be a change to
+operator semantics such that all operator definitions which were defined
+in the previous operator definition have exactly same semantics as
+in the previous version.  The following are examples of
+backwards-compatible extensions:
+
+* Adding an optional attribute, such that when the attribute is omitted,
+  the semantics are identical.
+
+* Adding an optional input, such that when the input is omitted, the
+  semantics are identical.
+
+* Clarifications of specification ambiguities to match prevailing
+  implementation practice.
+
+If the semantics of an operator is changed in a backwards-incompatible
+way, you MUST create a new operator; the `op_version` of the new
+operator id MUST be greater than any extant `op_version` for the
+`domain`.
+
+> In practice, this means that BC-breaking changes in the ONNX
+> repository require contributors to follow the following three steps:
+>
+> 1. Increment the maximum version in `DomainToVersionRange`,
+> 2. Copy the old operator schema to an `old.cc` file, and
+> 3. Update the `SinceVersion` signifier to the new max version from
+>    step (1).
 
 ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set
 specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover,
 the opset version MUST be no less than the highest operator version number in the set.
 
 ONNX models declare which operator sets they require as a list of two part operator ids (domain, opset_version).  The empty string ("") domain indicates the operators defined as part of the 
-ONNX specification. The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.  
+ONNX specification; other domains correspond to operator sets of other vendors (e.g., they can be used to provide vendor-specific extensions to ONNX). The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.
 
 How nodes bind to operator declarations is strictly defined, and are designed to increase model compatibility across ONNX implementations (appealing to the conservative clause of the robustness principle). 
 
