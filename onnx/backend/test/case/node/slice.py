@@ -54,11 +54,11 @@ class Slice(Base):
             outputs=['y'],
             axes=[1],
             starts=[1000],
-            ends=[-1],
+            ends=[1000],
         )
 
         x = np.random.randn(20, 10, 5).astype(np.float32)
-        y = x[:, 1000:-1]
+        y = x[:, 1000:1000]
 
         expect(node, inputs=[x], outputs=[y],
                name='test_slice_start_out_of_bounds')
