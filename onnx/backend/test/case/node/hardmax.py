@@ -43,7 +43,7 @@ class Hardmax(Base):
             outputs=['y'],
             axis=0,
         )
-        y = hardmax_2d(x.reshape(1, 60)).reshape(3,4,5)
+        y = hardmax_2d(x.reshape(1, 60)).reshape(3, 4, 5)
         expect(node, inputs=[x], outputs=[y],
                name='test_hardmax_axis_0')
 
@@ -53,7 +53,7 @@ class Hardmax(Base):
             outputs=['y'],
             axis=1,
         )
-        y = hardmax_2d(x.reshape(3, 20)).reshape(3,4,5)
+        y = hardmax_2d(x.reshape(3, 20)).reshape(3, 4, 5)
         expect(node, inputs=[x], outputs=[y],
                name='test_hardmax_axis_1')
 
@@ -72,6 +72,6 @@ class Hardmax(Base):
             outputs=['y'],
             axis=2,
         )
-        y = hardmax_2d(x.reshape(12, 5)).reshape(3,4,5)
+        y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
         expect(node, inputs=[x], outputs=[y],
                name='test_hardmax_axis_2')

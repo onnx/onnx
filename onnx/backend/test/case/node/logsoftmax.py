@@ -29,9 +29,9 @@ class LogSoftmax(Base):
         def logsoftmax_2d(x):
             max_x = np.max(x, axis=1).reshape((-1, 1))
             exp_x = np.exp(x - max_x)
-            return x - max_x  - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
+            return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
 
-        x = np.array([[0, 1, 2, 3],[10000, 10001, 10002, 10003]]).astype(np.float32)
+        x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
         #expected output [[-3.4401896, -2.4401896, -1.44018972, -0.44018969],
         #                 [-3.4401896, -2.4401896, -1.44018972, -0.44018969]]
         y = logsoftmax_2d(x)
@@ -51,7 +51,7 @@ class LogSoftmax(Base):
             outputs=['y'],
             axis=0,
         )
-        y = logsoftmax_2d(x.reshape(1, 60)).reshape(3,4,5)
+        y = logsoftmax_2d(x.reshape(1, 60)).reshape(3, 4, 5)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_axis_0')
 
@@ -61,7 +61,7 @@ class LogSoftmax(Base):
             outputs=['y'],
             axis=1,
         )
-        y = logsoftmax_2d(x.reshape(3, 20)).reshape(3,4,5)
+        y = logsoftmax_2d(x.reshape(3, 20)).reshape(3, 4, 5)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_axis_1')
 
@@ -80,6 +80,6 @@ class LogSoftmax(Base):
             outputs=['y'],
             axis=2,
         )
-        y = logsoftmax_2d(x.reshape(12, 5)).reshape(3,4,5)
+        y = logsoftmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_axis_2')
