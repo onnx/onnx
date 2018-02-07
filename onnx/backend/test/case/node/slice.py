@@ -61,7 +61,7 @@ class Slice(Base):
         y = x[:, 1000:-1]
 
         expect(node, inputs=[x], outputs=[y],
-               name='test_slice_end_out_of_bounds')
+               name='test_slice_start_out_of_bounds')
 
     @staticmethod
     def export_slice_end_out_of_bounds():
