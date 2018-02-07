@@ -58,13 +58,13 @@ Performs element-wise binary {name} (with limited broadcast support).
   };
 }
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(const char* name) {
+std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(const char* name, const char* description) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
-The operator computes the {name} normalized values for each layer in the batch
+The operator computes the {name} ({description}) values for each layer in the batch
  of the given input. The input is a 2-D tensor (Tensor<float>) of size
 (batch_size x input_feature_dimensions). The output tensor has the same shape
-and contains the {name} normalized values of the corresponding input.
+and contains the {name} values of the corresponding input.
 
 X does not need to explicitly be a 2D vector; rather, it will be
 coerced into one. For an arbitrary n-dimensional tensor
@@ -78,6 +78,7 @@ Each of these dimensions must be matched correctly, or else the operator
 will throw errors.
 )DOC";
     ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{description}", description);
     schema.SetDoc(doc);
     schema.Attr("axis",
         "(int) default to 1; describes the axis of the inputs when coerced "
@@ -88,7 +89,7 @@ will throw errors.
     schema.Input(0, "input",
          "The input tensor that's coerced into a 2D matrix of size (NxD) "
          "as described above.", "T");
-    schema.Output(0, "output", "The normalized output values with the same "
+    schema.Output(0, "output", "The output values with the same "
           "shape as input tensor.", "T");
     schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
@@ -416,13 +417,13 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
         "Constrain input and output types to float tensors.");
 
 OPERATOR_SCHEMA(Softmax)
-    .FillUsing(SoftmaxFamilyDocGenerator("softmax"));
+    .FillUsing(SoftmaxFamilyDocGenerator("softmax", "normalized exponential"));
 
 OPERATOR_SCHEMA(LogSoftmax)
-    .FillUsing(SoftmaxFamilyDocGenerator("logsoftmax"));
+    .FillUsing(SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax"));
 
 OPERATOR_SCHEMA(Hardmax)
-    .FillUsing(SoftmaxFamilyDocGenerator("hardmax"));
+    .FillUsing(SoftmaxFamilyDocGenerator("hardmax", "1 for the first maximum value, and 0 for all others"));
 
 OPERATOR_SCHEMA(Softsign)
     .SetDoc(R"DOC(
