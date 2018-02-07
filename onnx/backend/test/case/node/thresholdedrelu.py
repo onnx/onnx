@@ -31,6 +31,7 @@ class ThresholdedRelu(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, alpha, np.inf)
         y[y == alpha] = 0
+
         expect(node, inputs=[x], outputs=[y],
                name='test_thresholdedrelu')
 
@@ -45,5 +46,6 @@ class ThresholdedRelu(Base):
         x = np.random.randn(3, 4, 5).astype(np.float32)
         y = np.clip(x, default_alpha, np.inf)
         y[y == default_alpha] = 0
+
         expect(node, inputs=[x], outputs=[y],
                name='test_thresholdedrelu_default')
