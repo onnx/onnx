@@ -5628,7 +5628,9 @@ expect(node, inputs=[x], outputs=[y],
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
-  dimension.
+  dimension. If the value passed to start or end is larger than the `n` (the
+  number of elements in this dimension), it represents `n`. If `axes` are omitted,
+  they are set to `[0, ..., ndim-1]`.
   
   Example 1:
   
@@ -5651,11 +5653,11 @@ expect(node, inputs=[x], outputs=[y],
         [1, 2, 3, 4],
         [5, 6, 7, 8],
     ]
-    starts = [0]
-    ends = [-1]
+    starts = [0, 1]
+    ends = [-1, 1000]
   
     result = [
-        [1, 2, 3, 4],
+        [2, 3, 4],
     ]
   
 
@@ -5750,6 +5752,29 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
+<summary>slice_end_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1],
+    starts=[1],
+    ends=[1000],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, 1:1000]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice_end_out_of_bounds')
+```
+
+</details>
+
+
+<details>
 <summary>slice_neg</summary>
 
 ```python
@@ -5767,6 +5792,29 @@ y = x[:, 0:-1]
 
 expect(node, inputs=[x], outputs=[y],
        name='test_slice_neg')
+```
+
+</details>
+
+
+<details>
+<summary>slice_start_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Slice',
+    inputs=['x'],
+    outputs=['y'],
+    axes=[1],
+    starts=[1000],
+    ends=[1000],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[:, 1000:1000]
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_slice_start_out_of_bounds')
 ```
 
 </details>
