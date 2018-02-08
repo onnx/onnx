@@ -25,6 +25,7 @@ class ThresholdedRelu(Base):
         x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
         y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
         y[y == alpha] = 0
+
         expect(node, inputs=[x], outputs=[y],
                name='test_thresholdedrelu_example')
 
