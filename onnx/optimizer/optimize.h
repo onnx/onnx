@@ -44,7 +44,7 @@ struct Optimizer {
       return mp_in;
     }
 
-    onnx::ModelProto mp_out{};
+    ONNX_NAMESPACE::ModelProto mp_out{};
     PrepareOutput(mp_in, mp_out);
 
     for (auto & name : names) {
