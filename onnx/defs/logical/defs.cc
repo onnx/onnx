@@ -3,9 +3,9 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
@@ -80,4 +80,4 @@ Returns the negation of the input tensor element-wise.
     .TypeConstraint("T", { "tensor(bool)" },
                     "Constrains input/output to boolean tensors.");
 
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE

@@ -3,7 +3,7 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
 OPERATOR_SCHEMA(Cast)
     .SetDoc(R"DOC(
@@ -227,6 +227,25 @@ Takes a  parameter `axes` with a list of axes to squeeze.
 )DOC")
     .Input(0, "data", "Tensors with at least max(dims) dimensions.", "T")
     .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input and output types to float tensors.");
+
+OPERATOR_SCHEMA(Unsqueeze)
+    .Attr(
+      "axes",
+      "List of positive integers, indicate the dimensions to be inserted",
+      AttributeProto::INTS)
+    .SetDoc(R"DOC(
+Insert single-dimensional entries to the shape of a tensor.
+Takes one required argument `axes`, a list of dimensions that will be inserted.
+Dimension indices in `axes` are as seen in the output tensor. For example:
+
+  Given a tensor such that tensor with shape [3, 4, 5], then
+  Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+
+)DOC")
+    .Input(0, "data", "Original tensor", "T")
+    .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 

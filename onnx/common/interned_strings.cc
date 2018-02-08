@@ -10,7 +10,7 @@
 #include "onnx/common/assertions.h"
 #include "onnx/common/interned_strings.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 struct InternedStrings {
   InternedStrings()
@@ -71,4 +71,4 @@ Symbol::Symbol(const std::string & s)
   : value(globalStrings().symbol(s)) {
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
