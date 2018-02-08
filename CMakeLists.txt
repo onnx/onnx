@@ -44,7 +44,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
   set(${SRCS})
   set(${HDRS})
   foreach(FIL ${ARGN})
-    message(${FIL})
     set(ABS_FIL ${ROOT_DIR}/${FIL})
     get_filename_component(FIL_WE ${FIL} NAME_WE)
     get_filename_component(FIL_DIR ${ABS_FIL} DIRECTORY)
@@ -58,7 +57,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
              "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb.h"
       COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS --cpp_out  ${DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR} -I ${ROOT_DIR} ${ABS_FIL} -I ${PROTOBUF_INCLUDE_DIRS} -I ${ROOT_DIR}/${REL_DIR}
-      DEPENDS ${ABS_FIL} protobuf
+      DEPENDS ${ABS_FIL} protobuf::protoc
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM )
   endforeach()
@@ -94,7 +93,9 @@ endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 add_dependencies(onnx_proto protobuf::libprotobuf)
-target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+if(MSVC)
+  target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+endif()
 
 add_library(onnx ${onnx_src})
 add_dependencies(onnx onnx_proto)
