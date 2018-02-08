@@ -7886,6 +7886,12 @@ node = onnx.helper.make_node(
     outputs=['y'],
     alpha=alpha
 )
+
+x = np.array([-1.5, 0., 1.2, 2.2]).astype(np.float32)
+y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 2.2]
+expect(node, inputs=[x], outputs=[y],
+       name='test_thresholdedrelu_example')
+
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, alpha, np.inf)
 
