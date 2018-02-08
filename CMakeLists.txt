@@ -17,10 +17,6 @@ if (WIN32)
 endif()
 add_subdirectory(third_party/pybind11)
 FIND_PACKAGE(Protobuf REQUIRED)
-include_directories(
-    ${ONNX_ROOT}
-    ${CMAKE_CURRENT_BINARY_DIR}
-)
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 # from https://github.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tensorflow/contrib/cmake/tf_core_framework.cmake
@@ -36,7 +32,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
   else()
     set(DLLEXPORT_STR "")
   endif()
-  
+
   set(${SRCS})
   set(${HDRS})
   foreach(FIL ${ARGN})
@@ -88,8 +84,8 @@ else()
 endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
-target_include_directories(onnx_proto PUBLIC "${PROTOBUF_INCLUDE_DIRS}")
-target_link_libraries(onnx_proto ${PROTOBUF_LIBRARIES})
+target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
+target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
 
 
 if(MSVC)
@@ -97,9 +93,8 @@ if(MSVC)
 endif()
 
 add_library(onnx ${onnx_src})
-target_include_directories(onnx PUBLIC "${PYBIND11_INCLUDE_DIR}")
-target_include_directories(onnx PUBLIC "${PYTHON_INCLUDE_DIRS}")
-target_link_libraries(onnx onnx_proto)
+target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}" "${PYBIND11_INCLUDE_DIR}" "${PYTHON_INCLUDE_DIRS}")
+target_link_libraries(onnx PUBLIC onnx_proto)
 
 if (WIN32)
     target_compile_options(onnx PRIVATE
