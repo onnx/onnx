@@ -7,7 +7,7 @@ namespace ONNX_NAMESPACE {
 namespace py = pybind11;
 
 template <typename Proto>
-bool ParseProtoFromPyBytes(Proto& proto, const py::bytes& bytes) {
+bool ParseProtoFromPyBytes(Proto* proto, const py::bytes& bytes) {
   // Get the buffer from Python bytes object
   char* buffer = nullptr;
   Py_ssize_t length;

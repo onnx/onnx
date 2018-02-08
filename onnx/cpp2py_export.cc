@@ -140,7 +140,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "check_value_info",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         ValueInfoProto proto{};
-        ParseProtoFromPyBytes(proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_value_info(proto, ctx);
       });
 
@@ -148,7 +148,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "check_tensor",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         TensorProto proto{};
-        ParseProtoFromPyBytes(proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_tensor(proto, ctx);
       });
 
@@ -156,7 +156,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "check_attribute",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         AttributeProto proto{};
-        ParseProtoFromPyBytes(proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::check_attribute(proto, ctx, checker::LexicalScopeContext());
       });
 
@@ -164,7 +164,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "check_node",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         NodeProto proto{};
-        ParseProtoFromPyBytes(proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
         checker::check_node(proto, ctx, lex_ctx);
       });
@@ -173,14 +173,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "check_graph",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         GraphProto proto{};
-        ParseProtoFromPyBytes(proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
         checker::check_graph(proto, ctx, lex_ctx);
       });
 
   checker.def("check_model", [](const py::bytes& bytes) -> void {
     ModelProto proto{};
-    ParseProtoFromPyBytes(proto, bytes);
+    ParseProtoFromPyBytes(&proto, bytes);
     checker::check_model(proto);
   });
 
@@ -192,7 +192,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "optimize",
       [](const py::bytes& bytes, const std::vector<std::string>& names) {
         ModelProto proto{};
-        ParseProtoFromPyBytes(proto, bytes);
+        ParseProtoFromPyBytes(&proto, bytes);
         auto const result = optimization::Optimize(std::move(proto), names);
         std::string out;
         result.SerializeToString(&out);
