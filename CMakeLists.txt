@@ -17,14 +17,6 @@ if (WIN32)
 endif()
 add_subdirectory(third_party/pybind11)
 FIND_PACKAGE(Protobuf REQUIRED)
-include_directories(
-    ${ONNX_ROOT}
-    ${CMAKE_CURRENT_BINARY_DIR}
-    # External dependencies.
-    ${PROTOBUF_INCLUDE_DIRS}
-    ${PYBIND11_INCLUDE_DIR}
-    ${PYTHON_INCLUDE_DIRS}
-)
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 # from https://github.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tensorflow/contrib/cmake/tf_core_framework.cmake
@@ -40,7 +32,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
   else()
     set(DLLEXPORT_STR "")
   endif()
-  
+
   set(${SRCS})
   set(${HDRS})
   foreach(FIL ${ARGN})
@@ -58,7 +50,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
              "${CMAKE_CURRENT_BINARY_DIR}/${REL_DIR}/${FIL_WE}.pb.h"
       COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
       ARGS --cpp_out  ${DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR} -I ${ROOT_DIR} ${ABS_FIL} -I ${PROTOBUF_INCLUDE_DIRS} -I ${ROOT_DIR}/${REL_DIR}
-      DEPENDS ${ABS_FIL} protobuf
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM )
   endforeach()
@@ -93,11 +84,18 @@ else()
 endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
-add_dependencies(onnx_proto protobuf::libprotobuf)
-target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
+target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+
+
+if(MSVC)
+    target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+endif()
 
 add_library(onnx ${onnx_src})
-add_dependencies(onnx onnx_proto)
+target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}" "${PYBIND11_INCLUDE_DIR}" "${PYTHON_INCLUDE_DIRS}")
+target_link_libraries(onnx PUBLIC onnx_proto)
+
 if (WIN32)
     target_compile_options(onnx PRIVATE
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
@@ -108,4 +106,7 @@ if (WIN32)
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
+endif()
+if(APPLE)
+    set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
