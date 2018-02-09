@@ -166,7 +166,7 @@ class build_proto_in(ONNXCommand):
         if self.force or any(dep_util.newer_group(in_files, o)
                              for o in out_files):
             log.info('compiling *.in.proto')
-            subprocess.check_call([sys.executable, gen_script, '-p', ONNX_NAMESPAC] + stems)
+            subprocess.check_call([sys.executable, gen_script, '-p', ONNX_NAMESPACE] + stems)
 
 
 class build_proto(ONNXCommand):
