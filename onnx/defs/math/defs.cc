@@ -295,10 +295,18 @@ ONNX_OPERATOR_SCHEMA(Pow)
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
-)DOC")
+)DOC" + std::string(kBroadcastDoc))
     .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
     .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, "
                    "the exponent component.", "T")
+    .Attr("broadcast",
+          "Pass 1 to enable broadcasting",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
+    .Attr("axis",
+          "If set, defines the broadcast dimensions. See doc for details.",
+          AttributeProto::INT,
+          OPTIONAL)
     .Output(0, "Z", "Output tensor (same size as X)", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
