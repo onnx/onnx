@@ -7869,9 +7869,12 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, default_alpha, np.inf)
 y[y == default_alpha] = 0
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Fixing a bug with using clip in thresholded relu testcase.
+=======
+>>>>>>> 3f3c049e36cfe1a40242a9769c51405c13176e95
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu_default')
 ```
@@ -7893,6 +7896,7 @@ node = onnx.helper.make_node(
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
 y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
 y[y == alpha] = 0
@@ -7905,6 +7909,11 @@ x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
 y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
 y[y == alpha] = 0
 >>>>>>> Fixing a bug with using clip in thresholded relu testcase.
+=======
+x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
+y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
+y[y == alpha] = 0
+>>>>>>> 3f3c049e36cfe1a40242a9769c51405c13176e95
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu_example')
 
@@ -7912,9 +7921,12 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, alpha, np.inf)
 y[y == alpha] = 0
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> Fixing a bug with using clip in thresholded relu testcase.
+=======
+>>>>>>> 3f3c049e36cfe1a40242a9769c51405c13176e95
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu')
 ```
