@@ -29,49 +29,49 @@ detailed description of the broadcasting rules.
     };
 }
 
-OPERATOR_SCHEMA(And)
+ONNX_OPERATOR_SCHEMA(And)
     .FillUsing(BinaryLogicDocGenerator("and"))
     .TypeConstraint("T", { "tensor(bool)" },
                     "Constrains input to boolean tensor.")
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(Or)
+ONNX_OPERATOR_SCHEMA(Or)
     .FillUsing(BinaryLogicDocGenerator("or"))
     .TypeConstraint("T", { "tensor(bool)" },
                     "Constrains input to boolean tensor.")
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(Xor)
+ONNX_OPERATOR_SCHEMA(Xor)
     .FillUsing(BinaryLogicDocGenerator("xor"))
     .TypeConstraint("T", { "tensor(bool)" },
                     "Constrains input to boolean tensor.")
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(Greater)
+ONNX_OPERATOR_SCHEMA(Greater)
     .FillUsing(BinaryLogicDocGenerator("greater"))
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                     "Constrains input to float tensors.")
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(Less)
+ONNX_OPERATOR_SCHEMA(Less)
     .FillUsing(BinaryLogicDocGenerator("less"))
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                     "Constrains input to float tensors.")
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(Equal)
+ONNX_OPERATOR_SCHEMA(Equal)
     .FillUsing(BinaryLogicDocGenerator("equal"))
     .TypeConstraint("T", { "tensor(bool)", "tensor(int32)", "tensor(int64)" },
                     "Constrains input to integral tensors.")
     .TypeConstraint("T1", { "tensor(bool)" },
                     "Constrains output to boolean tensor.");
 
-OPERATOR_SCHEMA(Not)
+ONNX_OPERATOR_SCHEMA(Not)
     .SetDoc(R"DOC(
 Returns the negation of the input tensor element-wise.
 )DOC")

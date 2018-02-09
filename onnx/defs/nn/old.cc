@@ -21,7 +21,7 @@ namespace ONNX_NAMESPACE {
                                       "encouraged to use explicit padding specified in the pads attribute.";
 }
 
-OPERATOR_SCHEMA(LpPool)
+ONNX_OPERATOR_SCHEMA(LpPool)
     .SinceVersion(1)
     .SetDoc(R"DOC(
  LpPool consumes an input tensor X and applies Lp pooling across the
@@ -67,7 +67,7 @@ OPERATOR_SCHEMA(LpPool)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                     "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(GlobalLpPool)
+ONNX_OPERATOR_SCHEMA(GlobalLpPool)
     .SinceVersion(1)
     .SetDoc(R"DOC(
  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
