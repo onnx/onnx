@@ -89,6 +89,7 @@
   * <a href="#Sum">Sum</a>
   * <a href="#Tanh">Tanh</a>
   * <a href="#Tile">Tile</a>
+  * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Xor">Xor</a>
@@ -6554,6 +6555,97 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>
+
+
+### <a name="TopK"></a><a name="topk">**TopK**</a>
+
+  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+      which contains the values of the top k elements along the specified axis
+    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+     contains the indices of the top k elements (original indices from the input
+     tensor).
+  
+  Given two equivalent values, this operator uses the indices along the axis  as
+   a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Dimension on which to do the sort. Default -1, which indicates the last axis</dd>
+<dt><tt>k</tt> : int (required)</dt>
+<dd>Number of top elements to retrieve</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>top_k</summary>
+
+```python
+node = onnx.helper.make_node(
+    'TopK',
+    inputs=['x'],
+    outputs=['values', 'indices'],
+    k=3
+)
+X = np.array([
+    [0, 1, 2, 3],
+    [4, 5, 6, 7],
+    [8, 9, 10, 11],
+])
+values_ref = np.array([
+    [3, 2, 1],
+    [7, 6, 5],
+    [11, 10, 9],
+])
+indices_ref = np.array([
+    [3, 2, 1],
+    [3, 2, 1],
+    [3, 2, 1],
+])
+
+expect(node, inputs=[X], outputs=[values_ref, indices_ref],
+       name='test_top_k')
+```
+
+</details>
 
 
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
