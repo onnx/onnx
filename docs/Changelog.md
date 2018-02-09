@@ -1944,10 +1944,10 @@ opset_import {
 
 ### <a name="Hardmax-1"></a>**Hardmax-1**</a>
 
-  The operator computes the hardmax normalized values for each layer in the batch
+  The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax normalized values of the corresponding input.
+  and contains the hardmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -1988,7 +1988,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -2514,10 +2514,10 @@ opset_import {
 
 ### <a name="LogSoftmax-1"></a>**LogSoftmax-1**</a>
 
-  The operator computes the logsoftmax normalized values for each layer in the batch
+  The operator computes the logsoftmax (log of softmax) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax normalized values of the corresponding input.
+  and contains the logsoftmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -2558,7 +2558,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4754,10 +4754,10 @@ opset_import {
 
 ### <a name="Softmax-1"></a>**Softmax-1**</a>
 
-  The operator computes the softmax normalized values for each layer in the batch
+  The operator computes the softmax (normalized exponential) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax normalized values of the corresponding input.
+  and contains the softmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -4798,7 +4798,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4847,7 +4847,7 @@ opset_import {
 
 ### <a name="Softsign-1"></a>**Softsign-1**</a>
 
-  Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
+  Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
 #### Versioning
 
@@ -4870,7 +4870,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softsign (x/1+|x|) values of the input tensor computed element-wise</dd>
+<dd>The softsign (x/(1+|x|)) values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
