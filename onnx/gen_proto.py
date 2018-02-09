@@ -41,6 +41,14 @@ def process_ifs(lines, onnx_ml):
             elif (2 == in_if and not onnx_ml):
                 yield line
 
+
+PACKAGE_NAME_REGEX = re.compile(r'\{PACKAGE_NAME\}')
+
+def process_package_name(lines, package_name):
+    for line in lines:
+        yield PACKAGE_NAME_REGEX.sub(package_name, line)
+
+
 PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
 OPTIONAL_REGEX = re.compile(r'(\s*)optional\s(.*)$')
 IMPORT_REGEX = re.compile(r'(\s*)import\s*"([^"]*)\.proto";\s*$')
@@ -68,9 +76,10 @@ def convert_to_proto3(lines):
         yield line
 
 
-def translate(source, proto, onnx_ml):
+def translate(source, proto, onnx_ml, package_name):
     lines = source.splitlines()
     lines = process_ifs(lines, onnx_ml=onnx_ml)
+    lines = process_package_name(lines, package_name=package_name)
     if proto == 3:
         lines = convert_to_proto3(lines)
     else:
@@ -80,7 +89,7 @@ def translate(source, proto, onnx_ml):
 def qualify(f):
     return os.path.join(os.path.dirname(__file__), f)
 
-def convert(stem, do_onnx_ml=False):
+def convert(stem, package_name, do_onnx_ml=False):
     proto_in = qualify("{}.in.proto".format(stem))
     proto = qualify("{}.proto".format(stem))
     proto3 = qualify("{}.proto3".format(stem))
@@ -91,33 +100,35 @@ def convert(stem, do_onnx_ml=False):
         print("Writing {}".format(proto))
         with io.open(proto, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=2, onnx_ml=False))
+            fout.write(translate(source, proto=2, onnx_ml=False, package_name=package_name))
         print("Writing {}".format(proto3))
         with io.open(proto3, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=3, onnx_ml=False))
+            fout.write(translate(source, proto=3, onnx_ml=False, package_name=package_name))
         if do_onnx_ml:
             ml_proto = qualify("{}-ml.proto".format(stem))
             ml_proto3 = qualify("{}-ml.proto3".format(stem))
             print("Writing {}".format(ml_proto))
             with io.open(ml_proto, 'w', newline='') as fout:
                 fout.write(autogen_header)
-                fout.write(translate(source, proto=2, onnx_ml=True))
+                fout.write(translate(source, proto=2, onnx_ml=True, package_name=package_name))
             print("Writing {}".format(ml_proto3))
             with io.open(ml_proto3, 'w', newline='') as fout:
                 fout.write(autogen_header)
-                fout.write(translate(source, proto=3, onnx_ml=True))
+                fout.write(translate(source, proto=3, onnx_ml=True, package_name=package_name))
 
 def main():
     parser = argparse.ArgumentParser(
         description='Generates .proto file variations from .in.proto')
+    parser.add_argument('-p', '--package', default='onnx',
+                        help='package name in the generated proto files')
     parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators'],
                         help='list of .in.proto file stems '
                         '(default: %(default)s)')
     args = parser.parse_args()
 
     for stem in args.stems:
-        convert(stem, do_onnx_ml=True)
+        convert(stem, package_name=args.package, do_onnx_ml=True)
 
 if __name__ == '__main__':
     main()

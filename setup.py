@@ -36,6 +36,7 @@ TP_DIR = os.path.join(TOP_DIR, 'third_party')
 PROTOC = find_executable('protoc')
 
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 
 install_requires = ['six']
 setup_requires = []
@@ -165,7 +166,7 @@ class build_proto_in(ONNXCommand):
         if self.force or any(dep_util.newer_group(in_files, o)
                              for o in out_files):
             log.info('compiling *.in.proto')
-            subprocess.check_call([sys.executable, gen_script] + stems)
+            subprocess.check_call([sys.executable, gen_script, '-p', ONNX_NAMESPAC] + stems)
 
 
 class build_proto(ONNXCommand):
@@ -346,7 +347,7 @@ if build_for_release and platform.system() == 'Linux':
 else:
     cpp2py_deps.append(Protobuf())
 
-define_macros = [('ONNX_NAMESPACE', os.getenv('ONNX_NAMESPACE', 'onnx'))]
+define_macros = [('ONNX_NAMESPACE', ONNX_NAMESPACE)]
 if ONNX_ML:
     define_macros.append(('ONNX_ML', '1'))
 
