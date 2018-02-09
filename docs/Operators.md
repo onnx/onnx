@@ -2481,10 +2481,10 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Hardmax"></a><a name="hardmax">**Hardmax**</a>
 
-  The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
+  The operator computes the hardmax normalized values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax values of the corresponding input.
+  and contains the hardmax normalized values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -2525,7 +2525,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The softmax normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -3126,10 +3126,10 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="LogSoftmax"></a><a name="logsoftmax">**LogSoftmax**</a>
 
-  The operator computes the logsoftmax (log of softmax) values for each layer in the batch
+  The operator computes the logsoftmax normalized values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax values of the corresponding input.
+  and contains the logsoftmax normalized values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -3170,7 +3170,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The softmax normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -5773,10 +5773,10 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Softmax"></a><a name="softmax">**Softmax**</a>
 
-  The operator computes the softmax (normalized exponential) values for each layer in the batch
+  The operator computes the softmax normalized values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax values of the corresponding input.
+  and contains the softmax normalized values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -5817,7 +5817,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The softmax normalized output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -5981,7 +5981,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Softsign"></a><a name="softsign">**Softsign**</a>
 
-  Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
+  Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
 
 #### Versioning
 
@@ -6004,7 +6004,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softsign (x/(1+|x|)) values of the input tensor computed element-wise</dd>
+<dd>The softsign (x/1+|x|) values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
@@ -7868,7 +7868,10 @@ node = onnx.helper.make_node(
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, default_alpha, np.inf)
 y[y == default_alpha] = 0
+<<<<<<< HEAD
 
+=======
+>>>>>>> Fixing a bug with using clip in thresholded relu testcase.
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu_default')
 ```
@@ -7889,6 +7892,7 @@ node = onnx.helper.make_node(
 )
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
 y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
 y[y == alpha] = 0
@@ -7896,13 +7900,21 @@ y[y == alpha] = 0
 x = np.array([-1.5, 0., 1.2, 2.2]).astype(np.float32)
 y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 2.2]
 >>>>>>> Addressing Lu's review comments.
+=======
+x = np.array([-1.5, 0., 1.2, 2.0, 2.2]).astype(np.float32)
+y = np.clip(x, alpha, np.inf)  # expected output [0., 0., 0., 0., 2.2]
+y[y == alpha] = 0
+>>>>>>> Fixing a bug with using clip in thresholded relu testcase.
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu_example')
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, alpha, np.inf)
 y[y == alpha] = 0
+<<<<<<< HEAD
 
+=======
+>>>>>>> Fixing a bug with using clip in thresholded relu testcase.
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu')
 ```
