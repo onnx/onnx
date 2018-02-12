@@ -524,16 +524,11 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] "
         "containing the corresponding input tensor indices for the top K "
         "values.",
-        "I")
+        "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .TypeConstraint(
-        "I",
-        {"tensor(int64)", "tensor(int32)"},
-        "Constrain index tensor to integral types"
-    )
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(
       "axis",

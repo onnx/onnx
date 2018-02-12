@@ -5314,7 +5314,7 @@ opset_import {
 <dl>
 <dt><tt>Values</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
-<dt><tt>Indices</tt> : I</dt>
+<dt><tt>Indices</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
@@ -5323,8 +5323,6 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
-<dd>Constrain index tensor to integral types</dd>
 </dl>
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>

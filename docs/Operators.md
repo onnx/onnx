@@ -6601,7 +6601,7 @@ opset_import {
 <dl>
 <dt><tt>Values</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
-<dt><tt>Indices</tt> : I</dt>
+<dt><tt>Indices</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
@@ -6610,8 +6610,6 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
-<dd>Constrain index tensor to integral types</dd>
 </dl>
 
 
@@ -6631,7 +6629,7 @@ X = np.array([
     [0, 1, 2, 3],
     [4, 5, 6, 7],
     [8, 9, 10, 11],
-], dtype=np.float32)
+])
 values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
@@ -6641,7 +6639,7 @@ indices_ref = np.array([
     [3, 2, 1],
     [3, 2, 1],
     [3, 2, 1],
-], dtype=np.int32)
+])
 
 expect(node, inputs=[X], outputs=[values_ref, indices_ref],
        name='test_top_k')
