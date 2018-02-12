@@ -38,12 +38,12 @@ typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
  *
  * OpSchema records the common interface of an op specified by its name.
  *
- * To register an OpSchema, one can use the macro OPERATOR_SCHEMA(name) and
+ * To register an OpSchema, one can use the macro ONNX_OPERATOR_SCHEMA(name) and
  * then append the various functions in the class. For example, for an op
  * that takes in two inputs, one output, and the first input and output
  * could be in-place, can be written as
  *
- *     OPERATOR_SCHEMA(name)
+ *     ONNX_OPERATOR_SCHEMA(name)
  *         .NumInputs(2).NumOutputs(1).AllowConsumed({{0, 0}});
  */
 class OpSchema {
@@ -314,7 +314,7 @@ class OpSchema {
   //       2) <type> ::= <data_type> means the data is scalar (zero dimension).
   //
   // Example:
-  // OPERATOR_SCHEMA(Sum)
+  // ONNX_OPERATOR_SCHEMA(Sum)
   // .Input(0, "input_a", "the first input", "T")
   // .Input(1, "input_b", "the second input", "T")
   // .Output(0, "sum", "the sum of two numbers", "T")
@@ -578,7 +578,7 @@ class OpSchemaRegistry {
    * @brief Returns the underlying string to OpSchema map.
    *
    * You should not manually manipulate the map object returned. Instead, use
-   * the macros defined such as OPERATOR_SCHEMA to register your operator
+   * the macros defined such as ONNX_OPERATOR_SCHEMA to register your operator
    * schema.
    *
    * We wrap it inside a function to avoid the statia initialization order
@@ -611,10 +611,10 @@ class OpSchemaRegistry {
   }
 };
 
-#define OPERATOR_SCHEMA(name) OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
-#define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) \
-  OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define OPERATOR_SCHEMA_UNIQ(Counter, name)            \
+#define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
+#define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) \
+  ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)            \
   static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
       op_schema_register_once##name##Counter) =        \
       OpSchema(#name, __FILE__, __LINE__)

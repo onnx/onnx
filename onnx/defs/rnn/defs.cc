@@ -59,7 +59,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     };
 }
 
-OPERATOR_SCHEMA(RNN)
+ONNX_OPERATOR_SCHEMA(RNN)
     .SetDoc(R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
@@ -144,7 +144,7 @@ Equations (Default: f=Tanh):
     .FillUsing(RNNDocGenerator("RNN"));
 
 
-OPERATOR_SCHEMA(GRU)
+ONNX_OPERATOR_SCHEMA(GRU)
     .SetDoc(R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -248,7 +248,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
     .FillUsing(RNNDocGenerator("GRU"));
 
 
-OPERATOR_SCHEMA(LSTM)
+ONNX_OPERATOR_SCHEMA(LSTM)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
