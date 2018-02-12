@@ -16,8 +16,11 @@ import platform
 import fnmatch
 from collections import namedtuple
 import os
+import hashlib
+import shutil
 import subprocess
 import sys
+import tempfile
 from textwrap import dedent
 
 from tools.ninja_builder import NinjaBuilder, ninja_build_ext
@@ -77,6 +80,15 @@ def recursive_glob(directory, pattern):
     return [os.path.join(dirpath, f)
             for dirpath, dirnames, files in os.walk(directory)
             for f in fnmatch.filter(files, pattern)]
+
+
+ # https://stackoverflow.com/a/3431838/2143581
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 ################################################################################
 # Pre Check
@@ -148,6 +160,7 @@ class ONNXCommand(setuptools.Command):
 
 class build_proto_in(ONNXCommand):
     def run(self):
+        tmp_dir = tempfile.mkdtemp()
         gen_script = os.path.join(SRC_DIR, 'gen_proto.py')
         stems = ['onnx', 'onnx-operators']
 
@@ -163,10 +176,20 @@ class build_proto_in(ONNXCommand):
                 os.path.join(SRC_DIR, '{}-ml.proto3'.format(stem)),
             ])
 
-        if self.force or any(dep_util.newer_group(in_files, o)
-                             for o in out_files):
-            log.info('compiling *.in.proto')
-            subprocess.check_call([sys.executable, gen_script, '-p', ONNX_NAMESPACE] + stems)
+        log.info('compiling *.in.proto to temp dir {}'.format(tmp_dir))
+        subprocess.check_call([
+            sys.executable, gen_script,
+            '-p', ONNX_NAMESPACE,
+            '-o', tmp_dir
+        ] + stems)
+
+        for out_f in out_files:
+            tmp_f = os.path.join(tmp_dir, os.path.basename(out_f))
+            if os.path.exists(out_f) and md5(out_f) == md5(tmp_f):
+                log.info("Skip updating {} since it's the same.".format(out_f))
+                continue
+            shutil.copyfile(tmp_f, out_f)
+        shutil.rmtree(tmp_dir)
 
 
 class build_proto(ONNXCommand):
