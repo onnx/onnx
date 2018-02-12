@@ -104,6 +104,10 @@ message AttributeProto {
 
   // The name field MUST be present for this version of the IR.
   string name = 1;           // namespace Attribute
+  // if ref_attr_name is not empty, ref_attr_name is the attribute name in parent function.
+  // In this case, this AttributeProto does not contain data, and it's a reference of attribute
+  // in parent scope.
+  string ref_attr_name = 21;
 
   // A human-readable documentation for this attribute. Markdown is allowed.
   string doc_string = 13;
@@ -255,6 +259,9 @@ message GraphProto {
   // Information for the values in the graph. The ValueInfoProto.name's
   // must be distinct. It is optional for a value to appear in value_info list.
   repeated ValueInfoProto value_info = 13;
+  
+  // Customized functions referred by this graph.
+  repeated FunctionDefProto function = 14;
 
   // DO NOT USE the following fields, they were deprecated before
   // repeated string input = 3;
@@ -446,4 +453,80 @@ message OperatorSetIdProto {
   // The version of the operator set being identified.
   // This field MUST be present in this version of the IR.
   int64 version = 2;
+}
+
+// Defines a function parameter.
+message ParameterDeclProto {
+  // The name of this parameter. Must be present.
+  string name = 1;
+
+  // The type/shape of this parameter.
+  TypeProto type = 2; 
+
+  // A human-readable doc string for this parameter. 
+  string doc_string = 3; 
+} 
+
+// Defines a function attribute declaration.
+message FuncAttrDeclProto {
+  // The attribute name of the function. Must be present.
+  string name = 1;
+
+  // The type of this attribute.
+  AttributeProto.AttributeType type = 2;
+} 
+
+// Defines a custom implementation of a function. 
+message FunctionImplProto { 
+  // The domain of this function implementation.
+  string function_impl_domain = 1; 
+
+  // The version of this implementation.
+  int64 function_impl_version = 2; 
+
+  // The URI of the executable. A runtime uses <domain> and <version> to
+  // determine whether Compilation data itself saved in a separate file. 
+  string executable_uri = 3;
+
+  // The actual executable for this function implementation.
+  bytes executable = 4;
+} 
+ 
+// Defines a function.
+// We specify a function as a subgraph composed of ONNX ops. Any runtime can
+// have a custom implementation optimized for the runtime. A runtime can use
+// a matching custom implementation if there is one, or falls back to execute
+// the subgraph.
+// NOTE: We don't support recursive function.
+message FunctionDefProto { 
+  // The name of the function. MUST be present for this version of the IR. 
+  string name = 1;
+  
+  // The domain of the function.
+  string domain = 2;
+
+  // The version of the function.
+  int64 version = 3;
+
+  // The input parameters of the function. 
+  repeated ParameterDeclProto input_params = 4; 
+
+  // The output parameters of the function. 
+  repeated ParameterDeclProto output_params = 5;
+
+  // The body of the function. 
+  repeated NodeProto node = 6;
+
+  // The function attributes' declaration.
+  repeated FuncAttrDeclProto attr = 7;
+
+  // An optional human-readable documentation for this function in the graph. 
+  // MAY contain Markdown markup that conforms to http://commonmark.org/. 
+  string doc_string = 8;
+
+  // Custom implementations of this function. This enables runtime specific
+  // implementations.
+  repeated FunctionImplProto impl = 9;
+ 
+  reserved 100 to 200; // for future extensions. 
 }
