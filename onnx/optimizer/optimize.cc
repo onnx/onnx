@@ -48,9 +48,11 @@ void PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in, ONNX_NAMESPACE::Mode
 
 static Optimizer _optimizer;
 
-std::unique_ptr<ONNX_NAMESPACE::ModelProto> Optimize(
-    std::unique_ptr<ONNX_NAMESPACE::ModelProto> mp_in, std::vector<std::string>& names) {
-  return _optimizer.optimize(std::move(mp_in), names);
+ONNX_NAMESPACE::ModelProto Optimize(
+    const ONNX_NAMESPACE::ModelProto& mp_in,
+    const std::vector<std::string>& names) {
+  return _optimizer.optimize(mp_in, names);
+
 }
 
 }}
