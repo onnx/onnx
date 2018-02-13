@@ -1,6 +1,6 @@
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
@@ -53,7 +53,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     };
 }
 
-OPERATOR_SCHEMA(GRU)
+ONNX_OPERATOR_SCHEMA(GRU)
     .SetDoc(R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.

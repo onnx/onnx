@@ -1944,10 +1944,10 @@ opset_import {
 
 ### <a name="Hardmax-1"></a>**Hardmax-1**</a>
 
-  The operator computes the hardmax normalized values for each layer in the batch
+  The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax normalized values of the corresponding input.
+  and contains the hardmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -1988,7 +1988,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -2514,10 +2514,10 @@ opset_import {
 
 ### <a name="LogSoftmax-1"></a>**LogSoftmax-1**</a>
 
-  The operator computes the logsoftmax normalized values for each layer in the batch
+  The operator computes the logsoftmax (log of softmax) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax normalized values of the corresponding input.
+  and contains the logsoftmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -2558,7 +2558,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4754,10 +4754,10 @@ opset_import {
 
 ### <a name="Softmax-1"></a>**Softmax-1**</a>
 
-  The operator computes the softmax normalized values for each layer in the batch
+  The operator computes the softmax (normalized exponential) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax normalized values of the corresponding input.
+  and contains the softmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -4798,7 +4798,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4847,7 +4847,7 @@ opset_import {
 
 ### <a name="Softsign-1"></a>**Softsign-1**</a>
 
-  Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
+  Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
 #### Versioning
 
@@ -4870,7 +4870,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softsign (x/1+|x|) values of the input tensor computed element-wise</dd>
+<dd>The softsign (x/(1+|x|)) values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
@@ -5268,6 +5268,63 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
+</dl>
+
+### <a name="TopK-1"></a>**TopK-1**</a>
+
+  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+      which contains the values of the top k elements along the specified axis
+    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+     contains the indices of the top k elements (original indices from the input
+     tensor).
+  
+  Given two equivalent values, this operator uses the indices along the axis  as
+   a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Dimension on which to do the sort. Default -1, which indicates the last axis</dd>
+<dt><tt>k</tt> : int (required)</dt>
+<dd>Number of top elements to retrieve</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> : I</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
+<dd>Constrain index tensor to integral types</dd>
 </dl>
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>

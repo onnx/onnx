@@ -2,9 +2,9 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     static std::string pads_doc = "Padding for the beginning and ending along each axis, it can take any value greater "
                                   "than or equal to 0. The value represent the number of pixels added to the beginning "
                                   "and end part of the corresponding axis. `pads` format should be as follow "
@@ -20,7 +20,7 @@ namespace onnx {
                                       "encouraged to use explicit padding specified in the pads attribute.";
 }
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -65,15 +65,15 @@ namespace onnx {
         };
     }
 
-    OPERATOR_SCHEMA(AveragePool)
+    ONNX_OPERATOR_SCHEMA(AveragePool)
         .FillUsing(PoolOpSchemaGenerator("AveragePool", "average"));
 
-    OPERATOR_SCHEMA(MaxPool)
+    ONNX_OPERATOR_SCHEMA(MaxPool)
         .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -121,12 +121,12 @@ namespace onnx {
         };
     }
 
-    OPERATOR_SCHEMA(LpPool)
+    ONNX_OPERATOR_SCHEMA(LpPool)
         .FillUsing(LpPoolOpSchemaGenerator("LpPool"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -161,11 +161,11 @@ namespace onnx {
         };
     }
 
-    OPERATOR_SCHEMA(MaxRoiPool)
+    ONNX_OPERATOR_SCHEMA(MaxRoiPool)
         .FillUsing(RoiPoolOpSchemaGenerator("max"));
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -221,12 +221,12 @@ computes the output.)DOC";
         };
     }
 
-    OPERATOR_SCHEMA(Conv)
+    ONNX_OPERATOR_SCHEMA(Conv)
         .FillUsing(ConvOpSchemaGenerator("a filter"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(const char* filter_desc) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -291,12 +291,12 @@ and computes the output.)DOC";
         };
     }
 
-    OPERATOR_SCHEMA(ConvTranspose)
+    ONNX_OPERATOR_SCHEMA(ConvTranspose)
         .FillUsing(ConvTransposeOpSchemaGenerator("a filter"));
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
   std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char* op_type, const char* op) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -324,13 +324,13 @@ namespace onnx {
             schema.SetDoc(doc);
         };
     }
-  OPERATOR_SCHEMA(GlobalAveragePool)
+  ONNX_OPERATOR_SCHEMA(GlobalAveragePool)
   .FillUsing(GlobalPoolingOpSchemaGenerator("AveragePool", "average"));
-  OPERATOR_SCHEMA(GlobalMaxPool)
+  ONNX_OPERATOR_SCHEMA(GlobalMaxPool)
   .FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max"));
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
   std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const char* op_type, const char* op) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
@@ -364,11 +364,11 @@ namespace onnx {
         };
     }
 
-    OPERATOR_SCHEMA(GlobalLpPool)
+    ONNX_OPERATOR_SCHEMA(GlobalLpPool)
         .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
-OPERATOR_SCHEMA(BatchNormalization)
+ONNX_OPERATOR_SCHEMA(BatchNormalization)
     .NumOutputs({ 1, 5 })
     .EnforceConsumed({ {3, 1}, {4, 2} })
     .SetDoc(R"DOC(
@@ -437,7 +437,7 @@ Output case #2: Y (test mode)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(InstanceNormalization)
+ONNX_OPERATOR_SCHEMA(InstanceNormalization)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Carries out instance normalization as described in the paper
@@ -466,7 +466,7 @@ where mean and variance are computed per instance per channel.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(LpNormalization)
+ONNX_OPERATOR_SCHEMA(LpNormalization)
     .Input(0, "input", "Input matrix", "T")
     .Output(0, "output", "Matrix after normalization", "T")
     .TypeConstraint(
@@ -479,7 +479,7 @@ Given a matrix, apply Lp-normalization along the provided axis.
     .Attr("axis", "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.", AttributeProto::INT, static_cast<int64_t>(-1))
     .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttributeProto::INT, static_cast<int64_t>(2));
 
-OPERATOR_SCHEMA(Dropout)
+ONNX_OPERATOR_SCHEMA(Dropout)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -504,7 +504,7 @@ the training phase, so during testing nothing needs to be done.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Flatten)
+ONNX_OPERATOR_SCHEMA(Flatten)
     .SetDoc(R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
@@ -530,7 +530,7 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         AttributeProto::INT,
         static_cast<int64_t>(1));
 
-OPERATOR_SCHEMA(LRN)
+ONNX_OPERATOR_SCHEMA(LRN)
     .Attr("size", "The number of channels to sum over", AttributeProto::INT)
     .Attr("alpha", "Scaling parameter", AttributeProto::FLOAT)
     .Attr("beta", "The exponent", AttributeProto::FLOAT)

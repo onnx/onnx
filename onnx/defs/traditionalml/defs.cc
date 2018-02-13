@@ -3,9 +3,9 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 #ifdef ONNX_ML
-OPERATOR_SCHEMA(ArrayFeatureExtractor)
+ONNX_OPERATOR_SCHEMA(ArrayFeatureExtractor)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Select a subset of the data based on the indices passed.
@@ -23,7 +23,7 @@ OPERATOR_SCHEMA(ArrayFeatureExtractor)
     " allowed types.")
 .TypeConstraint("T2", { "tensor(int64)" }, " Index value types .");
 
-OPERATOR_SCHEMA(Binarizer)
+ONNX_OPERATOR_SCHEMA(Binarizer)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Makes values 1 or 0 based on a single threshold.
@@ -40,7 +40,7 @@ OPERATOR_SCHEMA(Binarizer)
     AttributeProto::FLOAT,
     OPTIONAL);
 
-OPERATOR_SCHEMA(CastMap)
+ONNX_OPERATOR_SCHEMA(CastMap)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Converts a map to a tensor.  Map key must be int64 and the values will be ordered
@@ -73,7 +73,7 @@ OPERATOR_SCHEMA(CastMap)
     AttributeProto::INT,
     OPTIONAL);
 
-OPERATOR_SCHEMA(CategoryMapper)
+ONNX_OPERATOR_SCHEMA(CategoryMapper)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Convert strings to int64s and vice versa.
@@ -120,7 +120,7 @@ OPERATOR_SCHEMA(CategoryMapper)
     AttributeProto::INT,
     OPTIONAL);
 
-OPERATOR_SCHEMA(DictVectorizer)
+ONNX_OPERATOR_SCHEMA(DictVectorizer)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Uses an index mapping to convert a dictionary to an array.
@@ -146,7 +146,7 @@ OPERATOR_SCHEMA(DictVectorizer)
 .Attr("string_vocabulary", "The vocabulary vector", AttributeProto::STRINGS, OPTIONAL)
 .Attr("int64_vocabulary", "The vocabulary vector", AttributeProto::INTS, OPTIONAL);
 
-OPERATOR_SCHEMA(Imputer)
+ONNX_OPERATOR_SCHEMA(Imputer)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Replace imputs that equal replaceValue/s  with  imputeValue/s.
@@ -166,7 +166,7 @@ OPERATOR_SCHEMA(Imputer)
 .Attr("imputed_value_int64s", "value to change to", AttributeProto::INTS, OPTIONAL)
 .Attr("replaced_value_int64", "value that needs replacing", AttributeProto::INT, OPTIONAL);
 
-OPERATOR_SCHEMA(LabelEncoder)
+ONNX_OPERATOR_SCHEMA(LabelEncoder)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Convert class label to their integral type and vice versa.
@@ -199,7 +199,7 @@ OPERATOR_SCHEMA(LabelEncoder)
     AttributeProto::STRING,
     OPTIONAL);
 
-OPERATOR_SCHEMA(LinearClassifier)
+ONNX_OPERATOR_SCHEMA(LinearClassifier)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Linear classifier prediction (choose class)
@@ -242,7 +242,7 @@ OPERATOR_SCHEMA(LinearClassifier)
     AttributeProto::STRING,
     OPTIONAL);
 
-OPERATOR_SCHEMA(LinearRegressor)
+ONNX_OPERATOR_SCHEMA(LinearRegressor)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Generalized linear regression evaluation.
@@ -275,7 +275,7 @@ OPERATOR_SCHEMA(LinearRegressor)
     AttributeProto::INT,
     static_cast<int64_t>(1));
 
-OPERATOR_SCHEMA(Normalizer)
+ONNX_OPERATOR_SCHEMA(Normalizer)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Normalize the input.  There are three normalization modes,
@@ -292,7 +292,7 @@ OPERATOR_SCHEMA(Normalizer)
     " allowed types.")
 .Attr("norm", "0=Lmax, 1=L1, 2=L2", AttributeProto::STRING, OPTIONAL);
 
-OPERATOR_SCHEMA(OneHotEncoder)
+ONNX_OPERATOR_SCHEMA(OneHotEncoder)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Replace the inputs with an array of ones and zeros, where the only
@@ -318,7 +318,7 @@ OPERATOR_SCHEMA(OneHotEncoder)
     AttributeProto::INT,
     OPTIONAL);
 
-OPERATOR_SCHEMA(Scaler)
+ONNX_OPERATOR_SCHEMA(Scaler)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
@@ -340,7 +340,7 @@ OPERATOR_SCHEMA(Scaler)
     AttributeProto::FLOATS,
     OPTIONAL);
 
-OPERATOR_SCHEMA(SVMClassifier)
+ONNX_OPERATOR_SCHEMA(SVMClassifier)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     SVM classifier prediction
@@ -396,7 +396,7 @@ OPERATOR_SCHEMA(SVMClassifier)
     AttributeProto::INTS,
     OPTIONAL);
 
-OPERATOR_SCHEMA(SVMRegressor)
+ONNX_OPERATOR_SCHEMA(SVMRegressor)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     SVM regression prediction and one-class svm anomaly detection
@@ -436,7 +436,7 @@ OPERATOR_SCHEMA(SVMRegressor)
     OPTIONAL)
 .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL);
 
-OPERATOR_SCHEMA(TreeEnsembleClassifier)
+ONNX_OPERATOR_SCHEMA(TreeEnsembleClassifier)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Tree Ensemble classifier.  Returns the top class for each input in N.
@@ -532,7 +532,7 @@ OPERATOR_SCHEMA(TreeEnsembleClassifier)
     AttributeProto::FLOATS,
     OPTIONAL);
 
-OPERATOR_SCHEMA(TreeEnsembleRegressor)
+ONNX_OPERATOR_SCHEMA(TreeEnsembleRegressor)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Tree Ensemble regressor.  Returns the regressed values for each input in N.
@@ -618,7 +618,7 @@ OPERATOR_SCHEMA(TreeEnsembleRegressor)
     AttributeProto::FLOATS,
     OPTIONAL);
 
-OPERATOR_SCHEMA(ZipMap)
+ONNX_OPERATOR_SCHEMA(ZipMap)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Makes a map from the input and the attributes.
@@ -637,7 +637,7 @@ OPERATOR_SCHEMA(ZipMap)
 .Attr("classlabels_strings", "keys if using string keys", AttributeProto::STRINGS, OPTIONAL)
 .Attr("classlabels_int64s", "keys if using int keys", AttributeProto::INTS, OPTIONAL);
 
-OPERATOR_SCHEMA(FeatureVectorizer)
+ONNX_OPERATOR_SCHEMA(FeatureVectorizer)
 .SetDomain("ai.onnx.ml")
 .SetDoc(R"DOC(
     Concatenates input features into one continuous output.

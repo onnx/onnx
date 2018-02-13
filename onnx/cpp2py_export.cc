@@ -9,7 +9,7 @@
 #include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 namespace py = pybind11;
 
@@ -139,49 +139,49 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   checker.def(
       "check_value_info",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<ValueInfoProto> proto(new ValueInfoProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_value_info(*proto, ctx);
+        ValueInfoProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_value_info(proto, ctx);
       });
 
   checker.def(
       "check_tensor",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<TensorProto> proto(new TensorProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_tensor(*proto, ctx);
+        TensorProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_tensor(proto, ctx);
       });
 
   checker.def(
       "check_attribute",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<AttributeProto> proto(new AttributeProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_attribute(*proto, ctx, checker::LexicalScopeContext());
+        AttributeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_attribute(proto, ctx, checker::LexicalScopeContext());
       });
 
   checker.def(
       "check_node",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<NodeProto> proto(new NodeProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
-        checker::check_node(*proto, ctx, lex_ctx);
+        checker::check_node(proto, ctx, lex_ctx);
       });
 
   checker.def(
       "check_graph",
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<GraphProto> proto(new GraphProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
+        GraphProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
-        checker::check_graph(*proto, ctx, lex_ctx);
+        checker::check_graph(proto, ctx, lex_ctx);
       });
 
   checker.def("check_model", [](const py::bytes& bytes) -> void {
-    std::unique_ptr<ModelProto> proto(new ModelProto());
-    ParseProtoFromPyBytes(proto.get(), bytes);
-    checker::check_model(*proto);
+    ModelProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    checker::check_model(proto);
   });
 
   // Submodule `optimizer`
@@ -189,15 +189,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   optimizer.doc() = "Optimizer submodule";
 
   optimizer.def(
-      "optimize", [](const py::bytes& bytes, std::vector<std::string>& names) {
-        std::unique_ptr<ModelProto> proto(new ModelProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        std::unique_ptr<ModelProto> result(
-            optimization::Optimize(std::move(proto), names));
+      "optimize",
+      [](const py::bytes& bytes, const std::vector<std::string>& names) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        auto const result = optimization::Optimize(std::move(proto), names);
         std::string out;
-        result->SerializeToString(&out);
+        result.SerializeToString(&out);
         return py::bytes(out);
       });
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

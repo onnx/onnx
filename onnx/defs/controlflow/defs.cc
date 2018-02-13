@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-using SupportType = onnx::OpSchema::SupportType;
+using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
-OPERATOR_SCHEMA(If)
+ONNX_OPERATOR_SCHEMA(If)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc("If conditional")
     .Input(0, "cond", "Condition for the if", "B")
@@ -33,7 +33,7 @@ OPERATOR_SCHEMA(If)
     .TypeConstraint("V", OpSchema::all_tensor_types, "All Tensor types")
     .TypeConstraint("B", {"tensor(bool)"}, "Only bool");
 
-OPERATOR_SCHEMA(Loop)
+ONNX_OPERATOR_SCHEMA(Loop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
@@ -194,7 +194,7 @@ pipelined/"wavefront" fashion.
     .TypeConstraint("I", {"int64"}, "Only int64")
     .TypeConstraint("B", {"bool"}, "Only bool");
 
-OPERATOR_SCHEMA(LoopIndexTensor)
+ONNX_OPERATOR_SCHEMA(LoopIndexTensor)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(
         "This is a special operator only valid inside the loop that supports "
