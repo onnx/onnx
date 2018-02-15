@@ -49,6 +49,36 @@ from the shape argument.)DOC")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
 	            "Constrain input and output types to float tensors.");
 
+ONNX_OPERATOR_SCHEMA(Shape)
+    .SetDoc(R"DOC(
+Takes a tensor as input and outputs an 1D int64 tensor with the shape of the input tensor.
+)DOC")
+    .Input(0, "data", "An input tensor.", "T")
+    .Output(0, "shape", "Shape of the input tensor", "T1")
+    .TypeConstraint("T", { "tensor(float16)",  "tensor(float)", "tensor(double)",
+                           "tensor(int8)", "tensor(int16)",  "tensor(int32)", "tensor(int64)",
+                           "tensor(uint8)", "tensor(uint16)",
+                           "tensor(bool)" },
+                "Input tensor can be of arbitrary type.")
+    .TypeConstraint("T1", { "tensor(int64)"},
+	            "Constrains output to int64 tensor.");
+
+
+ONNX_OPERATOR_SCHEMA(Size)
+    .SetDoc(R"DOC(
+Takes a tensor as input and outputs an 1D int64 tensor with single element that contains the total number of elements of the input tensor.
+)DOC")
+    .Input(0, "data", "An input tensor.", "T")
+    .Output(0, "size", "Total number of elements of the input tensor", "T1")
+    .TypeConstraint("T", { "tensor(float16)",  "tensor(float)", "tensor(double)",
+                           "tensor(int8)", "tensor(int16)",  "tensor(int32)", "tensor(int64)",
+                           "tensor(uint8)", "tensor(uint16)",
+                           "tensor(bool)" },
+                "Input tensor can be of arbitrary type.")
+    .TypeConstraint("T1", { "tensor(int64)"},
+	            "Constrains output to int64 tensor.");
+
+
 ONNX_OPERATOR_SCHEMA(Concat)
 .Attr("axis",
     "Which axis to concat on",
