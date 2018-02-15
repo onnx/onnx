@@ -4635,7 +4635,7 @@ opset_import {
 
 ### <a name="Shape-1"></a>**Shape-1**</a>
 
-  Takes a tensor as input and outputs an 1D int64 tensor with the shape of the input tensor.
+  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 
 #### Versioning
 

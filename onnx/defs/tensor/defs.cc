@@ -51,7 +51,7 @@ from the shape argument.)DOC")
 
 ONNX_OPERATOR_SCHEMA(Shape)
     .SetDoc(R"DOC(
-Takes a tensor as input and outputs an 1D int64 tensor with the shape of the input tensor.
+Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 )DOC")
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "shape", "Shape of the input tensor", "T1")
