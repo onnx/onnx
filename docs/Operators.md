@@ -5606,6 +5606,18 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
 )
+
+x = np.array([
+    [1, 2, 3],
+    [4, 5, 6],
+]).astype(np.float32)
+y = np.array([
+    2, 3,
+]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_shape_example')
+
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.array(x.shape).astype(np.int64)
 
@@ -5729,6 +5741,16 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
 )
+
+x = np.array([
+    [1, 2, 3],
+    [4, 5, 6],
+]).astype(np.float32)
+y = np.array([6]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_size_example')
+
 x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.array([x.size]).astype(np.int64)
 
