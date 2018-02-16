@@ -3512,6 +3512,23 @@ opset_import {
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Versioning
 
@@ -3522,6 +3539,15 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
 
 #### Inputs
 
