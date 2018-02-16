@@ -511,29 +511,6 @@ OpSchema& OpSchema::TypeConstraint(
   return *this;
 }
 
-const std::vector<std::string> OpSchema::all_integral_types = {"float",
-                                                               "int32",
-                                                               "string",
-                                                               "bool",
-                                                               "uint8",
-                                                               "int8",
-                                                               "uint16",
-                                                               "int16",
-                                                               "int64",
-                                                               "float16",
-                                                               "double"};
-const std::vector<std::string> OpSchema::all_tensor_types = {"tensor(float)",
-                                                             "tensor(int32)",
-                                                             "tensor(string)",
-                                                             "tensor(bool)",
-                                                             "tensor(uint8)",
-                                                             "tensor(int8)",
-                                                             "tensor(uint16)",
-                                                             "tensor(int16)",
-                                                             "tensor(int64)",
-                                                             "tensor(float16)",
-                                                             "tensor(double)"};
-
 void OpSchema::ParseAndSetTypes(
     /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
   for (auto& formal_parameter : *formal_parameters) {
