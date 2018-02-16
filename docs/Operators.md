@@ -5629,8 +5629,9 @@ expect(node, inputs=[x], outputs=[y],
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
   dimension. If the value passed to start or end is larger than the `n` (the
-  number of elements in this dimension), it represents `n`. If `axes` are omitted,
-  they are set to `[0, ..., ndim-1]`.
+  number of elements in this dimension), it represents `n`. For slicing to the
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   
   Example 1:
   
