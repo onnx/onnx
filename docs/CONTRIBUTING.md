@@ -33,6 +33,7 @@ Then, after you have made changes to Python and C++ files:
 [Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions. To refresh these docs, run the following command from the repo root and commit the results:
 
 ```
+python setup.py install
 python onnx/defs/gen_doc.py
 ```
 
