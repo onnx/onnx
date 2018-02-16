@@ -3,9 +3,9 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-OPERATOR_SCHEMA(Concat)
+ONNX_OPERATOR_SCHEMA(Concat)
 .Attr("axis",
     "Which axis to concat on.  Default value is 1.",
     AttributeProto::INT,
@@ -16,7 +16,7 @@ OPERATOR_SCHEMA(Concat)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.");
 
-OPERATOR_SCHEMA(Split)
+ONNX_OPERATOR_SCHEMA(Split)
     .SinceVersion(1)
     .Input(0, "input", "The tensor to split", "T")
     .Input(1, "split", "Optional list of output lengths (see also arg 'split')", "T", OpSchema::Optional)
@@ -37,7 +37,7 @@ optional second input blob to the operator. Otherwise, the tensor is split
 to equal sized parts.
 )DOC");
 
-OPERATOR_SCHEMA(Pad)
+ONNX_OPERATOR_SCHEMA(Pad)
     .SinceVersion(1)
     .Attr("paddings",
           "List of integers indicate the padding element count at the "

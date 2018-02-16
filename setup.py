@@ -16,8 +16,11 @@ import platform
 import fnmatch
 from collections import namedtuple
 import os
+import hashlib
+import shutil
 import subprocess
 import sys
+import tempfile
 from textwrap import dedent
 
 from tools.ninja_builder import NinjaBuilder, ninja_build_ext
@@ -36,6 +39,7 @@ TP_DIR = os.path.join(TOP_DIR, 'third_party')
 PROTOC = find_executable('protoc')
 
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
 
 install_requires = ['six']
 setup_requires = []
@@ -48,7 +52,7 @@ tests_require = []
 try:
     git_version = subprocess.check_output(['git', 'rev-parse', 'HEAD'],
                                           cwd=TOP_DIR).decode('ascii').strip()
-except subprocess.CalledProcessError:
+except (OSError, subprocess.CalledProcessError):
     git_version = None
 
 with open(os.path.join(TOP_DIR, 'VERSION_NUMBER')) as version_file:
@@ -76,6 +80,15 @@ def recursive_glob(directory, pattern):
     return [os.path.join(dirpath, f)
             for dirpath, dirnames, files in os.walk(directory)
             for f in fnmatch.filter(files, pattern)]
+
+
+ # https://stackoverflow.com/a/3431838/2143581
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 ################################################################################
 # Pre Check
@@ -118,14 +131,18 @@ class Protobuf(Dependency):
             includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
         elif use_conda:
             includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
+        else:
+            print("Warning: Environment Variable PROTOBUF_INCDIR or CONDA_PREFIX is not set, which may cause protobuf including folder error.")
 
         self.libraries = libs
         self.include_dirs = includes
+
 
 class Pybind11(Dependency):
     def __init__(self):
         super(Pybind11, self).__init__()
         self.include_dirs = [os.path.join(TP_DIR, 'pybind11', 'include')]
+
 
 ################################################################################
 # Customized commands
@@ -143,6 +160,7 @@ class ONNXCommand(setuptools.Command):
 
 class build_proto_in(ONNXCommand):
     def run(self):
+        tmp_dir = tempfile.mkdtemp()
         gen_script = os.path.join(SRC_DIR, 'gen_proto.py')
         stems = ['onnx', 'onnx-operators']
 
@@ -158,10 +176,20 @@ class build_proto_in(ONNXCommand):
                 os.path.join(SRC_DIR, '{}-ml.proto3'.format(stem)),
             ])
 
-        if self.force or any(dep_util.newer_group(in_files, o)
-                             for o in out_files):
-            log.info('compiling *.in.proto')
-            subprocess.check_call([sys.executable, gen_script] + stems)
+        log.info('compiling *.in.proto to temp dir {}'.format(tmp_dir))
+        subprocess.check_call([
+            sys.executable, gen_script,
+            '-p', ONNX_NAMESPACE,
+            '-o', tmp_dir
+        ] + stems)
+
+        for out_f in out_files:
+            tmp_f = os.path.join(tmp_dir, os.path.basename(out_f))
+            if os.path.exists(out_f) and md5(out_f) == md5(tmp_f):
+                log.info("Skip updating {} since it's the same.".format(out_f))
+                continue
+            shutil.copyfile(tmp_f, out_f)
+        shutil.rmtree(tmp_dir)
 
 
 class build_proto(ONNXCommand):
@@ -278,7 +306,7 @@ class ONNXExtension(setuptools.Extension):
     def pre_run(self):
         pass
 
-def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects):
+def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects, define_macros):
     include_dirs = sum([dep.include_dirs for dep in dependencies], [TOP_DIR])
     libraries = sum([dep.libraries for dep in dependencies], [])
     extra_compile_args=['-std=c++11']
@@ -288,12 +316,9 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
     if platform.system() == 'Windows':
         extra_compile_args.append('/MT')
-    macros = []
-    if ONNX_ML:
-        macros = [('ONNX_ML', '1')]
     return ExtType(
         name=name,
-        define_macros = macros,
+        define_macros=define_macros,
         sources=sources,
         include_dirs=include_dirs,
         libraries=libraries,
@@ -308,10 +333,16 @@ class ONNXCpp2PyExtension(setuptools.Extension):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
         if ONNX_ML:
             # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx.pb.cc"), os.path.join(SRC_DIR, "onnx-operators.pb.cc")]
+            sources_filter = [
+                os.path.join(SRC_DIR, "onnx.pb.cc"),
+                os.path.join(SRC_DIR, "onnx-operators.pb.cc"),
+            ]
         else:
             # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
-            sources_filter = [os.path.join(SRC_DIR, "onnx-ml.pb.cc"), os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc")]
+            sources_filter = [
+                os.path.join(SRC_DIR, "onnx-ml.pb.cc"),
+                os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc"),
+            ]
 
         for source_filter in sources_filter:
             if source_filter in self.sources:
@@ -339,13 +370,18 @@ if build_for_release and platform.system() == 'Linux':
 else:
     cpp2py_deps.append(Protobuf())
 
+define_macros = [('ONNX_NAMESPACE', ONNX_NAMESPACE)]
+if ONNX_ML:
+    define_macros.append(('ONNX_ML', '1'))
+
 ext_modules = [
     create_extension(ONNXCpp2PyExtension,
                      str('onnx.onnx_cpp2py_export'),
                      sources=[], # sources will be propagated in pre_run
                      dependencies=cpp2py_deps,
                      extra_link_args=cpp2py_link_args,
-                     extra_objects=cpp2py_extra_objects)
+                     extra_objects=cpp2py_extra_objects,
+                     define_macros=define_macros)
 ]
 
 ################################################################################

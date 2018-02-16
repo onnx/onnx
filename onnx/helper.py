@@ -14,6 +14,7 @@ from onnx import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
+from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
 
 def make_node(
         op_type, inputs, outputs,
@@ -41,7 +42,7 @@ def make_node(
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
-            for key, value in kwargs.items())
+            for key, value in sorted(kwargs.items()))
     return node
 
 
@@ -238,9 +239,17 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
     tensor_type_proto = value_info_proto.type.tensor_type
     tensor_type_proto.elem_type = elem_type
 
-    tensor_shape_proto = tensor_type_proto.shape.dim
+    tensor_shape_proto = tensor_type_proto.shape
+
+    # You might think this is a no-op (extending a normal Python list by []
+    # certainly is), but protobuf lists work a little differently; if a field is never
+    # set, it is omitted from the resulting protobuf; a list that is explicitly
+    # set to be empty will get an (empty) entry in the protobuf. This difference
+    # is visible to our consumers, so make sure we emit an empty shape!
+    tensor_shape_proto.dim.extend([])
+
     for d in shape:
-        dim = tensor_shape_proto.add()
+        dim = tensor_shape_proto.dim.add()
         if isinstance(d, integer_types):
             dim.dim_value = d
         elif isinstance(d, text_type):
@@ -266,7 +275,7 @@ def _sanitize_str(s):
         return sanitized[:64] + '...<+len=%d>' % (len(sanitized) - 64)
 
 
-def printable_attribute(attr):
+def printable_attribute(attr, subgraphs=False):
     content = []
     content.append(attr.name)
     content.append("=")
@@ -290,6 +299,11 @@ def printable_attribute(attr):
 
     # for now, this logic should continue to work as long as we are running on a proto3
     # implementation. If/when we switch to proto3, we will need to use attr.type
+
+    # To support printing subgraphs, if we find a graph attribute, print out
+    # its name here and pass the graph itself up to the caller for later
+    # printing.
+    graphs = []
     if attr.HasField("f"):
         content.append(str_float(attr.f))
     elif attr.HasField("i"):
@@ -298,7 +312,15 @@ def printable_attribute(attr):
         # TODO: Bit nervous about Python 2 / Python 3 determinism implications
         content.append(repr(_sanitize_str(attr.s)))
     elif attr.HasField("t"):
-        content.append("<Tensor>")
+        if len(attr.t.dims) > 0:
+            content.append("<Tensor>")
+        else:
+            # special case to print scalars
+            field = STORAGE_TENSOR_TYPE_TO_FIELD[attr.t.data_type]
+            content.append('<Scalar Tensor {}>'.format(str(getattr(attr.t, field))))
+    elif attr.HasField("g"):
+        content.append("<graph {}>".format(attr.g.name))
+        graphs.append(attr.g)
     elif attr.floats:
         content.append(str_list(str_float, attr.floats))
     elif attr.ints:
@@ -308,9 +330,19 @@ def printable_attribute(attr):
         content.append(str(list(map(_sanitize_str, attr.strings))))
     elif attr.tensors:
         content.append("[<Tensor>, ...]")
+    elif attr.graphs:
+        content.append('[')
+        for i, g in enumerate(attr.graphs):
+            comma = ',' if i != len(attr.graphs) - 1 else ''
+            content.append('<graph {}>{}'.format(g.name, comma))
+        content.append(']')
+        graphs.extend(attr.graphs)
     else:
         content.append("<Unknown>")
-    return ' '.join(content)
+    if subgraphs:
+        return ' '.join(content), graphs
+    else:
+        return ' '.join(content)
 
 
 def printable_dim(dim):
@@ -321,7 +353,10 @@ def printable_type(t):
     if t.WhichOneof('value') == "tensor_type":
         s = TensorProto.DataType.Name(t.tensor_type.elem_type)
         if t.tensor_type.HasField('shape'):
-            s += ', ' + 'x'.join(map(printable_dim, t.tensor_type.shape.dim))
+            if len(t.tensor_type.shape.dim):
+                s += ', ' + 'x'.join(map(printable_dim, t.tensor_type.shape.dim))
+            else:
+                s += ', scalar'
         return s
     if t.WhichOneof('value') is None:
         return ""
@@ -335,20 +370,32 @@ def printable_value_info(v):
     return s
 
 
-def printable_node(node, prefix=''):
+def printable_node(node, prefix='', subgraphs=False):
     content = []
     if len(node.output):
         content.append(
             ', '.join(['%{}'.format(name) for name in node.output]))
         content.append('=')
-    printed_attributes = ', '.join(sorted(map(printable_attribute, node.attribute)))
+    # To deal with nested graphs
+    graphs = []
+    printed_attrs = []
+    for attr in node.attribute:
+        if subgraphs:
+            printed_attr, gs = printable_attribute(attr, subgraphs)
+            graphs.extend(gs)
+            printed_attrs.append(printed_attr)
+        else:
+            printed_attrs.append(printable_attribute(attr))
+    printed_attributes = ', '.join(sorted(printed_attrs))
     printed_inputs = ', '.join(['%{}'.format(name) for name in node.input])
     if node.attribute:
         content.append("{}[{}]({})".format(node.op_type, printed_attributes, printed_inputs))
     else:
         content.append("{}({})".format(node.op_type, printed_inputs))
-    # TODO: subgr
-    return prefix + ' '.join(content)
+    if subgraphs:
+        return prefix + ' '.join(content), graphs
+    else:
+        return prefix + ' '.join(content)
 
 
 def printable_graph(graph, prefix=''):
@@ -383,9 +430,12 @@ def printable_graph(graph, prefix=''):
 
     header.append('{')
     content.append(prefix + ' '.join(header))
+    graphs = []
     # body
     for node in graph.node:
-        content.append(printable_node(node, indent))
+        pn, gs = printable_node(node, indent, subgraphs=True)
+        content.append(pn)
+        graphs.extend(gs)
     # tail
     tail = ['return']
     if len(graph.output):
@@ -394,6 +444,8 @@ def printable_graph(graph, prefix=''):
     content.append(indent + ' '.join(tail))
     # closing bracket
     content.append(prefix + '}')
+    for g in graphs:
+        content.append('\n' + printable_graph(g))
     return '\n'.join(content)
 
 

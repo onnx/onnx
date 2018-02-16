@@ -602,6 +602,9 @@ opset_import {
   
       This operator assumes every input in X is of the same category set
       (meaning there is only one category count).
+  	
+  	If the input is a tensor of float, int32, or double, the data will be cast
+      to int64s and the cats_int64s category list will be used for the lookups.
 
 #### Versioning
 
@@ -617,7 +620,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>cats_int64s</tt> : int</dt>
+<dt><tt>cats_int64s</tt> : list of ints</dt>
 <dd>list of cateogries, ints</dd>
 <dt><tt>cats_strings</tt> : list of strings</dt>
 <dd>list of cateogries, strings</dd>
@@ -642,7 +645,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(string), tensor(int64)</dt>
+<dt><tt>T</tt> : tensor(string), tensor(int64), tensor(int32), tensor(float), tensor(double)</dt>
 <dd> allowed types.</dd>
 </dl>
 

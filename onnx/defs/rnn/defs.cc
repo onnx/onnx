@@ -3,10 +3,11 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
+// Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
@@ -51,15 +52,14 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
                       "It is optional if `output_sequence` is 0.", "T", OpSchema::Optional);
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
-                      "`[num_directions, batch_size, hidden_size]`.", "T");
+                      "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                               "Constrain input and output types to float tensors.");
         schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
     };
 }
 
-
-OPERATOR_SCHEMA(RNN)
+ONNX_OPERATOR_SCHEMA(RNN)
     .SetDoc(R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
@@ -126,7 +126,7 @@ Equations (Default: f=Tanh):
           "input gate. The activation function must be one of the activation "
           "functions specified above. Optional: Default `Tanh` if not specified.",
           AttributeProto::STRINGS,
-          OPTIONAL)
+          std::vector<std::string>{"Tanh", "Tanh"})
     .Input(1, "W",
 	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
            "(if bidirectional). The tensor has shape "
@@ -144,7 +144,7 @@ Equations (Default: f=Tanh):
     .FillUsing(RNNDocGenerator("RNN"));
 
 
-OPERATOR_SCHEMA(GRU)
+ONNX_OPERATOR_SCHEMA(GRU)
     .SetDoc(R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -213,7 +213,9 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
   - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
 
-  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh)
+  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+
+  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC")
@@ -223,6 +225,12 @@ Equations (Default: f=Sigmoid, g=Tanh):
           "for default if not specified.",
           AttributeProto::STRINGS,
           OPTIONAL)
+    .SinceVersion(3)
+    .Attr("linear_before_reset", "When computing the output of the hidden gate, "
+          "apply the linear transformation before multiplying by the output of the "
+          "reset gate.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
     .Input(1, "W",
 	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
 	   "(if bidirectional) along dimension 0. This tensor has shape "
@@ -240,7 +248,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
     .FillUsing(RNNDocGenerator("GRU"));
 
 
-OPERATOR_SCHEMA(LSTM)
+ONNX_OPERATOR_SCHEMA(LSTM)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
@@ -356,6 +364,8 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
 	   "assumed to be 0.", "T",
        OpSchema::Optional)
-    .FillUsing(RNNDocGenerator("LSTM"));
-
-}  // namespace onnx
+    .FillUsing(RNNDocGenerator("LSTM"))
+    .Output(2, "Y_c",
+            "The last output value of the cell. It has shape "
+            "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
+}  // namespace ONNX_NAMESPACE

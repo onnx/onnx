@@ -41,8 +41,15 @@ class Runner(object):
         for rt in load_model_tests(kind='real'):
             self._add_model_test(rt, 'Real')
 
-        for gt in load_model_tests(kind='pytorch-converted'):
-            self._add_model_test(gt, 'PyTorchConverted')
+        for rt in load_model_tests(kind='simple'):
+            self._add_model_test(rt, 'Simple')
+
+        for ct in load_model_tests(kind='pytorch-converted'):
+            self._add_model_test(ct, 'PyTorchConverted')
+
+        for ot in load_model_tests(kind='pytorch-operator'):
+            self._add_model_test(ot, 'PyTorchOperator')
+
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -140,7 +147,7 @@ class Runner(object):
                 rtol=1e-3)
 
     def _prepare_model_data(self, model_test):
-        onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', '~/.onnx'))
+        onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
         model_dir = os.path.join(models_dir, model_test.model_name)

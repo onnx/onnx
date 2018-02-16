@@ -3,9 +3,9 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
     static std::string pads_doc = "Padding for the beginning and ending along each axis, it can take any value greater "
                                   "than or equal to 0. The value represent the number of pixels added to the beginning "
                                   "and end part of the corresponding axis. `pads` format should be as follow "
@@ -21,7 +21,7 @@ namespace onnx {
                                       "encouraged to use explicit padding specified in the pads attribute.";
 }
 
-OPERATOR_SCHEMA(LpPool)
+ONNX_OPERATOR_SCHEMA(LpPool)
     .SinceVersion(1)
     .SetDoc(R"DOC(
  LpPool consumes an input tensor X and applies Lp pooling across the
@@ -67,7 +67,7 @@ OPERATOR_SCHEMA(LpPool)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                     "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(GlobalLpPool)
+ONNX_OPERATOR_SCHEMA(GlobalLpPool)
     .SinceVersion(1)
     .SetDoc(R"DOC(
  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
@@ -90,5 +90,5 @@ OPERATOR_SCHEMA(GlobalLpPool)
             "Y",
             "Output data tensor from pooling across the input "
             "tensor. Dimensions will be N x C x 1 x 1", "T")
-.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+                    "Constrain input and output types to float tensors.");

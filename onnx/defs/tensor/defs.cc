@@ -3,16 +3,14 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-OPERATOR_SCHEMA(Cast)
+ONNX_OPERATOR_SCHEMA(Cast)
     .SetDoc(R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
-in the 'DataType' enum field in the TensorProto message. If the 'to' argument
-is not provided or is not one of the enumerated types in DataType, Caffe2
-throws an Enforce error.
+in the 'DataType' enum field in the TensorProto message.
 
 NOTE: Casting to and from strings is not supported yet.
 )DOC")
@@ -20,8 +18,7 @@ NOTE: Casting to and from strings is not supported yet.
           "to",
           "The data type to which the elements of the input tensor are cast."
           "Strictly must be one of the types from DataType enum in TensorProto",
-          AttributeProto::STRING,
-          OPTIONAL)
+          AttributeProto::STRING)
     .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
@@ -35,7 +32,7 @@ NOTE: Casting to and from strings is not supported yet.
             "Constrain output types to float tensors.");
 
 
-OPERATOR_SCHEMA(Reshape)
+ONNX_OPERATOR_SCHEMA(Reshape)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
@@ -52,7 +49,7 @@ from the shape argument.)DOC")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
 	            "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Concat)
+ONNX_OPERATOR_SCHEMA(Concat)
 .SinceVersion(3)
 .Attr("axis",
     "Which axis to concat on",
@@ -64,7 +61,7 @@ OPERATOR_SCHEMA(Concat)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.");
 
-OPERATOR_SCHEMA(Split)
+ONNX_OPERATOR_SCHEMA(Split)
     .SinceVersion(2)
     .Input(0, "input", "The tensor to split", "T")
     .Output(0, "outputs", "One or more outputs forming list of tensors after splitting", "T", OpSchema::Variadic)
@@ -83,7 +80,7 @@ OPERATOR_SCHEMA(Split)
 Otherwise, the tensor is split to equal sized parts.
 )DOC");
 
-OPERATOR_SCHEMA(Slice)
+ONNX_OPERATOR_SCHEMA(Slice)
     .SetDoc(R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
@@ -92,7 +89,10 @@ Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
 dimension for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
 start or end indices, it represent number of elements before the end of that
-dimension.
+dimension. If the value passed to start or end is larger than the `n` (the
+number of elements in this dimension), it represents `n`. For slicing to the
+end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
 
 Example 1:
 
@@ -115,11 +115,11 @@ Example 2:
       [1, 2, 3, 4],
       [5, 6, 7, 8],
   ]
-  starts = [0]
-  ends = [-1]
+  starts = [0, 1]
+  ends = [-1, 1000]
 
   result = [
-      [1, 2, 3, 4],
+      [2, 3, 4],
   ]
 
 )DOC")
@@ -140,7 +140,7 @@ Example 2:
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Transpose)
+ONNX_OPERATOR_SCHEMA(Transpose)
     .SetDoc(R"DOC(
 Transpose the input tensor similar to numpy.transpose. For example, when
 axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
@@ -156,7 +156,7 @@ will be (2, 1, 3).
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Gather)
+ONNX_OPERATOR_SCHEMA(Gather)
     .SetDoc(R"DOC(
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
@@ -222,7 +222,7 @@ Example 2:
         {"tensor(int32)", "tensor(int64)"},
         "Constrain indices to integer types");
 
-OPERATOR_SCHEMA(Squeeze)
+ONNX_OPERATOR_SCHEMA(Squeeze)
     .Attr("axes",
           "List of positive integers, indicate the dimensions to squeeze.",
           AttributeProto::INTS)
@@ -235,7 +235,26 @@ Takes a  parameter `axes` with a list of axes to squeeze.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Pad)
+ONNX_OPERATOR_SCHEMA(Unsqueeze)
+    .Attr(
+      "axes",
+      "List of positive integers, indicate the dimensions to be inserted",
+      AttributeProto::INTS)
+    .SetDoc(R"DOC(
+Insert single-dimensional entries to the shape of a tensor.
+Takes one required argument `axes`, a list of dimensions that will be inserted.
+Dimension indices in `axes` are as seen in the output tensor. For example:
+
+  Given a tensor such that tensor with shape [3, 4, 5], then
+  Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
+
+)DOC")
+    .Input(0, "data", "Original tensor", "T")
+    .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Constrain input and output types to float tensors.");
+
+ONNX_OPERATOR_SCHEMA(Pad)
     .SinceVersion(2)
     .Attr("pads",
           "List of integers indicate the padding element count at the "
@@ -279,7 +298,7 @@ Example:
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(SpaceToDepth)
+ONNX_OPERATOR_SCHEMA(SpaceToDepth)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttributeProto::INT,
@@ -298,7 +317,7 @@ are moved to the depth dimension.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
 
-OPERATOR_SCHEMA(DepthToSpace)
+ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr("blocksize",
           "Blocks of [blocksize, blocksize] are moved.",
           AttributeProto::INT,
@@ -318,7 +337,7 @@ and width dimensions.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
             "Constrain input types to float tensors.");
 
-OPERATOR_SCHEMA(Tile)
+ONNX_OPERATOR_SCHEMA(Tile)
     .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
     .Input(0,
            "input",
