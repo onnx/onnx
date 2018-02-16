@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-using SupportType = onnx::OpSchema::SupportType;
+using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
-OPERATOR_SCHEMA(Identity)
+ONNX_OPERATOR_SCHEMA(Identity)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc("Identity operator")
     .Input(0, "input", "Input tensor", "T")
@@ -18,7 +18,7 @@ OPERATOR_SCHEMA(Identity)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Affine)
+ONNX_OPERATOR_SCHEMA(Affine)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(R"DOC(
 Affine takes one input data (Tensor<T>) and produces one output data
@@ -33,7 +33,7 @@ is applied to the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 
-OPERATOR_SCHEMA(ThresholdedRelu)
+ONNX_OPERATOR_SCHEMA(ThresholdedRelu)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
@@ -50,7 +50,7 @@ is applied to the tensor elementwise.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(ScaledTanh)
+ONNX_OPERATOR_SCHEMA(ScaledTanh)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
@@ -66,7 +66,7 @@ by providing the same input and output blobs.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(ParametricSoftplus)
+ONNX_OPERATOR_SCHEMA(ParametricSoftplus)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
@@ -81,7 +81,7 @@ the tensor elementwise.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(ConstantFill)
+ONNX_OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
@@ -155,7 +155,7 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         {"tensor(float)", "tensor(int32)", "tensor(int64)", "tensor(bool)"},
         "Constrain output types to float, int32, int64, bool tensors.");
 
-OPERATOR_SCHEMA(GivenTensorFill)
+ONNX_OPERATOR_SCHEMA(GivenTensorFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .Input(0, "shape", "The shape of filled tensor", "T", OpSchema::Optional)
     .Output(0, "X", "The filled tensor", "T")
@@ -169,7 +169,7 @@ OPERATOR_SCHEMA(GivenTensorFill)
     .Attr("extra_shape", "", AttributeProto::INTS, OPTIONAL)
     .AllowConsumed({{0, 0}});
 
-OPERATOR_SCHEMA(FC)
+ONNX_OPERATOR_SCHEMA(FC)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(R"DOC(
 Computes the result of passing an input vector X into a fully
@@ -223,7 +223,7 @@ will throw errors.
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Scale)
+ONNX_OPERATOR_SCHEMA(Scale)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .Input(0, "input", "Input data to be scaled", "T")
     .Output(0, "output", "Output data after scaling", "T")
@@ -238,7 +238,7 @@ Scale takes one input data (Tensor<float>) and produces one output data
 )DOC")
     .Attr("scale", "(float, default 1.0) the scale to apply.", AttributeProto::FLOAT, 1.0f);
 
-OPERATOR_SCHEMA(GRUUnit)
+ONNX_OPERATOR_SCHEMA(GRUUnit)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(R"DOC(
 GRUUnit computes the activations of a standard GRU,
@@ -274,7 +274,7 @@ value at X[t][n] >= seqLengths[n].
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(ATen)
+ONNX_OPERATOR_SCHEMA(ATen)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowUncheckedAttributes()
     .SetDoc(R"DOC(
@@ -288,7 +288,7 @@ and op)DOC")
         "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to bool, int32, int64, float16, float, double tensors.");
 
-OPERATOR_SCHEMA(ImageScaler)
+ONNX_OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in
@@ -302,7 +302,7 @@ the same ordering as the image pixel format.)DOC")
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(MeanVarianceNormalization)
+ONNX_OPERATOR_SCHEMA(MeanVarianceNormalization)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
@@ -315,7 +315,7 @@ OPERATOR_SCHEMA(MeanVarianceNormalization)
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Crop)
+ONNX_OPERATOR_SCHEMA(Crop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
@@ -330,7 +330,7 @@ If scale is not provided, crop the borders as provided.)DOC")
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Upsample)
+ONNX_OPERATOR_SCHEMA(Upsample)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .Attr(
         "width_scale",

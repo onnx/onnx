@@ -6,9 +6,9 @@
 #include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
-void ExportModelProto(onnx::ModelProto* p_m, const std::shared_ptr<Graph>& g);
-std::unique_ptr<Graph> ImportModelProto(const onnx::ModelProto& mp);
+void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Graph>& g);
+std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp);
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

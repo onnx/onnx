@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include "onnx/checker.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
@@ -90,9 +90,8 @@ void OpSchema::Verify(const NodeProto& node) const {
   }
 
   // Check the values of inputs / outputs
-  for (size_t in_idx = 0; in_idx < static_cast<size_t>(node.input_size());
-       ++in_idx) {
-    if (in_idx >= inputs_.size()) {
+  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
+    if (in_idx >= static_cast<int>(inputs_.size())) {
       if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
         // The last input formal parameter should be variadic.
         break;
@@ -115,22 +114,22 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
-  for (size_t out_idx = 0; out_idx < static_cast<size_t>(node.output_size());
-       ++out_idx) {
-    if (out_idx >= outputs_.size()) {
-      if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
-        // The last output formal parameter should be variadic.
-        break;
-      } else {
-        fail_check(
-            "Node (",
-            node.name(),
-            ") has more outputs (",
-            node.output_size(),
-            ") than declared (",
-            outputs_.size(),
-            ") in op definition.");
-      }
+  for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
+    if (out_idx >= static_cast<int>(outputs_.size())) {
+        if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
+            // The last output formal parameter should be variadic.
+            break;
+        }
+        else {
+            fail_check(
+                "Node (",
+                node.name(),
+                ") has more outputs (",
+                node.output_size(),
+                ") than declared (",
+                outputs_.size(),
+                ") in op definition.");
+        }
     }
 
     if (node.output(out_idx).empty() &&
@@ -512,29 +511,6 @@ OpSchema& OpSchema::TypeConstraint(
   return *this;
 }
 
-const std::vector<std::string> OpSchema::all_integral_types = {"float",
-                                                               "int32",
-                                                               "string",
-                                                               "bool",
-                                                               "uint8",
-                                                               "int8",
-                                                               "uint16",
-                                                               "int16",
-                                                               "int64",
-                                                               "float16",
-                                                               "double"};
-const std::vector<std::string> OpSchema::all_tensor_types = {"tensor(float)",
-                                                             "tensor(int32)",
-                                                             "tensor(string)",
-                                                             "tensor(bool)",
-                                                             "tensor(uint8)",
-                                                             "tensor(int8)",
-                                                             "tensor(uint16)",
-                                                             "tensor(int16)",
-                                                             "tensor(int64)",
-                                                             "tensor(float16)",
-                                                             "tensor(double)"};
-
 void OpSchema::ParseAndSetTypes(
     /*out*/ std::vector<OpSchema::FormalParameter>* formal_parameters) {
   for (auto& formal_parameter : *formal_parameters) {
@@ -692,4 +668,4 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
   }
   return numReplaced;
 }
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
