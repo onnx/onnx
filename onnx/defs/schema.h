@@ -25,7 +25,6 @@ using OperatorSetVersion = int;
 
 const char* const ONNX_DOMAIN = "";
 const bool OPTIONAL = false;
-const bool REQUIRED = true;
 
 typedef std::unordered_set<DataType> DataTypeSet;
 

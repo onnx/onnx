@@ -53,8 +53,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
 .SinceVersion(3)
 .Attr("axis",
     "Which axis to concat on",
-    AttributeProto::INT,
-    REQUIRED)
+    AttributeProto::INT)
     .SetDoc("Concatenate a list of tensors into a single tensor")
     .Input(0, "inputs", "List of tensors for concatenation", "T", OpSchema::Variadic)
     .Output(0, "concat_result", "Concatenated tensor", "T")
