@@ -66,7 +66,7 @@ Takes a tensor as input and outputs an 1D int64 tensor containing the shape of t
 
 ONNX_OPERATOR_SCHEMA(Size)
     .SetDoc(R"DOC(
-Takes a tensor as input and outputs an 1D int64 tensor with single element that contains the total number of elements of the input tensor.
+Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 )DOC")
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "size", "Total number of elements of the input tensor", "T1")
@@ -75,8 +75,8 @@ Takes a tensor as input and outputs an 1D int64 tensor with single element that 
                            "tensor(uint8)", "tensor(uint16)",
                            "tensor(bool)" },
                 "Input tensor can be of arbitrary type.")
-    .TypeConstraint("T1", { "tensor(int64)"},
-	            "Constrains output to int64 tensor.");
+    .TypeConstraint("T1", { "int64" },
+	            "Constrains output to int64 scalar.");
 
 
 ONNX_OPERATOR_SCHEMA(Concat)

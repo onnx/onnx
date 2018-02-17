@@ -4709,7 +4709,7 @@ opset_import {
 
 ### <a name="Size-1"></a>**Size-1**</a>
 
-  Takes a tensor as input and outputs an 1D int64 tensor with single element that contains the total number of elements of the input tensor.
+  Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
 #### Versioning
 
@@ -4740,8 +4740,8 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrains output to int64 tensor.</dd>
+<dt><tt>T1</tt> : int64</dt>
+<dd>Constrains output to int64 scalar.</dd>
 </dl>
 
 ### <a name="Slice-1"></a>**Slice-1**</a>

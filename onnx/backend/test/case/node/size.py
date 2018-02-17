@@ -24,13 +24,13 @@ class Size(Base):
             [1, 2, 3],
             [4, 5, 6],
         ]).astype(np.float32)
-        y = np.array([6]).astype(np.int64)
+        y = np.array(6).astype(np.int64)
 
         expect(node, inputs=[x], outputs=[y],
                name='test_size_example')
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
-        y = np.array([x.size]).astype(np.int64)
+        y = np.array(x.size).astype(np.int64)
 
         expect(node, inputs=[x], outputs=[y],
                name='test_size')
