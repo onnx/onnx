@@ -29,6 +29,8 @@ else()
 endif()
 add_definitions(${MY_ONNX_NAMESPACE})
 
+find_package(PythonInterp REQUIRED)
+
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 # from https://github.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tensorflow/contrib/cmake/tf_core_framework.cmake
 # to solve the problem that customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
@@ -49,7 +51,6 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 
   set(GEN_PROTO_PY ${ROOT_DIR}/onnx/gen_proto.py)
   foreach(INFILE ${ARGN})
-    message(${INFILE})
     set(ABS_FILE ${ROOT_DIR}/${INFILE})
     get_filename_component(FILE_DIR ${ABS_FILE} DIRECTORY)
     get_filename_component(FILE_WE ${INFILE} NAME_WE)
@@ -59,16 +60,24 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     list(APPEND ${SRCS} "${OUTPUT_PROTO_DIR}/${FILE_WE}.pb.cc")
     list(APPEND ${HDRS} "${OUTPUT_PROTO_DIR}/${FILE_WE}.pb.h")
 
+    set(GENERATED_PROTO "${OUTPUT_PROTO_DIR}/${FILE_WE}.proto")
     add_custom_command(
-      OUTPUT "${OUTPUT_PROTO_DIR}/${FILE_WE}.pb.cc"
-             "${OUTPUT_PROTO_DIR}/${FILE_WE}.pb.h"
+      OUTPUT "${GENERATED_PROTO}"
       COMMAND mkdir
       ARGS -p ${OUTPUT_PROTO_DIR}
-      COMMAND ${GEN_PROTO_PY}
-      ARGS -p ${ONNX_NAMESPACE} -o ${OUTPUT_PROTO_DIR}
+      COMMAND ${PYTHON_EXECUTABLE} ${GEN_PROTO_PY}
+      ARGS -p ${ONNX_NAMESPACE} -o ${OUTPUT_PROTO_DIR} ${FILE_WE}
+      DEPENDS ${INFILE}
+      COMMENT "Running gen_proto.py on ${INFILE}"
+      VERBATIM )
+
+    add_custom_command (
+      OUTPUT "${OUTPUT_PROTO_DIR}/${FILE_WE}.pb.cc"
+             "${OUTPUT_PROTO_DIR}/${FILE_WE}.pb.h"
       COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS --cpp_out ${DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${OUTPUT_PROTO_DIR}/${FILE_WE}.proto -I ${PROTOBUF_INCLUDE_DIRS} -I ${OUTPUT_PROTO_DIR}
-      COMMENT "Running C++ protocol buffer compiler on ${INFILE}"
+      ARGS --cpp_out ${DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${PROTOBUF_INCLUDE_DIRS} -I ${OUTPUT_PROTO_DIR}
+      DEPENDS ${GENERATED_PROTO}
+      COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
       VERBATIM )
   endforeach()
 
