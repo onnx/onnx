@@ -81,6 +81,12 @@ def recursive_glob(directory, pattern):
             for dirpath, dirnames, files in os.walk(directory)
             for f in fnmatch.filter(files, pattern)]
 
+def which(name):
+    for path in os.getenv("PATH").split(os.path.pathsep):
+        full_path = path + os.sep + name
+        if os.path.exists(full_path):
+	    return path
+    return None 
 
  # https://stackoverflow.com/a/3431838/2143581
 def md5(fname):
@@ -117,12 +123,21 @@ class Protobuf(Dependency):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
         use_conda = os.getenv('CONDA_PREFIX') and platform.system() == 'Windows'
+		# Find the path by finding protoc and suppose it's in ${PROTOBUF_PATH}/bin
+        proto_path = which('protoc')
+        if proto_path:
+            proto_path = os.path.realpath(proto_path + "/../")
+        
 
         libs = []
+        link_args = []
         if os.getenv('PROTOBUF_LIBDIR'):
             libs.append(os.path.join(os.getenv('PROTOBUF_LIBDIR'), "libprotobuf"))
         elif use_conda:
             libs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf"))
+        elif proto_path:
+            libs.append(os.path.join(proto_path, "lib", "libprotobuf"))
+            link_args.extend(["-L" + os.path.join(proto_path, "lib"), "-lprotobuf"])
         else:
             libs.append("protobuf")
 
@@ -131,11 +146,17 @@ class Protobuf(Dependency):
             includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
         elif use_conda:
             includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
+        elif proto_path:
+            includes.append(os.path.join(proto_path, "include"))
         else:
             print("Warning: Environment Variable PROTOBUF_INCDIR or CONDA_PREFIX is not set, which may cause protobuf including folder error.")
 
         self.libraries = libs
         self.include_dirs = includes
+        self.__link_args = link_args
+
+    def link_args(self):
+        return self.__link_args
 
 
 class Pybind11(Dependency):
@@ -368,7 +389,9 @@ if build_for_release and platform.system() == 'Linux':
     cpp2py_extra_objects.extend([os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf.a'),
                              os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf-lite.a')])
 else:
-    cpp2py_deps.append(Protobuf())
+    p = Protobuf()
+    cpp2py_deps.append(p)
+    cpp2py_link_args += p.link_args()
 
 define_macros = [('ONNX_NAMESPACE', ONNX_NAMESPACE)]
 if ONNX_ML:
