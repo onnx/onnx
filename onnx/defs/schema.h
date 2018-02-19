@@ -343,8 +343,37 @@ class OpSchema {
       const std::string& description);
 
   // Convenience members for types
-  static const std::vector<std::string> all_integral_types;
-  static const std::vector<std::string> all_tensor_types;
+  static const std::vector<std::string>& all_integral_types() {
+    static const std::vector<std::string> all_integral_types =
+      {"float",
+       "int32",
+       "string",
+       "bool",
+       "uint8",
+       "int8",
+       "uint16",
+       "int16",
+       "int64",
+       "float16",
+       "double"};
+    return all_integral_types;
+  }
+
+  static const std::vector<std::string>& all_tensor_types() {
+    static const std::vector<std::string> all_tensor_types =
+      {"tensor(float)",
+       "tensor(int32)",
+       "tensor(string)",
+       "tensor(bool)",
+       "tensor(uint8)",
+       "tensor(int8)",
+       "tensor(uint16)",
+       "tensor(int16)",
+       "tensor(int64)",
+       "tensor(float16)",
+       "tensor(double)"};
+    return all_tensor_types;
+  }
 
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.

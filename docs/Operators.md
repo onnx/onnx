@@ -2051,7 +2051,8 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
     ]
-    indices = [0, 2],
+    indices = [
+        [0, 2],
     ]
     axis = 1,
     output = [
@@ -2103,6 +2104,50 @@ opset_import {
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>gather_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=0,
+)
+data = np.random.randn(5, 4, 3, 2).astype(np.float32)
+indices = np.array([0, 1, 3])
+y = np.take(data, indices, axis=0)
+
+expect(node, inputs=[data, indices], outputs=[y],
+       name='test_gather_0')
+```
+
+</details>
+
+
+<details>
+<summary>gather_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.random.randn(5, 4, 3, 2).astype(np.float32)
+indices = np.array([0, 1, 3])
+y = np.take(data, indices, axis=1)
+
+expect(node, inputs=[data, indices], outputs=[y],
+       name='test_gather_1')
+```
+
+</details>
 
 
 ### <a name="Gemm"></a><a name="gemm">**Gemm**</a>
@@ -4382,6 +4427,23 @@ for mode in ['edge', 'reflect']:
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Versioning
 
@@ -4392,6 +4454,15 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
 
 #### Inputs
 
@@ -4431,7 +4502,7 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array([4, 5, 6]).astype(np.float32)
-z = np.power(x, y) #expected output [1., 32., 729.]
+z = np.power(x, y) # expected output [1., 32., 729.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_example')
 
@@ -4440,6 +4511,40 @@ y = np.random.randn(3, 4, 5).astype(np.float32)
 z = np.power(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow')
+```
+
+</details>
+
+
+<details>
+<summary>pow_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Pow',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    broadcast=1,
+)
+
+x = np.array([1, 2, 3]).astype(np.float32)
+y = np.array([2]).astype(np.float32)
+z = np.power(x, y) # expected output [1., 4., 9.]
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_bcast')
+
+node = onnx.helper.make_node(
+    'Pow',
+    inputs=['x', 'y'],
+    outputs=['z'],
+    broadcast=1,
+    axis=0,
+)
+x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+y = np.array([2, 3, 4]).astype(np.float32)
+z = np.array([[1, 8, 81], [16, 125, 1296]]).astype(np.float32)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_pow_bcast_axis0')
 ```
 
 </details>
@@ -5458,6 +5563,38 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>reshape</summary>
+
+```python
+original_shape = [2, 3, 4]
+test_cases = {
+    'reordered_dims':[4, 2, 3],
+    'reduced_dims':[3, 8],
+    'extended_dims':[3, 2, 2, 2],
+    'one_dim':[24],
+    'negative_dim':[6, -1, 2]
+}
+data = np.random.random_sample(original_shape).astype(np.float32)
+
+for test_name,test_shape in test_cases.items():
+    node = onnx.helper.make_node(
+        'Reshape',
+        inputs=['data'],
+        outputs=['reshaped'],
+        shape=test_shape,
+    )
+
+    reshaped = np.reshape(data, test_shape)
+    expect(node, inputs=[data], outputs=[reshaped],
+       name='test_reshape_' + test_name)
+```
+
+</details>
 
 
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
