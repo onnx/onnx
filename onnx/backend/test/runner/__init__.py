@@ -211,7 +211,7 @@ class Runner(object):
                 model_dir = self._prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
-            model_pb_path = os.path.join(model_dir, 'model.pb')
+            model_pb_path = os.path.join(model_dir, 'model.onnx')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             prepared_model = self.backend.prepare(model, device)
