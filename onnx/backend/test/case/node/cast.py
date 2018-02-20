@@ -19,12 +19,12 @@ class Cast(Base):
     def export():
         shape = (3, 4)
         test_cases = [
-            ('FLOAT','FLOAT16'),
-            ('FLOAT','DOUBLE'),
-            ('FLOAT16','FLOAT'),
-            ('FLOAT16','DOUBLE'),
-            ('DOUBLE','FLOAT'),
-            ('DOUBLE','FLOAT16')
+            ('FLOAT', 'FLOAT16'),
+            ('FLOAT', 'DOUBLE'),
+            ('FLOAT16', 'FLOAT'),
+            ('FLOAT16', 'DOUBLE'),
+            ('DOUBLE', 'FLOAT'),
+            ('DOUBLE', 'FLOAT16'),
         ]   
 
         for case in test_cases:
@@ -38,5 +38,5 @@ class Cast(Base):
                 to=to_type
             )
             output = input.astype(type_map[getattr(TensorProto, to_type)])
-            expect(node, inputs=[input], outputs=[output],
-               name='test_cast_' + from_type + '_to_' + to_type)
+            expect(node, inputs=[input], outputs=[output], name='test_cast_' + from_type + '_to_' + to_type)
+            

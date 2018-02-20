@@ -748,12 +748,12 @@ opset_import {
 ```python
 shape = (3, 4)
 test_cases = [
-    ('FLOAT','FLOAT16'),
-    ('FLOAT','DOUBLE'),
-    ('FLOAT16','FLOAT'),
-    ('FLOAT16','DOUBLE'),
-    ('DOUBLE','FLOAT'),
-    ('DOUBLE','FLOAT16')
+    ('FLOAT', 'FLOAT16'),
+    ('FLOAT', 'DOUBLE'),
+    ('FLOAT16', 'FLOAT'),
+    ('FLOAT16', 'DOUBLE'),
+    ('DOUBLE', 'FLOAT'),
+    ('DOUBLE', 'FLOAT16'),
 ]   
 
 for case in test_cases:
@@ -767,8 +767,7 @@ for case in test_cases:
         to=to_type
     )
     output = input.astype(type_map[getattr(TensorProto, to_type)])
-    expect(node, inputs=[input], outputs=[output],
-       name='test_cast_' + from_type + '_to_' + to_type)
+    expect(node, inputs=[input], outputs=[output], name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -949,15 +948,13 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 4
+  version = 1
 }
 ~~~~
-
-Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
 #### Attributes
 
@@ -2085,8 +2082,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
     ]
-    indices = [
-        [0, 2],
+    indices = [0, 2],
     ]
     axis = 1,
     output = [
