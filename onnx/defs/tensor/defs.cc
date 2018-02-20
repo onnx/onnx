@@ -50,6 +50,7 @@ from the shape argument.)DOC")
 	            "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Concat)
+.SinceVersion(4)
 .Attr("axis",
     "Which axis to concat on",
     AttributeProto::INT)

@@ -915,13 +915,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 4
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
 #### Attributes
 
