@@ -50,6 +50,7 @@ from the shape argument.)DOC")
 	            "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Concat)
+.SinceVersion(4)
 .Attr("axis",
     "Which axis to concat on",
     AttributeProto::INT)
@@ -87,7 +88,10 @@ Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
 dimension for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
 start or end indices, it represent number of elements before the end of that
-dimension.
+dimension. If the value passed to start or end is larger than the `n` (the
+number of elements in this dimension), it represents `n`. For slicing to the
+end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
 
 Example 1:
 
@@ -110,11 +114,11 @@ Example 2:
       [1, 2, 3, 4],
       [5, 6, 7, 8],
   ]
-  starts = [0]
-  ends = [-1]
+  starts = [0, 1]
+  ends = [-1, 1000]
 
   result = [
-      [1, 2, 3, 4],
+      [2, 3, 4],
   ]
 
 )DOC")
@@ -184,7 +188,8 @@ Example 2:
       [2.3, 3.4, 3.9],
       [4.5, 5.7, 5.9],
   ]
-  indices = [0, 2],
+  indices = [
+      [0, 2],
   ]
   axis = 1,
   output = [
