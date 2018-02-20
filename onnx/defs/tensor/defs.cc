@@ -80,6 +80,7 @@ Takes a tensor as input and outputs a int64 scalar that equals to the total numb
 
 
 ONNX_OPERATOR_SCHEMA(Concat)
+.SinceVersion(4)
 .Attr("axis",
     "Which axis to concat on",
     AttributeProto::INT)
@@ -217,7 +218,8 @@ Example 2:
       [2.3, 3.4, 3.9],
       [4.5, 5.7, 5.9],
   ]
-  indices = [0, 2],
+  indices = [
+      [0, 2],
   ]
   axis = 1,
   output = [
