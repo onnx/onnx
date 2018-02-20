@@ -5,6 +5,17 @@
 
 using namespace ONNX_NAMESPACE;
 
+ONNX_OPERATOR_SCHEMA(Concat)
+.Attr("axis",
+    "Which axis to concat on.  Default value is 1.",
+    AttributeProto::INT,
+    OPTIONAL)
+    .SetDoc("Concatenate a list of tensors into a single tensor")
+    .Input(0, "inputs", "List of tensors for concatenation", "T", OpSchema::Variadic)
+    .Output(0, "concat_result", "Concatenated tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain output types to float tensors.");
+
 ONNX_OPERATOR_SCHEMA(Split)
     .SinceVersion(1)
     .Input(0, "input", "The tensor to split", "T")
