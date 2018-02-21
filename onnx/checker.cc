@@ -4,7 +4,7 @@
 
 #include <unordered_set>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace checker {
 
 #define enforce_has_field(proto, field)                                     \
@@ -330,10 +330,10 @@ void check_model(const ModelProto& model) {
   }
   std::unordered_map<std::string, int> versions;
   CheckerContext ctx;
-  ctx.set_ir_version(model.ir_version());
+  ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] = opset_import.version();
+    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
   auto dit = opset_imports.find(ONNX_DOMAIN);
   if (dit == opset_imports.end()) {
@@ -355,4 +355,4 @@ void check_model(const ModelProto& model) {
 #undef enforce_non_empty_field
 
 } // namespace checker
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

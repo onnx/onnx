@@ -71,7 +71,7 @@ def load_model_tests(data_dir=os.path.join(DATA_DIR, 'model'), kind=None):
         # skip the non-dir files, such as generated __init__.py.
         if not os.path.isdir(case_dir):
             continue
-        if os.path.exists(os.path.join(case_dir, 'model.pb')):
+        if os.path.exists(os.path.join(case_dir, 'model.onnx')):
             url = None
             model_name = test_name[len('test_')]
             model_dir = case_dir
