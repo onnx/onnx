@@ -34,6 +34,6 @@ class Concat(Base):
                     axis=i
                 )
                 output = np.concatenate(values,i)
-                expect(node, inputs=[*values], outputs=[output],
+                expect(node, inputs=[v for v in values], outputs=[output],
                 name='test_concat_' + test_case + '_axis_' + str(i))
                 
