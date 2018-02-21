@@ -4660,6 +4660,43 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Shape-1"></a>**Shape-1**</a>
+
+  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>shape</tt> : T1</dt>
+<dd>Shape of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor.</dd>
+</dl>
+
 ### <a name="Sigmoid-1"></a>**Sigmoid-1**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
@@ -4695,6 +4732,43 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Size-1"></a>**Size-1**</a>
+
+  Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>size</tt> : T1</dt>
+<dd>Total number of elements of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : int64</dt>
+<dd>Constrains output to int64 scalar.</dd>
 </dl>
 
 ### <a name="Slice-1"></a>**Slice-1**</a>
