@@ -126,7 +126,7 @@ class Protobuf(Dependency):
         if os.getenv('PROTOBUF_LIBDIR'):
             libs.append(os.path.join(os.getenv('PROTOBUF_LIBDIR'), "protobuf"))
         elif use_conda:
-            libs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "protobuf"))
+            libs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf"))
         elif proto_path:
             libs.append(os.path.join(proto_path, "lib", "protobuf"))
         else:
