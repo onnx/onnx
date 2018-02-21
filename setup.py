@@ -116,7 +116,7 @@ class Protobuf(Dependency):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
         use_conda = os.getenv('CONDA_PREFIX') and platform.system() == 'Windows'
-		# Find the path by finding protoc and suppose it's in ${PROTOBUF_PATH}/bin
+        # Find the path by finding protoc and suppose it's in ${PROTOBUF_PATH}/bin
         proto_path = os.path.dirname(PROTOC)
         if proto_path:
             proto_path = os.path.join(proto_path, os.pardir)
