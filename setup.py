@@ -376,7 +376,7 @@ if build_for_release and platform.system() == 'Linux':
     cpp2py_extra_objects.extend([os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf.a'),
                              os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf-lite.a')])
 else:
-    cpp2py_deps.append(Protobuf)
+    cpp2py_deps.append(Protobuf())
 
 define_macros = [('ONNX_NAMESPACE', ONNX_NAMESPACE)]
 if ONNX_ML:
