@@ -948,13 +948,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 4
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
 #### Attributes
 
@@ -2082,7 +2084,8 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
     ]
-    indices = [0, 2],
+    indices = [
+        [0, 2],
     ]
     axis = 1,
     output = [
