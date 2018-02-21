@@ -972,7 +972,7 @@ for test_case, values in test_cases.items():
         in_args = ['value' + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
             'Concat',
-            inputs=[*in_args],
+            inputs=[s for s in in_args],
             outputs=['output'],
             axis=i
         )
