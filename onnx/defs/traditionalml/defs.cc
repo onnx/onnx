@@ -249,7 +249,7 @@ ONNX_OPERATOR_SCHEMA(LinearRegressor)
     If targets is set to 1 (default) then univariate regression is performed.
     If targets is set to M then M sets of coefficients must be passed in as a sequence
     and M results will be output for each input n in N.
-    Coefficients are of the same length as an n, and coefficents for each target are contiguous.
+    Coefficients are of the same length as an n, and coefficients for each target are contiguous.
     Intercepts are optional but if provided must match the number of targets.
 )DOC")
 .Input(0, "X", "Data to be regressed", "T")
@@ -310,8 +310,8 @@ ONNX_OPERATOR_SCHEMA(OneHotEncoder)
 .Input(0, "X", "Data to be encoded", "T")
 .Output(0, "Y", "encoded output data", "tensor(float)")
 .TypeConstraint("T", { "tensor(string)", "tensor(int64)","tensor(int32)", "tensor(float)","tensor(double)" }, " allowed types.")
-.Attr("cats_int64s", "list of cateogries, ints", AttributeProto::INTS, OPTIONAL)
-.Attr("cats_strings", "list of cateogries, strings", AttributeProto::STRINGS, OPTIONAL)
+.Attr("cats_int64s", "list of categories, ints", AttributeProto::INTS, OPTIONAL)
+.Attr("cats_strings", "list of categories, strings", AttributeProto::STRINGS, OPTIONAL)
 .Attr(
     "zeros",
     "if true and category is not present, will return all zeros, if false and missing category, operator will return false",
