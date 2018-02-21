@@ -41,6 +41,14 @@ def process_ifs(lines, onnx_ml):
             elif (2 == in_if and not onnx_ml):
                 yield line
 
+
+PACKAGE_NAME_REGEX = re.compile(r'\{PACKAGE_NAME\}')
+
+def process_package_name(lines, package_name):
+    for line in lines:
+        yield PACKAGE_NAME_REGEX.sub(package_name, line)
+
+
 PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
 OPTIONAL_REGEX = re.compile(r'(\s*)optional\s(.*)$')
 IMPORT_REGEX = re.compile(r'(\s*)import\s*"([^"]*)\.proto";\s*$')
@@ -68,22 +76,23 @@ def convert_to_proto3(lines):
         yield line
 
 
-def translate(source, proto, onnx_ml):
+def translate(source, proto, onnx_ml, package_name):
     lines = source.splitlines()
     lines = process_ifs(lines, onnx_ml=onnx_ml)
+    lines = process_package_name(lines, package_name=package_name)
     if proto == 3:
         lines = convert_to_proto3(lines)
     else:
         assert proto == 2
     return "\n".join(lines)  # TODO: not Windows friendly
 
-def qualify(f):
-    return os.path.join(os.path.dirname(__file__), f)
+def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):
+    return os.path.join(pardir, f)
 
-def convert(stem, do_onnx_ml=False):
+def convert(stem, package_name, output, do_onnx_ml=False):
     proto_in = qualify("{}.in.proto".format(stem))
-    proto = qualify("{}.proto".format(stem))
-    proto3 = qualify("{}.proto3".format(stem))
+    proto = qualify("{}.proto".format(stem), pardir=output)
+    proto3 = qualify("{}.proto3".format(stem), pardir=output)
     print("Processing {}".format(proto_in))
 
     with io.open(proto_in, 'r') as fin:
@@ -91,33 +100,45 @@ def convert(stem, do_onnx_ml=False):
         print("Writing {}".format(proto))
         with io.open(proto, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=2, onnx_ml=False))
+            fout.write(translate(source, proto=2, onnx_ml=False, package_name=package_name))
         print("Writing {}".format(proto3))
         with io.open(proto3, 'w', newline='') as fout:
             fout.write(autogen_header)
-            fout.write(translate(source, proto=3, onnx_ml=False))
+            fout.write(translate(source, proto=3, onnx_ml=False, package_name=package_name))
         if do_onnx_ml:
-            ml_proto = qualify("{}-ml.proto".format(stem))
-            ml_proto3 = qualify("{}-ml.proto3".format(stem))
+            ml_proto = qualify("{}-ml.proto".format(stem), pardir=output)
+            ml_proto3 = qualify("{}-ml.proto3".format(stem), pardir=output)
             print("Writing {}".format(ml_proto))
             with io.open(ml_proto, 'w', newline='') as fout:
                 fout.write(autogen_header)
-                fout.write(translate(source, proto=2, onnx_ml=True))
+                fout.write(translate(source, proto=2, onnx_ml=True, package_name=package_name))
             print("Writing {}".format(ml_proto3))
             with io.open(ml_proto3, 'w', newline='') as fout:
                 fout.write(autogen_header)
-                fout.write(translate(source, proto=3, onnx_ml=True))
+                fout.write(translate(source, proto=3, onnx_ml=True, package_name=package_name))
 
 def main():
     parser = argparse.ArgumentParser(
         description='Generates .proto file variations from .in.proto')
+    parser.add_argument('-p', '--package', default='onnx',
+                        help='package name in the generated proto files'
+                        ' (default: %(default)s)')
+    parser.add_argument('-o', '--output',
+                        default=os.path.realpath(os.path.dirname(__file__)),
+                        help='output directory (default: %(default)s)')
     parser.add_argument('stems', nargs='*', default=['onnx', 'onnx-operators'],
                         help='list of .in.proto file stems '
                         '(default: %(default)s)')
     args = parser.parse_args()
 
+    if not os.path.exists(args.output):
+        os.mkdirs(args.output)
+
     for stem in args.stems:
-        convert(stem, do_onnx_ml=True)
+        convert(stem,
+                package_name=args.package,
+                output=args.output,
+                do_onnx_ml=True)
 
 if __name__ == '__main__':
     main()

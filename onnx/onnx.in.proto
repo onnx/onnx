@@ -3,7 +3,7 @@
 
 syntax = "proto2";
 
-package onnx;
+package {PACKAGE_NAME};
 
 // Note [Release]
 // We are still in the very early stage of defining ONNX. The current

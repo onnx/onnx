@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include "onnx/onnx_pb.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 // String pointer as unique TypeProto identifier.
 typedef const std::string* DataType;
 
@@ -63,6 +63,6 @@ class DataTypeUtils {
   static std::mutex& GetTypeStrLock();
 };
 } // namespace Utils
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
 #endif // ! ONNX_DATA_TYPE_UTILS_H

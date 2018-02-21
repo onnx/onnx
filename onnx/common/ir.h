@@ -27,7 +27,7 @@
   void operator=(const TypeName&) = delete
 
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 // Graph represents one "function" of computation.
 // It uses a simple ownership model where the graph owns all the nodes inside it.
@@ -293,15 +293,15 @@ private:
   use_list uses_;
   bool has_unique_name_;
   std::string unique_name_;
-  onnx::TensorProto_DataType elem_type_;
+  ONNX_NAMESPACE::TensorProto_DataType elem_type_;
   std::vector<Dimension> sizes_;
 
 public:
-  Value* setElemType(onnx::TensorProto_DataType elem_type) {
+  Value* setElemType(ONNX_NAMESPACE::TensorProto_DataType elem_type) {
     elem_type_ = elem_type;
     return this;
   }
-  onnx::TensorProto_DataType elemType() const {
+  ONNX_NAMESPACE::TensorProto_DataType elemType() const {
     return elem_type_;
   }
   Value* setSizes(const std::vector<Dimension>& sizes) {
@@ -1054,4 +1054,4 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

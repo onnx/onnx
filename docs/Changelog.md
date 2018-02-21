@@ -606,8 +606,8 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (required)</dt>
-<dd>Which axis to concat on</dd>
+<dt><tt>axis</tt> : int</dt>
+<dd>Which axis to concat on.  Default value is 1.</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
@@ -1565,7 +1565,8 @@ opset_import {
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
     ]
-    indices = [0, 2],
+    indices = [
+        [0, 2],
     ]
     axis = 1,
     output = [
@@ -1944,10 +1945,10 @@ opset_import {
 
 ### <a name="Hardmax-1"></a>**Hardmax-1**</a>
 
-  The operator computes the hardmax normalized values for each layer in the batch
+  The operator computes the hardmax (1 for the first maximum value, and 0 for all others) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the hardmax normalized values of the corresponding input.
+  and contains the hardmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -1988,7 +1989,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -2514,10 +2515,10 @@ opset_import {
 
 ### <a name="LogSoftmax-1"></a>**LogSoftmax-1**</a>
 
-  The operator computes the logsoftmax normalized values for each layer in the batch
+  The operator computes the logsoftmax (log of softmax) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the logsoftmax normalized values of the corresponding input.
+  and contains the logsoftmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -2558,7 +2559,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -3512,6 +3513,23 @@ opset_import {
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Versioning
 
@@ -3522,6 +3540,15 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
 
 #### Inputs
 
@@ -4679,7 +4706,10 @@ opset_import {
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
-  dimension.
+  dimension. If the value passed to start or end is larger than the `n` (the
+  number of elements in this dimension), it represents `n`. For slicing to the
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   
   Example 1:
   
@@ -4702,11 +4732,11 @@ opset_import {
         [1, 2, 3, 4],
         [5, 6, 7, 8],
     ]
-    starts = [0]
-    ends = [-1]
+    starts = [0, 1]
+    ends = [-1, 1000]
   
     result = [
-        [1, 2, 3, 4],
+        [2, 3, 4],
     ]
   
 
@@ -4754,10 +4784,10 @@ opset_import {
 
 ### <a name="Softmax-1"></a>**Softmax-1**</a>
 
-  The operator computes the softmax normalized values for each layer in the batch
+  The operator computes the softmax (normalized exponential) values for each layer in the batch
    of the given input. The input is a 2-D tensor (Tensor<float>) of size
   (batch_size x input_feature_dimensions). The output tensor has the same shape
-  and contains the softmax normalized values of the corresponding input.
+  and contains the softmax values of the corresponding input.
   
   X does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
@@ -4798,7 +4828,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softmax normalized output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4847,7 +4877,7 @@ opset_import {
 
 ### <a name="Softsign-1"></a>**Softsign-1**</a>
 
-  Calculates the softsign (x/1+|x|) of the given input tensor element-wise.
+  Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
 #### Versioning
 
@@ -4870,7 +4900,7 @@ opset_import {
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The softsign (x/1+|x|) values of the input tensor computed element-wise</dd>
+<dd>The softsign (x/(1+|x|)) values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
@@ -5268,6 +5298,63 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
+</dl>
+
+### <a name="TopK-1"></a>**TopK-1**</a>
+
+  Retrieve the top-K elements along a specified axis. Given an input tensor of
+  shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
+    -Value tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n]
+      which contains the values of the top k elements along the specified axis
+    -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
+     contains the indices of the top k elements (original indices from the input
+     tensor).
+  
+  Given two equivalent values, this operator uses the indices along the axis  as
+   a tiebreaker. That is, the element with the lower index will appear first.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Dimension on which to do the sort. Default -1, which indicates the last axis</dd>
+<dt><tt>k</tt> : int (required)</dt>
+<dd>Number of top elements to retrieve</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_n, r]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Values</tt> : T</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
+<dt><tt>Indices</tt> : I</dt>
+<dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
+<dd>Constrain index tensor to integral types</dd>
 </dl>
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
@@ -5832,5 +5919,48 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
+## Version 4 of the default ONNX operator set
+### <a name="Concat-4"></a>**Concat-4**</a>
+
+  Concatenate a list of tensors into a single tensor
+
+#### Versioning
+
+This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 4
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (required)</dt>
+<dd>Which axis to concat on</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>inputs</tt> (variadic) : T</dt>
+<dd>List of tensors for concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>concat_result</tt> : T</dt>
+<dd>Concatenated tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 

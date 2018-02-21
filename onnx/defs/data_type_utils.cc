@@ -5,7 +5,7 @@
 
 #include "data_type_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace Utils {
 
 // Singleton wrapper around allowed data types.
@@ -408,4 +408,4 @@ TypesWrapper::TypesWrapper() {
   }
 }
 } // namespace Utils
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
