@@ -740,6 +740,39 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>cast</summary>
+
+```python
+shape = (3, 4)
+test_cases = [
+    ('FLOAT', 'FLOAT16'),
+    ('FLOAT', 'DOUBLE'),
+    ('FLOAT16', 'FLOAT'),
+    ('FLOAT16', 'DOUBLE'),
+    ('DOUBLE', 'FLOAT'),
+    ('DOUBLE', 'FLOAT16'),
+]   
+
+for case in test_cases:
+    from_type = case[0]
+    to_type = case[1]
+    input = np.random.random_sample(shape).astype(type_map[getattr(TensorProto, from_type)])
+    node = onnx.helper.make_node(
+        'Cast',
+        inputs=['input'],
+        outputs=['output'],
+        to=to_type
+    )
+    output = input.astype(type_map[getattr(TensorProto, to_type)])
+    expect(node, inputs=[input], outputs=[output], name='test_cast_' + from_type + '_to_' + to_type)
+```
+
+</details>
+
+
 ### <a name="Ceil"></a><a name="ceil">**Ceil**</a>
 
   Ceil takes one input data (Tensor<T>) and produces one output data
