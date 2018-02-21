@@ -52,7 +52,7 @@ def generate_data(args):
                     'model_name': case.model_name,
                 }, f, sort_keys=True)
         else:
-            with open(os.path.join(output_dir, 'model.pb'), 'wb') as f:
+            with open(os.path.join(output_dir, 'model.onnx'), 'wb') as f:
                 f.write(case.model.SerializeToString())
             for i, (inputs, outputs) in enumerate(case.data_sets):
                 data_set_dir = os.path.join(
