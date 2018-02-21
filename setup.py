@@ -81,7 +81,8 @@ def recursive_glob(directory, pattern):
             for dirpath, dirnames, files in os.walk(directory)
             for f in fnmatch.filter(files, pattern)]
 
-# https://stackoverflow.com/a/3431838/2143581
+
+ # https://stackoverflow.com/a/3431838/2143581
 def md5(fname):
     hash_md5 = hashlib.md5()
     with open(fname, 'rb') as f:
@@ -116,19 +117,12 @@ class Protobuf(Dependency):
         super(Protobuf, self).__init__()
         # TODO: allow user specify protobuf include_dirs libraries with flags
         use_conda = os.getenv('CONDA_PREFIX') and platform.system() == 'Windows'
-        # Find the path by finding protoc and suppose it's in ${PROTOBUF_PATH}/bin
-        proto_path = os.path.dirname(PROTOC)
-        if proto_path:
-            proto_path = os.path.join(proto_path, os.pardir)
-        
 
         libs = []
         if os.getenv('PROTOBUF_LIBDIR'):
-            libs.append(os.path.join(os.getenv('PROTOBUF_LIBDIR'), "protobuf"))
+            libs.append(os.path.join(os.getenv('PROTOBUF_LIBDIR'), "libprotobuf"))
         elif use_conda:
             libs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf"))
-        elif proto_path:
-            libs.append(os.path.join(proto_path, "lib", "protobuf"))
         else:
             libs.append("protobuf")
 
@@ -137,8 +131,6 @@ class Protobuf(Dependency):
             includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
         elif use_conda:
             includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
-        elif proto_path:
-            includes.append(os.path.join(proto_path, "include"))
         else:
             print("Warning: Environment Variable PROTOBUF_INCDIR or CONDA_PREFIX is not set, which may cause protobuf including folder error.")
 
