@@ -606,8 +606,8 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (required)</dt>
-<dd>Which axis to concat on</dd>
+<dt><tt>axis</tt> : int</dt>
+<dd>Which axis to concat on.  Default value is 1.</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
@@ -1565,7 +1565,8 @@ opset_import {
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
     ]
-    indices = [0, 2],
+    indices = [
+        [0, 2],
     ]
     axis = 1,
     output = [
@@ -4659,6 +4660,43 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Shape-1"></a>**Shape-1**</a>
+
+  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>shape</tt> : T1</dt>
+<dd>Shape of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor.</dd>
+</dl>
+
 ### <a name="Sigmoid-1"></a>**Sigmoid-1**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
@@ -4694,6 +4732,43 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Size-1"></a>**Size-1**</a>
+
+  Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>size</tt> : T1</dt>
+<dd>Total number of elements of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : int64</dt>
+<dd>Constrains output to int64 scalar.</dd>
 </dl>
 
 ### <a name="Slice-1"></a>**Slice-1**</a>
@@ -5918,5 +5993,48 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
+## Version 4 of the default ONNX operator set
+### <a name="Concat-4"></a>**Concat-4**</a>
+
+  Concatenate a list of tensors into a single tensor
+
+#### Versioning
+
+This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 4
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (required)</dt>
+<dd>Which axis to concat on</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>inputs</tt> (variadic) : T</dt>
+<dd>List of tensors for concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>concat_result</tt> : T</dt>
+<dd>Concatenated tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 

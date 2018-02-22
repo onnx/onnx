@@ -76,7 +76,9 @@
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
   * <a href="#Selu">Selu</a>
+  * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
+  * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
   * <a href="#Softplus">Softplus</a>
@@ -915,13 +917,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 4
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
 #### Attributes
 
@@ -950,6 +954,39 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>concat</summary>
+
+```python
+test_cases = {
+    '1d': ([1, 2],
+           [3, 4]),
+    '2d': ([[1, 2], [3, 4]],
+           [[5, 6], [7, 8]]),
+    '3d':([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+           [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
+    }
+
+for test_case, values in test_cases.items():
+    values = [np.asarray(v) for v in values]
+    for i in range(len(values[0].shape)):
+        in_args = ['value' + str(k) for k in range(len(values))]
+        node = onnx.helper.make_node(
+            'Concat',
+            inputs=[s for s in in_args],
+            outputs=['output'],
+            axis=i
+        )
+        output = np.concatenate(values,i)
+        expect(node, inputs=[v for v in values], outputs=[output],
+        name='test_concat_' + test_case + '_axis_' + str(i))
+```
+
+</details>
 
 
 ### <a name="Constant"></a><a name="constant">**Constant**</a>
@@ -2049,7 +2086,8 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
     ]
-    indices = [0, 2],
+    indices = [
+        [0, 2],
     ]
     axis = 1,
     output = [
@@ -2101,6 +2139,50 @@ opset_import {
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>gather_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=0,
+)
+data = np.random.randn(5, 4, 3, 2).astype(np.float32)
+indices = np.array([0, 1, 3])
+y = np.take(data, indices, axis=0)
+
+expect(node, inputs=[data, indices], outputs=[y],
+       name='test_gather_0')
+```
+
+</details>
+
+
+<details>
+<summary>gather_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Gather',
+    inputs=['data', 'indices'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.random.randn(5, 4, 3, 2).astype(np.float32)
+indices = np.array([0, 1, 3])
+y = np.take(data, indices, axis=1)
+
+expect(node, inputs=[data, indices], outputs=[y],
+       name='test_gather_1')
+```
+
+</details>
 
 
 ### <a name="Gemm"></a><a name="gemm">**Gemm**</a>
@@ -5647,6 +5729,77 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Shape"></a><a name="shape">**Shape**</a>
+
+  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>shape</tt> : T1</dt>
+<dd>Shape of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Shape',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([
+    [1, 2, 3],
+    [4, 5, 6],
+]).astype(np.float32)
+y = np.array([
+    2, 3,
+]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_shape_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.array(x.shape).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_shape')
+```
+
+</details>
+
+
 ### <a name="Sigmoid"></a><a name="sigmoid">**Sigmoid**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
@@ -5706,6 +5859,75 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = 1.0 / (1.0 + np.exp(np.negative(x)))
 expect(node, inputs=[x], outputs=[y],
        name='test_sigmoid')
+```
+
+</details>
+
+
+### <a name="Size"></a><a name="size">**Size**</a>
+
+  Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>size</tt> : T1</dt>
+<dd>Total number of elements of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : int64</dt>
+<dd>Constrains output to int64 scalar.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>size</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Size',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([
+    [1, 2, 3],
+    [4, 5, 6],
+]).astype(np.float32)
+y = np.array(6).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_size_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.array(x.size).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_size')
 ```
 
 </details>
