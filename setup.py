@@ -170,10 +170,11 @@ class build_proto_in(ONNXCommand):
             in_files.append(
                 os.path.join(SRC_DIR, '{}.in.proto'.format(stem)))
             out_files.extend([
-                os.path.join(SRC_DIR, '{}.proto'.format(stem)),
-                os.path.join(SRC_DIR, '{}.proto3'.format(stem)),
-                os.path.join(SRC_DIR, '{}-ml.proto'.format(stem)),
-                os.path.join(SRC_DIR, '{}-ml.proto3'.format(stem)),
+                os.path.join(SRC_DIR, '{}.pb.h'.format(stem)),
+                os.path.join(SRC_DIR, '{}_{}.proto'.format(stem, ONNX_NAMESPACE)),
+                os.path.join(SRC_DIR, '{}_{}.proto3'.format(stem, ONNX_NAMESPACE)),
+                os.path.join(SRC_DIR, '{}_{}-ml.proto'.format(stem, ONNX_NAMESPACE)),
+                os.path.join(SRC_DIR, '{}_{}-ml.proto3'.format(stem, ONNX_NAMESPACE)),
             ])
 
         log.info('compiling *.in.proto to temp dir {}'.format(tmp_dir))
@@ -188,6 +189,7 @@ class build_proto_in(ONNXCommand):
             if os.path.exists(out_f) and md5(out_f) == md5(tmp_f):
                 log.info("Skip updating {} since it's the same.".format(out_f))
                 continue
+            log.info("Copying {} to {}".format(tmp_f, out_f))
             shutil.copyfile(tmp_f, out_f)
         shutil.rmtree(tmp_dir)
 
@@ -199,9 +201,9 @@ class build_proto(ONNXCommand):
         stems = ['onnx', 'onnx-operators']
         for stem in stems:
             if ONNX_ML:
-                proto_base = '{}-ml'.format(stem)
+                proto_base = '{}_{}-ml'.format(stem, ONNX_NAMESPACE)
             else:
-                proto_base = stem
+                proto_base = '{}_{}'.format(stem, ONNX_NAMESPACE)
 
             proto = os.path.join(SRC_DIR, '{}.proto'.format(proto_base))
             # "-" is invalid in python module name, replaces '-' with '_'
@@ -214,6 +216,7 @@ class build_proto(ONNXCommand):
                 pb2_py,
                 os.path.join(SRC_DIR, '{}.pb.cc'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}.pb.h'.format(proto_base)),
+                os.path.join(SRC_DIR, '{}.pb.h'.format(stem)),
             ]
             if self.force or any(dep_util.newer(proto, o) for o in outputs):
                 log.info('compiling {}'.format(proto))

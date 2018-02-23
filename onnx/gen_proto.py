@@ -42,16 +42,27 @@ def process_ifs(lines, onnx_ml):
                 yield line
 
 
+IMPORT_REGEX = re.compile(r'(\s*)import\s*"([^"]*)\.proto";\s*$')
 PACKAGE_NAME_REGEX = re.compile(r'\{PACKAGE_NAME\}')
+ML_REGEX = re.compile(r'(.*)\-ml')
 
 def process_package_name(lines, package_name):
     for line in lines:
-        yield PACKAGE_NAME_REGEX.sub(package_name, line)
+        m = IMPORT_REGEX.match(line)
+        if m:
+            include_name = m.group(2)
+            ml = ML_REGEX.match(include_name)
+            if ml:
+                include_name = "{}_{}-ml".format(ml.group(1), package_name)
+            else:
+                include_name = "{}_{}".format(include_name, package_name)
+            yield m.group(1) + 'import "{}.proto";'.format(include_name)
+        else:
+            yield PACKAGE_NAME_REGEX.sub(package_name, line)
 
 
 PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
 OPTIONAL_REGEX = re.compile(r'(\s*)optional\s(.*)$')
-IMPORT_REGEX = re.compile(r'(\s*)import\s*"([^"]*)\.proto";\s*$')
 
 def convert_to_proto3(lines):
     for line in lines:
@@ -91,10 +102,11 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):
 
 def convert(stem, package_name, output, do_onnx_ml=False):
     proto_in = qualify("{}.in.proto".format(stem))
-    proto = qualify("{}.proto".format(stem), pardir=output)
-    proto3 = qualify("{}.proto3".format(stem), pardir=output)
+    proto = qualify("{}_{}.proto".format(stem, package_name), pardir=output)
+    proto3 = qualify("{}_{}.proto3".format(stem, package_name), pardir=output)
     print("Processing {}".format(proto_in))
 
+    proto_header = qualify("{}.pb.h".format(stem), pardir=output)
     with io.open(proto_in, 'r') as fin:
         source = fin.read()
         print("Writing {}".format(proto))
@@ -105,9 +117,18 @@ def convert(stem, package_name, output, do_onnx_ml=False):
         with io.open(proto3, 'w', newline='') as fout:
             fout.write(autogen_header)
             fout.write(translate(source, proto=3, onnx_ml=False, package_name=package_name))
+        print("Writing {}".format(proto_header))
+        with io.open(proto_header, 'w', newline='') as fout:
+            fout.write("#ifndef {}_{}_H\n".format(stem.upper(), package_name.upper()))
+            fout.write("#define {}_{}_H 1\n".format(stem.upper(), package_name.upper()))
+            fout.write("#include \"{}_{}.pb.h\"\n".format(stem, package_name))
+            fout.write("#endif\n")
+
         if do_onnx_ml:
-            ml_proto = qualify("{}-ml.proto".format(stem), pardir=output)
-            ml_proto3 = qualify("{}-ml.proto3".format(stem), pardir=output)
+            ml_proto = qualify("{}_{}-ml.proto".format(stem, package_name), pardir=output)
+            ml_proto3 = qualify("{}_{}-ml.proto3".format(stem, package_name), pardir=output)
+            ml_proto_header = qualify("{}_{}-ml.pb.h".format(stem, package_name), pardir=output)
+
             print("Writing {}".format(ml_proto))
             with io.open(ml_proto, 'w', newline='') as fout:
                 fout.write(autogen_header)
@@ -116,6 +137,13 @@ def convert(stem, package_name, output, do_onnx_ml=False):
             with io.open(ml_proto3, 'w', newline='') as fout:
                 fout.write(autogen_header)
                 fout.write(translate(source, proto=3, onnx_ml=True, package_name=package_name))
+
+            print("Writing {}".format(ml_proto_header))
+            with io.open(ml_proto_header, 'w', newline='') as fout:
+                fout.write("#ifndef {}_{}_ML_H\n".format(stem.upper(), package_name.upper()))
+                fout.write("#define {}_{}_ML_H 1\n".format(stem.upper(), package_name.upper()))
+                fout.write("#include \"{}_{}-ml.pb.h\"\n".format(stem, package_name))
+                fout.write("#endif\n")
 
 def main():
     parser = argparse.ArgumentParser(
