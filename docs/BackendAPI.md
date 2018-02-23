@@ -21,12 +21,12 @@ We propose a cross-platform API for loading and executing ONNX graphs on optimiz
 ## How to Use ONNX Backend Interface
 
 0. (Optional) Use `onnx_backend_load` to dynamically load the ONNX Backend Interface library.
-2. Call `onnxGetNumBackends` to get the number of available backends. Note that it can be 0.
-3. Call `onnxGetBackendInfo` to check additional information about any available backend.
-4. Call `onnxGetBackendCompatibility` to check if your model, or parts of it, can run on the backend.
-5. Call `onnxInitBackend` to initialize a backend, then call `onnxInitGraph` to offload one or more model graphs to the backend.
-6. Call `onnxSetGraphIO` to set inputs and output for the graph, then call `onnxRunGraph` to execute the graph(s). If your model works with fixed-size inputs, one call to `onnxSetGraphIO` is sufficient for multiple `onnxRunGraph` calls. For models with variable-size inputs, you'd need to call `onnxSetGraphIO` before each `onnxRunGraph` call.
-7. When done using the model, release the model graph(s) with `onnxReleaseGraph`, then release the backend with `onnxReleaseBackend`
+1. Call `onnxGetNumBackends` to get the number of available backends. Note that it can be 0.
+2. Call `onnxGetBackendInfo` to check additional information about any available backend.
+3. Call `onnxGetBackendCompatibility` to check if your model, or parts of it, can run on the backend.
+4. Call `onnxInitBackend` to initialize a backend, then call `onnxInitGraph` to offload one or more model graphs to the backend.
+5. Call `onnxSetGraphIO` to set inputs and output for the graph, then call `onnxRunGraph` to execute the graph(s). If your model works with fixed-size inputs, one call to `onnxSetGraphIO` is sufficient for multiple `onnxRunGraph` calls. For models with variable-size inputs, you'd need to call `onnxSetGraphIO` before each `onnxRunGraph` call.
+6. When done using the model, release the model graph(s) with `onnxReleaseGraph`, then release the backend with `onnxReleaseBackend`
 
 ## How to Implement ONNX Backend Interface
 
