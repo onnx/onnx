@@ -4576,8 +4576,8 @@ node = onnx.helper.make_node(
     axis=0,
 )
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
-y = np.array([2, 3, 4]).astype(np.float32)
-z = np.array([[1, 8, 81], [16, 125, 1296]]).astype(np.float32)
+y = np.array([2, 3]).astype(np.float32)
+z = np.array([[1, 4, 9], [64, 125, 216]]).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_axis0')
 ```
