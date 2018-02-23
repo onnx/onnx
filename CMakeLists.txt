@@ -15,7 +15,11 @@ if (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /WX")
     set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /WX")
 endif()
-add_subdirectory(third_party/pybind11)
+
+# ---[ pybind11
+if (NOT TARGET pybind11)
+  add_subdirectory(third_party/pybind11)
+endif()
 
 # Customized version of find Protobuf. We need to avoid situations mentioned
 # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
