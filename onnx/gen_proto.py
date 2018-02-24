@@ -127,7 +127,7 @@ def convert(stem, package_name, output, do_onnx_ml=False):
         if do_onnx_ml:
             ml_proto = qualify("{}_{}-ml.proto".format(stem, package_name), pardir=output)
             ml_proto3 = qualify("{}_{}-ml.proto3".format(stem, package_name), pardir=output)
-            ml_proto_header = qualify("{}_{}-ml.pb.h".format(stem, package_name), pardir=output)
+            ml_proto_header = qualify("{}-ml.pb.h".format(stem), pardir=output)
 
             print("Writing {}".format(ml_proto))
             with io.open(ml_proto, 'w', newline='') as fout:

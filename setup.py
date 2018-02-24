@@ -171,6 +171,7 @@ class build_proto_in(ONNXCommand):
                 os.path.join(SRC_DIR, '{}.in.proto'.format(stem)))
             out_files.extend([
                 os.path.join(SRC_DIR, '{}.pb.h'.format(stem)),
+                os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)),
                 os.path.join(SRC_DIR, '{}_{}.proto'.format(stem, ONNX_NAMESPACE)),
                 os.path.join(SRC_DIR, '{}_{}.proto3'.format(stem, ONNX_NAMESPACE)),
                 os.path.join(SRC_DIR, '{}_{}-ml.proto'.format(stem, ONNX_NAMESPACE)),
@@ -216,8 +217,11 @@ class build_proto(ONNXCommand):
                 pb2_py,
                 os.path.join(SRC_DIR, '{}.pb.cc'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}.pb.h'.format(proto_base)),
-                os.path.join(SRC_DIR, '{}.pb.h'.format(stem)),
             ]
+            if ONNX_ML:
+                outputs.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
+            else:
+                outputs.append(os.path.join(SRC_DIR, '{}.pb.h'.format(stem)))
             if self.force or any(dep_util.newer(proto, o) for o in outputs):
                 log.info('compiling {}'.format(proto))
                 subprocess.check_call([
