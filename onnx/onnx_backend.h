@@ -73,10 +73,22 @@ typedef void* onnxGraph;
 
 /** Return code for ONNX functions */
 typedef int32_t onnxStatus;
-/** Type for enumeration values */
-typedef uint32_t onnxEnum;
-/** Type for bit fields */
-typedef uint32_t onnxBitfield;
+/**
+ * Type for enumeration values.
+ *
+ * The low 32 bits are reserved for standardized ONNX values.
+ * The high 32 bits are reserved for vendor-specific extensions. Applications
+ * must check for specific vendor extensions before interpreting these bits.
+ */
+typedef uint64_t onnxEnum;
+/**
+ * Type for bit fields.
+ *
+ * The low 32 bits are reserved for standardized ONNX values.
+ * The high 32 bits are reserved for vendor-specific extensions. Applications
+ * must check for specific vendor extensions before interpreting these bits.
+ */
+typedef uint64_t onnxBitfield;
 /**
  * Type for pointers or handles for memory buffers.
  * This type is intended to work not only for CPU-addressable memory, but also
@@ -140,122 +152,183 @@ typedef uint64_t onnxPointer;
  */
 #define ONNX_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x02
 
-#define ONNX_VENDOR_NAME_MAX 32
-#define ONNX_VERSION_NAME_MAX 64
-#define ONNX_BACKEND_NAME_MAX 64
-#define ONNX_DEVICE_NAME_MAX 64
+/**
+ * Type of the backend information.
+ *
+ * Possible values:
+ *     ONNX_BACKEND_NAME
+ *     ONNX_BACKEND_VENDOR
+ *     ONNX_BACKEND_VERSION
+ *     ONNX_BACKEND_EXTENSIONS
+ *     ONNX_BACKEND_DEVICE
+ *     ONNX_BACKEND_DEVICE_TYPE
+ *     ONNX_BACKEND_CAPABILITIES
+ *     ONNX_BACKEND_INIT_PROPERTIES
+ *     ONNX_BACKEND_MEMORY_TYPES
+ *     ONNX_BACKEND_MAX_GRAPH_SIZE
+ *     ONNX_BACKEND_MAX_GRAPH_COUNT
+ *     ONNX_BACKEND_MACS_FP32
+ *     ONNX_BACKEND_MACS_FP16
+ *     ONNX_BACKEND_MEMORY_BANDWIDTH
+ *     ONNX_BACKEND_CPU_MEMORY_READ_BANDWIDTH
+ *     ONNX_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH
+ */
+typedef int32_t onnxBackendInfo;
 
-/** Denotes onnxBackendCoreInfo structure. */
-#define ONNX_BACKEND_INFO_TYPE_CORE 0
-/** Denotes onnxBackendPerformanceInfo structure. */
-#define ONNX_BACKEND_INFO_TYPE_PERFORMANCE 1
+/**
+ * Marketing name of the backend (excluding the vendor name).
+ *
+ * Value type: char[], e.g.:
+ *    "Caffe2"
+ *    "Tensor Comprehensions"
+ */
+#define ONNX_BACKEND_NAME 1
 
-typedef struct onnxBackendCoreInfo {
-  /**
-   * Marketing name of the backend (excluding the vendor name).
-   *
-   * Examples:
-   *    "Caffe2"
-   *    "ATen"
-   */
-  char name[ONNX_BACKEND_NAME_MAX];
-  /**
-   * Name of the backend vendor.
-   *
-   * Examples:
-   *    "Facebook"
-   *    "Marat Dukhan"
-   */
-  char vendor[ONNX_VENDOR_NAME_MAX];
-  /**
-   * Version of the backend software. Exact format is vendor-specific, but
-   * must be unique for the software release.
-   *
-   * Examples:
-   *    "1.2.3"
-   *    "1.2.3.0"
-   *    "1.2.3-db3a4439d233276e25681fb4735b7f8e674dda65"
-   */
-  char version[ONNX_VERSION_NAME_MAX];
-  /**
-   * Descriptive name of the device (i.e. CPU, GPU, DSP, or NPU model).
-   */
-  char device[ONNX_DEVICE_NAME_MAX];
-  /**
-   * Type of the device.
-   *
-   * Possible values:
-   *      ONNX_DEVICE_TYPE_NPU
-   *      ONNX_DEVICE_TYPE_DSP
-   *      ONNX_DEVICE_TYPE_GPU
-   *      ONNX_DEVICE_TYPE_CPU
-   *      ONNX_DEVICE_TYPE_FPGA
-   */
-  onnxEnum deviceType;
-  /**
-   * Optional features supported by the backend.
-   *
-   * Possible values are any combination of the following flags:
-   *      ONNX_CAPABILITY_SYMBOLIC_SIZE_TENSORS
-   *      ONNX_CAPABILITY_VARIABLE_SIZE_OUTPUTS
-   */
-  onnxBitfield capabilities;
-  /**
-   * Auxiliary initialization properties supported by the backend.
-   */
-  onnxBitfield initProperties;
-  /**
-   * Memory types supported for graph inputs and outputs.
-   *
-   * Possible values are any combination of the following flags:
-   *      ONNX_MEMORY_TYPE_CPU (always supported)
-   */
-  onnxBitfield memoryTypes;
-  /**
-   * Maximum amount of memory, in bytes, available to the use by the backend.
-   */
-  uint64_t memorySize;
-  /**
-   * Maximum size of network parameters, in bytes.
-   */
-  uint64_t maxGraphSize;
-  /**
-   * Maximum number of independent network graphs supported by the backend.
-   */
-  uint32_t maxGraphsCount;
-} onnxBackendCoreInfo;
+/**
+ * Name of the backend vendor.
+ *
+ * Value type: char[], e.g.:
+ *    "Facebook"
+ *    "Marat Dukhan"
+ */
+#define ONNX_BACKEND_VENDOR 2
 
-typedef struct onnxBackendPerformanceInfo {
-  /**
-   * Number of FP32 multiply-accumulate operations per second delivered by
-   * the backend.
-   *
-   * If the backend does not support FP32 computation, it must return 0.
-   */
-  uint64_t macsFP32;
-  /**
-   * Number of FP16 multiply-accumulate operations per second delivered by
-   * the backend.
-   *
-   * If the backend does not support FP16 computation, it must return 0.
-   */
-  uint64_t macsFP16;
-  /**
-   * Bandwidth, in bytes per second, of the global memory specific to the
-   * backend device.
-   */
-  uint64_t deviceMemoryBandwidth;
-  /**
-   * Bandwidth, in bytes per second, of transferring data from cacheable
-   * CPU-allocated memory to the backend device.
-   */
-  uint64_t cpuMemoryReadBandwidth;
-  /**
-   * Bandwidth, in bytes per second, of transferring data to cacheable
-   * CPU-allocated memory from the backend device.
-   */
-  uint64_t cpuMemoryWriteBandwidth;
-} onnxBackendPerformanceInfo;
+/**
+ * Version of the backend software. Exact format is vendor-specific, but MUST be
+ * unique for the software release.
+ *
+ * Value type: char[], e.g.:
+ *    "1.2.3"
+ *    "1.2.3.0"
+ *    "1.2.3-db3a4439d233276e25681fb4735b7f8e674dda65"
+ */
+#define ONNX_BACKEND_VERSION 3
+
+/**
+ * Space-separated list of vendor- or device-specific extensions supported on
+ * this backend.
+ *
+ * Value type: char[], e.g.:
+ *    ""
+ *    "onnx_async"
+ *    "onnx_quant8 onnx_clone_graph fb_maskrcnn"
+ */
+#define ONNX_BACKEND_EXTENSIONS 4
+
+/**
+ * Descriptive name of the device (i.e. CPU, GPU, DSP, or NPU model).
+ *
+ * Value type: char[], e.g.:
+ *    "nnDuino 123"
+ */
+#define ONNX_BACKEND_DEVICE 5
+
+/**
+ * Type of the device.
+ *
+ * Value type: onnxEnum.
+ * Possible values:
+ *      ONNX_DEVICE_TYPE_NPU
+ *      ONNX_DEVICE_TYPE_DSP
+ *      ONNX_DEVICE_TYPE_GPU
+ *      ONNX_DEVICE_TYPE_CPU
+ *      ONNX_DEVICE_TYPE_FPGA
+ *      ONNX_DEVICE_TYPE_FRAMEWORK
+ */
+#define ONNX_BACKEND_DEVICE_TYPE 6
+
+/**
+ * Optional features supported by the backend.
+ *
+ * Value type: onnxBitfield.
+ * Possible values: any combination of the following flags:
+ *      ONNX_CAPABILITY_SYMBOLIC_SIZE_TENSORS
+ *      ONNX_CAPABILITY_VARIABLE_SIZE_OUTPUTS
+ *      or any vendor-specific flags in the high 32 bits of the bit field.
+ */
+#define ONNX_BACKEND_CAPABILITIES 10
+
+/**
+ * Auxiliary initialization properties supported by the backend.
+ *
+ * Value type: onnxBitfield.
+ * Possible values: any combination of vendor-specific flags in high 32 bits of
+ * the bit field.
+ */
+#define ONNX_BACKEND_INIT_PROPERTIES 11
+
+/**
+ * Memory types supported for graph inputs and outputs.
+ *
+ * Value type: onnxBitfield.
+ * Possible values are any combination of the following flags:
+ *      ONNX_MEMORY_TYPE_CPU (always supported)
+ *      or any vendor-specific flags in the high 32 bits of the bit field.
+ */
+#define ONNX_BACKEND_MEMORY_TYPES 12
+
+/**
+ * Maximum amount of memory, in bytes, available to the use by the backend.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNX_BACKEND_MEMORY_SIZE 20
+
+/**
+ * Maximum size of network parameters, in bytes.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNX_BACKEND_MAX_GRAPH_SIZE 21
+
+/**
+ * Maximum number of independent network graphs supported by the backend.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNX_BACKEND_MAX_GRAPH_COUNT 22
+
+/**
+ * Number of FP32 multiply-accumulate operations per second delivered by the
+ * backend.
+ *
+ * Value type: uint64_t.
+ * If the backend does not support FP32 computation, the value MUST be 0.
+ */
+#define ONNX_BACKEND_MACS_FP32 30
+
+/**
+ * Number of FP16 multiply-accumulate operations per second delivered by the
+ * backend.
+ *
+ * Value type: uint64_t.
+ * If the backend does not support FP16 computation, the value MUST be 0.
+ */
+#define ONNX_BACKEND_MACS_FP16 31
+
+/**
+ * Bandwidth, in bytes per second, of the global memory specific to the backend
+ * device.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNX_BACKEND_MEMORY_BANDWIDTH 35
+
+/**
+ * Bandwidth, in bytes per second, of transferring data from cacheable
+ * CPU-allocated memory to the backend device.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNX_BACKEND_CPU_MEMORY_READ_BANDWIDTH 36
+
+/**
+ * Bandwidth, in bytes per second, of transferring data to cacheable
+ * CPU-allocated memory from the backend device.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNX_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH 37
 
 /* Note: the data type values match ONNX TensorProto.DataType enum */
 #define ONNX_DATATYPE_UNDEFINED 0
@@ -329,8 +402,9 @@ typedef struct onnxTensorDescriptor {
 typedef uint32_t(ONNX_ABI* onnxGetNumBackendsFunction)(void);
 typedef onnxStatus(ONNX_ABI* onnxGetBackendInfoFunction)(
     uint32_t index,
-    void* backendInfo,
-    uint32_t backendInfoVersion);
+    onnxBackendInfo infoType,
+    void* infoValue,
+    size_t* infoValueSize);
 typedef onnxStatus(ONNX_ABI* onnxGetBackendCompatibilityFunction)(
     uint32_t index,
     size_t onnxModelSize,
@@ -376,36 +450,75 @@ ONNX_PUBLIC uint32_t ONNX_ABI ONNX_SYMBOL_NAME(onnxGetNumBackends)(void);
  * one ONNX backend for each GPU in the system, or one ONNX backend for GPU and
  * another for CPU, both implemented in the same software).
  *
- * @param index - index of the backend to query.
- * @param[out] backendInfo - pointer to backend information structure, either
- *                           onnxBackendCoreInfo (if backendInfoType is
- *                           ONNX_BACKEND_INFO_TYPE_CORE), or
- *                           onnxBackendPerformanceInfo (if backendInfoType is
- *                           ONNX_BACKEND_INFO_TYPE_PERFORMANCE).
- *                           In case of error, this structure is unchanged.
- * @param backendInfoType - type of the backend information structure to return.
- *                          In the current version it can be
- *                          ONNX_BACKEND_INFO_TYPE_CORE or
- *                          ONNX_BACKEND_INFO_TYPE_PERFORMANCE If this value is
- *                          not supported by the backend, the function will fail
- *                          with ONNX_STATUS_UNSUPPORTED_VERSION.
+ * The content and data type of information provided by this function depends
+ * infoType value as specified below:
  *
- * @retval ONNX_STATUS_SUCCESS The function call succeeded and backendInfo is
- *                             populated with information about the backend.
+ *      infoType value                                 data type
+ *     ONNX_BACKEND_NAME                                 char[]
+ *     ONNX_BACKEND_VENDOR                               char[]
+ *     ONNX_BACKEND_VERSION                              char[]
+ *     ONNX_BACKEND_EXTENSIONS                           char[]
+ *     ONNX_BACKEND_DEVICE                               char[]
+ *     ONNX_BACKEND_DEVICE_TYPE                         onnxEnum
+ *     ONNX_BACKEND_CAPABILITIES                      onnxBitfield
+ *     ONNX_BACKEND_INIT_PROPERTIES                   onnxBitfield
+ *     ONNX_BACKEND_MEMORY_TYPES                      onnxBitfield
+ *     ONNX_BACKEND_MEMORY_SIZE                         uint64_t
+ *     ONNX_BACKEND_MAX_GRAPH_SIZE                      uint64_t
+ *     ONNX_BACKEND_MAX_GRAPH_COUNT                     uint64_t
+ *     ONNX_BACKEND_MACS_FP32                           uint64_t
+ *     ONNX_BACKEND_MACS_FP16                           uint64_t
+ *     ONNX_BACKEND_MEMORY_BANDWIDTH                    uint64_t
+ *     ONNX_BACKEND_CPU_MEMORY_READ_BANDWIDTH           uint64_t
+ *     ONNX_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH          uint64_t
+ *
+ * @param index - index of the backend to query.
+ * @param infoType - type of the backend information to query. Must be one of
+ *                   the ONNX_BACKEND_* constants. If this value is not
+ *                   supported by the backend, the function will fail with
+ *                   ONNX_STATUS_UNSUPPORTED_PARAMETER.
+ * @param infoValue[out] - pointer to the memory location where the backend
+ *                         information value will be returned. If the pointer is
+ *                         NULL, is it ignored.
+ * @param infoValueSize[in,out] - pointer to a variable specifying size, in
+ *                                bytes, of the information value. On function
+ *                                entry, the variable MUST contain the size of
+ *                                the memory buffer specified by infoValue.
+ *                                For successful completion, this size must be
+ *                                at least as large as the queried value. If the
+ *                                function completes with either
+ *                                ONNX_STATUS_SUCCESS or ONNX_STATUS_FALLBACK
+ *                                status codes, the actual size of the value
+ *                                queried in the call is stored in the variable
+ *                                specified by this pointer.
+ *
+ * @retval ONNX_STATUS_SUCCESS The function call succeeded, and requested value
+ *                             is stored in the location specified by infoValue,
+ *                             and the actual size of the requested value is
+ *                             stored in the location specified by
+ *                             infoValueSize.
+ * @retval ONNX_STATUS_FALLBACK The function call completed, but the requested
+ *                              value was not stored in the location specified
+ *                              by infoValue, either because it is NULL, or
+ *                              because the size of the memory buffer is
+ *                              insufficient for the value. The actual size of
+ *                              the requested value is stored in the location
+ *                              specified by infoValueSize.
  * @retval ONNX_STATUS_INVALID_INDEX The function call failed because backend
  *                                   index is out of bounds (is greater or equal
  *                                   to the value returned by
  *                                   onnxGetNumBackends)
  * @retval ONNX_STATUS_INVALID_POINTER The function call failed because
- *                                     backendInfo is NULL.
- * @retval ONNX_STATUS_UNSUPPORTED_VERSION The function call failed because
- *                                         the value of backendInfoType is
- *                                         not supported by the backend.
+ *                                     infoValueSize is NULL.
+ * @retval ONNX_STATUS_UNSUPPORTED_PARAMETER The function call failed because
+ *                                           the value of infoType is
+ *                                           not supported by the backend.
  */
 ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxGetBackendInfo)(
     uint32_t index,
-    void* backendInfo,
-    uint32_t backendInfoType);
+    onnxBackendInfo infoType,
+    void* infoValue,
+    size_t* infoValueSize);
 
 /**
  * Query if an ONNX model graph is compatible with the backend.
