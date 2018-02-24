@@ -1,26 +1,13 @@
 os: linux
 dist: trusty
 sudo: required
-language: python
-python:
-  - "2.7"
-  - "3.6"
+language: cpp
+compiler: gcc
 
 addons:
   apt:
     packages:
       - dos2unix
-
-install:
-  - ./.travis/install.sh
-
-script:
-  - ./.travis/build.sh
-
-cache:
-  - directories:
-    - $HOME/.build_cache
-    - $HOME/.ccache
 
 env:
   global:
@@ -30,3 +17,20 @@ env:
     - USE_NINJA=true
     - ONNX_ML=1 USE_NINJA=false
     - ONNX_ML=1 USE_NINJA=true
+
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode8.3
+      compiler: clang
+
+cache:
+  - directories:
+    - $HOME/.build_cache
+    - $HOME/.ccache
+
+install:
+  - ./.travis/install.sh
+
+script:
+  - ./.travis/build.sh
