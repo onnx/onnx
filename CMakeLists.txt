@@ -363,6 +363,15 @@ endif()
 add_library(onnxifi INTERFACE)
 target_include_directories(onnxifi INTERFACE onnx)
 
+# ---[ ONNXIFI loader
+add_library(onnxifi_loader STATIC onnx/onnxifi_loader.c)
+# Users of ONNX backend API would compile it with their toolchain,
+# so it is implemented in standard C89 for maximum compatibility
+set_target_properties(onnxifi_loader PROPERTIES
+  C_STANDARD 90
+  C_EXTENSIONS NO)
+target_link_libraries(onnxifi_loader PUBLIC onnxifi)
+target_include_directories(onnxifi_loader PUBLIC onnx)
 
 install(TARGETS onnx onnx_proto
     DESTINATION lib)
