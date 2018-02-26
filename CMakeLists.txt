@@ -318,9 +318,9 @@ endif()
 
 # ---[ ONNX backend interface
 IF(${CMAKE_VERSION} VERSION_LESS "3.0")
-  add_library(onnxbe_interface STATIC include/onnx_backend.h)
+  add_library(onnxbe_interface STATIC onnx/onnx_backend.h)
   set_target_properties(onnxbe_interface PROPERTIES LINKER_LANGUAGE C)
 ELSE()
   add_library(onnxbe_interface INTERFACE)
 ENDIF()
-target_include_directories(onnxbe_interface INTERFACE include)
+target_include_directories(onnxbe_interface INTERFACE onnx)
