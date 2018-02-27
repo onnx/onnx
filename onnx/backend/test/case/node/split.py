@@ -27,15 +27,15 @@ class Split(Base):
 
         for i in range(len(shape)):
             for test_case, s in test_cases.items():
-                args = ['output' + str(k) for k in range(len(s) if isinstance(s, list) else s)]
+                output_args = ['output' + str(k) for k in range(len(s) if isinstance(s, list) else s)]
                 node = onnx.helper.make_node(
                     'Split',
                     inputs=['input'],
-                    outputs=[*args],
+                    outputs=[arg for arg in output_args],
                     axis=i,
                     split=s
                 )
 
-                output = np.split(input, np.cumsum(s[:-1]) if isinstance(s,list) else s , i)
-                expect(node, inputs=[input], outputs=[*output],
+                outputs = np.split(input, np.cumsum(s[:-1]) if isinstance(s,list) else s , i)
+                expect(node, inputs=[input], outputs=[output for output in outputs],
                 name='test_split_' + test_case + '_axis_' + str(i))
