@@ -364,7 +364,7 @@ The width and height of the output tensor are:
   output_width = floor(input_width * width_scale),
   output_height = floor(input_height * height_scale).
 
-Exmpale:
+Example:
   Given `data` tensor, width_scale, height_scale, mode,
   Upsample the input 4-D tensor in nearest mode:
 
