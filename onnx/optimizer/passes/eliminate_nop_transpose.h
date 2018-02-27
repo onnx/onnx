@@ -5,7 +5,7 @@
 
 #include "onnx/optimizer/passes/optimize_pass.h"
 
-namespace onnx { namespace optimization {
+namespace ONNX_NAMESPACE { namespace optimization {
 
 struct EliminateNopTranspose : public OptimizePass {
   explicit EliminateNopTranspose()
@@ -38,4 +38,4 @@ struct EliminateNopTranspose : public OptimizePass {
   }
 };
 
-}} // namespace onnx::optimization
+}} // namespace ONNX_NAMESPACE::optimization
