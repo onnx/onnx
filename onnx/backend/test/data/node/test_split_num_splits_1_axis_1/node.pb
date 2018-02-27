@@ -1,4 +1,4 @@
 
-inputoutput0output1"Split*
+inputoutput0"Split*
 axis *
-split 
+split@ 

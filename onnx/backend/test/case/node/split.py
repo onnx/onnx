@@ -16,8 +16,8 @@ class Split(Base):
     def export():
         shape = (6,6)
         test_cases = {
-            'num_splits_1': 2,
-            'num_splits_2': 3,
+            'num_splits_1': [2],
+            'num_splits_2': [3],
             'size_splits_1':[6],
             'size_splits_2':[2,4],
             'size_splits_3':[1,2,3]
