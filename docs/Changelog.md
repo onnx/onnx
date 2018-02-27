@@ -5434,7 +5434,7 @@ opset_import {
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
 
   Transpose the input tensor similar to numpy.transpose. For example, when
-  axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
+  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
 #### Versioning

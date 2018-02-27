@@ -282,22 +282,24 @@ opset_import {
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>X</tt> (variadic) : T</dt>
+<dt><tt>X</tt> (variadic) : T1</dt>
 <dd>ordered input tensors</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T</dt>
+<dt><tt>Y</tt> : T2</dt>
 <dd>Full output array, in order assigned in the inputlist, as floats</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float)</dt>
-<dd> allowed types.</dd>
+<dt><tt>T1</tt> : tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd> Allowed input types</dd>
+<dt><tt>T2</tt> : tensor(float)</dt>
+<dd> Output data type</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.Imputer-1"></a>**ai.onnx.ml.Imputer-1**</a>

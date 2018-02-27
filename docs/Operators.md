@@ -742,6 +742,39 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>cast</summary>
+
+```python
+shape = (3, 4)
+test_cases = [
+    ('FLOAT', 'FLOAT16'),
+    ('FLOAT', 'DOUBLE'),
+    ('FLOAT16', 'FLOAT'),
+    ('FLOAT16', 'DOUBLE'),
+    ('DOUBLE', 'FLOAT'),
+    ('DOUBLE', 'FLOAT16'),
+]   
+
+for case in test_cases:
+    from_type = case[0]
+    to_type = case[1]
+    input = np.random.random_sample(shape).astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+    node = onnx.helper.make_node(
+        'Cast',
+        inputs=['input'],
+        outputs=['output'],
+        to=to_type
+    )
+    output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    expect(node, inputs=[input], outputs=[output], name='test_cast_' + from_type + '_to_' + to_type)
+```
+
+</details>
+
+
 ### <a name="Ceil"></a><a name="ceil">**Ceil**</a>
 
   Ceil takes one input data (Tensor<T>) and produces one output data
@@ -4576,8 +4609,8 @@ node = onnx.helper.make_node(
     axis=0,
 )
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
-y = np.array([2, 3, 4]).astype(np.float32)
-z = np.array([[1, 8, 81], [16, 125, 1296]]).astype(np.float32)
+y = np.array([2, 3]).astype(np.float32)
+z = np.array([[1, 4, 9], [64, 125, 216]]).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast_axis0')
 ```
@@ -7016,7 +7049,7 @@ expect(node, inputs=[X], outputs=[values_ref, indices_ref],
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
   Transpose the input tensor similar to numpy.transpose. For example, when
-  axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
+  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
 #### Versioning
