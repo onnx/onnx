@@ -172,7 +172,7 @@ Example 2:
 ONNX_OPERATOR_SCHEMA(Transpose)
     .SetDoc(R"DOC(
 Transpose the input tensor similar to numpy.transpose. For example, when
-axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
+perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
 will be (2, 1, 3).
 )DOC")
     .Attr("perm",
