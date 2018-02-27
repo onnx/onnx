@@ -2578,7 +2578,7 @@ opset_import {
      Note that a static trip count (specified at graph construction time) can be
      specified by passing in a constant node for input M.
   2) Loop termination condition. This is an input to the op that determines
-     whether to run the first interation and also a loop-carried dependency for
+     whether to run the first iteration and also a loop-carried dependency for
      the body graph. The body graph must yield a value for the condition variable,
      whether this input is provided or not.
   
@@ -5530,7 +5530,7 @@ opset_import {
     output_width = floor(input_width * width_scale),
     output_height = floor(input_height * height_scale).
   
-  Exmpale:
+  Example:
     Given `data` tensor, width_scale, height_scale, mode,
     Upsample the input 4-D tensor in nearest mode:
   

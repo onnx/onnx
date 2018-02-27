@@ -497,7 +497,7 @@ opset_import {
       If targets is set to 1 (default) then univariate regression is performed.
       If targets is set to M then M sets of coefficients must be passed in as a sequence
       and M results will be output for each input n in N.
-      Coefficients are of the same length as an n, and coefficents for each target are contiguous.
+      Coefficients are of the same length as an n, and coefficients for each target are contiguous.
       Intercepts are optional but if provided must match the number of targets.
 
 #### Versioning
@@ -623,9 +623,9 @@ opset_import {
 
 <dl>
 <dt><tt>cats_int64s</tt> : list of ints</dt>
-<dd>list of cateogries, ints</dd>
+<dd>list of categories, ints</dd>
 <dt><tt>cats_strings</tt> : list of strings</dt>
-<dd>list of cateogries, strings</dd>
+<dd>list of categories, strings</dd>
 <dt><tt>zeros</tt> : int</dt>
 <dd>if true and category is not present, will return all zeros, if false and missing category, operator will return false</dd>
 </dl>
