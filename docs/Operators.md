@@ -7049,7 +7049,7 @@ expect(node, inputs=[X], outputs=[values_ref, indices_ref],
 ### <a name="Transpose"></a><a name="transpose">**Transpose**</a>
 
   Transpose the input tensor similar to numpy.transpose. For example, when
-  axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
+  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
 #### Versioning
