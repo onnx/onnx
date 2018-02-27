@@ -610,7 +610,7 @@ opset_import {
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
 </dl>
 
 #### Type Constraints
@@ -3678,7 +3678,7 @@ opset_import {
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
 </dl>
 
 #### Type Constraints
