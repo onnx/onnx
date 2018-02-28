@@ -219,10 +219,13 @@ class build_proto(ONNXCommand):
 
             proto = os.path.join(SRC_DIR, '{}.proto'.format(proto_base))
             pb2 = "{}_{}".format(stem.replace('-', '_'), ONNX_NAMESPACE.replace('-', '_')) if need_rename else stem.replace('-', '_')
+            if ONNX_ML:
+                pb2 += "_ml"
             outputs = [
                 os.path.join(SRC_DIR, '{}.pb.cc'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}.pb.h'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}_pb2.py'.format(pb2)),
+                os.path.join(SRC_DIR, '{}_pb.py'.format(stem.replace('-', '_'))),
             ]
             if ONNX_ML:
                 outputs.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
