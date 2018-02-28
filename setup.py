@@ -173,20 +173,17 @@ class build_proto_in(ONNXCommand):
                 os.path.join(SRC_DIR, '{}.in.proto'.format(stem)))
             if ONNX_ML:
                 proto_base = '{}_{}-ml'.format(stem, ONNX_NAMESPACE) if need_rename else '{}-ml'.format(stem)
-                out_files.extend([
-                     os.path.join(SRC_DIR, '{}.proto'.format(proto_base)),
-                     os.path.join(SRC_DIR, '{}.proto3'.format(proto_base)),
-                ])
                 if need_rename:
                     out_files.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
             else:
                 proto_base = '{}_{}'.format(stem, ONNX_NAMESPACE) if need_rename else stem
-                out_files.extend([
-                    os.path.join(SRC_DIR, '{}.proto'.format(proto_base)),
-                    os.path.join(SRC_DIR, '{}.proto3'.format(proto_base)),
-                ])
                 if need_rename:
                      out_files.append(os.path.join(SRC_DIR, '{}.pb.h'.format(stem)))
+            out_files.extend([
+                os.path.join(SRC_DIR, '{}_pb.py'.format(stem.replace('-', '_'))),
+                os.path.join(SRC_DIR, '{}.proto'.format(proto_base)),
+                os.path.join(SRC_DIR, '{}.proto3'.format(proto_base)),
+            ])
 
         log.info('compiling *.in.proto to temp dir {}'.format(tmp_dir))
         command_list = [
@@ -221,9 +218,11 @@ class build_proto(ONNXCommand):
                 proto_base = '{}_{}'.format(stem, ONNX_NAMESPACE) if need_rename else stem
 
             proto = os.path.join(SRC_DIR, '{}.proto'.format(proto_base))
+            pb2 = "{}_{}".format(stem.replace('-', '_'), ONNX_NAMESPACE.replace('-', '_')) if need_rename else stem.replace('-', '_')
             outputs = [
                 os.path.join(SRC_DIR, '{}.pb.cc'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}.pb.h'.format(proto_base)),
+                os.path.join(SRC_DIR, '{}_pb2.py'.format(pb2)),
             ]
             if ONNX_ML:
                 outputs.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
@@ -333,6 +332,30 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
+        need_rename = (ONNX_NAMESPACE != DEFAULT_ONNX_NAMESPACE)
+
+        original_onnx = [
+            os.path.join(SRC_DIR, "onnx.pb.cc"),
+            os.path.join(SRC_DIR, "onnx-operators.pb.cc"),
+        ]
+        original_onnx_ml = [
+            os.path.join(SRC_DIR, "onnx-ml.pb.cc"),
+            os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc"),
+        ]
+        if ONNX_ML:
+            # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
+            sources_filter = original_onnx
+            if need_rename:
+                sources_filter.extend(original_onnx_ml)
+        else:
+            # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
+            sources_filter = original_onnx_ml
+            if need_rename:
+                 sources_filter.extend(original_onnx)
+
+        for source_filter in sources_filter:
+            if source_filter in self.sources:
+                self.sources.remove(source_filter)
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
