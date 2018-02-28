@@ -19,6 +19,7 @@ Arguments:
     names (list of string): list of optimization names
 
 Supported pass names:
+    -- nop
     -- eliminate_nop_transpose
     -- fuse_consecutive_transposes
     -- fuse_transpose_into_gemm

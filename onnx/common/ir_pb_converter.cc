@@ -468,6 +468,9 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
     ONNX_NAMESPACE::ValueInfoProto* v = p_g->add_output();
     encodeValueInfo(v, output);
   }
+
+  std::unordered_set<Value*> graph_outputs(g->outputs().begin(), g->outputs().end());
+
   for (auto node : g->nodes()) {
     if (node->kind() == kUndefined) {
       // Undefined nodes are used to represent optional inputs that are not provided.
@@ -483,6 +486,19 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
     }
     for(auto output : node->outputs()) {
       p_n->add_output(value_name(output));
+
+      // only save it if
+      //  - it has actual information worth saving
+      //  - it's not already saved in the graph outputs value info
+      if (graph_outputs.find(output) != graph_outputs.end()) {
+        continue;
+      }
+      if (output->elemType() == ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED &&
+          output->sizes().empty()) {
+        continue;
+      }
+      ONNX_NAMESPACE::ValueInfoProto* v = p_g->add_value_info();
+      encodeValueInfo(v, output);
     }
     p_n->set_op_type(node->kind().toString());
     for(auto attr_name : node->attributeNames()) {

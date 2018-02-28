@@ -10,10 +10,10 @@ import unittest
 
 class TestOptimizer(unittest.TestCase):
 
-    def _optimized(self, graph, name):
+    def _optimized(self, graph, opts):
         orig_model = helper.make_model(graph, producer_name='onnx-test')
         orig_model_str = orig_model.SerializeToString()
-        optimized_model_str = onnx.optimizer.optimize(orig_model_str, [name])
+        optimized_model_str = onnx.optimizer.optimize(orig_model_str, opts)
         optimized_model = ModelProto()
         optimized_model.ParseFromString(optimized_model_str)
         checker.check_model(optimized_model)
@@ -26,7 +26,7 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3))])
-        optimized_model = self._optimized(graph, "eliminate_nop_transpose")
+        optimized_model = self._optimized(graph, ["eliminate_nop_transpose"])
 
         for node in optimized_model.graph.node:
             assert node.op_type != "Transpose"
@@ -38,7 +38,7 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2))])
-        optimized_model = self._optimized(graph, "eliminate_nop_transpose")
+        optimized_model = self._optimized(graph, ["eliminate_nop_transpose"])
 
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Transpose"
@@ -52,7 +52,7 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
             [helper.make_tensor_value_info("A", TensorProto.FLOAT, (4, 3, 2))])
-        optimized_model = self._optimized(graph, "fuse_consecutive_transposes")
+        optimized_model = self._optimized(graph, ["fuse_consecutive_transposes"])
 
         assert len(list(optimized_model.graph.node)) == 1
 
@@ -64,7 +64,7 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 4))])
-        optimized_model = self._optimized(graph, "fuse_consecutive_transposes")
+        optimized_model = self._optimized(graph, ["fuse_consecutive_transposes"])
 
         assert len(list(optimized_model.graph.node)) == 0
 
@@ -76,7 +76,7 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (4, 3, 2))])
-        optimized_model = self._optimized(graph, "fuse_consecutive_transposes")
+        optimized_model = self._optimized(graph, ["fuse_consecutive_transposes"])
 
         assert len(list(optimized_model.graph.node)) == 2
         for node in optimized_model.graph.node:
@@ -93,10 +93,28 @@ class TestOptimizer(unittest.TestCase):
              helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 2)),
              helper.make_tensor_value_info("C", TensorProto.FLOAT, (3, 5))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (3, 5))])
-        optimized_model = self._optimized(graph, "fuse_transpose_into_gemm")
+        optimized_model = self._optimized(graph, ["fuse_transpose_into_gemm"])
 
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Gemm"
+
+    def test_preserve_value_info(self):
+        trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1,0,2])
+        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2,0,1])
+        trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2,0,1])
+        graph = helper.make_graph(
+            [trans1, trans2, trans3],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (4, 3, 2))])
+        vi = helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))
+
+        graph.value_info.extend([vi])
+
+        optimized_model = self._optimized(graph, ["nop"])
+
+        assert list(optimized_model.graph.value_info) == [vi]
+        assert len(list(optimized_model.graph.node)) == 3
 
 
 if __name__ == '__main__':
