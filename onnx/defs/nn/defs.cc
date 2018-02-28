@@ -59,7 +59,8 @@ namespace ONNX_NAMESPACE {
                           "Y",
                           "Output data tensor from average or max pooling across "
                           "the input tensor. Dimensions will vary based "
-                          "on various kernel, stride, and pad sizes.", "T");
+                          "on various kernel, stride, and pad sizes. Floor value of "
+                          "the dimension is used", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
         };

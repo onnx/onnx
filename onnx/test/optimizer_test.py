@@ -25,11 +25,23 @@ class TestOptimizer(unittest.TestCase):
             [trans],
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2))])
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3))])
         optimized_model = self._optimized(graph, "eliminate_nop_transpose")
 
         for node in optimized_model.graph.node:
             assert node.op_type != "Transpose"
+
+    def test_nop_transpose_default(self):
+        trans = helper.make_node("Transpose", ["X"], ["Y"])
+        graph = helper.make_graph(
+            [trans],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2))])
+        optimized_model = self._optimized(graph, "eliminate_nop_transpose")
+
+        assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Transpose"
 
     def test_fuse_transpose(self):
         trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1,0,2])
@@ -43,6 +55,32 @@ class TestOptimizer(unittest.TestCase):
         optimized_model = self._optimized(graph, "fuse_consecutive_transposes")
 
         assert len(list(optimized_model.graph.node)) == 1
+
+    def test_fuse_transpose_default(self):
+        trans1 = helper.make_node("Transpose", ["X"], ["Y"])
+        trans2 = helper.make_node("Transpose", ["Y"], ["Z"])
+        graph = helper.make_graph(
+            [trans1, trans2],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 4))])
+        optimized_model = self._optimized(graph, "fuse_consecutive_transposes")
+
+        assert len(list(optimized_model.graph.node)) == 0
+
+    def test_fuse_transpose_default_no_fuse(self):
+        trans1 = helper.make_node("Transpose", ["X"], ["Y"])
+        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[0, 1, 2])
+        graph = helper.make_graph(
+            [trans1, trans2],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (4, 3, 2))])
+        optimized_model = self._optimized(graph, "fuse_consecutive_transposes")
+
+        assert len(list(optimized_model.graph.node)) == 2
+        for node in optimized_model.graph.node:
+            assert node.op_type == "Transpose"
 
     def test_fuse_transpose_into_gemm(self):
         trans1 = helper.make_node("Transpose", ["X"], ["A"], perm=[1,0])
