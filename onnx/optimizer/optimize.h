@@ -8,6 +8,7 @@
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
+#include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
 #include "onnx/proto_utils.h"
 
@@ -26,6 +27,8 @@ struct Optimizer {
     passes[ent->name] = std::move(ent);
     std::unique_ptr<FuseTransposeIntoGemm> ftg(new FuseTransposeIntoGemm());
     passes[ftg->name] = std::move(ftg);
+    std::unique_ptr<Nop> nop(new Nop());
+    passes[nop->name] = std::move(nop);
     std::unique_ptr<SplitInit> si(new SplitInit());
     passes[si->name] = std::move(si);
     std::unique_ptr<SplitPredict> sp(new SplitPredict());
