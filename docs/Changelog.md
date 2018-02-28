@@ -5427,8 +5427,8 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
-<dd>Constrain index tensor to integral types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
