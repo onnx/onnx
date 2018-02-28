@@ -192,7 +192,7 @@ class build_proto_in(ONNXCommand):
             '-o', tmp_dir
         ]
         if ONNX_ML:
-            command_list.append('-m')
+            command_list.append('--ml')
         subprocess.check_call(command_list + stems)
 
         for out_f in out_files:
