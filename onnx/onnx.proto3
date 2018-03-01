@@ -104,10 +104,6 @@ message AttributeProto {
 
   // The name field MUST be present for this version of the IR.
   string name = 1;           // namespace Attribute
-  // if ref_attr_name is not empty, ref_attr_name is the attribute name in parent function.
-  // In this case, this AttributeProto does not contain data, and it's a reference of attribute
-  // in parent scope.
-  string ref_attr_name = 21;
 
   // A human-readable documentation for this attribute. Markdown is allowed.
   string doc_string = 13;
