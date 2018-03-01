@@ -494,6 +494,4 @@ message FunctionDefProto {
   // Custom implementations of this function. This enables runtime specific
   // implementations.
   repeated FunctionImplProto impl = 9;
- 
-  reserved 100 to 200; // for future extensions. 
 }
