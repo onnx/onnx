@@ -29,9 +29,20 @@ struct FuseConsecutiveTransposes : public OptimizePass {
   void fuse_consecutive_transposes(Graph& graph) {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
-
       if (n->kind() == kTranspose && n->input()->node()->kind() == kTranspose) {
         auto origInput = n->input();
+        if (!n->hasAttribute(kperm) && !origInput->node()->hasAttribute(kperm)) {
+          // One special case (two consecutive transposes with no perm,
+          // since we do not have the shape information here, we have
+          // to eliminate two transpose together.
+          n->replaceAllUsesWith(origInput->node()->input()->node());
+          it.destroyCurrent();
+          it.destroyCurrent();
+          continue;
+        }
+        if (!n->hasAttribute(kperm) || !origInput->node()->hasAttribute(kperm)) {
+          continue;
+        }
         n->is_(kperm, compose_transposes(origInput->node()->is(kperm), n->is(kperm)));
         n->replaceInput(0, origInput->node()->input());
         if (origInput->uses().size() == 0) {

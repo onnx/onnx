@@ -16,8 +16,11 @@ import platform
 import fnmatch
 from collections import namedtuple
 import os
+import hashlib
+import shutil
 import subprocess
 import sys
+import tempfile
 from textwrap import dedent
 
 from tools.ninja_builder import NinjaBuilder, ninja_build_ext
@@ -35,14 +38,16 @@ SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 PROTOC = find_executable('protoc')
 
+DEFAULT_ONNX_NAMESPACE = 'onnx'
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
 
 install_requires = ['six']
 setup_requires = []
 tests_require = []
 
 ################################################################################
-# Version
+#Version
 ################################################################################
 
 try:
@@ -76,6 +81,15 @@ def recursive_glob(directory, pattern):
     return [os.path.join(dirpath, f)
             for dirpath, dirnames, files in os.walk(directory)
             for f in fnmatch.filter(files, pattern)]
+
+
+ # https://stackoverflow.com/a/3431838/2143581
+def md5(fname):
+    hash_md5 = hashlib.md5()
+    with open(fname, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 ################################################################################
 # Pre Check
@@ -147,25 +161,48 @@ class ONNXCommand(setuptools.Command):
 
 class build_proto_in(ONNXCommand):
     def run(self):
+        tmp_dir = tempfile.mkdtemp()
         gen_script = os.path.join(SRC_DIR, 'gen_proto.py')
         stems = ['onnx', 'onnx-operators']
 
         in_files = [gen_script]
         out_files = []
+        need_rename = (ONNX_NAMESPACE != DEFAULT_ONNX_NAMESPACE)
         for stem in stems:
             in_files.append(
                 os.path.join(SRC_DIR, '{}.in.proto'.format(stem)))
+            if ONNX_ML:
+                proto_base = '{}_{}-ml'.format(stem, ONNX_NAMESPACE) if need_rename else '{}-ml'.format(stem)
+                if need_rename:
+                    out_files.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
+            else:
+                proto_base = '{}_{}'.format(stem, ONNX_NAMESPACE) if need_rename else stem
+                if need_rename:
+                     out_files.append(os.path.join(SRC_DIR, '{}.pb.h'.format(stem)))
             out_files.extend([
-                os.path.join(SRC_DIR, '{}.proto'.format(stem)),
-                os.path.join(SRC_DIR, '{}.proto3'.format(stem)),
-                os.path.join(SRC_DIR, '{}-ml.proto'.format(stem)),
-                os.path.join(SRC_DIR, '{}-ml.proto3'.format(stem)),
+                os.path.join(SRC_DIR, '{}_pb.py'.format(stem.replace('-', '_'))),
+                os.path.join(SRC_DIR, '{}.proto'.format(proto_base)),
+                os.path.join(SRC_DIR, '{}.proto3'.format(proto_base)),
             ])
 
-        if self.force or any(dep_util.newer_group(in_files, o)
-                             for o in out_files):
-            log.info('compiling *.in.proto')
-            subprocess.check_call([sys.executable, gen_script] + stems)
+        log.info('compiling *.in.proto to temp dir {}'.format(tmp_dir))
+        command_list = [
+            sys.executable, gen_script,
+            '-p', ONNX_NAMESPACE,
+            '-o', tmp_dir
+        ]
+        if ONNX_ML:
+            command_list.append('--ml')
+        subprocess.check_call(command_list + stems)
+
+        for out_f in out_files:
+            tmp_f = os.path.join(tmp_dir, os.path.basename(out_f))
+            if os.path.exists(out_f) and md5(out_f) == md5(tmp_f):
+                log.info("Skip updating {} since it's the same.".format(out_f))
+                continue
+            log.info("Copying {} to {}".format(tmp_f, out_f))
+            shutil.copyfile(tmp_f, out_f)
+        shutil.rmtree(tmp_dir)
 
 
 class build_proto(ONNXCommand):
@@ -173,24 +210,27 @@ class build_proto(ONNXCommand):
         self.run_command('build_proto_in')
 
         stems = ['onnx', 'onnx-operators']
+        need_rename = (ONNX_NAMESPACE != DEFAULT_ONNX_NAMESPACE)
         for stem in stems:
             if ONNX_ML:
-                proto_base = '{}-ml'.format(stem)
+                proto_base = '{}_{}-ml'.format(stem, ONNX_NAMESPACE) if need_rename else '{}-ml'.format(stem)
             else:
-                proto_base = stem
+                proto_base = '{}_{}'.format(stem, ONNX_NAMESPACE) if need_rename else stem
 
             proto = os.path.join(SRC_DIR, '{}.proto'.format(proto_base))
-            # "-" is invalid in python module name, replaces '-' with '_'
-            pb_py = os.path.join(SRC_DIR, '{}_pb.py'.format(
-                stem.replace('-', '_')))
-            pb2_py = os.path.join(SRC_DIR, '{}_pb2.py'.format(
-                proto_base.replace('-', '_')))
+            pb2 = "{}_{}".format(stem.replace('-', '_'), ONNX_NAMESPACE.replace('-', '_')) if need_rename else stem.replace('-', '_')
+            if ONNX_ML:
+                pb2 += "_ml"
             outputs = [
-                pb_py,
-                pb2_py,
                 os.path.join(SRC_DIR, '{}.pb.cc'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}.pb.h'.format(proto_base)),
+                os.path.join(SRC_DIR, '{}_pb2.py'.format(pb2)),
+                os.path.join(SRC_DIR, '{}_pb.py'.format(stem.replace('-', '_'))),
             ]
+            if ONNX_ML:
+                outputs.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
+            else:
+                outputs.append(os.path.join(SRC_DIR, '{}.pb.h'.format(stem)))
             if self.force or any(dep_util.newer(proto, o) for o in outputs):
                 log.info('compiling {}'.format(proto))
                 subprocess.check_call([
@@ -200,18 +240,6 @@ class build_proto(ONNXCommand):
                     '--cpp_out', SRC_DIR,
                     proto
                 ])
-                log.info('generating {}'.format(pb_py))
-                with open(pb_py, 'w') as f:
-                    f.write(dedent('''\
-                    # This file is generated by setup.py. DO NOT EDIT!
-
-                    from __future__ import absolute_import
-                    from __future__ import division
-                    from __future__ import print_function
-                    from __future__ import unicode_literals
-
-                    from .{} import *  # noqa
-                    '''.format(os.path.splitext(os.path.basename(pb2_py))[0])))
 
 
 class create_version(ONNXCommand):
@@ -307,18 +335,26 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
         self.sources = recursive_glob(SRC_DIR, '*.cc')
+        need_rename = (ONNX_NAMESPACE != DEFAULT_ONNX_NAMESPACE)
+
+        original_onnx = [
+            os.path.join(SRC_DIR, "onnx.pb.cc"),
+            os.path.join(SRC_DIR, "onnx-operators.pb.cc"),
+        ]
+        original_onnx_ml = [
+            os.path.join(SRC_DIR, "onnx-ml.pb.cc"),
+            os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc"),
+        ]
         if ONNX_ML:
             # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
-            sources_filter = [
-                os.path.join(SRC_DIR, "onnx.pb.cc"),
-                os.path.join(SRC_DIR, "onnx-operators.pb.cc"),
-            ]
+            sources_filter = original_onnx
+            if need_rename:
+                sources_filter.extend(original_onnx_ml)
         else:
             # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
-            sources_filter = [
-                os.path.join(SRC_DIR, "onnx-ml.pb.cc"),
-                os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc"),
-            ]
+            sources_filter = original_onnx_ml
+            if need_rename:
+                 sources_filter.extend(original_onnx)
 
         for source_filter in sources_filter:
             if source_filter in self.sources:
@@ -346,7 +382,7 @@ if build_for_release and platform.system() == 'Linux':
 else:
     cpp2py_deps.append(Protobuf())
 
-define_macros = [('ONNX_NAMESPACE', os.getenv('ONNX_NAMESPACE', 'onnx'))]
+define_macros = [('ONNX_NAMESPACE', ONNX_NAMESPACE)]
 if ONNX_ML:
     define_macros.append(('ONNX_ML', '1'))
 

@@ -21,7 +21,7 @@ class Pow(Base):
 
         x = np.array([1, 2, 3]).astype(np.float32)
         y = np.array([4, 5, 6]).astype(np.float32)
-        z = np.power(x, y) #expected output [1., 32., 729.]
+        z = np.power(x, y) # expected output [1., 32., 729.]
         expect(node, inputs=[x, y], outputs=[z],
                name='test_pow_example')
 
@@ -30,3 +30,31 @@ class Pow(Base):
         z = np.power(x, y)
         expect(node, inputs=[x, y], outputs=[z],
                name='test_pow')
+
+    @staticmethod
+    def export_pow_broadcast():
+        node = onnx.helper.make_node(
+            'Pow',
+            inputs=['x', 'y'],
+            outputs=['z'],
+            broadcast=1,
+        )
+
+        x = np.array([1, 2, 3]).astype(np.float32)
+        y = np.array([2]).astype(np.float32)
+        z = np.power(x, y) # expected output [1., 4., 9.]
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_pow_bcast')
+
+        node = onnx.helper.make_node(
+            'Pow',
+            inputs=['x', 'y'],
+            outputs=['z'],
+            broadcast=1,
+            axis=0,
+        )
+        x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
+        y = np.array([2, 3]).astype(np.float32)
+        z = np.array([[1, 4, 9], [64, 125, 216]]).astype(np.float32)
+        expect(node, inputs=[x, y], outputs=[z],
+               name='test_pow_bcast_axis0')

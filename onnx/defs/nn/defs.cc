@@ -59,16 +59,17 @@ namespace ONNX_NAMESPACE {
                           "Y",
                           "Output data tensor from average or max pooling across "
                           "the input tensor. Dimensions will vary based "
-                          "on various kernel, stride, and pad sizes.", "T");
+                          "on various kernel, stride, and pad sizes. Floor value of "
+                          "the dimension is used", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
         };
     }
 
-    OPERATOR_SCHEMA(AveragePool)
+    ONNX_OPERATOR_SCHEMA(AveragePool)
         .FillUsing(PoolOpSchemaGenerator("AveragePool", "average"));
 
-    OPERATOR_SCHEMA(MaxPool)
+    ONNX_OPERATOR_SCHEMA(MaxPool)
         .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
 
 } // namespace ONNX_NAMESPACE
@@ -121,7 +122,7 @@ namespace ONNX_NAMESPACE {
         };
     }
 
-    OPERATOR_SCHEMA(LpPool)
+    ONNX_OPERATOR_SCHEMA(LpPool)
         .FillUsing(LpPoolOpSchemaGenerator("LpPool"));
 
 } // namespace ONNX_NAMESPACE
@@ -161,7 +162,7 @@ namespace ONNX_NAMESPACE {
         };
     }
 
-    OPERATOR_SCHEMA(MaxRoiPool)
+    ONNX_OPERATOR_SCHEMA(MaxRoiPool)
         .FillUsing(RoiPoolOpSchemaGenerator("max"));
 } // namespace ONNX_NAMESPACE
 
@@ -221,7 +222,7 @@ computes the output.)DOC";
         };
     }
 
-    OPERATOR_SCHEMA(Conv)
+    ONNX_OPERATOR_SCHEMA(Conv)
         .FillUsing(ConvOpSchemaGenerator("a filter"));
 
 } // namespace ONNX_NAMESPACE
@@ -291,7 +292,7 @@ and computes the output.)DOC";
         };
     }
 
-    OPERATOR_SCHEMA(ConvTranspose)
+    ONNX_OPERATOR_SCHEMA(ConvTranspose)
         .FillUsing(ConvTransposeOpSchemaGenerator("a filter"));
 
 } // namespace ONNX_NAMESPACE
@@ -324,9 +325,9 @@ namespace ONNX_NAMESPACE {
             schema.SetDoc(doc);
         };
     }
-  OPERATOR_SCHEMA(GlobalAveragePool)
+  ONNX_OPERATOR_SCHEMA(GlobalAveragePool)
   .FillUsing(GlobalPoolingOpSchemaGenerator("AveragePool", "average"));
-  OPERATOR_SCHEMA(GlobalMaxPool)
+  ONNX_OPERATOR_SCHEMA(GlobalMaxPool)
   .FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max"));
 } // namespace ONNX_NAMESPACE
 
@@ -364,11 +365,11 @@ namespace ONNX_NAMESPACE {
         };
     }
 
-    OPERATOR_SCHEMA(GlobalLpPool)
+    ONNX_OPERATOR_SCHEMA(GlobalLpPool)
         .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool"));
 } // namespace ONNX_NAMESPACE
 
-OPERATOR_SCHEMA(BatchNormalization)
+ONNX_OPERATOR_SCHEMA(BatchNormalization)
     .NumOutputs({ 1, 5 })
     .EnforceConsumed({ {3, 1}, {4, 2} })
     .SetDoc(R"DOC(
@@ -437,7 +438,7 @@ Output case #2: Y (test mode)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(InstanceNormalization)
+ONNX_OPERATOR_SCHEMA(InstanceNormalization)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Carries out instance normalization as described in the paper
@@ -466,7 +467,7 @@ where mean and variance are computed per instance per channel.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(LpNormalization)
+ONNX_OPERATOR_SCHEMA(LpNormalization)
     .Input(0, "input", "Input matrix", "T")
     .Output(0, "output", "Matrix after normalization", "T")
     .TypeConstraint(
@@ -479,7 +480,7 @@ Given a matrix, apply Lp-normalization along the provided axis.
     .Attr("axis", "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.", AttributeProto::INT, static_cast<int64_t>(-1))
     .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttributeProto::INT, static_cast<int64_t>(2));
 
-OPERATOR_SCHEMA(Dropout)
+ONNX_OPERATOR_SCHEMA(Dropout)
     .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -504,7 +505,7 @@ the training phase, so during testing nothing needs to be done.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-OPERATOR_SCHEMA(Flatten)
+ONNX_OPERATOR_SCHEMA(Flatten)
     .SetDoc(R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
@@ -530,7 +531,7 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         AttributeProto::INT,
         static_cast<int64_t>(1));
 
-OPERATOR_SCHEMA(LRN)
+ONNX_OPERATOR_SCHEMA(LRN)
     .Attr("size", "The number of channels to sum over", AttributeProto::INT)
     .Attr("alpha", "Scaling parameter", AttributeProto::FLOAT)
     .Attr("beta", "The exponent", AttributeProto::FLOAT)

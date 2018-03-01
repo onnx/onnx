@@ -377,7 +377,7 @@ opset_import {
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
 </dl>
 
 #### Type Constraints
@@ -606,8 +606,8 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axis</tt> : int (required)</dt>
-<dd>Which axis to concat on</dd>
+<dt><tt>axis</tt> : int</dt>
+<dd>Which axis to concat on.  Default value is 1.</dd>
 </dl>
 
 #### Inputs (1 - &#8734;)
@@ -1565,7 +1565,8 @@ opset_import {
         [2.3, 3.4, 3.9],
         [4.5, 5.7, 5.9],
     ]
-    indices = [0, 2],
+    indices = [
+        [0, 2],
     ]
     axis = 1,
     output = [
@@ -2577,7 +2578,7 @@ opset_import {
      Note that a static trip count (specified at graph construction time) can be
      specified by passing in a constant node for input M.
   2) Loop termination condition. This is an input to the op that determines
-     whether to run the first interation and also a loop-carried dependency for
+     whether to run the first iteration and also a loop-carried dependency for
      the body graph. The body graph must yield a value for the condition variable,
      whether this input is provided or not.
   
@@ -2995,7 +2996,7 @@ opset_import {
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
 </dl>
 
 #### Type Constraints
@@ -3512,6 +3513,23 @@ opset_import {
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
 #### Versioning
 
@@ -3522,6 +3540,15 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
 
 #### Inputs
 
@@ -4633,6 +4660,43 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Shape-1"></a>**Shape-1**</a>
+
+  Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>shape</tt> : T1</dt>
+<dd>Shape of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor.</dd>
+</dl>
+
 ### <a name="Sigmoid-1"></a>**Sigmoid-1**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
@@ -4670,6 +4734,43 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Size-1"></a>**Size-1**</a>
+
+  Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>An input tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>size</tt> : T1</dt>
+<dd>Total number of elements of the input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dd>Input tensor can be of arbitrary type.</dd>
+<dt><tt>T1</tt> : int64</dt>
+<dd>Constrains output to int64 scalar.</dd>
+</dl>
+
 ### <a name="Slice-1"></a>**Slice-1**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
@@ -4679,7 +4780,10 @@ opset_import {
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
   start or end indices, it represent number of elements before the end of that
-  dimension.
+  dimension. If the value passed to start or end is larger than the `n` (the
+  number of elements in this dimension), it represents `n`. For slicing to the
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
   
   Example 1:
   
@@ -4702,11 +4806,11 @@ opset_import {
         [1, 2, 3, 4],
         [5, 6, 7, 8],
     ]
-    starts = [0]
-    ends = [-1]
+    starts = [0, 1]
+    ends = [-1, 1000]
   
     result = [
-        [1, 2, 3, 4],
+        [2, 3, 4],
     ]
   
 
@@ -5314,7 +5418,7 @@ opset_import {
 <dl>
 <dt><tt>Values</tt> : T</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing top K values from the input tensor</dd>
-<dt><tt>Indices</tt> : T</dt>
+<dt><tt>Indices</tt> : I</dt>
 <dd>Tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] containing the corresponding input tensor indices for the top K values.</dd>
 </dl>
 
@@ -5323,12 +5427,14 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
+<dd>Constrain index tensor to integral types</dd>
 </dl>
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
 
   Transpose the input tensor similar to numpy.transpose. For example, when
-  axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
+  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
 #### Versioning
@@ -5424,7 +5530,7 @@ opset_import {
     output_width = floor(input_width * width_scale),
     output_height = floor(input_height * height_scale).
   
-  Exmpale:
+  Example:
     Given `data` tensor, width_scale, height_scale, mode,
     Upsample the input 4-D tensor in nearest mode:
   
@@ -5887,5 +5993,48 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
+## Version 4 of the default ONNX operator set
+### <a name="Concat-4"></a>**Concat-4**</a>
+
+  Concatenate a list of tensors into a single tensor
+
+#### Versioning
+
+This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 4
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (required)</dt>
+<dd>Which axis to concat on</dd>
+</dl>
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>inputs</tt> (variadic) : T</dt>
+<dd>List of tensors for concatenation</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>concat_result</tt> : T</dt>
+<dd>Concatenated tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 

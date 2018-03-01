@@ -8,7 +8,7 @@
 
 syntax = "proto2";
 
-package ONNX_NAMESPACE;
+package onnx;
 
 // Note [Release]
 // We are still in the very early stage of defining ONNX. The current

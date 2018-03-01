@@ -6,7 +6,7 @@ using namespace ONNX_NAMESPACE;
 
 using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
-OPERATOR_SCHEMA(If)
+ONNX_OPERATOR_SCHEMA(If)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc("If conditional")
     .Input(0, "cond", "Condition for the if", "B")
@@ -30,10 +30,10 @@ OPERATOR_SCHEMA(If)
         " the number of outputs in the then_branch.",
         AttributeProto::GRAPH,
         true)
-    .TypeConstraint("V", OpSchema::all_tensor_types, "All Tensor types")
+    .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
     .TypeConstraint("B", {"tensor(bool)"}, "Only bool");
 
-OPERATOR_SCHEMA(Loop)
+ONNX_OPERATOR_SCHEMA(Loop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
@@ -43,7 +43,7 @@ Generic Looping construct. This loop has multiple termination conditions:
    Note that a static trip count (specified at graph construction time) can be
    specified by passing in a constant node for input M.
 2) Loop termination condition. This is an input to the op that determines
-   whether to run the first interation and also a loop-carried dependency for
+   whether to run the first iteration and also a loop-carried dependency for
    the body graph. The body graph must yield a value for the condition variable,
    whether this input is provided or not.
 
@@ -190,11 +190,11 @@ pipelined/"wavefront" fashion.
         " if the dimensions of these values change across loop iterations.",
         AttributeProto::GRAPH,
         true)
-    .TypeConstraint("V", OpSchema::all_tensor_types, "All Tensor types")
+    .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
     .TypeConstraint("I", {"int64"}, "Only int64")
     .TypeConstraint("B", {"bool"}, "Only bool");
 
-OPERATOR_SCHEMA(LoopIndexTensor)
+ONNX_OPERATOR_SCHEMA(LoopIndexTensor)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(
         "This is a special operator only valid inside the loop that supports "
@@ -211,5 +211,5 @@ OPERATOR_SCHEMA(LoopIndexTensor)
         AttributeProto::INT,
         static_cast<int64_t>(0))
     .Output(0, "O", "Tensor of N - 1 dims that is a sub tensor of T", "T")
-    .TypeConstraint("T", OpSchema::all_tensor_types, "All Tensor types")
+    .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types")
     .TypeConstraint("I", {"int32"}, "Indices");
