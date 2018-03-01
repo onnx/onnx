@@ -442,22 +442,6 @@ message FuncAttrDeclProto {
   // The type of this attribute.
   optional AttributeProto.AttributeType type = 2;
 } 
-
-// Defines a custom implementation of a function. 
-message FunctionImplProto { 
-  // The domain of this function implementation.
-  optional string function_impl_domain = 1; 
-
-  // The version of this implementation.
-  optional int64 function_impl_version = 2; 
-
-  // The URI of the executable. A runtime uses <domain> and <version> to
-  // determine whether Compilation data itself saved in a separate file. 
-  optional string executable_uri = 3;
-
-  // The actual executable for this function implementation.
-  optional bytes executable = 4;
-} 
  
 // Defines a function.
 // We specify a function as a subgraph composed of ONNX ops. Any runtime can
@@ -490,8 +474,4 @@ message FunctionDefProto {
   // An optional human-readable documentation for this function in the graph. 
   // MAY contain Markdown markup that conforms to http://commonmark.org/. 
   optional string doc_string = 8;
-
-  // Custom implementations of this function. This enables runtime specific
-  // implementations.
-  repeated FunctionImplProto impl = 9;
 }
