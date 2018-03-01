@@ -43,7 +43,7 @@ Generic Looping construct. This loop has multiple termination conditions:
    Note that a static trip count (specified at graph construction time) can be
    specified by passing in a constant node for input M.
 2) Loop termination condition. This is an input to the op that determines
-   whether to run the first interation and also a loop-carried dependency for
+   whether to run the first iteration and also a loop-carried dependency for
    the body graph. The body graph must yield a value for the condition variable,
    whether this input is provided or not.
 

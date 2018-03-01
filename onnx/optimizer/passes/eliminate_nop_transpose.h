@@ -23,7 +23,7 @@ struct EliminateNopTranspose : public OptimizePass {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
 
-      if (n->kind() == kTranspose) {
+      if (n->kind() == kTranspose && n->hasAttribute(kperm)) {
         if (is_nop_transpose(n->is(kperm))) {
           n->replaceAllUsesWith(n->input()->node());
           it.destroyCurrent();

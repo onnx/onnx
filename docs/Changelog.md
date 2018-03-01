@@ -377,7 +377,7 @@ opset_import {
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
 </dl>
 
 #### Type Constraints
@@ -2578,7 +2578,7 @@ opset_import {
      Note that a static trip count (specified at graph construction time) can be
      specified by passing in a constant node for input M.
   2) Loop termination condition. This is an input to the op that determines
-     whether to run the first interation and also a loop-carried dependency for
+     whether to run the first iteration and also a loop-carried dependency for
      the body graph. The body graph must yield a value for the condition variable,
      whether this input is provided or not.
   
@@ -2996,7 +2996,7 @@ opset_import {
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes.</dd>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
 </dl>
 
 #### Type Constraints
@@ -4482,8 +4482,8 @@ opset_import {
   
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
-  could also be 0, in which case the actual dimension value is going to be copied
-  from the shape argument.
+  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
+  from the input tensor).
 
 #### Versioning
 
@@ -5434,7 +5434,7 @@ opset_import {
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
 
   Transpose the input tensor similar to numpy.transpose. For example, when
-  axes=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
+  perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
 #### Versioning
@@ -5530,7 +5530,7 @@ opset_import {
     output_width = floor(input_width * width_scale),
     output_height = floor(input_height * height_scale).
   
-  Exmpale:
+  Example:
     Given `data` tensor, width_scale, height_scale, mode,
     Upsample the input 4-D tensor in nearest mode:
   
