@@ -672,8 +672,8 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 k_h, k_w = (2, 2)
 s_h, s_w = (1, 1)
-out_shape = _get_output_shape('SAME_UPPER', x_shape[2:4], [k_h, k_w], [s_h, s_w])
-pad_shape = _get_pad_shape('SAME_UPPER', x_shape[2:4], [k_h, k_w], [s_h, s_w], out_shape)
+out_shape = _get_output_shape('SAME_UPPER', x_shape[2:4], (k_h, k_w), (s_h, s_w))
+pad_shape = _get_pad_shape('SAME_UPPER', x_shape[2:4], (k_h, k_w), (s_h, s_w), out_shape)
 pad_top = pad_shape[0] // 2
 pad_bottom = pad_shape[0] - pad_top
 pad_left = pad_shape[1] // 2
@@ -695,8 +695,8 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 k_h, k_w = (2, 2)
 s_h, s_w = (1, 1)
-out_shape = _get_output_shape('SAME_LOWER', x_shape[2:4], [k_h, k_w], [s_h, s_w])
-pad_shape = _get_pad_shape('SAME_LOWER', x_shape[2:4], [k_h, k_w], [s_h, s_w], out_shape)
+out_shape = _get_output_shape('SAME_LOWER', x_shape[2:4], (k_h, k_w), (s_h, s_w))
+pad_shape = _get_pad_shape('SAME_LOWER', x_shape[2:4], (k_h, k_w), (s_h, s_w), out_shape)
 pad_bottom = pad_shape[0] // 2
 pad_top = pad_shape[0] - pad_bottom
 pad_right = pad_shape[1] // 2
@@ -723,7 +723,7 @@ pad_top = 2
 pad_right = 2
 pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-out_shape = _get_output_shape('VALID', np.add(x_shape[2:4], pad_shape), [k_h, k_w], [s_h, s_w])
+out_shape = _get_output_shape('VALID', np.add(x_shape[2:4], pad_shape), (k_h, k_w), (s_h, s_w))
 padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                 constant_values=np.nan)
 y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), pad_shape)
@@ -741,10 +741,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 k_h, k_w = (5, 5)
 s_h, s_w = (3, 3)
-out_shape = _get_output_shape('VALID', x_shape[2:4], [k_h, k_w], [s_h, s_w])
-pad_shape = _get_pad_shape('VALID', x_shape[2:4], [k_h, k_w], [s_h, s_w], out_shape)
+out_shape = _get_output_shape('VALID', x_shape[2:4], (k_h, k_w), (s_h, s_w))
 padded = x
-y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), pad_shape)
+y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), (0, 0))
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_strides')
 
@@ -758,10 +757,9 @@ x = np.random.randn(1, 3, 32, 32).astype(np.float32)
 x_shape = np.shape(x)
 k_h, k_w = (2, 2)
 s_h, s_w = (1, 1)
-out_shape = _get_output_shape('VALID', x_shape[2:4], [k_h, k_w], [s_h, s_w])
-pad_shape = _get_pad_shape('VALID', x_shape[2:4], [k_h, k_w], [s_h, s_w], out_shape)
+out_shape = _get_output_shape('VALID', x_shape[2:4], (k_h, k_w), (s_h, s_w))
 padded = x
-y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), pad_shape)
+y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), (0, 0))
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_default')
 ```
@@ -5739,8 +5737,8 @@ expect(node, inputs=[x], outputs=[y],
   
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
-  could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-  from the input tensor).
+  could also be 0, in which case the actual dimension value is going to be copied
+  from the shape argument.
 
 #### Versioning
 
