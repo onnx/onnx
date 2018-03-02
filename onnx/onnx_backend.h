@@ -37,6 +37,16 @@ extern "C" {
 #endif
 #endif
 
+#ifndef ONNX_CHECK_RESULT
+  #if defined(__GNUC__) && (__GNUC__ >= 4)
+    #define ONNX_CHECK_RESULT __attribute__((__warn_unused_result__))
+  #elif defined(_MSC_VER) && (_MSC_VER >= 1700)
+    #define ONNX_CHECK_RESULT _Check_return_
+  #else
+    #define ONNX_CHECK_RESULT
+  #endif
+#endif
+
 #if defined(ONNX_BACKEND_SUFFIX)
 #define ONNX_SYMBOL_CONCAT_(prefix, suffix) prefix##suffix
 #define ONNX_SYMBOL_CONCAT(prefix, suffix) ONNX_SYMBOL_CONCAT_(prefix, suffix)
@@ -397,36 +407,48 @@ typedef struct onnxTensorDescriptor {
 } onnxTensorDescriptor;
 
 /* Function pointer declarations for dynamic loading */
-typedef uint32_t(ONNX_ABI* onnxGetNumBackendsFunction)(void);
-typedef onnxStatus(ONNX_ABI* onnxGetBackendInfoFunction)(
+typedef ONNX_CHECK_RESULT uint32_t
+  (ONNX_ABI* onnxGetNumBackendsFunction)(void);
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxGetBackendInfoFunction)(
     uint32_t index,
     onnxBackendInfo infoType,
     void* infoValue,
     size_t* infoValueSize);
-typedef onnxStatus(ONNX_ABI* onnxGetBackendCompatibilityFunction)(
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxGetBackendCompatibilityFunction)(
     uint32_t index,
     size_t onnxModelSize,
     const void* onnxModel);
-typedef onnxStatus(ONNX_ABI* onnxInitBackendFunction)(
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxInitBackendFunction)(
     uint32_t index,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
-typedef onnxStatus(ONNX_ABI* onnxReleaseBackendFunction)(onnxBackend backend);
-typedef onnxStatus(ONNX_ABI* onnxInitGraphFunction)(
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxReleaseBackendFunction)(
+    onnxBackend backend);
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxInitGraphFunction)(
     onnxBackend backend,
     size_t onnxModelSize,
     const void* onnxModel,
     uint32_t weightsCount,
     const onnxTensorDescriptor* weightDescriptors,
     onnxGraph* graph);
-typedef onnxStatus(ONNX_ABI* onnxSetGraphIOFunction)(
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxSetGraphIOFunction)(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptor* inputDescriptors,
     uint32_t outputsCount,
     const onnxTensorDescriptor* outputDescriptors);
-typedef onnxStatus(ONNX_ABI* onnxRunGraphFunction)(onnxGraph graph);
-typedef onnxStatus(ONNX_ABI* onnxReleaseGraphFunction)(onnxGraph graph);
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxRunGraphFunction)(
+    onnxGraph graph);
+typedef ONNX_CHECK_RESULT onnxStatus
+  (ONNX_ABI* onnxReleaseGraphFunction)(
+    onnxGraph graph);
 
 /**
  * Query the number of available backends for ONNX graphs.
@@ -512,7 +534,8 @@ ONNX_PUBLIC uint32_t ONNX_ABI ONNX_SYMBOL_NAME(onnxGetNumBackends)(void);
  *                                           the value of infoType is
  *                                           not supported by the backend.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxGetBackendInfo)(
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxGetBackendInfo)(
     uint32_t index,
     onnxBackendInfo infoType,
     void* infoValue,
@@ -589,7 +612,8 @@ ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxGetBackendInfo)(
  *                                    backend experienced an unrecovered
  *                                    internal error.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxGetBackendCompatibility)(
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxGetBackendCompatibility)(
     uint32_t index,
     size_t onnxModelSize,
     const void* onnxModel);
@@ -642,7 +666,8 @@ ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxGetBackendCompatibility)(
  *                                    backend experienced an unrecovered
  *                                    internal error.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxInitBackend)(
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxInitBackend)(
     uint32_t index,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
@@ -660,8 +685,9 @@ ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxInitBackend)(
  *                                    backend experienced an unrecovered
  *                                    internal error.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI
-    ONNX_SYMBOL_NAME(onnxReleaseBackend)(onnxBackend backend);
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxReleaseBackend)(
+    onnxBackend backend);
 
 /**
  * Parse an ONNX graph and convert it for a particular backend.
@@ -758,7 +784,8 @@ ONNX_PUBLIC onnxStatus ONNX_ABI
  *                                         command queues) to initialize the
  *                                         graph.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxInitGraph)(
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxInitGraph)(
     onnxBackend backend,
     size_t onnxModelSize,
     const void* onnxModel,
@@ -840,7 +867,8 @@ ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxInitGraph)(
  *                                    backend experienced an unrecovered
  *                                    internal error.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxSetGraphIO)(
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxSetGraphIO)(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptor* inputDescriptors,
@@ -890,7 +918,9 @@ ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxSetGraphIO)(
  *                                    backend experienced an unrecovered
  *                                    internal error.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxRunGraph)(onnxGraph graph);
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxRunGraph)(
+    onnxGraph graph);
 
 /**
  * Deinitialize an ONNX graph and release associated resources.
@@ -905,8 +935,9 @@ ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxRunGraph)(onnxGraph graph);
  *                                    graph backend experienced an unrecovered
  *                                    internal error.
  */
-ONNX_PUBLIC onnxStatus ONNX_ABI
-    ONNX_SYMBOL_NAME(onnxReleaseGraph)(onnxGraph graph);
+ONNX_PUBLIC ONNX_CHECK_RESULT onnxStatus ONNX_ABI
+  ONNX_SYMBOL_NAME(onnxReleaseGraph)(
+    onnxGraph graph);
 
 #ifdef __cplusplus
 } /* extern "C" */
