@@ -37,18 +37,35 @@ class MaxPool(Base):
             np.ceil((input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / strides_spatial[i]))
       return out_shape
 
-    def _pool_2d(padded, x_shape, out_shape, kernel_shape, strides, pad_shape):
-      k_h, k_w = kernel_shape
-      s_h, s_w = strides
-      y = np.zeros((x_shape[0], x_shape[1], out_shape[0], out_shape[1]))
-      for n, c, h, w in itertools.product(range(x_shape[0]),
-                                          range(x_shape[1]),
-                                          range(int((x_shape[2] + pad_shape[0] - k_h) / s_h + 1)),
-                                          range(int((x_shape[3] + pad_shape[1] - k_w) / s_w + 1))):
-        window = padded[n, c, s_h * h:s_h * h + k_h, s_w * w:s_w * w + k_w]
+    def _pool(padded, spatial_size, kernel_shape, strides_shape, out_shape, pad_shape):
+      y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))
+
+      for shape in itertools.product(range(x_shape[0]),
+                                     range(x_shape[1]),
+                                     *[range(
+                                       int((x_shape[i + 2] + pad_shape[i] - kernel_shape[i]) / strides_shape[i] + 1))
+                                       for i in range(spatial_size)]):
+        window = padded[shape[0], shape[1]]
+        if spatial_size == 1:
+          window = window[
+                   strides_shape[0] * shape[2]:strides_shape[0] * shape[2] + kernel_shape[0]]
+        elif spatial_size == 2:
+          window = window[
+                   strides_shape[0] * shape[2]:strides_shape[0] * shape[2] + kernel_shape[0],
+                   strides_shape[1] * shape[3]:strides_shape[1] * shape[3] + kernel_shape[1]]
+        elif spatial_size == 3:
+          window = window[
+                   strides_shape[0] * shape[2]:strides_shape[0] * shape[2] + kernel_shape[0],
+                   strides_shape[1] * shape[3]:strides_shape[1] * shape[3] + kernel_shape[1],
+                   strides_shape[2] * shape[4]:strides_shape[2] * shape[4] + kernel_shape[2]]
         maximum = np.max(window[np.where(~np.isnan(window))])
-        y[n, c, h, w] = maximum
-      return y
+        if spatial_size == 1:
+          y[shape[0], shape[1], shape[2]] = maximum
+        elif spatial_size == 2:
+          y[shape[0], shape[1], shape[2], shape[3]] = maximum
+        elif spatial_size == 3:
+          y[shape[0], shape[1], shape[2], shape[3], shape[4]] = maximum
+      return y.astype(np.float32)
 
     node = onnx.helper.make_node(
       'MaxPool',
@@ -59,19 +76,20 @@ class MaxPool(Base):
     )
     x = np.random.randn(1, 3, 32, 32).astype(np.float32)
     x_shape = np.shape(x)
-    k_h, k_w = (2, 2)
-    s_h, s_w = (1, 1)
-    out_shape = _get_output_shape('SAME_UPPER', x_shape[2:4], (k_h, k_w), (s_h, s_w))
-    pad_shape = _get_pad_shape('SAME_UPPER', x_shape[2:4], (k_h, k_w), (s_h, s_w), out_shape)
+    spatial_size = np.ndim(x) - 2
+    kernel_shape = (2, 2)
+    strides = (1, 1)
+    out_shape = _get_output_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides)
+    pad_shape = _get_pad_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides, out_shape)
     pad_top = pad_shape[0] // 2
     pad_bottom = pad_shape[0] - pad_top
     pad_left = pad_shape[1] // 2
     pad_right = pad_shape[1] - pad_left
     padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                     constant_values=np.nan)
-    y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), pad_shape)
+    y = _pool(padded, spatial_size, kernel_shape, strides, out_shape, pad_shape)
 
-    expect(node, inputs=[x], outputs=[y], name='test_maxpool')
+    expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_upper')
 
     node = onnx.helper.make_node(
       'MaxPool',
@@ -82,19 +100,20 @@ class MaxPool(Base):
     )
     x = np.random.randn(1, 3, 32, 32).astype(np.float32)
     x_shape = np.shape(x)
-    k_h, k_w = (2, 2)
-    s_h, s_w = (1, 1)
-    out_shape = _get_output_shape('SAME_LOWER', x_shape[2:4], (k_h, k_w), (s_h, s_w))
-    pad_shape = _get_pad_shape('SAME_LOWER', x_shape[2:4], (k_h, k_w), (s_h, s_w), out_shape)
+    spatial_size = np.ndim(x) - 2
+    kernel_shape = (2, 2)
+    strides = (1, 1)
+    out_shape = _get_output_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides)
+    pad_shape = _get_pad_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides, out_shape)
     pad_bottom = pad_shape[0] // 2
     pad_top = pad_shape[0] - pad_bottom
     pad_right = pad_shape[1] // 2
     pad_left = pad_shape[1] - pad_right
     padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                     constant_values=np.nan)
-    y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), pad_shape)
+    y = _pool(padded, spatial_size, kernel_shape, strides, out_shape, pad_shape)
 
-    expect(node, inputs=[x], outputs=[y], name='test_maxpool_same_lower')
+    expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_lower')
 
     node = onnx.helper.make_node(
       'MaxPool',
@@ -105,19 +124,20 @@ class MaxPool(Base):
     )
     x = np.random.randn(1, 3, 28, 28).astype(np.float32)
     x_shape = np.shape(x)
-    k_h, k_w = (3, 3)
-    s_h, s_w = (1, 1)
+    spatial_size = np.ndim(x) - 2
+    kernel_shape = (3, 3)
+    strides = (1, 1)
     pad_bottom = 2
     pad_top = 2
     pad_right = 2
     pad_left = 2
     pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
-    out_shape = _get_output_shape('VALID', np.add(x_shape[2:4], pad_shape), (k_h, k_w), (s_h, s_w))
+    out_shape = _get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
     padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                     constant_values=np.nan)
-    y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), pad_shape)
+    y = _pool(padded, spatial_size, kernel_shape, strides, out_shape, pad_shape)
 
-    expect(node, inputs=[x], outputs=[y], name='test_maxpool_pads')
+    expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_pads')
 
     node = onnx.helper.make_node(
       'MaxPool',
@@ -128,13 +148,32 @@ class MaxPool(Base):
     )
     x = np.random.randn(1, 3, 32, 32).astype(np.float32)
     x_shape = np.shape(x)
-    k_h, k_w = (5, 5)
-    s_h, s_w = (3, 3)
-    out_shape = _get_output_shape('VALID', x_shape[2:4], (k_h, k_w), (s_h, s_w))
+    spatial_size = np.ndim(x) - 2
+    kernel_shape = (5, 5)
+    strides = (3, 3)
+    out_shape = _get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
     padded = x
-    y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), (0, 0))
+    y = _pool(padded, spatial_size, kernel_shape, strides, out_shape, (0, 0))
 
-    expect(node, inputs=[x], outputs=[y], name='test_maxpool_strides')
+    expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
+
+
+    node = onnx.helper.make_node(
+      'MaxPool',
+      inputs=['x'],
+      outputs=['y'],
+      kernel_shape=[2],
+    )
+    x = np.random.randn(1, 3, 32).astype(np.float32)
+    x_shape = np.shape(x)
+    spatial_size = np.ndim(x) - 2
+    kernel_shape = [2]
+    strides = [1]
+    out_shape = _get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+    padded = x
+    y = _pool(padded, spatial_size, kernel_shape, strides, out_shape, [0])
+
+    expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
 
     node = onnx.helper.make_node(
       'MaxPool',
@@ -144,10 +183,28 @@ class MaxPool(Base):
     )
     x = np.random.randn(1, 3, 32, 32).astype(np.float32)
     x_shape = np.shape(x)
-    k_h, k_w = (2, 2)
-    s_h, s_w = (1, 1)
-    out_shape = _get_output_shape('VALID', x_shape[2:4], (k_h, k_w), (s_h, s_w))
+    spatial_size = np.ndim(x) - 2
+    kernel_shape = (2, 2)
+    strides = (1, 1)
+    out_shape = _get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
     padded = x
-    y = _pool_2d(padded, x_shape, out_shape, (k_h, k_w), (s_h, s_w), (0, 0))
+    y = _pool(padded, spatial_size, kernel_shape, strides, out_shape, (0, 0))
 
-    expect(node, inputs=[x], outputs=[y], name='test_maxpool_default')
+    expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
+
+    node = onnx.helper.make_node(
+      'MaxPool',
+      inputs=['x'],
+      outputs=['y'],
+      kernel_shape=[2, 2, 2],
+    )
+    x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
+    x_shape = np.shape(x)
+    spatial_size = np.ndim(x) - 2
+    kernel_shape = [2, 2, 2]
+    strides = [1, 1, 1]
+    out_shape = _get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+    padded = x
+    y = _pool(padded, spatial_size, kernel_shape, strides, out_shape, [0, 0, 0])
+
+    expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
