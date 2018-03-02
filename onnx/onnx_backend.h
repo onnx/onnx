@@ -347,8 +347,6 @@ typedef int32_t onnxBackendInfo;
 /** Cacheable CPU memory */
 #define ONNX_MEMORY_TYPE_CPU 0
 
-#define ONNX_TENSOR_DIMS_MAX 8
-
 /**
  * Terminates the list of auxiliary backend initialization properties passed to
  * onnxInitBackend.
@@ -391,7 +389,7 @@ typedef struct onnxTensorDescriptor {
   /**
    * Dimensions of the tensor.
    */
-  uint64_t shape[ONNX_TENSOR_DIMS_MAX];
+  const uint64_t* shape;
   /**
    * Pointers to tensor data.
    */
@@ -704,8 +702,9 @@ ONNX_PUBLIC onnxStatus ONNX_ABI
  *                                empty. The tensor descriptors for the weights
  *                                must use ONNX_MEMORY_TYPE_CPU memory type,
  *                                and the backend must copy the values of the
- *                                weights into its own memory before the
- *                                function returns.
+ *                                weights and all metadata, including shape,
+ *                                into its own memory before the function
+ *                                returns.
  * @param[out] graph - pointer to the opaque handle for the created ONNX graph.
  *                     If the function fails, the handle is initialized to NULL.
  *
@@ -771,7 +770,9 @@ ONNX_PUBLIC onnxStatus ONNX_ABI ONNX_SYMBOL_NAME(onnxInitGraph)(
  * Set locations for inputs and outputs of an ONNX graph.
  *
  * The caller MUST ensure that the memory buffers specified for input and output
- * tensors remain accessible for the life-time of the ONNX graph.
+ * tensors remain accessible for the life-time of the ONNX graph. The caller
+ * can discard other data data in tensor descriptors, including shape, once the
+ * function returns.
  *
  * @param graph - graph handle created by onnxInitGraph.
  * @param inputsCount - number of elements in the inputDescriptors array.
