@@ -4368,6 +4368,50 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>prelu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'PRelu',
+    inputs=['x', 'slope'],
+    outputs=['y'],
+)
+
+x = np.array([[-1, -2], [0, 0], [1, 2]]).astype(np.float32)
+slope = np.array([0.1, 0.2]).astype(np.float32)
+y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope.reshape(1, 2)
+
+expect(node, inputs=[x, slope], outputs=[y],
+       name='test_prelu_example')
+```
+
+</details>
+
+
+<details>
+<summary>sharing_slope</summary>
+
+```python
+node = onnx.helper.make_node(
+    'PRelu',
+    inputs=['x', 'slope'],
+    outputs=['y'],
+)
+
+x = np.array([[-1, -2], [0, 0], [1, 2]]).astype(np.float32)
+slope = np.array([0.1]).astype(np.float32)
+y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
+
+expect(node, inputs=[x, slope], outputs=[y],
+       name='test_prelu_sharing_slope_example')
+```
+
+</details>
+
+
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
   Given `data` tensor, pads, mode, and value.
