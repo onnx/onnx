@@ -28,7 +28,7 @@ install:
 - cmd: git submodule update --init --recursive
 
 before_build:
-- cmd: C:\Miniconda36\Scripts\conda install -y -c conda-forge protobuf numpy cmake make
+- cmd: C:\Miniconda36\Scripts\conda install -y -c conda-forge protobuf numpy cmake
 
 build_script:
 # try running cmake
@@ -36,7 +36,7 @@ build_script:
 - cmd: mkdir build
 - cmd: cd c:\projects\onnx\build
 - cmd: cmake c:\projects\onnx
-- cmd: msbuild
+- cmd: msbuild onnx.sln
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
