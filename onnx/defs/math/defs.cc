@@ -318,15 +318,18 @@ ONNX_OPERATOR_SCHEMA(PRelu)
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-
-)DOC")
-    .Input(0, "X", "Input tensor", "T")
-    .Input(
-        1,
-        "slope",
-        "Slope tensor. If `Slope` is of size 1, the value is shared"
-        "across different channels", "T")
-    .Output(0, "Y", "Output tensor", "T")
+)DOC" + std::string(kBroadcastDoc))
+    .Input(0, "X", "Input tensor of any shape.", "T")
+    .Input(1, "slope", "Slope tensor of any shape broadcastable to X shape.", "T")
+    .Attr("broadcast",
+          "Pass 1 to enable broadcasting.",
+          AttributeProto::INT,
+          static_cast<int64_t>(0))
+    .Attr("axis",
+          "If set, defines the broadcast dimensions. See doc for details.",
+          AttributeProto::INT,
+          OPTIONAL)
+    .Output(0, "Y", "Output tensor (same size as X)", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
