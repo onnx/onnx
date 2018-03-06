@@ -1,0 +1,14 @@
+set -ex
+
+die() {
+    echo >&2 "$@"
+    exit 1
+}
+
+workdir="$HOME/work"
+mkdir -p "$workdir"
+build_cache_dir="$HOME/.build_cache/pb-$PB_VERSION"
+mkdir -p "$build_cache_dir"
+
+# setup ccache
+export PATH="/usr/lib/ccache:$PATH"

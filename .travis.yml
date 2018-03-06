@@ -1,49 +1,32 @@
-language: generic
+os: linux
+dist: trusty
+sudo: required
+language: python
+python:
+  - "2.7"
+  - "3.6"
 
-matrix:
-  include:
-    - os: linux
-      sudo: required
-      env: PYTHON_VERSION=python2
-    - os: linux
-      sudo: required
-      env: PYTHON_VERSION=python3
-    - os: osx
-      osx_image: xcode9.3beta
-      env: PYTHON_VERSION=python2
-    - os: linux
-      sudo: required
-      env: PYTHON_VERSION=python2 ONNX_ML=1
-    - os: linux
-      sudo: required
-      env: PYTHON_VERSION=python3 ONNX_ML=1
-    - os: osx
-      osx_image: xcode9.3beta
-      env: PYTHON_VERSION=python2 ONNX_ML=1
-
-env:
-  global:
-    - PB_VERSION=2.6.1
-
-before_install:
-  - ./.travis/before_install.sh
+addons:
+  apt:
+    packages:
+      - dos2unix
 
 install:
   - ./.travis/install.sh
 
 script:
-  - ./.travis/script.sh
-
-after_success:
-  - ./.travis/after_success.sh
-
-after_failure:
-  - ./.travis/after_failure.sh
+  - ./.travis/build.sh
 
 cache:
-  - timeout: 300
   - directories:
-    - $BUILD_CCACHE_DIR
-    - $BUILD_NINJA_DIR
+    - $HOME/.build_cache
     - $HOME/.ccache
-    - $HOME/.cache/pb
+
+env:
+  global:
+    - PB_VERSION=2.6.1
+  matrix:
+    - USE_NINJA=false
+    - USE_NINJA=true
+    - ONNX_ML=1 USE_NINJA=false
+    - ONNX_ML=1 USE_NINJA=true
