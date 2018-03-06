@@ -69,8 +69,8 @@ class MaxPool(Base):
                                 y[:,j,k] = np.max(x[:, startH: endH, startW: endW].reshape((batch*channel, -1)), axis=1)
                     x = x.reshape(batch, channel, x.shape[1], x.shape[2])
                     y = y.reshape(batch, channel, y.shape[1], y.shape[2])
-                    padStr = 'sym_pad'
-                    if pads[0] == pads[3] and pads[1] == pads[2]: padStr = 'asym_pad' 
+                    padStr = 'asym_pad'
+                    if pads[0] == pads[3] and pads[1] == pads[2]: padStr = 'sym_pad' 
                     elif np.all(pads == 0): padStr = 'no_pad'
                     # Check result:
                     expect(node, inputs=[x], outputs=[y],
@@ -142,8 +142,8 @@ class MaxPool(Base):
                     x = x.reshape(batch, channel, x.shape[1], x.shape[2], x.shape[3])
                     y = y.reshape(batch, channel, y.shape[1], y.shape[2], y.shape[3])
                     # Check result:
-                    padStr = 'sym_pad'
-                    if pads[0] == pads[5] and pads[1] == pads[4] and pads[2] == pads[3]: padStr = 'asym_pad' 
+                    padStr = 'asym_pad'
+                    if pads[0] == pads[5] and pads[1] == pads[4] and pads[2] == pads[3]: padStr = 'sym_pad' 
                     elif np.all(pads == 0): padStr = 'no_pad'
                     expect(node, inputs=[x], outputs=[y],
                        name='test_maxpool_3D_%s_kernel_%d_%d_%d_stride_%d_%d_%d' % (
