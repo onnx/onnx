@@ -35,7 +35,7 @@ build_script:
 - cmd: cd c:\projects\onnx
 - cmd: mkdir build
 - cmd: cd c:\projects\onnx\build
-- cmd: cmake c:\projects\onnx
+- cmd: cmake c:\projects\onnx -A x64 -T v140 -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% MSBuild /p:Configuration=%CMAKE_BUILD_TYPE% ALL_BUILD.vcxproj
 - cmd: msbuild onnx.sln
 
 # add after_test commands to collect logs and such
