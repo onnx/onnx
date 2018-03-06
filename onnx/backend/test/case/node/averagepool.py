@@ -14,58 +14,16 @@ class AveragePool(Base):
 
     @staticmethod
     def export():
-        #1D Tests
-        #Try different paddings
-        for pads in [[0,0]]:#, [1,1], [1,0], [2,2]
-            #Try different strides
-            for strides in [[1]]:#, [2]
-                #Try different kernels
-                for kernel_shape in [[1]]:#, [2]:
-                    # Define a random input tensor
-                    x = np.random.randn(4, 3, 11).astype(np.float32)
-                    # Add padding to the input tensor
-                    if pads[0] != 0: 
-                        x = np.concatenate([np.zeros((x.shape[0], 
-                                x.shape[1], pads[0])), x], 2)
-                    if pads[1] != 0:
-                        x = np.concatenate([np.zeros((x.shape[0], 
-                                x.shape[1], pads[1])), x], 2)
-                    # Define output tensor of the right size:
-                    y = np.zeros((4, 3, int(np.floor(x.shape[2]/strides[0]))), dtype=np.float32)
-                    # make onnx mean_pool node
-                    node = onnx.helper.make_node(
-                        'AveragePool',
-                        inputs=['x'],
-                        outputs=['y'],
-                        kernel_shape = kernel_shape,
-                        strides=strides,
-                        pads=pads
-                    )
-                    # calculate max_pool using numpy
-                    batch = y.shape[0]
-                    channel = y.shape[1]
-                    x = x.reshape(-1, x.shape[2])
-                    y = y.reshape(-1, y.shape[2])
-                    # TODO get ride of the unefficient loops, maybe 
-                    # using the Generalized Universal Function API from numpy
-                    for i in range(y.shape[0]):
-                        for j in range(y.shape[1]):
-                                    startH = j*strides[0]
-                                    endH = startH+kernel_shape[0]
-                                    y[:,j] = np.mean(x[:,startH: endH], axis=1)
-                    x = x.reshape(batch, channel, x.shape[1])
-                    y = y.reshape(batch, channel, y.shape[1])
-                    # Check result:
-                    expect(node, inputs=[x], outputs=[y],
-                       name='test_average_pooling_1D_with_pad:%d,%d_kernel:%d_stride:%d' % (
-                                pads[0],pads[1], kernel_shape[0], strides[0]))
         #2D Test
         #Try different paddings
-        for pads in [[0,0,0,0]]:#, [1,1,1,1], [1,1,0,0], [2,2,2,2]
-            #Try different strides
-            for strides in [[1, 1]]:#, [2, 2], [3, 1]]:
-                #Try different kernels
-                for kernel_shape in [[1, 1]]:#, [2, 2], [1, 3]]:
+        for strides in [[1, 1], [2, 2], [3, 1]]:
+            #Try different kernels
+            for kernel_shape in [[1, 1], [2, 2], [1, 3]]:
+                #Try different paddings
+                if kernel_shape[1] == 1: paddings = [[0,0,0,0]]
+                elif kernel_shape[1] == 2: paddings = [[0,0,0,0], [1,1,1,1], [1,1,0,0]]
+                else: paddings = [[0,0,0,0], [0,0,1,1], [0,0,2,2]]
+                for pads in paddings:
                     # Define a random input tensor
                     x = np.random.randn(4, 3, 11, 11).astype(np.float32)
                     # Add padding to the input tensor
@@ -82,8 +40,9 @@ class AveragePool(Base):
                         x = np.concatenate([x, np.zeros((x.shape[0], x.shape[1], 
                                 x.shape[2], pads[3]))], 3)
                     # Define output tensor of the right size:
-                    y = np.zeros((4, 3, int(np.floor(x.shape[2]/strides[0])), 
-                                int(np.floor(x.shape[3]/strides[1]))), dtype=np.float32)
+                    hSize = int(np.floor((x.shape[2]-(kernel_shape[0]-1)-1)/strides[0]+1))
+                    wSize = int(np.floor((x.shape[3]-(kernel_shape[1]-1)-1)/strides[1]+1))
+                    y = np.zeros((4, 3, hSize, wSize), dtype=np.float32)
                     # make onnx mean_pool node
                     node = onnx.helper.make_node(
                         'AveragePool',
@@ -116,15 +75,15 @@ class AveragePool(Base):
                                 pads[0],pads[1], pads[2], pads[3], kernel_shape[0], 
                                 kernel_shape[1], strides[0], strides[1]))
         #3D Test
-        #Try different paddings
-        #Try different kernels
-        for kernel_shape in [[1, 1, 1], [2, 2, 2], [1, 3, 1]]:
-            if kernel_shape[1] == 1: padList = [[0,0,0,0,0,0]]
-            elif kernel_shape[2] == 1: padList = [[0,0,0,0,0,0], [1,1,1,1,1,1], [0,0,1,1,0,0]]
-            else: padList = [[0,0,0,0,0,0], [0,0,1,1,0,0]]
-            for pads in padList:
-                #Try different strides
-                for strides in [[1, 1, 1]]:#, [2, 2, 2], [3, 1, 3]]:
+        #Try different strides
+        for strides in [[1, 1, 1], [2, 2, 2], [3, 1, 3]]:
+            #Try different kernels
+            for kernel_shape in [[1, 1, 1], [2, 2, 2], [1, 3, 1]]:
+                #Try different paddings
+                if kernel_shape[1] == 1: paddings = [[0,0,0,0,0,0]]
+                elif kernel_shape[1] == 2: paddings = [[0,0,0,0,0,0], [1,1,1,1,1,1], [1,1,1,0,0,0]]
+                else: paddings = [[0,0,0,0,0,0], [0,2,0,0,2,0]]
+                for pads in paddings:
                     # Define a random input tensor
                     x = np.random.randn(4, 3, 11, 11, 11).astype(np.float32)
                     # Add padding to the input tensor
@@ -148,10 +107,11 @@ class AveragePool(Base):
                                 x.shape[2], x.shape[3], pads[5]))], 4)
                     # Define output tensor of the right size:
                     if strides[0] == 1: y = np.zeros_like(x)
-                    # Add proper size calculation!
-                    else: y = np.zeros((4, 3, int(np.floor(x.shape[2]/strides[0])), 
-                                int(np.floor(x.shape[3]/strides[1])),
-                                int(np.floor(x.shape[4]/strides[2]))), dtype=np.float32)
+                    # Define output tensor of the right size:
+                    hSize = int(np.floor((x.shape[2]-(kernel_shape[0]-1)-1)/strides[0]+1))
+                    wSize = int(np.floor((x.shape[3]-(kernel_shape[1]-1)-1)/strides[1]+1))
+                    dSize = int(np.floor((x.shape[4]-(kernel_shape[2]-1)-1)/strides[2]+1))
+                    y = np.zeros((4, 3, hSize, wSize, dSize), dtype=np.float32)
                     # make onnx max_pool node
                     node = onnx.helper.make_node(
                         'AveragePool',

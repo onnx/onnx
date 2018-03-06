@@ -80,7 +80,7 @@ class MaxPool(Base):
             #Try different kernels
             for kernel_shape in [[1, 1, 1], [2, 2, 2], [1, 3, 1]]:
                 #Try different paddings
-                if kernel_shape[1] == 1: paddings = [[0,0,0,0,0,0], [1,1,1,1,1,1], [1,1,1,0,0,0], [2,2,2,2,2,2]]
+                if kernel_shape[1] == 1: paddings = [[0,0,0,0,0,0]]
                 elif kernel_shape[1] == 2: paddings = [[0,0,0,0,0,0], [1,1,1,1,1,1], [1,1,1,0,0,0]]
                 else: paddings = [[0,0,0,0,0,0], [0,2,0,0,2,0]]
                 for pads in paddings:
@@ -140,6 +140,6 @@ class MaxPool(Base):
                     y = y.reshape(batch, channel, y.shape[1], y.shape[2], y.shape[3])
                     # Check result:
                     expect(node, inputs=[x], outputs=[y],
-                       name='test_max_pooling_3D_with_pad:%d,%d,%d,%d_kernel:%d,%d_stride:%d,%d' % (
-                                pads[0],pads[1], pads[2], pads[3], kernel_shape[0], 
-                                kernel_shape[1], strides[0], strides[1]))
+                       name='test_max_pooling_3D_with_pad:%d,%d,%d,%d,%d,%d_kernel:%d,%d,%d_stride:%d,%d,%d' % (
+                                pads[0],pads[1], pads[2], pads[3], pads[4], pads[5], kernel_shape[0], 
+                                kernel_shape[1], kernel_shape[2], strides[0], strides[1], strides[2]))
