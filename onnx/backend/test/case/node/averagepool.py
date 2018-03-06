@@ -71,7 +71,7 @@ class AveragePool(Base):
                     y = y.reshape(batch, channel, y.shape[1], y.shape[2])
                     # Check result:
                     expect(node, inputs=[x], outputs=[y],
-                       name='test_average_pooling_2D_with_pad:%d,%d,%d,%d_kernel:%d,%d_stride:%d,%d' % (
+                       name='test_average_pooling_2D_with_pad_%d_%d_%d_%d_kernel_%d_%d_stride_%d_%d' % (
                                 pads[0],pads[1], pads[2], pads[3], kernel_shape[0], 
                                 kernel_shape[1], strides[0], strides[1]))
         #3D Test
@@ -142,6 +142,6 @@ class AveragePool(Base):
                     y = y.reshape(batch, channel, y.shape[1], y.shape[2], y.shape[3])
                     # Check result:
                     expect(node, inputs=[x], outputs=[y],
-                       name='test_average_pooling_3D_with_pad:%d,%d,%d,%d,%d,%d_kernel:%d,%d,%d_stride:%d,%d,%d' % (
+                       name='test_average_pooling_3D_with_pad_%d_%d_%d_%d_%d_%d_kernel_%d_%d_%d_stride_%d_%d_%d' % (
                                 pads[0],pads[1], pads[2], pads[3], pads[4], pads[5], kernel_shape[0], 
                                 kernel_shape[1], kernel_shape[2], strides[0], strides[1], strides[2]))
