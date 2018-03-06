@@ -104,6 +104,11 @@ message AttributeProto {
 
   // The name field MUST be present for this version of the IR.
   string name = 1;           // namespace Attribute
+ 
+  // if ref_attr_name is not empty, ref_attr_name is the attribute name in parent function.
+  // In this case, this AttributeProto does not contain data, and it's a reference of attribute
+  // in parent scope.
+  string ref_attr_name = 21;
 
   // A human-readable documentation for this attribute. Markdown is allowed.
   string doc_string = 13;
@@ -226,6 +231,19 @@ message StringStringEntryProto {
   string value= 2;
 };
 
+// Defines an attribute declaration.
+message AttrDeclProto {
+
+  // The attribute name. Must be present.
+  string name = 1;
+
+  // The type of this attribute.
+  AttributeProto.AttributeType type = 2;
+  
+  // The attribute default value.
+  AttributeProto default_value = 3;
+};
+
 // GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
 // This is the equivalent of the "network" and "graph" in many deep learning
 // frameworks.
@@ -255,6 +273,9 @@ message GraphProto {
   // Information for the values in the graph. The ValueInfoProto.name's
   // must be distinct. It is optional for a value to appear in value_info list.
   repeated ValueInfoProto value_info = 13;
+  
+  repeated GraphProto functions = 14;
+  repeated AttrDeclProto attr_decl = 15;
 
   // DO NOT USE the following fields, they were deprecated before
   // repeated string input = 3;
