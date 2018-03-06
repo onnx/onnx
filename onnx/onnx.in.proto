@@ -251,8 +251,10 @@ message GraphProto {
   // must be distinct. It is optional for a value to appear in value_info list.
   repeated ValueInfoProto value_info = 13;
   
-  // Customized functions referred by this graph.
-  repeated FunctionDefProto function = 14;
+  // Functions referred by this graph. A function is a subgraph composed of
+  // primitive ONNX ops. A node may use function graph's name as its op_type
+  // when referring to a function instead of a primitive ONNX op.
+  repeated GraphProto function = 14;
 
   // DO NOT USE the following fields, they were deprecated before
   // repeated string input = 3;
@@ -448,58 +450,4 @@ message OperatorSetIdProto {
   // The version of the operator set being identified.
   // This field MUST be present in this version of the IR.
   optional int64 version = 2;
-}
-
-// Defines a function parameter.
-message ParameterDeclProto {
-  // The name of this parameter. Must be present.
-  optional string name = 1;
-
-  // The type/shape of this parameter.
-  optional TypeProto type = 2; 
-
-  // A human-readable doc string for this parameter. 
-  optional string doc_string = 3; 
-} 
-
-// Defines a function attribute declaration.
-message FuncAttrDeclProto {
-  // The attribute name of the function. Must be present.
-  optional string name = 1;
-
-  // The type of this attribute.
-  optional AttributeProto.AttributeType type = 2;
-} 
- 
-// Defines a function.
-// We specify a function as a subgraph composed of ONNX ops. Any runtime can
-// have a custom implementation optimized for the runtime. A runtime can use
-// a matching custom implementation if there is one, or falls back to execute
-// the subgraph.
-// NOTE: We don't support recursive function.
-message FunctionDefProto { 
-  // The name of the function. MUST be present for this version of the IR. 
-  optional string name = 1;
-  
-  // The domain of the function.
-  optional string domain = 2;
-
-  // The version of the function.
-  optional int64 version = 3;
-
-  // The input parameters of the function. 
-  repeated ParameterDeclProto input_params = 4; 
-
-  // The output parameters of the function. 
-  repeated ParameterDeclProto output_params = 5;
-
-  // The body of the function. 
-  repeated NodeProto node = 6;
-
-  // The function attributes' declaration.
-  repeated FuncAttrDeclProto attr = 7;
-
-  // An optional human-readable documentation for this function in the graph. 
-  // MAY contain Markdown markup that conforms to http://commonmark.org/. 
-  optional string doc_string = 8;
 }
