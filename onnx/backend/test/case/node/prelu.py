@@ -20,24 +20,42 @@ class PRelu(Base):
             outputs=['y'],
         )
 
-        x = np.array([[-1, -2], [0, 0], [1, 2]]).astype(np.float32)
-        slope = np.array([0.1, 0.2]).astype(np.float32)
-        y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope.reshape(1, 2)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        slope = np.random.randn(3, 4, 5).astype(np.float32)
+        y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
 
         expect(node, inputs=[x, slope], outputs=[y],
                name='test_prelu_example')
 
     @staticmethod
-    def export_sharing_slope():
+    def export_prelu_broadcast():
         node = onnx.helper.make_node(
             'PRelu',
             inputs=['x', 'slope'],
             outputs=['y'],
+            broadcast=1,
         )
 
-        x = np.array([[-1, -2], [0, 0], [1, 2]]).astype(np.float32)
-        slope = np.array([0.1]).astype(np.float32)
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        slope = np.random.randn(5).astype(np.float32)
         y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
 
         expect(node, inputs=[x, slope], outputs=[y],
-               name='test_prelu_sharing_slope_example')
+               name='test_prelu_broadcast')
+
+    @staticmethod
+    def export_prelu_axis():
+        node = onnx.helper.make_node(
+            'PRelu',
+            inputs=['x', 'slope'],
+            outputs=['y'],
+            broadcast=1,
+            axis=1,
+        )
+
+        x = np.random.randn(3, 4, 5).astype(np.float32)
+        slope = np.random.randn(4).astype(np.float32)
+        y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope[:, np.newaxis]
+
+        expect(node, inputs=[x, slope], outputs=[y],
+               name='test_prelu_axis')
