@@ -12,42 +12,10 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
-# Customized version of find Protobuf. We need to avoid situations mentioned
-# in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
-# The following section is stolen from cmake/ProtoBuf.cmake in Caffe2
-find_program(PROTOBUF_PROTOC_EXECUTABLE
-  NAMES protoc
-  DOC "The Google Protocol Buffers Compiler")
-
-# Only if protoc was found, seed the include directories and libraries.
-# We assume that protoc is installed at PREFIX/bin.
-# We use get_filename_component to resolve PREFIX.
-if(PROTOBUF_PROTOC_EXECUTABLE)
-  get_filename_component(
-    _PROTOBUF_INSTALL_PREFIX
-    ${PROTOBUF_PROTOC_EXECUTABLE}
-    DIRECTORY)
-  get_filename_component(
-    _PROTOBUF_INSTALL_PREFIX
-    ${_PROTOBUF_INSTALL_PREFIX}/..
-    REALPATH)
-  find_library(PROTOBUF_LIBRARY
-    NAMES protobuf
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-    NO_DEFAULT_PATH)
-  find_library(PROTOBUF_PROTOC_LIBRARY
-    NAMES protoc
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-    NO_DEFAULT_PATH)
-  find_library(PROTOBUF_LITE_LIBRARY
-    NAMES protobuf-lite
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-    NO_DEFAULT_PATH)
-  find_path(PROTOBUF_INCLUDE_DIR
-    google/protobuf/service.h
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
-    NO_DEFAULT_PATH)
-  find_package(Protobuf REQUIRED)
+if(TARGET protobuf::libprotobuf)
+  set(PROTOBUF_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+else()
+  find_library(protobuf REQUIRED)
 endif()
 
 # Build the libraries with -fPIC
@@ -125,7 +93,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
       OUTPUT "${OUTPUT_PB_SRC}"
              "${OUTPUT_PB_HEADER}"
       COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS --cpp_out ${DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${PROTOBUF_INCLUDE_DIRS} -I ${OUTPUT_PROTO_DIR}
+      ARGS --cpp_out ${DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR}
       DEPENDS ${GENERATED_PROTO}
       COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
       VERBATIM )
@@ -184,6 +152,10 @@ else()
   target_include_directories(onnx_pybind PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
 endif()
 target_link_libraries(onnx_pybind PRIVATE onnx_proto onnx)
+if (APPLE)
+  set_target_properties(onnx_pybind PROPERTIES SUFFIX ".so")
+  set_target_properties(onnx_pybind PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+endif()
 
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
