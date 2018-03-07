@@ -353,6 +353,8 @@ typedef int32_t onnxBackendInfo;
 #define ONNX_DATATYPE_UINT16 4
 #define ONNX_DATATYPE_UINT32 12
 #define ONNX_DATATYPE_UINT64 13
+#define ONNX_DATATYPE_COMPLEX64 14
+#define ONNX_DATATYPE_COMPLEX128 15
 
 /** Cacheable CPU memory */
 #define ONNX_MEMORY_TYPE_CPU 0
