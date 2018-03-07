@@ -2,8 +2,9 @@ set -ex
 
 export top_dir=$(dirname ${0%/*})
 
-source "${HOME}/virtualenv/bin/activate"
-python --version
+if  [ "$TRAVIS_OS_NAME" == "osx" ]; then
+  source "${HOME}/virtualenv/bin/activate"
+fi
 
 # setup ccache
 if [ "$TRAVIS_OS_NAME" == "linux" ]; then
