@@ -5004,6 +5004,52 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Unique-1"></a>**Unique-1**</a>
+
+  Returns the unique scalar elements of the input tensor as a 1-D tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>return_inverse</tt> : int</dt>
+<dd>(bool) Whether to also return the indices for where elements in the original input ended up in the returned unique list.</dd>
+<dt><tt>sorted</tt> : int</dt>
+<dd>(bool) Whether to sort the unique elements in ascending order before returning as output.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor to find unique elements of</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1-D tensor containing unique elements of the input tensor.</dd>
+<dt><tt>inverse_indices</tt> : T</dt>
+<dd>(optional) if `return_inverse` is True, there will be a 2nd output tensor (same shape as input) representing the indices for where elements in the original input map to in the output; otherwise, this op will only return a single tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>All Tensor types</dd>
+</dl>
+
 ### <a name="Unsqueeze-1"></a>**Unsqueeze-1**</a>
 
   Insert single-dimensional entries to the shape of a tensor.

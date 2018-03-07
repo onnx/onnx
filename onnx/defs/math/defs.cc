@@ -780,8 +780,41 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "Constrain index tensor to int64")
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(
-        "axis",
-        "Dimension on which to do the sort. Default -1, which indicates the last"
-        " axis",
-        AttributeProto::INT,
-        static_cast<int64_t>(-1));
+      "axis",
+      "Dimension on which to do the sort. Default -1, which indicates the last"
+      " axis",
+      AttributeProto::INT,
+      static_cast<int64_t>(-1));
+
+
+ONNX_OPERATOR_SCHEMA(Unique)
+  .SetDoc(R"DOC(
+Returns the unique scalar elements of the input tensor as a 1-D tensor.
+)DOC")
+  .Input(0, "X", "Tensor to find unique elements of", "T")
+  .Output(
+    0,
+    "Y",
+    "1-D tensor containing unique elements of the input tensor.",
+    "T")
+  .Output(
+    1,
+    "inverse_indices",
+    "(optional) if `return_inverse` is True, there will be a 2nd output "
+    "tensor (same shape as input) representing the indices for where elements "
+    "in the original input map to in the output; otherwise, this op will "
+    "only return a single tensor.",
+    "T")
+  .Attr(
+    "sorted",
+    "(bool) Whether to sort the unique elements in ascending order before "
+    "returning as output.",
+    AttributeProto::INT,
+    static_cast<int64_t>(0))
+  .Attr(
+    "return_inverse",
+    "(bool) Whether to also return the indices for where elements in the "
+    "original input ended up in the returned unique list.",
+    AttributeProto::INT,
+    static_cast<int64_t>(0))
+  .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types");
