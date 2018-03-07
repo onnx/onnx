@@ -265,9 +265,9 @@ class Runner(object):
                          for tensor in node_test.inputs]
             ref_outputs = [numpy_helper.to_array(tensor)
                            for tensor in node_test.outputs]
-
+            outputs_info = [(output.dtype, output.shape) for output in ref_outputs]
             outputs = self.backend.run_node(
-                node_test.node, np_inputs, device)
+                node_test.node, np_inputs, device=device, outputs_info=outputs_info)
             self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test('Node', node_test.name, run, node_test.node)

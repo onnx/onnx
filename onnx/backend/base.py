@@ -57,7 +57,14 @@ class Backend(object):
         return cls.prepare(model, device, **kwargs).run(inputs)
 
     @classmethod
-    def run_node(cls, node, inputs, device='CPU'):
+    def run_node(cls, node, inputs, device='CPU', outputs_info=None, **kwargs):
+        '''Simple run one operator and return the results.
+        Args:
+            outputs_info: a list of tuples, which contains the element type and
+            shape of each output. First element of the tuple is the dtype, and
+            the second element is the shape. More use case can be found in
+            https://github.com/onnx/onnx/blob/master/onnx/backend/test/runner/__init__.py
+        '''
         onnx.checker.check_node(node)
 
     @classmethod
