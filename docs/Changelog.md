@@ -343,8 +343,8 @@ opset_import {
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   VALID or pads given: output_spatial_shape[i] = int(np.ceil((input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / strides_spatial_shape[i]))
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = int(np.ceil(input_spatial_shape[i] / strides_spatial_shape[i]))
+   VALID or pads given: output_spatial_shape[i] = ceil((input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / strides_spatial_shape[i]))
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i]))
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -2971,8 +2971,8 @@ opset_import {
    subset of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
-   VALID or pads given: output_spatial_shape[i] = int(np.ceil((input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / strides_spatial_shape[i]))
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = int(np.ceil(input_spatial_shape[i] / strides_spatial_shape[i]))
+   VALID or pads given: output_spatial_shape[i] = ceil((input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / strides_spatial_shape[i]))
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i]))
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
