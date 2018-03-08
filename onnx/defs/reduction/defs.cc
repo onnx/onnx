@@ -4,7 +4,7 @@
 #include "onnx/defs/schema.h"
 #include <functional>
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
@@ -32,40 +32,40 @@ False instead of True.)DOC";
     };
 }
   
-OPERATOR_SCHEMA(ReduceMax)
+ONNX_OPERATOR_SCHEMA(ReduceMax)
     .FillUsing(ReduceDocGenerator("max"));
 
-OPERATOR_SCHEMA(ReduceMin)
+ONNX_OPERATOR_SCHEMA(ReduceMin)
     .FillUsing(ReduceDocGenerator("min"));
 
-OPERATOR_SCHEMA(ReduceSum)
+ONNX_OPERATOR_SCHEMA(ReduceSum)
     .FillUsing(ReduceDocGenerator("sum"));
 
-OPERATOR_SCHEMA(ReduceSumSquare)
+ONNX_OPERATOR_SCHEMA(ReduceSumSquare)
     .FillUsing(ReduceDocGenerator("sum square"));
 
-OPERATOR_SCHEMA(ReduceMean)
+ONNX_OPERATOR_SCHEMA(ReduceMean)
     .FillUsing(ReduceDocGenerator("mean"));
 
-OPERATOR_SCHEMA(ReduceProd)
+ONNX_OPERATOR_SCHEMA(ReduceProd)
     .FillUsing(ReduceDocGenerator("product"));
 
-OPERATOR_SCHEMA(ReduceLogSum)
+ONNX_OPERATOR_SCHEMA(ReduceLogSum)
     .FillUsing(ReduceDocGenerator("log sum"));
 
-OPERATOR_SCHEMA(ReduceLogSumExp)
+ONNX_OPERATOR_SCHEMA(ReduceLogSumExp)
     .FillUsing(ReduceDocGenerator("log sum exponent"));
 
-OPERATOR_SCHEMA(ReduceL1)
+ONNX_OPERATOR_SCHEMA(ReduceL1)
     .FillUsing(ReduceDocGenerator("L1 norm"));
 
-OPERATOR_SCHEMA(ReduceL2)
+ONNX_OPERATOR_SCHEMA(ReduceL2)
     .FillUsing(ReduceDocGenerator("L2 norm"));
 
 
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
@@ -90,10 +90,10 @@ The type of the output tensor is integer.)DOC";
     };
 }
 
-OPERATOR_SCHEMA(ArgMax)
+ONNX_OPERATOR_SCHEMA(ArgMax)
     .FillUsing(ArgReduceDocGenerator("max"));
 
-OPERATOR_SCHEMA(ArgMin)
+ONNX_OPERATOR_SCHEMA(ArgMin)
     .FillUsing(ArgReduceDocGenerator("min"));
 
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE

@@ -6,9 +6,10 @@
 
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
+#include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 namespace py = pybind11;
 
@@ -70,8 +71,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
       .def_property_readonly(
           "description", &OpSchema::FormalParameter::GetDescription)
-      .def_property_readonly(
-          "option", &OpSchema::FormalParameter::GetOption);
+      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption);
 
   py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
       .value("FLOAT", AttributeProto::FLOAT)
@@ -97,9 +97,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def("has_schema", [](const std::string& op_type) -> bool {
     return OpSchemaRegistry::Schema(op_type) != nullptr;
   });
-  defs.def("schema_version_map", []() -> std::unordered_map<std::string, std::pair<int, int>> {
-    return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
-  });
+  defs.def(
+      "schema_version_map",
+      []() -> std::unordered_map<std::string, std::pair<int, int>> {
+        return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
+      });
   defs.def("get_schema", [](const std::string& op_type) -> OpSchema {
     const auto* schema = OpSchemaRegistry::Schema(op_type);
     if (!schema) {
@@ -108,70 +110,94 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     return *schema;
   });
 
-  defs.def(
-      "get_all_schemas",
-      []() -> const std::vector<OpSchema> {
-        return OpSchemaRegistry::get_all_schemas();
-      });
+  defs.def("get_all_schemas", []() -> const std::vector<OpSchema> {
+    return OpSchemaRegistry::get_all_schemas();
+  });
 
-  defs.def(
-      "get_all_schemas_with_history",
-      []() -> const std::vector<OpSchema> {
-        return OpSchemaRegistry::get_all_schemas_with_history();
-      });
+  defs.def("get_all_schemas_with_history", []() -> const std::vector<OpSchema> {
+    return OpSchemaRegistry::get_all_schemas_with_history();
+  });
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
   checker.doc() = "Checker submodule";
 
-  py::class_<checker::CheckerContext> checker_context(checker, "CheckerContext");
-  checker_context
-      .def(py::init<>())
-      .def_property("ir_version", &checker::CheckerContext::get_ir_version, &checker::CheckerContext::set_ir_version)
-      .def_property("opset_imports", &checker::CheckerContext::get_opset_imports, &checker::CheckerContext::set_opset_imports);
+  py::class_<checker::CheckerContext> checker_context(
+      checker, "CheckerContext");
+  checker_context.def(py::init<>())
+      .def_property(
+          "ir_version",
+          &checker::CheckerContext::get_ir_version,
+          &checker::CheckerContext::set_ir_version)
+      .def_property(
+          "opset_imports",
+          &checker::CheckerContext::get_opset_imports,
+          &checker::CheckerContext::set_opset_imports);
 
   py::register_exception<checker::ValidationError>(checker, "ValidationError");
 
   checker.def(
-      "check_value_info", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<ValueInfoProto> proto(new ValueInfoProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_value_info(*proto, ctx);
+      "check_value_info",
+      [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+        ValueInfoProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_value_info(proto, ctx);
       });
 
   checker.def(
-      "check_tensor", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<TensorProto> proto(new TensorProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_tensor(*proto, ctx);
+      "check_tensor",
+      [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+        TensorProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_tensor(proto, ctx);
       });
 
   checker.def(
-      "check_attribute", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<AttributeProto> proto(new AttributeProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_attribute(*proto, ctx);
+      "check_attribute",
+      [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+        AttributeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::check_attribute(proto, ctx, checker::LexicalScopeContext());
       });
 
-  checker.def("check_node", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-    std::unique_ptr<NodeProto> proto(new NodeProto());
-    ParseProtoFromPyBytes(proto.get(), bytes);
-    checker::check_node(*proto, ctx);
+  checker.def(
+      "check_node",
+      [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+        NodeProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::LexicalScopeContext lex_ctx;
+        checker::check_node(proto, ctx, lex_ctx);
+      });
+
+  checker.def(
+      "check_graph",
+      [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
+        GraphProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        checker::LexicalScopeContext lex_ctx;
+        checker::check_graph(proto, ctx, lex_ctx);
+      });
+
+  checker.def("check_model", [](const py::bytes& bytes) -> void {
+    ModelProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    checker::check_model(proto);
   });
 
-  checker.def(
-      "check_graph", [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
-        std::unique_ptr<GraphProto> proto(new GraphProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_graph(*proto, ctx);
-      });
+  // Submodule `optimizer`
+  auto optimizer = onnx_cpp2py_export.def_submodule("optimizer");
+  optimizer.doc() = "Optimizer submodule";
 
-  checker.def(
-      "check_model", [](const py::bytes& bytes) -> void {
-        std::unique_ptr<ModelProto> proto(new ModelProto());
-        ParseProtoFromPyBytes(proto.get(), bytes);
-        checker::check_model(*proto);
+  optimizer.def(
+      "optimize",
+      [](const py::bytes& bytes, const std::vector<std::string>& names) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        auto const result = optimization::Optimize(std::move(proto), names);
+        std::string out;
+        result.SerializeToString(&out);
+        return py::bytes(out);
       });
 }
 
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

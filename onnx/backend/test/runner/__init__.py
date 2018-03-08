@@ -8,6 +8,7 @@ import functools
 import glob
 import os
 import re
+import shutil
 import tarfile
 import tempfile
 import unittest
@@ -41,11 +42,15 @@ class Runner(object):
         for rt in load_model_tests(kind='real'):
             self._add_model_test(rt, 'Real')
 
+        for rt in load_model_tests(kind='simple'):
+            self._add_model_test(rt, 'Simple')
+
         for ct in load_model_tests(kind='pytorch-converted'):
             self._add_model_test(ct, 'PyTorchConverted')
 
         for ot in load_model_tests(kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
+
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -147,7 +152,16 @@ class Runner(object):
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
         model_dir = os.path.join(models_dir, model_test.model_name)
-        if not os.path.exists(model_dir):
+        if not os.path.exists(os.path.join(model_dir, 'model.onnx')):
+            if os.path.exists(model_dir):
+                bi = 0
+                while True:
+                    dest = '{}.old.{}'.format(model_dir, bi)
+                    if os.path.exists(dest):
+                        bi += 1
+                        continue
+                    shutil.move(model_dir, dest)
+                    break
             os.makedirs(model_dir)
             url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
                 model_test.model_name)
@@ -207,7 +221,7 @@ class Runner(object):
                 model_dir = self._prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
-            model_pb_path = os.path.join(model_dir, 'model.pb')
+            model_pb_path = os.path.join(model_dir, 'model.onnx')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             prepared_model = self.backend.prepare(model, device)

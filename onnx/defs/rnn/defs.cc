@@ -3,9 +3,9 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace onnx;
+using namespace ONNX_NAMESPACE;
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 // Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
@@ -13,7 +13,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
                     AttributeProto::STRING,
-                    std::string("foward"));
+                    std::string("forward"));
         schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL);
         schema.Attr("activation_alpha",
                     "Optional scaling values used by some activation functions. The values "
@@ -59,7 +59,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
     };
 }
 
-OPERATOR_SCHEMA(RNN)
+ONNX_OPERATOR_SCHEMA(RNN)
     .SetDoc(R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
@@ -144,7 +144,7 @@ Equations (Default: f=Tanh):
     .FillUsing(RNNDocGenerator("RNN"));
 
 
-OPERATOR_SCHEMA(GRU)
+ONNX_OPERATOR_SCHEMA(GRU)
     .SetDoc(R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -248,7 +248,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
     .FillUsing(RNNDocGenerator("GRU"));
 
 
-OPERATOR_SCHEMA(LSTM)
+ONNX_OPERATOR_SCHEMA(LSTM)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
@@ -368,4 +368,4 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
     .Output(2, "Y_c",
             "The last output value of the cell. It has shape "
             "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
-}  // namespace onnx
+}  // namespace ONNX_NAMESPACE
