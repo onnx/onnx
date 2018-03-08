@@ -15,7 +15,43 @@ list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 if(TARGET protobuf::libprotobuf)
   set(PROTOBUF_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
 else()
-  find_library(protobuf REQUIRED)
+  # Customized version of find Protobuf. We need to avoid situations mentioned
+  # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
+  # The following section is stolen from cmake/ProtoBuf.cmake in Caffe2
+  find_program(PROTOBUF_PROTOC_EXECUTABLE
+    NAMES protoc
+    DOC "The Google Protocol Buffers Compiler")
+
+  # Only if protoc was found, seed the include directories and libraries.
+  # We assume that protoc is installed at PREFIX/bin.
+  # We use get_filename_component to resolve PREFIX.
+  if(PROTOBUF_PROTOC_EXECUTABLE)
+    get_filename_component(
+      _PROTOBUF_INSTALL_PREFIX
+      ${PROTOBUF_PROTOC_EXECUTABLE}
+      DIRECTORY)
+    get_filename_component(
+      _PROTOBUF_INSTALL_PREFIX
+      ${_PROTOBUF_INSTALL_PREFIX}/..
+      REALPATH)
+    find_library(PROTOBUF_LIBRARY
+      NAMES protobuf
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+      NO_DEFAULT_PATH)
+    find_library(PROTOBUF_PROTOC_LIBRARY
+      NAMES protoc
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+      NO_DEFAULT_PATH)
+    find_library(PROTOBUF_LITE_LIBRARY
+      NAMES protobuf-lite
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+      NO_DEFAULT_PATH)
+    find_path(PROTOBUF_INCLUDE_DIR
+      google/protobuf/service.h
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
+      NO_DEFAULT_PATH)
+    find_package(Protobuf REQUIRED)
+  endif()
 endif()
 
 # Build the libraries with -fPIC
@@ -131,7 +167,11 @@ endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
-target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+if(TARGET protobuf::libprotobuf)
+  target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
+else()
+  target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+endif()
 
 if(MSVC)
     target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
