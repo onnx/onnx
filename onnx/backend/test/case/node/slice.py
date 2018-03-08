@@ -94,4 +94,4 @@ class Slice(Base):
         y = x[:, :, 3:4]
 
         expect(node, inputs=[x], outputs=[y],
-               name='test_default_axes')
+               name='test_slice_default_axes')
