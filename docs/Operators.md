@@ -2324,6 +2324,20 @@ opset_import {
 <summary>globalaveragepool</summary>
 
 ```python
+
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[5]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
+
 node = onnx.helper.make_node(
     'GlobalAveragePool',
     inputs=['x'],
@@ -2431,6 +2445,20 @@ opset_import {
 <summary>globalmaxpool</summary>
 
 ```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[9]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
+
 node = onnx.helper.make_node(
     'GlobalMaxPool',
     inputs=['x'],

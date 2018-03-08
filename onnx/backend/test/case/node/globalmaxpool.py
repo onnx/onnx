@@ -16,6 +16,20 @@ class GlobalMaxPool(Base):
 
     @staticmethod
     def export():
+
+        node = onnx.helper.make_node(
+            'GlobalMaxPool',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.array([[[
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]]]).astype(np.float32)
+        y = np.array([[[[9]]]]).astype(np.float32)
+        expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
+
         node = onnx.helper.make_node(
             'GlobalMaxPool',
             inputs=['x'],
