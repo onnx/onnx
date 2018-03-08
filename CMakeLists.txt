@@ -12,7 +12,7 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
-if(TARGET protobuf::libprotobuf)
+if(TARGET protobuf::protoc)
   set(PROTOBUF_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
 else()
   # Customized version of find Protobuf. We need to avoid situations mentioned
