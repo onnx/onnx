@@ -84,6 +84,7 @@
   * <a href="#Softmax">Softmax</a>
   * <a href="#Softplus">Softplus</a>
   * <a href="#Softsign">Softsign</a>
+  * <a href="#Sort">Sort</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
   * <a href="#Split">Split</a>
   * <a href="#Sqrt">Sqrt</a>
@@ -7178,6 +7179,51 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Sort"></a><a name="sort">**Sort**</a>
+
+  Return a sorted copy of a tensor.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Axis along which to sort</dd>
+<dt><tt>descending</tt> : int</dt>
+<dd>(bool) If true, sort with descending order. Otherwise sort ascending.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor to sort</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Sorted result tensor. Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>All Tensor types</dd>
+</dl>
+
+
 ### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
 
   SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
@@ -8000,15 +8046,6 @@ opset_import {
 }
 ~~~~
 
-#### Attributes
-
-<dl>
-<dt><tt>return_inverse</tt> : int</dt>
-<dd>(bool) Whether to also return the indices for where elements in the original input ended up in the returned unique list.</dd>
-<dt><tt>sorted</tt> : int</dt>
-<dd>(bool) Whether to sort the unique elements in ascending order before returning as output.</dd>
-</dl>
-
 #### Inputs
 
 <dl>
@@ -8021,8 +8058,6 @@ opset_import {
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>1-D tensor containing unique elements of the input tensor.</dd>
-<dt><tt>inverse_indices</tt> : T</dt>
-<dd>(optional) if `return_inverse` is True, there will be a 2nd output tensor (same shape as input) representing the indices for where elements in the original input map to in the output; otherwise, this op will only return a single tensor.</dd>
 </dl>
 
 #### Type Constraints
