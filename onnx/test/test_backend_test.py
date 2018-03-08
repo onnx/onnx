@@ -28,8 +28,8 @@ class DummyBackend(onnx.backend.base.Backend):
         raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def run_node(cls, node, inputs, device='CPU'):
-        super(DummyBackend, cls).run_node(node, inputs, device)
+    def run_node(cls, node, inputs, device='CPU', outputs_info=None):
+        super(DummyBackend, cls).run_node(node, inputs, device=device, outputs_info=outputs_info)
         raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
 
 
