@@ -5,21 +5,35 @@ matrix:
     - os: linux
       sudo: required
       env: PYTHON_VERSION=python2
+      language: python
+      python: "2.7"
     - os: linux
       sudo: required
       env: PYTHON_VERSION=python3
+      language: python
+      python: "3.6"
     - os: osx
       osx_image: xcode9.3beta
       env: PYTHON_VERSION=python2
+    - os: osx
+      osx_image: xcode9.3beta
+      env: PYTHON_VERSION=python3
     - os: linux
       sudo: required
       env: PYTHON_VERSION=python2 ONNX_ML=1
+      language: python
+      python: "2.7"
     - os: linux
       sudo: required
       env: PYTHON_VERSION=python3 ONNX_ML=1
+      language: python
+      python: "3.6"
     - os: osx
       osx_image: xcode9.3beta
       env: PYTHON_VERSION=python2 ONNX_ML=1
+    - os: osx
+      osx_image: xcode9.3beta
+      env: PYTHON_VERSION=python3 ONNX_ML=1
 
 env:
   global:
@@ -44,6 +58,5 @@ cache:
   - timeout: 300
   - directories:
     - $BUILD_CCACHE_DIR
-    - $BUILD_NINJA_DIR
     - $HOME/.ccache
     - $HOME/.cache/pb
