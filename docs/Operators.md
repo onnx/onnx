@@ -654,12 +654,8 @@ x = np.array([[[
   [16, 17, 18, 19, 20],
   [21, 22, 23, 24, 25],
 ]]]).astype(np.float32)
-x_shape = (1, 1, 5, 5)
-kernel_shape = (2, 2)
-strides = (2, 2)
-out_shape = (2, 2)
-padded = x
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0))
+y = np.array([[[[4, 6],
+                [14, 16]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_strides')
 
@@ -682,15 +678,20 @@ x = np.array([[[
   [16, 17, 18, 19, 20],
   [21, 22, 23, 24, 25],
 ]]]).astype(np.float32)
-x_shape = (1, 1, 5, 5)
-kernel_shape = (3, 3)
-strides = (2, 2)
-out_shape = (3, 3)
-padded = np.pad(x, ((0, 0), (0, 0), (1, 1), (1, 1)), mode='constant', constant_values=np.nan)
-y = pool(padded, x_shape, kernel_shape, strides, out_shape, (2, 2))
+y = np.array([[[[4, 5.5, 7],
+                [11.5, 13, 14.5],
+                [19, 20.5, 22]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_same_upper')
+```
 
+</details>
+
+
+<details>
+<summary>averagepool_2d</summary>
+
+```python
 """
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
@@ -790,6 +791,15 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0))
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_default</summary>
+
+```python
 
 """
 output_shape: [1, 3, 31]
