@@ -5062,6 +5062,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>return_inverse</tt> : int</dt>
+<dd>(bool) Whether to also return the indices for where elements in the original input ended up in the returned unique list.</dd>
+</dl>
+
 #### Inputs
 
 <dl>
@@ -5074,6 +5081,8 @@ opset_import {
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>1-D tensor containing unique elements of the input tensor.</dd>
+<dt><tt>inverse_indices</tt> : T</dt>
+<dd>(optional) if `return_inverse` is True, there will be a 2nd output tensor (same shape as input) representing the indices for where elements in the original input map to in the output; otherwise, this op will only return a single tensor.</dd>
 </dl>
 
 #### Type Constraints

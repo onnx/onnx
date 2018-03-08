@@ -797,6 +797,20 @@ Returns the unique scalar elements of the input tensor as a 1-D tensor.
     "Y",
     "1-D tensor containing unique elements of the input tensor.",
     "T")
+  .Output(
+    1,
+    "inverse_indices",
+    "(optional) if `return_inverse` is True, there will be a 2nd output "
+    "tensor (same shape as input) representing the indices for where elements "
+    "in the original input map to in the output; otherwise, this op will "
+    "only return a single tensor.",
+    "T")
+  .Attr(
+    "return_inverse",
+    "(bool) Whether to also return the indices for where elements in the "
+    "original input ended up in the returned unique list.",
+    AttributeProto::INT,
+    static_cast<int64_t>(0))
   .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types");
 
 
