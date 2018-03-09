@@ -4,6 +4,18 @@
 #include <string>
 
 namespace ONNX_NAMESPACE {
+
+#if defined(__ANDROID__)
+template <typename T>
+std::string to_string(T value) {
+  std::ostringstream os;
+  os << value;
+  return os.str();
+}
+#else
+using std::to_string;
+#endif // defined(__ANDROID__)
+
 inline void MakeStringInternal(std::stringstream& /*ss*/) {}
 
 template <typename T>
