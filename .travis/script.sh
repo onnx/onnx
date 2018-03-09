@@ -28,6 +28,9 @@ git diff --exit-code
 ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
 ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
 
+ls onnx
+cat onnx/onnx_pb.py
+
 # Mypy only works with Python 3
 if [ "${PYTHON_VERSION}" != "python2" ]; then
   time mypy .

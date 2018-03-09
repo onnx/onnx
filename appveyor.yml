@@ -37,6 +37,8 @@ build_script:
 - cmd: dir /s protoc_gen_mypy.bat
 - cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\
 - cmd: cd c:\projects\onnx
+- cmd: dir /ad /b /s
+- cmd: dir /a-d /b /s
 - cmd: C:\Miniconda36\Scripts\pytest
 - cmd: C:\Miniconda36\python onnx/defs/gen_doc.py
 - cmd: C:\Miniconda36\python onnx/gen_proto.py
