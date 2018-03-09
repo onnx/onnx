@@ -2324,6 +2324,26 @@ opset_import {
 <summary>globalaveragepool</summary>
 
 ```python
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
+```
+
+</details>
+
+
+<details>
+<summary>globalaveragepool_precomputed</summary>
+
+```python
 
 node = onnx.helper.make_node(
     'GlobalAveragePool',
@@ -2337,18 +2357,6 @@ x = np.array([[[
 ]]]).astype(np.float32)
 y = np.array([[[[5]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
-
-node = onnx.helper.make_node(
-    'GlobalAveragePool',
-    inputs=['x'],
-    outputs=['y'],
-)
-x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-spatial_shape = np.ndim(x) - 2
-y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
-for _ in range(spatial_shape):
-    y = np.expand_dims(y, -1)
-expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
 ```
 
 </details>
@@ -2451,6 +2459,27 @@ node = onnx.helper.make_node(
     inputs=['x'],
     outputs=['y'],
 )
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
+```
+
+</details>
+
+
+<details>
+<summary>globalmaxpool_precomputed</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
 x = np.array([[[
     [1, 2, 3],
     [4, 5, 6],
@@ -2458,18 +2487,6 @@ x = np.array([[[
 ]]]).astype(np.float32)
 y = np.array([[[[9]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
-
-node = onnx.helper.make_node(
-    'GlobalMaxPool',
-    inputs=['x'],
-    outputs=['y'],
-)
-x = np.random.randn(1, 3, 5, 5).astype(np.float32)
-spatial_shape = np.ndim(x) - 2
-y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
-for _ in range(spatial_shape):
-    y = np.expand_dims(y, -1)
-expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
 ```
 
 </details>
