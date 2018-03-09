@@ -206,6 +206,11 @@ class build_proto_in(ONNXCommand):
         shutil.rmtree(tmp_dir)
 
 
+protoc_mypy_args = ['--mypy_out', SRC_DIR]
+if platform.system() == 'Windows':
+    protoc_mypy_args.extend(['--plugin', 'protoc-gen-mypy=python/protoc_gen_mypy.bat'])
+
+
 class build_proto(ONNXCommand):
     def run(self):
         self.run_command('build_proto_in')
@@ -227,6 +232,7 @@ class build_proto(ONNXCommand):
                 os.path.join(SRC_DIR, '{}.pb.h'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}_pb2.py'.format(pb2)),
                 os.path.join(SRC_DIR, '{}_pb.py'.format(stem.replace('-', '_'))),
+                os.path.join(SRC_DIR, '{}_pb2.pyi'.format(pb2)),
             ]
             if ONNX_ML:
                 outputs.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
@@ -238,7 +244,7 @@ class build_proto(ONNXCommand):
                     PROTOC,
                     '--proto_path', SRC_DIR,
                     '--python_out', SRC_DIR,
-                    '--mypy_out', SRC_DIR,
+                    ] + protoc_mypy_args + [
                     '--cpp_out', SRC_DIR,
                     proto
                 ])
