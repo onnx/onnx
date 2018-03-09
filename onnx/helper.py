@@ -5,11 +5,11 @@ from __future__ import unicode_literals
 
 import collections
 import numbers
-import numpy as np
+import numpy as np  # type: ignore
 
 from six import text_type, integer_types, binary_type
 
-import google.protobuf.message
+import google.protobuf.message  # type: ignore
 from onnx import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, IR_VERSION
 import onnx.defs as defs

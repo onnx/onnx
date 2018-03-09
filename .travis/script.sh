@@ -27,3 +27,11 @@ git diff --exit-code
 # in a private namespace.
 ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
 ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+# Mypy only works with Python 3
+if [ "${TRAVIS_PYTHON_VERSION}" != 2* ]; then
+  time mypy .
+  # Also test in python2 mode (but this is still in the python 3 CI
+  # instance, because mypy itself needs python 3)
+  time mypy --py2 .
+fi

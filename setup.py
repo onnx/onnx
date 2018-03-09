@@ -45,6 +45,7 @@ ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
 install_requires = ['six']
 setup_requires = []
 tests_require = []
+extras_require = {}
 
 ################################################################################
 #Version
@@ -237,6 +238,7 @@ class build_proto(ONNXCommand):
                     PROTOC,
                     '--proto_path', SRC_DIR,
                     '--python_out', SRC_DIR,
+                    '--mypy_out', SRC_DIR,
                     '--cpp_out', SRC_DIR,
                     proto
                 ])
@@ -403,7 +405,13 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.extend(['protobuf', 'numpy'])
+install_requires.extend([
+    'protobuf',
+    'numpy',
+    'typing>=3.6.4',
+    'typing-extensions>=3.6.2.1',
+    'mypy-protobuf',
+])
 
 ################################################################################
 # Test
@@ -413,6 +421,10 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest-cov')
 tests_require.append('nbval')
 tests_require.append('tabulate')
+
+if sys.version_info[0] == 3:
+    # Mypy doesn't work with Python 2
+    extras_require['mypy'] = ['mypy==0.560']
 
 ################################################################################
 # Final
@@ -429,6 +441,7 @@ setuptools.setup(
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
+    extras_require=extras_require,
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
