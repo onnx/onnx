@@ -208,7 +208,7 @@ class build_proto_in(ONNXCommand):
 
 protoc_mypy_args = ['--mypy_out', SRC_DIR]
 if platform.system() == 'Windows':
-    protoc_mypy_args.extend(['--plugin', 'protoc-gen-mypy=python/protoc_gen_mypy.bat'])
+    protoc_mypy_args.extend(['--plugin', 'protoc-gen-mypy=python\\protoc_gen_mypy.bat'])
 
 
 class build_proto(ONNXCommand):
