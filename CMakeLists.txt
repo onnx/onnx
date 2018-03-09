@@ -170,11 +170,6 @@ file(GLOB_RECURSE onnx_src
 )
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-if(MSVC)
-    set(DLLEXPORT_OPTION "-DONNX_API=__declspec(dllexport)")
-else()
-    set(DLLEXPORT_OPTION "-DONNX_API=")
-endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
@@ -185,7 +180,10 @@ else()
 endif()
 
 if(MSVC)
-    target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+  target_compile_options(onnx_proto PRIVATE /WX-)
+  if(BUILD_SHARED_LIBS)
+    target_compile_definitions(onnx_proto PRIVATE "ONNX_API=__declspec(dllexport)")
+  endif()
 endif()
 
 add_library(onnx ${onnx_src})
