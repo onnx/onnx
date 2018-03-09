@@ -15,6 +15,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "onnx/string_utils.h"
 #include "onnx/common/array_ref.h"
 #include "onnx/common/assertions.h"
 #include "onnx/common/interned_strings.h"
@@ -320,7 +321,7 @@ public:
   std::string uniqueName() const {
     if(has_unique_name())
       return unique_name_;
-    return std::to_string(unique());
+    return ONNX_NAMESPACE::to_string(unique());
   }
   Value* setUniqueName(const std::string & name) {
     has_unique_name_ = true;
