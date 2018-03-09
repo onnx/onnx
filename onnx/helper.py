@@ -214,7 +214,7 @@ def get_attribute_value(attr):
     elif attr.HasField('t'):
         return attr.t
     elif attr.HasField('g'):
-        return onnn_attr.g
+        return attr.g
     elif len(attr.floats):
         return list(attr.floats)
     elif len(attr.ints):
