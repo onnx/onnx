@@ -30,8 +30,15 @@ namespace ONNX_NAMESPACE {
  subset of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing. The output spatial shape will be following:
  ```
- VALID or pads given: output_spatial_shape[i] = ceil((input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / strides_spatial_shape[i]))
- SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i]))
+ output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+
+ * pad_shape[i] is sum of pads along axis i
+ ```
+
+ `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+ ```
+ VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
  ```
  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
  ```
