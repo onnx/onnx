@@ -6535,34 +6535,70 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 #### Examples
 
 <details>
-<summary>split</summary>
+<summary>1d</summary>
 
 ```python
-shape = (6,6)
-test_cases = {
-    'num_splits_1': [2],
-    'num_splits_2': [3],
-    'size_splits_1':[6],
-    'size_splits_2':[2,4],
-    'size_splits_3':[1,2,3]
-    }
+input = np.array([1., 2., 3., 4., 5., 6.])
 
-input = np.random.random_sample(shape).astype(np.float32)
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3'],
+    axis=0,
+    split=[2]
+)
 
-for i in range(len(shape)):
-    for test_case, s in test_cases.items():
-        output_args = ['output' + str(k) for k in range(len(s) if isinstance(s, list) else s)]
-        node = onnx.helper.make_node(
-            'Split',
-            inputs=['input'],
-            outputs=[arg for arg in output_args],
-            axis=i,
-            split=s
-        )
+expected_outputs = [np.array([1, 2]), np.array([3, 4]), np.array([5, 6])]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_1d')
 
-        outputs = np.split(input, np.cumsum(s[:-1]) if isinstance(s,list) else s , i)
-        expect(node, inputs=[input], outputs=[output for output in outputs],
-        name='test_split_' + test_case + '_axis_' + str(i))
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=0,
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([1., 2.]), np.array([3., 4., 5., 6.])]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
+```
+
+</details>
+
+
+<details>
+<summary>2d</summary>
+
+```python
+input = np.array([[1., 2., 3., 4., 5., 6.],
+                  [7., 8., 9., 10., 11., 12.]])
+
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=1,
+    split=[3]
+)
+
+expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]), 
+                    np.array([[4., 5., 6.], [10., 11., 12.]])]  
+
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=1,
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([[1., 2.], [7. ,8.]]),
+                    np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]])]
+
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')        
 ```
 
 </details>
