@@ -226,7 +226,7 @@ def get_attribute_value(attr):
     elif len(attr.graphs):
         return list(attr.graphs)
     else:
-        raise ValueError("Unsupported ONNX attribute: {}".format(onnx_arg))
+        raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
 def make_tensor_value_info(name, elem_type, shape, doc_string=""):
