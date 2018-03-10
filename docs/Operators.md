@@ -75,6 +75,7 @@
   * <a href="#ReduceSumSquare">ReduceSumSquare</a>
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
+  * <a href="#Rsqrt">Rsqrt</a>
   * <a href="#Selu">Selu</a>
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
@@ -5663,6 +5664,44 @@ for test_name,test_shape in test_cases.items():
 ```
 
 </details>
+
+
+### <a name="Rsqrt"></a><a name="rsqrt">**Rsqrt**</a>
+
+  Reciprocal square root takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the reciprocal of square root is, y = 1 / x^0.5, is applied to
+  the tensor elementwise. If x is negative, then it will return NaN.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
