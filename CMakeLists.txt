@@ -228,9 +228,12 @@ if (WIN32)
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
     )
-    if(NOT BUILD_SHARED_LIBS)
+    if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       target_compile_options(onnx_proto PRIVATE /MT)
       target_compile_options(onnx PRIVATE /MT)
+    else()
+      target_compile_options(onnx_proto PRIVATE /MD)
+      target_compile_options(onnx PRIVATE /MD)
     endif()
     set(onnx_static_library_flags
         -IGNORE:4221 # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
