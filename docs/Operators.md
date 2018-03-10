@@ -736,10 +736,10 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Casting from strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Casting to strings and complex are not supported.</dd>
 </dl>
 
 
@@ -2319,6 +2319,50 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>globalaveragepool</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
+```
+
+</details>
+
+
+<details>
+<summary>globalaveragepool_precomputed</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[5]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
+```
+
+</details>
+
+
 ### <a name="GlobalLpPool"></a><a name="globallppool">**GlobalLpPool**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
@@ -2402,6 +2446,51 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>globalmaxpool</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
+```
+
+</details>
+
+
+<details>
+<summary>globalmaxpool_precomputed</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[9]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
+```
+
+</details>
 
 
 ### <a name="Greater"></a><a name="greater">**Greater**</a>
@@ -6132,7 +6221,7 @@ x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[:, :, 3:4]
 
 expect(node, inputs=[x], outputs=[y],
-       name='test_default_axes')
+       name='test_slice_default_axes')
 ```
 
 </details>

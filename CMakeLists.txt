@@ -4,59 +4,65 @@ cmake_minimum_required(VERSION 3.1)
 # Project
 project(onnx C CXX)
 
+option(BUILD_PYTHON "Build Python binaries" ON)
+
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
-if (WIN32)
-    # parallel build
-    add_compile_options(/MP)
-    add_compile_options(/WX)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /WX")
-    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} /WX")
-endif()
 
-# ---[ pybind11
-if (NOT TARGET pybind11)
-  add_subdirectory(third_party/pybind11)
-endif()
+set(CMAKE_MODULE_PATH "")
+list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
-# Customized version of find Protobuf. We need to avoid situations mentioned
-# in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
-# The following section is stolen from cmake/ProtoBuf.cmake in Caffe2
-find_program(PROTOBUF_PROTOC_EXECUTABLE
-  NAMES protoc
-  DOC "The Google Protocol Buffers Compiler")
-
-# Only if protoc was found, seed the include directories and libraries.
-# We assume that protoc is installed at PREFIX/bin.
-# We use get_filename_component to resolve PREFIX.
-if(PROTOBUF_PROTOC_EXECUTABLE)
-  get_filename_component(
-    _PROTOBUF_INSTALL_PREFIX
-    ${PROTOBUF_PROTOC_EXECUTABLE}
-    DIRECTORY)
-  get_filename_component(
-    _PROTOBUF_INSTALL_PREFIX
-    ${_PROTOBUF_INSTALL_PREFIX}/..
-    REALPATH)
-  find_library(PROTOBUF_LIBRARY
-    NAMES protobuf
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-    NO_DEFAULT_PATH)
-  find_library(PROTOBUF_PROTOC_LIBRARY
+if(TARGET protobuf::libprotobuf)
+  # Sometimes we need to use protoc compiled for host architecture while
+  # linking libprotobuf against target architecture. See
+  # https://github.com/caffe2/caffe2/blob/96f35ad75480b25c1a23d6e9e97bccae9f7a7f9c/cmake/ProtoBuf.cmake#L92-L99
+  if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+    message(STATUS "Using custom protoc executable")
+    set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
+  else()
+    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+  endif()
+else()
+  # Customized version of find Protobuf. We need to avoid situations mentioned
+  # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
+  # The following section is stolen from cmake/ProtoBuf.cmake in Caffe2
+  find_program(PROTOBUF_PROTOC_EXECUTABLE
     NAMES protoc
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-    NO_DEFAULT_PATH)
-  find_library(PROTOBUF_LITE_LIBRARY
-    NAMES protobuf-lite
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-    NO_DEFAULT_PATH)
-  find_path(PROTOBUF_INCLUDE_DIR
-    google/protobuf/service.h
-    PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
-    NO_DEFAULT_PATH)
-  find_package(Protobuf REQUIRED)
+    DOC "The Google Protocol Buffers Compiler")
+
+  # Only if protoc was found, seed the include directories and libraries.
+  # We assume that protoc is installed at PREFIX/bin.
+  # We use get_filename_component to resolve PREFIX.
+  if(PROTOBUF_PROTOC_EXECUTABLE)
+    set(ONNX_PROTOC_EXECUTABLE ${PROTOBUF_PROTOC_EXECUTABLE})
+    get_filename_component(
+      _PROTOBUF_INSTALL_PREFIX
+      ${PROTOBUF_PROTOC_EXECUTABLE}
+      DIRECTORY)
+    get_filename_component(
+      _PROTOBUF_INSTALL_PREFIX
+      ${_PROTOBUF_INSTALL_PREFIX}/..
+      REALPATH)
+    find_library(PROTOBUF_LIBRARY
+      NAMES protobuf
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+      NO_DEFAULT_PATH)
+    find_library(PROTOBUF_PROTOC_LIBRARY
+      NAMES protoc
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+      NO_DEFAULT_PATH)
+    find_library(PROTOBUF_LITE_LIBRARY
+      NAMES protobuf-lite
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+      NO_DEFAULT_PATH)
+    find_path(PROTOBUF_INCLUDE_DIR
+      google/protobuf/service.h
+      PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
+      NO_DEFAULT_PATH)
+    find_package(Protobuf REQUIRED)
+  endif()
 endif()
 
 # Build the libraries with -fPIC
@@ -70,7 +76,12 @@ else()
 endif()
 add_definitions(${MY_ONNX_NAMESPACE})
 
-find_package(PythonInterp REQUIRED)
+# Python command
+if ("${PYTHON_EXECUTABLE}" STREQUAL "")
+  set(PYTHON_EXE "python")
+else()
+  set(PYTHON_EXE "${PYTHON_EXECUTABLE}")
+endif()
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 # from https://github.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tensorflow/contrib/cmake/tf_core_framework.cmake
@@ -81,10 +92,10 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     return()
   endif()
 
-  if(MSVC)
-    set(DLLEXPORT_STR "dllexport_decl=ONNX_API:")
+  if(MSVC AND BUILD_SHARED_LIBS)
+    set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
   else()
-    set(DLLEXPORT_STR "")
+    set(ONNX_DLLEXPORT_STR "")
   endif()
 
   set(${SRCS})
@@ -113,12 +124,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     list(APPEND ${SRCS} "${OUTPUT_PB_SRC}")
     list(APPEND ${HDRS} "${OUTPUT_PB_HEADER}")
 
+    if(NOT EXISTS "${OUTPUT_PROTO_DIR}")
+      file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
+    endif()
+
     add_custom_command(
       OUTPUT "${GENERATED_PROTO}"
-      COMMAND mkdir
-      ARGS -p ${OUTPUT_PROTO_DIR}
-      COMMAND ${PYTHON_EXECUTABLE} ${GEN_PROTO_PY}
-      ARGS -p ${ONNX_NAMESPACE} -o ${OUTPUT_PROTO_DIR} ${FILE_WE}
+      COMMAND "${PYTHON_EXE}" "${GEN_PROTO_PY}"
+      ARGS -p "${ONNX_NAMESPACE}" -o "${OUTPUT_PROTO_DIR}" "${FILE_WE}"
       DEPENDS ${INFILE}
       COMMENT "Running gen_proto.py on ${INFILE}"
       VERBATIM )
@@ -126,8 +139,8 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     add_custom_command (
       OUTPUT "${OUTPUT_PB_SRC}"
              "${OUTPUT_PB_HEADER}"
-      COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS --cpp_out ${DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${PROTOBUF_INCLUDE_DIRS} -I ${OUTPUT_PROTO_DIR}
+      COMMAND ${ONNX_PROTOC_EXECUTABLE}
+      ARGS --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR}
       DEPENDS ${GENERATED_PROTO}
       COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
       VERBATIM )
@@ -157,47 +170,78 @@ file(GLOB_RECURSE onnx_src
 )
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-if(MSVC)
-    set(DLLEXPORT_OPTION "-DONNX_API=__declspec(dllexport)")
-else()
-    set(DLLEXPORT_OPTION "-DONNX_API=")
-endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
-target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+if(TARGET protobuf::libprotobuf)
+  target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
+else()
+  target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+endif()
 
 if(MSVC)
-    target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+  target_compile_options(onnx_proto PRIVATE /WX-)
 endif()
 
 add_library(onnx ${onnx_src})
 target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
 
-add_library(onnx_pybind "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-target_include_directories(onnx_pybind PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}" "${PYBIND11_INCLUDE_DIR}" "${PYTHON_INCLUDE_DIRS}")
-target_link_libraries(onnx_pybind PUBLIC onnx_proto onnx)
+if(BUILD_PYTHON)
+  add_library(onnx_pybind MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  target_include_directories(onnx_pybind PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}" "${PYTHON_INCLUDE_DIR}")
+
+  # pybind11 is a header only lib
+  find_package(pybind11)
+  if(pybind11_FOUND)
+    target_include_directories(onnx_pybind PRIVATE ${pybind11_INCLUDE_DIRS})
+  else()
+    target_include_directories(onnx_pybind PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+  endif()
+  target_link_libraries(onnx_pybind PRIVATE onnx_proto onnx)
+  if(WIN32)
+    target_compile_options(onnx_pybind PRIVATE
+        /MP
+        /MX
+        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+        /wd4503 # identifier' : decorated name length exceeded, name was truncated
+    )
+  endif()
+  if(APPLE)
+    set_target_properties(onnx_pybind PROPERTIES SUFFIX ".so")
+    set_target_properties(onnx_pybind PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  endif()
+endif()
 
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
 set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
 
 if (WIN32)
+    target_compile_options(onnx_proto PRIVATE
+        /MP
+        /MX
+    )
     target_compile_options(onnx PRIVATE
+        /MP
+        /MX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
     )
-    target_compile_options(onnx_pybind PRIVATE
-        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
-        /wd4503 # identifier' : decorated name length exceeded, name was truncated
-    )
+    if(${ONNX_USE_MSVC_STATIC_RUNTIME})
+      target_compile_options(onnx_proto PRIVATE /MT)
+      target_compile_options(onnx PRIVATE /MT)
+    else()
+      target_compile_options(onnx_proto PRIVATE /MD)
+      target_compile_options(onnx PRIVATE /MD)
+    endif()
     set(onnx_static_library_flags
         -IGNORE:4221 # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
 endif()
+
 if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
