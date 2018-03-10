@@ -3,7 +3,8 @@
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
-std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
+
+std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* name) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",
@@ -85,6 +86,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         "T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
   };
 }
+
 
 ONNX_OPERATOR_SCHEMA(GRU)
     .SetDoc(R"DOC(
@@ -199,5 +201,5 @@ Equations (Default: f=Sigmoid, g=Tanh):
         "- assumed to be 0",
         "T",
         OpSchema::Optional)
-    .FillUsing(RNNDocGenerator("GRU"));
+    .FillUsing(RNNDocGeneratorOld("GRU"));
 } // namespace ONNX_NAMESPACE
