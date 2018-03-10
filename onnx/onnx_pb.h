@@ -50,10 +50,12 @@
 // issue, and for anyone dependent on ONNX it will be defined as
 // ONNX_IMPORT.
 // This is a solution from https://github.com/caffe2/caffe2/blob/4f534fad1af9f77d4f0496ecd37dafb382330223/caffe2/core/common.h
+#ifndef ONNX_API
 #ifdef ONNX_BUILD_MAIN_LIB
 #define ONNX_API ONNX_EXPORT
 #else
 #define ONNX_API ONNX_IMPORT
+#endif
 #endif
 
 #ifdef ONNX_ML

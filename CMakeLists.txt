@@ -92,10 +92,10 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     return()
   endif()
 
-  if(MSVC)
-    set(DLLEXPORT_STR "dllexport_decl=ONNX_API:")
+  if(MSVC AND BUILD_SHARED_LIBS)
+    set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
   else()
-    set(DLLEXPORT_STR "")
+    set(ONNX_DLLEXPORT_STR "")
   endif()
 
   set(${SRCS})
@@ -140,7 +140,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
       OUTPUT "${OUTPUT_PB_SRC}"
              "${OUTPUT_PB_HEADER}"
       COMMAND ${ONNX_PROTOC_EXECUTABLE}
-      ARGS --cpp_out ${DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR}
+      ARGS --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR}
       DEPENDS ${GENERATED_PROTO}
       COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
       VERBATIM )
@@ -170,11 +170,6 @@ file(GLOB_RECURSE onnx_src
 )
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-if(MSVC)
-    set(DLLEXPORT_OPTION "-DONNX_API=__declspec(dllexport)")
-else()
-    set(DLLEXPORT_OPTION "-DONNX_API=")
-endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
@@ -185,7 +180,7 @@ else()
 endif()
 
 if(MSVC)
-    target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+  target_compile_options(onnx_proto PRIVATE /WX-)
 endif()
 
 add_library(onnx ${onnx_src})
@@ -233,12 +228,20 @@ if (WIN32)
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
     )
+    if(${ONNX_USE_MSVC_STATIC_RUNTIME})
+      target_compile_options(onnx_proto PRIVATE /MT)
+      target_compile_options(onnx PRIVATE /MT)
+    else()
+      target_compile_options(onnx_proto PRIVATE /MD)
+      target_compile_options(onnx PRIVATE /MD)
+    endif()
     set(onnx_static_library_flags
         -IGNORE:4221 # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
 endif()
+
 if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
