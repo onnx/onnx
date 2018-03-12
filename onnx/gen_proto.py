@@ -156,7 +156,7 @@ def convert(stem, package_name, output, do_onnx_ml=False):
         from __future__ import print_function
         from __future__ import unicode_literals
 
-        from onnx.{} import *  # noqa
+        from .{} import *  # noqa
         '''.format(os.path.splitext(os.path.basename(pb2_py))[0])))
 
 
