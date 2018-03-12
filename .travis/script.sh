@@ -34,7 +34,7 @@ cat onnx/onnx_pb.py
 # Mypy only works with Python 3
 if [ "${PYTHON_VERSION}" != "python2" ]; then
   # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-  pip install -e .
+  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
 
   time mypy .
   # Also test in python2 mode (but this is still in the python 3 CI

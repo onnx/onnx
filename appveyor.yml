@@ -37,8 +37,8 @@ build_script:
 - cmd: dir /ad /b /s
 - cmd: dir /a-d /b /s
 - cmd: cd C:\
-- cmd: dir /ad /b /s
-- cmd: dir /a-d /b /s
+- cmd: dir /ad /b /s | findstr /C:"mypy"
+- cmd: dir /a-d /b /s | findstr /C:"mypy"
 #- cmd: dir /s protoc_gen_mypy.bat
 - cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\
 - cmd: cd c:\projects\onnx
