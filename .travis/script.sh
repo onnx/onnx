@@ -33,6 +33,9 @@ cat onnx/onnx_pb.py
 
 # Mypy only works with Python 3
 if [ "${PYTHON_VERSION}" != "python2" ]; then
+  # Unfortunately, mypy only works when we install in develop mode, so let's do that
+  pip install -e .
+  
   time mypy .
   # Also test in python2 mode (but this is still in the python 3 CI
   # instance, because mypy itself needs python 3)
