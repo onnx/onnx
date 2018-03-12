@@ -206,8 +206,9 @@ class build_proto_in(ONNXCommand):
         shutil.rmtree(tmp_dir)
 
 
+gen_mypy = platform.system() != 'Windows'
 protoc_mypy_args = []
-if platform.system() == 'Windows':
+if gen_mypy:
     # Only generate mypy files for non-windows. Didn't figure out how to do it in Windows yet.
     protoc_mypy_args.extend(['--mypy_out', SRC_DIR])
 
@@ -249,6 +250,12 @@ class build_proto(ONNXCommand):
                     '--cpp_out', SRC_DIR,
                     proto
                 ])
+                if gen_mypy:
+                    # Workaround for https://github.com/dropbox/mypy-protobuf/issues/8
+                    for file in os.listdir('onnx'):
+                        if file.endswith('.pyi') and '-' in file:
+                            os.rename(os.path.join('onnx', file), os.path.join('onnx', file.replace('-', '_')))
+
 
 
 class create_version(ONNXCommand):

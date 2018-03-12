@@ -33,11 +33,6 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
   time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
 
-  # Workaround for https://github.com/dropbox/mypy-protobuf/issues/8
-  for file in `ls onnx/*-*.pyi`; do
-    mv ${file} ${file/-/_}
-  done
-
   time mypy .
   # Also test in python2 mode (but this is still in the python 3 CI
   # instance, because mypy itself needs python 3)
