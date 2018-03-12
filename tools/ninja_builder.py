@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 import os
-import setuptools
+import setuptools  # type: ignore
 import distutils
 from contextlib import contextmanager
 import subprocess
@@ -15,7 +15,7 @@ BUILD_DIR = 'build'
 # run it when run() is called.
 class NinjaBuilder(object):
     def __init__(self, name):
-        import ninja
+        import ninja  # type: ignore
         if not os.path.exists(BUILD_DIR):
             os.mkdir(BUILD_DIR)
         self.ninja_program = os.path.join(ninja.BIN_DIR, 'ninja')

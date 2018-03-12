@@ -6,8 +6,9 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import inspect
 from textwrap import dedent
+from typing import Dict, Text, List, Tuple  # noqa
 
-import numpy as np
+import numpy as np  # type: ignore
 from six import add_metaclass
 
 
@@ -21,11 +22,11 @@ def process_snippet(op_name, name, export):
     return snippet_name, dedent("\n".join(lines[2:]))
 
 
-Snippets = defaultdict(list)
+Snippets = defaultdict(list)  # type: Dict[Text, List[Tuple[Text, Text]]]
 
 
 class _Exporter(type):
-    exports = defaultdict(list)
+    exports = defaultdict(list)  # type: Dict[Text, List[Tuple[Text, Text]]]
 
     def __init__(cls, name, bases, dct):
         for k, v in dct.items():
