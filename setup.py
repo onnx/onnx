@@ -206,9 +206,10 @@ class build_proto_in(ONNXCommand):
         shutil.rmtree(tmp_dir)
 
 
-protoc_mypy_args = ['--mypy_out', SRC_DIR]
+protoc_mypy_args = []
 if platform.system() == 'Windows':
-    protoc_mypy_args.extend(['--plugin', 'protoc-gen-mypy=protoc_gen_mypy.bat'])
+    # Only generate mypy files for non-windows. Didn't figure out how to do it in Windows yet.
+    protoc_mypy_args.extend(['--mypy_out', SRC_DIR])
 
 
 class build_proto(ONNXCommand):

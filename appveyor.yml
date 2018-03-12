@@ -33,14 +33,8 @@ before_build:
 
 build_script:
 # Build and test onnx.
-- cmd: cd c:\miniconda36\lib\site-packages
-- cmd: dir /ad /b /s
-- cmd: dir /a-d /b /s
-#- cmd: dir /s protoc_gen_mypy.bat
 - cmd: C:\Miniconda36\Scripts\pip install -e c:\projects\onnx\
 - cmd: cd c:\projects\onnx
-- cmd: dir /ad /b /s
-- cmd: dir /a-d /b /s
 - cmd: C:\Miniconda36\Scripts\pytest
 - cmd: C:\Miniconda36\python onnx/defs/gen_doc.py
 - cmd: C:\Miniconda36\python onnx/gen_proto.py
