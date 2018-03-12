@@ -3,13 +3,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import pytest
+import pytest  # type: ignore
 
 import onnx
 from .coverage import Coverage
+from typing import Dict, Text, Sequence, Any
 
 _coverage = Coverage()
-_marks = {}
+_marks = {}  # type: Dict[Text, Sequence[Any]]
 
 
 def _add_mark(mark, bucket):

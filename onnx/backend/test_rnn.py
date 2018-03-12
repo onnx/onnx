@@ -10,7 +10,7 @@ from itertools import chain
 # TODO(dzhulgakov): these tests are not picked up any more and need to be fixed.
 
 """
-import numpy as np
+import numpy as np  # type: ignore
 from six.moves import zip
 
 from .test_util import N

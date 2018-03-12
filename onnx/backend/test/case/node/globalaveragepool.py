@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import itertools
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base

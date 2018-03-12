@@ -17,7 +17,7 @@ from onnx import (ValueInfoProto,
                   GraphProto,
                   ModelProto,
                   IR_VERSION)
-import onnx.onnx_cpp2py_export.checker as C
+import onnx.onnx_cpp2py_export.checker as C  # type: ignore
 import onnx.defs
 
 
