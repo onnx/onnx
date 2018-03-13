@@ -13,6 +13,7 @@ import onnx.defs  # noqa
 
 import google.protobuf.message  # type: ignore
 
+from typing import Union, Text, IO, Optional, cast
 
 # f should be either readable or a file path
 def _load_bytes(f):

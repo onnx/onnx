@@ -9,13 +9,14 @@ import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto, DenotationConstProto
+from typing import Text, Any, List
 
 import unittest
 
 
 class TestHelperAttributeFunctions(unittest.TestCase):
 
-    def test_attr_float(self):
+    def test_attr_float(self):  # type: () -> None
         # float
         attr = helper.make_attribute("float", 1.)
         self.assertEqual(attr.name, "float")
@@ -27,7 +28,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.f, 1e10)
         checker.check_attribute(attr)
 
-    def test_attr_int(self):
+    def test_attr_int(self):  # type: () -> None
         # integer
         attr = helper.make_attribute("int", 3)
         self.assertEqual(attr.name, "int")
@@ -49,7 +50,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.i, 0x1701)
         checker.check_attribute(attr)
 
-    def test_attr_doc_string(self):
+    def test_attr_doc_string(self):  # type: () -> None
         attr = helper.make_attribute("a", "value")
         self.assertEqual(attr.name, "a")
         self.assertEqual(attr.doc_string, "")
@@ -57,7 +58,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.name, "a")
         self.assertEqual(attr.doc_string, "doc")
 
-    def test_attr_string(self):
+    def test_attr_string(self):  # type: () -> None
         # bytes
         attr = helper.make_attribute("str", b"test")
         self.assertEqual(attr.name, "str")
@@ -74,25 +75,25 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.s, b"test")
         checker.check_attribute(attr)
 
-    def test_attr_repeated_float(self):
+    def test_attr_repeated_float(self):  # type: () -> None
         attr = helper.make_attribute("floats", [1.0, 2.0])
         self.assertEqual(attr.name, "floats")
         self.assertEqual(list(attr.floats), [1.0, 2.0])
         checker.check_attribute(attr)
 
-    def test_attr_repeated_int(self):
+    def test_attr_repeated_int(self):  # type: () -> None
         attr = helper.make_attribute("ints", [1, 2])
         self.assertEqual(attr.name, "ints")
         self.assertEqual(list(attr.ints), [1, 2])
         checker.check_attribute(attr)
 
-    def test_attr_repeated_str(self):
+    def test_attr_repeated_str(self):  # type: () -> None
         attr = helper.make_attribute("strings", ["str1", "str2"])
         self.assertEqual(attr.name, "strings")
         self.assertEqual(list(attr.strings), [b"str1", b"str2"])
         checker.check_attribute(attr)
 
-    def test_attr_repeated_tensor_proto(self):
+    def test_attr_repeated_tensor_proto(self):  # type: () -> None
         tensors = [
             helper.make_tensor(
                 name='a',
@@ -111,7 +112,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.tensors), tensors)
         checker.check_attribute(attr)
 
-    def test_attr_repeated_graph_proto(self):
+    def test_attr_repeated_graph_proto(self):  # type: () -> None
         graphs = [GraphProto(), GraphProto()]
         graphs[0].name = "a"
         graphs[1].name = "b"
@@ -120,7 +121,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(list(attr.graphs), graphs)
         checker.check_attribute(attr)
 
-    def test_is_attr_legal(self):
+    def test_is_attr_legal(self):  # type: () -> None
         # no name, no field
         attr = AttributeProto()
         self.assertRaises(checker.ValidationError, checker.check_attribute, attr)
@@ -135,21 +136,22 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         attr.i = 2
         self.assertRaises(checker.ValidationError, checker.check_attribute, attr)
 
-    def test_is_attr_legal_verbose(self):
+    def test_is_attr_legal_verbose(self):  # type: () -> None
+
+        def _set(attr, type, var, value):  # type: (AttributeProto, AttributeProto.AttributeType, Text, Any) -> None
+            setattr(attr, var, value)
+            setattr(attr, 'type', type)
+        def _extend(attr, type, var, value):  # type: (AttributeProto, AttributeProto.AttributeType, List[Any], Any) -> None
+            var.extend(value)
+            setattr(attr, 'type', type)
 
         SET_ATTR = [
-            (lambda attr: setattr(attr, "f", 1.0) or
-             setattr(attr, 'type', AttributeProto.FLOAT)),
-            (lambda attr: setattr(attr, "i", 1) or
-             setattr(attr, 'type', AttributeProto.INT)),
-            (lambda attr: setattr(attr, "s", b"str") or
-             setattr(attr, 'type', AttributeProto.STRING)),
-            (lambda attr: attr.floats.extend([1.0, 2.0]) or
-             setattr(attr, 'type', AttributeProto.FLOATS)),
-            (lambda attr: attr.ints.extend([1, 2]) or
-             setattr(attr, 'type', AttributeProto.INTS)),
-            (lambda attr: attr.strings.extend([b"a", b"b"]) or
-             setattr(attr, 'type', AttributeProto.STRINGS)),
+            (lambda attr: _set(attr, AttributeProto.FLOAT, "f", 1.0)),
+            (lambda attr: _set(attr, AttributeProto.INT, "i", 1)),
+            (lambda attr: _set(attr, AttributeProto.STRING, "b", b"str")),
+            (lambda attr: _extend(attr, AttributeProto.FLOATS, attr.floats, [1.0, 2.0])),
+            (lambda attr: _extend(attr, AttributeProto.INTS, attr.ints, [1, 2])),
+            (lambda attr: _extend(attr, AttributeProto.STRINGS, attr.strings, [b"a", b"b"])),
         ]
         # Randomly set one field, and the result should be legal.
         for _i in range(100):
@@ -170,7 +172,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
 
 class TestHelperNodeFunctions(unittest.TestCase):
 
-    def test_node_no_arg(self):
+    def test_node_no_arg(self):  # type: () -> None
         self.assertTrue(defs.has("Relu"))
         node_def = helper.make_node(
             "Relu", ["X"], ["Y"], name="test")
@@ -179,12 +181,12 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertEqual(list(node_def.input), ["X"])
         self.assertEqual(list(node_def.output), ["Y"])
 
-    def test_attr_doc_string(self):
+    def test_attr_doc_string(self):  # type: () -> None
         node_def = helper.make_node(
             "Relu", ["X"], ["Y"], name="test", doc_string="doc")
         self.assertEqual(node_def.doc_string, "doc")
 
-    def test_node_with_arg(self):
+    def test_node_with_arg(self):  # type: () -> None
         self.assertTrue(defs.has("Relu"))
         # Note: Relu actually does not need an arg, but let's
         # test it.
@@ -199,7 +201,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
             node_def.attribute[0],
             helper.make_attribute("arg_value", 1))
 
-    def test_graph(self):
+    def test_graph(self):  # type: () -> None
         node_def1 = helper.make_node(
             "Relu", ["X"], ["Y"])
         node_def2 = helper.make_node(
@@ -220,12 +222,12 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertEqual(graph.doc_string, "")
         self.assertEqual(graph.value_info[0], value_info[0])
 
-    def test_graph_docstring(self):
+    def test_graph_docstring(self):  # type: () -> None
         graph = helper.make_graph([], "my graph", [], [], None, "my docs")
         self.assertEqual(graph.name, "my graph")
         self.assertEqual(graph.doc_string, "my docs")
 
-    def test_model(self):
+    def test_model(self):  # type: () -> None
         node_def = helper.make_node(
             "Relu", ["X"], ["Y"])
         graph_def = helper.make_graph(
@@ -237,7 +239,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         model_def = helper.make_model(graph_def, producer_name='test')
         self.assertEqual(model_def.producer_name, 'test')
 
-    def test_model_docstring(self):
+    def test_model_docstring(self):  # type: () -> None
         graph = helper.make_graph([], "my graph", [], [])
         model_def = helper.make_model(graph, doc_string='test')
         # models may have their own documentation, but don't have a name
@@ -245,7 +247,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertFalse(hasattr(model_def, "name"))
         self.assertEqual(model_def.doc_string, 'test')
 
-    def test_model_metadata_props(self):
+    def test_model_metadata_props(self):  # type: () -> None
         graph = helper.make_graph([], "my graph", [], [])
         model_def = helper.make_model(graph, doc_string='test')
         helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
@@ -274,7 +276,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
-    def test_make_tensor(self):
+    def test_make_tensor(self):  # type: () -> None
         np_array = np.random.randn(2, 3).astype(np.float32)
 
         tensor = helper.make_tensor(
@@ -306,7 +308,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         self.assertEqual(string_list, list(tensor.string_data))
 
-    def test_make_tensor_value_info(self):
+    def test_make_tensor_value_info(self):  # type: () -> None
         vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))
         checker.check_value_info(vi)
 

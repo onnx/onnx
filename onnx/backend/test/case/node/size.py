@@ -13,7 +13,7 @@ from . import expect
 class Size(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Size',
             inputs=['x'],

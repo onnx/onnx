@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import onnx
 import onnx.onnx_cpp2py_export.defs as C
+from typing import Sequence, Any, Text
 
 
 ONNX_DOMAIN = ""
@@ -16,7 +17,7 @@ get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
 
 
-def onnx_opset_version():
+def onnx_opset_version():  # type: () -> int
     return C.schema_version_map()[ONNX_DOMAIN][1]
 
 
