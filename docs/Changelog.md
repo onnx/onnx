@@ -5809,12 +5809,12 @@ opset_import {
 
 ### <a name="Split-2"></a>**Split-2**</a>
 
-  Split a tensor into a list of tensors, along the specified
-  'axis'. Lengths of the parts can be specified using argument 'split'. If the
-  'split' argument contains only one element, and that element divides the length 
-  of split axis evenly, the tensor is split into equal sized parts with given
-  length. If the 'split' argument has more than one element, the sum of elements
-  should be equal to the length of given split axis.
+  Split a tensor into a list of tensors, along the specified 'axis'. Lengths
+  of the parts can be specified using argument 'split'. If the 'split' argument
+  contains only one element, and that element divides the length of split axis
+  evenly, the tensor is split into equal sized parts with given length. If the
+  'split' argument has more than one element, the sum of elements should be equal
+  to length of the given split axis.
 
 #### Versioning
 
