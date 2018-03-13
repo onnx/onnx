@@ -62,21 +62,15 @@ ONNX_OPERATOR_SCHEMA(Reshape)
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 
-It takes a tensor and a specified output shape (optional) as inputs and an argument `shape`
-if the output_shape is not specified. It outputs the reshaped tensor.
+It takes a tensor and a specified output shape as inputs. It outputs the reshaped tensor.
 
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
 from the input tensor).)DOC")
-    .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
-    .Input(
-        1,
-        "output_shape",
-        "Specified shape for output.",
-        "tensor(int32)",
-        OpSchema::Optional)
+    .Input(1, "shape", "Specified shape for output.", "tensor(int32)")
+    .SinceVersion(5)
     .Output(0, "reshaped", "Reshaped data.", "T")
     .TypeConstraint(
         "T",
