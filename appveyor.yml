@@ -23,16 +23,8 @@ environment:
     CONDA_PREFIX: C:\Miniconda36
 
   - ONNX_ML: 0
-    ONNXPY_DIR: C:\Python36-x64
-    CONDA_PREFIX: C:\Miniconda36-x64
-
-  - ONNX_ML: 0
     ONNXPY_DIR: C:\Python35
     CONDA_PREFIX: C:\Miniconda35
-
-  - ONNX_ML: 0
-    ONNXPY_DIR: C:\Python35-x64
-    CONDA_PREFIX: C:\Miniconda35-x64
 
   # onnx-ml
   - ONNX_ML: 1
@@ -67,10 +59,6 @@ after_test:
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
 - cmd: pip install %_wheel%
 - cmd: pytest
-
-artifacts:
-  - path: '*.whl'
-    name: ONNXWheel
 
 # commented out to avoid comments on threads
 # notifications:
