@@ -158,17 +158,6 @@ void OpSchema::Verify(const NodeProto& node) const {
       expected_type = search->second.type;
     } else if (allows_unchecked_attributes_) {
       continue;
-    } else if (name == "consumed_inputs") {
-      expected_type = AttributeProto::INTS;
-      consume_attr = &attr_proto;
-      if (attr_proto.ints().size() != node.input_size()) {
-        fail_check(
-            "Attribute consumed_inputs (length ",
-            attr_proto.ints().size(),
-            ") is not the same length as inputs (length ",
-            node.input_size(),
-            ")");
-      }
     } else {
       fail_check("Unrecognized attribute: ", name);
     }
