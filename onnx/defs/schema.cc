@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <unordered_set>
 #include "onnx/checker.h"
+#include "onnx/common/stl_backports.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -281,14 +282,14 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
 }
 
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ = [allowed_input_nums = std::move(allowed_input_nums)](int n) -> bool {
+  num_inputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ = [allowed_output_nums = std::move(allowed_output_nums)](int n) -> bool {
+  num_outputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n);
   };
   return *this;
@@ -296,7 +297,7 @@ OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
 
 OpSchema& OpSchema::AllowConsumed(
     std::function<std::pair<bool, int>(int)> inplace) {
-  consumed_ = [inplace = std::move(inplace)](int idx) {
+  consumed_ = [MOVE_CAPTURE_IF_CPP14(inplace)](int idx) {
     auto r = inplace(idx);
     return std::make_pair(
         r.first ? UseType::CONSUME_ALLOWED : UseType::DEFAULT, r.second);
@@ -305,7 +306,7 @@ OpSchema& OpSchema::AllowConsumed(
 }
 
 OpSchema& OpSchema::AllowConsumed(std::unordered_map<int, int> inplace) {
-  return AllowConsumed([inplace = std::move(inplace)](int idx) {
+  return AllowConsumed([MOVE_CAPTURE_IF_CPP14(inplace)](int idx) {
     auto it = inplace.find(idx);
     if (it != inplace.end()) {
       return std::make_pair(true, it->second);
@@ -320,7 +321,7 @@ OpSchema& OpSchema::AllowOneToOneConsumed() {
 
 OpSchema& OpSchema::EnforceConsumed(
     std::function<std::pair<bool, int>(int)> inplace) {
-  consumed_ = [inplace = std::move(inplace)](int idx) {
+  consumed_ = [MOVE_CAPTURE_IF_CPP14(inplace)](int idx) {
     auto r = inplace(idx);
     return std::make_pair(
         r.first ? UseType::CONSUME_ENFORCED : UseType::DEFAULT, r.second);
@@ -329,7 +330,7 @@ OpSchema& OpSchema::EnforceConsumed(
 }
 
 OpSchema& OpSchema::EnforceConsumed(std::unordered_map<int, int> inplace) {
-  return EnforceConsumed([inplace = std::move(inplace)](int idx) {
+  return EnforceConsumed([MOVE_CAPTURE_IF_CPP14(inplace)](int idx) {
     auto it = inplace.find(idx);
     if (it != inplace.end()) {
       return std::make_pair(true, it->second);
