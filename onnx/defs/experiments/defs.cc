@@ -383,3 +383,24 @@ Example:
       [3, 3, 4, 4]
   ]]]
 )DOC");
+
+ONNX_OPERATOR_SCHEMA(ReshapeDynamic)
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+Similar to Reshape, but the shape is provided as a second input tensor
+rather than as an argument.
+
+Note: this operator will be deprecated once https://github.com/onnx/onnx/pull/608 is merged
+)DOC")
+    .Input(0, "data", "An input tensor.", "T")
+    .Input(1, "shape", "New shape", "T1")
+    .Output(0, "reshaped", "Reshaped data.", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .TypeConstraint(
+        "T1",
+        {"tensor(int64)"},
+        "Constrains shape input to int64 tensor");
