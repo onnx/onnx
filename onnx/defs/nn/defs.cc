@@ -371,7 +371,6 @@ namespace ONNX_NAMESPACE {
 
 ONNX_OPERATOR_SCHEMA(BatchNormalization)
     .NumOutputs({ 1, 5 })
-    .EnforceConsumed({ {3, 1}, {4, 2} })
     .SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
@@ -439,7 +438,6 @@ Output case #2: Y (test mode)
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(InstanceNormalization)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
@@ -481,7 +479,6 @@ Given a matrix, apply Lp-normalization along the provided axis.
     .Attr("p", "(int64, default 2) the order of the normalization, only 1 or 2 are supported.", AttributeProto::INT, static_cast<int64_t>(2));
 
 ONNX_OPERATOR_SCHEMA(Dropout)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in

@@ -242,36 +242,6 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
-  // Check in-place settings.
-  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
-    bool consumed = consume_attr ? consume_attr->ints(in_idx) : false;
-    auto use_type = consumed_(in_idx);
-    switch (use_type.first) {
-      case UseType::DEFAULT:
-        if (consumed) {
-          fail_check(
-              "Input index ",
-              in_idx,
-              " is set to consumed but ",
-              "is not supported by op ",
-              node.op_type());
-        }
-        break;
-      case UseType::CONSUME_ENFORCED:
-        if (!consumed) {
-          fail_check(
-              "Input index ",
-              in_idx,
-              " must be set to consumed ",
-              "for operator ",
-              node.op_type());
-        }
-        break;
-      case UseType::CONSUME_ALLOWED:
-        // pass, either is allowed
-        break;
-    }
-  }
   // Phew. All verifications passed.
 }
 
@@ -292,54 +262,6 @@ OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
     return allowed_output_nums.count(n);
   };
   return *this;
-}
-
-OpSchema& OpSchema::AllowConsumed(
-    std::function<std::pair<bool, int>(int)> inplace) {
-  consumed_ = [inplace](int idx) {
-    auto r = inplace(idx);
-    return std::make_pair(
-        r.first ? UseType::CONSUME_ALLOWED : UseType::DEFAULT, r.second);
-  };
-  return *this;
-}
-
-OpSchema& OpSchema::AllowConsumed(std::unordered_map<int, int> inplace) {
-  return AllowConsumed([inplace](int idx) {
-    auto it = inplace.find(idx);
-    if (it != inplace.end()) {
-      return std::make_pair(true, it->second);
-    }
-    return std::make_pair(false, 0);
-  });
-}
-
-OpSchema& OpSchema::AllowOneToOneConsumed() {
-  return AllowConsumed([](int i) { return std::make_pair(true, i); });
-}
-
-OpSchema& OpSchema::EnforceConsumed(
-    std::function<std::pair<bool, int>(int)> inplace) {
-  consumed_ = [inplace](int idx) {
-    auto r = inplace(idx);
-    return std::make_pair(
-        r.first ? UseType::CONSUME_ENFORCED : UseType::DEFAULT, r.second);
-  };
-  return *this;
-}
-
-OpSchema& OpSchema::EnforceConsumed(std::unordered_map<int, int> inplace) {
-  return EnforceConsumed([inplace](int idx) {
-    auto it = inplace.find(idx);
-    if (it != inplace.end()) {
-      return std::make_pair(true, it->second);
-    }
-    return std::make_pair(false, 0);
-  });
-}
-
-OpSchema& OpSchema::EnforceOneToOneConsumed() {
-  return EnforceConsumed([](int i) { return std::make_pair(true, i); });
 }
 
 OpSchema& OpSchema::SetSupportLevel(SupportType support) {

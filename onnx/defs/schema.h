@@ -196,15 +196,6 @@ class OpSchema {
    */
   OpSchema& NumOutputs(std::set<int> allowed_output_nums);
 
-  // Sets the rule to allow optional in-place operation.
-  OpSchema& AllowConsumed(std::function<std::pair<bool, int>(int)> inplace);
-  OpSchema& AllowConsumed(std::unordered_map<int, int> inplace);
-  OpSchema& AllowOneToOneConsumed();
-  // Sets the rule to enforce in-place opeartion.
-  OpSchema& EnforceConsumed(std::function<std::pair<bool, int>(int)> inplace);
-  OpSchema& EnforceConsumed(std::unordered_map<int, int> inplace);
-  OpSchema& EnforceOneToOneConsumed();
-
   // Set the support level for the op schema.
   OpSchema& SetSupportLevel(SupportType supportType);
 
@@ -214,14 +205,6 @@ class OpSchema {
   // Functions to specify domain for the operator schema.
   // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
   OpSchema& SetDomain(const std::string& domain);
-
-  enum class UseType {
-    DEFAULT, // read only use of an input
-    CONSUME_ALLOWED, // allowed to be marked consumed by a "consumed_inputs"
-                     // attribute.
-    CONSUME_ENFORCED, // must be marked consumed by a "consumed_inputs"
-                      // attribute.
-  };
 
   struct Attribute {
     Attribute(
@@ -426,9 +409,6 @@ class OpSchema {
   int max_output() const {
     return max_output_;
   }
-  std::pair<UseType, int> consumed(int i) const {
-    return consumed_(i);
-  }
 
  private:
   friend class OpSchemaRegistry;
@@ -463,11 +443,6 @@ class OpSchema {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  // Is input i allowed/required to be marked consumed_
-  // If so, which output idx shares the same buffer with i
-  std::function<std::pair<UseType, int>(int)> consumed_ = [](int) {
-    return std::make_pair(UseType::DEFAULT, 0);
-  };
 };
 
 // Map type to store operator schemas. The format is,

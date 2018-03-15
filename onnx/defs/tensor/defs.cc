@@ -58,7 +58,6 @@ NOTE: Casting to and from strings is not supported yet.
         "Constrain output types. Casting to strings and complex are not supported.");
 
 ONNX_OPERATOR_SCHEMA(Reshape)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 
