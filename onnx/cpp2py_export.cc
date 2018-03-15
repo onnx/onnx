@@ -40,10 +40,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "type_constraints", &OpSchema::typeConstraintParams)
       .def_static(
           "is_infinite",
-          [](int v) { return v == std::numeric_limits<int>::max(); })
-      .def("consumed", [](const OpSchema& schema, int i) {
-        return schema.consumed(i);
-      });
+          [](int v) { return v == std::numeric_limits<int>::max(); });
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
@@ -88,11 +85,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   py::enum_<OpSchema::SupportType>(op_schema, "SupportType")
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
-
-  py::enum_<OpSchema::UseType>(op_schema, "UseType")
-      .value("DEFAULT", OpSchema::UseType::DEFAULT)
-      .value("CONSUME_ALLOWED", OpSchema::UseType::CONSUME_ALLOWED)
-      .value("CONSUME_ENFORCED", OpSchema::UseType::CONSUME_ENFORCED);
 
   defs.def("has_schema", [](const std::string& op_type) -> bool {
     return OpSchemaRegistry::Schema(op_type) != nullptr;
