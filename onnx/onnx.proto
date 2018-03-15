@@ -141,6 +141,10 @@ message ValueInfoProto {
   optional TypeProto type = 2;
   // A human-readable documentation for this value. Markdown is allowed.
   optional string doc_string = 3;
+  // scale for 8bit quantized tensor
+  optional float scale = 4;
+  // zero_point for 8bit quantized tensor
+  optional int32 zero_point = 5;
 }
 
 // NodeProto stores a node that is similar to the notion of "layer"

@@ -3,6 +3,7 @@
 
 #include "onnx/defs/schema.h"
 
+namespace ONNX_NAMESPACE {
 ONNX_OPERATOR_SCHEMA(Quantize)
     .SetDoc(R"DOC(Quantize a float tensor into a uint8 quantized tensor)DOC")
     .Input(0, "input", "Input tensor of any shape.", "T0")
@@ -28,3 +29,4 @@ ONNX_OPERATOR_SCHEMA(Dequantize)
         "T1",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to float tensors.");                
+}
