@@ -7181,7 +7181,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Sort"></a><a name="sort">**Sort**</a>
 
-  Return a sorted copy of a tensor.
+  Return a sorted copy of a tensor along the specified axis.
 
 #### Versioning
 
@@ -7197,7 +7197,7 @@ opset_import {
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Axis along which to sort</dd>
+<dd>Axis along which to sort. Default -1, to sort along the last axis.</dd>
 <dt><tt>descending</tt> : int</dt>
 <dd>(bool) If true, sort with descending order. Otherwise sort ascending.</dd>
 </dl>
@@ -7222,6 +7222,47 @@ opset_import {
 <dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
 <dd>All Tensor types</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>sort</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sort',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.sort(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_sort')
+```
+
+</details>
+
+
+<details>
+<summary>sort_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sort',
+    inputs=['x'],
+    outputs=['y', 'inverse'],
+    axis=2,
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.sort(x, axis=2)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_sort_axis')
+```
+
+</details>
 
 
 ### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
@@ -8034,7 +8075,8 @@ expect(node, inputs=[data], outputs=[transposed],
 
 ### <a name="Unique"></a><a name="unique">**Unique**</a>
 
-  Returns the unique scalar elements of the input tensor as a 1-D tensor.
+  Returns the unique scalar elements of the input tensor as a 1-D tensor. The
+  order of the elements in the output tensor is unspecified.
 
 #### Versioning
 
@@ -8075,6 +8117,47 @@ opset_import {
 <dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
 <dd>All Tensor types</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>unique</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Unique',
+    inputs=['x'],
+    outputs=['y', ''],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.unique(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_unique')
+```
+
+</details>
+
+
+<details>
+<summary>unique_return_inverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Unique',
+    inputs=['x'],
+    outputs=['y', 'inverse'],
+    return_inverse=True,
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y, inverse = np.unique(x, return_inverse=True)
+
+expect(node, inputs=[x], outputs=[y, inverse],
+       name='test_unique_return_inverse')
+```
+
+</details>
 
 
 ### <a name="Unsqueeze"></a><a name="unsqueeze">**Unsqueeze**</a>

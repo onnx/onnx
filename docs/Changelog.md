@@ -4556,7 +4556,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Sort-1"></a>**Sort-1**</a>
 
-  Return a sorted copy of a tensor.
+  Return a sorted copy of a tensor along the specified axis.
 
 #### Versioning
 
@@ -4572,7 +4572,7 @@ opset_import {
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Axis along which to sort</dd>
+<dd>Axis along which to sort. Default -1, to sort along the last axis.</dd>
 <dt><tt>descending</tt> : int</dt>
 <dd>(bool) If true, sort with descending order. Otherwise sort ascending.</dd>
 </dl>
@@ -5050,7 +5050,8 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Unique-1"></a>**Unique-1**</a>
 
-  Returns the unique scalar elements of the input tensor as a 1-D tensor.
+  Returns the unique scalar elements of the input tensor as a 1-D tensor. The
+  order of the elements in the output tensor is unspecified.
 
 #### Versioning
 

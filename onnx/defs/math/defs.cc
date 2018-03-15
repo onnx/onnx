@@ -789,7 +789,8 @@ Given two equivalent values, this operator uses the indices along the axis  as
 
 ONNX_OPERATOR_SCHEMA(Unique)
   .SetDoc(R"DOC(
-Returns the unique scalar elements of the input tensor as a 1-D tensor.
+Returns the unique scalar elements of the input tensor as a 1-D tensor. The
+order of the elements in the output tensor is unspecified.
 )DOC")
   .Input(0, "X", "Tensor to find unique elements of", "T")
   .Output(
@@ -816,13 +817,13 @@ Returns the unique scalar elements of the input tensor as a 1-D tensor.
 
 ONNX_OPERATOR_SCHEMA(Sort)
   .SetDoc(R"DOC(
-Return a sorted copy of a tensor.
+Return a sorted copy of a tensor along the specified axis.
 )DOC")
   .Input(0, "X", "Tensor to sort", "T")
   .Output(0, "Y", "Sorted result tensor. Same shape as X", "T")
   .Attr(
     "axis",
-    "Axis along which to sort",
+    "Axis along which to sort. Default -1, to sort along the last axis.",
     AttributeProto::INT,
     static_cast<int64_t>(-1))
   .Attr(
