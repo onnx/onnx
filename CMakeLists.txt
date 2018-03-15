@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 
 # Project
 project(onnx C CXX)
+option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_PYTHON "Build Python binaries" ON)
 
@@ -211,6 +212,19 @@ if(BUILD_PYTHON)
     set_target_properties(onnx_pybind PROPERTIES SUFFIX ".so")
     set_target_properties(onnx_pybind PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
   endif()
+endif()
+
+if(ONNX_BUILD_BENCHMARKS)
+  if(NOT TARGET benchmark)
+    # We will not need to test benchmark lib itself.
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing as we don't need it.")
+    # We will not need to install benchmark since we link it statically.
+    set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable benchmark install to avoid overwriting vendor install.")
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
+  endif()
+
+  add_executable(protobuf-bench tools/protobuf-bench.cc)
+  target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
 # Export include directories
