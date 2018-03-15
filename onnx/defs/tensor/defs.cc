@@ -73,8 +73,8 @@ from the input tensor).)DOC")
     .Output(0, "reshaped", "Reshaped data.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Shape)
     .SetDoc(R"DOC(
@@ -134,8 +134,8 @@ ONNX_OPERATOR_SCHEMA(Concat)
     .Output(0, "concat_result", "Concatenated tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain output types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Split)
     .SinceVersion(2)
@@ -148,8 +148,8 @@ ONNX_OPERATOR_SCHEMA(Split)
         OpSchema::Variadic)
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.")
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input types to float or uint8 tensors.")
     .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL)
     .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
@@ -219,8 +219,8 @@ Example 2:
     .Output(0, "output", "Sliced data tensor.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Transpose)
     .SetDoc(R"DOC(
@@ -238,8 +238,8 @@ will be (2, 1, 3).
     .Output(0, "transposed", "Transposed output.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Gather)
     .SetDoc(R"DOC(
@@ -301,8 +301,8 @@ Example 2:
     .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input and output types to float or uint8 tensors.")
     .TypeConstraint(
         "Tind",
         {"tensor(int32)", "tensor(int64)"},
@@ -321,8 +321,8 @@ Takes a  parameter `axes` with a list of axes to squeeze.
     .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Unsqueeze)
     .Attr(
@@ -342,8 +342,8 @@ Dimension indices in `axes` are as seen in the output tensor. For example:
     .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Pad)
     .SinceVersion(2)
@@ -391,8 +391,8 @@ Example:
     .Output(0, "output", "Tensor after padding.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(SpaceToDepth)
     .Attr(
@@ -418,8 +418,8 @@ are moved to the depth dimension.
         "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr(
@@ -446,8 +446,8 @@ and width dimensions.
         "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Tile)
     .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
@@ -461,5 +461,5 @@ ONNX_OPERATOR_SCHEMA(Tile)
     .Output(0, "output", "Output tensor of same shape and type as input.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        {"tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)"},
+        "Constrain input types to float or uint8 tensors.");
