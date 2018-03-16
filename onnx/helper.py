@@ -214,7 +214,7 @@ def get_attribute_value(attr):
     elif attr.HasField('t'):
         return attr.t
     elif attr.HasField('g'):
-        return onnn_attr.g
+        return attr.g
     elif len(attr.floats):
         return list(attr.floats)
     elif len(attr.ints):
@@ -226,7 +226,7 @@ def get_attribute_value(attr):
     elif len(attr.graphs):
         return list(attr.graphs)
     else:
-        raise ValueError("Unsupported ONNX attribute: {}".format(onnx_arg))
+        raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
 def make_tensor_value_info(name, elem_type, shape, doc_string=""):
