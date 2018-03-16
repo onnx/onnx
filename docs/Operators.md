@@ -5727,24 +5727,23 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims':[4, 2, 3],
-    'reduced_dims':[3, 8],
-    'extended_dims':[3, 2, 2, 2],
-    'one_dim':[24],
-    'negative_dim':[6, -1, 2]
+    'reordered_dims': np.array([4, 2, 3], dtype=np.int32),
+    'reduced_dims': np.array([3, 8], dtype=np.int32),
+    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int32),
+    'one_dim': np.array([24], dtype=np.int32),
+    'negative_dim': np.array([6, -1, 2], dtype=np.int32),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
-for test_name,test_shape in test_cases.items():
+for test_name, shape in test_cases.items():
     node = onnx.helper.make_node(
         'Reshape',
-        inputs=['data'],
+        inputs=['data', 'shape'],
         outputs=['reshaped'],
-        shape=test_shape,
     )
 
-    reshaped = np.reshape(data, test_shape)
-    expect(node, inputs=[data], outputs=[reshaped],
+    reshaped = np.reshape(data, shape)
+    expect(node, inputs=[data, shape], outputs=[reshaped],
        name='test_reshape_' + test_name)
 ```
 
