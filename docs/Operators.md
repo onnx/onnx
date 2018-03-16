@@ -5676,7 +5676,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Reshape the input tensor similar to numpy.reshape.
   
-  It takes a tensor and a specified output shape as inputs. It outputs the reshaped tensor.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
@@ -5700,7 +5700,7 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>shape</tt> : tensor(int32)</dt>
+<dt><tt>shape</tt> : tensor(int64)</dt>
 <dd>Specified shape for output.</dd>
 </dl>
 
@@ -5727,11 +5727,11 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims': np.array([4, 2, 3], dtype=np.int32),
-    'reduced_dims': np.array([3, 8], dtype=np.int32),
-    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int32),
-    'one_dim': np.array([24], dtype=np.int32),
-    'negative_dim': np.array([6, -1, 2], dtype=np.int32),
+    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reduced_dims': np.array([3, 8], dtype=np.int64),
+    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'one_dim': np.array([24], dtype=np.int64),
+    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 

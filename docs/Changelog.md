@@ -6041,7 +6041,7 @@ opset_import {
 
   Reshape the input tensor similar to numpy.reshape.
   
-  It takes a tensor and a specified output shape as inputs. It outputs the reshaped tensor.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
@@ -6063,7 +6063,7 @@ opset_import {
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
-<dt><tt>shape</tt> : tensor(int32)</dt>
+<dt><tt>shape</tt> : tensor(int64)</dt>
 <dd>Specified shape for output.</dd>
 </dl>
 
