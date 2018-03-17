@@ -12,22 +12,26 @@ OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
     const DataTypeSet& allowed_type_set,
     const std::string& type_str,
-    const std::string& description,
+    const char* description,
     FormalParameterOption param_option)
     : name_(name),
       type_set_(allowed_type_set),
       type_str_(type_str),
+#ifndef ONNX_STRIP_DOCS
       description_(description),
+#endif
       param_option_(param_option) {}
 
 OpSchema::FormalParameter::FormalParameter(
     const std::string& name,
-    const std::string& description,
+    const char* description,
     const std::string& type_str,
     FormalParameterOption param_option)
     : name_(name),
       type_str_(type_str),
+#ifndef ONNX_STRIP_DOCS
       description_(description),
+#endif
       param_option_(param_option) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
@@ -46,8 +50,12 @@ const std::string& OpSchema::FormalParameter::GetTypeStr() const {
   return type_str_;
 }
 
-const std::string& OpSchema::FormalParameter::GetDescription() const {
+const char* OpSchema::FormalParameter::GetDescription() const {
+#ifndef ONNX_STRIP_DOCS
   return description_;
+#else
+  return "";
+#endif
 }
 
 OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
@@ -346,9 +354,10 @@ OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   support_ = support;
   return *this;
 }
-
-OpSchema& OpSchema::SetDoc(const std::string& doc) {
+OpSchema& OpSchema::SetDoc(const char* doc) {
+#ifndef ONNX_STRIP_DOCS
   doc_ = doc;
+#endif
   return *this;
 }
 
@@ -364,7 +373,7 @@ OpSchema& OpSchema::Attr(const Attribute& attr) {
 
 OpSchema& OpSchema::Attr(
     const std::string& name,
-    const std::string& description,
+    const char* description,
     AttributeProto::AttributeType type,
     bool required) {
   Attr(Attribute{name, description, type, required});
@@ -374,7 +383,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype) \
   OpSchema& OpSchema::Attr(                                  \
       const std::string& name,                               \
-      const std::string& description,                        \
+      const char* description,                               \
       AttributeProto::AttributeType attr_type,               \
       const type& default_value) {                           \
     if (attrtype != attr_type) {                             \
@@ -392,7 +401,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_LIST_VALUE(type, field, attrtype)   \
   OpSchema& OpSchema::Attr(                                  \
       const std::string& name,                               \
-      const std::string& description,                        \
+      const char* description,                               \
       AttributeProto::AttributeType attr_type,               \
       const std::vector<type>& default_value) {              \
     if (attrtype != attr_type) {                             \
@@ -412,7 +421,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype) \
   OpSchema& OpSchema::Attr(                                         \
       const std::string& name,                                      \
-      const std::string& description,                               \
+      const char* description,                                      \
       AttributeProto::AttributeType attr_type,                      \
       const type& default_value) {                                  \
     if (attrtype != attr_type) {                                    \
@@ -430,7 +439,7 @@ OpSchema& OpSchema::Attr(
 #define ATTR_SETTER_WITH_LIST_COMPLEXVALUE(type, field, attrtype) \
   OpSchema& OpSchema::Attr(                                       \
       const std::string& name,                                    \
-      const std::string& description,                             \
+      const char* description,                                    \
       AttributeProto::AttributeType attr_type,                    \
       const std::vector<type>& default_value) {                   \
     if (attrtype != attr_type) {                                  \
@@ -472,7 +481,7 @@ OpSchema& OpSchema::AllowUncheckedAttributes() {
 OpSchema& OpSchema::Input(
     const int n,
     const std::string& name,
-    const std::string& description,
+    const char* description,
     const std::string& type_str,
     OpSchema::FormalParameterOption param_option) {
   if (int(inputs_.size()) <= n) {
@@ -485,7 +494,7 @@ OpSchema& OpSchema::Input(
 OpSchema& OpSchema::Output(
     const int n,
     const std::string& name,
-    const std::string& description,
+    const char* description,
     const std::string& type_str,
     OpSchema::FormalParameterOption param_option) {
   if (int(outputs_.size()) <= n) {
@@ -498,7 +507,7 @@ OpSchema& OpSchema::Output(
 OpSchema& OpSchema::TypeConstraint(
     const std::string& type_str,
     const std::vector<std::string>& constraints,
-    const std::string& description) {
+    const char* description) {
   assert(type_constraints_.end() == type_constraints_.find(type_str));
   DataTypeSet d;
   for (const auto& t : constraints) {
@@ -603,7 +612,10 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   if (!schema.attributes_.empty()) {
     out << "Attributes:" << std::endl;
     for (const auto& pair : schema.attributes_) {
-      out << "  " << pair.second.name << " : " << pair.second.description
+      out << "  " << pair.second.name << " : "
+#ifndef ONNX_STRIP_DOCS
+          << pair.second.description
+#endif ONNX_STRIP_DOCS
           << std::endl;
     }
   }
@@ -613,10 +625,10 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
       for (size_t i = 0; i < schema.inputs_.size(); ++i) {
         const auto& p = schema.inputs_[i];
         auto& name = p.GetName();
-        auto& description = p.GetDescription();
+        auto* description = p.GetDescription();
         auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
+            << (std::string("") != description ? description : "(no doc)") << " : "
             << ("" != type_str ? type_str : "(no type)") << std::endl;
       }
     } else {
@@ -629,10 +641,10 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
       for (size_t i = 0; i < schema.outputs_.size(); ++i) {
         const auto& p = schema.outputs_[i];
         auto& name = p.GetName();
-        auto& description = p.GetDescription();
+        auto* description = p.GetDescription();
         auto& type_str = p.GetTypeStr();
         out << "  " << i << ", " << ("" != name ? name : "(unnamed)") << " : "
-            << ("" != description ? description : "(no doc)") << " : "
+            << (std::string("") != description ? description : "(no doc)") << " : "
             << ("" != type_str ? type_str : "(no type)") << std::endl;
       }
     } else {

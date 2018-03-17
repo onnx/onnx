@@ -16,7 +16,7 @@ the resulted tensor have the reduced dimension pruned.
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
 False instead of True.)DOC";
         ReplaceAll(doc, "{name}", name);
-        schema.SetDoc(doc);
+        schema.SetDoc(doc.c_str());
         schema.Attr("axes",
                     "A list of integers, along which to reduce.",
                     AttributeProto::INTS,
@@ -31,7 +31,7 @@ False instead of True.)DOC";
             "Constrain input and output types to float tensors.");
     };
 }
-  
+
 ONNX_OPERATOR_SCHEMA(ReduceMax)
     .FillUsing(ReduceDocGenerator("max"));
 
@@ -70,12 +70,12 @@ namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         std::string doc = R"DOC(
-Computes the indices of the {name} elements of the input tensor's element along the 
+Computes the indices of the {name} elements of the input tensor's element along the
 provided axis. The resulted tensor has the same rank as the input if keepdims equal 1.
-If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
+If keepdims equal 0, then the resulted tensor have the reduced dimension pruned.
 The type of the output tensor is integer.)DOC";
         ReplaceAll(doc, "{name}", name);
-        schema.SetDoc(doc);
+        schema.SetDoc(doc.c_str());
         schema.Attr("axis",
                     "The axis in which to compute the arg indices",
                     AttributeProto::INT,

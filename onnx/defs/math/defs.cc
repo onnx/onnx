@@ -34,7 +34,7 @@ Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc);
-    schema.SetDoc(doc);
+    schema.SetDoc(doc.c_str());
     schema.Attr("broadcast",
                 "Pass 1 to enable broadcasting",
                 AttributeProto::INT,
@@ -79,7 +79,7 @@ will throw errors.
 )DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{description}", description);
-    schema.SetDoc(doc);
+    schema.SetDoc(doc.c_str());
     schema.Attr("axis",
         "(int) default to 1; describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
@@ -290,12 +290,17 @@ Calculates the hyperbolic tangent of the given input tensor element-wise.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
-ONNX_OPERATOR_SCHEMA(Pow)
-    .SetDoc(R"DOC(
+std::string &getPowDoc() {
+  static std::string powDoc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
-)DOC" + std::string(kBroadcastDoc))
+)DOC" + std::string(kBroadcastDoc);
+  return powDoc;
+}
+
+ONNX_OPERATOR_SCHEMA(Pow)
+    .SetDoc(getPowDoc().c_str())
     .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
     .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, "
                    "the exponent component.", "T")

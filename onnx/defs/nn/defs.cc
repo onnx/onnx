@@ -31,7 +31,7 @@ namespace ONNX_NAMESPACE {
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
@@ -84,7 +84,7 @@ namespace ONNX_NAMESPACE {
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
             schema.SinceVersion(2);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
@@ -135,7 +135,7 @@ namespace ONNX_NAMESPACE {
  apply {name} pooling across each RoI, to produce output 4-D tensor of shape
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
             ReplaceAll(doc, "{name}", name);
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
             schema.Attr("pooled_shape",
                         "ROI pool output shape (height, width).",
                         AttributeProto::INTS);
@@ -173,7 +173,7 @@ namespace ONNX_NAMESPACE {
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; "
@@ -234,7 +234,7 @@ namespace ONNX_NAMESPACE {
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; has size (N x C x H x W)"
@@ -306,7 +306,7 @@ namespace ONNX_NAMESPACE {
  equal to the spatial dimension of input tensor.)DOC";
             ReplaceAll(doc, "{op_type}", op_type);
             ReplaceAll(doc, "{op}", op);
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -322,7 +322,7 @@ namespace ONNX_NAMESPACE {
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
         };
     }
   ONNX_OPERATOR_SCHEMA(GlobalAveragePool)
@@ -340,7 +340,7 @@ namespace ONNX_NAMESPACE {
  equal to the spatial dimension of input tensor.)DOC";
             ReplaceAll(doc, "{op_type}", op_type);
             ReplaceAll(doc, "{op}", op);
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
             schema.SinceVersion(2);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
@@ -361,7 +361,7 @@ namespace ONNX_NAMESPACE {
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
         };
     }
 
