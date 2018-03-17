@@ -9,6 +9,7 @@ namespace ONNX_NAMESPACE {
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
         std::string doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B`.
@@ -18,6 +19,9 @@ to match the shape of left-hand-side argument. See the doc of `Add` for a
 detailed description of the broadcasting rules.
 )DOC";
         ReplaceAll(doc, "{name}", name);
+#else
+        std::string doc = "";
+#endif
         schema.SetDoc(doc.c_str());
         schema.Attr("broadcast", "Enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));
         schema.Attr("axis", "If set, defines the broadcast dimensions.",

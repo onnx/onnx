@@ -236,7 +236,7 @@ class OpSchema {
           description(description_),
 #else
           description(""),
-#endif ONNX_STRIP_DOCS
+#endif
           type(type_),
           required(required_) {}
 

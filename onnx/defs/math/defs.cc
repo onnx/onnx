@@ -8,6 +8,7 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
+#ifndef ONNX_STRIP_DOCS
 const char* kBroadcastDoc = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
@@ -26,14 +27,21 @@ For example, the following tensor shapes are supported (with broadcast=1):
 
 Attribute `broadcast=1` needs to be passed to enable broadcasting.
 )DOC";
+#else
+const char* kBroadcastDoc = "";
+#endif
 
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
     std::string doc = R"DOC(
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc);
+#else
+    std::string doc = "";
+#endif
     schema.SetDoc(doc.c_str());
     schema.Attr("broadcast",
                 "Pass 1 to enable broadcasting",
@@ -60,6 +68,7 @@ Performs element-wise binary {name} (with limited broadcast support).
 
 std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(const char* name, const char* description) {
   return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
     std::string doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
  of the given input. The input is a 2-D tensor (Tensor<float>) of size
@@ -79,6 +88,9 @@ will throw errors.
 )DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{description}", description);
+#else
+    std::string doc = "";
+#endif
     schema.SetDoc(doc.c_str());
     schema.Attr("axis",
         "(int) default to 1; describes the axis of the inputs when coerced "
@@ -291,11 +303,15 @@ Calculates the hyperbolic tangent of the given input tensor element-wise.
         "Constrain input and output types to float tensors.");
 
 std::string &getPowDoc() {
+#ifndef ONNX_STRIP_DOCS
   static std::string powDoc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC" + std::string(kBroadcastDoc);
+#else
+  static std::string powDoc = "";
+#endif
   return powDoc;
 }
 

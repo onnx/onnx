@@ -354,6 +354,7 @@ OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   support_ = support;
   return *this;
 }
+
 OpSchema& OpSchema::SetDoc(const char* doc) {
 #ifndef ONNX_STRIP_DOCS
   doc_ = doc;
