@@ -17,19 +17,14 @@ environment:
     ONNX_NAMESPACE: ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
   matrix:
-  # onnx
-  - ONNX_ML: 0
-    ONNXPY_DIR: C:\Python36
-    CONDA_PREFIX: C:\Miniconda36
-
-  - ONNX_ML: 0
-    ONNXPY_DIR: C:\Python35
-    CONDA_PREFIX: C:\Miniconda35
-
   # onnx-ml
   - ONNX_ML: 1
     ONNXPY_DIR: C:\Python36
     CONDA_PREFIX: C:\Miniconda36
+
+  - ONNX_ML: 1
+    ONNXPY_DIR: C:\Python35
+    CONDA_PREFIX: C:\Miniconda35
 
 install:
 - cmd: git submodule update --init --recursive
@@ -41,8 +36,10 @@ before_build:
 
 build_script:
 # Build and test onnx.
-- cmd: pip install -e c:\projects\onnx\
 - cmd: cd c:\projects\onnx
+- cmd: python setup.py bdist_wheel --universal --dist-dir .
+- cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
+- cmd: pip install %_wheel%
 - cmd: pytest
 - cmd: python onnx/defs/gen_doc.py
 - cmd: python onnx/gen_proto.py
@@ -53,12 +50,6 @@ build_script:
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
-after_test:
-- cmd: python setup.py bdist_wheel --universal --dist-dir .
-- cmd: pip uninstall -y onnx
-- cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
-- cmd: pip install %_wheel%
-- cmd: pytest
 
 # commented out to avoid comments on threads
 # notifications:
