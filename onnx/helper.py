@@ -473,11 +473,3 @@ def strip_doc_string(proto):
                     strip_doc_string(x)
             elif proto.HasField(descriptor.name):
                 strip_doc_string(getattr(proto, descriptor.name))
-
-class StandardDenotation(object):
-    DATA_BATCH = "DATA_BATCH"
-    DATA_CHANNEL = "DATA_CHANNEL"
-    DATA_SPATIAL = "DATA_SPATIAL"
-    FILTER_IN_CHANNEL = "FILTER_IN_CHANNEL"
-    FILTER_OUT_CHANNEL = "FILTER_OUT_CHANNEL"
-    FILTER_SPATIAL = "FILTER_SPATIAL"
