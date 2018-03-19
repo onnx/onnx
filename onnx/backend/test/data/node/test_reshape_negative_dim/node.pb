@@ -1,3 +1,3 @@
 
-datareshaped"Reshape*
-shape@@ÿÿÿÿÿÿÿÿÿ@ 
+data
+shapereshaped"Reshape
