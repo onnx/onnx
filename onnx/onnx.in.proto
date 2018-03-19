@@ -385,6 +385,10 @@ message TensorShapeProto {
     optional string standard_denotation = 3;
   };
   repeated Dimension dim = 1;
+
+  // A set of pre-defined constants to be used as values for
+  // the standard denotation field for semantic description of
+  // the tensor dimension.
   optional string DATA_BATCH = 2 [default = "DATA_BATCH"];
   optional string DATA_CHANNEL = 3 [default = "DATA_CHANNEL"];
   optional string DATA_TIME = 4 [default = "DATA_TIME"];

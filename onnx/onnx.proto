@@ -388,7 +388,6 @@ message TensorShapeProto {
     // dimensions with standard semantic descriptions to ensure
     // that operations are applied to the correct axis of a tensor.
     optional string standard_denotation = 3;
-
   };
   repeated Dimension dim = 1;
 
