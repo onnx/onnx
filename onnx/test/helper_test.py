@@ -8,7 +8,7 @@ import random
 import numpy as np
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx import AttributeProto, TensorProto, GraphProto
+from onnx import AttributeProto, TensorProto, GraphProto, TensorShapeProto
 
 import unittest
 
@@ -249,10 +249,12 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_shape_denotation(self):
-        shape_denotation = [helper.StandardDenotation.DATA_BATCH,
-                            helper.StandardDenotation.DATA_CHANNEL,
-                            helper.StandardDenotation.DATA_SPATIAL,
-                            helper.StandardDenotation.DATA_SPATIAL]
+        default_instance = TensorShapeProto()
+
+        shape_denotation = [TensorShapeProto().DATA_BATCH,
+                            TensorShapeProto().DATA_CHANNEL,
+                            TensorShapeProto().DATA_FEATURE,
+                            TensorShapeProto().DATA_FEATURE]
         tensor = helper.make_tensor_value_info("X",
                                                 TensorProto.FLOAT,
                                                 [2, 2, 2, 2],
