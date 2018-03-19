@@ -31,6 +31,7 @@ class Runner(object):
         self._parent_module = parent_module
         self._include_patterns = set()
         self._exclude_patterns = set()
+        self._tolerance_patterns = set()
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
@@ -66,6 +67,10 @@ class Runner(object):
 
     def exclude(self, pattern):
         self._exclude_patterns.add(re.compile(pattern))
+        return self
+
+    def tolerance(self, pattern, rtol, atol):
+        self._tolerance_patterns.add((re.compile(pattern), rtol, atol))
         return self
 
     def enable_report(self):
@@ -141,14 +146,14 @@ class Runner(object):
         return tests
 
     @staticmethod
-    def _assert_similar_outputs(ref_outputs, outputs):
+    def _assert_similar_outputs(ref_outputs, outputs, rtol, atol):
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
-                rtol=1e-3,
-                atol=1e-7)
+                rtol,
+                atol)
 
     def _prepare_model_data(self, model_test):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
@@ -228,6 +233,7 @@ class Runner(object):
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             prepared_model = self.backend.prepare(model, device)
+            (rtol, atol) = self._tolerance(model_test.name)
 
             # TODO after converting all npz files to protobuf, we can delete this.
             for test_data_npz in glob.glob(
@@ -236,7 +242,7 @@ class Runner(object):
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
-                self._assert_similar_outputs(ref_outputs, outputs)
+                self._assert_similar_outputs(ref_outputs, outputs, rtol, atol)
 
             for test_data_dir in glob.glob(
                     os.path.join(model_dir, "test_data_set*")):
@@ -257,9 +263,17 @@ class Runner(object):
                         tensor.ParseFromString(f.read())
                     ref_outputs.append(numpy_helper.to_array(tensor))
                 outputs = list(prepared_model.run(inputs))
-                self._assert_similar_outputs(ref_outputs, outputs)
+                self._assert_similar_outputs(ref_outputs, outputs, rtol, atol)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
+
+    def _tolerance(self, name):
+        for pattern, rtol, atol in self._tolerance_patterns:
+            if pattern.search(name):
+                return (rtol, atol)
+        rtol = 1e-3
+        atol = 1e-7
+        return (rtol, atol)
 
     def _add_node_test(self, node_test):
 
