@@ -147,7 +147,8 @@ class Runner(object):
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
-                rtol=1e-3)
+                rtol=1e-3,
+                atol=1e-7)
 
     def _prepare_model_data(self, model_test):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
