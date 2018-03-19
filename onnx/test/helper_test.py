@@ -249,8 +249,6 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
     def test_shape_denotation(self):
-        default_instance = TensorShapeProto()
-
         shape_denotation = [TensorShapeProto().DATA_BATCH,
                             TensorShapeProto().DATA_CHANNEL,
                             TensorShapeProto().DATA_FEATURE,
