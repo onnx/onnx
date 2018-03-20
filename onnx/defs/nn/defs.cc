@@ -21,7 +21,7 @@ namespace ONNX_NAMESPACE {
 }
 
 namespace ONNX_NAMESPACE {
-    std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
+    std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName, const char* additionalDescription) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across the
@@ -44,9 +44,11 @@ namespace ONNX_NAMESPACE {
  ```
  pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
  ```
+ {additionalDescription}
  )DOC";
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);
+            ReplaceAll(doc, "{additionalDescription}", additionalDescription);
             schema.SetDoc(doc);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
@@ -83,10 +85,12 @@ namespace ONNX_NAMESPACE {
     }
 
     ONNX_OPERATOR_SCHEMA(AveragePool)
-        .FillUsing(PoolOpSchemaGenerator("AveragePool", "average"));
+        .FillUsing(PoolOpSchemaGenerator("AveragePool", "average",
+        "The output of each pooling window is divided by the number of elements exclude pad."
+        ));
 
     ONNX_OPERATOR_SCHEMA(MaxPool)
-        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
+        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max", ""));
 
 } // namespace ONNX_NAMESPACE
 
