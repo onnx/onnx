@@ -229,8 +229,7 @@ private:
   template<typename T>
   typename T::ValueType & get(Symbol name) const {
     auto it = find(name, true);
-    T* child = dynamic_cast<T*>(it->get());
-    ONNX_ASSERT(child != nullptr);
+    T* child = static_cast<T*>(it->get());
     return child->value();
   }
   using AVPtr = AttributeValue::Ptr;
