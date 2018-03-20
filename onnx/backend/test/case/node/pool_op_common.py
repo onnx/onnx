@@ -23,7 +23,7 @@ def get_output_shape(auto_pad, input_spatial_shape, kernel_spatial_shape, stride
         np.ceil(float(input_spatial_shape[i] - (kernel_spatial_shape[i] - 1)) / float(strides_spatial[i])))
   return out_shape
 
-def pool(padded, x_shape, kernel_shape, strides_shape, out_shape, pad_shape):
+def pool(padded, x_shape, kernel_shape, strides_shape, out_shape, pad_shape, pooling_type):
   spatial_size = len(x_shape) - 2
   y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))
 
@@ -38,6 +38,11 @@ def pool(padded, x_shape, kernel_shape, strides_shape, out_shape, pad_shape):
         *[range(strides_shape[i] * shape[i + 2], strides_shape[i] * shape[i + 2] + kernel_shape[i]) for i in
           range(spatial_size)])
     )])
-    average = np.average(window_vals[np.where(~np.isnan(window_vals))])
-    y[shape] = average
+    if pooling_type == 'AVG':
+      f = np.average
+    elif pooling_type == 'MAX':
+      f = np.max
+    else:
+      raise NotImplementedError('Pooling type {} does not support. Should be AVG, MAX'.format(pooling_type))
+    y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
   return y.astype(np.float32)
