@@ -7,7 +7,7 @@
 
 namespace ONNX_NAMESPACE {
 
-struct Tensor {
+struct Tensor final {
 private:
   bool is_segment_;
   int64_t segment_begin_;
@@ -104,9 +104,9 @@ public:
     return raw_data_;
   }
 
-  void set_raw_data(const std::string& raw_data) {
+  void set_raw_data(std::string raw_data) {
     is_raw_data_ = true;
-    raw_data_ = raw_data;
+    raw_data_ = std::move(raw_data);
   }
 
   bool is_segment() const {
@@ -135,9 +135,9 @@ public:
     return name_;
   }
 
-  void setName(const std::string& name) {
+  void setName(std::string name) {
     has_name_ = true;
-    name_ = name;
+    name_ = std::move(name);
   }
 };
 
