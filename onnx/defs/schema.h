@@ -72,12 +72,12 @@ class OpSchema {
         const std::string& name,
         const DataTypeSet& type_set,
         const std::string& type_str,
-        const std::string& description,
+        const char* description,
         FormalParameterOption param_option = Single);
 
     explicit FormalParameter(
         const std::string& name,
-        const std::string& description,
+        const char* description,
         const std::string& type_str,
         FormalParameterOption param_option = Single);
 
@@ -91,7 +91,7 @@ class OpSchema {
     const std::string& GetTypeStr() const;
 
     // Get formal parameter description.
-    const std::string& GetDescription() const;
+    const char* GetDescription() const;
 
     // Get the parameter option, it could be Single, Optional or Variadic.
     FormalParameterOption GetOption() const;
@@ -114,7 +114,9 @@ class OpSchema {
     std::string type_str_;
 
     // Formal parameter description.
-    std::string description_;
+#ifndef ONNX_STRIP_DOCS
+    const char* description_;
+#endif
 
     // Formal parameter option.
     FormalParameterOption param_option_;
@@ -209,7 +211,7 @@ class OpSchema {
   OpSchema& SetSupportLevel(SupportType supportType);
 
   // Functions to do documentation for the operator schema.
-  OpSchema& SetDoc(const std::string& doc);
+  OpSchema& SetDoc(const char* doc);
 
   // Functions to specify domain for the operator schema.
   // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
@@ -226,26 +228,34 @@ class OpSchema {
   struct Attribute {
     Attribute(
         const std::string& name_,
-        const std::string& description_,
+        const char* description_,
         AttributeProto::AttributeType type_,
         bool required_)
         : name(name_),
+#ifndef ONNX_STRIP_DOCS
           description(description_),
+#else
+          description(""),
+#endif
           type(type_),
           required(required_) {}
 
     Attribute(
         const std::string& name_,
-        const std::string& description_,
+        const char* description_,
         AttributeProto default_value_)
         : name(name_),
+#ifndef ONNX_STRIP_DOCS
           description(description_),
+#else
+          description(""),
+#endif
           type(default_value_.type()),
           required(false),
           default_value(default_value_) {}
 
     const std::string name;
-    const std::string description;
+    const char* description;
     AttributeProto::AttributeType type;
     bool required;
     AttributeProto default_value;
@@ -257,12 +267,12 @@ class OpSchema {
 #define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName) \
   OpSchema& Attr(                                \
       const std::string& name,                   \
-      const std::string& description,            \
+      const char* description,                   \
       AttributeProto::AttributeType type,        \
       const TypeName& defaultValue);             \
   OpSchema& Attr(                                \
       const std::string& name,                   \
-      const std::string& description,            \
+      const char* description,                   \
       AttributeProto::AttributeType type,        \
       const std::vector<TypeName>& defaultValue);
 
@@ -275,7 +285,7 @@ class OpSchema {
   // Register "required" attribute without default value.
   OpSchema& Attr(
       const std::string& name,
-      const std::string& description,
+      const char* description,
       AttributeProto::AttributeType type,
       bool required = true);
   OpSchema& AllowUncheckedAttributes();
@@ -285,18 +295,22 @@ class OpSchema {
     TypeConstraintParam(
         const std::string& type_param_str_,
         const std::vector<std::string>& allowed_type_strs_,
-        const std::string& description_)
+        const char* description_)
         : type_param_str(type_param_str_),
-          allowed_type_strs(allowed_type_strs_),
-          description(description_) {}
+#ifndef ONNX_STRIP_DOCS
+          description(description_),
+#else
+          description(""),
+#endif
+          allowed_type_strs(allowed_type_strs_) {}
 
     // Type parameter string, for example, "T", "T1", etc.
     std::string type_param_str;
+    // Type parameter description.
+    const char* description;
     // Allowed type strings for <*this> type parameter, for example,
     // "tensor(float)".
     std::vector<std::string> allowed_type_strs;
-    // Type parameter description.
-    std::string description;
   };
 
   // Grammar for type strings used in Input(), Output().
@@ -328,19 +342,19 @@ class OpSchema {
   OpSchema& Input(
       const int n,
       const std::string& name,
-      const std::string& description,
+      const char* description,
       const std::string& type_str,
       FormalParameterOption param_option = Single);
   OpSchema& Output(
       const int n,
       const std::string& name,
-      const std::string& description,
+      const char* description,
       const std::string& type_str,
       FormalParameterOption param_option = Single);
   OpSchema& TypeConstraint(
       const std::string& type_str,
       const std::vector<std::string>& constraints,
-      const std::string& description);
+      const char* description);
 
   // Convenience members for types
   static const std::vector<std::string>& all_integral_types() {

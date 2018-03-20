@@ -5,6 +5,7 @@
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
+#ifndef ONNX_STRIP_DOCS
     static std::string pads_doc = "Padding for the beginning and ending along each axis, it can take any value greater "
                                   "than or equal to 0. The value represent the number of pixels added to the beginning "
                                   "and end part of the corresponding axis. `pads` format should be as follow "
@@ -18,11 +19,16 @@ namespace ONNX_NAMESPACE {
                                       "beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
                                       "only intended to support legacy uses, and for framework authors, one is explicitly "
                                       "encouraged to use explicit padding specified in the pads attribute.";
+#else
+    static std::string pads_doc = "";
+    static std::string auto_pad_doc = "";
+#endif
 }
 
 namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
         return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
             std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -31,7 +37,10 @@ namespace ONNX_NAMESPACE {
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);
-            schema.SetDoc(doc);
+#else
+            std::string doc = "";
+#endif
+            schema.SetDoc(doc.c_str());
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
                         AttributeProto::INTS);
@@ -77,6 +86,7 @@ namespace ONNX_NAMESPACE {
 namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
             std::string doc = R"DOC(
  {name} consumes an input tensor X and applies Lp pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
@@ -84,7 +94,10 @@ namespace ONNX_NAMESPACE {
  of the input tensor according to the kernel size and downsampling the
  data into the output tensor Y for further processing.)DOC";
             ReplaceAll(doc, "{name}", name);
-            schema.SetDoc(doc);
+#else
+            std::string doc = "";
+#endif
+            schema.SetDoc(doc.c_str());
             schema.SinceVersion(2);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
@@ -130,12 +143,16 @@ namespace ONNX_NAMESPACE {
 namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
             std::string doc = R"DOC(
  ROI {name} pool consumes an input tensor X and region of interests (RoIs) to
  apply {name} pooling across each RoI, to produce output 4-D tensor of shape
  (num_rois, channels, pooled_shape[0], pooled_shape[1]).)DOC";
             ReplaceAll(doc, "{name}", name);
-            schema.SetDoc(doc);
+#else
+            std::string doc = "";
+#endif
+            schema.SetDoc(doc.c_str());
             schema.Attr("pooled_shape",
                         "ROI pool output shape (height, width).",
                         AttributeProto::INTS);
@@ -169,11 +186,15 @@ namespace ONNX_NAMESPACE {
 namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
         return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
             std::string doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
-            schema.SetDoc(doc);
+#else
+            std::string doc = "";
+#endif
+            schema.SetDoc(doc.c_str());
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; "
@@ -230,11 +251,15 @@ computes the output.)DOC";
 namespace ONNX_NAMESPACE {
     std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(const char* filter_desc) {
         return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
             std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output.)DOC";
             ReplaceAll(doc, "{filter_desc}", filter_desc);
-            schema.SetDoc(doc);
+#else
+            std::string doc = "";
+#endif
+            schema.SetDoc(doc.c_str());
             schema.Input(0,
                          "X",
                          "Input data tensor from previous layer; has size (N x C x H x W)"
@@ -300,13 +325,17 @@ and computes the output.)DOC";
 namespace ONNX_NAMESPACE {
   std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(const char* op_type, const char* op) {
         return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
             std::string doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across the
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
             ReplaceAll(doc, "{op_type}", op_type);
             ReplaceAll(doc, "{op}", op);
-            schema.SetDoc(doc);
+#else
+            std::string doc = "";
+#endif
+            schema.SetDoc(doc.c_str());
             schema.Input(0,
                          "X",
                          "Input data tensor from the previous operator; "
@@ -322,7 +351,7 @@ namespace ONNX_NAMESPACE {
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
         };
     }
   ONNX_OPERATOR_SCHEMA(GlobalAveragePool)
@@ -334,13 +363,17 @@ namespace ONNX_NAMESPACE {
 namespace ONNX_NAMESPACE {
   std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(const char* op_type, const char* op) {
         return [=](OpSchema& schema) {
+#ifndef ONNX_STRIP_DOCS
             std::string doc = R"DOC(
  Global{op_type} consumes an input tensor X and applies {op} pooling across the
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
             ReplaceAll(doc, "{op_type}", op_type);
             ReplaceAll(doc, "{op}", op);
-            schema.SetDoc(doc);
+#else
+            std::string doc = "";
+#endif
+            schema.SetDoc(doc.c_str());
             schema.SinceVersion(2);
             schema.Attr("p",
                         "p value of the Lp norm used to pool over the input data, default is 2.",
@@ -361,7 +394,7 @@ namespace ONNX_NAMESPACE {
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
             schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                 "Constrain input and output types to float tensors.");
-            schema.SetDoc(doc);
+            schema.SetDoc(doc.c_str());
         };
     }
 
