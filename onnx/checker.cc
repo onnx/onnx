@@ -228,7 +228,7 @@ void check_node(
   if (!schema) {
     fail_check(
         "No Schema registered for " + node.op_type() +
-        " with domain_version of " + std::to_string(domain_version));
+        " with domain_version of " + ONNX_NAMESPACE::to_string(domain_version));
   }
   schema->Verify(node);
 }

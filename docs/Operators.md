@@ -574,7 +574,24 @@ opset_import {
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   ```
+   The output of each pooling window is divided by the number of elements exclude pad.
+   
 
 #### Versioning
 
@@ -619,6 +636,330 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>averagepool_1d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32]
+output_shape: [1, 3, 31]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2],
+)
+x = np.random.randn(1, 3, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = [2]
+strides = [1]
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0])
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 31, 31]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0))
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_pads</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 28, 28]
+output_shape: [1, 3, 30, 30]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[2, 2, 2, 2]
+)
+x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (3, 3)
+strides = (1, 1)
+pad_bottom = 2
+pad_top = 2
+pad_right = 2
+pad_left = 2
+pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 7.5, 8, 8.5, 9],
+                [9.5, 10, 10.5, 11, 11.5],
+                [12, 12.5, 13, 13.5, 14],
+                [14.5, 15, 15.5, 16, 16.5],
+                [17, 17.5, 18, 18.5, 19]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_same_upper</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 3, 3]
+pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    auto_pad='SAME_UPPER'
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[4, 5.5, 7],
+                [11.5, 13, 14.5],
+                [19, 20.5, 22]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_same_upper')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[4, 6],
+                [14, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_strides')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_same_lower</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    auto_pad='SAME_LOWER'
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides, out_shape)
+pad_bottom = pad_shape[0] // 2
+pad_top = pad_shape[0] - pad_bottom
+pad_right = pad_shape[1] // 2
+pad_left = pad_shape[1] - pad_right
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_same_upper</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    auto_pad='SAME_UPPER'
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides, out_shape)
+pad_top = pad_shape[0] // 2
+pad_bottom = pad_shape[0] - pad_top
+pad_left = pad_shape[1] // 2
+pad_right = pad_shape[1] - pad_left
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_strides</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 10, 10]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    strides=[3, 3]
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (5, 5)
+strides = (3, 3)
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0))
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_3d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32, 32]
+output_shape: [1, 3, 31, 31, 31]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2, 2],
+)
+x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = [2, 2, 2]
+strides = [1, 1, 1]
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0])
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
+```
+
+</details>
 
 
 ### <a name="BatchNormalization"></a><a name="batchnormalization">**BatchNormalization**</a>
@@ -2318,6 +2659,50 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>globalaveragepool</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
+```
+
+</details>
+
+
+<details>
+<summary>globalaveragepool_precomputed</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[5]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
+```
+
+</details>
+
+
 ### <a name="GlobalLpPool"></a><a name="globallppool">**GlobalLpPool**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
@@ -2401,6 +2786,51 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>globalmaxpool</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
+```
+
+</details>
+
+
+<details>
+<summary>globalmaxpool_precomputed</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[9]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
+```
+
+</details>
 
 
 ### <a name="Greater"></a><a name="greater">**Greater**</a>
@@ -3642,7 +4072,24 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   ```
+   
+   
 
 #### Versioning
 
@@ -5790,7 +6237,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Reshape the input tensor similar to numpy.reshape.
   
-  It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
@@ -5799,26 +6246,23 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 5 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 5
 }
 ~~~~
 
-#### Attributes
-
-<dl>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>New shape</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>shape</tt> : tensor(int64)</dt>
+<dd>Specified shape for output.</dd>
 </dl>
 
 #### Outputs
@@ -5844,24 +6288,23 @@ opset_import {
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims':[4, 2, 3],
-    'reduced_dims':[3, 8],
-    'extended_dims':[3, 2, 2, 2],
-    'one_dim':[24],
-    'negative_dim':[6, -1, 2]
+    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reduced_dims': np.array([3, 8], dtype=np.int64),
+    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'one_dim': np.array([24], dtype=np.int64),
+    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
-for test_name,test_shape in test_cases.items():
+for test_name, shape in test_cases.items():
     node = onnx.helper.make_node(
         'Reshape',
-        inputs=['data'],
+        inputs=['data', 'shape'],
         outputs=['reshaped'],
-        shape=test_shape,
     )
 
-    reshaped = np.reshape(data, test_shape)
-    expect(node, inputs=[data], outputs=[reshaped],
+    reshaped = np.reshape(data, shape)
+    expect(node, inputs=[data, shape], outputs=[reshaped],
        name='test_reshape_' + test_name)
 ```
 
@@ -6296,7 +6739,7 @@ x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[:, :, 3:4]
 
 expect(node, inputs=[x], outputs=[y],
-       name='test_default_axes')
+       name='test_slice_default_axes')
 ```
 
 </details>

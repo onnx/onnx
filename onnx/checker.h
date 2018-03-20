@@ -8,7 +8,7 @@
 
 namespace ONNX_NAMESPACE {
 namespace checker {
-class ValidationError : public std::runtime_error {
+class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
   const char* what() const noexcept override {
@@ -29,7 +29,7 @@ class ValidationError : public std::runtime_error {
 #define fail_check(...) \
   throw ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
-class CheckerContext {
+class CheckerContext final {
   int ir_version;
   std::unordered_map<std::string, int> opset_imports;
 
@@ -43,13 +43,13 @@ class CheckerContext {
   const std::unordered_map<std::string, int>& get_opset_imports() const {
     return opset_imports;
   }
-  void set_opset_imports(const std::unordered_map<std::string, int>& imps) {
-    opset_imports = imps;
+  void set_opset_imports(std::unordered_map<std::string, int> imps) {
+    opset_imports = std::move(imps);
   }
   explicit CheckerContext() : ir_version(-1) {}
 };
 
-struct LexicalScopeContext {
+struct LexicalScopeContext final {
   std::unordered_set<std::string> output_names;
 };
 
