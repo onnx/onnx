@@ -47,7 +47,7 @@ struct Node;
 struct Value;
 
 
-class ResourceGuard {
+class ResourceGuard final {
   std::function<void()> destructor_;
   bool released_;
 
@@ -66,12 +66,12 @@ public:
 };
 
 
-struct Dimension {
+struct Dimension final {
   Dimension(int dim)
     : is_int(true), dim(dim) {
   }
-  Dimension(const std::string& param)
-    : is_int(false), dim(-1), param(param) {
+  Dimension(std::string param)
+    : is_int(false), dim(-1), param(std::move(param)) {
   }
 
   bool is_int;
@@ -80,7 +80,7 @@ struct Dimension {
 };
 
 
-enum class AttributeKind {
+enum class AttributeKind : uint8_t {
   // float, float list, int, int list, string, string list,
   // tensor, tensor list, subgraph, subgraph list
   f, fs, i, is, s, ss, t, ts, g, gs
@@ -88,7 +88,7 @@ enum class AttributeKind {
 
 
 static inline const char * toString(AttributeKind kind) {
-  static const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs"};
+  static constexpr const char* names[] = {"f","fs", "i", "is", "s", "ss", "t", "ts", "g", "gs"};
   ONNX_ASSERT(size_t(kind) < sizeof(names) / sizeof(AttributeKind));
   return names[int(kind)];
 }
@@ -101,12 +101,12 @@ struct AttributeValue {
   Symbol name;
   virtual AttributeKind kind() const = 0;
   virtual Ptr clone() const = 0;
-  virtual ~AttributeValue() {}
+  virtual ~AttributeValue() = default;
 };
 
 
 template<typename T, AttributeKind Kind>
-struct ScalarAttributeValue : public AttributeValue {
+struct ScalarAttributeValue final : public AttributeValue {
   using ConstructorType = const T &;
   using ValueType = T;
   ScalarAttributeValue(Symbol name, ConstructorType value_)
@@ -125,7 +125,7 @@ private:
 
 
 template<typename T, AttributeKind Kind>
-struct VectorAttributeValue : public AttributeValue {
+struct VectorAttributeValue final : public AttributeValue {
   using ConstructorType = const std::vector<T> &&;
   using ValueType = std::vector<T>;
   VectorAttributeValue(Symbol name, ConstructorType value_)
@@ -164,6 +164,7 @@ struct Attributes {
   Attributes() {}
   void copyAttributes(const Attributes & rhs) {
     values_.clear();
+    values_.reserve(rhs.values_.size());
     for(auto & i : rhs.values_) {
       values_.push_back(i->clone());
     }
@@ -184,6 +185,7 @@ struct Attributes {
   // The names are returned in order, since name actually is the index.
   std::vector<Symbol> attributeNames() const {
     std::vector<Symbol> names;
+    names.reserve(values_.size());
     for(auto & a : values_)
       names.push_back(a->name);
     return names;
@@ -260,7 +262,7 @@ private:
 // Each use is represented by this type, see Node::uses()
 // 'user' is the consumer of the value, offset is the index into
 // 'user's input this where the produces will be found.
-struct Use {
+struct Use final {
   Use(Node * user, size_t offset)
   : user(user), offset(offset) {}
   Node * user;
@@ -280,7 +282,7 @@ using use_list = std::vector<Use>;
 using NodeKind = Symbol;
 
 
-struct Value {
+struct Value final {
   ONNX_DISALLOW_COPY_AND_ASSIGN(Value);
   Value(Node * node_, size_t offset_);
 
@@ -305,8 +307,8 @@ public:
   ONNX_NAMESPACE::TensorProto_DataType elemType() const {
     return elem_type_;
   }
-  Value* setSizes(const std::vector<Dimension>& sizes) {
-    sizes_ = sizes;
+  Value* setSizes(std::vector<Dimension> sizes) {
+    sizes_ = std::move(sizes);
     return this;
   }
   const std::vector<Dimension>& sizes() const {
@@ -323,9 +325,9 @@ public:
       return unique_name_;
     return ONNX_NAMESPACE::to_string(unique());
   }
-  Value* setUniqueName(const std::string & name) {
+  Value* setUniqueName(std::string name) {
     has_unique_name_ = true;
-    unique_name_ = name;
+    unique_name_ = std::move(name);
     return this;
   }
   Value* setStage(size_t s) {
@@ -420,9 +422,9 @@ public:
   const std::string& name() {
     return name_;
   }
-  void setName(const std::string& name) {
+  void setName(std::string name) {
     has_name_ = true;
-    name_ = name;
+    name_ = std::move(name);
   }
   bool has_doc_string() const {
     return has_doc_string_;
@@ -430,9 +432,9 @@ public:
   const std::string& docString() {
     return doc_string_;
   }
-  void setDocString(const std::string& doc_string) {
+  void setDocString(std::string doc_string) {
     has_doc_string_ = true;
-    doc_string_ = doc_string;
+    doc_string_ = std::move(doc_string);
   }
   NodeKind kind() const {
     return kind_;
@@ -705,7 +707,7 @@ public:
     return static_cast<T*>(this);
   }
 
-  virtual ~Node() {}
+  virtual ~Node() = default;
 
 private:
   // Lookup iterator in use list of _input i_ that corresponds to its use of _this_
@@ -765,7 +767,7 @@ protected:
   }
 };
 
-struct Graph {
+struct Graph final {
 ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 friend struct Value;
@@ -811,9 +813,9 @@ public:
   const std::string& docString() {
     return doc_string_;
   }
-  void setDocString(const std::string& doc_string) {
+  void setDocString(std::string doc_string) {
     has_doc_string_ = true;
-    doc_string_ = doc_string;
+    doc_string_ = std::move(doc_string);
   }
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
@@ -951,7 +953,7 @@ public:
     return has_name_;
   }
 
-  std::string name() const {
+  const std::string& name() const {
     return name_;
   }
 
