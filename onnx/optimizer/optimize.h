@@ -17,7 +17,7 @@ namespace ONNX_NAMESPACE { namespace optimization {
 
 ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in);
 
-struct Optimizer final {
+struct Optimizer {
   std::map<std::string, std::unique_ptr<OptimizePass>> passes;
 
   Optimizer() {
@@ -30,6 +30,8 @@ struct Optimizer final {
     _registerOptimizer<SplitInit>();
     _registerOptimizer<SplitPredict>();
   }
+
+  virtual ~Optimizer() = default;
 
   ONNX_NAMESPACE::ModelProto optimize(
       const ONNX_NAMESPACE::ModelProto& mp_in,
