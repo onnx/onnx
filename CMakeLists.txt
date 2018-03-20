@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.1)
 
 # Project
 project(onnx C CXX)
+option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
+
+option(BUILD_PYTHON "Build Python binaries" ON)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -12,8 +15,16 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
-if(TARGET protobuf::protoc)
-  set(PROTOBUF_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+if(TARGET protobuf::libprotobuf)
+  # Sometimes we need to use protoc compiled for host architecture while
+  # linking libprotobuf against target architecture. See
+  # https://github.com/caffe2/caffe2/blob/96f35ad75480b25c1a23d6e9e97bccae9f7a7f9c/cmake/ProtoBuf.cmake#L92-L99
+  if(EXISTS "${ONNX_CUSTOM_PROTOC_EXECUTABLE}")
+    message(STATUS "Using custom protoc executable")
+    set(ONNX_PROTOC_EXECUTABLE ${ONNX_CUSTOM_PROTOC_EXECUTABLE})
+  else()
+    set(ONNX_PROTOC_EXECUTABLE $<TARGET_FILE:protobuf::protoc>)
+  endif()
 else()
   # Customized version of find Protobuf. We need to avoid situations mentioned
   # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
@@ -26,6 +37,7 @@ else()
   # We assume that protoc is installed at PREFIX/bin.
   # We use get_filename_component to resolve PREFIX.
   if(PROTOBUF_PROTOC_EXECUTABLE)
+    set(ONNX_PROTOC_EXECUTABLE ${PROTOBUF_PROTOC_EXECUTABLE})
     get_filename_component(
       _PROTOBUF_INSTALL_PREFIX
       ${PROTOBUF_PROTOC_EXECUTABLE}
@@ -81,10 +93,10 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     return()
   endif()
 
-  if(MSVC)
-    set(DLLEXPORT_STR "dllexport_decl=ONNX_API:")
+  if(MSVC AND BUILD_SHARED_LIBS)
+    set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
   else()
-    set(DLLEXPORT_STR "")
+    set(ONNX_DLLEXPORT_STR "")
   endif()
 
   set(${SRCS})
@@ -128,8 +140,8 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     add_custom_command (
       OUTPUT "${OUTPUT_PB_SRC}"
              "${OUTPUT_PB_HEADER}"
-      COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
-      ARGS --cpp_out ${DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR}
+      COMMAND ${ONNX_PROTOC_EXECUTABLE}
+      ARGS --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR} ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR}
       DEPENDS ${GENERATED_PROTO}
       COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
       VERBATIM )
@@ -159,11 +171,6 @@ file(GLOB_RECURSE onnx_src
 )
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 
-if(MSVC)
-    set(DLLEXPORT_OPTION "-DONNX_API=__declspec(dllexport)")
-else()
-    set(DLLEXPORT_OPTION "-DONNX_API=")
-endif()
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
@@ -174,27 +181,50 @@ else()
 endif()
 
 if(MSVC)
-    target_compile_options(onnx_proto PRIVATE /WX- ${DLLEXPORT_OPTION})
+  target_compile_options(onnx_proto PRIVATE /WX-)
 endif()
 
 add_library(onnx ${onnx_src})
 target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
 
-add_library(onnx_pybind MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-target_include_directories(onnx_pybind PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}" "${PYTHON_INCLUDE_DIR}")
+if(BUILD_PYTHON)
+  add_library(onnx_pybind MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+  target_include_directories(onnx_pybind PRIVATE "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}" "${PYTHON_INCLUDE_DIR}")
 
-# pybind11 is a header only lib
-find_package(pybind11)
-if(pybind11_FOUND)
-  target_include_directories(onnx_pybind PRIVATE ${pybind11_INCLUDE_DIRS})
-else()
-  target_include_directories(onnx_pybind PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+  # pybind11 is a header only lib
+  find_package(pybind11)
+  if(pybind11_FOUND)
+    target_include_directories(onnx_pybind PRIVATE ${pybind11_INCLUDE_DIRS})
+  else()
+    target_include_directories(onnx_pybind PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+  endif()
+  target_link_libraries(onnx_pybind PRIVATE onnx_proto onnx)
+  if(WIN32)
+    target_compile_options(onnx_pybind PRIVATE
+        /MP
+        /MX
+        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+        /wd4503 # identifier' : decorated name length exceeded, name was truncated
+    )
+  endif()
+  if(APPLE)
+    set_target_properties(onnx_pybind PROPERTIES SUFFIX ".so")
+    set_target_properties(onnx_pybind PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+  endif()
 endif()
-target_link_libraries(onnx_pybind PRIVATE onnx_proto onnx)
-if (APPLE)
-  set_target_properties(onnx_pybind PROPERTIES SUFFIX ".so")
-  set_target_properties(onnx_pybind PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+
+if(ONNX_BUILD_BENCHMARKS)
+  if(NOT TARGET benchmark)
+    # We will not need to test benchmark lib itself.
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing as we don't need it.")
+    # We will not need to install benchmark since we link it statically.
+    set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable benchmark install to avoid overwriting vendor install.")
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
+  endif()
+
+  add_executable(protobuf-bench tools/protobuf-bench.cc)
+  target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
 # Export include directories
@@ -212,18 +242,20 @@ if (WIN32)
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
     )
-    target_compile_options(onnx_pybind PRIVATE
-        /MP
-        /MX
-        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
-        /wd4503 # identifier' : decorated name length exceeded, name was truncated
-    )
+    if(${ONNX_USE_MSVC_STATIC_RUNTIME})
+      target_compile_options(onnx_proto PRIVATE /MT)
+      target_compile_options(onnx PRIVATE /MT)
+    else()
+      target_compile_options(onnx_proto PRIVATE /MD)
+      target_compile_options(onnx PRIVATE /MD)
+    endif()
     set(onnx_static_library_flags
         -IGNORE:4221 # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
 endif()
+
 if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()

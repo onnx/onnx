@@ -2318,6 +2318,50 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>globalaveragepool</summary>
+
+```python
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.average(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
+```
+
+</details>
+
+
+<details>
+<summary>globalaveragepool_precomputed</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalAveragePool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+  [1, 2, 3],
+  [4, 5, 6],
+  [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[5]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
+```
+
+</details>
+
+
 ### <a name="GlobalLpPool"></a><a name="globallppool">**GlobalLpPool**</a>
 
   GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
@@ -2401,6 +2445,51 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>globalmaxpool</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 5, 5).astype(np.float32)
+spatial_shape = np.ndim(x) - 2
+y = np.max(x, axis=tuple(range(spatial_shape, spatial_shape + 2)))
+for _ in range(spatial_shape):
+    y = np.expand_dims(y, -1)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool')
+```
+
+</details>
+
+
+<details>
+<summary>globalmaxpool_precomputed</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'GlobalMaxPool',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.array([[[
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
+]]]).astype(np.float32)
+y = np.array([[[[9]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
+```
+
+</details>
 
 
 ### <a name="Greater"></a><a name="greater">**Greater**</a>
@@ -5680,7 +5769,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Reshape the input tensor similar to numpy.reshape.
   
-  It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
@@ -5689,26 +5778,23 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 5 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 5
 }
 ~~~~
 
-#### Attributes
-
-<dl>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>New shape</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>shape</tt> : tensor(int64)</dt>
+<dd>Specified shape for output.</dd>
 </dl>
 
 #### Outputs
@@ -5734,24 +5820,23 @@ opset_import {
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims':[4, 2, 3],
-    'reduced_dims':[3, 8],
-    'extended_dims':[3, 2, 2, 2],
-    'one_dim':[24],
-    'negative_dim':[6, -1, 2]
+    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reduced_dims': np.array([3, 8], dtype=np.int64),
+    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'one_dim': np.array([24], dtype=np.int64),
+    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
-for test_name,test_shape in test_cases.items():
+for test_name, shape in test_cases.items():
     node = onnx.helper.make_node(
         'Reshape',
-        inputs=['data'],
+        inputs=['data', 'shape'],
         outputs=['reshaped'],
-        shape=test_shape,
     )
 
-    reshaped = np.reshape(data, test_shape)
-    expect(node, inputs=[data], outputs=[reshaped],
+    reshaped = np.reshape(data, shape)
+    expect(node, inputs=[data, shape], outputs=[reshaped],
        name='test_reshape_' + test_name)
 ```
 
@@ -6186,7 +6271,7 @@ x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[:, :, 3:4]
 
 expect(node, inputs=[x], outputs=[y],
-       name='test_default_axes')
+       name='test_slice_default_axes')
 ```
 
 </details>
