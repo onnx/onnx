@@ -21,6 +21,7 @@ class Device(object):
     syntax: device_type:device_id(optional)
     example: 'CPU', 'CUDA', 'CUDA:1'
     '''
+
     def __init__(self, device):
         options = device.split(':')
         self.type = getattr(DeviceType, options[0])
@@ -34,6 +35,7 @@ def namedtupledict(typename, field_names, *args, **kwargs):
     # Some output names are invalid python identifier, e.g. "0"
     kwargs.setdefault('rename', True)
     data = namedtuple(typename, field_names, *args, **kwargs)
+
     def getitem(self, key):
         if isinstance(key, six.string_types):
             key = field_names_map[key]

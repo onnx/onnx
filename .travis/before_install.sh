@@ -16,11 +16,11 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
 
   function install_protobuf() {
       # Install protobuf
-      pb_dir="~/.cache/pb"
+      local pb_dir="$HOME/.cache/pb"
       mkdir -p "$pb_dir"
       wget -qO- "https://github.com/google/protobuf/releases/download/v${PB_VERSION}/protobuf-${PB_VERSION}.tar.gz" | tar -xz -C "$pb_dir" --strip-components 1
       ccache -z
-      cd "$pb_dir" && ./configure && make -j${NUMCORES} && make check && sudo make install && sudo ldconfig
+      cd "$pb_dir" && ./configure && make -j${NUMCORES} && make check && sudo make install && sudo ldconfig && cd -
       ccache -s
   }
 
