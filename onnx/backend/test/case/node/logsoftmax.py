@@ -20,7 +20,8 @@ class LogSoftmax(Base):
             outputs=['y'],
         )
         x = np.array([[-1, 0, 1]]).astype(np.float32)
-        y = x - np.log(np.sum(np.exp(x), axis=1)) #expected output [[-2.40760589, -1.40760589, -0.40760589]]
+        # expected output [[-2.40760589, -1.40760589, -0.40760589]]
+        y = x - np.log(np.sum(np.exp(x), axis=1))
         expect(node, inputs=[x], outputs=[y],
                name='test_logsoftmax_example_1')
 
@@ -32,7 +33,7 @@ class LogSoftmax(Base):
             return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
 
         x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
-        #expected output [[-3.4401896, -2.4401896, -1.44018972, -0.44018969],
+        # expected output [[-3.4401896, -2.4401896, -1.44018972, -0.44018969],
         #                 [-3.4401896, -2.4401896, -1.44018972, -0.44018969]]
         y = logsoftmax_2d(x)
 

@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 import pytest
 
-import onnx
 from .coverage import Coverage
 
 _coverage = Coverage()
@@ -31,7 +30,7 @@ def pytest_runtest_call(item):
 def pytest_runtest_logreport(report):
     if (report.when == 'call' and
         report.outcome == 'passed' and
-        report.nodeid in _marks):
+            report.nodeid in _marks):
         mark = _marks[report.nodeid]
         _add_mark(mark, 'passed')
 

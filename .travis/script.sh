@@ -1,18 +1,9 @@
 #!/bin/bash
 
-scripts_dir=$(dirname $(readlink -e "${BASH_SOURCE[0]}"))
-source "$scripts_dir/common";
-
-onnx_dir="$PWD"
-
-# install onnx
-cd $onnx_dir
-ccache -z
-ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -v .
-ccache -s
+script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[1]))" "${BASH_SOURCE[0]}")
+source "${script_path%/*}/setup.sh"
 
 # onnx tests
-cd $onnx_dir
 pip install pytest-cov nbval
 pytest
 
@@ -33,3 +24,7 @@ git diff --exit-code
 # in a private namespace.
 ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
 ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+# lint python code
+pip install flake8
+flake8

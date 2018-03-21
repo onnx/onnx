@@ -50,28 +50,28 @@ class Xor(Base):
             broadcast=1,
         )
 
-        #3d vs 1d
+        # 3d vs 1d
         x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
         y = (np.random.randn(5) > 0).astype(np.bool)
         z = np.logical_xor(x, y)
         expect(node, inputs=[x, y], outputs=[z],
                name='test_xor_bcast3v1d')
 
-        #3d vs 2d
+        # 3d vs 2d
         x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
         y = (np.random.randn(4, 5) > 0).astype(np.bool)
         z = np.logical_xor(x, y)
         expect(node, inputs=[x, y], outputs=[z],
                name='test_xor_bcast3v2d')
 
-        #4d vs 2d
+        # 4d vs 2d
         x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
         y = (np.random.randn(5, 6) > 0).astype(np.bool)
         z = np.logical_xor(x, y)
         expect(node, inputs=[x, y], outputs=[z],
                name='test_xor_bcast4v2d')
 
-        #4d vs 3d
+        # 4d vs 3d
         x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
         y = (np.random.randn(4, 5, 6) > 0).astype(np.bool)
         z = np.logical_xor(x, y)
@@ -103,7 +103,7 @@ class Xor(Base):
             axis=1,
         )
 
-        z = np.logical_xor(x, y[:, np.newaxis, np.newaxis,])
+        z = np.logical_xor(x, y[:, np.newaxis, np.newaxis, ])
         expect(node, inputs=[x, y], outputs=[z],
                name='test_xor_axis1')
 
@@ -115,7 +115,7 @@ class Xor(Base):
             axis=2,
         )
 
-        z = np.logical_xor(x, y[:, np.newaxis,])
+        z = np.logical_xor(x, y[:, np.newaxis, ])
         expect(node, inputs=[x, y], outputs=[z],
                name='test_xor_axis2')
 

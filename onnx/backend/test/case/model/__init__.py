@@ -18,6 +18,7 @@ TestCase = namedtuple('TestCase', [
 
 _SimpleModelTestCases = []
 
+
 def expect(model, inputs, outputs, name=None):
     name = name or model.graph.name
     _SimpleModelTestCases.append(
@@ -33,6 +34,7 @@ def expect(model, inputs, outputs, name=None):
 
 
 BASE_URL = 'https://s3.amazonaws.com/download.onnx/models'
+
 
 def collect_testcases():
     '''Collect model test cases defined in python/numpy code and in model zoo.
@@ -63,7 +65,6 @@ def collect_testcases():
             data_sets=None,
             kind='real',
         ))
-
 
     import_recursive(sys.modules[__name__])
 
