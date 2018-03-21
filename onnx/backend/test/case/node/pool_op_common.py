@@ -7,7 +7,7 @@ def get_pad_shape(auto_pad, input_spatial_shape, kernel_spatial_shape, strides_s
     if auto_pad in ('SAME_UPPER', 'SAME_LOWER'):
         for i in range(len(input_spatial_shape)):
             pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial[i] + kernel_spatial_shape[i] - \
-                           input_spatial_shape[i]
+                input_spatial_shape[i]
     elif auto_pad == 'VALID':
         pass
     return pad_shape
