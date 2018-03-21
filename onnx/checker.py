@@ -15,7 +15,6 @@ from onnx import (ValueInfoProto,
                   TensorProto,
                   NodeProto,
                   GraphProto,
-                  ModelProto,
                   IR_VERSION)
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
@@ -27,10 +26,10 @@ import onnx.defs
 
 
 # NB: Please don't edit this context!
-DEFAULT_CONTEXT=C.CheckerContext()
+DEFAULT_CONTEXT = C.CheckerContext()
 DEFAULT_CONTEXT.ir_version = IR_VERSION
 # TODO: Maybe ONNX-ML should also be defaulted?
-DEFAULT_CONTEXT.opset_imports = { '': onnx.defs.onnx_opset_version() }
+DEFAULT_CONTEXT.opset_imports = {'': onnx.defs.onnx_opset_version()}
 
 
 # TODO: This really doesn't seem worth the metaprogramming...
@@ -75,5 +74,6 @@ def check_graph(graph, ctx=DEFAULT_CONTEXT):
 
 def check_model(model):
     C.check_model(model.SerializeToString())
+
 
 ValidationError = C.ValidationError
