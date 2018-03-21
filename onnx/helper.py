@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 import collections
 import numbers
-import numpy as np
 
 from six import text_type, integer_types, binary_type
 
@@ -15,6 +14,7 @@ from onnx import TensorProto, AttributeProto, ValueInfoProto, \
 import onnx.defs as defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
+
 
 def make_node(
         op_type, inputs, outputs,
@@ -87,6 +87,7 @@ def make_model(graph, **kwargs):
         setattr(model, k, v)
     return model
 
+
 def set_model_props(model, dict_value):
     del model.metadata_props[:]
     for (k, v) in dict_value.items():
@@ -94,6 +95,7 @@ def set_model_props(model, dict_value):
         entry.key = k
         entry.value = v
         # model.metadata_properties.append(entry)
+
 
 def split_complex_to_pairs(ca):
     return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
@@ -203,6 +205,7 @@ def make_attribute(key, value, doc_string=None):
         raise ValueError(
             'Value "{}" is not valid attribute data type.'.format(value))
     return attr
+
 
 def get_attribute_value(attr):
     if attr.HasField('f'):

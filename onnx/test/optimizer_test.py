@@ -8,6 +8,7 @@ from onnx import checker, helper, ModelProto, TensorProto
 import onnx.optimizer
 import unittest
 
+
 class TestOptimizer(unittest.TestCase):
 
     def _optimized(self, graph, opts):
@@ -20,7 +21,7 @@ class TestOptimizer(unittest.TestCase):
         return optimized_model
 
     def test_nop_transpose(self):
-        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[0,1])
+        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])
         graph = helper.make_graph(
             [trans],
             "test",
@@ -44,9 +45,9 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == "Transpose"
 
     def test_fuse_transpose(self):
-        trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1,0,2])
-        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2,0,1])
-        trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2,0,1])
+        trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
+        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
+        trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])
         graph = helper.make_graph(
             [trans1, trans2, trans3],
             "test",
@@ -83,8 +84,8 @@ class TestOptimizer(unittest.TestCase):
             assert node.op_type == "Transpose"
 
     def test_fuse_transpose_into_gemm(self):
-        trans1 = helper.make_node("Transpose", ["X"], ["A"], perm=[1,0])
-        trans2 = helper.make_node("Transpose", ["Y"], ["B"], perm=[1,0])
+        trans1 = helper.make_node("Transpose", ["X"], ["A"], perm=[1, 0])
+        trans2 = helper.make_node("Transpose", ["Y"], ["B"], perm=[1, 0])
         gemm = helper.make_node("Gemm", ["A", "B", "C"], ["Z"])
         graph = helper.make_graph(
             [trans1, trans2, gemm],
@@ -99,9 +100,9 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == "Gemm"
 
     def test_preserve_value_info(self):
-        trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1,0,2])
-        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2,0,1])
-        trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2,0,1])
+        trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
+        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
+        trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])
         graph = helper.make_graph(
             [trans1, trans2, trans3],
             "test",

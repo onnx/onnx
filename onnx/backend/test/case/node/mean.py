@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 class Mean(Base):
 
     @staticmethod

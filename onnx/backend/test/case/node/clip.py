@@ -23,7 +23,7 @@ class Clip(Base):
         )
 
         x = np.array([-2, 0, 2]).astype(np.float32)
-        y = np.clip(x, -1, 1) #expected output [-1., 0., 1.]
+        y = np.clip(x, -1, 1)  # expected output [-1., 0., 1.]
         expect(node, inputs=[x], outputs=[y],
                name='test_clip_example')
 
@@ -55,4 +55,3 @@ class Clip(Base):
         y = np.clip(x, -np.inf, 0.0)
         expect(node, inputs=[x], outputs=[y],
                name='test_clip_default_max')
-
