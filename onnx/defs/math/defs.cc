@@ -185,6 +185,18 @@ the tensor elementwise. If x is negative, then it will return NaN.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain input and output types to float tensors.");
 
+ONNX_OPERATOR_SCHEMA(Rsqrt)
+    .AllowConsumed({{0, 0}})
+    .SetDoc(R"DOC(
+Reciprocal square root takes one input data (Tensor<T>) and produces one output data
+(Tensor<T>) where the reciprocal of square root is, y = 1 / x^0.5, is applied to
+the tensor elementwise. If x is negative, then it will return NaN.
+)DOC")
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input and output types to float tensors.");
+
 ONNX_OPERATOR_SCHEMA(Relu)
   .AllowConsumed({{0, 0}})
   .SetDoc(R"DOC(
