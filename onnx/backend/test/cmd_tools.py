@@ -10,11 +10,11 @@ import shutil
 
 import onnx.backend.test.case.node as node_test
 import onnx.backend.test.case.model as model_test
-from onnx.backend.test import loader
 from onnx import numpy_helper
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 DATA_DIR = os.path.join(TOP_DIR, 'data')
+
 
 def generate_data(args):
 
@@ -70,6 +70,7 @@ def generate_data(args):
                     with open(os.path.join(
                             data_set_dir, 'output_{}.pb'.format(i)), 'wb') as f:
                         f.write(tensor.SerializeToString())
+
 
 def parse_args():
     parser = argparse.ArgumentParser('backend-test-tools')

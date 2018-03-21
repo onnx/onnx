@@ -1,15 +1,15 @@
 import unittest
 
 from onnx import defs, helper
-from onnx import NodeProto
 
 
 class TestRelu(unittest.TestCase):
 
     def test_relu(self):
         self.assertTrue(defs.has('Relu'))
-        node_def = helper.make_node(
+        helper.make_node(
             'Relu', ['X'], ['Y'])
+
 
 if __name__ == '__main__':
     unittest.main()
