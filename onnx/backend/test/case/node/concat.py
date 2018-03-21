@@ -19,9 +19,9 @@ class Concat(Base):
                    [3, 4]),
             '2d': ([[1, 2], [3, 4]],
                    [[5, 6], [7, 8]]),
-            '3d':([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+            '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
                    [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
-            }
+        }
 
         for test_case, values in test_cases.items():
             values = [np.asarray(v) for v in values]
@@ -33,7 +33,6 @@ class Concat(Base):
                     outputs=['output'],
                     axis=i
                 )
-                output = np.concatenate(values,i)
+                output = np.concatenate(values, i)
                 expect(node, inputs=[v for v in values], outputs=[output],
-                name='test_concat_' + test_case + '_axis_' + str(i))
-                
+                       name='test_concat_' + test_case + '_axis_' + str(i))

@@ -54,7 +54,6 @@ def load_node_tests(data_dir=os.path.join(DATA_DIR, 'node')):
     return testcases
 
 
-
 def load_model_tests(data_dir=os.path.join(DATA_DIR, 'model'), kind=None):
     '''Load model test cases from on-disk data files.
     '''

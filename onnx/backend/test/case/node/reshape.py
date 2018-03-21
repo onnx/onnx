@@ -33,4 +33,4 @@ class Reshape(Base):
 
             reshaped = np.reshape(data, shape)
             expect(node, inputs=[data, shape], outputs=[reshaped],
-               name='test_reshape_' + test_name)
+                   name='test_reshape_' + test_name)
