@@ -4,10 +4,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import argparse
-import inspect
 import io
-from textwrap import dedent
 import os
 from collections import defaultdict
 
@@ -23,10 +20,12 @@ if ONNX_ML:
 else:
     ext = '.md'
 
+
 def display_number(v):
     if defs.OpSchema.is_infinite(v):
         return '&#8734;'
     return str(v)
+
 
 def should_render_domain(domain):
     if domain == 'ai.onnx.ml' and not ONNX_ML:
@@ -35,10 +34,11 @@ def should_render_domain(domain):
         return False
     return True
 
+
 def display_attr_type(v):
     assert isinstance(v, OpSchema.AttrType)
     s = str(v)
-    s = s[s.rfind('.')+1:].lower()
+    s = s[s.rfind('.') + 1:].lower()
     if s[-1] == 's':
         s = 'list of ' + s
     return s
@@ -75,7 +75,8 @@ def display_schema(schema, versions):
     # since version
     s += '\n#### Versioning\n'
     s += '\nThis operator is used if you are using version {} '.format(schema.since_version)
-    s += 'of {} until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:\n\n'.format(display_domain(schema.domain))
+    s += 'of {} until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:\n\n'.format(
+        display_domain(schema.domain))
     s += '~~~~\n'
     s += 'opset_import {\n'
     s += '  version = {}\n'.format(schema.since_version)
@@ -85,7 +86,8 @@ def display_schema(schema, versions):
     s += '~~~~\n'
     if len(versions) > 1:
         # TODO: link to the Changelog.md
-        s += '\nOther versions of this operator: {}\n'.format(', '.join(display_version_link(domain_prefix + s.name, s.since_version) for s in versions[:-1]))
+        s += '\nOther versions of this operator: {}\n'.format(
+            ', '.join(display_version_link(domain_prefix + s.name, s.since_version) for s in versions[:-1]))
 
     # attributes
     if schema.attributes:
@@ -103,7 +105,7 @@ def display_schema(schema, versions):
     s += '\n#### Inputs'
     if schema.min_input != schema.max_input:
         s += ' ({} - {})'.format(display_number(schema.min_input),
-                            display_number(schema.max_input))
+                                 display_number(schema.max_input))
     s += '\n\n'
     if schema.inputs:
         s += '<dl>\n'
@@ -121,7 +123,7 @@ def display_schema(schema, versions):
     s += '\n#### Outputs'
     if schema.min_output != schema.max_output:
         s += ' ({} - {})'.format(display_number(schema.min_output),
-                             display_number(schema.max_output))
+                                 display_number(schema.max_output))
     s += '\n\n'
 
     if schema.outputs:
@@ -147,7 +149,8 @@ def display_schema(schema, versions):
                 allowedTypeStr = allowedTypes[0]
             for allowedType in allowedTypes[1:]:
                 allowedTypeStr += ', ' + allowedType
-            s += '<dt><tt>{}</tt> : {}</dt>\n'.format(type_constraint.type_param_str, allowedTypeStr)
+            s += '<dt><tt>{}</tt> : {}</dt>\n'.format(
+                type_constraint.type_param_str, allowedTypeStr)
             s += '<dd>{}</dd>\n'.format(type_constraint.description)
         s += '</dl>\n'
 
@@ -188,7 +191,8 @@ def main(args):
             for version, unsorted_schemas in sorted(versionmap.items()):
                 s += '## Version {} of {}\n'.format(version, display_domain(domain))
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
-                    name_with_ver = '{}-{}'.format(domain_prefix + schema.name, schema.since_version)
+                    name_with_ver = '{}-{}'.format(domain_prefix +
+                                                   schema.name, schema.since_version)
                     s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
@@ -227,8 +231,8 @@ def main(args):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
-                            support_level_str(schema.support_level),
-                            domain_prefix + n, domain_prefix + n)
+                        support_level_str(schema.support_level),
+                        domain_prefix + n, domain_prefix + n)
                     fout.write(s)
 
         fout.write('\n')
@@ -274,6 +278,7 @@ def main(args):
 if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     docs_dir = os.path.join(base_dir, 'docs')
+
     class Args(object):
         output = os.path.join(docs_dir, 'Operators' + ext)
         changelog = os.path.join(docs_dir, 'Changelog' + ext)

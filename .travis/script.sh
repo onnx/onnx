@@ -27,3 +27,7 @@ git diff --exit-code
 # in a private namespace.
 ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
 ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+# lint python code
+pip install flake8
+flake8

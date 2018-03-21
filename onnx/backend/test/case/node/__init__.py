@@ -13,6 +13,7 @@ TestCases = []
 
 TestCase = namedtuple('TestCase', ['node', 'inputs', 'outputs', 'name'])
 
+
 def expect(*args, **kwargs):
     TestCases.append(TestCase(*args, **kwargs))
 
