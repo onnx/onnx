@@ -3,14 +3,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 import inspect
-import os
-import sys
 from textwrap import dedent
 
 import numpy as np
 from six import add_metaclass
+
 
 def process_snippet(op_name, name, export):
     snippet_name = name[len('export_'):] or op_name.lower()
@@ -23,6 +22,7 @@ def process_snippet(op_name, name, export):
 
 
 Snippets = defaultdict(list)
+
 
 class _Exporter(type):
     exports = defaultdict(list)

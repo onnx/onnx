@@ -138,17 +138,17 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_is_attr_legal_verbose(self):
 
         SET_ATTR = [
-            (lambda attr: setattr(attr, "f", 1.0) or \
+            (lambda attr: setattr(attr, "f", 1.0) or
              setattr(attr, 'type', AttributeProto.FLOAT)),
-            (lambda attr: setattr(attr, "i", 1) or \
+            (lambda attr: setattr(attr, "i", 1) or
              setattr(attr, 'type', AttributeProto.INT)),
-            (lambda attr: setattr(attr, "s", b"str") or \
+            (lambda attr: setattr(attr, "s", b"str") or
              setattr(attr, 'type', AttributeProto.STRING)),
-            (lambda attr: attr.floats.extend([1.0, 2.0]) or \
+            (lambda attr: attr.floats.extend([1.0, 2.0]) or
              setattr(attr, 'type', AttributeProto.FLOATS)),
-            (lambda attr: attr.ints.extend([1, 2]) or \
+            (lambda attr: attr.ints.extend([1, 2]) or
              setattr(attr, 'type', AttributeProto.INTS)),
-            (lambda attr: attr.strings.extend([b"a", b"b"]) or \
+            (lambda attr: attr.strings.extend([b"a", b"b"]) or
              setattr(attr, 'type', AttributeProto.STRINGS)),
         ]
         # Randomly set one field, and the result should be legal.
@@ -166,6 +166,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
             self.assertRaises(checker.ValidationError,
                               checker.check_attribute,
                               attr)
+
 
 class TestHelperNodeFunctions(unittest.TestCase):
 
@@ -238,15 +239,16 @@ class TestHelperNodeFunctions(unittest.TestCase):
     def test_model_metadata_props(self):
         graph = helper.make_graph([], "my graph", [], [])
         model_def = helper.make_model(graph, doc_string='test')
-        helper.set_model_props(model_def, { 'Title': 'my graph', 'Keywords': 'test;graph' })
+        helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
         checker.check_model(model_def)
-        helper.set_model_props(model_def, { 'Title': 'my graph', 'Keywords': 'test;graph' })
-        checker.check_model(model_def) # helper replaces, so no dupe
+        helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
+        checker.check_model(model_def)  # helper replaces, so no dupe
 
         dupe = model_def.metadata_props.add()
         dupe.key = 'Title'
         dupe.value = 'Other'
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
+
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
