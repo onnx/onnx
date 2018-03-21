@@ -3,8 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import itertools
-
 import numpy as np
 
 import onnx
@@ -37,9 +35,9 @@ class GlobalAveragePool(Base):
             outputs=['y'],
         )
         x = np.array([[[
-          [1, 2, 3],
-          [4, 5, 6],
-          [7, 8, 9],
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
         ]]]).astype(np.float32)
         y = np.array([[[[5]]]]).astype(np.float32)
         expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')

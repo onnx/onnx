@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 class Div(Base):
 
     @staticmethod
@@ -21,7 +22,7 @@ class Div(Base):
 
         x = np.array([3, 4]).astype(np.float32)
         y = np.array([1, 2]).astype(np.float32)
-        z = x / y #expected output [3., 2.]
+        z = x / y  # expected output [3., 2.]
         expect(node, inputs=[x, y], outputs=[z],
                name='test_div_example')
 

@@ -22,7 +22,7 @@ class LeakyRelu(Base):
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
-        #expected output [-0.1, 0., 1.]
+        # expected output [-0.1, 0., 1.]
         y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * 0.1
         expect(node, inputs=[x], outputs=[y],
                name='test_leakyrelu_example')
@@ -44,4 +44,3 @@ class LeakyRelu(Base):
         y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * default_alpha
         expect(node, inputs=[x], outputs=[y],
                name='test_leakyrelu_default')
-

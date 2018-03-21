@@ -21,7 +21,7 @@ class Sqrt(Base):
         )
 
         x = np.array([1, 4, 9]).astype(np.float32)
-        y = np.sqrt(x) #expected output [1., 2., 3.]
+        y = np.sqrt(x)  # expected output [1., 2., 3.]
         expect(node, inputs=[x], outputs=[y],
                name='test_sqrt_example')
 
