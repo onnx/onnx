@@ -21,7 +21,7 @@ class Neg(Base):
         )
 
         x = np.array([-4, 2]).astype(np.float32)
-        y = np.negative(x) #expected output [4., -2.],
+        y = np.negative(x)  # expected output [4., -2.],
         expect(node, inputs=[x], outputs=[y],
                name='test_neg_example')
 

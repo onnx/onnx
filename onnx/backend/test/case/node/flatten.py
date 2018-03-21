@@ -26,21 +26,21 @@ class Flatten(Base):
             )
 
             new_shape = (1, -1) if i == 0 else (np.prod(shape[0:i]).astype(int), -1)
-            b= np.reshape(a, new_shape)
+            b = np.reshape(a, new_shape)
             expect(node, inputs=[a], outputs=[b],
-               name='test_flatten_axis' + str(i))
+                   name='test_flatten_axis' + str(i))
 
     @staticmethod
     def export_flatten_with_default_axis():
         node = onnx.helper.make_node(
             'Flatten',
             inputs=['a'],
-            outputs=['b'], # Default value for axis: axis=1
+            outputs=['b'],  # Default value for axis: axis=1
         )
-        
+
         shape = (5, 4, 3, 2)
         a = np.random.random_sample(shape).astype(np.float32)
         new_shape = (5, 24)
-        b= np.reshape(a, new_shape)
+        b = np.reshape(a, new_shape)
         expect(node, inputs=[a], outputs=[b],
                name='test_flatten_default_axis')

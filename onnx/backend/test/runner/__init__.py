@@ -18,7 +18,7 @@ import unittest
 import numpy as np
 
 import onnx
-from onnx import helper, numpy_helper
+from onnx import numpy_helper
 from six.moves.urllib.request import urlretrieve
 from ..loader import load_node_tests, load_model_tests
 from .item import TestItem
@@ -52,7 +52,6 @@ class Runner(object):
 
         for ot in load_model_tests(kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
-
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -136,7 +135,7 @@ class Runner(object):
         '''
         tests = self._get_test_case('OnnxBackendTest')
         for _, items_map in sorted(self._filtered_test_items.values()):
-            for name, item in sorted(funcs_map.items()):
+            for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
 
