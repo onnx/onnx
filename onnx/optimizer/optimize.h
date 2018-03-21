@@ -23,7 +23,6 @@ struct Optimizer {
   Optimizer() {
     // Register the optimization passes to the optimizer.
     _registerOptimizer<FuseConsecutiveTransposes>();
-    _registerOptimizer<FuseConsecutiveTransposes>();
     _registerOptimizer<EliminateNopTranspose>();
     _registerOptimizer<FuseTransposeIntoGemm>();
     _registerOptimizer<Nop>();
