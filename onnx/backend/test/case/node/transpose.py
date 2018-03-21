@@ -17,7 +17,7 @@ class Transpose(Base):
     def export_default():
         shape = (2, 3, 4)
         data = np.random.random_sample(shape).astype(np.float32)
-        
+
         node = onnx.helper.make_node(
             'Transpose',
             inputs=['data'],
@@ -26,11 +26,11 @@ class Transpose(Base):
 
         transposed = np.transpose(data)
         expect(node, inputs=[data], outputs=[transposed],
-            name='test_transpose_default')
+               name='test_transpose_default')
 
     @staticmethod
     def export_all_permutations():
-        shape = (2,3,4)
+        shape = (2, 3, 4)
         data = np.random.random_sample(shape).astype(np.float32)
         permutations = list(itertools.permutations(np.arange(len(shape))))
 
@@ -40,7 +40,7 @@ class Transpose(Base):
                 inputs=['data'],
                 outputs=['transposed'],
                 perm=permutations[i]
-            )            
+            )
             transposed = np.transpose(data, permutations[i])
             expect(node, inputs=[data], outputs=[transposed],
-                name='test_transpose_all_permutations_' + str(i))            
+                   name='test_transpose_all_permutations_' + str(i))

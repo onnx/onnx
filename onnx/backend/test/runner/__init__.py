@@ -6,9 +6,11 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import functools
 import glob
+import inspect
 import os
 import re
 import shutil
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -16,7 +18,7 @@ import unittest
 import numpy as np
 
 import onnx
-from onnx import helper, numpy_helper
+from onnx import numpy_helper
 from six.moves.urllib.request import urlretrieve
 from ..loader import load_node_tests, load_model_tests
 from .item import TestItem
@@ -50,7 +52,6 @@ class Runner(object):
 
         for ot in load_model_tests(kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
-
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -134,7 +135,7 @@ class Runner(object):
         '''
         tests = self._get_test_case('OnnxBackendTest')
         for _, items_map in sorted(self._filtered_test_items.values()):
-            for name, item in sorted(funcs_map.items()):
+            for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
 
@@ -145,7 +146,8 @@ class Runner(object):
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
-                rtol=1e-3)
+                rtol=1e-3,
+                atol=1e-7)
 
     def _prepare_model_data(self, model_test):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
@@ -265,9 +267,17 @@ class Runner(object):
                          for tensor in node_test.inputs]
             ref_outputs = [numpy_helper.to_array(tensor)
                            for tensor in node_test.outputs]
-
-            outputs = self.backend.run_node(
-                node_test.node, np_inputs, device)
+            if sys.version_info < (3,):
+                run_node_spec = inspect.getargspec(self.backend.run_node)
+            else:
+                run_node_spec = inspect.getfullargspec(self.backend.run_node)
+            if 'outputs_info' in run_node_spec.args:
+                outputs_info = [(output.dtype, output.shape) for output in ref_outputs]
+                outputs = self.backend.run_node(
+                    node_test.node, np_inputs, device=device, outputs_info=outputs_info)
+            else:
+                outputs = self.backend.run_node(
+                    node_test.node, np_inputs, device=device)
             self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test('Node', node_test.name, run, node_test.node)

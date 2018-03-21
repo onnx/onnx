@@ -1,4 +1,5 @@
 #include "onnx/checker.h"
+#include "onnx/proto_utils.h"
 
 #include "onnx/defs/schema.h"
 
@@ -228,7 +229,7 @@ void check_node(
   if (!schema) {
     fail_check(
         "No Schema registered for " + node.op_type() +
-        " with domain_version of " + std::to_string(domain_version));
+        " with domain_version of " + ONNX_NAMESPACE::to_string(domain_version));
   }
   schema->Verify(node);
 }
@@ -280,7 +281,7 @@ void check_graph(
             "Nodes in a graph must be topologically sorted, however input '",
             input,
             "' of node: \n",
-            node.ShortDebugString(),
+            ProtoDebugString(node),
             "\n is not output of any previous nodes.");
       }
     }
@@ -292,7 +293,7 @@ void check_graph(
     try {
       check_node(node, ctx, lex_ctx);
     } catch (ValidationError& ex) {
-      ex.AppendContext("Bad node spec: " + node.ShortDebugString());
+      ex.AppendContext("Bad node spec: " + ProtoDebugString(node));
       throw ex;
     }
     // check for SSA form
