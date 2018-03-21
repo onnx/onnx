@@ -269,7 +269,12 @@ message GraphProto {
   // must be distinct. It is optional for a value to appear in value_info list.
   repeated ValueInfoProto value_info = 13;
   
+  // This contains all customized functions called by the graph nodes.
+  // Common functions defined in ONNX domain are not carried in each model.
   repeated GraphProto functions = 14;
+  
+  // This is used when the graph is indeed a function, so that it could have
+  // attributes declared, similar with attributes declaration in operator schema.
   repeated AttrDeclProto attr_decl = 15;
 
   // DO NOT USE the following fields, they were deprecated before
