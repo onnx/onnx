@@ -26,6 +26,9 @@ from .item import TestItem
 
 class Runner(object):
 
+    DEFAULT_TOLERANCE_RELATIVE = 1e-3
+    DEFAULT_TOLERANCE_ABSOLUTE = 1e-7
+
     def __init__(self, backend, parent_module=None):
         self.backend = backend
         self._parent_module = parent_module
@@ -69,7 +72,7 @@ class Runner(object):
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def tolerance(self, pattern, rtol, atol):
+    def tolerance(self, pattern, rtol=DEFAULT_TOLERANCE_RELATIVE, atol=DEFAULT_TOLERANCE_ABSOLUTE):
         self._tolerance_patterns.add((re.compile(pattern), rtol, atol))
         return self
 
@@ -271,8 +274,8 @@ class Runner(object):
         for pattern, rtol, atol in self._tolerance_patterns:
             if pattern.search(name):
                 return (rtol, atol)
-        rtol = 1e-3
-        atol = 1e-7
+        rtol = self.DEFAULT_TOLERANCE_RELATIVE
+        atol = self.DEFAULT_TOLERANCE_ABSOLUTE
         return (rtol, atol)
 
     def _add_node_test(self, node_test):
@@ -293,6 +296,7 @@ class Runner(object):
             else:
                 outputs = self.backend.run_node(
                     node_test.node, np_inputs, device=device)
-            self._assert_similar_outputs(ref_outputs, outputs)
+            (rtol, atol) = self._tolerance(node_test.name)
+            self._assert_similar_outputs(ref_outputs, outputs, rtol, atol)
 
         self._add_test('Node', node_test.name, run, node_test.node)
