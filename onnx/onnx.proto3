@@ -390,17 +390,19 @@ message TensorShapeProto {
     string standard_denotation = 3;
   };
   repeated Dimension dim = 1;
+}
 
+message StandardDenotationConstProto {
   // A set of pre-defined constants to be used as values for
   // the standard denotation field for semantic description of
   // the tensor dimension.
-  string DATA_BATCH = 2 [default = "DATA_BATCH"];
-  string DATA_CHANNEL = 3 [default = "DATA_CHANNEL"];
-  string DATA_TIME = 4 [default = "DATA_TIME"];
-  string DATA_FEATURE = 5 [default = "DATA_FEATURE"];
-  string FILTER_IN_CHANNEL = 6 [default = "FILTER_IN_CHANNEL"];
-  string FILTER_OUT_CHANNEL = 7 [default = "FILTER_OUT_CHANNEL"];
-  string FILTER_SPATIAL = 8 [default = "FILTER_SPATIAL"];
+  string DATA_BATCH = 1 [default = "DATA_BATCH"];
+  string DATA_CHANNEL = 2 [default = "DATA_CHANNEL"];
+  string DATA_TIME = 3 [default = "DATA_TIME"];
+  string DATA_FEATURE = 4 [default = "DATA_FEATURE"];
+  string FILTER_IN_CHANNEL = 5 [default = "FILTER_IN_CHANNEL"];
+  string FILTER_OUT_CHANNEL = 6 [default = "FILTER_OUT_CHANNEL"];
+  string FILTER_SPATIAL = 7 [default = "FILTER_SPATIAL"];
 }
 
 // Define the types.
