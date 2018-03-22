@@ -25,12 +25,13 @@ class Cast(Base):
             ('FLOAT16', 'DOUBLE'),
             ('DOUBLE', 'FLOAT'),
             ('DOUBLE', 'FLOAT16'),
-        ]   
+        ]
 
         for case in test_cases:
             from_type = case[0]
             to_type = case[1]
-            input = np.random.random_sample(shape).astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+            input = np.random.random_sample(shape).astype(
+                TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
             node = onnx.helper.make_node(
                 'Cast',
                 inputs=['input'],
@@ -38,5 +39,5 @@ class Cast(Base):
                 to=to_type
             )
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
-            expect(node, inputs=[input], outputs=[output], name='test_cast_' + from_type + '_to_' + to_type)
-            
+            expect(node, inputs=[input], outputs=[output],
+                   name='test_cast_' + from_type + '_to_' + to_type)

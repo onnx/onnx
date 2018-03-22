@@ -9,7 +9,7 @@ class TestSchema(unittest.TestCase):
         defs.get_schema("Relu")
 
     def test_typecheck(self):
-        schema = defs.get_schema("Conv")
+        defs.get_schema("Conv")
 
 
 if __name__ == '__main__':

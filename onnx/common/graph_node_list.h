@@ -27,8 +27,8 @@ namespace ONNX_NAMESPACE {
 // physically point to the element they logically point to, rather than
 // the off-by-one behavior for all standard library reverse iterators.
 
-static constexpr int kNextDirection = 0;
-static constexpr int kPrevDirection = 1;
+static constexpr size_t kNextDirection = 0;
+static constexpr size_t kPrevDirection = 1;
 
 template <typename T>
 struct generic_graph_node_list;
@@ -43,10 +43,10 @@ using graph_node_list_iterator = generic_graph_node_list_iterator<Node>;
 using const_graph_node_list_iterator = generic_graph_node_list_iterator<const Node>;
 
 template <typename T>
-struct generic_graph_node_list_iterator {
+struct generic_graph_node_list_iterator final {
   generic_graph_node_list_iterator()
     : cur(nullptr), d(kNextDirection) {}
-  generic_graph_node_list_iterator(T * cur, int d)
+  generic_graph_node_list_iterator(T * cur, size_t d)
     : cur(cur), d(d) {}
   generic_graph_node_list_iterator(const generic_graph_node_list_iterator & rhs)
     : cur(rhs.cur), d(rhs.d) {}
@@ -86,15 +86,15 @@ struct generic_graph_node_list_iterator {
     return generic_graph_node_list_iterator(cur, reverseDir());
   }
 private:
-  int reverseDir() {
+  size_t reverseDir() {
     return d == kNextDirection ? kPrevDirection : kNextDirection;
   }
   T * cur;
-  int d; //direction 0 is forward 1 is reverse, see next_in_graph
+  size_t d; //direction 0 is forward 1 is reverse, see next_in_graph
 };
 
 template <typename T>
-struct generic_graph_node_list {
+struct generic_graph_node_list final {
   using iterator = generic_graph_node_list_iterator<T>;
   using const_iterator = generic_graph_node_list_iterator<const T>;
   generic_graph_node_list_iterator<T> begin() {
@@ -127,11 +127,11 @@ struct generic_graph_node_list {
   const generic_graph_node_list reverse() const {
     return generic_graph_node_list(head, d == kNextDirection ? kPrevDirection : kNextDirection);
   }
-  generic_graph_node_list(T * head, int d)
+  generic_graph_node_list(T * head, size_t d)
     : head(head), d(d) {}
 private:
   T * head;
-  int d;
+  size_t d;
 };
 
 template <typename T>
