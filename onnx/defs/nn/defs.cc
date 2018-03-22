@@ -390,6 +390,7 @@ namespace ONNX_NAMESPACE {
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(BatchNormalization)
+    .SinceVersion(6)
     .NumOutputs({ 1, 5 })
     .SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
