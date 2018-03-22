@@ -75,8 +75,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Add-1"></a>**Add-1**</a>
@@ -138,8 +138,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Affine-1"></a>**Affine-1**</a>
@@ -284,8 +284,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ArgMin-1"></a>**ArgMin-1**</a>
@@ -331,8 +331,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="AveragePool-1"></a>**AveragePool-1**</a>
@@ -400,8 +400,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="BatchNormalization-1"></a>**BatchNormalization-1**</a>
@@ -471,7 +471,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Cast-1"></a>**Cast-1**</a>
@@ -556,8 +556,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Clip-1"></a>**Clip-1**</a>
@@ -602,8 +602,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Concat-1"></a>**Concat-1**</a>
@@ -794,7 +794,7 @@ opset_import {
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional) : Tb</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
@@ -808,8 +808,10 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input, weights, and output types to float or uint8 tensors.</dd>
+<dt><tt>Tb</tt> : tensor(float16), tensor(float), tensor(double), tensor(int32)</dt>
+<dd>Constrain bias types to float or int32 tensors.</dd>
 </dl>
 
 ### <a name="ConvTranspose-1"></a>**ConvTranspose-1**</a>
@@ -855,7 +857,7 @@ opset_import {
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
-<dt><tt>B</tt> (optional) : T</dt>
+<dt><tt>B</tt> (optional) : Tb</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
 </dl>
 
@@ -869,8 +871,10 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input, weights, and output types to float or uint8 tensors.</dd>
+<dt><tt>Tb</tt> : tensor(float16), tensor(float), tensor(double), tensor(int32)</dt>
+<dd>Constrain bias types to float or int32 tensors.</dd>
 </dl>
 
 ### <a name="Crop-1"></a>**Crop-1**</a>
@@ -960,8 +964,45 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input types to float or uint8 tensors.</dd>
+</dl>
+
+### <a name="Dequantize-1"></a>**Dequantize-1**</a>
+
+  Dequantize a uint8 quantized tensor into a float tensor
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T0</dt>
+<dd>Input tensor of any shape.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T1</dt>
+<dd>Output tensor of same shape and type as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T0</tt> : tensor(uint8)</dt>
+<dd>Constrain input types to uint8 tensors.</dd>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to float tensors.</dd>
 </dl>
 
 ### <a name="Div-1"></a>**Div-1**</a>
@@ -1023,8 +1064,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Dropout-1"></a>**Dropout-1**</a>
@@ -1073,8 +1114,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Elu-1"></a>**Elu-1**</a>
@@ -1118,8 +1159,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Equal-1"></a>**Equal-1**</a>
@@ -1206,8 +1247,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="FC-1"></a>**FC-1**</a>
@@ -1314,8 +1355,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Floor-1"></a>**Floor-1**</a>
@@ -1351,8 +1392,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="GRU-1"></a>**GRU-1**</a>
@@ -1630,8 +1671,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
@@ -1693,8 +1734,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="GivenTensorFill-1"></a>**GivenTensorFill-1**</a>
@@ -1776,8 +1817,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="GlobalLpPool-1"></a>**GlobalLpPool-1**</a>
@@ -1857,8 +1898,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Greater-1"></a>**Greater-1**</a>
@@ -1956,8 +1997,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Hardmax-1"></a>**Hardmax-1**</a>
@@ -2012,8 +2053,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Identity-1"></a>**Identity-1**</a>
@@ -2189,8 +2230,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="LRN-1"></a>**LRN-1**</a>
@@ -2239,8 +2280,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output  types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output  types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="LSTM-1"></a>**LSTM-1**</a>
@@ -2438,8 +2479,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Less-1"></a>**Less-1**</a>
@@ -2526,8 +2567,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="LogSoftmax-1"></a>**LogSoftmax-1**</a>
@@ -2582,8 +2623,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Loop-1"></a>**Loop-1**</a>
@@ -2841,7 +2882,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="LpPool-1"></a>**LpPool-1**</a>
@@ -2931,8 +2972,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Max-1"></a>**Max-1**</a>
@@ -2967,8 +3008,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="MaxPool-1"></a>**MaxPool-1**</a>
@@ -3036,8 +3077,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="MaxRoiPool-1"></a>**MaxRoiPool-1**</a>
@@ -3084,8 +3125,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Mean-1"></a>**Mean-1**</a>
@@ -3120,8 +3161,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="MeanVarianceNormalization-1"></a>**MeanVarianceNormalization-1**</a>
@@ -3200,8 +3241,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Mul-1"></a>**Mul-1**</a>
@@ -3263,8 +3304,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Neg-1"></a>**Neg-1**</a>
@@ -3300,8 +3341,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Not-1"></a>**Not-1**</a>
@@ -3428,8 +3469,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Pad-1"></a>**Pad-1**</a>
@@ -3603,8 +3644,45 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
+</dl>
+
+### <a name="Quantize-1"></a>**Quantize-1**</a>
+
+  Quantize a float tensor into a uint8 quantized tensor
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T0</dt>
+<dd>Input tensor of any shape.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T1</dt>
+<dd>Output tensor of same shape and type as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T0</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(uint8)</dt>
+<dd>Constrain output types to uint8 tensors.</dd>
 </dl>
 
 ### <a name="RNN-1"></a>**RNN-1**</a>
@@ -3977,8 +4055,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceL1-1"></a>**ReduceL1-1**</a>
@@ -4026,8 +4104,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceL2-1"></a>**ReduceL2-1**</a>
@@ -4075,8 +4153,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**</a>
@@ -4124,8 +4202,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**</a>
@@ -4173,8 +4251,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceMax-1"></a>**ReduceMax-1**</a>
@@ -4222,8 +4300,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceMean-1"></a>**ReduceMean-1**</a>
@@ -4271,8 +4349,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceMin-1"></a>**ReduceMin-1**</a>
@@ -4320,8 +4398,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceProd-1"></a>**ReduceProd-1**</a>
@@ -4369,8 +4447,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceSum-1"></a>**ReduceSum-1**</a>
@@ -4418,8 +4496,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**</a>
@@ -4467,8 +4545,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Relu-1"></a>**Relu-1**</a>
@@ -4504,8 +4582,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Reshape-1"></a>**Reshape-1**</a>
@@ -4551,8 +4629,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Scale-1"></a>**Scale-1**</a>
@@ -4688,8 +4766,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Shape-1"></a>**Shape-1**</a>
@@ -4762,8 +4840,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Size-1"></a>**Size-1**</a>
@@ -4884,8 +4962,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Softmax-1"></a>**Softmax-1**</a>
@@ -4940,8 +5018,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Softplus-1"></a>**Softplus-1**</a>
@@ -4977,8 +5055,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Softsign-1"></a>**Softsign-1**</a>
@@ -5012,8 +5090,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="SpaceToDepth-1"></a>**SpaceToDepth-1**</a>
@@ -5056,8 +5134,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Split-1"></a>**Split-1**</a>
@@ -5142,8 +5220,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Squeeze-1"></a>**Squeeze-1**</a>
@@ -5185,8 +5263,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Sub-1"></a>**Sub-1**</a>
@@ -5248,8 +5326,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Sum-1"></a>**Sum-1**</a>
@@ -5284,8 +5362,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Tanh-1"></a>**Tanh-1**</a>
@@ -5319,8 +5397,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="ThresholdedRelu-1"></a>**ThresholdedRelu-1**</a>
@@ -5402,8 +5480,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="TopK-1"></a>**TopK-1**</a>
@@ -5458,7 +5536,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 <dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
 <dd>Constrain index tensor to integral types</dd>
 </dl>
@@ -5503,8 +5581,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Unsqueeze-1"></a>**Unsqueeze-1**</a>
@@ -5551,8 +5629,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Upsample-1"></a>**Upsample-1**</a>
@@ -5717,8 +5795,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="LpPool-2"></a>**LpPool-2**</a>
@@ -5771,8 +5849,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Pad-2"></a>**Pad-2**</a>
@@ -5835,8 +5913,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input and output types to float or uint8 tensors.</dd>
 </dl>
 
 ### <a name="Split-2"></a>**Split-2**</a>
@@ -5881,8 +5959,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain input types to float or uint8 tensors.</dd>
 </dl>
 
 ## Version 3 of the default ONNX operator set
@@ -6066,8 +6144,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint8)</dt>
+<dd>Constrain output types to float or uint8 tensors.</dd>
 </dl>
 
 ## Version 5 of the default ONNX operator set

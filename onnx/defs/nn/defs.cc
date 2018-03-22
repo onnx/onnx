@@ -79,8 +79,8 @@ namespace ONNX_NAMESPACE {
                           "the input tensor. Dimensions will vary based "
                           "on various kernel, stride, and pad sizes. Floor value of "
                           "the dimension is used", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+                "Constrain input and output types to float or uint8 tensors.");
         };
     }
 
@@ -137,8 +137,8 @@ namespace ONNX_NAMESPACE {
                           "Output data tensor from Lp pooling across the input "
                           "tensor. Dimensions will vary based on various kernel, stride, and pad "
                           "sizes.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+                "Constrain input and output types to float or uint8 tensors.");
         };
     }
 
@@ -177,8 +177,8 @@ namespace ONNX_NAMESPACE {
             schema.Output(0,
                           "Y",
                           "RoI pooled output 4-D tensor of shape (num_rois, channels, pooled_shape[0], pooled_shape[1]).", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+                "Constrain input and output types to float or uint8 tensors.");
         };
     }
 
@@ -212,14 +212,16 @@ computes the output.)DOC";
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
                          "B",
-                         "Optional 1D bias to be added to the convolution, has size of M.", "T", OpSchema::Optional);
+                         "Optional 1D bias to be added to the convolution, has size of M.", "Tb", OpSchema::Optional);
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the "
                           "convolution. The output dimensions are functions "
                           "of the kernel size, stride size, and pad lengths.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+                "Constrain input, weights, and output types to float or uint8 tensors.");
+            schema.TypeConstraint("Tb", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int32)" },
+                "Constrain bias types to float or int32 tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel. If not present, should be inferred from input W.",
                          AttributeProto::INTS, OPTIONAL);
@@ -272,14 +274,16 @@ and computes the output.)DOC";
                          "where is the dimension of the kernel", "T");
             schema.Input(2,
                          "B",
-                         "Optional 1D bias to be added to the convolution, has size of C.", "T", OpSchema::Optional);
+                         "Optional 1D bias to be added to the convolution, has size of C.", "Tb", OpSchema::Optional);
             schema.Output(0,
                           "Y",
                           "Output data tensor that contains the result of the convolution. The "
                           "output dimensions are functions of the kernel size, stride size, "
                           "and pad lengths.", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+                "Constrain input, weights, and output types to float or uint8 tensors.");
+            schema.TypeConstraint("Tb", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(int32)" },
+                "Constrain bias types to float or int32 tensors.");
             schema.Attr("kernel_shape",
                         "The shape of the convolution kernel. If not present, should be inferred from input W.",
                          AttributeProto::INTS, OPTIONAL);
@@ -340,8 +344,8 @@ namespace ONNX_NAMESPACE {
                           "Y",
                           "Output data tensor from pooling across the input "
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+                "Constrain input and output types to float or uint8 tensors.");
             schema.SetDoc(doc);
         };
     }
@@ -379,8 +383,8 @@ namespace ONNX_NAMESPACE {
                           "Y",
                           "Output data tensor from pooling across the input "
                           "tensor. Dimensions will be N x C x 1 x 1", "T");
-            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                "Constrain input and output types to float tensors.");
+            schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+                "Constrain input and output types to float or uint8 tensors.");
             schema.SetDoc(doc);
         };
     }
@@ -456,7 +460,7 @@ Output case #2: Y (test mode)
         "Saved variance used during training to speed up "
         "gradient computation. Should not be used for testing.", "T", OpSchema::Optional)
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(InstanceNormalization)
     .AllowConsumed({{0, 0}})
@@ -484,8 +488,8 @@ where mean and variance are computed per instance per channel.
     .Output(0,
         "output",
         "The output 4-dimensional tensor of the same shape as input.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(LpNormalization)
     .Input(0, "input", "Input matrix", "T")
@@ -493,7 +497,7 @@ ONNX_OPERATOR_SCHEMA(LpNormalization)
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        "Constrain input and output types to float or uint8 tensors.")
     .SetDoc(R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC")
@@ -522,8 +526,8 @@ the training phase, so during testing nothing needs to be done.
     .Output(0, "output", "The output.", "T")
     .Output(1, "mask",
                "The output mask. If is_test is nonzero, this output is not filled.", "T", OpSchema::Optional)
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Flatten)
     .SetDoc(R"DOC(
@@ -539,8 +543,8 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         "with input dimensions up to axis flattened to the outer dimension "
         "of the output and remaining input dimensions flattened into the inner "
         "dimension of the output.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.")
     .Attr(
         "axis",
         "(Default to 1) Indicate up to which input dimensions "
@@ -558,8 +562,8 @@ ONNX_OPERATOR_SCHEMA(LRN)
     .Attr("bias", "Default to 1.f", AttributeProto::FLOAT, 1.0f)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" }, "Constrain input and output "
-        " types to float tensors.")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" }, "Constrain input and output "
+        " types to float or uint8 tensors.")
     .SetDoc(R"DOC(
 Local Response Normalization. It normalizes over local input regions.
 Each input value is divided by

@@ -53,8 +53,8 @@ Performs element-wise binary {name} (with limited broadcast support).
         "Second operand. With broadcasting can be of smaller size than A. "
         "If broadcasting is disabled it should be of the same size.", "T");
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
-    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
   };
 }
 
@@ -91,8 +91,8 @@ will throw errors.
          "as described above.", "T");
     schema.Output(0, "output", "The output values with the same "
           "shape as input tensor.", "T");
-    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
   };
 }
 
@@ -122,8 +122,8 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Abs)
     .AllowConsumed({{0, 0}})
@@ -134,8 +134,8 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Reciprocal)
     .AllowConsumed({{0, 0}})
@@ -146,8 +146,8 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Floor)
     .AllowConsumed({{0, 0}})
@@ -158,8 +158,8 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Ceil)
     .AllowConsumed({{0, 0}})
@@ -170,8 +170,8 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sqrt)
     .AllowConsumed({{0, 0}})
@@ -182,8 +182,8 @@ the tensor elementwise. If x is negative, then it will return NaN.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Relu)
   .AllowConsumed({{0, 0}})
@@ -194,8 +194,8 @@ the tensor elementwise.
 )DOC")
   .Input(0, "X", "Input tensor", "T")
   .Output(0, "Y", "Output tensor", "T")
-  .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+  .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(LeakyRelu)
     .Attr("alpha",
@@ -210,8 +210,8 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Selu)
     .AllowConsumed({{0, 0}})
@@ -231,8 +231,8 @@ is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Elu)
     .AllowConsumed({{0, 0}})
@@ -248,8 +248,8 @@ Elu takes one input data (Tensor<T>) and produces one output data
 )DOC")
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Exp)
     .AllowConsumed({{0, 0}})
@@ -262,8 +262,8 @@ Calculates the exponential of the given input tensor, element-wise.
         "output",
         "The exponential of the input tensor computed "
         "element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Log)
     .AllowConsumed({{0, 0}})
@@ -276,8 +276,8 @@ Calculates the natural log of the given input tensor, element-wise.
         "output",
         "The natural log of the input tensor computed "
         "element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Tanh)
   .AllowConsumed({{0, 0}})
@@ -287,8 +287,8 @@ Calculates the hyperbolic tangent of the given input tensor element-wise.
     .Input(0, "input", "1-D input tensor", "T")
     .Output(0, "output", "The hyperbolic tangent values of the input tensor "
                "computed element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Pow)
     .SetDoc(R"DOC(
@@ -308,8 +308,8 @@ is applied to the data tensor elementwise.
           AttributeProto::INT,
           OPTIONAL)
     .Output(0, "Z", "Output tensor (same size as X)", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(PRelu)
     .AllowConsumed({{0, 0}})
@@ -327,8 +327,8 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
         "Slope tensor. If `Slope` is of size 1, the value is shared"
         "across different channels", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sigmoid)
   .AllowConsumed({{0, 0}})
@@ -339,8 +339,8 @@ tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(HardSigmoid)
   .AllowConsumed({{0, 0}})
@@ -359,8 +359,8 @@ is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Max)
     .AllowConsumed({{0, 0}})
@@ -370,8 +370,8 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
     .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Min)
     .AllowConsumed({{0, 0}})
@@ -381,8 +381,8 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
     .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sum)
     .AllowConsumed({{0, 0}})
@@ -392,8 +392,8 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
     .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Mean)
     .AllowConsumed({{0, 0}})
@@ -403,8 +403,8 @@ have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Mean.", "T", OpSchema::Variadic)
     .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Clip)
     .AllowConsumed({{0, 0}})
@@ -421,8 +421,8 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
           OPTIONAL)
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Softmax)
     .FillUsing(SoftmaxFamilyDocGenerator("softmax", "normalized exponential"));
@@ -443,8 +443,8 @@ Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
         "output",
         "The softsign (x/(1+|x|)) values of the input tensor computed element-wise",
         "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Softplus)
     .SetDoc(R"DOC(
@@ -454,8 +454,8 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Gemm)
     .SetDoc(R"DOC(General Matrix multiplication:
@@ -472,8 +472,8 @@ if attribute transA is non-zero, same for B and transB.
     .Input(2, "C", "Input tensor C, can be inplace.", "T")
     .AllowConsumed({{2, 0}})
     .Output(0, "Y", "Output tensor.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.")
     .Attr("transA",
           "Whether A should be transposed",
           AttributeProto::INT,
@@ -500,8 +500,8 @@ ONNX_OPERATOR_SCHEMA(MatMul)
     .Input(0, "A", "N-dimensional matrix A", "T")
     .Input(1, "B", "N-dimensional matrix B", "T")
     .Output(0, "Y", "Matrix multiply results from A * B", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.")
+    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)", "tensor(uint8)" },
+        "Constrain input and output types to float or uint8 tensors.")
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC");
@@ -536,7 +536,7 @@ Given two equivalent values, this operator uses the indices along the axis  as
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        "Constrain input and output types to float or uint8 tensors.")
     .TypeConstraint(
         "I",
         {"tensor(int64)", "tensor(int32)"},
