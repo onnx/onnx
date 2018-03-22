@@ -8,7 +8,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
-#include "onnx/shape_inference/shape_inference.h"
+#include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
 
