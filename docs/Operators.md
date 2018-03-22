@@ -1721,12 +1721,34 @@ opset_import {
 <summary>depthtospace</summary>
 
 ```python
+b, c, h, w = shape = (2, 8, 3, 3)
 blocksize = 2
 node = onnx.helper.make_node(
     'DepthToSpace',
     inputs=['x'],
     outputs=['y'],
     blocksize=blocksize,
+)
+x = np.random.random_sample(shape).astype(np.float32)
+tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace')
+```
+
+</details>
+
+
+<details>
+<summary>example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
 )
 
 # (1, 4, 2, 3) input tensor
@@ -1746,14 +1768,6 @@ y = np.array([[[[0,  6,  1,  7,  2,  8],
                 [15, 21, 16, 22, 17, 23]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_depthtospace_example')
-
-b, c, h, w = shape = (2, 8, 3, 3)
-x = np.random.random_sample(shape).astype(np.float32)
-tmp = np.reshape(x, [b, blocksize, blocksize, c//(blocksize**2), h, w])
-tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
-y = np.reshape(tmp, [b, c//(blocksize**2), h*blocksize, w*blocksize])
-expect(node, inputs=[x], outputs=[y],
-       name='test_depthtospace')
 ```
 
 </details>
