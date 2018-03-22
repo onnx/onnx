@@ -165,7 +165,7 @@ class Runner(object):
                     shutil.move(model_dir, dest)
                     break
             os.makedirs(model_dir)
-            url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
+            url = 'https://s3.amazonaws.com/download.onnx/models/latest/{}.tar.gz'.format(
                 model_test.model_name)
 
             # On Windows, NamedTemporaryFile can not be opened for a

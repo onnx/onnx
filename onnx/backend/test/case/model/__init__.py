@@ -33,7 +33,7 @@ def expect(model, inputs, outputs, name=None):
         ))
 
 
-BASE_URL = 'https://s3.amazonaws.com/download.onnx/models'
+BASE_URL = 'https://s3.amazonaws.com/download.onnx/models/latest'
 
 
 def collect_testcases():
