@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import TensorProto
+from onnx.onnx_pb import TensorProto
 import numpy as np
 
 TENSOR_TYPE_TO_NP_TYPE = {

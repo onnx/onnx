@@ -6,8 +6,10 @@ from __future__ import unicode_literals
 import sys
 
 import numpy as np
-from onnx import TensorProto
+
 from onnx import mapping
+from onnx.external_data_helper import load_external_data, runtime_to_persistence
+from onnx.onnx_pb import TensorProto
 
 if sys.byteorder != 'little':
     raise RuntimeError(
@@ -47,6 +49,13 @@ def to_array(tensor):
         return np.frombuffer(
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
+    elif tensor.HasField("external_data") \
+            and tensor.external_data.startswith('runtime://'):
+        # Read data from an external file.
+        raw_data = load_external_data(tensor)
+        tensor.raw_data = raw_data
+        tensor.external_data = runtime_to_persistence(tensor.external_data)
+        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
     else:
         data = getattr(tensor, storage_field),
         if (tensor_dtype == TensorProto.COMPLEX64 or

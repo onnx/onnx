@@ -3,6 +3,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import os
+
+from onnx import numpy_helper
+from onnx import external_data_helper
+
 from .onnx_pb import *  # noqa
 from .version import version as __version__  # noqa
 
@@ -47,3 +52,64 @@ def load_from_string(s):
             "Protobuf decoding consumed too few bytes: {} out of {}".format(
                 decoded, len(s)))
     return model
+
+
+def load_from_disk(onnx_filename, lazy_loading=True):
+    """Load binary protobuf file with an ONNX model.
+
+    :param onnx_filename: Path to file containing an ONNX model.
+    :param lazy_loading: By default tensor values are loaded from external data
+            files only when accessed using `numpy_helper.to_array`.
+            Set this to False to load all external data values into memory.
+    :return: loaded ONNX model
+    """
+    with open(onnx_filename, 'rb') as f:
+        onnx_string = f.read()
+    onnx_model_proto = load_from_string(onnx_string)
+
+    external_data_helper.set_external_data_runtime_values(
+        onnx_model_proto, onnx_filename)
+
+    if not lazy_loading:
+        for tensor in external_data_helper.get_all_tensors(onnx_model_proto):
+            numpy_helper.to_array(tensor)
+
+    return onnx_model_proto
+
+
+def save_to_disk(onnx_model_proto, filename):
+    """Save ONNX model to files on disk.
+
+    External data is written to additional files relative to the directory
+    in which the ONNX file is written.
+
+    :param onnx_model_proto: ONNX Protocol Buffers model
+    :param filename: path to the output file
+    """
+    dirname = os.path.dirname(filename)
+
+    for tensor in external_data_helper.get_all_tensors(onnx_model_proto):
+        if tensor.HasField("external_data"):
+            if tensor.external_data.startswith('runtime://'):
+                persistence_val = external_data_helper.runtime_to_persistence(
+                    tensor.external_data)
+                tensor.external_data = persistence_val
+
+            data_filename = external_data_helper.persistence_to_filename(
+                tensor.external_data)
+            external_data_filepath = os.path.join(dirname, data_filename)
+
+            tensor_value = numpy_helper.to_array(tensor)
+
+            # Write external data file
+            with open(external_data_filepath, 'wb') as data_file:
+                data_file.write(tensor_value.tobytes())
+
+            # Clear tensor data fields
+            for data_field in ['double_data', 'float_data', 'int32_data',
+                               'int64_data', 'raw_data',
+                               'string_data', 'uint64_data']:
+                tensor.ClearField(data_field)
+
+    with open(filename, 'wb') as f:
+        f.write(onnx_model_proto.SerializeToString())

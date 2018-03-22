@@ -360,6 +360,13 @@ message TensorProto {
   // When this field is present, the data_type field MUST NOT be STRING or UNDEFINED
   bytes raw_data = 9;
 
+  // Data can be stored inside the protobuf file using the raw_data field.
+  // Alternatively, raw bytes data can be stored in an external file, using the external_data field.
+  // external_data field stores a URI in the format file:///data_filename.bin
+  // Only the file:// protocol is currently supported and paths are interpreted as filenames relative
+  // to the filesystem directory where the ONNX protobuf model was stored.
+  string external_data = 13;
+
   // For double
   // Complex64 tensors are encoded as a single array of doubles,
   // with the real components appearing in odd numbered positions,
