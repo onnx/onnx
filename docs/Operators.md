@@ -5526,6 +5526,55 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>reducel1</summary>
+
+```python
+
+data = np.array(
+    [[[1,2], [3,4]],[[5,6], [7,8]],[[9,10], [11,12]]], 
+    dtype=np.float32)
+
+node = onnx.helper.make_node(
+    'ReduceL1',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [2],
+    keepdims = 0 
+)
+
+reduced = np.array([
+    [  3.,   7.], 
+    [ 11.,  15.], 
+    [ 19.,  23.]], 
+    dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_l1_do_not_keep_dims')
+
+node = onnx.helper.make_node(
+    'ReduceL1',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [2],
+    keepdims = 1
+)
+
+reduced = np.array([
+    [[  3.], [  7.]], 
+    [[ 11.], [ 15.]], 
+    [[ 19.], [ 23.]]], 
+    dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_l1_keep_dims')
+```
+
+</details>
+
+
 ### <a name="ReduceL2"></a><a name="reducel2">**ReduceL2**</a>
 
   Computes the L2 norm of the input tensor's element along the provided axes. The resulted
@@ -5574,6 +5623,55 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>reducel2</summary>
+
+```python
+
+data = np.array(
+    [[[1,2], [3,4]],[[5,6], [7,8]],[[9,10], [11,12]]], 
+    dtype=np.float32)
+
+node = onnx.helper.make_node(
+    'ReduceL2',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [2],
+    keepdims = 0
+)
+
+reduced = np.array([
+    [  2.23606777,   5.        ],  
+    [  7.81024933,  10.63014507], 
+    [ 13.45362377,  16.27882004]], 
+    dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_l2_do_not_keep_dims')
+
+node = onnx.helper.make_node(
+    'ReduceL2',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [2],
+    keepdims = 1
+)
+
+reduced = np.array([
+    [[  2.23606777], [  5.        ]], 
+    [[  7.81024933], [ 10.63014507]], 
+    [[ 13.45362377], [ 16.27882004]]], 
+    dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_l2_keep_dims')
+```
+
+</details>
 
 
 ### <a name="ReduceLogSum"></a><a name="reducelogsum">**ReduceLogSum**</a>
@@ -5676,6 +5774,36 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>reducelogsumexp</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReduceLogSumExp',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [1],
+    keepdims = 1 
+)
+
+data = np.array(
+    [[[5,1], [20,2]],[[30,1], [40,2]],[[55,1], [60,2]]], 
+    dtype=np.float32)
+reduced = np.array([
+    [[ 20.        ,   2.31326175]], 
+    [[ 40.00004578,   2.31326175]], 
+    [[ 60.00671387,   2.31326175]]], 
+    dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_log_sum_exp')
+```
+
+</details>
+
+
 ### <a name="ReduceMax"></a><a name="reducemax">**ReduceMax**</a>
 
   Computes the max of the input tensor's element along the provided axes. The resulted
@@ -5724,6 +5852,36 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>reducemax</summary>
+
+```python
+axis = 1
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMax',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [axis],
+    keepdims = keepdims 
+)
+
+data = np.array(
+    [[3,5],[2,4],[8,6]], 
+    dtype=np.float32)
+reduced = np.maximum.reduce(data, axis = axis, 
+    keepdims = keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_max')
+```
+
+</details>
 
 
 ### <a name="ReduceMean"></a><a name="reducemean">**ReduceMean**</a>
@@ -5776,6 +5934,37 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>reducemean</summary>
+
+```python
+
+axis = 1
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMean',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [axis],
+    keepdims = keepdims 
+)
+
+data = np.array(
+    [[[5,1], [20,2]],[[30,1], [40,2]],[[55,1], [60,2]]], 
+    dtype=np.float32)
+reduced = np.mean(data, axis = axis, 
+    keepdims = keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], 
+    name='test_reduce_mean')
+```
+
+</details>
+
+
 ### <a name="ReduceMin"></a><a name="reducemin">**ReduceMin**</a>
 
   Computes the min of the input tensor's element along the provided axes. The resulted
@@ -5824,6 +6013,36 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>reducemin</summary>
+
+```python
+axis = 1
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceMin',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [axis],
+    keepdims = keepdims
+)
+
+data = np.array(
+    [[3,5],[2,4],[8,6]], 
+    dtype=np.float32)
+reduced = np.minimum.reduce(data, axis = axis, 
+    keepdims = keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_min')
+```
+
+</details>
 
 
 ### <a name="ReduceProd"></a><a name="reduceprod">**ReduceProd**</a>
@@ -5876,6 +6095,35 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>reduceprod</summary>
+
+```python
+axis = 0
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceProd',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [axis],
+    keepdims = keepdims
+)
+
+data = np.array(
+    [[[1,2], [3,4]],[[5,6], [7,8]],[[9,10], [11,12]]], 
+    dtype=np.float32)
+reduced = np.prod(data, 0, keepdims = keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_prod')
+```
+
+</details>
+
+
 ### <a name="ReduceSum"></a><a name="reducesum">**ReduceSum**</a>
 
   Computes the sum of the input tensor's element along the provided axes. The resulted
@@ -5926,6 +6174,35 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>reducesum</summary>
+
+```python
+axis = 0
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSum',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [1],
+    keepdims = keepdims
+)
+
+data = np.array(
+    [[[1,2], [3,4]],[[5,6], [7,8]],[[9,10], [11,12]]], 
+    dtype=np.float32)
+reduced = np.sum(data, axis = axis, keepdims = keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], 
+    name='test_reduce_sum')
+```
+
+</details>
+
+
 ### <a name="ReduceSumSquare"></a><a name="reducesumsquare">**ReduceSumSquare**</a>
 
   Computes the sum square of the input tensor's element along the provided axes. The resulted
@@ -5974,6 +6251,36 @@ opset_import {
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>reducesumsquare</summary>
+
+```python
+axis = 1
+keepdims = 1
+
+node = onnx.helper.make_node(
+    'ReduceSumSquare',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes = [axis],
+    keepdims = keepdims
+)
+
+data = np.array(
+    [[[1,2], [3,4]],[[5,6], [7,8]],[[9,10], [11,12]]], 
+    dtype=np.float32)
+reduced = np.sum(np.square(data), axis = axis, 
+    keepdims = keepdims == 1)
+
+expect(node, inputs=[data], outputs=[reduced], 
+    name='test_reduce_sum_square')
+```
+
+</details>
 
 
 ### <a name="Relu"></a><a name="relu">**Relu**</a>
