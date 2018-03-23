@@ -20,7 +20,7 @@ import numpy as np
 import onnx
 from onnx import numpy_helper
 from six.moves.urllib.request import urlretrieve
-from ..loader import load_node_tests, load_model_tests
+from ..loader import load_model_tests
 from .item import TestItem
 
 
@@ -38,8 +38,8 @@ class Runner(object):
         # {category: {name: func}}
         self._test_items = defaultdict(dict)
 
-        for nt in load_node_tests():
-            self._add_node_test(nt)
+        for rt in load_model_tests(kind='node'):
+            self._add_model_test(rt, 'Node')
 
         for rt in load_model_tests(kind='real'):
             self._add_model_test(rt, 'Real')
@@ -257,25 +257,3 @@ class Runner(object):
                 self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
-
-    def _add_node_test(self, node_test):
-
-        def run(test_self, device):
-            np_inputs = [numpy_helper.to_array(tensor)
-                         for tensor in node_test.inputs]
-            ref_outputs = [numpy_helper.to_array(tensor)
-                           for tensor in node_test.outputs]
-            if sys.version_info < (3,):
-                run_node_spec = inspect.getargspec(self.backend.run_node)
-            else:
-                run_node_spec = inspect.getfullargspec(self.backend.run_node)
-            if 'outputs_info' in run_node_spec.args:
-                outputs_info = [(output.dtype, output.shape) for output in ref_outputs]
-                outputs = self.backend.run_node(
-                    node_test.node, np_inputs, device=device, outputs_info=outputs_info)
-            else:
-                outputs = self.backend.run_node(
-                    node_test.node, np_inputs, device=device)
-            self._assert_similar_outputs(ref_outputs, outputs)
-
-        self._add_test('Node', node_test.name, run, node_test.node)

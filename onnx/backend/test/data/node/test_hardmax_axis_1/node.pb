@@ -1,3 +1,0 @@
-
-xy"Hardmax*
-axis 
