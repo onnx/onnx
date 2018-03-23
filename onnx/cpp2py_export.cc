@@ -8,6 +8,7 @@
 #include "onnx/defs/schema.h"
 #include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
+#include "onnx/shape_inference/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -198,6 +199,21 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         result.SerializeToString(&out);
         return py::bytes(out);
       });
+
+  // Submodule `shape_inference`
+  auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
+  shape_inference.doc() = "Shape Inference submodule";
+
+  shape_inference.def(
+    "infer_shapes",
+    [](const py::bytes& bytes) {
+      ModelProto proto{};
+      ParseProtoFromPyBytes(&proto, bytes);
+      shape_inference::InferShapes(proto);
+      std::string out;
+      proto.SerializeToString(&out);
+      return py::bytes(out);
+    });
 }
 
 } // namespace ONNX_NAMESPACE
