@@ -510,7 +510,7 @@ class OpSchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 5);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 6);
       map_["ai.onnx.ml"] = std::make_pair(1, 1);
     }
 
