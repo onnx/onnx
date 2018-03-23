@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from collections import namedtuple
 import sys
 
 import onnx
@@ -23,10 +22,10 @@ def _extract_value_info(arr, name):
 
 
 def expect(node, inputs, outputs, name):
-    inputs_vi = [_extract_value_info(arr, name)
-                 for arr, name in zip(inputs, node.input)]
-    outputs_vi = [_extract_value_info(arr, name)
-                  for arr, name in zip(outputs, node.output)]
+    inputs_vi = [_extract_value_info(arr, arr_name)
+                 for arr, arr_name in zip(inputs, node.input)]
+    outputs_vi = [_extract_value_info(arr, arr_name)
+                  for arr, arr_name in zip(outputs, node.output)]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,

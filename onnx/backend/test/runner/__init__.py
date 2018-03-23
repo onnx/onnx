@@ -6,11 +6,9 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import functools
 import glob
-import inspect
 import os
 import re
 import shutil
-import sys
 import tarfile
 import tempfile
 import unittest

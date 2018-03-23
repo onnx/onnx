@@ -3,11 +3,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import glob
 import json
 import os
 
-import onnx
 from ..case.test_case import TestCase
 
 DATA_DIR = os.path.join(
