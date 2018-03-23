@@ -11,17 +11,17 @@ from . import expect
 from .pool_op_common import get_output_shape, get_pad_shape, pool
 
 
-class AveragePool(Base):
+class MaxPool(Base):
 
     @staticmethod
-    def export_averagepool_2d_precomputed_pads():
+    def export_maxpool_2d_precomputed_pads():
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 5, 5]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[5, 5],
@@ -35,22 +35,23 @@ class AveragePool(Base):
             [16, 17, 18, 19, 20],
             [21, 22, 23, 24, 25],
         ]]]).astype(np.float32)
-        y = np.array([[[[7, 7.5, 8, 8.5, 9],
-                        [9.5, 10, 10.5, 11, 11.5],
-                        [12, 12.5, 13, 13.5, 14],
-                        [14.5, 15, 15.5, 16, 16.5],
-                        [17, 17.5, 18, 18.5, 19]]]]).astype(np.float32)
+        y = np.array([[[
+            [13, 14, 15, 15, 15],
+            [18, 19, 20, 20, 20],
+            [23, 24, 25, 25, 25],
+            [23, 24, 25, 25, 25],
+            [23, 24, 25, 25, 25]]]]).astype(np.float32)
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_pads')
 
     @staticmethod
-    def export_averagepool_2d_precomputed_strides():
+    def export_maxpool_2d_precomputed_strides():
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 2, 2]
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[2, 2],
@@ -63,20 +64,20 @@ class AveragePool(Base):
             [16, 17, 18, 19, 20],
             [21, 22, 23, 24, 25],
         ]]]).astype(np.float32)
-        y = np.array([[[[4, 6],
-                        [14, 16]]]]).astype(np.float32)
+        y = np.array([[[[7, 9],
+                        [17, 19]]]]).astype(np.float32)
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_strides')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_strides')
 
     @staticmethod
-    def export_averagepool_2d_precomputed_same_upper():
+    def export_maxpool_2d_precomputed_same_upper():
         """
         input_shape: [1, 1, 5, 5]
         output_shape: [1, 1, 3, 3]
         pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[3, 3],
@@ -90,20 +91,20 @@ class AveragePool(Base):
             [16, 17, 18, 19, 20],
             [21, 22, 23, 24, 25],
         ]]]).astype(np.float32)
-        y = np.array([[[[4, 5.5, 7],
-                        [11.5, 13, 14.5],
-                        [19, 20.5, 22]]]]).astype(np.float32)
+        y = np.array([[[[7, 9, 10],
+                        [17, 19, 20],
+                        [22, 24, 25]]]]).astype(np.float32)
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_same_upper')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_same_upper')
 
     @staticmethod
-    def export_averagepool_1d_default():
+    def export_maxpool_1d_default():
         """
         iutput_shape: [1, 3, 32]
         output_shape: [1, 3, 31]
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[2],
@@ -114,18 +115,18 @@ class AveragePool(Base):
         strides = [1]
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'AVG')
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
 
     @staticmethod
-    def export_averagepool_2d_default():
+    def export_maxpool_2d_default():
         """
         iutput_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 31, 31]
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[2, 2],
@@ -136,18 +137,18 @@ class AveragePool(Base):
         strides = (1, 1)
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'AVG')
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
 
     @staticmethod
-    def export_averagepool_3d_default():
+    def export_maxpool_3d_default():
         """
         iutput_shape: [1, 3, 32, 32, 32]
         output_shape: [1, 3, 31, 31, 31]
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[2, 2, 2],
@@ -158,19 +159,19 @@ class AveragePool(Base):
         strides = [1, 1, 1]
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'AVG')
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'MAX')
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
 
     @staticmethod
-    def export_averagepool_2d_same_upper():
+    def export_maxpool_2d_same_upper():
         """
         iutput_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[2, 2],
@@ -188,19 +189,19 @@ class AveragePool(Base):
         pad_right = pad_shape[1] - pad_left
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                         constant_values=np.nan)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'MAX')
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_upper')
 
     @staticmethod
-    def export_averagepool_2d_same_lower():
+    def export_maxpool_2d_same_lower():
         """
         iutput_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[2, 2],
@@ -218,19 +219,19 @@ class AveragePool(Base):
         pad_left = pad_shape[1] - pad_right
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                         constant_values=np.nan)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'MAX')
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_lower')
 
     @staticmethod
-    def export_averagepool_2d_pads():
+    def export_maxpool_2d_pads():
         """
         iutput_shape: [1, 3, 28, 28]
         output_shape: [1, 3, 30, 30]
         pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[3, 3],
@@ -248,18 +249,18 @@ class AveragePool(Base):
         out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                         constant_values=np.nan)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'MAX')
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_pads')
 
     @staticmethod
-    def export_averagepool_2d_strides():
+    def export_maxpool_2d_strides():
         """
         iutput_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 10, 10]
         """
         node = onnx.helper.make_node(
-            'AveragePool',
+            'MaxPool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[5, 5],
@@ -271,6 +272,6 @@ class AveragePool(Base):
         strides = (3, 3)
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'AVG')
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
 
-        expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
+        expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
