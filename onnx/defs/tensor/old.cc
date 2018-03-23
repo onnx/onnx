@@ -111,7 +111,7 @@ from the input tensor).)DOC")
     .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     // This attribute was added via AllowConsumed API in OpSchema.
     // After removing the API, we're now using the Attr API to simulate the old definition.
-    .Attr("consumed_inputs", "legacy optimization attribute.", AttributeProto::INTS)
+    .Attr("consumed_inputs", "legacy optimization attribute.", AttributeProto::INTS, OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "reshaped", "Reshaped data.", "T")
     .TypeConstraint(

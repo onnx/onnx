@@ -427,7 +427,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>consumed_inputs</tt> : list of ints (required)</dt>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
 <dt><tt>epsilon</tt> : float</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
@@ -4532,7 +4532,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>consumed_inputs</tt> : list of ints (required)</dt>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
 <dt><tt>shape</tt> : list of ints</dt>
 <dd>New shape</dd>
