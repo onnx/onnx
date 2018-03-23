@@ -33,6 +33,18 @@ typedef std::unordered_set<DataType> DataTypeSet;
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
     TypeConstraintMap;
 
+typedef TensorShapeProto_Dimension InferenceDimension;
+
+struct InferenceContext {
+  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual size_t getNumInputTypes() const = 0;
+  virtual const TypeProto_Tensor* getInputType(size_t index) const = 0;
+  virtual size_t getNumOutputTypes() const = 0;
+  virtual TypeProto_Tensor* getOutputType(size_t index) = 0;
+};
+
+typedef void (*InferenceFunction)(InferenceContext&);
+
 /**
  * @brief A class to record the schema of an op.
  *
@@ -204,6 +216,15 @@ class OpSchema {
   OpSchema& EnforceConsumed(std::function<std::pair<bool, int>(int)> inplace);
   OpSchema& EnforceConsumed(std::unordered_map<int, int> inplace);
   OpSchema& EnforceOneToOneConsumed();
+
+  // Shape Inference
+  //
+  // Note that signatures are defined to allow for forward-declaring
+  // any structs used from ir.h
+  OpSchema& ShapeInferenceFunction(InferenceFunction inferenceFunction);
+  InferenceFunction GetShapeInferenceFunction() const {
+    return tensor_inference_function_;
+  }
 
   // Set the support level for the op schema.
   OpSchema& SetSupportLevel(SupportType supportType);
@@ -463,6 +484,7 @@ class OpSchema {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
+  InferenceFunction tensor_inference_function_ = [](InferenceContext&) {};
   // Is input i allowed/required to be marked consumed_
   // If so, which output idx shares the same buffer with i
   std::function<std::pair<UseType, int>(int)> consumed_ = [](int) {
