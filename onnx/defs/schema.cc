@@ -253,6 +253,11 @@ OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
   return *this;
 }
 
+OpSchema& OpSchema::ShapeInferenceFunction(InferenceFunction inferenceFunction) {
+  tensor_inference_function_ = inferenceFunction;
+  return *this;
+}
+
 OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   support_ = support;
   return *this;

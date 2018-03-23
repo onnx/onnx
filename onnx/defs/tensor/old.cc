@@ -101,7 +101,6 @@ Example:
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Reshape)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.

@@ -33,6 +33,19 @@ typedef std::unordered_set<DataType> DataTypeSet;
 typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
     TypeConstraintMap;
 
+typedef TensorShapeProto_Dimension InferenceDimension;
+
+struct InferenceContext {
+  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
+  virtual size_t getNumInputTypes() const = 0;
+  virtual const TypeProto_Tensor* getInputType(size_t index) const = 0;
+  virtual size_t getNumOutputTypes() const = 0;
+  virtual TypeProto_Tensor* getOutputType(size_t index) = 0;
+  virtual ~InferenceContext() {}
+};
+
+typedef void (*InferenceFunction)(InferenceContext&);
+
 /**
  * @brief A class to record the schema of an op.
  *
@@ -195,6 +208,15 @@ class OpSchema {
    * @brief Output could be one of the values specified in allowed_output_nums.
    */
   OpSchema& NumOutputs(std::set<int> allowed_output_nums);
+
+  // Shape Inference
+  //
+  // Note that signatures are defined to allow for forward-declaring
+  // any structs used from ir.h
+  OpSchema& ShapeInferenceFunction(InferenceFunction inferenceFunction);
+  InferenceFunction GetShapeInferenceFunction() const {
+    return tensor_inference_function_;
+  }
 
   // Set the support level for the op schema.
   OpSchema& SetSupportLevel(SupportType supportType);
@@ -443,6 +465,7 @@ class OpSchema {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
+  InferenceFunction tensor_inference_function_ = [](InferenceContext&) {};
 };
 
 // Map type to store operator schemas. The format is,
@@ -463,7 +486,7 @@ class OpSchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 5);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 6);
       map_["ai.onnx.ml"] = std::make_pair(1, 1);
     }
 

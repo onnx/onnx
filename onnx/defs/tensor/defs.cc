@@ -239,7 +239,39 @@ will be (2, 1, 3).
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .ShapeInferenceFunction([](InferenceContext& ctx) {
+        if (ctx.getNumInputTypes() != 1) {
+          return;
+        }
+        std::vector<int64_t> perm;
+        {
+          auto perm_attr = ctx.getAttribute("perm");
+          if (perm_attr) {
+            for (auto dim : perm_attr->ints()) {
+              perm.push_back(dim);
+            }
+          } else {
+            int ndims = ctx.getInputType(0)->shape().dim_size();
+            for (int i = 0; i < ndims; i++) {
+              perm.push_back(ndims - i - 1);
+            }
+          }
+        }
+
+        TypeProto_Tensor tt;
+        {
+          tt.set_elem_type(ctx.getInputType(0)->elem_type());
+          auto shape = tt.mutable_shape();
+
+          for (size_t i = 0; i < perm.size(); i++) {
+            auto dim = shape->add_dim();
+            *dim = ctx.getInputType(0)->shape().dim(perm[i]);
+          }
+        }
+
+        *ctx.getOutputType(0) = tt;
+      });
 
 ONNX_OPERATOR_SCHEMA(Gather)
     .SetDoc(R"DOC(
