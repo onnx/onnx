@@ -90,7 +90,9 @@ namespace ONNX_NAMESPACE {
         ));
 
     ONNX_OPERATOR_SCHEMA(MaxPool)
-        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max", ""));
+        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max",
+        "The output of each pooling window is maximum number of elements exclude pad."
+        ));
 
 } // namespace ONNX_NAMESPACE
 
