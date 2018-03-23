@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import sys
 
+import onnx.defs
 from ..utils import import_recursive
 from ..test_case import TestCase
 
@@ -25,7 +26,8 @@ def expect(model, inputs, outputs, name=None):
         ))
 
 
-BASE_URL = 'https://s3.amazonaws.com/download.onnx/models/latest'
+BASE_URL = 'https://s3.amazonaws.com/download.onnx/models/opset_{}'.format(
+    onnx.defs.onnx_opset_version())
 
 
 def collect_testcases():
