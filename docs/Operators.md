@@ -974,13 +974,15 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 6
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>
 
 #### Attributes
 
