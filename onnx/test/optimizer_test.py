@@ -137,6 +137,7 @@ class TestOptimizer(unittest.TestCase):
 
         init_model = self._optimized(graph, ['split_init'])
         self.assertEqual(len(init_model.graph.node), 1)
+        self.assertEqual(len(init_model.graph.output), 1)
         self.assertEqual(init_model.graph.node[0].op_type, 'Constant')
 
         predict_model = self._optimized(graph, ['split_predict'])
