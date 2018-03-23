@@ -41,6 +41,7 @@ struct InferenceContext {
   virtual const TypeProto_Tensor* getInputType(size_t index) const = 0;
   virtual size_t getNumOutputTypes() const = 0;
   virtual TypeProto_Tensor* getOutputType(size_t index) = 0;
+  virtual ~InferenceContext() {}
 };
 
 typedef void (*InferenceFunction)(InferenceContext&);
