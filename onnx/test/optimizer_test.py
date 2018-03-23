@@ -117,6 +117,34 @@ class TestOptimizer(unittest.TestCase):
         assert list(optimized_model.graph.value_info) == [vi]
         assert len(list(optimized_model.graph.node)) == 3
 
+    def test_split(self):
+        node = onnx.helper.make_node(
+            'Constant',
+            inputs=[],
+            outputs=['X'],
+            value=onnx.helper.make_tensor(
+                name='X',
+                data_type=TensorProto.FLOAT,
+                dims=[1],
+                vals=[5],
+            ),
+        )
+        graph = helper.make_graph(
+            [node],
+            'test-optimize-split',
+            [],
+            [helper.make_tensor_value_info('X', TensorProto.FLOAT, (1,))])
+
+        init_model = self._optimized(graph, ['split_init'])
+        self.assertEqual(len(init_model.graph.node), 1)
+        self.assertEqual(len(init_model.graph.output), 1)
+        self.assertEqual(init_model.graph.node[0].op_type, 'Constant')
+
+        predict_model = self._optimized(graph, ['split_predict'])
+        self.assertEqual(len(predict_model.graph.node), 0)
+        self.assertEqual(len(predict_model.graph.input), 1)
+        self.assertEqual(predict_model.graph.input[0].name, 'X')
+
 
 if __name__ == '__main__':
     unittest.main()
