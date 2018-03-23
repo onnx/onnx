@@ -1001,7 +1001,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dd>The input 4-dimensional tensor of shape NCHW for 2D BatchNormalization or 5-dimensional tensor of shape NCHWD for 3D BatchNormalization.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
 <dt><tt>B</tt> : T</dt>
@@ -1016,7 +1016,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>The output 4-dimensional tensor of the same shape as X.</dd>
+<dd>The output tensor of the same shape as X.</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
