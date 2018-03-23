@@ -342,6 +342,11 @@ OpSchema& OpSchema::EnforceOneToOneConsumed() {
   return EnforceConsumed([](int i) { return std::make_pair(true, i); });
 }
 
+OpSchema& OpSchema::ShapeInferenceFunction(InferenceFunction inferenceFunction) {
+  tensor_inference_function_ = inferenceFunction;
+  return *this;
+}
+
 OpSchema& OpSchema::SetSupportLevel(SupportType support) {
   support_ = support;
   return *this;
