@@ -114,7 +114,7 @@ class AveragePool(Base):
         strides = [1]
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0])
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
 
@@ -136,7 +136,7 @@ class AveragePool(Base):
         strides = (1, 1)
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0))
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
 
@@ -158,7 +158,7 @@ class AveragePool(Base):
         strides = [1, 1, 1]
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0])
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
@@ -188,7 +188,7 @@ class AveragePool(Base):
         pad_right = pad_shape[1] - pad_left
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                         constant_values=np.nan)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
 
@@ -218,7 +218,7 @@ class AveragePool(Base):
         pad_left = pad_shape[1] - pad_right
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                         constant_values=np.nan)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
 
@@ -248,7 +248,7 @@ class AveragePool(Base):
         out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
         padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
                         constant_values=np.nan)
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape)
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
 
@@ -271,6 +271,6 @@ class AveragePool(Base):
         strides = (3, 3)
         out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
         padded = x
-        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0))
+        y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'AVG')
 
         expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
