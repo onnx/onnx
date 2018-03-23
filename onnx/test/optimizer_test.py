@@ -145,5 +145,6 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(len(predict_model.graph.input), 1)
         self.assertEqual(predict_model.graph.input[0].name, 'X')
 
+
 if __name__ == '__main__':
     unittest.main()
