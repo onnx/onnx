@@ -25,21 +25,26 @@ def get_output_shape(auto_pad, input_spatial_shape, kernel_spatial_shape, stride
     return out_shape
 
 
-def pool(padded, x_shape, kernel_shape, strides_shape, out_shape, pad_shape):
+def pool(padded, x_shape, kernel_shape, strides_shape, out_shape, pad_shape, pooling_type):
     spatial_size = len(x_shape) - 2
     y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))
 
     for shape in itertools.product(range(x_shape[0]),
                                    range(x_shape[1]),
                                    *[range(
-                                     int((x_shape[i + 2] + pad_shape[i] - kernel_shape[i]) / strides_shape[i] + 1))
-                                     for i in range(spatial_size)]):
+                                       int((x_shape[i + 2] + pad_shape[i] - kernel_shape[i]) / strides_shape[i] + 1))
+                                       for i in range(spatial_size)]):
         window = padded[shape[0], shape[1]]
         window_vals = np.array([window[i] for i in list(
             itertools.product(
                 *[range(strides_shape[i] * shape[i + 2], strides_shape[i] * shape[i + 2] + kernel_shape[i]) for i in
                   range(spatial_size)])
         )])
-        average = np.average(window_vals[np.where(~np.isnan(window_vals))])
-        y[shape] = average
+        if pooling_type == 'AVG':
+            f = np.average
+        elif pooling_type == 'MAX':
+            f = np.max
+        else:
+            raise NotImplementedError('Pooling type {} does not support. Should be AVG, MAX'.format(pooling_type))
+        y[shape] = f(window_vals[np.where(~np.isnan(window_vals))])
     return y.astype(np.float32)
