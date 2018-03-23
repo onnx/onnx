@@ -109,6 +109,9 @@ inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
 from the input tensor).)DOC")
     .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
+    // This attribute was added via AllowConsumed API in OpSchema.
+    // After removing the API, we're now using the Attr API to simulate the old definition.
+    .Attr("consumed_inputs", "legacy optimization attribute.", AttributeProto::INTS)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "reshaped", "Reshaped data.", "T")
     .TypeConstraint(

@@ -123,6 +123,9 @@ Output case #2: Y (test mode)
         "e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.",
         AttributeProto::FLOAT,
         0.9f)
+    // This attribute was added via AllowConsumed API in OpSchema.
+    // After removing the API, we're now using the Attr API to simulate the old definition.
+    .Attr("consumed_inputs", "legacy optimization attribute.", AttributeProto::INTS)
     .Input(0,
         "X",
         "The input 4-dimensional tensor of shape NCHW.", "T")
