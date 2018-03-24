@@ -123,13 +123,15 @@
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 
 #### Inputs
 
@@ -197,13 +199,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
 
 #### Attributes
 
@@ -1128,13 +1132,15 @@ for case in test_cases:
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Ceil-1">Ceil-1</a>
 
 #### Inputs
 
@@ -1192,13 +1198,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 
 #### Attributes
 
@@ -1798,13 +1806,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
 
 #### Attributes
 
@@ -1898,13 +1908,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
 
 #### Attributes
 
@@ -1948,13 +1960,15 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Elu-1">Elu-1</a>
 
 #### Attributes
 
@@ -2135,13 +2149,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Exp-1">Exp-1</a>
 
 #### Inputs
 
@@ -2291,13 +2307,15 @@ expect(node, inputs=[a], outputs=[b],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
 
 #### Inputs
 
@@ -2636,13 +2654,15 @@ expect(node, inputs=[data, indices], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 
 #### Attributes
 
@@ -3002,13 +3022,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoid-1</a>
 
 #### Attributes
 
@@ -3235,13 +3257,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">InstanceNormalization-1</a>
 
 #### Attributes
 
@@ -3491,13 +3515,15 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">LeakyRelu-1</a>
 
 #### Attributes
 
@@ -3678,13 +3704,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Log-1">Log-1</a>
 
 #### Inputs
 
@@ -4062,13 +4090,15 @@ expect(node, inputs=[a, b], outputs=[c],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -4582,13 +4612,15 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -4658,13 +4690,15 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -4750,13 +4784,15 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
 
 #### Attributes
 
@@ -4848,13 +4884,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
 
 #### Inputs
 
@@ -5173,13 +5211,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 
 #### Inputs
 
@@ -5805,13 +5845,15 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Reciprocal-1">Reciprocal-1</a>
 
 #### Inputs
 
@@ -6369,13 +6411,15 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
 
 #### Inputs
 
@@ -6507,13 +6551,15 @@ for test_name, shape in test_cases.items():
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 
 #### Attributes
 
@@ -6675,13 +6721,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Sigmoid-1">Sigmoid-1</a>
 
 #### Inputs
 
@@ -7374,13 +7422,15 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Sqrt-1">Sqrt-1</a>
 
 #### Inputs
 
@@ -7519,13 +7569,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
 
 #### Attributes
 
@@ -7616,13 +7668,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -7691,13 +7745,15 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Versioning
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 1
+  version = 7
 }
 ~~~~
+
+Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
 
 #### Inputs
 

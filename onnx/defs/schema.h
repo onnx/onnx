@@ -30,7 +30,8 @@ using DataTypeSet = std::unordered_set<DataType>;
 
 // Type constraint map. Key is type string. Value is data type set and
 // description.
-using TypeConstraintMap = std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>;
+using TypeConstraintMap =
+    std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>;
 
 typedef TensorShapeProto_Dimension InferenceDimension;
 
@@ -140,7 +141,10 @@ class OpSchema final {
 
   OpSchema() : OpSchema("unknown", "unknown", 0) {}
   OpSchema(std::string name, std::string file, int line)
-      : name_(std::move(name)), file_(std::move(file)), line_(line), support_(SupportType::COMMON) {}
+      : name_(std::move(name)),
+        file_(std::move(file)),
+        line_(line),
+        support_(SupportType::COMMON) {}
 
   /**
    * @brief Returns the file that the op schema is registered from.
@@ -345,34 +349,32 @@ class OpSchema final {
 
   // Convenience members for types
   static const std::vector<std::string>& all_integral_types() {
-    static const std::vector<std::string> all_integral_types =
-      {"float",
-       "int32",
-       "string",
-       "bool",
-       "uint8",
-       "int8",
-       "uint16",
-       "int16",
-       "int64",
-       "float16",
-       "double"};
+    static const std::vector<std::string> all_integral_types = {"float",
+                                                                "int32",
+                                                                "string",
+                                                                "bool",
+                                                                "uint8",
+                                                                "int8",
+                                                                "uint16",
+                                                                "int16",
+                                                                "int64",
+                                                                "float16",
+                                                                "double"};
     return all_integral_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types =
-      {"tensor(float)",
-       "tensor(int32)",
-       "tensor(string)",
-       "tensor(bool)",
-       "tensor(uint8)",
-       "tensor(int8)",
-       "tensor(uint16)",
-       "tensor(int16)",
-       "tensor(int64)",
-       "tensor(float16)",
-       "tensor(double)"};
+    static const std::vector<std::string> all_tensor_types = {"tensor(float)",
+                                                              "tensor(int32)",
+                                                              "tensor(string)",
+                                                              "tensor(bool)",
+                                                              "tensor(uint8)",
+                                                              "tensor(int8)",
+                                                              "tensor(uint16)",
+                                                              "tensor(int16)",
+                                                              "tensor(int64)",
+                                                              "tensor(float16)",
+                                                              "tensor(double)"};
     return all_tensor_types;
   }
 
@@ -481,7 +483,7 @@ class OpSchemaRegistry final {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 6);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
       map_["ai.onnx.ml"] = std::make_pair(1, 1);
     }
 
@@ -537,15 +539,16 @@ class OpSchemaRegistry final {
       auto lower_bound_incl = ver_range_it->second.first;
       auto upper_bound_incl = ver_range_it->second.second;
       if (!(lower_bound_incl <= ver && upper_bound_incl >= ver)) {
-        std::cerr << "Trying to register schema with name " << op_name
-                  << " (domain: " << op_domain << " version: " << ver
-                  << ") from file " << op_schema.file() << " line "
-                  << op_schema.line() << ", but it its version is not"
-                  << "in the inclusive range [" << lower_bound_incl << ", "
-                  << upper_bound_incl << "] (usually, this means you "
-                  << "bumped the operator version but "
-                  << "forgot to update the version range in DomainToVersionRange "
-                  << "in onnx/defs/schema.h)." << std::endl;
+        std::cerr
+            << "Trying to register schema with name " << op_name
+            << " (domain: " << op_domain << " version: " << ver
+            << ") from file " << op_schema.file() << " line "
+            << op_schema.line() << ", but it its version is not"
+            << "in the inclusive range [" << lower_bound_incl << ", "
+            << upper_bound_incl << "] (usually, this means you "
+            << "bumped the operator version but "
+            << "forgot to update the version range in DomainToVersionRange "
+            << "in onnx/defs/schema.h)." << std::endl;
         abort();
       }
       m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
@@ -633,12 +636,13 @@ class OpSchemaRegistry final {
   }
 };
 
-#define ONNX_OPERATOR_SCHEMA(name) ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
+#define ONNX_OPERATOR_SCHEMA(name) \
+  ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) \
   ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)            \
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                 \
   static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
-      op_schema_register_once##name##Counter) =        \
+      op_schema_register_once##name##Counter) =                  \
       OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
