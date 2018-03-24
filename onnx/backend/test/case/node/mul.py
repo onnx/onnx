@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 class Mul(Base):
 
     @staticmethod
@@ -21,7 +22,7 @@ class Mul(Base):
 
         x = np.array([1, 2, 3]).astype(np.float32)
         y = np.array([4, 5, 6]).astype(np.float32)
-        z = x * y #expected output [4., 10., 18.]
+        z = x * y  # expected output [4., 10., 18.]
         expect(node, inputs=[x, y], outputs=[z],
                name='test_mul_example')
 

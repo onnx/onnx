@@ -18,7 +18,7 @@ import unittest
 import numpy as np
 
 import onnx
-from onnx import helper, numpy_helper
+from onnx import numpy_helper
 from six.moves.urllib.request import urlretrieve
 from ..loader import load_node_tests, load_model_tests
 from .item import TestItem
@@ -52,7 +52,6 @@ class Runner(object):
 
         for ot in load_model_tests(kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
-
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -136,7 +135,7 @@ class Runner(object):
         '''
         tests = self._get_test_case('OnnxBackendTest')
         for _, items_map in sorted(self._filtered_test_items.values()):
-            for name, item in sorted(funcs_map.items()):
+            for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
 
@@ -147,7 +146,8 @@ class Runner(object):
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
-                rtol=1e-3)
+                rtol=1e-3,
+                atol=1e-7)
 
     def _prepare_model_data(self, model_test):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
@@ -165,8 +165,6 @@ class Runner(object):
                     shutil.move(model_dir, dest)
                     break
             os.makedirs(model_dir)
-            url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
-                model_test.model_name)
 
             # On Windows, NamedTemporaryFile can not be opened for a
             # second time
@@ -174,8 +172,8 @@ class Runner(object):
             try:
                 download_file.close()
                 print('Start downloading model {} from {}'.format(
-                    model_test.model_name, url))
-                urlretrieve(url, download_file.name)
+                    model_test.model_name, model_test.url))
+                urlretrieve(model_test.url, download_file.name)
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)

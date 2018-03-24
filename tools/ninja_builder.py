@@ -27,7 +27,6 @@ class NinjaBuilder(object):
         self.compdb_targets = []
 
     def run(self):
-        import ninja
         self.writer.close()
         subprocess.check_call([self.ninja_program, '-f', self.filename])
         compile_db_path = os.path.join(BUILD_DIR, '{}_compile_commands.json'.format(self.name))

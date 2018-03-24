@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 import sys
 
+import onnx.defs
 from ..utils import import_recursive
 
 TestCase = namedtuple('TestCase', [
@@ -17,6 +18,7 @@ TestCase = namedtuple('TestCase', [
 ])
 
 _SimpleModelTestCases = []
+
 
 def expect(model, inputs, outputs, name=None):
     name = name or model.graph.name
@@ -32,7 +34,9 @@ def expect(model, inputs, outputs, name=None):
         ))
 
 
-BASE_URL = 'https://s3.amazonaws.com/download.onnx/models'
+BASE_URL = 'https://s3.amazonaws.com/download.onnx/models/opset_{}'.format(
+    onnx.defs.onnx_opset_version())
+
 
 def collect_testcases():
     '''Collect model test cases defined in python/numpy code and in model zoo.
@@ -63,7 +67,6 @@ def collect_testcases():
             data_sets=None,
             kind='real',
         ))
-
 
     import_recursive(sys.modules[__name__])
 

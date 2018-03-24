@@ -96,6 +96,12 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
     }
   }
 
+  for (Value * v : graph.outputs()) {
+    if (!value_belongs_to_predict_net(v)) {
+      new_interface.insert(v);
+    }
+  }
+
   if (init) {
     // Add new outputs corresponding to the boundary between init and
     // predict nets, ensuring that we don't duplicate outputs.

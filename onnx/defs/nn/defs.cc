@@ -21,16 +21,34 @@ namespace ONNX_NAMESPACE {
 }
 
 namespace ONNX_NAMESPACE {
-    std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName) {
+    std::function<void(OpSchema&)> PoolOpSchemaGenerator(const char* name, const char* opName, const char* additionalDescription) {
         return [=](OpSchema& schema) {
             std::string doc = R"DOC(
  {name} consumes an input tensor X and applies {opName} pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
  subset of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing.)DOC";
+ data into the output tensor Y for further processing. The output spatial shape will be following:
+ ```
+ output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+
+ * pad_shape[i] is sum of pads along axis i
+ ```
+
+ `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+ ```
+ VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+ ```
+ And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+ ```
+ pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+ ```
+ {additionalDescription}
+ )DOC";
             ReplaceAll(doc, "{name}", name);
             ReplaceAll(doc, "{opName}", opName);
+            ReplaceAll(doc, "{additionalDescription}", additionalDescription);
             schema.SetDoc(doc);
             schema.Attr("kernel_shape",
                         "The size of the kernel along each axis.",
@@ -67,10 +85,14 @@ namespace ONNX_NAMESPACE {
     }
 
     ONNX_OPERATOR_SCHEMA(AveragePool)
-        .FillUsing(PoolOpSchemaGenerator("AveragePool", "average"));
+        .FillUsing(PoolOpSchemaGenerator("AveragePool", "average",
+        "The output of each pooling window is divided by the number of elements exclude pad."
+        ));
 
     ONNX_OPERATOR_SCHEMA(MaxPool)
-        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max"));
+        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max",
+        "The output of each pooling window is maximum number of elements exclude pad."
+        ));
 
 } // namespace ONNX_NAMESPACE
 
@@ -370,8 +392,8 @@ namespace ONNX_NAMESPACE {
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(BatchNormalization)
+    .SinceVersion(6)
     .NumOutputs({ 1, 5 })
-    .EnforceConsumed({ {3, 1}, {4, 2} })
     .SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
