@@ -165,8 +165,6 @@ class Runner(object):
                     shutil.move(model_dir, dest)
                     break
             os.makedirs(model_dir)
-            url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
-                model_test.model_name)
 
             # On Windows, NamedTemporaryFile can not be opened for a
             # second time
@@ -174,8 +172,8 @@ class Runner(object):
             try:
                 download_file.close()
                 print('Start downloading model {} from {}'.format(
-                    model_test.model_name, url))
-                urlretrieve(url, download_file.name)
+                    model_test.model_name, model_test.url))
+                urlretrieve(model_test.url, download_file.name)
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)

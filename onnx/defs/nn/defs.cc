@@ -90,7 +90,9 @@ namespace ONNX_NAMESPACE {
         ));
 
     ONNX_OPERATOR_SCHEMA(MaxPool)
-        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max", ""));
+        .FillUsing(PoolOpSchemaGenerator("MaxPool", "max",
+        "The output of each pooling window is maximum number of elements exclude pad."
+        ));
 
 } // namespace ONNX_NAMESPACE
 
@@ -390,8 +392,8 @@ namespace ONNX_NAMESPACE {
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(BatchNormalization)
+    .SinceVersion(6)
     .NumOutputs({ 1, 5 })
-    .EnforceConsumed({ {3, 1}, {4, 2} })
     .SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
