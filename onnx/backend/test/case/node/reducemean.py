@@ -23,14 +23,14 @@ class ReduceMean(Base):
             inputs=['data'],
             outputs=['reduced'],
             axes = [axis],
-            keepdims = keepdims 
+            keepdims = keepdims
         )
 
         data = np.array(
-            [[[5,1], [20,2]],[[30,1], [40,2]],[[55,1], [60,2]]], 
+            [[[5,1], [20,2]],[[30,1], [40,2]],[[55,1], [60,2]]],
             dtype=np.float32)
-        reduced = np.mean(data, axis = axis, 
+        reduced = np.mean(data, axis = axis,
             keepdims = keepdims == 1)
 
-        expect(node, inputs=[data], outputs=[reduced], 
+        expect(node, inputs=[data], outputs=[reduced],
             name='test_reduce_mean')

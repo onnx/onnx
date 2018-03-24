@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import  
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -26,9 +26,9 @@ class ReduceMin(Base):
         )
 
         data = np.array(
-            [[3,5],[2,4],[8,6]], 
+            [[3,5],[2,4],[8,6]],
             dtype=np.float32)
-        reduced = np.minimum.reduce(data, axis = axis, 
+        reduced = np.minimum.reduce(data, axis = axis,
             keepdims = keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced],

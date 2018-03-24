@@ -22,14 +22,14 @@ class ReduceMax(Base):
             inputs=['data'],
             outputs=['reduced'],
             axes = [axis],
-            keepdims = keepdims 
+            keepdims = keepdims
         )
 
         data = np.array(
-            [[3,5],[2,4],[8,6]], 
+            [[3,5],[2,4],[8,6]],
             dtype=np.float32)
-        reduced = np.maximum.reduce(data, axis = axis, 
+        reduced = np.maximum.reduce(data, axis = axis,
             keepdims = keepdims == 1)
-            
+
         expect(node, inputs=[data], outputs=[reduced],
                name='test_reduce_max')
