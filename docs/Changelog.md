@@ -6254,6 +6254,106 @@ opset_import {
 </dl>
 
 ## Version 6 of the default ONNX operator set
+### <a name="Abs-6"></a>**Abs-6**</a>
+
+  Absolute takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the absolute is, y = abs(x), is applied to
+  the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Add-6"></a>**Add-6**</a>
+
+  Performs element-wise binary addition (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="BatchNormalization-6"></a>**BatchNormalization-6**</a>
 
   Carries out batch normalization as described in the paper
@@ -6324,108 +6424,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-## Version 7 of the default ONNX operator set
-### <a name="Abs-7"></a>**Abs-7**</a>
-
-  Absolute takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the absolute is, y = abs(x), is applied to
-  the tensor elementwise.
-
-#### Versioning
-
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 7
-}
-~~~~
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="Add-7"></a>**Add-7**</a>
-
-  Performs element-wise binary addition (with limited broadcast support).
-  
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of size 1 (a scalar value), or having its shape as a
-  contiguous subset of the first tensor's shape. The starting of the mutually
-  equal shape is specified by the argument "axis", and if it is not set, suffix
-  matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
-
-#### Versioning
-
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 7
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="Ceil-7"></a>**Ceil-7**</a>
+### <a name="Ceil-6"></a>**Ceil-6**</a>
 
   Ceil takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
@@ -6433,11 +6432,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6462,7 +6461,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Clip-7"></a>**Clip-7**</a>
+### <a name="Clip-6"></a>**Clip-6**</a>
 
   Clip operator limits the given input within an interval. The interval is
   specified with arguments 'min' and 'max'. They default to
@@ -6470,11 +6469,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6508,7 +6507,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Div-7"></a>**Div-7**</a>
+### <a name="Div-6"></a>**Div-6**</a>
 
   Performs element-wise binary division (with limited broadcast support).
   
@@ -6531,11 +6530,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6571,7 +6570,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Dropout-7"></a>**Dropout-7**</a>
+### <a name="Dropout-6"></a>**Dropout-6**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
   output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
@@ -6581,11 +6580,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6621,7 +6620,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Elu-7"></a>**Elu-7**</a>
+### <a name="Elu-6"></a>**Elu-6**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
@@ -6630,11 +6629,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6666,17 +6665,17 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Exp-7"></a>**Exp-7**</a>
+### <a name="Exp-6"></a>**Exp-6**</a>
 
   Calculates the exponential of the given input tensor, element-wise.
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6701,7 +6700,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Floor-7"></a>**Floor-7**</a>
+### <a name="Floor-6"></a>**Floor-6**</a>
 
   Floor takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the floor is, y = floor(x), is applied to
@@ -6709,11 +6708,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6738,7 +6737,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Gemm-7"></a>**Gemm-7**</a>
+### <a name="Gemm-6"></a>**Gemm-6**</a>
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
@@ -6751,11 +6750,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6799,7 +6798,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="HardSigmoid-7"></a>**HardSigmoid-7**</a>
+### <a name="HardSigmoid-6"></a>**HardSigmoid-6**</a>
 
   HardSigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
@@ -6807,11 +6806,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6845,7 +6844,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="InstanceNormalization-7"></a>**InstanceNormalization-7**</a>
+### <a name="InstanceNormalization-6"></a>**InstanceNormalization-6**</a>
 
   Carries out instance normalization as described in the paper
   https://arxiv.org/abs/1607.08022.
@@ -6856,11 +6855,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6896,7 +6895,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="LeakyRelu-7"></a>**LeakyRelu-7**</a>
+### <a name="LeakyRelu-6"></a>**LeakyRelu-6**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
@@ -6904,11 +6903,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6940,17 +6939,17 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Log-7"></a>**Log-7**</a>
+### <a name="Log-6"></a>**Log-6**</a>
 
   Calculates the natural log of the given input tensor, element-wise.
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6975,18 +6974,18 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Max-7"></a>**Max-7**</a>
+### <a name="Max-6"></a>**Max-6**</a>
 
   Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7011,18 +7010,18 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Mean-7"></a>**Mean-7**</a>
+### <a name="Mean-6"></a>**Mean-6**</a>
 
   Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7047,18 +7046,18 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Min-7"></a>**Min-7**</a>
+### <a name="Min-6"></a>**Min-6**</a>
 
   Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7083,7 +7082,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Mul-7"></a>**Mul-7**</a>
+### <a name="Mul-6"></a>**Mul-6**</a>
 
   Performs element-wise binary multiplication (with limited broadcast support).
   
@@ -7106,11 +7105,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7146,7 +7145,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Neg-7"></a>**Neg-7**</a>
+### <a name="Neg-6"></a>**Neg-6**</a>
 
   Neg takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where each element flipped sign, y = -x, is applied to
@@ -7154,11 +7153,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7183,7 +7182,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="PRelu-7"></a>**PRelu-7**</a>
+### <a name="PRelu-6"></a>**PRelu-6**</a>
 
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
@@ -7192,11 +7191,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7223,7 +7222,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Reciprocal-7"></a>**Reciprocal-7**</a>
+### <a name="Reciprocal-6"></a>**Reciprocal-6**</a>
 
   Reciprocal takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
@@ -7231,11 +7230,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7260,7 +7259,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Relu-7"></a>**Relu-7**</a>
+### <a name="Relu-6"></a>**Relu-6**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
@@ -7268,11 +7267,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7297,7 +7296,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Selu-7"></a>**Selu-7**</a>
+### <a name="Selu-6"></a>**Selu-6**</a>
 
   Selu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the scaled exponential linear unit function,
@@ -7306,11 +7305,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7344,7 +7343,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sigmoid-7"></a>**Sigmoid-7**</a>
+### <a name="Sigmoid-6"></a>**Sigmoid-6**</a>
 
   Sigmoid takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
@@ -7352,11 +7351,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7381,7 +7380,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sqrt-7"></a>**Sqrt-7**</a>
+### <a name="Sqrt-6"></a>**Sqrt-6**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the square root is, y = x^0.5, is applied to
@@ -7389,11 +7388,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7418,7 +7417,7 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sub-7"></a>**Sub-7**</a>
+### <a name="Sub-6"></a>**Sub-6**</a>
 
   Performs element-wise binary subtraction (with limited broadcast support).
   
@@ -7441,11 +7440,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7481,18 +7480,18 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Sum-7"></a>**Sum-7**</a>
+### <a name="Sum-6"></a>**Sum-6**</a>
 
   Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7517,17 +7516,17 @@ opset_import {
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="Tanh-7"></a>**Tanh-7**</a>
+### <a name="Tanh-6"></a>**Tanh-6**</a>
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 

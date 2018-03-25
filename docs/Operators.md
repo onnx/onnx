@@ -123,11 +123,11 @@
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -199,11 +199,11 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -1132,11 +1132,11 @@ for case in test_cases:
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -1198,11 +1198,11 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -1806,11 +1806,11 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -1908,11 +1908,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -1960,11 +1960,11 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -2149,11 +2149,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -2307,11 +2307,11 @@ expect(node, inputs=[a], outputs=[b],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -2654,11 +2654,11 @@ expect(node, inputs=[data, indices], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -3022,11 +3022,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -3257,11 +3257,11 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -3515,11 +3515,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -3704,11 +3704,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -4090,11 +4090,11 @@ expect(node, inputs=[a, b], outputs=[c],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -4612,11 +4612,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -4690,11 +4690,11 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -4784,11 +4784,11 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -4884,11 +4884,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -5211,11 +5211,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -5845,11 +5845,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6411,11 +6411,11 @@ opset_import {
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6551,11 +6551,11 @@ for test_name, shape in test_cases.items():
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -6721,11 +6721,11 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7422,11 +7422,11 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7569,11 +7569,11 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7668,11 +7668,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 
@@ -7745,11 +7745,11 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Versioning
 
-This operator is used if you are using version 7 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
 
 ~~~~
 opset_import {
-  version = 7
+  version = 6
 }
 ~~~~
 

@@ -579,7 +579,7 @@ Output case #2: Y (test mode)
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(InstanceNormalization)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
@@ -628,7 +628,7 @@ Given a matrix, apply Lp-normalization along the provided axis.
         static_cast<int64_t>(2));
 
 ONNX_OPERATOR_SCHEMA(Dropout)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in

@@ -114,21 +114,21 @@ will throw errors.
   };
 }
 
-ONNX_OPERATOR_SCHEMA(Add).SinceVersion(7).FillUsing(
+ONNX_OPERATOR_SCHEMA(Add).SinceVersion(6).FillUsing(
     MathDocGenerator("addition"));
 
-ONNX_OPERATOR_SCHEMA(Sub).SinceVersion(7).FillUsing(
+ONNX_OPERATOR_SCHEMA(Sub).SinceVersion(6).FillUsing(
     MathDocGenerator("subtraction"));
 
-ONNX_OPERATOR_SCHEMA(Mul).SinceVersion(7).FillUsing(
+ONNX_OPERATOR_SCHEMA(Mul).SinceVersion(6).FillUsing(
     MathDocGenerator("multiplication"));
 
-ONNX_OPERATOR_SCHEMA(Div).SinceVersion(7).FillUsing(
+ONNX_OPERATOR_SCHEMA(Div).SinceVersion(6).FillUsing(
     MathDocGenerator("division"));
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(Neg)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Neg takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where each element flipped sign, y = -x, is applied to
@@ -142,7 +142,7 @@ the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Abs)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Absolute takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the absolute is, y = abs(x), is applied to
@@ -156,7 +156,7 @@ the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Reciprocal)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Reciprocal takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
@@ -170,7 +170,7 @@ the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Floor)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Floor takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the floor is, y = floor(x), is applied to
@@ -184,7 +184,7 @@ the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Ceil)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Ceil takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the ceil is, y = ceil(x), is applied to
@@ -198,7 +198,7 @@ the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sqrt)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Square root takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the square root is, y = x^0.5, is applied to
@@ -212,7 +212,7 @@ the tensor elementwise. If x is negative, then it will return NaN.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Relu)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
@@ -226,7 +226,7 @@ the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(LeakyRelu)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .Attr(
         "alpha",
         "Coefficient of leakage default to 0.01.",
@@ -245,7 +245,7 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Selu)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .Attr(
         "alpha",
         "Coefficient of SELU default to 1.6732.",
@@ -270,7 +270,7 @@ is applied to the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Elu)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .Attr(
         "alpha",
         "Coefficient of ELU default to 1.0.",
@@ -290,7 +290,7 @@ Elu takes one input data (Tensor<T>) and produces one output data
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Exp)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
 )DOC")
@@ -307,7 +307,7 @@ Calculates the exponential of the given input tensor, element-wise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Log)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Calculates the natural log of the given input tensor, element-wise.
 )DOC")
@@ -324,7 +324,7 @@ Calculates the natural log of the given input tensor, element-wise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Tanh)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Calculates the hyperbolic tangent of the given input tensor element-wise.
 )DOC")
@@ -370,7 +370,7 @@ is applied to the data tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(PRelu)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
@@ -392,7 +392,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sigmoid)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
@@ -406,7 +406,7 @@ tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(HardSigmoid)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .Attr("alpha", "Value of alpha default to 0.2", AttributeProto::FLOAT, 0.2f)
     .Attr("beta", "Value of beta default to 0.5", AttributeProto::FLOAT, 0.5f)
     .SetDoc(R"DOC(
@@ -422,7 +422,7 @@ is applied to the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Max)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise max of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
@@ -435,7 +435,7 @@ have the same shape and data type.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Min)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise min of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
@@ -448,7 +448,7 @@ have the same shape and data type.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sum)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise sum of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
@@ -461,7 +461,7 @@ have the same shape and data type.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Mean)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise mean of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
@@ -474,7 +474,7 @@ have the same shape and data type.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Clip)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified with arguments 'min' and 'max'. They default to
@@ -536,7 +536,7 @@ the tensor elementwise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Gemm)
-    .SinceVersion(7)
+    .SinceVersion(6)
     .SetDoc(R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
