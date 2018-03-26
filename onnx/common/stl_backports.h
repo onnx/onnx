@@ -2,6 +2,8 @@
 
 // This file contains backports of STL features for newer C++.
 
+#include <memory>
+#include <type_traits>
 
 /*
  * Use MOVE_CAPTURE_IF_CPP14 in a lambda capture so it gets
