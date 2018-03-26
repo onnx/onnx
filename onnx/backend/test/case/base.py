@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import inspect
 from textwrap import dedent
-from typing import Dict, Text, List, Tuple  # noqa
+from typing import Dict, Text, List, Tuple
 
 import numpy as np  # type: ignore
 from six import add_metaclass
