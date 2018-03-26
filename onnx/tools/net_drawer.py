@@ -69,10 +69,9 @@ def GetPydotGraph(
     graph,  # type: GraphProto
     name=None,  # type: Optional[Text]
     rankdir='LR',  # type: Text
-    node_producer=None, # type: Optional[_NodeProducer]
+    node_producer=None,  # type: Optional[_NodeProducer]
     embed_docstring=False,  # type: bool
-):
-    # type: (...) -> pydot.Dot
+):  # type: (...) -> pydot.Dot
     if node_producer is None:
         node_producer = GetOpNodeProducer(embed_docstring=embed_docstring, **OP_STYLE)
     pydot_graph = pydot.Dot(name, rankdir=rankdir)

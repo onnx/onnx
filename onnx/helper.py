@@ -24,7 +24,7 @@ def make_node(
         name=None,  # type: Optional[Text]
         doc_string=None,  # type: Optional[Text]
         **kwargs  # type: Any
-        ):  # type: (...) -> NodeProto
+):  # type: (...) -> NodeProto
     """Construct a NodeProto.
 
     Arguments:
@@ -59,7 +59,7 @@ def make_graph(
     outputs,  # type: Sequence[ValueInfoProto]
     initializer=None,  # type: Optional[Sequence[TensorProto]]
     doc_string=None,  # type: Optional[Text]
-    value_info=[],  # type: List[ValueInfoProto]
+    value_info=[],  # type: Sequence[ValueInfoProto]
 ):  # type: (...) -> GraphProto
     if initializer is None:
         initializer = []
@@ -126,7 +126,7 @@ def make_tensor(
         dims,  # type: Sequence[int]
         vals,  # type: Any
         raw=False  # type: bool
-        ):  # type: (...) -> TensorProto
+):  # type: (...) -> TensorProto
     '''
     Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
@@ -177,7 +177,7 @@ def make_attribute(
         key,  # type: Text
         value,  # type: Any
         doc_string=None  # type: Optional[Text]
-        ):  # type: (...) -> AttributeProto
+):  # type: (...) -> AttributeProto
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
@@ -266,7 +266,7 @@ def make_tensor_value_info(
         shape,  # type: Sequence[int]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[Text]
-        ):  # type: (...) -> ValueInfoProto
+):  # type: (...) -> ValueInfoProto
     """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
@@ -345,7 +345,7 @@ def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) 
     def str_str(s):  # type: (Text) -> Text
         return repr(s)
 
-    _T = TypeVar('_T')
+    _T = TypeVar('_T')  # noqa
 
     def str_list(str_elem, xs):  # type: (Callable[[_T], Text], Sequence[_T]) -> Text
         return '[' + ', '.join(map(str_elem, xs)) + ']'

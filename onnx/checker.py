@@ -37,6 +37,7 @@ DEFAULT_CONTEXT.opset_imports = {'': onnx.defs.onnx_opset_version()}
 
 FuncType = TypeVar('FuncType', bound=Callable[..., Any])
 
+
 # TODO: This really doesn't seem worth the metaprogramming...
 def _create_checker(proto_type):  # type: (Type[Message]) -> Callable[[FuncType], FuncType]
     def decorator(py_func):  # type: (FuncType) -> FuncType

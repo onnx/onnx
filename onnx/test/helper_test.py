@@ -141,6 +141,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         def _set(attr, type, var, value):  # type: (AttributeProto, AttributeProto.AttributeType, Text, Any) -> None
             setattr(attr, var, value)
             setattr(attr, 'type', type)
+
         def _extend(attr, type, var, value):  # type: (AttributeProto, AttributeProto.AttributeType, List[Any], Any) -> None
             var.extend(value)
             setattr(attr, 'type', type)
