@@ -252,16 +252,15 @@ class build_proto(ONNXCommand):
                     PROTOC,
                     '--proto_path', SRC_DIR,
                     '--python_out', SRC_DIR,
-                    ] + protoc_mypy_args + [
+                ] + protoc_mypy_args + [
                     '--cpp_out', SRC_DIR,
                     proto
                 ])
                 if gen_mypy:
                     # Workaround for https://github.com/dropbox/mypy-protobuf/issues/8
-                    for file in os.listdir('onnx'):
-                        if file.endswith('.pyi') and '-' in file:
-                            os.rename(os.path.join('onnx', file), os.path.join('onnx', file.replace('-', '_')))
-
+                    for f in os.listdir(SRC_DIR):
+                        if f.endswith('.pyi') and '-' in f:
+                            os.rename(os.path.join(SRC_DIR, f), os.path.join(SRC_DIR, f.replace('-', '_')))
 
 
 class create_version(ONNXCommand):
