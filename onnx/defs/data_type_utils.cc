@@ -12,7 +12,7 @@ namespace Utils {
 // This implements construct on first use which is needed to ensure
 // static objects are initialized before use. Ops registration does not work
 // properly without this.
-class TypesWrapper {
+class TypesWrapper final {
  public:
   static TypesWrapper& GetTypesWrapper();
 
@@ -38,7 +38,7 @@ class TypesWrapper {
 // This can be used to track a "valid" range/slice of the string.
 // Caller should ensure StringRange is not used after external storage has
 // been freed.
-class StringRange {
+class StringRange final {
  public:
   StringRange();
   StringRange(const char* data, size_t size);

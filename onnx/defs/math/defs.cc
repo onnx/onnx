@@ -1,8 +1,8 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "onnx/defs/schema.h"
 #include <functional>
+#include "onnx/defs/schema.h"
 
 using namespace ONNX_NAMESPACE;
 
@@ -35,30 +35,38 @@ Performs element-wise binary {name} (with limited broadcast support).
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc);
     schema.SetDoc(doc);
-    schema.Attr("broadcast",
-                "Pass 1 to enable broadcasting",
-                AttributeProto::INT,
-                static_cast<int64_t>(0));
-    schema.Attr("axis",
-                "If set, defines the broadcast dimensions. See doc for details.",
-                AttributeProto::INT,
-                OPTIONAL);
+    schema.Attr(
+        "broadcast",
+        "Pass 1 to enable broadcasting",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
+    schema.Attr(
+        "axis",
+        "If set, defines the broadcast dimensions. See doc for details.",
+        AttributeProto::INT,
+        OPTIONAL);
     schema.Input(
         0,
         "A",
-        "First operand, should share the type with the second operand.", "T");
+        "First operand, should share the type with the second operand.",
+        "T");
     schema.Input(
         1,
         "B",
         "Second operand. With broadcasting can be of smaller size than A. "
-        "If broadcasting is disabled it should be of the same size.", "T");
+        "If broadcasting is disabled it should be of the same size.",
+        "T");
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
-    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
   };
 }
 
-std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(const char* name, const char* description) {
+std::function<void(OpSchema&)> SoftmaxFamilyDocGenerator(
+    const char* name,
+    const char* description) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The operator computes the {name} ({description}) values for each layer in the batch
@@ -80,41 +88,47 @@ will throw errors.
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{description}", description);
     schema.SetDoc(doc);
-    schema.Attr("axis",
+    schema.Attr(
+        "axis",
         "(int) default to 1; describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
         "the batch_size",
         AttributeProto::INT,
         static_cast<int64_t>(1));
-    schema.Input(0, "input",
-         "The input tensor that's coerced into a 2D matrix of size (NxD) "
-         "as described above.", "T");
-    schema.Output(0, "output", "The output values with the same "
-          "shape as input tensor.", "T");
-    schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    schema.Input(
+        0,
+        "input",
+        "The input tensor that's coerced into a 2D matrix of size (NxD) "
+        "as described above.",
+        "T");
+    schema.Output(
+        0,
+        "output",
+        "The output values with the same "
+        "shape as input tensor.",
+        "T");
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
   };
 }
 
-ONNX_OPERATOR_SCHEMA(Add)
-    .AllowConsumed({{0, 0}, {1, 0}})
-    .FillUsing(MathDocGenerator("addition"));
+ONNX_OPERATOR_SCHEMA(Add).SinceVersion(6).FillUsing(
+    MathDocGenerator("addition"));
 
-ONNX_OPERATOR_SCHEMA(Sub)
-    .AllowConsumed({{0, 0}, {1, 0}})
-    .FillUsing(MathDocGenerator("subtraction"));
+ONNX_OPERATOR_SCHEMA(Sub).SinceVersion(6).FillUsing(
+    MathDocGenerator("subtraction"));
 
-ONNX_OPERATOR_SCHEMA(Mul)
-    .AllowConsumed({{0, 0}, {1, 0}})
-    .FillUsing(MathDocGenerator("multiplication"));
+ONNX_OPERATOR_SCHEMA(Mul).SinceVersion(6).FillUsing(
+    MathDocGenerator("multiplication"));
 
-ONNX_OPERATOR_SCHEMA(Div)
-    .AllowConsumed({{0, 0}, {1, 0}})
-    .FillUsing(MathDocGenerator("division"));
-}  // namespace ONNX_NAMESPACE
+ONNX_OPERATOR_SCHEMA(Div).SinceVersion(6).FillUsing(
+    MathDocGenerator("division"));
+} // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(Neg)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Neg takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where each element flipped sign, y = -x, is applied to
@@ -122,11 +136,13 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Abs)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Absolute takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the absolute is, y = abs(x), is applied to
@@ -134,11 +150,13 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Reciprocal)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Reciprocal takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
@@ -146,11 +164,13 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Floor)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Floor takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the floor is, y = floor(x), is applied to
@@ -158,11 +178,13 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Ceil)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Ceil takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the ceil is, y = ceil(x), is applied to
@@ -170,11 +192,13 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sqrt)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Square root takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the square root is, y = x^0.5, is applied to
@@ -182,27 +206,32 @@ the tensor elementwise. If x is negative, then it will return NaN.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Relu)
-  .AllowConsumed({{0, 0}})
-  .SetDoc(R"DOC(
+    .SinceVersion(6)
+    .SetDoc(R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
 the tensor elementwise.
 )DOC")
-  .Input(0, "X", "Input tensor", "T")
-  .Output(0, "Y", "Output tensor", "T")
-  .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .Input(0, "X", "Input tensor", "T")
+    .Output(0, "Y", "Output tensor", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(LeakyRelu)
-    .Attr("alpha",
-          "Coefficient of leakage default to 0.01.",
-          AttributeProto::FLOAT,
-          0.01f)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
+    .Attr(
+        "alpha",
+        "Coefficient of leakage default to 0.01.",
+        AttributeProto::FLOAT,
+        0.01f)
     .SetDoc(R"DOC(
 LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
 output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
@@ -210,19 +239,23 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Selu)
-    .AllowConsumed({{0, 0}})
-    .Attr("alpha",
-          "Coefficient of SELU default to 1.6732.",
-          AttributeProto::FLOAT,
-          1.6732f)
-    .Attr("gamma",
-          "Coefficient of SELU default to 1.0507.",
-           AttributeProto::FLOAT,
-           1.0507f)
+    .SinceVersion(6)
+    .Attr(
+        "alpha",
+        "Coefficient of SELU default to 1.6732.",
+        AttributeProto::FLOAT,
+        1.6732f)
+    .Attr(
+        "gamma",
+        "Coefficient of SELU default to 1.0507.",
+        AttributeProto::FLOAT,
+        1.0507f)
     .SetDoc(R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
@@ -231,15 +264,18 @@ is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Elu)
-    .AllowConsumed({{0, 0}})
-    .Attr("alpha",
-          "Coefficient of ELU default to 1.0.",
-          AttributeProto::FLOAT,
-          1.0f)
+    .SinceVersion(6)
+    .Attr(
+        "alpha",
+        "Coefficient of ELU default to 1.0.",
+        AttributeProto::FLOAT,
+        1.0f)
     .SetDoc(R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
@@ -248,11 +284,13 @@ Elu takes one input data (Tensor<T>) and produces one output data
 )DOC")
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Exp)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Calculates the exponential of the given input tensor, element-wise.
 )DOC")
@@ -261,12 +299,15 @@ Calculates the exponential of the given input tensor, element-wise.
         0,
         "output",
         "The exponential of the input tensor computed "
-        "element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Log)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Calculates the natural log of the given input tensor, element-wise.
 )DOC")
@@ -275,19 +316,28 @@ Calculates the natural log of the given input tensor, element-wise.
         0,
         "output",
         "The natural log of the input tensor computed "
-        "element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Tanh)
-  .AllowConsumed({{0, 0}})
-  .SetDoc(R"DOC(
+    .SinceVersion(6)
+    .SetDoc(R"DOC(
 Calculates the hyperbolic tangent of the given input tensor element-wise.
 )DOC")
     .Input(0, "input", "1-D input tensor", "T")
-    .Output(0, "output", "The hyperbolic tangent values of the input tensor "
-               "computed element-wise", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .Output(
+        0,
+        "output",
+        "The hyperbolic tangent values of the input tensor "
+        "computed element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Pow)
@@ -297,22 +347,30 @@ produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC" + std::string(kBroadcastDoc))
     .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
-    .Input(1, "Y", "Input tensor of any shape broadcastable to X shape, "
-                   "the exponent component.", "T")
-    .Attr("broadcast",
-          "Pass 1 to enable broadcasting",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-    .Attr("axis",
-          "If set, defines the broadcast dimensions. See doc for details.",
-          AttributeProto::INT,
-          OPTIONAL)
+    .Input(
+        1,
+        "Y",
+        "Input tensor of any shape broadcastable to X shape, "
+        "the exponent component.",
+        "T")
+    .Attr(
+        "broadcast",
+        "Pass 1 to enable broadcasting",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "axis",
+        "If set, defines the broadcast dimensions. See doc for details.",
+        AttributeProto::INT,
+        OPTIONAL)
     .Output(0, "Z", "Output tensor (same size as X)", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(PRelu)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
@@ -325,113 +383,129 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
         1,
         "slope",
         "Slope tensor. If `Slope` is of size 1, the value is shared"
-        "across different channels", "T")
+        "across different channels",
+        "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sigmoid)
-  .AllowConsumed({{0, 0}})
-  .SetDoc(R"DOC(
+    .SinceVersion(6)
+    .SetDoc(R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
 tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(HardSigmoid)
-  .AllowConsumed({{0, 0}})
-  .Attr("alpha",
-        "Value of alpha default to 0.2",
-        AttributeProto::FLOAT,
-        0.2f)
-  .Attr("beta",
-        "Value of beta default to 0.5",
-        AttributeProto::FLOAT,
-        0.5f)
-  .SetDoc(R"DOC(
+    .SinceVersion(6)
+    .Attr("alpha", "Value of alpha default to 0.2", AttributeProto::FLOAT, 0.2f)
+    .Attr("beta", "Value of beta default to 0.5", AttributeProto::FLOAT, 0.5f)
+    .SetDoc(R"DOC(
 HardSigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
 is applied to the tensor elementwise.
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Max)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise max of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
     .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Min)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise min of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
     .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sum)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise sum of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
     .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Mean)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Element-wise mean of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
 )DOC")
     .Input(0, "data_0", "List of tensors for Mean.", "T", OpSchema::Variadic)
     .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Clip)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Clip operator limits the given input within an interval. The interval is
 specified with arguments 'min' and 'max'. They default to
 numeric_limits::lowest() and numeric_limits::max() respectively.
 )DOC")
-    .Attr("min", "Minimum value, under which element is replaced by min",
-          AttributeProto::FLOAT,
-          OPTIONAL)
-    .Attr("max", "Maximum value, above which element is replaced by max",
-          AttributeProto::FLOAT,
-          OPTIONAL)
+    .Attr(
+        "min",
+        "Minimum value, under which element is replaced by min",
+        AttributeProto::FLOAT,
+        OPTIONAL)
+    .Attr(
+        "max",
+        "Maximum value, above which element is replaced by max",
+        AttributeProto::FLOAT,
+        OPTIONAL)
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
-ONNX_OPERATOR_SCHEMA(Softmax)
-    .FillUsing(SoftmaxFamilyDocGenerator("softmax", "normalized exponential"));
+ONNX_OPERATOR_SCHEMA(Softmax).FillUsing(
+    SoftmaxFamilyDocGenerator("softmax", "normalized exponential"));
 
 ONNX_OPERATOR_SCHEMA(LogSoftmax)
     .FillUsing(SoftmaxFamilyDocGenerator("logsoftmax", "log of softmax"));
 
-ONNX_OPERATOR_SCHEMA(Hardmax)
-    .FillUsing(SoftmaxFamilyDocGenerator("hardmax", "1 for the first maximum value, and 0 for all others"));
+ONNX_OPERATOR_SCHEMA(Hardmax).FillUsing(SoftmaxFamilyDocGenerator(
+    "hardmax",
+    "1 for the first maximum value, and 0 for all others"));
 
 ONNX_OPERATOR_SCHEMA(Softsign)
     .SetDoc(R"DOC(
@@ -443,7 +517,9 @@ Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
         "output",
         "The softsign (x/(1+|x|)) values of the input tensor computed element-wise",
         "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Softplus)
@@ -454,10 +530,13 @@ the tensor elementwise.
 )DOC")
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D input tensor", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Gemm)
+    .SinceVersion(6)
     .SetDoc(R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
@@ -470,37 +549,44 @@ if attribute transA is non-zero, same for B and transB.
     .Input(0, "A", "Input tensor A", "T")
     .Input(1, "B", "Input tensor B", "T")
     .Input(2, "C", "Input tensor C, can be inplace.", "T")
-    .AllowConsumed({{2, 0}})
     .Output(0, "Y", "Output tensor.", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .Attr("transA",
-          "Whether A should be transposed",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-    .Attr("transB",
-          "Whether B should be transposed",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-    .Attr("broadcast",
-          "Whether C should be broadcasted",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-    .Attr("alpha",
-          "Scalar multiplier for the product of input tensors A * B",
-          AttributeProto::FLOAT,
-          1.0f)
-    .Attr("beta",
-          "Scalar multiplier for input tensor C",
-          AttributeProto::FLOAT,
-          1.0f);
-
+    .Attr(
+        "transA",
+        "Whether A should be transposed",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "transB",
+        "Whether B should be transposed",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "broadcast",
+        "Whether C should be broadcasted",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "alpha",
+        "Scalar multiplier for the product of input tensors A * B",
+        AttributeProto::FLOAT,
+        1.0f)
+    .Attr(
+        "beta",
+        "Scalar multiplier for input tensor C",
+        AttributeProto::FLOAT,
+        1.0f);
 
 ONNX_OPERATOR_SCHEMA(MatMul)
     .Input(0, "A", "N-dimensional matrix A", "T")
     .Input(1, "B", "N-dimensional matrix B", "T")
     .Output(0, "Y", "Matrix multiply results from A * B", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
@@ -540,12 +626,11 @@ Given two equivalent values, this operator uses the indices along the axis  as
     .TypeConstraint(
         "I",
         {"tensor(int64)"},
-        "Constrain index tensor to int64"
-    )
+        "Constrain index tensor to int64")
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(
-      "axis",
-      "Dimension on which to do the sort. Default -1, which indicates the last"
-      " axis",
-      AttributeProto::INT,
-      static_cast<int64_t>(-1));
+        "axis",
+        "Dimension on which to do the sort. Default -1, which indicates the last"
+        " axis",
+        AttributeProto::INT,
+        static_cast<int64_t>(-1));
