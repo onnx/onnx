@@ -7,7 +7,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import onnx.onnx_cpp2py_export.shape_inference as C
+import onnx.onnx_cpp2py_export.shape_inference as C  # type: ignore
 
 """Apply shape inference to the provided ModelProto.
 
