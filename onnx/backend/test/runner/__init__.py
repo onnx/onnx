@@ -24,6 +24,10 @@ from ..loader import load_node_tests, load_model_tests
 from .item import TestItem
 
 
+class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
+    pass
+
+
 class Runner(object):
 
     def __init__(self, backend, parent_module=None):
@@ -165,8 +169,6 @@ class Runner(object):
                     shutil.move(model_dir, dest)
                     break
             os.makedirs(model_dir)
-            url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
-                model_test.model_name)
 
             # On Windows, NamedTemporaryFile can not be opened for a
             # second time
@@ -174,8 +176,8 @@ class Runner(object):
             try:
                 download_file.close()
                 print('Start downloading model {} from {}'.format(
-                    model_test.model_name, url))
-                urlretrieve(url, download_file.name)
+                    model_test.model_name, model_test.url))
+                urlretrieve(model_test.url, download_file.name)
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)
@@ -205,7 +207,13 @@ class Runner(object):
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
             def device_test_func(*args, **kwargs):
-                return test_func(*args, device=device, **kwargs)
+                try:
+                    return test_func(*args, device=device, **kwargs)
+                except BackendIsNotSupposedToImplementIt as e:
+                    # hacky verbose reporting
+                    if '-v' in sys.argv or '--verbose' in sys.argv:
+                        print('Test {} is effectively skipped: {}'.format(
+                            device_test_name, e))
 
             self._test_items[category][device_test_name] = TestItem(
                 device_test_func, report_item)

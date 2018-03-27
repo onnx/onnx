@@ -58,6 +58,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs
 
 <dl>
@@ -117,6 +124,8 @@ opset_import {
 <dd>If set, defines the broadcast dimensions. See doc for details.</dd>
 <dt><tt>broadcast</tt> : int</dt>
 <dd>Pass 1 to enable broadcasting</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 </dl>
 
 #### Inputs
@@ -427,6 +436,8 @@ opset_import {
 #### Attributes
 
 <dl>
+<dt><tt>consumed_inputs</tt> : list of ints (required)</dt>
+<dd>legacy optimization attribute.</dd>
 <dt><tt>epsilon</tt> : float</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int</dt>
@@ -539,6 +550,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs
 
 <dl>
@@ -579,6 +597,8 @@ opset_import {
 #### Attributes
 
 <dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 <dt><tt>max</tt> : float</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
 <dt><tt>min</tt> : float</dt>
@@ -1002,6 +1022,8 @@ opset_import {
 <dd>If set, defines the broadcast dimensions. See doc for details.</dd>
 <dt><tt>broadcast</tt> : int</dt>
 <dd>Pass 1 to enable broadcasting</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 </dl>
 
 #### Inputs
@@ -1048,6 +1070,8 @@ opset_import {
 #### Attributes
 
 <dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 <dt><tt>is_test</tt> : int</dt>
 <dd>(int, default 0) if nonzero, run dropout in test mode where the output is simply Y = X.</dd>
 <dt><tt>ratio</tt> : float</dt>
@@ -1099,6 +1123,8 @@ opset_import {
 <dl>
 <dt><tt>alpha</tt> : float</dt>
 <dd>Coefficient of ELU default to 1.0.</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 </dl>
 
 #### Inputs
@@ -1188,6 +1214,13 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
 
 #### Inputs
 
@@ -1333,6 +1366,13 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
 
 #### Inputs
 
@@ -1937,6 +1977,8 @@ opset_import {
 <dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float</dt>
 <dd>Value of beta default to 0.5</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 </dl>
 
 #### Inputs
@@ -2164,6 +2206,8 @@ opset_import {
 #### Attributes
 
 <dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 <dt><tt>epsilon</tt> : float</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 </dl>
@@ -2419,6 +2463,8 @@ opset_import {
 <dl>
 <dt><tt>alpha</tt> : float</dt>
 <dd>Coefficient of leakage default to 0.01.</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 </dl>
 
 #### Inputs
@@ -2508,6 +2554,13 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
 
 #### Inputs
 
@@ -2950,6 +3003,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs (1 - &#8734;)
 
 <dl>
@@ -2993,7 +3053,7 @@ opset_import {
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
-   
+   The output of each pooling window is maximum number of elements exclude pad.
    
 
 #### Versioning
@@ -3103,6 +3163,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs (1 - &#8734;)
 
 <dl>
@@ -3183,6 +3250,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs (1 - &#8734;)
 
 <dl>
@@ -3242,6 +3316,8 @@ opset_import {
 <dd>If set, defines the broadcast dimensions. See doc for details.</dd>
 <dt><tt>broadcast</tt> : int</dt>
 <dd>Pass 1 to enable broadcasting</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 </dl>
 
 #### Inputs
@@ -3282,6 +3358,13 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
 
 #### Inputs
 
@@ -3408,6 +3491,13 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
 
 #### Inputs
 
@@ -3960,6 +4050,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs
 
 <dl>
@@ -4487,6 +4584,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs
 
 <dl>
@@ -4530,6 +4634,8 @@ opset_import {
 #### Attributes
 
 <dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 <dt><tt>shape</tt> : list of ints</dt>
 <dd>New shape</dd>
 </dl>
@@ -4667,6 +4773,8 @@ opset_import {
 <dl>
 <dt><tt>alpha</tt> : float</dt>
 <dd>Coefficient of SELU default to 1.6732.</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 <dt><tt>gamma</tt> : float</dt>
 <dd>Coefficient of SELU default to 1.0507.</dd>
 </dl>
@@ -4744,6 +4852,13 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
 
 #### Inputs
 
@@ -5125,6 +5240,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs
 
 <dl>
@@ -5227,6 +5349,8 @@ opset_import {
 <dd>If set, defines the broadcast dimensions. See doc for details.</dd>
 <dt><tt>broadcast</tt> : int</dt>
 <dd>Pass 1 to enable broadcasting</dd>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
 </dl>
 
 #### Inputs
@@ -5267,6 +5391,13 @@ opset_import {
 }
 ~~~~
 
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
+
 #### Inputs (1 - &#8734;)
 
 <dl>
@@ -5301,6 +5432,13 @@ opset_import {
   version = 1
 }
 ~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>consumed_inputs</tt> : list of ints</dt>
+<dd>legacy optimization attribute.</dd>
+</dl>
 
 #### Inputs
 
@@ -6106,6 +6244,1304 @@ opset_import {
 <dl>
 <dt><tt>reshaped</tt> : T</dt>
 <dd>Reshaped data.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+## Version 6 of the default ONNX operator set
+### <a name="Abs-6"></a>**Abs-6**</a>
+
+  Absolute takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the absolute is, y = abs(x), is applied to
+  the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Add-6"></a>**Add-6**</a>
+
+  Performs element-wise binary addition (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="BatchNormalization-6"></a>**BatchNormalization-6**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  there are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+  Output case #2: Y (test mode)
+      
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float</dt>
+<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
+<dt><tt>is_test</tt> : int</dt>
+<dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
+<dt><tt>momentum</tt> : float</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
+<dt><tt>spatial</tt> : int</dt>
+<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dt><tt>mean</tt> : T</dt>
+<dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
+<dt><tt>var</tt> : T</dt>
+<dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
+</dl>
+
+#### Outputs (1 - 5)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>The output 4-dimensional tensor of the same shape as X.</dd>
+<dt><tt>mean</tt> (optional) : T</dt>
+<dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
+<dt><tt>var</tt> (optional) : T</dt>
+<dd>The running variance after the BatchNormalization operator. Must be in-place with the input var. Should not be used for testing.</dd>
+<dt><tt>saved_mean</tt> (optional) : T</dt>
+<dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
+<dt><tt>saved_var</tt> (optional) : T</dt>
+<dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Ceil-6"></a>**Ceil-6**</a>
+
+  Ceil takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the ceil is, y = ceil(x), is applied to
+  the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Clip-6"></a>**Clip-6**</a>
+
+  Clip operator limits the given input within an interval. The interval is
+  specified with arguments 'min' and 'max'. They default to
+  numeric_limits::lowest() and numeric_limits::max() respectively.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>max</tt> : float</dt>
+<dd>Maximum value, above which element is replaced by max</dd>
+<dt><tt>min</tt> : float</dt>
+<dd>Minimum value, under which element is replaced by min</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor whose elements to be clipped</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor with clipped input elements</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Div-6"></a>**Div-6**</a>
+
+  Performs element-wise binary division (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Dropout-6"></a>**Dropout-6**</a>
+
+  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
+  output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
+  test mode or not, the output Y will either be a random dropout, or a simple
+  copy of the input. Note that our implementation of Dropout does scaling in
+  the training phase, so during testing nothing needs to be done.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>is_test</tt> : int</dt>
+<dd>(int, default 0) if nonzero, run dropout in test mode where the output is simply Y = X.</dd>
+<dt><tt>ratio</tt> : float</dt>
+<dd>(float, default 0.5) the ratio of random dropout</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+<dt><tt>mask</tt> (optional) : T</dt>
+<dd>The output mask. If is_test is nonzero, this output is not filled.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Elu-6"></a>**Elu-6**</a>
+
+  Elu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
+  0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
+  
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Coefficient of ELU default to 1.0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1D input tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Exp-6"></a>**Exp-6**</a>
+
+  Calculates the exponential of the given input tensor, element-wise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The exponential of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Floor-6"></a>**Floor-6**</a>
+
+  Floor takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the floor is, y = floor(x), is applied to
+  the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Gemm-6"></a>**Gemm-6**</a>
+
+  General Matrix multiplication:
+  https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+  Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
+  , input tensor B has dimension (K X N), input tensor C and output tensor Y have
+  dimension (M X N).
+  If attribute broadcast is non-zero, input tensor C will be broadcasted to match
+  the dimension requirement. If A can be transposed before doing the computation
+  if attribute transA is non-zero, same for B and transB.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Scalar multiplier for the product of input tensors A * B</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Scalar multiplier for input tensor C</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Whether C should be broadcasted</dd>
+<dt><tt>transA</tt> : int</dt>
+<dd>Whether A should be transposed</dd>
+<dt><tt>transB</tt> : int</dt>
+<dd>Whether B should be transposed</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Input tensor A</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Input tensor B</dd>
+<dt><tt>C</tt> : T</dt>
+<dd>Input tensor C, can be inplace.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="HardSigmoid-6"></a>**HardSigmoid-6**</a>
+
+  HardSigmoid takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
+  is applied to the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Value of alpha default to 0.2</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Value of beta default to 0.5</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="InstanceNormalization-6"></a>**InstanceNormalization-6**</a>
+
+  Carries out instance normalization as described in the paper
+  https://arxiv.org/abs/1607.08022.
+  
+  y = scale * (x - mean) / sqrt(variance + epsilon) + B,
+  where mean and variance are computed per instance per channel.
+  
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float</dt>
+<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>The input 1-dimensional scale tensor of size C.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>The input 1-dimensional bias tensor of size C.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output 4-dimensional tensor of the same shape as input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="LeakyRelu-6"></a>**LeakyRelu-6**</a>
+
+  LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
+  output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
+  `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Coefficient of leakage default to 0.01.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Log-6"></a>**Log-6**</a>
+
+  Calculates the natural log of the given input tensor, element-wise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The natural log of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Max-6"></a>**Max-6**</a>
+
+  Element-wise max of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for Max.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>max</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Mean-6"></a>**Mean-6**</a>
+
+  Element-wise mean of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for Mean.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>mean</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Min-6"></a>**Min-6**</a>
+
+  Element-wise min of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for Min</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>min</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Mul-6"></a>**Mul-6**</a>
+
+  Performs element-wise binary multiplication (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Neg-6"></a>**Neg-6**</a>
+
+  Neg takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where each element flipped sign, y = -x, is applied to
+  the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="PRelu-6"></a>**PRelu-6**</a>
+
+  PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
+  output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
+  `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+  
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>slope</tt> : T</dt>
+<dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Reciprocal-6"></a>**Reciprocal-6**</a>
+
+  Reciprocal takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
+  the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Relu-6"></a>**Relu-6**</a>
+
+  Relu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
+  the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Selu-6"></a>**Selu-6**</a>
+
+  Selu takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the scaled exponential linear unit function,
+  `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
+  is applied to the tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Coefficient of SELU default to 1.6732.</dd>
+<dt><tt>gamma</tt> : float</dt>
+<dd>Coefficient of SELU default to 1.0507.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Sigmoid-6"></a>**Sigmoid-6**</a>
+
+  Sigmoid takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
+  tensor elementwise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Sqrt-6"></a>**Sqrt-6**</a>
+
+  Square root takes one input data (Tensor<T>) and produces one output data
+  (Tensor<T>) where the square root is, y = x^0.5, is applied to
+  the tensor elementwise. If x is negative, then it will return NaN.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Sub-6"></a>**Sub-6**</a>
+
+  Performs element-wise binary subtraction (with limited broadcast support).
+  
+  If necessary the right-hand-side argument will be broadcasted to match the
+  shape of left-hand-side argument. When broadcasting is specified, the second
+  tensor can either be of size 1 (a scalar value), or having its shape as a
+  contiguous subset of the first tensor's shape. The starting of the mutually
+  equal shape is specified by the argument "axis", and if it is not set, suffix
+  matching is assumed. 1-dim expansion doesn't work yet.
+  
+  For example, the following tensor shapes are supported (with broadcast=1):
+  
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+  
+  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Sum-6"></a>**Sum-6**</a>
+
+  Element-wise sum of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for Sum.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>sum</tt> : T</dt>
+<dd>Output tensor. Same dimension as inputs.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Tanh-6"></a>**Tanh-6**</a>
+
+  Calculates the hyperbolic tangent of the given input tensor element-wise.
+
+#### Versioning
+
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>1-D input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic tangent values of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints
