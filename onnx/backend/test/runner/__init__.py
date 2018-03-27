@@ -22,6 +22,10 @@ from ..loader import load_model_tests
 from .item import TestItem
 
 
+class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
+    pass
+
+
 class Runner(object):
 
     def __init__(self, backend, parent_module=None):
@@ -201,7 +205,13 @@ class Runner(object):
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
             def device_test_func(*args, **kwargs):
-                return test_func(*args, device=device, **kwargs)
+                try:
+                    return test_func(*args, device=device, **kwargs)
+                except BackendIsNotSupposedToImplementIt as e:
+                    # hacky verbose reporting
+                    if '-v' in sys.argv or '--verbose' in sys.argv:
+                        print('Test {} is effectively skipped: {}'.format(
+                            device_test_name, e))
 
             self._test_items[category][device_test_name] = TestItem(
                 device_test_func, report_item)
