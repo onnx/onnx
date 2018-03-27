@@ -150,8 +150,8 @@ Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -237,8 +237,8 @@ Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -512,14 +512,14 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int32)</dt>
+<dt><tt>reduced</tt> : tensor(uint64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -560,14 +560,14 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int32)</dt>
+<dt><tt>reduced</tt> : tensor(uint64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -1844,8 +1844,8 @@ Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -4822,8 +4822,8 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 
@@ -4911,8 +4911,8 @@ Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
 
@@ -5925,7 +5925,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -5948,8 +5948,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -5975,7 +5975,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -5998,8 +5998,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6025,7 +6025,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6048,8 +6048,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6075,7 +6075,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6098,8 +6098,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6125,7 +6125,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6148,8 +6148,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6175,7 +6175,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6198,8 +6198,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6225,7 +6225,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6248,8 +6248,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6275,7 +6275,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6298,8 +6298,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6325,7 +6325,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6348,8 +6348,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -6375,7 +6375,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -6398,8 +6398,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -7607,8 +7607,8 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
 

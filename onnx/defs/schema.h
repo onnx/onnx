@@ -348,19 +348,20 @@ class OpSchema final {
       std::string description);
 
   // Convenience members for types
-  static const std::vector<std::string>& all_integral_types() {
-    static const std::vector<std::string> all_integral_types = {"float",
-                                                                "int32",
-                                                                "string",
-                                                                "bool",
-                                                                "uint8",
-                                                                "int8",
-                                                                "uint16",
-                                                                "int16",
-                                                                "int64",
-                                                                "float16",
-                                                                "double"};
-    return all_integral_types;
+  static const std::vector<std::string>& all_numeric_types() {
+    static const std::vector<std::string> all_numeric_types = {
+        "tensor(float)",
+        "tensor(uint32)",
+        "tensor(int32)",
+        "tensor(uint8)",
+        "tensor(int8)",
+        "tensor(uint16)",
+        "tensor(int16)",
+        "tensor(uint64)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(double)"};
+    return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
