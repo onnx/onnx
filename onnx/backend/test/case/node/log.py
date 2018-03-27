@@ -21,7 +21,7 @@ class Log(Base):
         )
 
         x = np.array([1, 10]).astype(np.float32)
-        y = np.log(x) #expected output [0., 2.30258512]
+        y = np.log(x)  # expected output [0., 2.30258512]
         expect(node, inputs=[x], outputs=[y],
                name='test_log_example')
 

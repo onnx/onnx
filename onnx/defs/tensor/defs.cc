@@ -58,18 +58,19 @@ NOTE: Casting to and from strings is not supported yet.
         "Constrain output types. Casting to strings and complex are not supported.");
 
 ONNX_OPERATOR_SCHEMA(Reshape)
-    .AllowConsumed({{0, 0}})
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 
-It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
+First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
 
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
 from the input tensor).)DOC")
-    .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
+    .Input(1, "shape", "Specified shape for output.", "tensor(int64)")
+    .SinceVersion(5)
     .Output(0, "reshaped", "Reshaped data.", "T")
     .TypeConstraint(
         "T",
@@ -243,7 +244,39 @@ will be (2, 1, 3).
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .ShapeInferenceFunction([](InferenceContext& ctx) {
+      if (ctx.getNumInputTypes() != 1) {
+        return;
+      }
+      std::vector<int64_t> perm;
+      {
+        auto perm_attr = ctx.getAttribute("perm");
+        if (perm_attr) {
+          for (auto dim : perm_attr->ints()) {
+            perm.push_back(dim);
+          }
+        } else {
+          int ndims = ctx.getInputType(0)->shape().dim_size();
+          for (int i = 0; i < ndims; i++) {
+            perm.push_back(ndims - i - 1);
+          }
+        }
+      }
+
+      TypeProto_Tensor tt;
+      {
+        tt.set_elem_type(ctx.getInputType(0)->elem_type());
+        auto shape = tt.mutable_shape();
+
+        for (size_t i = 0; i < perm.size(); i++) {
+          auto dim = shape->add_dim();
+          *dim = ctx.getInputType(0)->shape().dim(perm[i]);
+        }
+      }
+
+      *ctx.getOutputType(0) = tt;
+    });
 
 ONNX_OPERATOR_SCHEMA(Gather)
     .SetDoc(R"DOC(

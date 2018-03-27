@@ -24,6 +24,7 @@ IF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#if\s+ONNX-ML\s*$')
 ENDIF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#endif\s*$')
 ELSE_ONNX_ML_REGEX = re.compile(r'\s*//\s*#else\s*$')
 
+
 def process_ifs(lines, onnx_ml):
     in_if = 0
     for line in lines:
@@ -49,6 +50,7 @@ IMPORT_REGEX = re.compile(r'(\s*)import\s*"([^"]*)\.proto";\s*$')
 PACKAGE_NAME_REGEX = re.compile(r'\{PACKAGE_NAME\}')
 ML_REGEX = re.compile(r'(.*)\-ml')
 
+
 def process_package_name(lines, package_name):
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
     for line in lines:
@@ -67,6 +69,7 @@ def process_package_name(lines, package_name):
 
 PROTO_SYNTAX_REGEX = re.compile(r'(\s*)syntax\s*=\s*"proto2"\s*;\s*$')
 OPTIONAL_REGEX = re.compile(r'(\s*)optional\s(.*)$')
+
 
 def convert_to_proto3(lines):
     for line in lines:
@@ -101,8 +104,10 @@ def translate(source, proto, onnx_ml, package_name):
         assert proto == 2
     return "\n".join(lines)  # TODO: not Windows friendly
 
+
 def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):
     return os.path.join(pardir, f)
+
 
 def convert(stem, package_name, output, do_onnx_ml=False):
     proto_in = qualify("{}.in.proto".format(stem))
@@ -137,14 +142,14 @@ def convert(stem, package_name, output, do_onnx_ml=False):
 
     # Generate py mapping
     # "-" is invalid in python module name, replaces '-' with '_'
-    pb_py = qualify('{}_pb.py'.format(stem.replace('-', '_')),  pardir=output)
+    pb_py = qualify('{}_pb.py'.format(stem.replace('-', '_')), pardir=output)
     if need_rename:
-        pb2_py = qualify('{}_pb2.py'.format(proto_base.replace('-','_')),  pardir=output)
+        pb2_py = qualify('{}_pb2.py'.format(proto_base.replace('-', '_')), pardir=output)
     else:
         if do_onnx_ml:
-            pb2_py = qualify('{}_ml_pb2.py'.format(stem.replace('-', '_')),  pardir=output)
+            pb2_py = qualify('{}_ml_pb2.py'.format(stem.replace('-', '_')), pardir=output)
         else:
-            pb2_py = qualify('{}_pb2.py'.format(stem.replace('-', '_')),  pardir=output)
+            pb2_py = qualify('{}_pb2.py'.format(stem.replace('-', '_')), pardir=output)
 
     print('generating {}'.format(pb_py))
     with open(pb_py, 'w') as f:
@@ -183,6 +188,7 @@ def main():
                 package_name=args.package,
                 output=args.output,
                 do_onnx_ml=args.ml)
+
 
 if __name__ == '__main__':
     main()

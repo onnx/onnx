@@ -21,7 +21,7 @@ class Floor(Base):
         )
 
         x = np.array([-1.5, 1.2, 2]).astype(np.float32)
-        y = np.floor(x) #expected output [-2., 1., 2.]
+        y = np.floor(x)  # expected output [-2., 1., 2.]
         expect(node, inputs=[x], outputs=[y],
                name='test_floor_example')
 

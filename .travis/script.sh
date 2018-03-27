@@ -3,10 +3,7 @@
 script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[1]))" "${BASH_SOURCE[0]}")
 source "${script_path%/*}/setup.sh"
 
-onnx_dir="$PWD"
-
 # onnx tests
-cd $onnx_dir
 pip install pytest-cov nbval
 pytest
 
@@ -27,3 +24,7 @@ git diff --exit-code
 # in a private namespace.
 ! grep -R --include='*.cc' --include='*.h' 'namespace onnx' .
 ! grep -R --include='*.cc' --include='*.h' 'onnx::' .
+
+# lint python code
+pip install flake8
+flake8

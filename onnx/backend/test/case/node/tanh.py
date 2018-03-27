@@ -21,7 +21,7 @@ class Tanh(Base):
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
-        y = np.tanh(x) #expected output [-0.76159418, 0., 0.76159418]
+        y = np.tanh(x)  # expected output [-0.76159418, 0., 0.76159418]
         expect(node, inputs=[x], outputs=[y],
                name='test_tanh_example')
 
