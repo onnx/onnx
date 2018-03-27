@@ -33,11 +33,13 @@
 #if __cplusplus >= 201402L || __cpp_lib_make_unique >= 201304L || \
     (__ANDROID__ && __cplusplus >= 201300L) || _MSC_VER >= 1900
 
-// std::make_unique is available
+namespace ONNX_NAMESPACE {
+  using make_unique = std::make_unique;
+}
 
 #else
 
-namespace std {
+namespace ONNX_NAMESPACE {
 
 template <typename T, typename... Args>
 typename std::enable_if<!std::is_array<T>::value, std::unique_ptr<T>>::type

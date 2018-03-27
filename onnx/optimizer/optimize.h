@@ -70,7 +70,7 @@ struct Optimizer {
 
 private:
   template<class Optimizer, class... Args> void _registerOptimizer(Args&& ...args) {
-    auto optimizer = std::make_unique<Optimizer>(std::forward<Args>(args)...);
+    auto optimizer = make_unique<Optimizer>(std::forward<Args>(args)...);
     passes[optimizer->name] = std::move(optimizer);
   }
 };
