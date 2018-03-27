@@ -43,7 +43,6 @@ ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
 install_requires = ['six']
 setup_requires = []
 tests_require = []
-extras_require = {}
 
 ################################################################################
 # Version
@@ -209,14 +208,6 @@ class build_proto_in(ONNXCommand):
         shutil.rmtree(tmp_dir)
 
 
-# Only generate mypy files for non-windows. Didn't figure out how to do it in Windows yet.
-gen_mypy = platform.system() != 'Windows'
-
-protoc_mypy_args = []
-if gen_mypy:
-    protoc_mypy_args.extend(['--mypy_out', SRC_DIR])
-
-
 class build_proto(ONNXCommand):
     def run(self):
         self.run_command('build_proto_in')
@@ -240,7 +231,6 @@ class build_proto(ONNXCommand):
                 os.path.join(SRC_DIR, '{}.pb.h'.format(proto_base)),
                 os.path.join(SRC_DIR, '{}_pb2.py'.format(pb2)),
                 os.path.join(SRC_DIR, '{}_pb.py'.format(stem.replace('-', '_'))),
-                os.path.join(SRC_DIR, '{}_pb2.pyi'.format(pb2)),
             ]
             if ONNX_ML:
                 outputs.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
@@ -252,15 +242,9 @@ class build_proto(ONNXCommand):
                     PROTOC,
                     '--proto_path', SRC_DIR,
                     '--python_out', SRC_DIR,
-                ] + protoc_mypy_args + [
                     '--cpp_out', SRC_DIR,
                     proto
                 ])
-                if gen_mypy:
-                    # Workaround for https://github.com/dropbox/mypy-protobuf/issues/8
-                    for f in os.listdir(SRC_DIR):
-                        if f.endswith('.pyi') and '-' in f:
-                            os.rename(os.path.join(SRC_DIR, f), os.path.join(SRC_DIR, f.replace('-', '_')))
 
 
 class create_version(ONNXCommand):
@@ -428,13 +412,7 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.extend([
-    'protobuf',
-    'numpy',
-    'typing>=3.6.4',
-    'typing-extensions>=3.6.2.1',
-    'mypy-protobuf',
-])
+install_requires.extend(['protobuf', 'numpy'])
 
 ################################################################################
 # Test
@@ -444,10 +422,6 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest-cov')
 tests_require.append('nbval')
 tests_require.append('tabulate')
-
-if sys.version_info[0] == 3:
-    # Mypy doesn't work with Python 2
-    extras_require['mypy'] = ['mypy==0.570']
 
 ################################################################################
 # Final
@@ -464,7 +438,6 @@ setuptools.setup(
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
-    extras_require=extras_require,
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
