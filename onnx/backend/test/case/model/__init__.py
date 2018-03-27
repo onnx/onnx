@@ -3,19 +3,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from collections import namedtuple
 import sys
 
 import onnx.defs
 from ..utils import import_recursive
-
-TestCase = namedtuple('TestCase', [
-    'name', 'model_name',
-    'url',
-    'model_dir',
-    'model', 'data_sets',
-    'kind',
-])
+from ..test_case import TestCase
 
 _SimpleModelTestCases = []
 
