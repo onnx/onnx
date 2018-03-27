@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 # A container that hosts the test function and the associated
-# test item (NodeProto or ModelProto)
+# test item (ModelProto)
 
 
 class TestItem(object):
