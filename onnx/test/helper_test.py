@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import random
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto
