@@ -12,7 +12,8 @@ class TestSchema(unittest.TestCase):
         defs.get_schema("Conv")
 
     def test_attr_default_value(self):
-        v = defs.get_schema("BatchNormalization").attributes['epsilon'].default_value
+        v = defs.get_schema(
+            "BatchNormalization").attributes['epsilon'].default_value
         self.assertEqual(type(v), AttributeProto)
         self.assertEqual(v.type, AttributeProto.FLOAT)
 
