@@ -6302,7 +6302,7 @@ data = np.array(
     [[3, 5], [2, 4], [8, 6]],
     dtype=np.float32)
 reduced = np.maximum.reduce(data, axis=axis,
-    keepdims=keepdims==1)
+    keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced],
        name='test_reduce_max')
@@ -6383,7 +6383,7 @@ data = np.array(
     [[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
     dtype=np.float32)
 reduced = np.mean(data, axis=axis,
-    keepdims=keepdims==1)
+    keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced],
     name='test_reduce_mean')
@@ -6463,7 +6463,7 @@ data = np.array(
     [[3, 5], [2, 4], [8, 6]],
     dtype=np.float32)
 reduced = np.minimum.reduce(data, axis=axis,
-    keepdims=keepdims==1)
+    keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced],
        name='test_reduce_min')
@@ -6540,9 +6540,9 @@ node = onnx.helper.make_node(
 )
 
 data = np.array(
-    [[[1, 2], [3, 4]], [[5, 6], [7, 8]],[[9, 10], [11, 12]]],
+    [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]],
     dtype=np.float32)
-reduced = np.prod(data, 0, keepdims=keepdims==1)
+reduced = np.prod(data, 0, keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced],
        name='test_reduce_prod')
@@ -6621,7 +6621,7 @@ node = onnx.helper.make_node(
 data = np.array(
     [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]],
     dtype=np.float32)
-reduced = np.sum(data, axis=axis, keepdims=keepdims==1)
+reduced = np.sum(data, axis=axis, keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced],
     name='test_reduce_sum')
@@ -6701,7 +6701,7 @@ data = np.array(
     [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]],
     dtype=np.float32)
 reduced = np.sum(np.square(data), axis=axis,
-    keepdims=keepdims==1)
+    keepdims=keepdims == 1)
 
 expect(node, inputs=[data], outputs=[reduced],
     name='test_reduce_sum_square')
