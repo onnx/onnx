@@ -406,11 +406,11 @@ message StandardDenotationConstProto {
   // dimension in RNN and/or spatial dimension in CNN.
   optional string DATA_FEATURE = 4 [default = "DATA_FEATURE"];
   // Describe a filter in-channel dimension. This is the dimension
-  // that is identical to the channel dimension of the input
+  // that is identical (in size) to the channel dimension of the input
   // image feature maps.
   optional string FILTER_IN_CHANNEL = 5 [default = "FILTER_IN_CHANNEL"];
   // Describe a filter out channel dimension. This is the dimension
-  // that is identical to the channel dimension of the output
+  // that is identical (int size) to the channel dimension of the output
   // image feature maps.
   optional string FILTER_OUT_CHANNEL = 6 [default = "FILTER_OUT_CHANNEL"];
   // Describe a filter spatial dimension.
