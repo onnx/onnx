@@ -16,21 +16,21 @@ class ReduceL2(Base):
     def export():
 
         data = np.array(
-            [[[1,2], [3,4]],[[5,6], [7,8]],[[9,10], [11,12]]],
+            [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]],
             dtype=np.float32)
 
         node = onnx.helper.make_node(
             'ReduceL2',
             inputs=['data'],
             outputs=['reduced'],
-            axes = [2],
-            keepdims = 0
+            axes=[2],
+            keepdims=0
         )
 
         reduced = np.array([
-            [  2.23606777,   5.        ],
-            [  7.81024933,  10.63014507],
-            [ 13.45362377,  16.27882004]],
+            [2.23606777, 5.],
+            [7.81024933, 10.63014507],
+            [13.45362377, 16.27882004]],
             dtype=np.float32)
 
         expect(node, inputs=[data], outputs=[reduced],
@@ -40,14 +40,14 @@ class ReduceL2(Base):
             'ReduceL2',
             inputs=['data'],
             outputs=['reduced'],
-            axes = [2],
-            keepdims = 1
+            axes=[2],
+            keepdims=1
         )
 
         reduced = np.array([
-            [[  2.23606777], [  5.        ]],
-            [[  7.81024933], [ 10.63014507]],
-            [[ 13.45362377], [ 16.27882004]]],
+            [[2.23606777], [5.]],
+            [[7.81024933], [10.63014507]],
+            [[13.45362377], [16.27882004]]],
             dtype=np.float32)
 
         expect(node, inputs=[data], outputs=[reduced],

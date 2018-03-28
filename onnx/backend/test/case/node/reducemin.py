@@ -21,15 +21,15 @@ class ReduceMin(Base):
             'ReduceMin',
             inputs=['data'],
             outputs=['reduced'],
-            axes = [axis],
-            keepdims = keepdims
+            axes=[axis],
+            keepdims=keepdims
         )
 
         data = np.array(
-            [[3,5],[2,4],[8,6]],
+            [[3, 5], [2, 4], [8, 6]],
             dtype=np.float32)
-        reduced = np.minimum.reduce(data, axis = axis,
-            keepdims = keepdims == 1)
+        reduced = np.minimum.reduce(data, axis=axis,
+            keepdims=keepdims==1)
 
         expect(node, inputs=[data], outputs=[reduced],
                name='test_reduce_min')
