@@ -161,6 +161,10 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     set(PROTOC_ARGS ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR} --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
     if(BUILD_PYTHON)
       list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+      if(NOT WIN32)
+        # Haven't figured out how to generate mypy stubs on Windows yet
+        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${ROOT_DIR}/tools/protoc-gen-mypy.py --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+      endif()
     endif()
     add_custom_command (
       OUTPUT "${OUTPUT_PB_SRC}"

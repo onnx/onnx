@@ -39,6 +39,7 @@ MAKE = find_executable('make')
 install_requires = []
 setup_requires = []
 tests_require = []
+extras_require = {}
 
 ################################################################################
 # Version
@@ -111,7 +112,7 @@ class create_version(ONNXCommand):
 
 class cmake_build(setuptools.Command):
     """
-    Compiles everything when `python setup.py build` is run using cmake.
+    Compiles everything when `python setupmnm.py build` is run using cmake.
 
     Custom args can be passed to cmake by specifying the `CMAKE_ARGS`
     environment variable.
@@ -183,8 +184,11 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('create_version')
         self.run_command('cmake_build')
 
-        for src in glob.glob(
-                os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')):
+        generated_python_files = \
+          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
+          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
+
+        for src in generated_python_files:
             dst = os.path.join(
                 TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
             self.copy_file(src, dst)
@@ -246,7 +250,13 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.extend(['protobuf', 'numpy', 'six'])
+install_requires.extend([
+    'protobuf',
+    'numpy',
+    'six',
+    'typing>=3.6.4',
+    'typing-extensions>=3.6.2.1',
+])
 
 ################################################################################
 # Test
@@ -256,6 +266,12 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest-cov')
 tests_require.append('nbval')
 tests_require.append('tabulate')
+tests_require.append('typing')
+tests_require.append('typing-extensions')
+
+if sys.version_info[0] == 3:
+    # Mypy doesn't work with Python 2
+    extras_require['mypy'] = ['mypy==0.570']
 
 ################################################################################
 # Final
@@ -272,6 +288,7 @@ setuptools.setup(
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
+    extras_require=extras_require,
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
