@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 class Sub(Base):
 
     @staticmethod
@@ -21,7 +22,7 @@ class Sub(Base):
 
         x = np.array([1, 2, 3]).astype(np.float32)
         y = np.array([3, 2, 1]).astype(np.float32)
-        z = x - y #expected output [-2., 0., 2.]
+        z = x - y  # expected output [-2., 0., 2.]
         expect(node, inputs=[x, y], outputs=[z],
                name='test_sub_example')
 

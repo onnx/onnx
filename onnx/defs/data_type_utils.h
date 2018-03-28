@@ -12,7 +12,7 @@
 
 namespace ONNX_NAMESPACE {
 // String pointer as unique TypeProto identifier.
-typedef const std::string* DataType;
+using DataType = const std::string*;
 
 namespace Utils {
 
@@ -32,7 +32,7 @@ namespace Utils {
 //
 // Example: float, tensor(float), etc.
 //
-class DataTypeUtils {
+class DataTypeUtils final {
  public:
   static DataType ToType(const std::string& type_str);
 
