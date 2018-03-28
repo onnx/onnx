@@ -18,6 +18,7 @@ if sys.byteorder != 'little':
 def combine_pairs_to_complex(fa):
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
+
 def to_array(tensor):
     """Converts a tensor def object to a numpy array.
 

@@ -7,6 +7,7 @@ import os
 import unittest
 import onnx.backend.base
 import onnx.backend.test
+from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 
 
 # The following just executes the fake backend through the backend test
@@ -25,12 +26,14 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def prepare(cls, model, device='CPU', **kwargs):
         super(DummyBackend, cls).prepare(model, device, **kwargs)
-        raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
+        raise BackendIsNotSupposedToImplementIt(
+            "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def run_node(cls, node, inputs, device='CPU'):
-        super(DummyBackend, cls).run_node(node, inputs, device)
-        raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
+    def run_node(cls, node, inputs, device='CPU', outputs_info=None):
+        super(DummyBackend, cls).run_node(node, inputs, device=device, outputs_info=outputs_info)
+        raise BackendIsNotSupposedToImplementIt(
+            "This is the dummy backend test that doesn't verify the results but does run the checker")
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)

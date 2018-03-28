@@ -9,6 +9,7 @@ import glob
 import os
 import re
 import shutil
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -16,10 +17,14 @@ import unittest
 import numpy as np
 
 import onnx
-from onnx import helper, numpy_helper
+from onnx import numpy_helper
 from six.moves.urllib.request import urlretrieve
-from ..loader import load_node_tests, load_model_tests
+from ..loader import load_model_tests
 from .item import TestItem
+
+
+class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
+    pass
 
 
 class Runner(object):
@@ -36,8 +41,8 @@ class Runner(object):
         # {category: {name: func}}
         self._test_items = defaultdict(dict)
 
-        for nt in load_node_tests():
-            self._add_node_test(nt)
+        for rt in load_model_tests(kind='node'):
+            self._add_model_test(rt, 'Node')
 
         for rt in load_model_tests(kind='real'):
             self._add_model_test(rt, 'Real')
@@ -50,7 +55,6 @@ class Runner(object):
 
         for ot in load_model_tests(kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
-
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -134,7 +138,7 @@ class Runner(object):
         '''
         tests = self._get_test_case('OnnxBackendTest')
         for _, items_map in sorted(self._filtered_test_items.values()):
-            for name, item in sorted(funcs_map.items()):
+            for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
 
@@ -145,7 +149,8 @@ class Runner(object):
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
-                rtol=1e-3)
+                rtol=1e-3,
+                atol=1e-7)
 
     def _prepare_model_data(self, model_test):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
@@ -163,8 +168,6 @@ class Runner(object):
                     shutil.move(model_dir, dest)
                     break
             os.makedirs(model_dir)
-            url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
-                model_test.model_name)
 
             # On Windows, NamedTemporaryFile can not be opened for a
             # second time
@@ -172,8 +175,8 @@ class Runner(object):
             try:
                 download_file.close()
                 print('Start downloading model {} from {}'.format(
-                    model_test.model_name, url))
-                urlretrieve(url, download_file.name)
+                    model_test.model_name, model_test.url))
+                urlretrieve(model_test.url, download_file.name)
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)
@@ -203,7 +206,13 @@ class Runner(object):
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
             def device_test_func(*args, **kwargs):
-                return test_func(*args, device=device, **kwargs)
+                try:
+                    return test_func(*args, device=device, **kwargs)
+                except BackendIsNotSupposedToImplementIt as e:
+                    # hacky verbose reporting
+                    if '-v' in sys.argv or '--verbose' in sys.argv:
+                        print('Test {} is effectively skipped: {}'.format(
+                            device_test_name, e))
 
             self._test_items[category][device_test_name] = TestItem(
                 device_test_func, report_item)
@@ -257,17 +266,3 @@ class Runner(object):
                 self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
-
-    def _add_node_test(self, node_test):
-
-        def run(test_self, device):
-            np_inputs = [numpy_helper.to_array(tensor)
-                         for tensor in node_test.inputs]
-            ref_outputs = [numpy_helper.to_array(tensor)
-                           for tensor in node_test.outputs]
-
-            outputs = self.backend.run_node(
-                node_test.node, np_inputs, device)
-            self._assert_similar_outputs(ref_outputs, outputs)
-
-        self._add_test('Node', node_test.name, run, node_test.node)

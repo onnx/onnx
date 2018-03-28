@@ -121,7 +121,7 @@ class TestChecker(unittest.TestCase):
 
     def test_check_old_model(self):
         node = helper.make_node(
-            "Pad", ["X"], ["Y"], paddings=(0,0,0,0))
+            "Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
         graph = helper.make_graph(
             [node],
             "test",
