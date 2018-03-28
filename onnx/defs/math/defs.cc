@@ -391,7 +391,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
     .Output(0, "Y", "Output tensor (same size as X)", "T")
     .TypeConstraint(
         "T",
-        { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Sigmoid)
