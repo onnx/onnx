@@ -14,7 +14,7 @@ import tarfile
 import tempfile
 import unittest
 
-import numpy as np  # type: ignore
+import numpy as np
 
 import onnx
 from onnx import numpy_helper
@@ -71,7 +71,7 @@ class Runner(object):
         return self
 
     def enable_report(self):
-        import pytest  # type: ignore
+        import pytest
 
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():

@@ -3,7 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import onnx.onnx_cpp2py_export.defs as C  # type: ignore
+import onnx
+import onnx.onnx_cpp2py_export.defs as C
 
 
 ONNX_DOMAIN = ""
@@ -30,3 +31,13 @@ def onnx_opset_version():
 
 
 OpSchema = C.OpSchema
+
+
+@property
+def _Attribute_default_value(self):
+    attr = onnx.AttributeProto()
+    attr.ParseFromString(self._default_value)
+    return attr
+
+
+OpSchema.Attribute.default_value = _Attribute_default_value

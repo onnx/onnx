@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
 
-import numpy as np  # type: ignore
+import numpy as np
 
 from onnx import checker, helper
 from onnx import TensorProto

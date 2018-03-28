@@ -47,7 +47,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_readonly("name", &OpSchema::Attribute::name)
       .def_readonly("description", &OpSchema::Attribute::description)
       .def_readonly("type", &OpSchema::Attribute::type)
-      .def_readonly("default_value", &OpSchema::Attribute::default_value)
+      .def_property_readonly("_default_value", [](OpSchema::Attribute* attr) -> py::bytes {
+          std::string out;
+          attr->default_value.SerializeToString(&out);
+          return out;
+      })
       .def_readonly("required", &OpSchema::Attribute::required);
 
   py::class_<OpSchema::TypeConstraintParam>(op_schema, "TypeConstraintParam")
