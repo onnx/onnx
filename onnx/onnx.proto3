@@ -192,7 +192,7 @@ message ModelProto {
   // with the same-domain/same-op_type operator with the HIGHEST version
   // in the referenced operator sets.
   repeated OperatorSetIdProto opset_import = 8;
-
+  
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
@@ -222,6 +222,10 @@ message ModelProto {
 
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 14;
+  
+  // All customized function sets called by this model.
+  // Common function set defined in ONNX domain is not carried in each model.
+  repeated FunctionSetProto function_sets= 15;
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
@@ -229,19 +233,6 @@ message ModelProto {
 message StringStringEntryProto {
   string key = 1;
   string value= 2;
-};
-
-// Defines an attribute declaration.
-message AttrDeclProto {
-
-  // The attribute name. Must be present.
-  string name = 1;
-
-  // The type of this attribute.
-  AttributeProto.AttributeType type = 2;
-  
-  // The attribute default value.
-  AttributeProto default_value = 3;
 };
 
 // GraphProto defines a parameterized series of nodes to form a directed acyclic graph.
@@ -273,14 +264,6 @@ message GraphProto {
   // Information for the values in the graph. The ValueInfoProto.name's
   // must be distinct. It is optional for a value to appear in value_info list.
   repeated ValueInfoProto value_info = 13;
-  
-  // This contains all customized functions called by the graph nodes.
-  // Common functions defined in ONNX domain are not carried in each model.
-  repeated GraphProto functions = 14;
-  
-  // This is used when the graph is indeed a function, so that it could have
-  // attributes declared, similar with attributes declaration in operator schema.
-  repeated AttrDeclProto attr_decl = 15;
 
   // DO NOT USE the following fields, they were deprecated before
   // repeated string input = 3;
@@ -443,4 +426,76 @@ message OperatorSetIdProto {
   // The version of the operator set being identified.
   // This field MUST be present in this version of the IR.
   int64 version = 2;
+}
+
+enum OperatorStatus {
+  EXPERIMENTAL = 0;
+  STABLE = 1;
+}
+
+// Defines an attribute declaration.
+message AttrDeclProto {
+
+  // The attribute name. Must be present.
+  string name = 1;
+
+  // The type of this attribute.
+  AttributeProto.AttributeType type = 2;
+};
+
+message FunctionProto {
+  // The name of the function, similar usage of op_type in OperatorProto.
+  string name = 1;
+  
+  // The first version of a function set which contains this function.
+  // When there's any breaking change for this function, the function set
+  // contains the function needs to bump its version, and since_version of
+  // the updated function will be changed to the updated function set version.  
+  int64 since_version = 2;
+
+  // This field indicates whether the syntax, semantics, or presence
+  // of this function is in an experimental or stable stage. Once an
+  // function is published as STABLE, its syntax and semantics MUST NOT
+  // change in subsequent versions of the operator set.
+  // When a function is published as EXPERIMENTAL, the syntax and semantics
+  // of the function MAY change across operator set versions.
+  // Functions "become" stable by deprecating the experimental version and
+  // introducing a new stable function with the same name.
+  OperatorStatus status = 3;
+
+  // The inputs and outputs of the function.
+  repeated string input = 4;
+  repeated string output = 5;
+
+  // The attributes declaration of the function.
+  repeated AttrDeclProto attr_decl = 6;
+  
+  // The nodes in the function.
+  repeated NodeProto node = 7;
+  // A human-readable documentation for this function. Markdown is allowed.
+  string doc_string = 8;
+}
+
+message FunctionSetProto {
+
+  // The IR_VERSION of a function set works against.
+  // they adhere to. It is always IR_VERSION.
+  // This field MUST be present in this version of the IR
+  int64 ir_version = 1;
+
+  // Domain name of the operator set, in reverse DNS form (e.g., com.acme.dnnops).
+  string domain = 2;
+
+  // The version of the set of operators. This is a simple int value
+  // that is monotonically increasing as new versions of operator set
+  // are published. All operators in this set MUST have version
+  // numbers no greater than opset_version.
+  int64 version = 3;
+
+  // A human-readable documentation for this set of operators. Markdown is allowed.
+  string doc_string = 4;
+  
+  // The functions specified by this operator set.
+  // The (name, version) MUST be unique across all OperatorProtos/FunctionProtos in operator/functions
+  repeated FunctionProto functions = 5;
 }
