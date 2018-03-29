@@ -66,3 +66,4 @@ class Split(Base):
                             np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]])]
 
         expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
+        
