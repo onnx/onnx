@@ -20,8 +20,7 @@ class Split(Base):
             'Split',
             inputs=['input'],
             outputs=['output_1', 'output_2', 'output_3'],
-            axis=0,
-            split=[2]
+            axis=0
         )
 
         expected_outputs = [np.array([1, 2]), np.array([3, 4]), np.array([5, 6])]
@@ -49,8 +48,7 @@ class Split(Base):
             'Split',
             inputs=['input'],
             outputs=['output_1', 'output_2'],
-            axis=1,
-            split=[3]
+            axis=1
         )
 
         expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]), 
