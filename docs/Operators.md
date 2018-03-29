@@ -671,7 +671,7 @@ for strides in [[1, 1], [2, 2], [3, 1]]:
                 'AveragePool',
                 inputs=['x'],
                 outputs=['y'],
-                kernel_shape = kernel_shape,
+                kernel_shape=kernel_shape,
                 strides=strides,
                 pads=pads
             )
@@ -688,8 +688,9 @@ for strides in [[1, 1], [2, 2], [3, 1]]:
             expect(
                 node, inputs=[x], outputs=[y],
                 name='test_avgpool_2D_%s_kernel_%d_%d_stride_%d_%d' % (
-                padStr, kernel_shape[0],
-                kernel_shape[1], strides[0], strides[1])
+                    padStr, kernel_shape[0],
+                    kernel_shape[1], strides[0], strides[1]
+                )
             )
 ```
 
@@ -723,11 +724,11 @@ for strides in [[1, 1, 1], [2, 2, 2], [3, 1, 3]]:
                 'AveragePool',
                 inputs=['x'],
                 outputs=['y'],
-                kernel_shape = kernel_shape,
+                kernel_shape=kernel_shape,
                 strides=strides,
                 pads=pads
             )
-            pad_shape = [pads[0] + pads[3], pads[1]+pads[4], pads[2]+pads[5]]
+            pad_shape = [pads[0] + pads[3], pads[1] + pads[4], pads[2] + pads[5]]
             # Define output tensor of the right size:
             wSize = int(np.floor((padded.shape[2] - (kernel_shape[0] - 1) - 1) / strides[0] + 1))
             hSize = int(np.floor((padded.shape[3] - (kernel_shape[1] - 1) - 1) / strides[1] + 1))
@@ -742,8 +743,10 @@ for strides in [[1, 1, 1], [2, 2, 2], [3, 1, 3]]:
             expect(
                 node, inputs=[x], outputs=[y],
                 name='test_avgpool_3D_%s_kernel_%d_%d_%d_stride_%d_%d_%d' % (
-                padStr, kernel_shape[0], kernel_shape[1], kernel_shape[2],
-                strides[0], strides[1], strides[2]))
+                    padStr, kernel_shape[0], kernel_shape[1], kernel_shape[2],
+                    strides[0], strides[1], strides[2]
+                )
+            )
 ```
 
 </details>
@@ -4365,7 +4368,7 @@ for strides in [[1, 1], [2, 2], [3, 1]]:
                 'MaxPool',
                 inputs=['x'],
                 outputs=['y'],
-                kernel_shape = kernel_shape,
+                kernel_shape=kernel_shape,
                 strides=strides,
                 pads=pads
             )
@@ -4382,8 +4385,9 @@ for strides in [[1, 1], [2, 2], [3, 1]]:
             expect(
                 node, inputs=[x], outputs=[y],
                 name='test_maxpool_2D_%s_kernel_%d_%d_stride_%d_%d' % (
-                padStr, kernel_shape[0],
-                kernel_shape[1], strides[0], strides[1])
+                    padStr, kernel_shape[0],
+                    kernel_shape[1], strides[0], strides[1]
+                )
             )
 ```
 
@@ -4417,11 +4421,11 @@ for strides in [[1, 1, 1], [2, 2, 2], [3, 1, 3]]:
                 'MaxPool',
                 inputs=['x'],
                 outputs=['y'],
-                kernel_shape = kernel_shape,
+                kernel_shape=kernel_shape,
                 strides=strides,
                 pads=pads
             )
-            pad_shape = [pads[0] + pads[3], pads[1]+pads[4], pads[2]+pads[5]]
+            pad_shape = [pads[0] + pads[3], pads[1] + pads[4], pads[2] + pads[5]]
             # Define output tensor of the right size:
             wSize = int(np.floor((padded.shape[2] - (kernel_shape[0] - 1) - 1) / strides[0] + 1))
             hSize = int(np.floor((padded.shape[3] - (kernel_shape[1] - 1) - 1) / strides[1] + 1))
@@ -4436,8 +4440,9 @@ for strides in [[1, 1, 1], [2, 2, 2], [3, 1, 3]]:
             expect(
                 node, inputs=[x], outputs=[y],
                 name='test_maxpool_3D_%s_kernel_%d_%d_%d_stride_%d_%d_%d' % (
-                padStr, kernel_shape[0], kernel_shape[1], kernel_shape[2],
-                strides[0], strides[1], strides[2])
+                    padStr, kernel_shape[0], kernel_shape[1], kernel_shape[2],
+                    strides[0], strides[1], strides[2]
+                )
             )
 ```
 
