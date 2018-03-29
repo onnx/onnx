@@ -65,15 +65,8 @@ class Coverage(object):
         self.add_graph(model.graph, bucket)
 
     def add_proto(self, proto, bucket):
-        if isinstance(proto, onnx.NodeProto):
-            self.add_node(proto, bucket)
-        elif isinstance(proto, onnx.GraphProto):
-            self.add_model(proto, bucket)
-        elif isinstance(proto, onnx.ModelProto):
-            self.add_model(proto, bucket)
-        else:
-            raise ValueError(
-                'Unrecognized onnx_coverage item: {}'.format(proto))
+        assert isinstance(proto, onnx.ModelProto)
+        self.add_model(proto, bucket)
 
     def report_text(self, writer):
         writer.write('---------- onnx coverage: ----------\n')

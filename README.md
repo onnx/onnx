@@ -35,6 +35,8 @@ Check ONNX design choices and internals:
 
 # Contribute
 ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
+You can join [one of the working groups](https://github.com/onnx/onnx/wiki/%5BAnnouncement%5D-ONNX-working-groups-established) and help shape the future of ONNX.
+
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md)
 and [call for contributions](https://github.com/onnx/onnx/issues/426) to get started.
 
