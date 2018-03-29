@@ -270,7 +270,7 @@ def make_tensor_value_info(name, elem_type, shape, doc_string="", shape_denotati
                 'Needs to of integer_types or text_type.'.format(d))
 
         if shape_denotation:
-            dim.standard_denotation = shape_denotation[i]
+            dim.denotation = shape_denotation[i]
 
     return value_info_proto
 

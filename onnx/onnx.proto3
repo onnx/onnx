@@ -387,7 +387,7 @@ message TensorShapeProto {
     // Standard denotation can optionally be used to denote tensor
     // dimensions with standard semantic descriptions to ensure
     // that operations are applied to the correct axis of a tensor.
-    string standard_denotation = 3;
+    string denotation = 3;
   };
   repeated Dimension dim = 1;
 }
@@ -395,7 +395,7 @@ message TensorShapeProto {
 // A set of pre-defined constants to be used as values for
 // the standard denotation field in TensorShapeProto.Dimension
 // for semantic description of the tensor dimension.
-message StandardDenotationConstProto {
+message DenotationConstProto {
   // Describe a batch number dimension.
   string DATA_BATCH = 1 [default = "DATA_BATCH"];
   // Describe a channel dimension.
