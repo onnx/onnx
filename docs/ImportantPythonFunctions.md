@@ -6,6 +6,8 @@ import onnx
 
 onnx_model = onnx.load('path/to/the/model')
 ```
+Runnable IPython notebooks:
+- [load_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/load_model.ipynb)
 
 ## Saving an ONNX Model
 ```python
@@ -17,6 +19,8 @@ onnx_model = ... # Your model in memory
 with open('path/to/the/model', 'wb') as f:
     f.write(onnx_model.SerializeToString())
 ```
+Runnable IPython notebooks:
+- [save_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/save_model.ipynb)
 
 ## Manipulating TensorProto and Numpy Array
 ```python
@@ -47,6 +51,8 @@ with open(os.path.join(os.path.dirname('tensor.pb'), 'rb') as f:
     new_tensor.ParseFromString(f.read())
 print('After saving and loading, new TensorProto:\n{}'.format(new_tensor))
 ```
+Runnable IPython notebooks:
+- [np_array_tensorproto.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/np_array_tensorproto.ipynb)
 
 ## Creating an ONNX Model Using Helper Functions
 ```python
@@ -90,6 +96,9 @@ print('The model is:\n{}'.format(model_def))
 onnx.checker.check_model(model_def)
 print('The model is checked!')
 ```
+Runnable IPython notebooks:
+- [make_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/make_model.ipynb)
+- [Protobufs.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/Protobufs.ipynb)
 
 ## Checking an ONNX Model
 ```python
@@ -106,6 +115,8 @@ print('The model is:\n{}'.format(onnx_model))
 onnx.checker.check_model(onnx_model)
 print('The model is checked!')
 ```
+Runnable IPython notebooks:
+- [check_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/check_model.ipynb)
 
 ## Optimizing an ONNX Model
 ```python
@@ -129,6 +140,8 @@ optimized_model = onnx.load_from_string(optimizer.optimize(original_model_str, p
 
 print('The model after optimization:\n{}'.format(optimized_model))
 ```
+Runnable IPython notebooks:
+- [optimize_onnx.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/optimize_onnx.ipynb)
 
 ## Running Shape Inference on an ONNX Model
 ```python
@@ -163,3 +176,5 @@ inferred_model = onnx.load_from_string(inferred_model_str)
 onnx.checker.check_model(inferred_model)
 print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model.graph.value_info))
 ```
+Runnable IPython notebooks:
+- [shape_inference.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/shape_inference.ipynb)
