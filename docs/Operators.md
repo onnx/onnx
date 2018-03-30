@@ -7455,7 +7455,6 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 input = np.array([[1., 2., 3., 4., 5., 6.],
                   [7., 8., 9., 10., 11., 12.]])
 
-
 node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
@@ -7463,8 +7462,8 @@ node = onnx.helper.make_node(
     axis=1
 )
 
-expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]), 
-                    np.array([[4., 5., 6.], [10., 11., 12.]])]  
+expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]),
+                    np.array([[4., 5., 6.], [10., 11., 12.]])]
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
@@ -7476,10 +7475,10 @@ node = onnx.helper.make_node(
     split=[2, 4]
 )
 
-expected_outputs = [np.array([[1., 2.], [7. ,8.]]),
+expected_outputs = [np.array([[1., 2.], [7., 8.]]),
                     np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]])]
 
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')        
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
 ```
 
 </details>
