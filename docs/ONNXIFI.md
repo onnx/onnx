@@ -1,4 +1,4 @@
-# ONNX Backend Interface Proposal
+# ONNX Interface for Framework Integration (ONNXIFI) Proposal
 
 We propose a cross-platform API for loading and executing ONNX graphs on optimized backends. High-level frameworks and applications can use this API to execute neural network and machine learning models. Hardware vendors can implement this API to expose specialized hardware accelerators and highly optimized software infrastructure to the users.
 
@@ -18,9 +18,9 @@ We propose a cross-platform API for loading and executing ONNX graphs on optimiz
 - Graphs with variable-shape inputs and/or outputs
 - Graphs with data-dependendent output shapes
 
-## How to Use ONNX Backend Interface
+## How to Use ONNX Interface for Framework Integration
 
-0. (Optional) Use `onnx_backend_load` to dynamically load the ONNX Backend Interface library.
+0. (Optional) Use `onnxifi_library_load` to dynamically load the ONNX Interface for Framework Integration library.
 1. Call `onnxGetNumBackends` to get the number of available backends. Note that it can be 0.
 2. Call `onnxGetBackendInfo` to check additional information about any available backend.
 3. Call `onnxGetBackendCompatibility` to check if your model, or parts of it, can run on the backend.
@@ -28,9 +28,9 @@ We propose a cross-platform API for loading and executing ONNX graphs on optimiz
 5. Call `onnxSetGraphIO` to set inputs and output for the graph, then call `onnxRunGraph` to execute the graph(s). If your model works with fixed-size inputs, one call to `onnxSetGraphIO` is sufficient for multiple `onnxRunGraph` calls. For models with variable-size inputs, you'd need to call `onnxSetGraphIO` before each `onnxRunGraph` call.
 6. When done using the model, release the model graph(s) with `onnxReleaseGraph`, then release the backend with `onnxReleaseBackend`
 
-## How to Implement ONNX Backend Interface
+## How to Implement ONNX Interface for Framework Integration
 
-The minimum functionality an ONNX backend must provide is the following:
+The minimum functionality an ONNXIFI implementation must provide is the following:
 
 - Support ONNX 1.0 model format.
   - There is no minimum list of Operators a backed has to support.
@@ -39,14 +39,14 @@ The minimum functionality an ONNX backend must provide is the following:
 
 ### Discovery
 Vendor-provided libraries should adhere to some rules to ensure discovery by ONNX-supported frameworks and applications:
-- Use `libonnxbe-<backend>.so` filename on Linux/Android
-- Use `libonnxbe-<backend>.dylib` filename on macOS
-- Use `onnxbe-<backend>.dll` filename on Windows
-- Append ONNX function names with `<BACKEND>` (a vendor may define `ONNX_BACKEND_SUFFIX=<BACKEND>` and when using `onnx_backend.h` header).
-`<backend>` is the vendor-specific name in lowercase, and `<BACKEND>` is the same name in uppercase. E.g. a vendor **Gamma** would provide `libonnxbe-gamma.so` for Linux systems, and this library would implement functions `onnxGetNumBackendsGAMMA`, `onnxGetBackendInfoGAMMA`, etc.
+- Use `libonnxifi-<backend>.so` filename on Linux/Android
+- Use `libonnxifi-<backend>.dylib` filename on macOS
+- Use `onnxifi-<backend>.dll` filename on Windows
+- Append ONNX function names with `<BACKEND>` (a vendor may define `ONNXIFI_LIBRARY_SUFFIX=<BACKEND>` and when using `onnxifi.h` header).
+`<backend>` is the vendor-specific name in lowercase, and `<BACKEND>` is the same name in uppercase. E.g. a vendor **Gamma** would provide `libonnxifi-gamma.so` for Linux systems, and this library would implement functions `onnxGetNumBackendsGAMMA`, `onnxGetBackendInfoGAMMA`, etc.
 
 ### Extensions
 
 Hardware vendors are welcome to add their own extensions to ONNX backend interface. The backend interface offers several extension mechanisms:
 - Experimental, exotic, or vendor-specific operators can be supported in a private domain using NodeProto.domain attribute.
-- Vendor-provided ONNX backend interface library can provide additional functions
+- Vendor-provided ONNXIFI implementation can expose additional functions
