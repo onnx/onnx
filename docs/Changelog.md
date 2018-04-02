@@ -1504,7 +1504,7 @@ This version of the operator has been available since version 1 of the default O
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
   dimension (M X N).
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-  the dimension requirement. If A can be transposed before doing the computation
+  the dimension requirement. A will be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
 
 #### Version
@@ -4967,8 +4967,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
-<dd>Constrain index tensor to integral types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
@@ -5989,7 +5989,7 @@ This version of the operator has been available since version 6 of the default O
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
   dimension (M X N).
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-  the dimension requirement. If A can be transposed before doing the computation
+  the dimension requirement. A will be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
 
 #### Version
