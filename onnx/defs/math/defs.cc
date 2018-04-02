@@ -625,8 +625,8 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "Constrain input and output types to float tensors.")
     .TypeConstraint(
         "I",
-        {"tensor(int64)", "tensor(int32)"},
-        "Constrain index tensor to integral types")
+        {"tensor(int64)"},
+        "Constrain index tensor to int64")
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(
         "axis",
