@@ -94,12 +94,14 @@ message AttributeProto {
     STRING = 3;
     TENSOR = 4;
     GRAPH = 5;
+    FUNCTION = 11;
 
     FLOATS = 6;
     INTS = 7;
     STRINGS = 8;
     TENSORS = 9;
     GRAPHS = 10;
+    FUNCTIONS = 12;
   }
 
   // The name field MUST be present for this version of the IR.
