@@ -34,7 +34,7 @@
     (__ANDROID__ && __cplusplus >= 201300L) || _MSC_VER >= 1900
 
 namespace ONNX_NAMESPACE {
-  using make_unique = std::make_unique;
+  using std::make_unique;
 }
 
 #else
