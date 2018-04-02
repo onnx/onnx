@@ -231,13 +231,10 @@ message GraphProto {
   // The name of the graph.
   optional string name = 2;   // namespace Graph
 
-  // A list of named tensor values (constants), used to specify default
+  // A list of named tensor values (constants), used to specify constant
   // values for some of the inputs of the graph.
   // Each TensorProto entry must have a distinct name (within the list) that
   // also appears in the input list.
-  // In an evaluation, the default value specified here is used if and only if
-  // user specifies no value for the corresponding input parameter.
-  // May be used to pass serialized parameters for networks.
   repeated TensorProto initializer = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.
