@@ -5,6 +5,7 @@
 
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
+#include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
@@ -14,26 +15,22 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-void PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in, ONNX_NAMESPACE::ModelProto& mp_out);
+ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in);
 
 struct Optimizer {
   std::map<std::string, std::unique_ptr<OptimizePass>> passes;
 
   Optimizer() {
     // Register the optimization passes to the optimizer.
-    std::unique_ptr<FuseConsecutiveTransposes> fct(new FuseConsecutiveTransposes());
-    passes[fct->name] = std::move(fct);
-    std::unique_ptr<EliminateNopTranspose> ent(new EliminateNopTranspose());
-    passes[ent->name] = std::move(ent);
-    std::unique_ptr<FuseTransposeIntoGemm> ftg(new FuseTransposeIntoGemm());
-    passes[ftg->name] = std::move(ftg);
-    std::unique_ptr<Nop> nop(new Nop());
-    passes[nop->name] = std::move(nop);
-    std::unique_ptr<SplitInit> si(new SplitInit());
-    passes[si->name] = std::move(si);
-    std::unique_ptr<SplitPredict> sp(new SplitPredict());
-    passes[sp->name] = std::move(sp);
+    _registerOptimizer<FuseConsecutiveTransposes>();
+    _registerOptimizer<EliminateNopTranspose>();
+    _registerOptimizer<FuseTransposeIntoGemm>();
+    _registerOptimizer<Nop>();
+    _registerOptimizer<SplitInit>();
+    _registerOptimizer<SplitPredict>();
   }
+
+  virtual ~Optimizer() = default;
 
   ONNX_NAMESPACE::ModelProto optimize(
       const ONNX_NAMESPACE::ModelProto& mp_in,
@@ -47,14 +44,13 @@ struct Optimizer {
       return mp_in;
     }
 
-    ONNX_NAMESPACE::ModelProto mp_out{};
-    PrepareOutput(mp_in, mp_out);
+    ONNX_NAMESPACE::ModelProto mp_out = PrepareOutput(mp_in);
 
-    for (auto & name : names) {
+    for (const auto& name : names) {
       auto it = passes.find(name);
       ONNX_ASSERTM(it != passes.end(), "pass %s is unknown.", name.c_str());
       if (it != passes.end()) {
-        auto& pass = it->second;
+        const auto& pass = it->second;
         if (pass->type == API_TYPE::PROTO) {
           // Operate on ModelProto.
           ExportModelProto(&mp_out, g);
@@ -70,6 +66,12 @@ struct Optimizer {
 
     ExportModelProto(&mp_out, g);
     return mp_out;
+  }
+
+private:
+  template<class Optimizer, class... Args> void _registerOptimizer(Args&& ...args) {
+    auto optimizer = make_unique<Optimizer>(std::forward<Args>(args)...);
+    passes[optimizer->name] = std::move(optimizer);
   }
 };
 
