@@ -34,29 +34,33 @@ class TestProtobufExists(unittest.TestCase):
         self.assertTrue(model == loaded_model)
 
         # Test if input is a file name
-        f = tempfile.NamedTemporaryFile(delete=False)
-        f.write(model_string)
-        f.close()
-        loaded_model = onnx.load(f.name)
-        self.assertTrue(model == loaded_model)
-        os.remove(f.name)
+        try:
+            f = tempfile.NamedTemporaryFile(delete=False)
+            f.write(model_string)
+            f.close()
+            loaded_model = onnx.load(f.name)
+            self.assertTrue(model == loaded_model)
+        finally:
+            os.remove(f.name)
 
     def test_save(self):
         # Create a model proto.
         model = self._simple_model()
 
         # Test writable parameter
-        f = tempfile.NamedTemporaryFile(delete=False)
-        onnx.save(model, f)
-        f.close()
-        loaded_model = onnx.load(f.name)
-        self.assertTrue(model == loaded_model)
+        try:
+            f = tempfile.NamedTemporaryFile(delete=False)
+            onnx.save(model, f)
+            f.close()
+            loaded_model = onnx.load(f.name)
+            self.assertTrue(model == loaded_model)
 
-        # Test path string paramter
-        onnx.save(model, f.name)
-        loaded_model = onnx.load(f.name)
-        self.assertTrue(model == loaded_model)
-        os.remove(f.name)
+            # Test path string paramter
+            onnx.save(model, f.name)
+            loaded_model = onnx.load(f.name)
+            self.assertTrue(model == loaded_model)
+        finally:
+            os.remove(f.name)
 
     def test_existence(self):
         try:
