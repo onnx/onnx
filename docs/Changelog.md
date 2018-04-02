@@ -4100,7 +4100,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4149,7 +4149,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4198,7 +4198,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4247,7 +4247,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4296,7 +4296,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4345,7 +4345,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4394,7 +4394,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4443,7 +4443,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4492,7 +4492,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
@@ -4541,7 +4541,7 @@ opset_import {
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>A list of integers, along which to reduce.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
