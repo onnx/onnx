@@ -1,3 +1,0 @@
-
-data
-transposed"	Transpose
