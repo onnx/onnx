@@ -14,8 +14,12 @@ def has(op_type):
     return C.has_schema(op_type)
 
 
-def get_schema(op_type):
-    return C.get_schema(op_type)
+def onnx_opset_version():
+    return C.schema_version_map()[ONNX_DOMAIN][1]
+
+
+def get_schema(op_type, max_inclusive_version=onnx_opset_version()):
+    return C.get_schema(op_type, max_inclusive_version)
 
 
 def get_all_schemas():
@@ -24,10 +28,6 @@ def get_all_schemas():
 
 def get_all_schemas_with_history():
     return C.get_all_schemas_with_history()
-
-
-def onnx_opset_version():
-    return C.schema_version_map()[ONNX_DOMAIN][1]
 
 
 OpSchema = C.OpSchema
