@@ -20,8 +20,7 @@ class Split(Base):
             'Split',
             inputs=['input'],
             outputs=['output_1', 'output_2', 'output_3'],
-            axis=0,
-            split=[2]
+            axis=0
         )
 
         expected_outputs = [np.array([1, 2]), np.array([3, 4]), np.array([5, 6])]
@@ -38,23 +37,20 @@ class Split(Base):
         expected_outputs = [np.array([1., 2.]), np.array([3., 4., 5., 6.])]
         expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
 
-     
     @staticmethod
     def export_2d():
         input = np.array([[1., 2., 3., 4., 5., 6.],
                           [7., 8., 9., 10., 11., 12.]])
 
-
         node = onnx.helper.make_node(
             'Split',
             inputs=['input'],
             outputs=['output_1', 'output_2'],
-            axis=1,
-            split=[3]
+            axis=1
         )
 
-        expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]), 
-                            np.array([[4., 5., 6.], [10., 11., 12.]])]  
+        expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]),
+                            np.array([[4., 5., 6.], [10., 11., 12.]])]
 
         expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
@@ -66,7 +62,7 @@ class Split(Base):
             split=[2, 4]
         )
 
-        expected_outputs = [np.array([[1., 2.], [7. ,8.]]),
+        expected_outputs = [np.array([[1., 2.], [7., 8.]]),
                             np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]])]
 
-        expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')        
+        expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')

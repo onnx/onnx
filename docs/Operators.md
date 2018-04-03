@@ -6887,12 +6887,10 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Split"></a><a name="split">**Split**</a>
 
-  Split a tensor into a list of tensors, along the specified 'axis'. Lengths
-  of the parts can be specified using argument 'split'. If the 'split' argument
-  contains only one element, and that element divides the length of split axis
-  evenly, the tensor is split into equal sized parts with given length. If the
-  'split' argument has more than one element, the sum of elements should be equal
-  to length of the given split axis.
+  Split a tensor into a list of tensors, along the specified 
+  'axis'. Lengths of the parts can be specified using argument 'split'.
+  Otherwise, the tensor is split to equal sized parts. 
+   
 
 #### Version
 
@@ -6943,8 +6941,7 @@ node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
     outputs=['output_1', 'output_2', 'output_3'],
-    axis=0,
-    split=[2]
+    axis=0
 )
 
 expected_outputs = [np.array([1, 2]), np.array([3, 4]), np.array([5, 6])]
@@ -6972,17 +6969,15 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 input = np.array([[1., 2., 3., 4., 5., 6.],
                   [7., 8., 9., 10., 11., 12.]])
 
-
 node = onnx.helper.make_node(
     'Split',
     inputs=['input'],
     outputs=['output_1', 'output_2'],
-    axis=1,
-    split=[3]
+    axis=1
 )
 
-expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]), 
-                    np.array([[4., 5., 6.], [10., 11., 12.]])]  
+expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]),
+                    np.array([[4., 5., 6.], [10., 11., 12.]])]
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
@@ -6994,10 +6989,10 @@ node = onnx.helper.make_node(
     split=[2, 4]
 )
 
-expected_outputs = [np.array([[1., 2.], [7. ,8.]]),
+expected_outputs = [np.array([[1., 2.], [7., 8.]]),
                     np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]])]
 
-expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')        
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
 ```
 
 </details>
