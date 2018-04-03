@@ -350,32 +350,34 @@ class OpSchema final {
   // Convenience members for types
   static const std::vector<std::string>& all_numeric_types() {
     static const std::vector<std::string> all_numeric_types = {
-        "tensor(float)",
-        "tensor(uint32)",
-        "tensor(int32)",
         "tensor(uint8)",
-        "tensor(int8)",
         "tensor(uint16)",
-        "tensor(int16)",
+        "tensor(uint32)",
         "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
         "tensor(int64)",
         "tensor(float16)",
+        "tensor(float)",
         "tensor(double)"};
     return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types = {"tensor(float)",
-                                                              "tensor(int32)",
-                                                              "tensor(string)",
-                                                              "tensor(bool)",
-                                                              "tensor(uint8)",
-                                                              "tensor(int8)",
+    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
                                                               "tensor(uint16)",
+                                                              "tensor(uint32)",
+                                                              "tensor(uint64)",
+                                                              "tensor(int8)",
                                                               "tensor(int16)",
+                                                              "tensor(int32)",
                                                               "tensor(int64)",
                                                               "tensor(float16)",
-                                                              "tensor(double)"};
+                                                              "tensor(float)",
+                                                              "tensor(double)",
+                                                              "tensor(string)",
+                                                              "tensor(bool)"};
     return all_tensor_types;
   }
 

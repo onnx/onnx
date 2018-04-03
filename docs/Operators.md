@@ -144,7 +144,7 @@ Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -225,7 +225,7 @@ Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
@@ -495,7 +495,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -537,7 +537,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
@@ -1748,7 +1748,7 @@ Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
@@ -4540,7 +4540,7 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
@@ -5588,7 +5588,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5632,7 +5632,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5676,7 +5676,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5720,7 +5720,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5764,7 +5764,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5808,7 +5808,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5852,7 +5852,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5896,7 +5896,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5940,7 +5940,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -5984,7 +5984,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
@@ -7103,7 +7103,7 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(uint32), tensor(int32), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(uint64), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to numeric tensors.</dd>
 </dl>
 
@@ -7368,8 +7368,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Constrain index tensor to int64</dd>
+<dt><tt>I</tt> : tensor(uint64)</dt>
+<dd>Constrain index tensor to uint64</dd>
 </dl>
 
 
@@ -8135,7 +8135,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
@@ -8336,7 +8336,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int64</dt>
 <dd>Only int64</dd>
@@ -8379,7 +8379,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int32</dt>
 <dd>Indices</dd>
