@@ -75,20 +75,22 @@ typedef unsigned __int64 uint64_t;
 #endif /* !defined(ONNXIFI_NO_STDINT_H) */
 
 /**
- * Opaque ONNX backend handle.
- * ONNX backend is a combination of software layer and hardware device used to
- * run an ONNX graph.
+ * Opaque ONNXIFI backend handle.
+ * ONNXIFI backend is a combination of software layer and hardware device used
+ * to run an ONNX graph.
  */
 typedef void* onnxBackend;
-/** Opaque ONNX graph handle. */
+/** Opaque ONNXIFI graph handle. */
 typedef void* onnxGraph;
+/** Opaque ONNXIFI even handle. */
+typedef void* onnxEvent;
 
-/** Return code for ONNX functions */
+/** Return code for ONNXIFI functions */
 typedef int32_t onnxStatus;
 /**
  * Type for enumeration values.
  *
- * The low 32 bits are reserved for standardized ONNX values.
+ * The low 32 bits are reserved for standardized ONNXIFI values.
  * The high 32 bits are reserved for vendor-specific extensions. Applications
  * must check for specific vendor extensions before interpreting these bits.
  */
@@ -96,7 +98,7 @@ typedef uint64_t onnxEnum;
 /**
  * Type for bit fields.
  *
- * The low 32 bits are reserved for standardized ONNX values.
+ * The low 32 bits are reserved for standardized ONNXIFI values.
  * The high 32 bits are reserved for vendor-specific extensions. Applications
  * must check for specific vendor extensions before interpreting these bits.
  */
@@ -146,6 +148,16 @@ typedef uint64_t onnxPointer;
 #define ONNXIFI_DEVICE_TYPE_FRAMEWORK 0x20
 
 /**
+ * The backend supports multi-threaded access to ONNXIFI backend, graph, and
+ * event objects. E.g. onnxInitGraph can be called on a different thread than
+ * onnxInitBackend.
+ *
+ * If this capability it not indicated, ONNXIFI backend, graph, and event
+ * objects that relate to the backend must always be used on the same thread
+ * where the backend object was initialized.
+ */
+#define ONNXIFI_CAPABILITY_THREAD_SAFE 0x01
+/**
  * The backend supports ONNX graphs with symbolic variables in shape names
  * (using TensorShapeProto.dim_param for ModelProto.graph.input.type.shape or
  * ModelProto.graph.output.type.shape).
@@ -153,7 +165,7 @@ typedef uint64_t onnxPointer;
  * The exact numerical shape of all input and output tensors must be specified
  * in the onnxSetGraphIO call(s).
  */
-#define ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS 0x01
+#define ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS 0x02
 /**
  * The backend supports ONNX graphs with data-dependent output shapes.
  * The ONNX graph would specify unknown output shapes using symbolic variables,
@@ -162,7 +174,7 @@ typedef uint64_t onnxPointer;
  * For outputs with data-dependent shapes the shape specified in onnxSetGraphIO
  * call is interpreted as the upper limit.
  */
-#define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x02
+#define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x04
 
 /**
  * Type of the backend information.
@@ -274,10 +286,24 @@ typedef int32_t onnxBackendInfo;
  *
  * Value type: onnxBitfield.
  * Possible values are any combination of the following flags:
- *      ONNXIFI_MEMORY_TYPE_CPU (always supported)
- *      or any vendor-specific flags in the high 32 bits of the bit field.
+ *     ONNXIFI_MEMORY_TYPE_CPU (always supported)
+ *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER
+ *     ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT
+ *     ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT
+ *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE
+ *     or any vendor-specific flags in the high 32 bits of the bit field.
  */
 #define ONNXIFI_BACKEND_MEMORY_TYPES 12
+
+/**
+ * Memory synchronization primitives supported for graph inputs and outputs.
+ *
+ * Possible values are any combination of the following flags:
+ *     ONNXIFI_SYNCHRONIZATION_DEFAULT (always supported)
+ *     ONNXIFI_SYNCHRONIZATION_IMPLICIT
+ *     or any vendor-specific flags in the high 32 bits of the bit field.
+ */
+#define ONNXIFI_BACKEND_SYNCHRONIZATION_TYPES 14
 
 /**
  * Maximum amount of memory, in bytes, available to the use by the backend.
@@ -342,6 +368,41 @@ typedef int32_t onnxBackendInfo;
  */
 #define ONNXIFI_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH 37
 
+/**
+ * PCI bus ID of the backend device.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNXIFI_BACKEND_PCI_BUS_ID 40
+
+/**
+ * PCI device ID of the backend device.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNXIFI_BACKEND_PCI_DEVICE_ID 41
+
+/**
+ * PCI domain/function ID of the backend device.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNXIFI_BACKEND_PCI_DOMAIN_ID 42
+
+/**
+ * DirectX ID of the backend device.
+ *
+ * Value type: GUID (16 bytes).
+ */
+#define ONNXIFI_BACKEND_DIRECTX_ID 43
+
+/**
+ * CUDA index of the backend device.
+ *
+ * Value type: uint64_t.
+ */
+#define ONNXIFI_BACKEND_CUDA_INDEX 44
+
 /* Note: the data type values match ONNX TensorProto.DataType enum */
 #define ONNXIFI_DATATYPE_UNDEFINED 0
 #define ONNXIFI_DATATYPE_FLOAT16 10
@@ -360,6 +421,14 @@ typedef int32_t onnxBackendInfo;
 
 /** Cacheable CPU memory */
 #define ONNXIFI_MEMORY_TYPE_CPU 0
+/** CUDA memory buffer (allocated via cudaMalloc/cuMalloc).  */
+#define ONNXIFI_MEMORY_TYPE_CUDA_BUFFER 1
+/** OpenCL cl_mem object (buffer, sub-buffer, or 1D/2D/3D image). */
+#define ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT 2
+/** OpenGL ES 2.0+ object (1D/2D/3D texture or SSBO). */
+#define ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT 4
+/** Direct3D resource. */
+#define ONNXIFI_MEMORY_TYPE_D3D_RESOURCE 8
 
 /**
  * Terminates the list of auxiliary backend initialization properties passed to
@@ -391,24 +460,89 @@ typedef struct onnxTensorDescriptor {
   /**
    * Type of memory that stores the tensor.
    *
+   * ONNXIFI_MEMORY_TYPE_CPU memory type is always supported by the backend, but
+   * other memory types are optional. The use MUST call onnxGetBackendInfo with
+   * ONNXIFI_BACKEND_MEMORY_TYPES to check if a particular memory type is
+   * supported before using it.
+   *
+   * If the memory type is different than ONNXIFI_MEMORY_TYPE_CPU, it must be
+   * allocated on the same device as the backend.
+   *
    * Possible values:
-   *     ONNXIFI_MEMORY_TYPE_CPU
+   *     ONNXIFI_MEMORY_TYPE_CPU             (always supported)
+   *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER     (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT   (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE    (support is optional)
    */
   onnxEnum memoryType;
   /**
    * Number of dimensions in the tensor.
-   * Must be between 0 (for a scalar) and ONNXIFI_TENSOR_DIMS_MAX.
+   * For a scalar, the number of dimensions is 0.
    */
   uint32_t dimensions;
   /**
    * Dimensions of the tensor.
+   * For a scalar, this pointer can be NULL.
    */
   const uint64_t* shape;
   /**
    * Pointers to tensor data.
+   *
+   * Interpretation depends on memoryType:
+   *   - ONNXIFI_MEMORY_TYPE_CPU: buffer is a valid pointer to CPU memory.
+   *   - ONNXIFI_MEMORY_TYPE_CUDA_BUFFER: buffer is a valid pointer to CUDA
+   *     device memory, allocated via cudaMalloc or cuMalloc. CUDA device memory
+   *     must be allocated on the same device as the backend.
+   *   - ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT: buffer is a cl_mem handle for an
+   *     OpenCL buffer, sub-buffer, or 1D/2D/3D image. cl_mem object must be
+   *     allocated on the same device as the backend.
+   *   - ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT: buffer is a name of 1D/2D/3D
+   *     texture (created by glGenTextures) or SSBO (created by glGenBuffers).
+   *     The texture or SSBO must be allocated on the same device as the
+   *     backend.
+   *   - ONNXIFI_MEMORY_TYPE_D3D_RESOURCE: TBD
    */
   onnxPointer buffer;
 } onnxTensorDescriptor;
+
+/**
+ * Synchronization using ONNXIFI event object (onnxEvent).
+ */
+#define ONNXIFI_SYNCHRONIZATION_EVENT 0
+/**
+ * Implicit synchronization of inputs and outputs access with the caller.
+ * The details are backend-specific, and may involve extra parameters passed
+ * during backend initialization.
+ *
+ * Examples:
+ *  - CUDA-based backends could implicitly synchronize with the caller through
+ *    the use of the same CUDA stream.
+ *  - OpenCL-based backends could implicitly synchronize with the caller through
+ *    the use of the same in-order OpenCL command queue.
+ */
+#define ONNXIFI_SYNCHRONIZATION_IMPLICIT 2
+
+typedef struct onnxMemoryFence {
+  /**
+   * Type of memory synchronization primitive.
+   *
+   * Possible values:
+   *      ONNXIFI_SYNCHRONIZATION_DEFAULT  (always supported)
+   *      ONNXIFI_SYNCHRONIZATION_IMPLICIT
+   */
+  onnxEnum type;
+  union {
+    /**
+     * Pointer to a handle for a single-shot ONNXIFI event used as a
+     * synchronization primitive. Event for the input fence must be created
+     * by the caller to onnxRunGraph. Event for the output fence is created by
+     * implementation of onnxRunGraph, and store into the pointer specified in
+     * the output fence before onnxRunGraph returns.
+     */
+    onnxEvent* event;
+  };
+} onnxMemoryFence;
 
 /* Function pointer declarations for dynamic loading */
 typedef ONNXIFI_CHECK_RESULT uint32_t
@@ -433,6 +567,19 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxReleaseBackendFunction)(
     onnxBackend backend);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxInitEventFunction)(
+    onnxBackend backend,
+    onnxEvent* event);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxSignalEventFunction)(
+    onnxEvent event);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxWaitEventFunction)(
+    onnxEvent event);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxReleaseEventFunction)(
+    onnxEvent event);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxInitGraphFunction)(
     onnxBackend backend,
     size_t onnxModelSize,
@@ -449,20 +596,22 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
     const onnxTensorDescriptor* outputDescriptors);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxRunGraphFunction)(
-    onnxGraph graph);
+    onnxGraph graph,
+    const onnxMemoryFence* inputFence,
+    onnxMemoryFence* outputFence);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxReleaseGraphFunction)(
     onnxGraph graph);
 
 /**
- * Query the number of available backends for ONNX graphs.
+ * Query the number of available backends on the system.
  *
- * ONNX backend is a combination of software layer and hardware device used to
- * run an ONNX graph. The same software layer may expose multiple backends (e.g.
- * one ONNX backend for each GPU in the system, or one ONNX backend for GPU and
- * another for CPU, both implemented in the same software). Backends implemented
- * in the same software, but targeting different devices (e.g. "MyNN" for CPU
- * and "MyNN" for GPU) are counted separately.
+ * ONNXIFI backend is a combination of software layer and hardware device used
+ * to run an ONNX graph. The same software layer may expose multiple backends
+ * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNX backend for
+ * GPU and another for CPU, both implemented in the same software). Backends
+ * implemented in the same software, but targeting different devices (e.g.
+ * "MyNN" for CPU and "MyNN" for GPU) are counted separately.
  */
 ONNXIFI_PUBLIC uint32_t ONNXIFI_ABI
   ONNXIFI_SYMBOL_NAME(onnxGetNumBackends)(void);
@@ -685,7 +834,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     onnxBackend* backend);
 
 /**
- * Deinitialize an ONNX backend and release associated resources.
+ * Deinitialize an ONNXIFI backend and release associated resources.
  *
  * @param backend - backend handle created by onnxInitBackend.
  *
@@ -693,7 +842,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                resources were released to the operating
  *                                system.
  * @retval ONNXIFI_STATUS_INVALID_BACKEND The function call failed because
- *                                        backend is not an ONNX backend handle.
+ *                                        backend is not an ONNXIFI backend
+ *                                        handle.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       backend experienced an unrecovered
  *                                       internal error.
@@ -703,7 +853,108 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     onnxBackend backend);
 
 /**
- * Parse an ONNX graph and convert it for a particular backend.
+ * Initialize a single-shot ONNXIFI event.
+ *
+ * The newly created event is in non-signalled state.
+ *
+ * @param backend - backend handle created by onnxInitBackend. This backend
+ *                  would be used to initialize the event.
+ * @param[out] event - pointer to the opaque handle for the created ONNXIFI
+ *                     event. If the function fails, the handle is initialized
+ *                     to NULL.
+ *
+ * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the event
+ *                                was successfully initialized.
+ * @retval ONNXIFI_STATUS_INVALID_BACKEND The function call failed because
+ *                                        backend is not an ONNXIFI backend
+ *                                        handle.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        event pointer is NULL.
+ * @retval ONNXIFI_STATUS_NO_SYSTEM_MEMORY The function call failed due to
+ *                                         insufficient system memory to
+ *                                         initialize the event.
+ * @retval ONNXIFI_STATUS_NO_SYSTEM_RESOURCES The function call failed due to
+ *                                            insufficient non-memory system
+ *                                            resources (e.g. file handles) to
+ *                                            initialize the event.
+ * @retval ONNXIFI_STATUS_NO_DEVICE_MEMORY The function call failed due to
+ *                                         insufficient backend-specific memory
+ *                                         to initialize the event.
+ * @retval ONNXIFI_STATUS_NO_DEVICE_RESOURCES The function call failed due to
+ *                                            insufficient non-memory
+ *                                            backend-specific resources (e.g.
+ *                                            command queues) to initialize the
+ *                                            event.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       backend experienced an unrecovered
+ *                                       internal error.
+ */
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  ONNXIFI_SYMBOL_NAME(onnxInitEvent)(
+    onnxBackend backend,
+    onnxEvent* event);
+
+/**
+ * Change the state of an ONNXIFI event to signalled.
+ *
+ * @param event - event handle created by onnxInitEvent. While it is technically
+ *                possible to use this function for output memory fence event
+ *                created by onnxRunGraph, users SHOULD NOT do that.
+ *
+ * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the event
+ *                                was changed to signalled state.
+ * @retval ONNXIFI_STATUS_INVALID_EVENT The function call failed because event
+ *                                      is not an ONNXIFI event handle.
+ * @retval ONNXIFI_STATUS_INVALID_STATE The function call failed because event
+ *                                      is already in the signalled state.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       implementation experienced an
+ *                                       unrecovered internal error.
+ */
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  ONNXIFI_SYMBOL_NAME(onnxSignalEvent)(
+    onnxEvent event);
+
+/**
+ * Wait until an ONNXIFI event transitions to signalled state.
+ *
+ * @param event - event handle created by onnxRunGraph. While it is technically
+ *                possible to use this function to events created by
+ *                onnxInitEvent, this is not the intended use-case.
+ *
+ * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the function
+ *                                returned because event transitioned to
+ *                                signalled state.
+ * @retval ONNXIFI_STATUS_INVALID_EVENT The function call failed because event
+ *                                      is not an ONNXIFI event handle.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       implementation experienced an
+ *                                       unrecovered internal error.
+ */
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  ONNXIFI_SYMBOL_NAME(onnxWaitEvent)(
+    onnxEvent event);
+
+/**
+ * Deinitialize an ONNXIFI event and release associated resources.
+ *
+ * @param event - event handle created by either onnxInitEvent or onnxRunGraph.
+ *
+ * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the event
+ *                                resources were released to the operating
+ *                                system.
+ * @retval ONNXIFI_STATUS_INVALID_GRAPH The function call failed because event
+ *                                      is not an ONNXIFI event handle.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       implementation experienced an
+ *                                       unrecovered internal error.
+ */
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  ONNXIFI_SYMBOL_NAME(onnxReleaseEvent)(
+    onnxEvent event);
+
+/**
+ * Parse an ONNXIFI graph and convert it for a particular backend.
  *
  * Model graph is passed as a serialized ModelProto message, where types and
  * dimensions of all inputs (including static weights) and outputs are specified
@@ -895,17 +1146,40 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     const onnxTensorDescriptor* outputDescriptors);
 
 /**
- * Execute operations in an ONNX graph using pre-specified locations for inputs
- * and outputs.
+ * Asynchronously execute operations in an ONNX graph using pre-specified
+ * locations for inputs and outputs.
  *
- * This function operates synchronously: it expects that graph inputs have
- * valid values before the function is called, and will finish writing graph
- * outputs before the function returns.
+ * This function operates asynchronously: it doesn't require that the locations
+ * for graph inputs graph inputs hold valid values before the function is
+ * called, and doesn't guarantee that the locations for graph outputs hold
+ * valid values when the function returns. Instead, two synchronization
+ * primitives are used to signal to the backend when inputs are ready to use,
+ * and to signal to the caller when outputs are ready to use. The types of
+ * supported synchronization primitives are backend-specific, and indicated in
+ * information query. Note that none of the
+ * synchronization primitives are guaranteed to be supported, and if no
+ * synchronization primitive is supported by the backend, this function can't
+ * be used.
  *
  * The caller must successfully specify locations of input and output tensors
  * for the graph through onnxSetGraphIO before calling this function.
  *
  * @param graph - graph handle created by onnxInitGraph.
+ * @param[in] inputFence - synchronization primitive that signals when graph
+ *                         inputs are ready to use by the backend. The
+ *                         synchronization primitive always must be initialized
+ *                         by the caller.
+ * @param[out] outputFence - synchronization primitive that signals when graph
+ *                           outputs are ready to use by the caller. The type
+ *                           of the synchronization primitive always must be
+ *                           initialized by the caller. The type of the
+ *                           synchronization primitive determines whether it
+ *                           is initialized by the use before the call or by the
+ *                           backend as a result of this call. Single-shot
+ *                           synchronizatiom objects are initialized as a result
+ *                           of the call. Reusable synchronization objects are
+ *                           generally initialized by the user prior to the
+ *                           call.
  *
  * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the all graph
  *                                inputs and outputs were matched to a memory
@@ -940,10 +1214,15 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
   ONNXIFI_SYMBOL_NAME(onnxRunGraph)(
-    onnxGraph graph);
+    onnxGraph graph,
+    const onnxMemoryFence* inputFence,
+    onnxMemoryFence* outputFence);
 
 /**
  * Deinitialize an ONNX graph and release associated resources.
+ *
+ * If there are in-flight asynchronous inference operations on this graph,
+ * the function MUST block until all outstanding operations complete.
  *
  * @param graph - graph handle created by onnxInitGraph.
  *
