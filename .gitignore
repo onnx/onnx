@@ -63,6 +63,7 @@ build
 build_*
 .build_debug/*
 .build_release/*
+.setuptools-cmake-build/*
 
 # setup.py intermediates
 .eggs
