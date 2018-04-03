@@ -5307,10 +5307,9 @@ This version of the operator has been available since version 2 of the default O
 
 ### <a name="Split-2"></a>**Split-2**</a>
 
-  Split a tensor into a list of tensors, along the specified 
+  Split a tensor into a list of tensors, along the specified
   'axis'. Lengths of the parts can be specified using argument 'split'.
-  Otherwise, the tensor is split to equal sized parts. 
-   
+  Otherwise, the tensor is split to equal sized parts.
 
 #### Version
 

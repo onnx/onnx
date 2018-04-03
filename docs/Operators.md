@@ -6887,10 +6887,9 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Split"></a><a name="split">**Split**</a>
 
-  Split a tensor into a list of tensors, along the specified 
+  Split a tensor into a list of tensors, along the specified
   'axis'. Lengths of the parts can be specified using argument 'split'.
-  Otherwise, the tensor is split to equal sized parts. 
-   
+  Otherwise, the tensor is split to equal sized parts.
 
 #### Version
 
@@ -6935,7 +6934,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 <summary>1d</summary>
 
 ```python
-input = np.array([1., 2., 3., 4., 5., 6.])
+input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
 
 node = onnx.helper.make_node(
     'Split',
@@ -6944,7 +6943,7 @@ node = onnx.helper.make_node(
     axis=0
 )
 
-expected_outputs = [np.array([1, 2]), np.array([3, 4]), np.array([5, 6])]
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_1d')
 
 node = onnx.helper.make_node(
@@ -6955,7 +6954,7 @@ node = onnx.helper.make_node(
     split=[2, 4]
 )
 
-expected_outputs = [np.array([1., 2.]), np.array([3., 4., 5., 6.])]
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
 ```
 
@@ -6967,7 +6966,7 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 
 ```python
 input = np.array([[1., 2., 3., 4., 5., 6.],
-                  [7., 8., 9., 10., 11., 12.]])
+                  [7., 8., 9., 10., 11., 12.]]).astype(np.float32)
 
 node = onnx.helper.make_node(
     'Split',
@@ -6976,8 +6975,8 @@ node = onnx.helper.make_node(
     axis=1
 )
 
-expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]),
-                    np.array([[4., 5., 6.], [10., 11., 12.]])]
+expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
+                    np.array([[4., 5., 6.], [10., 11., 12.]]).astype(np.float32)]
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
 
@@ -6989,8 +6988,8 @@ node = onnx.helper.make_node(
     split=[2, 4]
 )
 
-expected_outputs = [np.array([[1., 2.], [7., 8.]]),
-                    np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]])]
+expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
+                    np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
 
 expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
 ```

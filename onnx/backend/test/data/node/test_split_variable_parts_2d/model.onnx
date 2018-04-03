@@ -4,14 +4,14 @@
 axis *
 split@@ test_split_variable_parts_2dZ
 input
-
+
 
 b
 output_1
-
+
 
 b
 output_2
-
+
 
 B
