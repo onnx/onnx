@@ -7,7 +7,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-struct EliminateNopTranspose : public OptimizePass {
+struct EliminateNopTranspose final : public OptimizePass {
   explicit EliminateNopTranspose()
     : OptimizePass("eliminate_nop_transpose", API_TYPE::IR) {
   }
@@ -33,7 +33,7 @@ struct EliminateNopTranspose : public OptimizePass {
     }
   }
 
-  virtual void optimize(Graph& graph) {
+  void optimize(Graph& graph) override {
     eliminate_nop_transpose(graph);
   }
 };
