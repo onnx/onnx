@@ -22,7 +22,7 @@ class Elu(Base):
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
-        #expected output [-1.2642411, 0., 1.]
+        # expected output [-1.2642411, 0., 1.]
         y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
         expect(node, inputs=[x], outputs=[y],
                name='test_elu_example')
@@ -44,4 +44,3 @@ class Elu(Base):
         y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha
         expect(node, inputs=[x], outputs=[y],
                name='test_elu_default')
-

@@ -21,7 +21,7 @@ class Ceil(Base):
         )
 
         x = np.array([-1.5, 1.2]).astype(np.float32)
-        y = np.ceil(x) #expected output [-1., 2.]
+        y = np.ceil(x)  # expected output [-1., 2.]
         expect(node, inputs=[x], outputs=[y],
                name='test_ceil_example')
 

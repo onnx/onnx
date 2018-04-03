@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 
 # Project
 project(onnx C CXX)
+option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_PYTHON "Build Python binaries" ON)
 
@@ -213,6 +214,19 @@ if(BUILD_PYTHON)
   endif()
 endif()
 
+if(ONNX_BUILD_BENCHMARKS)
+  if(NOT TARGET benchmark)
+    # We will not need to test benchmark lib itself.
+    set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "Disable benchmark testing as we don't need it.")
+    # We will not need to install benchmark since we link it statically.
+    set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "Disable benchmark install to avoid overwriting vendor install.")
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/benchmark)
+  endif()
+
+  add_executable(protobuf-bench tools/protobuf-bench.cc)
+  target_link_libraries(protobuf-bench onnx_proto benchmark)
+endif()
+
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
 set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
@@ -229,11 +243,21 @@ if (WIN32)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
-      target_compile_options(onnx_proto PRIVATE /MT)
-      target_compile_options(onnx PRIVATE /MT)
+      if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        target_compile_options(onnx_proto PRIVATE /MTd)
+        target_compile_options(onnx PRIVATE /MTd)
+      else()
+        target_compile_options(onnx_proto PRIVATE /MT)
+        target_compile_options(onnx PRIVATE /MT)
+      endif()
     else()
-      target_compile_options(onnx_proto PRIVATE /MD)
-      target_compile_options(onnx PRIVATE /MD)
+      if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+        target_compile_options(onnx_proto PRIVATE /MDd)
+        target_compile_options(onnx PRIVATE /MDd)
+      else()
+        target_compile_options(onnx_proto PRIVATE /MD)
+        target_compile_options(onnx PRIVATE /MD)
+      endif()
     endif()
     set(onnx_static_library_flags
         -IGNORE:4221 # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library

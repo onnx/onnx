@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import distutils
 from distutils.spawn import find_executable
 from distutils import sysconfig, dep_util, log
 import setuptools
@@ -11,7 +10,6 @@ import setuptools.command.build_py
 import setuptools.command.develop
 import setuptools.command.build_ext
 
-from contextlib import contextmanager
 import platform
 import fnmatch
 from collections import namedtuple
@@ -23,12 +21,12 @@ import sys
 import tempfile
 from textwrap import dedent
 
-from tools.ninja_builder import NinjaBuilder, ninja_build_ext
+from tools.ninja_builder import ninja_build_ext
 import glob
 import json
 
 try:
-    import ninja
+    import ninja # noqa
     WITH_NINJA = True
 except ImportError:
     WITH_NINJA = False
@@ -47,7 +45,7 @@ setup_requires = []
 tests_require = []
 
 ################################################################################
-#Version
+# Version
 ################################################################################
 
 try:
@@ -66,6 +64,7 @@ with open(os.path.join(TOP_DIR, 'VERSION_NUMBER')) as version_file:
 # Utilities
 ################################################################################
 
+
 def die(msg):
     log.error(msg)
     sys.exit(1)
@@ -82,8 +81,9 @@ def recursive_glob(directory, pattern):
             for dirpath, dirnames, files in os.walk(directory)
             for f in fnmatch.filter(files, pattern)]
 
+# https://stackoverflow.com/a/3431838/2143581
 
- # https://stackoverflow.com/a/3431838/2143581
+
 def md5(fname):
     hash_md5 = hashlib.md5()
     with open(fname, 'rb') as f:
@@ -95,11 +95,13 @@ def md5(fname):
 # Pre Check
 ################################################################################
 
-true_or_die(PROTOC, 'Could not find "protoc" executable!')
+
+true_or_die(PROTOC, 'Could not find "protoc" executable! Please install the protobuf compiler, header, and libraries.')
 
 ################################################################################
 # Dependencies
 ################################################################################
+
 
 class Dependency(object):
     def __init__(self):
@@ -172,13 +174,14 @@ class build_proto_in(ONNXCommand):
             in_files.append(
                 os.path.join(SRC_DIR, '{}.in.proto'.format(stem)))
             if ONNX_ML:
-                proto_base = '{}_{}-ml'.format(stem, ONNX_NAMESPACE) if need_rename else '{}-ml'.format(stem)
+                proto_base = '{}_{}-ml'.format(stem,
+                                               ONNX_NAMESPACE) if need_rename else '{}-ml'.format(stem)
                 if need_rename:
                     out_files.append(os.path.join(SRC_DIR, '{}-ml.pb.h'.format(stem)))
             else:
                 proto_base = '{}_{}'.format(stem, ONNX_NAMESPACE) if need_rename else stem
                 if need_rename:
-                     out_files.append(os.path.join(SRC_DIR, '{}.pb.h'.format(stem)))
+                    out_files.append(os.path.join(SRC_DIR, '{}.pb.h'.format(stem)))
             out_files.extend([
                 os.path.join(SRC_DIR, '{}_pb.py'.format(stem.replace('-', '_'))),
                 os.path.join(SRC_DIR, '{}.proto'.format(proto_base)),
@@ -213,12 +216,14 @@ class build_proto(ONNXCommand):
         need_rename = (ONNX_NAMESPACE != DEFAULT_ONNX_NAMESPACE)
         for stem in stems:
             if ONNX_ML:
-                proto_base = '{}_{}-ml'.format(stem, ONNX_NAMESPACE) if need_rename else '{}-ml'.format(stem)
+                proto_base = '{}_{}-ml'.format(stem,
+                                               ONNX_NAMESPACE) if need_rename else '{}-ml'.format(stem)
             else:
                 proto_base = '{}_{}'.format(stem, ONNX_NAMESPACE) if need_rename else stem
 
             proto = os.path.join(SRC_DIR, '{}.proto'.format(proto_base))
-            pb2 = "{}_{}".format(stem.replace('-', '_'), ONNX_NAMESPACE.replace('-', '_')) if need_rename else stem.replace('-', '_')
+            pb2 = "{}_{}".format(stem.replace('-', '_'), ONNX_NAMESPACE.replace('-',
+                                                                                '_')) if need_rename else stem.replace('-', '_')
             if ONNX_ML:
                 pb2 += "_ml"
             outputs = [
@@ -306,14 +311,16 @@ cmdclass = {
 # Extensions
 ################################################################################
 
+
 class ONNXExtension(setuptools.Extension):
     def pre_run(self):
         pass
 
+
 def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects, define_macros):
     include_dirs = sum([dep.include_dirs for dep in dependencies], [TOP_DIR])
     libraries = sum([dep.libraries for dep in dependencies], [])
-    extra_compile_args=['-std=c++11']
+    extra_compile_args = ['-std=c++11']
     if sys.platform == 'darwin':
         extra_compile_args.append('-stdlib=libc++')
     if os.getenv('CONDA_PREFIX'):
@@ -331,6 +338,7 @@ def create_extension(ExtType, name, sources, dependencies, extra_link_args, extr
         extra_link_args=extra_link_args,
         language='c++',
     )
+
 
 class ONNXCpp2PyExtension(setuptools.Extension):
     def pre_run(self):
@@ -354,11 +362,12 @@ class ONNXCpp2PyExtension(setuptools.Extension):
             # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
             sources_filter = original_onnx_ml
             if need_rename:
-                 sources_filter.extend(original_onnx)
+                sources_filter.extend(original_onnx)
 
         for source_filter in sources_filter:
             if source_filter in self.sources:
                 self.sources.remove(source_filter)
+
 
 cpp2py_deps = [Pybind11(), Python()]
 cpp2py_link_args = []
@@ -378,7 +387,7 @@ if build_for_release and platform.system() == 'Linux':
     # Hard coded look for the static libraries from Conda
     assert os.getenv('CONDA_PREFIX')
     cpp2py_extra_objects.extend([os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf.a'),
-                             os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf-lite.a')])
+                                 os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf-lite.a')])
 else:
     cpp2py_deps.append(Protobuf())
 
@@ -389,7 +398,7 @@ if ONNX_ML:
 ext_modules = [
     create_extension(ONNXCpp2PyExtension,
                      str('onnx.onnx_cpp2py_export'),
-                     sources=[], # sources will be propagated in pre_run
+                     sources=[],  # sources will be propagated in pre_run
                      dependencies=cpp2py_deps,
                      extra_link_args=cpp2py_link_args,
                      extra_objects=cpp2py_extra_objects,

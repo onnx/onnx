@@ -35,7 +35,6 @@ is applied to the tensor elementwise.
 
 ONNX_OPERATOR_SCHEMA(ThresholdedRelu)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 ThresholdedRelu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
@@ -52,7 +51,6 @@ is applied to the tensor elementwise.
 
 ONNX_OPERATOR_SCHEMA(ScaledTanh)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
 alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
@@ -68,7 +66,6 @@ by providing the same input and output blobs.
 
 ONNX_OPERATOR_SCHEMA(ParametricSoftplus)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 ParametricSoftplus takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
@@ -83,7 +80,6 @@ the tensor elementwise.
 
 ONNX_OPERATOR_SCHEMA(ConstantFill)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 The operator fills the elements of the output tensor with a constant value
 specified by the 'value' attribute.
@@ -156,18 +152,17 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         "Constrain output types to float, int32, int64, bool tensors.");
 
 ONNX_OPERATOR_SCHEMA(GivenTensorFill)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .Input(0, "shape", "The shape of filled tensor", "T", OpSchema::Optional)
-    .Output(0, "X", "The filled tensor", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+.SetSupportLevel(SupportType::EXPERIMENTAL)
+.Input(0, "shape", "The shape of filled tensor", "T", OpSchema::Optional)
+.Output(0, "X", "The filled tensor", "T")
+.TypeConstraint(
+    "T",
+    { "tensor(float16)", "tensor(float)", "tensor(double)" },
+    "Constrain input and output types to float tensors.")
     .Attr("values", "", AttributeProto::FLOATS, OPTIONAL)
     .Attr("shape", "", AttributeProto::INTS, OPTIONAL)
     .Attr("input_as_shape", "", AttributeProto::INT, OPTIONAL)
-    .Attr("extra_shape", "", AttributeProto::INTS, OPTIONAL)
-    .AllowConsumed({{0, 0}});
+    .Attr("extra_shape", "", AttributeProto::INTS, OPTIONAL);
 
 ONNX_OPERATOR_SCHEMA(FC)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
@@ -231,7 +226,6 @@ ONNX_OPERATOR_SCHEMA(Scale)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(
 Scale takes one input data (Tensor<float>) and produces one output data
 (Tensor<float>) whose value is the input data tensor scaled element-wise.
@@ -290,7 +284,6 @@ and op)DOC")
 
 ONNX_OPERATOR_SCHEMA(ImageScaler)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Scale and bias the input image. Bias values are stored in
 the same ordering as the image pixel format.)DOC")
     .Attr("bias", "Bias applied to each channel, same size as C.", AttributeProto::FLOATS, OPTIONAL)
@@ -304,7 +297,6 @@ the same ordering as the image pixel format.)DOC")
 
 ONNX_OPERATOR_SCHEMA(MeanVarianceNormalization)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Perform mean variance normalization.)DOC")
     .Attr("across_channels", "If 1, mean and variance are computed across channels. Default is 0.", AttributeProto::INT, static_cast<int64_t>(0))
     .Attr("normalize_variance", "If 0, normalize the mean only.  Default is 1.", AttributeProto::INT, static_cast<int64_t>(1))
@@ -317,7 +309,6 @@ ONNX_OPERATOR_SCHEMA(MeanVarianceNormalization)
 
 ONNX_OPERATOR_SCHEMA(Crop)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .AllowConsumed({{0, 0}})
     .SetDoc(R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
 then optionally start the crop offset by the left/top border amounts.
 If scale is not provided, crop the borders as provided.)DOC")

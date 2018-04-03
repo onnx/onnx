@@ -121,15 +121,11 @@
   (Tensor<T>) where the absolute is, y = abs(x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 
 #### Inputs
 
@@ -195,15 +191,11 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
 
 #### Attributes
 
@@ -288,15 +280,9 @@ expect(node, inputs=[x, y], outputs=[x + y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -440,28 +426,28 @@ node = onnx.helper.make_node(
     broadcast=1,
 )
 
-#3d vs 1d
+# 3d vs 1d
 x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
 y = (np.random.randn(5) > 0).astype(np.bool)
 z = np.logical_and(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast3v1d')
 
-#3d vs 2d
+# 3d vs 2d
 x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
 y = (np.random.randn(4, 5) > 0).astype(np.bool)
 z = np.logical_and(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast3v2d')
 
-#4d vs 2d
+# 4d vs 2d
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 y = (np.random.randn(5, 6) > 0).astype(np.bool)
 z = np.logical_and(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast4v2d')
 
-#4d vs 3d
+# 4d vs 3d
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 y = (np.random.randn(4, 5, 6) > 0).astype(np.bool)
 z = np.logical_and(x, y)
@@ -479,15 +465,9 @@ expect(node, inputs=[x, y], outputs=[z],
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -527,15 +507,9 @@ opset_import {
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -574,17 +548,28 @@ opset_import {
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   ```
+   The output of each pooling window is divided by the number of elements exclude pad.
+   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -621,6 +606,330 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>averagepool_1d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32]
+output_shape: [1, 3, 31]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2],
+)
+x = np.random.randn(1, 3, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = [2]
+strides = [1]
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'AVG')
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 31, 31]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'AVG')
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_pads</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 28, 28]
+output_shape: [1, 3, 30, 30]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[2, 2, 2, 2]
+)
+x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (3, 3)
+strides = (1, 1)
+pad_bottom = 2
+pad_top = 2
+pad_right = 2
+pad_left = 2
+pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 7.5, 8, 8.5, 9],
+                [9.5, 10, 10.5, 11, 11.5],
+                [12, 12.5, 13, 13.5, 14],
+                [14.5, 15, 15.5, 16, 16.5],
+                [17, 17.5, 18, 18.5, 19]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_same_upper</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 3, 3]
+pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    auto_pad='SAME_UPPER'
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[4, 5.5, 7],
+                [11.5, 13, 14.5],
+                [19, 20.5, 22]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_same_upper')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[4, 6],
+                [14, 16]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_strides')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_same_lower</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    auto_pad='SAME_LOWER'
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides, out_shape)
+pad_bottom = pad_shape[0] // 2
+pad_top = pad_shape[0] - pad_bottom
+pad_right = pad_shape[1] // 2
+pad_left = pad_shape[1] - pad_right
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_same_upper</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    auto_pad='SAME_UPPER'
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides, out_shape)
+pad_top = pad_shape[0] // 2
+pad_bottom = pad_shape[0] - pad_top
+pad_left = pad_shape[1] // 2
+pad_right = pad_shape[1] - pad_left
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_strides</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 10, 10]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    strides=[3, 3]
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (5, 5)
+strides = (3, 3)
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'AVG')
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_3d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32, 32]
+output_shape: [1, 3, 31, 31, 31]
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2, 2],
+)
+x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = [2, 2, 2]
+strides = [1, 1, 1]
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'AVG')
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
+```
+
+</details>
+
+
 ### <a name="BatchNormalization"></a><a name="batchnormalization">**BatchNormalization**</a>
 
   Carries out batch normalization as described in the paper
@@ -631,15 +940,11 @@ opset_import {
   Output case #2: Y (test mode)
       
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>
 
 #### Attributes
 
@@ -701,15 +1006,9 @@ opset_import {
   
   NOTE: Casting to and from strings is not supported yet.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -756,12 +1055,13 @@ test_cases = [
     ('FLOAT16', 'DOUBLE'),
     ('DOUBLE', 'FLOAT'),
     ('DOUBLE', 'FLOAT16'),
-]   
+]
 
 for case in test_cases:
     from_type = case[0]
     to_type = case[1]
-    input = np.random.random_sample(shape).astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+    input = np.random.random_sample(shape).astype(
+        TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
@@ -769,7 +1069,8 @@ for case in test_cases:
         to=to_type
     )
     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
-    expect(node, inputs=[input], outputs=[output], name='test_cast_' + from_type + '_to_' + to_type)
+    expect(node, inputs=[input], outputs=[output],
+           name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -781,15 +1082,11 @@ for case in test_cases:
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Ceil-1">Ceil-1</a>
 
 #### Inputs
 
@@ -826,7 +1123,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1.5, 1.2]).astype(np.float32)
-y = np.ceil(x) #expected output [-1., 2.]
+y = np.ceil(x)  # expected output [-1., 2.]
 expect(node, inputs=[x], outputs=[y],
        name='test_ceil_example')
 
@@ -845,15 +1142,11 @@ expect(node, inputs=[x], outputs=[y],
   specified with arguments 'min' and 'max'. They default to
   numeric_limits::lowest() and numeric_limits::max() respectively.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 
 #### Attributes
 
@@ -901,7 +1194,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-2, 0, 2]).astype(np.float32)
-y = np.clip(x, -1, 1) #expected output [-1., 0., 1.]
+y = np.clip(x, -1, 1)  # expected output [-1., 0., 1.]
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_example')
 
@@ -948,15 +1241,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Concatenate a list of tensors into a single tensor
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 4
-}
-~~~~
+This version of the operator has been available since version 4 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
@@ -1000,9 +1287,9 @@ test_cases = {
            [3, 4]),
     '2d': ([[1, 2], [3, 4]],
            [[5, 6], [7, 8]]),
-    '3d':([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
+    '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
-    }
+}
 
 for test_case, values in test_cases.items():
     values = [np.asarray(v) for v in values]
@@ -1014,9 +1301,9 @@ for test_case, values in test_cases.items():
             outputs=['output'],
             axis=i
         )
-        output = np.concatenate(values,i)
+        output = np.concatenate(values, i)
         expect(node, inputs=[v for v in values], outputs=[output],
-        name='test_concat_' + test_case + '_axis_' + str(i))
+               name='test_concat_' + test_case + '_axis_' + str(i))
 ```
 
 </details>
@@ -1026,15 +1313,9 @@ for test_case, values in test_cases.items():
 
   A constant tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1092,15 +1373,9 @@ expect(node, inputs=[], outputs=[values],
   The convolution operator consumes an input tensor and a filter, and
   computes the output.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1152,14 +1427,14 @@ opset_import {
 
 ```python
 
-x = np.array([[[[  0.,   1.,   2.,   3.,   4.], # (1, 1, 5, 5) input tensor
-                [  5.,   6.,   7.,   8.,   9.],
-                [ 10.,  11.,  12.,  13.,  14.],
-                [ 15.,  16.,  17.,  18.,  19.],
-                [ 20.,  21.,  22.,  23.,  24.]]]]).astype(np.float32)
-W = np.array([[[[ 1.,  1.,  1.], # (1, 1, 3, 3) tensor for convolution weights
-                [ 1.,  1.,  1.],
-                [ 1.,  1.,  1.]]]]).astype(np.float32)
+x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor
+                [5., 6., 7., 8., 9.],
+                [10., 11., 12., 13., 14.],
+                [15., 16., 17., 18., 19.],
+                [20., 21., 22., 23., 24.]]]]).astype(np.float32)
+W = np.array([[[[1., 1., 1.],  # (1, 1, 3, 3) tensor for convolution weights
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
 
 # Convolution with padding
 node_with_padding = onnx.helper.make_node(
@@ -1167,15 +1442,16 @@ node_with_padding = onnx.helper.make_node(
     inputs=['x', 'W'],
     outputs=['y'],
     kernel_shape=[3, 3],
-    pads=[1, 1, 1, 1], # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
+    pads=[1, 1, 1, 1],
 )
-y_with_padding = np.array([[[[  12.,   21.,   27.,   33.,   24.], # (1, 1, 5, 5) output tensor
-                             [  33.,   54.,   63.,   72.,   51.],
-                             [  63.,   99.,  108.,  117.,   81.],
-                             [  93.,  144.,  153.,  162.,  111.],
-                             [  72.,  111.,  117.,  123.,   84.]]]]).astype(np.float32)
+y_with_padding = np.array([[[[12., 21., 27., 33., 24.],  # (1, 1, 5, 5) output tensor
+                             [33., 54., 63., 72., 51.],
+                             [63., 99., 108., 117., 81.],
+                             [93., 144., 153., 162., 111.],
+                             [72., 111., 117., 123., 84.]]]]).astype(np.float32)
 expect(node_with_padding, inputs=[x, W], outputs=[y_with_padding],
-   name='test_basic_conv_with_padding')
+       name='test_basic_conv_with_padding')
 
 # Convolution without padding
 node_without_padding = onnx.helper.make_node(
@@ -1183,13 +1459,14 @@ node_without_padding = onnx.helper.make_node(
     inputs=['x', 'W'],
     outputs=['y'],
     kernel_shape=[3, 3],
-    pads=[0, 0, 0, 0], # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
+    # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
+    pads=[0, 0, 0, 0],
 )
-y_without_padding = np.array([[[[  54.,   63.,   72.], # (1, 1, 3, 3) output tensor
-                                [  99.,  108.,  117.],
-                                [ 144.,  153.,  162.]]]]).astype(np.float32)
+y_without_padding = np.array([[[[54., 63., 72.],  # (1, 1, 3, 3) output tensor
+                                [99., 108., 117.],
+                                [144., 153., 162.]]]]).astype(np.float32)
 expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
-   name='test_basic_conv_without_padding')
+       name='test_basic_conv_without_padding')
 ```
 
 </details>
@@ -1200,16 +1477,16 @@ expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
 
 ```python
 
-x = np.array([[[[  0.,   1.,   2.,   3.,   4.],  # (1, 1, 7, 5) input tensor
-                [  5.,   6.,   7.,   8.,   9.],
-                [ 10.,  11.,  12.,  13.,  14.],
-                [ 15.,  16.,  17.,  18.,  19.],
-                [ 20.,  21.,  22.,  23.,  24.],
-                [ 25.,  26.,  27.,  28.,  29.],
-                [ 30.,  31.,  32.,  33.,  34.]]]]).astype(np.float32)
-W = np.array([[[[ 1.,  1.,  1.],  # (1, 1, 3, 3) tensor for convolution weights
-                [ 1.,  1.,  1.],
-                [ 1.,  1.,  1.]]]]).astype(np.float32)
+x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 7, 5) input tensor
+                [5., 6., 7., 8., 9.],
+                [10., 11., 12., 13., 14.],
+                [15., 16., 17., 18., 19.],
+                [20., 21., 22., 23., 24.],
+                [25., 26., 27., 28., 29.],
+                [30., 31., 32., 33., 34.]]]]).astype(np.float32)
+W = np.array([[[[1., 1., 1.],  # (1, 1, 3, 3) tensor for convolution weights
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
 
 # Convolution with strides=2 and padding
 node_with_padding = onnx.helper.make_node(
@@ -1218,14 +1495,14 @@ node_with_padding = onnx.helper.make_node(
     outputs=['y'],
     kernel_shape=[3, 3],
     pads=[1, 1, 1, 1],
-    strides=[2, 2], # Default values for other attributes: dilations=[1, 1], groups=1
+    strides=[2, 2],  # Default values for other attributes: dilations=[1, 1], groups=1
 )
-y_with_padding = np.array([[[[  12.,   27.,   24.], # (1, 1, 4, 3) output tensor
-                             [  63.,  108.,   81.],
-                             [ 123.,  198.,  141.],
-                             [ 112.,  177.,  124.]]]]).astype(np.float32)
+y_with_padding = np.array([[[[12., 27., 24.],  # (1, 1, 4, 3) output tensor
+                             [63., 108., 81.],
+                             [123., 198., 141.],
+                             [112., 177., 124.]]]]).astype(np.float32)
 expect(node_with_padding, inputs=[x, W], outputs=[y_with_padding],
-   name='test_conv_with_strides_padding')
+       name='test_conv_with_strides_padding')
 
 # Convolution with strides=2 and no padding
 node_without_padding = onnx.helper.make_node(
@@ -1234,13 +1511,13 @@ node_without_padding = onnx.helper.make_node(
     outputs=['y'],
     kernel_shape=[3, 3],
     pads=[0, 0, 0, 0],
-    strides=[2, 2], # Default values for other attributes: dilations=[1, 1], groups=1
+    strides=[2, 2],  # Default values for other attributes: dilations=[1, 1], groups=1
 )
-y_without_padding = np.array([[[[  54.,   72.], # (1, 1, 3, 2) output tensor
-                                [ 144., 162.],
-                                [ 234.,  252.]]]]).astype(np.float32)
+y_without_padding = np.array([[[[54., 72.],  # (1, 1, 3, 2) output tensor
+                                [144., 162.],
+                                [234., 252.]]]]).astype(np.float32)
 expect(node_without_padding, inputs=[x, W], outputs=[y_without_padding],
-   name='test_conv_with_strides_no_padding')
+       name='test_conv_with_strides_no_padding')
 
 # Convolution with strides=2 and padding only along one dimension (the H dimension in NxCxHxW tensor)
 node_with_asymmetric_padding = onnx.helper.make_node(
@@ -1249,14 +1526,14 @@ node_with_asymmetric_padding = onnx.helper.make_node(
     outputs=['y'],
     kernel_shape=[3, 3],
     pads=[1, 0, 1, 0],
-    strides=[2, 2], # Default values for other attributes: dilations=[1, 1], groups=1
+    strides=[2, 2],  # Default values for other attributes: dilations=[1, 1], groups=1
 )
-y_with_asymmetric_padding = np.array([[[[  21.,   33.], # (1, 1, 4, 2) output tensor
-                                        [  99.,  117.],
-                                        [ 189.,  207.],
-                                        [ 171.,  183.]]]]).astype(np.float32)
+y_with_asymmetric_padding = np.array([[[[21., 33.],  # (1, 1, 4, 2) output tensor
+                                        [99., 117.],
+                                        [189., 207.],
+                                        [171., 183.]]]]).astype(np.float32)
 expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_padding],
-   name='test_conv_with_strides_and_asymmetric_padding')
+       name='test_conv_with_strides_and_asymmetric_padding')
 ```
 
 </details>
@@ -1267,15 +1544,9 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1331,15 +1602,9 @@ opset_import {
   the input tensor where values from the depth dimension are moved in spatial blocks to the height
   and width dimensions.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1370,6 +1635,64 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>depthtospace</summary>
+
+```python
+b, c, h, w = shape = (2, 8, 3, 3)
+blocksize = 2
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=blocksize,
+)
+x = np.random.random_sample(shape).astype(np.float32)
+tmp = np.reshape(x, [b, blocksize, blocksize, c // (blocksize**2), h, w])
+tmp = np.transpose(tmp, [0, 3, 4, 1, 5, 2])
+y = np.reshape(tmp, [b, c // (blocksize**2), h * blocksize, w * blocksize])
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace')
+```
+
+</details>
+
+
+<details>
+<summary>example</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DepthToSpace',
+    inputs=['x'],
+    outputs=['y'],
+    blocksize=2,
+)
+
+# (1, 4, 2, 3) input tensor
+x = np.array([[[[0, 1, 2],
+                [3, 4, 5]],
+               [[6, 7, 8],
+                [9, 10, 11]],
+               [[12, 13, 14],
+                [15, 16, 17]],
+               [[18, 19, 20],
+                [21, 22, 23]]]]).astype(np.float32)
+
+# (1, 1, 4, 6) output tensor
+y = np.array([[[[0, 6, 1, 7, 2, 8],
+                [12, 18, 13, 19, 14, 20],
+                [3, 9, 4, 10, 5, 11],
+                [15, 21, 16, 22, 17, 23]]]]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_depthtospace_example')
+```
+
+</details>
+
+
 ### <a name="Div"></a><a name="div">**Div**</a>
 
   Performs element-wise binary division (with limited broadcast support).
@@ -1391,15 +1714,11 @@ opset_import {
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
 
 #### Attributes
 
@@ -1448,7 +1767,7 @@ node = onnx.helper.make_node(
 
 x = np.array([3, 4]).astype(np.float32)
 y = np.array([1, 2]).astype(np.float32)
-z = x / y #expected output [3., 2.]
+z = x / y  # expected output [3., 2.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div_example')
 
@@ -1491,15 +1810,11 @@ expect(node, inputs=[x, y], outputs=[z],
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
 
 #### Attributes
 
@@ -1541,15 +1856,11 @@ opset_import {
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Elu-1">Elu-1</a>
 
 #### Attributes
 
@@ -1594,7 +1905,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-#expected output [-1.2642411, 0., 1.]
+# expected output [-1.2642411, 0., 1.]
 y = np.clip(x, 0, np.inf) + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0
 expect(node, inputs=[x], outputs=[y],
        name='test_elu_example')
@@ -1636,15 +1947,9 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1728,15 +2033,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Calculates the exponential of the given input tensor, element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Exp-1">Exp-1</a>
 
 #### Inputs
 
@@ -1773,7 +2074,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.exp(x) #expected output [0.36787945, 1., 2.71828175]
+y = np.exp(x)  # expected output [0.36787945, 1., 2.71828175]
 expect(node, inputs=[x], outputs=[y],
        name='test_exp_example')
 
@@ -1792,15 +2093,9 @@ expect(node, inputs=[x], outputs=[y],
   (d_0, d_1, ... d_n) then the output will have shape
   (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1849,9 +2144,9 @@ for i in range(len(shape)):
     )
 
     new_shape = (1, -1) if i == 0 else (np.prod(shape[0:i]).astype(int), -1)
-    b= np.reshape(a, new_shape)
+    b = np.reshape(a, new_shape)
     expect(node, inputs=[a], outputs=[b],
-       name='test_flatten_axis' + str(i))
+           name='test_flatten_axis' + str(i))
 ```
 
 </details>
@@ -1864,13 +2159,13 @@ for i in range(len(shape)):
 node = onnx.helper.make_node(
     'Flatten',
     inputs=['a'],
-    outputs=['b'], # Default value for axis: axis=1
+    outputs=['b'],  # Default value for axis: axis=1
 )
 
 shape = (5, 4, 3, 2)
 a = np.random.random_sample(shape).astype(np.float32)
 new_shape = (5, 24)
-b= np.reshape(a, new_shape)
+b = np.reshape(a, new_shape)
 expect(node, inputs=[a], outputs=[b],
        name='test_flatten_default_axis')
 ```
@@ -1884,15 +2179,11 @@ expect(node, inputs=[a], outputs=[b],
   (Tensor<T>) where the floor is, y = floor(x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
 
 #### Inputs
 
@@ -1929,7 +2220,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1.5, 1.2, 2]).astype(np.float32)
-y = np.floor(x) #expected output [-2., 1., 2.]
+y = np.floor(x)  # expected output [-2., 1., 2.]
 expect(node, inputs=[x], outputs=[y],
        name='test_floor_example')
 
@@ -2017,15 +2308,9 @@ expect(node, inputs=[x], outputs=[y],
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 3
-}
-~~~~
+This version of the operator has been available since version 3 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 
@@ -2131,15 +2416,9 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
         ],
     ]
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -2226,18 +2505,14 @@ expect(node, inputs=[data, indices], outputs=[y],
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
   dimension (M X N).
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-  the dimension requirement. If A can be transposed before doing the computation
+  the dimension requirement. A will be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 
 #### Attributes
 
@@ -2286,15 +2561,9 @@ opset_import {
    the values in the same channel. This is equivalent to AveragePool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -2351,9 +2620,9 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([[[
-  [1, 2, 3],
-  [4, 5, 6],
-  [7, 8, 9],
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9],
 ]]]).astype(np.float32)
 y = np.array([[[[5]]]]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
@@ -2368,15 +2637,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpPool-1</a>
 
@@ -2415,15 +2678,9 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
    the values in the same channel. This is equivalent to MaxPool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -2501,15 +2758,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -2595,15 +2846,11 @@ expect(node, inputs=[x, y], outputs=[z],
   (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoid-1</a>
 
 #### Attributes
 
@@ -2651,7 +2898,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.clip(x * 0.5 + 0.6, 0, 1) #expected output [0.1, 0.6, 1.]
+y = np.clip(x * 0.5 + 0.6, 0, 1)  # expected output [0.1, 0.6, 1.]
 expect(node, inputs=[x], outputs=[y],
        name='test_hardsigmoid_example')
 
@@ -2702,15 +2949,9 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -2773,7 +3014,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ```python
 def hardmax_2d(x):
-    return np.eye(x.shape[1])[np.argmax(x,axis=1)]
+    return np.eye(x.shape[1])[np.argmax(x, axis=1)]
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 node = onnx.helper.make_node(
@@ -2828,15 +3069,11 @@ expect(node, inputs=[x], outputs=[y],
   where mean and variance are computed per instance per channel.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">InstanceNormalization-1</a>
 
 #### Attributes
 
@@ -2877,15 +3114,9 @@ opset_import {
   Each input value is divided by
   (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3005,15 +3236,9 @@ opset_import {
   
     - Ht = ot (.) h(Ct)
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3084,15 +3309,11 @@ opset_import {
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
   `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">LeakyRelu-1</a>
 
 #### Attributes
 
@@ -3137,7 +3358,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-#expected output [-0.1, 0., 1.]
+# expected output [-0.1, 0., 1.]
 y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * 0.1
 expect(node, inputs=[x], outputs=[y],
        name='test_leakyrelu_example')
@@ -3179,15 +3400,9 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3271,15 +3486,11 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Calculates the natural log of the given input tensor, element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Log-1">Log-1</a>
 
 #### Inputs
 
@@ -3316,7 +3527,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([1, 10]).astype(np.float32)
-y = np.log(x) #expected output [0., 2.30258512]
+y = np.log(x)  # expected output [0., 2.30258512]
 expect(node, inputs=[x], outputs=[y],
        name='test_log_example')
 
@@ -3347,15 +3558,9 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3398,7 +3603,8 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([[-1, 0, 1]]).astype(np.float32)
-y = x - np.log(np.sum(np.exp(x), axis=1)) #expected output [[-2.40760589, -1.40760589, -0.40760589]]
+# expected output [[-2.40760589, -1.40760589, -0.40760589]]
+y = x - np.log(np.sum(np.exp(x), axis=1))
 expect(node, inputs=[x], outputs=[y],
        name='test_logsoftmax_example_1')
 ```
@@ -3416,7 +3622,7 @@ def logsoftmax_2d(x):
     return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
 
 x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
-#expected output [[-3.4401896, -2.4401896, -1.44018972, -0.44018969],
+# expected output [[-3.4401896, -2.4401896, -1.44018972, -0.44018969],
 #                 [-3.4401896, -2.4401896, -1.44018972, -0.44018969]]
 y = logsoftmax_2d(x)
 
@@ -3476,15 +3682,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Given a matrix, apply Lp-normalization along the provided axis.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3525,15 +3725,9 @@ opset_import {
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
@@ -3578,15 +3772,9 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -3654,15 +3842,11 @@ expect(node, inputs=[a, b], outputs=[c],
   Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -3731,17 +3915,28 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
-   data into the output tensor Y for further processing.
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   ```
+   The output of each pooling window is maximum number of elements exclude pad.
+   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3778,21 +3973,340 @@ opset_import {
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>maxpool_1d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32]
+output_shape: [1, 3, 31]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2],
+)
+x = np.random.randn(1, 3, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = [2]
+strides = [1]
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0], 'MAX')
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 31, 31]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_pads</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 28, 28]
+output_shape: [1, 3, 30, 30]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[2, 2, 2, 2]
+)
+x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (3, 3)
+strides = (1, 1)
+pad_bottom = 2
+pad_top = 2
+pad_right = 2
+pad_left = 2
+pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'MAX')
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_pads')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_precomputed_same_upper</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 3, 3]
+pad_shape: [2, 2] -> [1, 1, 1, 1] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    strides=[2, 2],
+    auto_pad='SAME_UPPER'
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9, 10],
+                [17, 19, 20],
+                [22, 24, 25]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_same_upper')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9],
+                [17, 19]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_strides')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_same_lower</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    auto_pad='SAME_LOWER'
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape('SAME_LOWER', x_shape[2:], kernel_shape, strides, out_shape)
+pad_bottom = pad_shape[0] // 2
+pad_top = pad_shape[0] - pad_bottom
+pad_right = pad_shape[1] // 2
+pad_left = pad_shape[1] - pad_right
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'MAX')
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_lower')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_same_upper</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 32, 32]
+pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    auto_pad='SAME_UPPER'
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (2, 2)
+strides = (1, 1)
+out_shape = get_output_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides)
+pad_shape = get_pad_shape('SAME_UPPER', x_shape[2:], kernel_shape, strides, out_shape)
+pad_top = pad_shape[0] // 2
+pad_bottom = pad_shape[0] - pad_top
+pad_left = pad_shape[1] // 2
+pad_right = pad_shape[1] - pad_left
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=np.nan)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'MAX')
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_upper')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_2d_strides</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32]
+output_shape: [1, 3, 10, 10]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    strides=[3, 3]
+)
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (5, 5)
+strides = (3, 3)
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, (0, 0), 'MAX')
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_3d_default</summary>
+
+```python
+"""
+iutput_shape: [1, 3, 32, 32, 32]
+output_shape: [1, 3, 31, 31, 31]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[2, 2, 2],
+)
+x = np.random.randn(1, 3, 32, 32, 32).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = [2, 2, 2]
+strides = [1, 1, 1]
+out_shape = get_output_shape('VALID', x_shape[2:], kernel_shape, strides)
+padded = x
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'MAX')
+
+expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
+```
+
+</details>
+
+
 ### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
 
   ROI max pool consumes an input tensor X and region of interests (RoIs) to
    apply max pooling across each RoI, to produce output 4-D tensor of shape
    (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3832,15 +4346,11 @@ opset_import {
   Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -3908,15 +4418,11 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -4000,15 +4506,11 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
 
 #### Attributes
 
@@ -4057,7 +4559,7 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array([4, 5, 6]).astype(np.float32)
-z = x * y #expected output [4., 10., 18.]
+z = x * y  # expected output [4., 10., 18.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul_example')
 
@@ -4098,15 +4600,11 @@ expect(node, inputs=[x, y], outputs=[z],
   (Tensor<T>) where each element flipped sign, y = -x, is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
 
 #### Inputs
 
@@ -4143,7 +4641,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-4, 2]).astype(np.float32)
-y = np.negative(x) #expected output [4., -2.],
+y = np.negative(x)  # expected output [4., -2.],
 expect(node, inputs=[x], outputs=[y],
        name='test_neg_example')
 
@@ -4160,15 +4658,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Returns the negation of the input tensor element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -4232,15 +4724,9 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -4384,28 +4870,28 @@ node = onnx.helper.make_node(
     broadcast=1,
 )
 
-#3d vs 1d
+# 3d vs 1d
 x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
 y = (np.random.randn(5) > 0).astype(np.bool)
 z = np.logical_or(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast3v1d')
 
-#3d vs 2d
+# 3d vs 2d
 x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
 y = (np.random.randn(4, 5) > 0).astype(np.bool)
 z = np.logical_or(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast3v2d')
 
-#4d vs 2d
+# 4d vs 2d
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 y = (np.random.randn(5, 6) > 0).astype(np.bool)
 z = np.logical_or(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast4v2d')
 
-#4d vs 3d
+# 4d vs 3d
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 y = (np.random.randn(4, 5, 6) > 0).astype(np.bool)
 z = np.logical_or(x, y)
@@ -4423,15 +4909,11 @@ expect(node, inputs=[x, y], outputs=[z],
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 
 #### Inputs
 
@@ -4479,15 +4961,9 @@ opset_import {
         ],
     ]
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 
@@ -4602,15 +5078,9 @@ for mode in ['edge', 'reflect']:
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -4659,7 +5129,7 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array([4, 5, 6]).astype(np.float32)
-z = np.power(x, y) # expected output [1., 32., 729.]
+z = np.power(x, y)  # expected output [1., 32., 729.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_example')
 
@@ -4686,7 +5156,7 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array([2]).astype(np.float32)
-z = np.power(x, y) # expected output [1., 4., 9.]
+z = np.power(x, y)  # expected output [1., 4., 9.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast')
 
@@ -4770,15 +5240,9 @@ expect(node, inputs=[x, y], outputs=[z],
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -4845,15 +5309,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -4898,15 +5356,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -4952,15 +5404,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5004,15 +5450,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5055,15 +5495,11 @@ opset_import {
   (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Reciprocal-1">Reciprocal-1</a>
 
 #### Inputs
 
@@ -5100,7 +5536,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-4, 2]).astype(np.float32)
-y = np.reciprocal(x) #expected output [-0.25, 0.5],
+y = np.reciprocal(x)  # expected output [-0.25, 0.5],
 expect(node, inputs=[x], outputs=[y],
        name='test_reciprocal_example')
 
@@ -5122,15 +5558,9 @@ expect(node, inputs=[x], outputs=[y],
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5172,15 +5602,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5222,15 +5646,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5272,15 +5690,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5322,15 +5734,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5372,15 +5778,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5422,15 +5822,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5472,15 +5866,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5522,15 +5910,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5572,15 +5954,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5619,15 +5995,11 @@ opset_import {
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
 
 #### Inputs
 
@@ -5676,35 +6048,26 @@ expect(node, inputs=[x], outputs=[y],
 
   Reshape the input tensor similar to numpy.reshape.
   
-  It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
+  First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
   
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 5 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
-
-#### Attributes
-
-<dl>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>New shape</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>data</tt> : T</dt>
 <dd>An input tensor.</dd>
+<dt><tt>shape</tt> : tensor(int64)</dt>
+<dd>Specified shape for output.</dd>
 </dl>
 
 #### Outputs
@@ -5730,25 +6093,24 @@ opset_import {
 ```python
 original_shape = [2, 3, 4]
 test_cases = {
-    'reordered_dims':[4, 2, 3],
-    'reduced_dims':[3, 8],
-    'extended_dims':[3, 2, 2, 2],
-    'one_dim':[24],
-    'negative_dim':[6, -1, 2]
+    'reordered_dims': np.array([4, 2, 3], dtype=np.int64),
+    'reduced_dims': np.array([3, 8], dtype=np.int64),
+    'extended_dims': np.array([3, 2, 2, 2], dtype=np.int64),
+    'one_dim': np.array([24], dtype=np.int64),
+    'negative_dim': np.array([6, -1, 2], dtype=np.int64),
 }
 data = np.random.random_sample(original_shape).astype(np.float32)
 
-for test_name,test_shape in test_cases.items():
+for test_name, shape in test_cases.items():
     node = onnx.helper.make_node(
         'Reshape',
-        inputs=['data'],
+        inputs=['data', 'shape'],
         outputs=['reshaped'],
-        shape=test_shape,
     )
 
-    reshaped = np.reshape(data, test_shape)
-    expect(node, inputs=[data], outputs=[reshaped],
-       name='test_reshape_' + test_name)
+    reshaped = np.reshape(data, shape)
+    expect(node, inputs=[data, shape], outputs=[reshaped],
+           name='test_reshape_' + test_name)
 ```
 
 </details>
@@ -5761,15 +6123,11 @@ for test_name,test_shape in test_cases.items():
   `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 
 #### Attributes
 
@@ -5817,7 +6175,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-#expected output [-3.79272318, 0., 3.]
+# expected output [-3.79272318, 0., 3.]
 y = np.clip(x, 0, np.inf) * 3.0 + (np.exp(np.clip(x, -np.inf, 0)) - 1) * 2.0 * 3.0
 expect(node, inputs=[x], outputs=[y],
        name='test_selu_example')
@@ -5843,7 +6201,8 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.clip(x, 0, np.inf) * default_gamma + (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
+y = np.clip(x, 0, np.inf) * default_gamma + \
+    (np.exp(np.clip(x, -np.inf, 0)) - 1) * default_alpha * default_gamma
 expect(node, inputs=[x], outputs=[y],
        name='test_selu_default')
 ```
@@ -5855,15 +6214,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -5928,15 +6281,11 @@ expect(node, inputs=[x], outputs=[y],
   (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
   tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Sigmoid-1">Sigmoid-1</a>
 
 #### Inputs
 
@@ -5973,7 +6322,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = 1.0 / (1.0 + np.exp(np.negative(x))) #expected output [0.26894143, 0.5, 0.7310586]
+y = 1.0 / (1.0 + np.exp(np.negative(x)))  # expected output [0.26894143, 0.5, 0.7310586]
 expect(node, inputs=[x], outputs=[y],
        name='test_sigmoid_example')
 
@@ -5990,15 +6339,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -6098,15 +6441,9 @@ expect(node, inputs=[x], outputs=[y],
     ]
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6275,15 +6612,9 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6326,7 +6657,8 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.array([[-1, 0, 1]]).astype(np.float32)
-y = np.exp(x) / np.sum(np.exp(x), axis=1) #expected output [[0.09003058, 0.24472848, 0.66524094]]
+# expected output [[0.09003058, 0.24472848, 0.66524094]]
+y = np.exp(x) / np.sum(np.exp(x), axis=1)
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_example')
 ```
@@ -6344,7 +6676,7 @@ def softmax_2d(x):
     return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
 
 x = np.array([[0, 1, 2, 3], [10000, 10001, 10002, 10003]]).astype(np.float32)
-#expected output [[0.0320586, 0.08714432, 0.23688284, 0.64391428],
+# expected output [[0.0320586, 0.08714432, 0.23688284, 0.64391428],
 #                 [0.0320586, 0.08714432, 0.23688284, 0.64391428]]
 y = softmax_2d(x)
 
@@ -6355,7 +6687,6 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[x], outputs=[y],
        name='test_softmax_large_number')
-
 
 x = np.abs(np.random.randn(3, 4, 5).astype(np.float32))
 node = onnx.helper.make_node(
@@ -6407,15 +6738,9 @@ expect(node, inputs=[x], outputs=[y],
   (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -6452,7 +6777,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.log(np.exp(x) + 1) #expected output [0.31326166, 0.69314718, 1.31326163]
+y = np.log(np.exp(x) + 1)  # expected output [0.31326166, 0.69314718, 1.31326163]
 expect(node, inputs=[x], outputs=[y],
        name='test_softplus_example')
 
@@ -6469,15 +6794,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -6533,15 +6852,9 @@ expect(node, inputs=[x], outputs=[y],
   this op outputs a copy of the input tensor where values from the height and width dimensions
   are moved to the depth dimension.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6581,15 +6894,9 @@ opset_import {
   'split' argument has more than one element, the sum of elements should be equal
   to length of the given split axis.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
@@ -6702,15 +7009,11 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
   (Tensor<T>) where the square root is, y = x^0.5, is applied to
   the tensor elementwise. If x is negative, then it will return NaN.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Sqrt-1">Sqrt-1</a>
 
 #### Inputs
 
@@ -6747,7 +7050,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([1, 4, 9]).astype(np.float32)
-y = np.sqrt(x) #expected output [1., 2., 3.]
+y = np.sqrt(x)  # expected output [1., 2., 3.]
 expect(node, inputs=[x], outputs=[y],
        name='test_sqrt_example')
 
@@ -6765,15 +7068,9 @@ expect(node, inputs=[x], outputs=[y],
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6847,15 +7144,11 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
 
 #### Attributes
 
@@ -6904,7 +7197,7 @@ node = onnx.helper.make_node(
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array([3, 2, 1]).astype(np.float32)
-z = x - y #expected output [-2., 0., 2.]
+z = x - y  # expected output [-2., 0., 2.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_sub_example')
 
@@ -6944,15 +7237,11 @@ expect(node, inputs=[x, y], outputs=[z],
   Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>
 
 #### Inputs (1 - &#8734;)
 
@@ -7019,15 +7308,11 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
 
 #### Inputs
 
@@ -7064,7 +7349,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
-y = np.tanh(x) #expected output [-0.76159418, 0., 0.76159418]
+y = np.tanh(x)  # expected output [-0.76159418, 0., 0.76159418]
 expect(node, inputs=[x], outputs=[y],
        name='test_tanh_example')
 
@@ -7081,15 +7366,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Repeat the elements of a tensor along an axis.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -7130,15 +7409,9 @@ opset_import {
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7170,8 +7443,8 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
-<dd>Constrain index tensor to integral types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 
@@ -7196,12 +7469,12 @@ values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
     [11, 10, 9],
-])
+], dtype=np.float32)
 indices_ref = np.array([
     [3, 2, 1],
     [3, 2, 1],
     [3, 2, 1],
-], dtype=np.int32)
+], dtype=np.int64)
 
 expect(node, inputs=[X], outputs=[values_ref, indices_ref],
        name='test_top_k')
@@ -7216,15 +7489,9 @@ expect(node, inputs=[X], outputs=[values_ref, indices_ref],
   perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7261,7 +7528,7 @@ opset_import {
 <summary>all_permutations</summary>
 
 ```python
-shape = (2,3,4)
+shape = (2, 3, 4)
 data = np.random.random_sample(shape).astype(np.float32)
 permutations = list(itertools.permutations(np.arange(len(shape))))
 
@@ -7271,10 +7538,10 @@ for i in range(len(permutations)):
         inputs=['data'],
         outputs=['transposed'],
         perm=permutations[i]
-    )            
+    )
     transposed = np.transpose(data, permutations[i])
     expect(node, inputs=[data], outputs=[transposed],
-        name='test_transpose_all_permutations_' + str(i))            
+           name='test_transpose_all_permutations_' + str(i))
 ```
 
 </details>
@@ -7295,7 +7562,7 @@ node = onnx.helper.make_node(
 
 transposed = np.transpose(data)
 expect(node, inputs=[data], outputs=[transposed],
-    name='test_transpose_default')
+       name='test_transpose_default')
 ```
 
 </details>
@@ -7311,15 +7578,9 @@ expect(node, inputs=[data], outputs=[transposed],
     Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7381,15 +7642,9 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7490,7 +7745,7 @@ node = onnx.helper.make_node(
     axis=1,
 )
 
-z = np.logical_xor(x, y[:, np.newaxis, np.newaxis,])
+z = np.logical_xor(x, y[:, np.newaxis, np.newaxis, ])
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_axis1')
 
@@ -7502,7 +7757,7 @@ node = onnx.helper.make_node(
     axis=2,
 )
 
-z = np.logical_xor(x, y[:, np.newaxis,])
+z = np.logical_xor(x, y[:, np.newaxis, ])
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_axis2')
 
@@ -7533,28 +7788,28 @@ node = onnx.helper.make_node(
     broadcast=1,
 )
 
-#3d vs 1d
+# 3d vs 1d
 x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
 y = (np.random.randn(5) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast3v1d')
 
-#3d vs 2d
+# 3d vs 2d
 x = (np.random.randn(3, 4, 5) > 0).astype(np.bool)
 y = (np.random.randn(4, 5) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast3v2d')
 
-#4d vs 2d
+# 4d vs 2d
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 y = (np.random.randn(5, 6) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast4v2d')
 
-#4d vs 3d
+# 4d vs 3d
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 y = (np.random.randn(4, 5, 6) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
@@ -7571,15 +7826,9 @@ expect(node, inputs=[x, y], outputs=[z],
   to allow for quick prototyping when ONNX is missing standard versions of
   and op
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs (1 - &#8734;)
 
@@ -7609,15 +7858,9 @@ opset_import {
   (Tensor<T>) where the affine function, y = alpha * x + beta,
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7671,15 +7914,9 @@ opset_import {
   
   NOTE: Currently, it supports data type of float, int32, int64, and bool.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7726,15 +7963,9 @@ opset_import {
   then optionally start the crop offset by the left/top border amounts.
   If scale is not provided, crop the borders as provided.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7787,15 +8018,9 @@ opset_import {
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7841,15 +8066,9 @@ opset_import {
   activations, avoiding computation if the input is invalid (as in, the
   value at X[t][n] >= seqLengths[n].
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7888,15 +8107,9 @@ opset_import {
 
 ### <sub>experimental</sub> <a name="GivenTensorFill"></a><a name="giventensorfill">**GivenTensorFill**</a>
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7937,15 +8150,9 @@ opset_import {
 
   Identity operator
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -7973,15 +8180,9 @@ opset_import {
 
   If conditional
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8021,15 +8222,9 @@ opset_import {
   Scale and bias the input image. Bias values are stored in
   the same ordering as the image pixel format.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8184,15 +8379,9 @@ opset_import {
   pipelined/"wavefront" fashion.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8235,15 +8424,9 @@ opset_import {
 
   This is a special operator only valid inside the loop that supports the common case behavior of accessing the correct element of the input sequence in an RNN. This operator MUST be directly given the passed-in iteration number to the body of a Loop graph. This signals to back-ends that this is a direct indexing operation, with no transforms applied to the index.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8282,15 +8465,9 @@ opset_import {
 
   Perform mean variance normalization.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8329,15 +8506,9 @@ opset_import {
   (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8375,15 +8546,9 @@ opset_import {
   Scale takes one input data (Tensor<float>) and produces one output data
   (Tensor<float>) whose value is the input data tensor scaled element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8421,15 +8586,9 @@ opset_import {
   by providing the same input and output blobs.
       
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8468,15 +8627,9 @@ opset_import {
   (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8586,15 +8739,9 @@ expect(node, inputs=[x], outputs=[y],
         [3, 3, 4, 4]
     ]]]
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
