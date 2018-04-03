@@ -96,7 +96,7 @@ def md5(fname):
 ################################################################################
 
 
-true_or_die(PROTOC, 'Could not find "protoc" executable! Please install the protobuf compiler, header, and libraries.')
+true_or_die(PROTOC, 'Could not find "protoc" executable!')
 
 ################################################################################
 # Dependencies

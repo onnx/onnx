@@ -7,7 +7,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-static constexpr const char* impure_operators[] = {
+static const char* impure_operators[] = {
   "RandomNormal",
   "RandomNormalLike",
   "RandomUniform",
@@ -183,22 +183,22 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
   }
 }
 
-struct SplitInit final : public OptimizePass {
+struct SplitInit : public OptimizePass {
   explicit SplitInit()
     : OptimizePass("split_init", API_TYPE::IR) {
   }
 
-  void optimize(Graph& graph) override {
+  virtual void optimize(Graph& graph) {
     split_init_and_predict(graph, true, false);
   }
 };
 
-struct SplitPredict final : public OptimizePass {
+struct SplitPredict : public OptimizePass {
   explicit SplitPredict()
     : OptimizePass("split_predict", API_TYPE::IR) {
   }
 
-  void optimize(Graph& graph) override {
+  virtual void optimize(Graph& graph) {
     split_init_and_predict(graph, false, true);
   }
 };

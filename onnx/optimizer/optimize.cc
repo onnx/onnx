@@ -5,9 +5,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in) {
-  ONNX_NAMESPACE::ModelProto mp_out{};
-
+void PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in, ONNX_NAMESPACE::ModelProto& mp_out) {
   if (mp_in.has_producer_name()) {
     mp_out.set_ir_version(mp_in.ir_version());
   }
@@ -46,8 +44,6 @@ ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in
       pp_out->set_value(pp_in.value());
     }
   }
-
-  return mp_out;
 }
 
 static Optimizer _optimizer;

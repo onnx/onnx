@@ -577,7 +577,7 @@ Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
 , input tensor B has dimension (K X N), input tensor C and output tensor Y have
 dimension (M X N).
 If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-the dimension requirement. A will be transposed before doing the computation
+the dimension requirement. If A can be transposed before doing the computation
 if attribute transA is non-zero, same for B and transB.
 )DOC")
     .Input(0, "A", "Input tensor A", "T")

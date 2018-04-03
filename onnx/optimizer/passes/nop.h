@@ -5,15 +5,12 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-struct Nop final : public OptimizePass {
+struct Nop : public OptimizePass {
   explicit Nop()
     : OptimizePass("nop", API_TYPE::IR) {
   }
 
-  void optimize(Graph& graph) override {
-  }
-
-  void optimize(ONNX_NAMESPACE::ModelProto& mp) override {
+  virtual void optimize(Graph& graph) {
   }
 };
 

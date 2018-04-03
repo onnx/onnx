@@ -29,12 +29,12 @@ class TopK(Base):
             [3, 2, 1],
             [7, 6, 5],
             [11, 10, 9],
-        ], dtype=np.float32)
+        ])
         indices_ref = np.array([
             [3, 2, 1],
             [3, 2, 1],
             [3, 2, 1],
-        ], dtype=np.int64)
+        ], dtype=np.int32)
 
         expect(node, inputs=[X], outputs=[values_ref, indices_ref],
                name='test_top_k')
