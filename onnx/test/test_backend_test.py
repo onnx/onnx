@@ -38,7 +38,7 @@ class DummyBackend(onnx.backend.base.Backend):
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
 if os.getenv('APPVEYOR'):
-    backend_test.exclude(r'(test_vgg19|test_vgg16)')
+    backend_test.exclude(r'(test_vgg19|test_vgg16|test_bvlc_alexnet_cuda)')
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test
