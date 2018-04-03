@@ -129,7 +129,6 @@ message AttributeProto {
   bytes s = 4;               // UTF-8 string
   TensorProto t = 5;         // tensor value
   GraphProto g = 6;          // graph
-  FunctionProto function = 22;
   // Do not use field below, it's deprecated.
   // optional ValueProto v = 12;         // value - subsumes everything but graph
 
@@ -138,7 +137,6 @@ message AttributeProto {
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
-  repeated FunctionProto functions = 23;
 }
 
 // Defines information on value, including the name, the type, and
