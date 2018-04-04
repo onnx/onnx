@@ -17,12 +17,11 @@ function(dedent outvar text)
   else()
     set(_python_exe "${PYTHON_EXECUTABLE}")
   endif()
-  set(_fixup_cmd "import sys; from textwrap import dedent; print(dedent(sys.stdin.read()))")
+  set(_fixup_cmd "import sys; from textwrap import dedent; print(dedent(sys.argv[1]));")
   # Use echo to pipe the text to python's stdinput. This prevents us from
   # needing to worry about any sort of special escaping.
   execute_process(
-    COMMAND echo "${text}"
-    COMMAND "${_python_exe}" -c "${_fixup_cmd}"
+    COMMAND "${_python_exe}" -c "${_fixup_cmd} " "${text}"
     RESULT_VARIABLE _dedent_exitcode
     OUTPUT_VARIABLE _dedent_text)
   if(NOT ${_dedent_exitcode} EQUAL 0)
