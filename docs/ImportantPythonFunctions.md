@@ -26,7 +26,6 @@ Runnable IPython notebooks:
 ```python
 import numpy
 import onnx
-import os
 from onnx import numpy_helper
 
 # Preprocessing: create a Numpy array
@@ -42,12 +41,12 @@ new_array = numpy_helper.to_array(tensor)
 print('After round trip, Numpy array:\n{}\n'.format(numpy_array))
 
 # Save the TensorProto
-with open(os.path.join(os.path.dirname('tensor.pb'), 'wb') as f:
+with open('tensor.pb', 'wb') as f:
     f.write(tensor.SerializeToString())
 
 # Load a TensorProto
 new_tensor = onnx.TensorProto()
-with open(os.path.join(os.path.dirname('tensor.pb'), 'rb') as f:
+with open('tensor.pb', 'rb') as f:
     new_tensor.ParseFromString(f.read())
 print('After saving and loading, new TensorProto:\n{}'.format(new_tensor))
 ```
@@ -69,7 +68,7 @@ from onnx import AttributeProto, TensorProto, GraphProto
 X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [1, 2])
 
 # Create one output (ValueInfoProto)
-Y = helper.make_tensor_value_info('X', TensorProto.FLOAT, [1, 2])
+Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [1, 2])
 
 # Create a node (NodeProto)
 node_def = helper.make_node(
@@ -103,10 +102,9 @@ Runnable IPython notebooks:
 ## Checking an ONNX Model
 ```python
 import onnx
-import os
 
 # Preprocessing: load the ONNX model
-model_path = os.path.join(os.path.dirname('model.onnx')
+model_path = 'path/to/the/model'
 onnx_model = onnx.load(model_path)
 
 print('The model is:\n{}'.format(onnx_model))
@@ -121,11 +119,10 @@ Runnable IPython notebooks:
 ## Optimizing an ONNX Model
 ```python
 import onnx
-import os
 from onnx import optimizer
 
 # Preprocessing: load the model contains two transposes.
-model_path = os.path.join('path/to/the/model')
+model_path = 'path/to/the/model'
 original_model = onnx.load(model_path)
 original_model_str = original_model.SerializeToString()
 
