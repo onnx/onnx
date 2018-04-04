@@ -111,7 +111,7 @@ There are two distinct ways to pass information to operators – inputs and attr
 
 A serialized graph is comprised of a set of metadata fields, a list of model parameters, and a list of computation nodes.
 
-Each computation dataflow graph is structured as a list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
+Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
 
 Graphs have the following properties:
 
@@ -172,13 +172,15 @@ domain|string|The domain of the operator set that contains the operator named by
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
-Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node. Node output names do not have to be unique within the graph. A node output MAY be the name of a graph output, and two nodes MAY compute the same output value. For example, when used with the (experimental) <a href="Operators.md#If">conditional operator 'If()'</a>, it is expected that each of its two branches will compute the same set of values. Graph outputs MAY NOT be used to establish data dependency edges in the graph.
+Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
- Node dependencies MAY NOT create cycles in the computation graph. 
+Node inputs MAY also refer to graph inputs and initializers. The outputs of a given node MAY introduce new names into the graph, name a graph output, or coincide with the outputs of other nodes. Thus, using overlapping output names, two nodes MAY compute the same output value. For example, when used with the (experimental) <a href="Operators.md#If">conditional operator 'If()'</a>, it is expected that each of its two branches will compute the same set of values. Graph outputs MAY NOT be used to establish data dependency edges in the graph by being named as node inputs.
+
+ Node dependencies MUST NOT create cycles in the computation graph. 
 
 __[[ DESCRIBE VARARGS ]]__
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K; further, no control input of N may refer to K.
+The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
 
 Node attributes are used to pass literal (static) values to operators.
 
