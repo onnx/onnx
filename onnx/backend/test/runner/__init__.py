@@ -142,11 +142,31 @@ class Runner(object):
                 setattr(tests, name, item.func)
         return tests
 
+    ONNX_STR_TYPE_TO_NP_TYPE = {
+        'tensor(float)': np.float32,
+        'tensor(float16)': np.float16,
+        'tensor(double)': np.double,
+        'tensor(int8)': np.int8,
+        'tensor(int16)': np.int16,
+        'tensor(int32)': np.int32,
+        'tensor(int64)': np.int64,
+        'tensor(uint8)': np.uint8,
+        'tensor(uint16)': np.uint16,
+        'tensor(uint32)': np.uint32,
+        'tensor(uint64)': np.uint64,
+        'tensor(bool)': np.bool,
+    }
+
     @staticmethod
-    def _assert_similar_outputs(ref_outputs, outputs):
+    def _assert_similar_outputs(ref_outputs, outputs, outputs_node_schema):
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
-            np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
+            assert outputs[i].dtype in [
+                Runner.ONNX_STR_TYPE_TO_NP_TYPE[typ]
+                for typ in outputs_node_schema.outputs[i].types
+            ]
+            np.testing.assert_equal(outputs_node_schema.outputs[i].dtype,
+                                    outputs[i].dtype)
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
@@ -264,6 +284,23 @@ class Runner(object):
                         tensor.ParseFromString(f.read())
                     ref_outputs.append(numpy_helper.to_array(tensor))
                 outputs = list(prepared_model.run(inputs))
-                self._assert_similar_outputs(ref_outputs, outputs)
+                outputs_node = [
+                    n for n in model.graph.node
+                    if any(x in [o.name
+                                 for o in model.graph.output]
+                           for x in n.output)
+                ]
+                assert len(
+                    outputs_node
+                ) == 1, "It has to be one output node in graph but get {}".format(
+                    len(outputs_node))
+                default_opset = [
+                    opset for opset in model.opset_import
+                    if opset.domain in ("", "ai.onnx")
+                ][0]
+                outputs_node_schema = onnx.defs.get_schema(
+                    outputs_node[0].op_type, default_opset.version)
+                self._assert_similar_outputs(ref_outputs, outputs,
+                                             outputs_node_schema)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
