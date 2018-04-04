@@ -96,6 +96,20 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Gemm"
 
+    def test_fuse_conv_add_into_bias(self):
+        conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
+        add = helper.make_node("Add", ["Z", "A"], ["B"])
+        graph = helper.make_graph(
+            [conv, add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 3, 3)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 16, 3, 3)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (16,))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (1, 16, 1, 1))])
+        optimized_model = self._optimized(graph, ["fuse_conv_add_into_bias"])
+
+        assert len(list(optimized_model.graph.node)) == 1
+
     def test_preserve_value_info(self):
         trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])

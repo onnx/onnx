@@ -27,6 +27,7 @@ Supported pass names:
     -- nop
     -- eliminate_nop_transpose
     -- fuse_consecutive_transposes
+    -- fuse_conv_add_into_bias
     -- fuse_transpose_into_gemm
 """
 

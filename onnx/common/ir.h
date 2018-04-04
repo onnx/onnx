@@ -493,7 +493,7 @@ public:
       outputs()[i]->replaceAllUsesWith(n->outputs()[i]);
     }
   }
-  // lots of things like chunk have a single input or singel output, so we have a
+  // lots of things like chunk have a single input or single output, so we have a
   // helper to make accessing it easier
   Value * input() {
     ONNX_ASSERT(inputs_.size() == 1);
