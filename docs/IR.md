@@ -5,7 +5,9 @@ __Purpose__
 
 This document contains the normative specification of the semantics of ONNX. The .proto and .proto3 files found under the ‘onnx’ folder form the normative specification of its syntax. Commentary found in the .proto and .proto3 files are intended to improve readability of those files, but are not normative if they conflict with this document. Such conflicts should be reported as documentation bugs.
 
+__Notes on model validation__
 
+A [Python-based tool](../onnx/checker.py) is available to perform general validation of models against this specification.
 
 __Notes on language in this and all related documents__:
 
