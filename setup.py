@@ -10,16 +10,19 @@ import setuptools.command.build_py
 import setuptools.command.develop
 import setuptools.command.build_ext
 
-import platform
 import fnmatch
 from collections import namedtuple
+from contextlib import contextmanager
 import os
 import hashlib
+import shlex
 import shutil
 import subprocess
 import sys
+import struct
 import tempfile
 from textwrap import dedent
+import multiprocessing
 
 from tools.ninja_builder import ninja_build_ext
 import glob
@@ -28,6 +31,7 @@ import json
 try:
     import ninja # noqa
     WITH_NINJA = True
+    WITH_NINJA = False
 except ImportError:
     WITH_NINJA = False
 
@@ -35,6 +39,7 @@ TOP_DIR = os.path.realpath(os.path.dirname(__file__))
 SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 PROTOC = find_executable('protoc')
+CMAKE_BUILD_DIR = os.path.join(TOP_DIR, '.setuptools-cmake-build')
 
 DEFAULT_ONNX_NAMESPACE = 'onnx'
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
@@ -61,8 +66,26 @@ with open(os.path.join(TOP_DIR, 'VERSION_NUMBER')) as version_file:
     )
 
 ################################################################################
+# Pre Check
+################################################################################
+
+assert find_executable('cmake'), 'Could not find "cmake" executable!'
+
+################################################################################
 # Utilities
 ################################################################################
+
+
+@contextmanager
+def cd(path):
+    if not os.path.isabs(path):
+        raise RuntimeError('Can only cd to absolute path, got: {}'.format(path))
+    orig_path = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(orig_path)
 
 
 def die(msg):
@@ -97,54 +120,6 @@ def md5(fname):
 
 
 true_or_die(PROTOC, 'Could not find "protoc" executable! Please install the protobuf compiler, header, and libraries.')
-
-################################################################################
-# Dependencies
-################################################################################
-
-
-class Dependency(object):
-    def __init__(self):
-        self.include_dirs = []
-        self.libraries = []
-
-
-class Python(Dependency):
-    def __init__(self):
-        super(Python, self).__init__()
-        self.include_dirs = [sysconfig.get_python_inc()]
-
-
-class Protobuf(Dependency):
-    def __init__(self):
-        super(Protobuf, self).__init__()
-        # TODO: allow user specify protobuf include_dirs libraries with flags
-        use_conda = os.getenv('CONDA_PREFIX') and platform.system() == 'Windows'
-
-        libs = []
-        if os.getenv('PROTOBUF_LIBDIR'):
-            libs.append(os.path.join(os.getenv('PROTOBUF_LIBDIR'), "libprotobuf"))
-        elif use_conda:
-            libs.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "lib", "libprotobuf"))
-        else:
-            libs.append("protobuf")
-
-        includes = []
-        if os.getenv('PROTOBUF_INCDIR'):
-            includes.append(os.path.join(os.getenv('PROTOBUF_INCDIR')))
-        elif use_conda:
-            includes.append(os.path.join(os.getenv('CONDA_PREFIX'), "Library", "Include"))
-        else:
-            print("Warning: Environment Variable PROTOBUF_INCDIR or CONDA_PREFIX is not set, which may cause protobuf including folder error.")
-
-        self.libraries = libs
-        self.include_dirs = includes
-
-
-class Pybind11(Dependency):
-    def __init__(self):
-        super(Pybind11, self).__init__()
-        self.include_dirs = [os.path.join(TP_DIR, 'pybind11', 'include')]
 
 
 ################################################################################
@@ -263,16 +238,85 @@ class create_version(ONNXCommand):
             '''.format(**dict(VersionInfo._asdict()))))
 
 
+class cmake_build(setuptools.Command):
+    """
+    Compiles everything when `python setup.py build` is run using cmake.
+
+    Custom args can be passed to cmake by specifying the `CMAKE_ARGS`
+    environment variable.
+
+    The number of CPUs used by `make` can be specified by passing `-j<ncpus>`
+    to `setup.py build`.  By default all CPUs are used.
+    """
+    user_options = [
+        (str('jobs='), str('j'), str('Specifies the number of jobs to use with make'))
+    ]
+
+    built = False
+
+    def initialize_options(self):
+        self.jobs = multiprocessing.cpu_count()
+
+    def finalize_options(self):
+        self.jobs = int(self.jobs)
+
+    def run(self):
+        if cmake_build.built:
+            return
+        cmake_build.built = True
+        if not os.path.exists(CMAKE_BUILD_DIR):
+            os.makedirs(CMAKE_BUILD_DIR)
+
+        with cd(CMAKE_BUILD_DIR):
+            # configure
+            cmake_args = [
+                find_executable('cmake'),
+                '-DPYTHON_INCLUDE_DIR={}'.format(sysconfig.get_python_inc()),
+                '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
+                '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
+                '-DBUILD_PYTHON=ON'.format(sysconfig.get_python_inc()),
+                '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
+                '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
+                '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
+            ]
+            if os.name == 'nt':
+                if 8 * struct.calcsize("P") == 64:
+                    # Temp fix for CI
+                    # TODO: need a better way to determine generator
+                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
+            if ONNX_ML:
+                cmake_args.append('-DONNX_ML=1')
+            if 'CMAKE_ARGS' in os.environ:
+                extra_cmake_args = shlex.split(os.environ['CMAKE_ARGS'])
+                # prevent crossfire with downstream scripts
+                del os.environ['CMAKE_ARGS']
+                log.info('Extra cmake args: {}'.format(extra_cmake_args))
+            cmake_args.append(TOP_DIR)
+            subprocess.check_call(cmake_args)
+
+            if find_executable('make'):
+                build_args = [find_executable('make')]
+                # control the number of concurrent jobs
+                if self.jobs is not None:
+                    build_args.extend(['-j', str(self.jobs)])
+            else:
+                # Windows CI environment
+                build_args = [find_executable('cmake'), '--build', '.']
+            subprocess.check_call(build_args)
+
+
 class build_py(setuptools.command.build_py.build_py):
     def run(self):
         self.run_command('create_version')
         self.run_command('build_proto')
+        self.run_command('cmake_build')
         return setuptools.command.build_py.build_py.run(self)
 
 
 class develop(setuptools.command.develop.develop):
     def run(self):
         self.run_command('create_version')
+        self.run_command('build_py')
         setuptools.command.develop.develop.run(self)
         self.create_compile_commands()
 
@@ -291,17 +335,43 @@ build_ext_parent = ninja_build_ext if WITH_NINJA \
 
 
 class build_ext(build_ext_parent):
+    def get_outputs(self):
+        return [self.build_lib]
+
     def run(self):
         self.run_command('build_proto')
-        for ext in self.extensions:
-            ext.pre_run()
         return setuptools.command.build_ext.build_ext.run(self)
+
+    def build_extensions(self):
+        i = 0
+        while i < len(self.extensions):
+            ext = self.extensions[i]
+            fullname = self.get_ext_fullname(ext.name)
+            filename = os.path.basename(self.get_ext_filename(fullname))
+
+            lib_path = CMAKE_BUILD_DIR
+            if os.name == 'nt':
+                debug_lib_dir = os.path.join(lib_path, "Debug")
+                release_lib_dir = os.path.join(lib_path, "Release")
+                if os.path.exists(debug_lib_dir):
+                    lib_path = debug_lib_dir
+                elif os.path.exists(release_lib_dir):
+                    lib_path = release_lib_dir
+            src = os.path.join(lib_path, filename)
+
+            if not os.path.exists(src):
+                del self.extensions[i]
+            else:
+                dst = os.path.join(os.path.realpath(self.build_lib), "onnx", filename)
+                self.copy_file(src, dst)
+                i += 1
 
 
 cmdclass = {
     'build_proto': build_proto,
     'build_proto_in': build_proto_in,
     'create_version': create_version,
+    'cmake_build': cmake_build,
     'build_py': build_py,
     'develop': develop,
     'build_ext': build_ext,
@@ -311,98 +381,10 @@ cmdclass = {
 # Extensions
 ################################################################################
 
-
-class ONNXExtension(setuptools.Extension):
-    def pre_run(self):
-        pass
-
-
-def create_extension(ExtType, name, sources, dependencies, extra_link_args, extra_objects, define_macros):
-    include_dirs = sum([dep.include_dirs for dep in dependencies], [TOP_DIR])
-    libraries = sum([dep.libraries for dep in dependencies], [])
-    extra_compile_args = ['-std=c++11']
-    if sys.platform == 'darwin':
-        extra_compile_args.append('-stdlib=libc++')
-    if os.getenv('CONDA_PREFIX'):
-        include_dirs.append(os.path.join(os.getenv('CONDA_PREFIX'), "include"))
-    if platform.system() == 'Windows':
-        extra_compile_args.append('/MT')
-    return ExtType(
-        name=name,
-        define_macros=define_macros,
-        sources=sources,
-        include_dirs=include_dirs,
-        libraries=libraries,
-        extra_compile_args=extra_compile_args,
-        extra_objects=extra_objects,
-        extra_link_args=extra_link_args,
-        language='c++',
-    )
-
-
-class ONNXCpp2PyExtension(setuptools.Extension):
-    def pre_run(self):
-        self.sources = recursive_glob(SRC_DIR, '*.cc')
-        need_rename = (ONNX_NAMESPACE != DEFAULT_ONNX_NAMESPACE)
-
-        original_onnx = [
-            os.path.join(SRC_DIR, "onnx.pb.cc"),
-            os.path.join(SRC_DIR, "onnx-operators.pb.cc"),
-        ]
-        original_onnx_ml = [
-            os.path.join(SRC_DIR, "onnx-ml.pb.cc"),
-            os.path.join(SRC_DIR, "onnx-operators-ml.pb.cc"),
-        ]
-        if ONNX_ML:
-            # Remove onnx.pb.cc, onnx-operators.pb.cc from sources.
-            sources_filter = original_onnx
-            if need_rename:
-                sources_filter.extend(original_onnx_ml)
-        else:
-            # Remove onnx-ml.pb.cc, onnx-operators-ml.pb.cc from sources.
-            sources_filter = original_onnx_ml
-            if need_rename:
-                sources_filter.extend(original_onnx)
-
-        for source_filter in sources_filter:
-            if source_filter in self.sources:
-                self.sources.remove(source_filter)
-
-
-cpp2py_deps = [Pybind11(), Python()]
-cpp2py_link_args = []
-cpp2py_extra_objects = []
-build_for_release = os.getenv('ONNX_BINARY_BUILD')
-if build_for_release and platform.system() == 'Linux':
-    # Cribbed from PyTorch
-    # get path of libstdc++ and link manually.
-    # for reasons unknown, -static-libstdc++ doesn't fully link some symbols
-    CXXNAME = os.getenv('CXX', 'g++')
-    path = subprocess.check_output([CXXNAME, '-print-file-name=libstdc++.a'])
-    path = path[:-1]
-    if type(path) != str:  # python 3
-        path = path.decode(sys.stdout.encoding)
-    cpp2py_link_args += [path]
-
-    # Hard coded look for the static libraries from Conda
-    assert os.getenv('CONDA_PREFIX')
-    cpp2py_extra_objects.extend([os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf.a'),
-                                 os.path.join(os.getenv('CONDA_PREFIX'), 'lib', 'libprotobuf-lite.a')])
-else:
-    cpp2py_deps.append(Protobuf())
-
-define_macros = [('ONNX_NAMESPACE', ONNX_NAMESPACE)]
-if ONNX_ML:
-    define_macros.append(('ONNX_ML', '1'))
-
 ext_modules = [
-    create_extension(ONNXCpp2PyExtension,
-                     str('onnx.onnx_cpp2py_export'),
-                     sources=[],  # sources will be propagated in pre_run
-                     dependencies=cpp2py_deps,
-                     extra_link_args=cpp2py_link_args,
-                     extra_objects=cpp2py_extra_objects,
-                     define_macros=define_macros)
+    setuptools.Extension(
+        name=str(('onnx.' if os.name != 'nt' else '') + 'onnx_cpp2py_export'),
+        sources=[])
 ]
 
 ################################################################################
