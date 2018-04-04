@@ -13,10 +13,7 @@ class TestOptimizer(unittest.TestCase):
 
     def _optimized(self, graph, opts):
         orig_model = helper.make_model(graph, producer_name='onnx-test')
-        orig_model_str = orig_model.SerializeToString()
-        optimized_model_str = onnx.optimizer.optimize(orig_model_str, opts)
-        optimized_model = ModelProto()
-        optimized_model.ParseFromString(optimized_model_str)
+        optimized_model = onnx.optimizer.optimize(orig_model, opts)
         checker.check_model(optimized_model)
         return optimized_model
 
@@ -144,25 +141,6 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(len(predict_model.graph.node), 0)
         self.assertEqual(len(predict_model.graph.input), 1)
         self.assertEqual(predict_model.graph.input[0].name, 'X')
-
-    def test_optimize_api(self):
-        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])
-        graph = helper.make_graph(
-            [trans],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3))])
-        orig_model = helper.make_model(graph, producer_name='onnx-test')
-        optimized_model = onnx.optimizer.optimize(orig_model,
-                                                  ["eliminate_nop_transpose"])
-        for node in optimized_model.graph.node:
-            assert node.op_type != "Transpose"
-
-        optimized_model = onnx.load_from_string(onnx.optimizer.optimize(
-            orig_model.SerializeToString(),
-            ["eliminate_nop_transpose"]))
-        for node in optimized_model.graph.node:
-            assert node.op_type != "Transpose"
 
 
 if __name__ == '__main__':

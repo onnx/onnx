@@ -131,13 +131,11 @@ print('The model before optimization:\n{}'.format(original_model))
 pass_list = ['fuse_consecutive_transposes']
 
 # Apply the optimization on the original model
-# Function `optimize` also accept serialized ModelProto, when the serialized model is passed in,
-# it will also return serialized optimized model
 optimized_model = optimizer.optimize(original_model, pass_list)
 
 print('The model after optimization:\n{}'.format(optimized_model))
 
-# You can also apply the default passes on your model
+# Users can also apply the default passes on the (serialized) model
 # Check the default passes here: https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L34
 optimized_model = optimizer.optimie(original_model)
 ```

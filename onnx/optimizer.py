@@ -34,12 +34,9 @@ def optimize(model, pass_list=None):
         pass_list = ['eliminate_nop_transpose',
                      'fuse_consecutive_transposes',
                      'fuse_transpose_into_gemm']
+    if not isinstance(model, ModelProto):
+        raise ValueError('Optimizer only accepts ModelProto as first paramter, incorrect type: {}'.format(type(model)))
 
-    if isinstance(model, ModelProto):
-        model_str = model.SerializeToString()
-        optimized_model_str = C.optimize(model_str, pass_list)
-        return onnx.load_from_string(optimized_model_str)
-    elif isinstance(model, str):
-        return C.optimize(model, pass_list)
-    else:
-        raise ValueError('Input model has incorrect type: {}'.format(type(model)))
+    model_str = model.SerializeToString()
+    optimized_model_str = C.optimize(model_str, pass_list)
+    return onnx.load_from_string(optimized_model_str)
