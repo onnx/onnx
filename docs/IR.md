@@ -48,7 +48,7 @@ The top-level ONNX construct is a ‘Model,’ which has the following component
 |producer_name|string|The name of the tool used to generate the model.|
 |producer_version|string|A string representing the version of the generating tool.|
 |domain|string|A reverse-DNS name to indicate the model namespace or domain, for example, org.onnx|
-|model_version|Int64|A version of the model itself, encoded in an integer.|
+|model_version|int64|A version of the model itself, encoded in an integer.|
 |doc_string|string|A human-readable documentation for this model. Markdown is allowed.|
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
@@ -81,9 +81,9 @@ magic|string|The value ‘ONXXOPSET’
 ir_version|int32|The ONNX version corresponding to the operators.
 ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
 ir_build_metadata|string|The symbolic identifier of the operator to invoke.
-domain|String|The domain of the operator set. Must be unique among all sets.
+domain|string|The domain of the operator set. Must be unique among all sets.
 opset_version|int64|The version of the set of operators. 
-doc_string|String|A human-readable documentation for this set of operators. Markdown is allowed.
+doc_string|string|A human-readable documentation for this set of operators. Markdown is allowed.
 operator|Operator[]|The operators of this operator set.
 
 The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published. No operator in a given operator set may have a version number greater than the operator set’s version.
@@ -117,10 +117,10 @@ Graphs have the following properties:
 
 |Name|Type|Description|
 |---|---|---|
-name|String|The name of the model graph.
+name|string|The name of the model graph.
 node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
 initializer|Tensor[]|A list of named tensor values, used to specify default values for some of the inputs of the graph. Each initializer value is associated with an input by name matching.
-doc_string|String|A human-readable documentation for this model. Markdown is allowed.
+doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo|__TODO: Write this description__
@@ -130,9 +130,9 @@ Each graph MUST define the names and types of its inputs and outputs, which are 
 
 Name|Type|Description
 |---|---|---|
-name|String|The name of the value/parameter.
+name|string|The name of the value/parameter.
 type|Type|The type of the value.
-doc_string|String|A human-readable documentation for this value. Markdown is allowed.
+doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
 Each graph MUST specify a name and a domain. Domains MUST be specified using reverse domain names as organization identifiers, the same convention that is used for naming Java packages.
 
@@ -164,13 +164,13 @@ They have the following properties:
 
 Name|Type|Description
 |---|---|---|
-name|String|An optional name of the node, used for diagnostic purposes only.
-input|String[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
-output|String[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a new value in the graph or refers to a graph output.
-op_type|String|The symbolic identifier of the operator to invoke.
-domain|String|The domain of the operator set that contains the operator names by the op_type.
+name|string|An optional name of the node, used for diagnostic purposes only.
+input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
+output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a new value in the graph or refers to a graph output.
+op_type|string|The symbolic identifier of the operator to invoke.
+domain|string|The domain of the operator set that contains the operator names by the op_type.
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
-doc_string|String|A human-readable documentation for this value. Markdown is allowed.
+doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node. Node output names MUST be unique within the graph, except that a node output may refer to a graph output. Node dependencies MAY NOT create cycles in the computation graph. 
 
@@ -186,8 +186,8 @@ Attributes, which represent literal constants passed to operators from nodes, ha
 
 Name|Type|Description
 |---|---|---|
-name|String|The name of the attribute. Must be unique among attributes, inputs, and outputs for any given operator and node.
-doc_string|String|A human-readable documentation for this value. Markdown is allowed.
+name|string|The name of the attribute. Must be unique among attributes, inputs, and outputs for any given operator and node.
+doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.
 f|float|A floating-point value.
 i|int64|An integer value
