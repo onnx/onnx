@@ -31,6 +31,8 @@ DEFAULT_ONNX_NAMESPACE = 'onnx'
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
 
+WINDOWS = (os.name == 'nt')
+
 CMAKE = find_executable('cmake')
 MAKE = find_executable('make')
 
@@ -141,14 +143,19 @@ class cmake_build(setuptools.Command):
             cmake_args = [
                 CMAKE,
                 '-DPYTHON_INCLUDE_DIR={}'.format(sysconfig.get_python_inc()),
-                '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
                 '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
                 '-DBUILD_PYTHON=ON',
                 '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
-                '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
             ]
-            if os.name == 'nt':
+            if WINDOWS:
+                cmake_args.extend([
+                    # we need to link with libpython on windows, so
+                    # passing python version to window in order to
+                    # find python in cmake
+                    '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
+                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
+                ])
                 if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI
                     # TODO: need a better way to determine generator
@@ -165,7 +172,7 @@ class cmake_build(setuptools.Command):
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, '--build', os.curdir]
-            if self.jobs is not None:
+            if self.jobs is not None and not WINDOWS:
                 build_args.extend(['--', '-j', str(self.jobs)])
             subprocess.check_call(build_args)
 
