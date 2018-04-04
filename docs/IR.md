@@ -166,13 +166,15 @@ Name|Type|Description
 |---|---|---|
 name|string|An optional name of the node, used for diagnostic purposes only.
 input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
-output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a new value in the graph or refers to a graph output.
+output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a  value in the graph or refers to a graph output.
 op_type|string|The symbolic identifier of the operator to invoke.
-domain|string|The domain of the operator set that contains the operator names by the op_type.
+domain|string|The domain of the operator set that contains the operator named by the op_type.
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
-Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node. Node output names MUST be unique within the graph, except that a node output may refer to a graph output. Node dependencies MAY NOT create cycles in the computation graph. 
+Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node. Node output names do not have to be unique within the graph. A node output MAY be the name of a graph output, and two nodes MAY compute the same output value. For example, when used with the (experimental) <a href="Operators.md#If">conditional operator 'If()'</a>, it is expected that each of its two branches will compute the same set of values. Graph outputs MAY NOT be used to establish data dependency edges in the graph.
+
+ Node dependencies MAY NOT create cycles in the computation graph. 
 
 __[[ DESCRIBE VARARGS ]]__
 
@@ -211,14 +213,6 @@ The types of the inputs and outputs of the model must be specified, including th
 #### Optional Inputs
 
 Some operators have inputs that are marked as optional. There are two ways to leave an optional input unspecified. The first is to simply not provide that input. However, this is not always possible - for example, if you wish to leave the fourth input unspecified, but still provide a value for the fifth input. Therefore, any input with a name of the empty string is treated as an unspecified optional input.
-
-Standard Data Types
-------------------------------------------
-
-### Operators
-
-See the [operator documentation](Operators.md) for details.
-
 
 ## Standard data types
 
