@@ -123,8 +123,8 @@ initializer|Tensor[]|A list of named tensor values, used to specify default valu
 doc_string|String|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
-value_info|ValueInfo|???
-__TODO: determine the description for value_info__
+value_info|ValueInfo|__TODO: Write this description__
+
 
 Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
