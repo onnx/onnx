@@ -5,6 +5,8 @@ __Purpose__
 
 This document contains the normative specification of the semantics of ONNX. The .proto and .proto3 files found under the ‘onnx’ folder form the normative specification of its syntax. Commentary found in the .proto and .proto3 files are intended to improve readability of those files, but are not normative if they conflict with this document. Such conflicts should be reported as documentation bugs.
 
+
+
 __Notes on language in this and all related documents__:
 
 1. The use of SHOULD, MUST, MAY and so on in this document is consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
@@ -27,15 +29,38 @@ Of these, #1 and #2 are covered in this document; the built-in operators are cov
 
 ONNX does not pre-suppose or imply any particular method of runtime implementation. 
 
-An implementation may consist of a rich runtime which interprets the model; it may be a code generator that translates the model to executable code for some target programming language in its entirety; it may be a combination of the two.
+For example, an implementation may consist of a rich runtime which interprets the model; it may be a code generator that translates the model in its entirety to executable code for some target programming language; it may be a hardware implementation; it may be a combination of two or three of those. 
 
 Nothing in this specification should be construed as advocating one implementation approach over any other; any comments on the inner workings of concrete implementations are to be interpreted as examples.
+
+## ONNX Versioning
+
+Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Futhermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
+
+Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use  the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number.
+
+Also by convention, the most significant bytes SHOULD be 0 if using simple-number versioning, while semantic versioning must have a non-zero major or the minor version number.
+
+The valid IR versions is defined by an enumeration, which currently has the following values:
+```
+  //  version we published on Oct 10, 2017.
+  IR_VERSION_2017_10_10 = 0x0000000000000001;
+
+  // IR_VERSION 0.0.2 published on Oct 30, 2017
+  IR_VERSION_2017_10_30 = 0x0000000000000002;
+
+  // IR VERSION 0.0.3 published on Nov 3, 2017
+  IR_VERSION = 0x0000000000000003;
+```
+
+Operator sets use a simple number as the version number. This specification does not provide guidance on what versioning scheme models should be using.
+
 
 ## Extensible computation graph model
 
 ONNX specifies the portable, serialized format of a computation graph. It does not have to be the form a framework chooses to use and manipulate the computation internally. For example, an implementation may represent the model differently in memory if it is more efficient to manipulate during optimization passes.
 
-An implementation MAY extend ONNX is by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support.
+An implementation MAY extend ONNX is by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support. The mechanism for this is adding operator sets to the opset_import property in a model that depends on the extension operators.
 
 ### Models
 
@@ -47,12 +72,14 @@ The top-level ONNX construct is a ‘Model,’ which has the following component
 |opset_import|OperatorSetId|A collection of operator set identifiers made available to the model. An implementation must support all operators in the set or reject the model.|
 |producer_name|string|The name of the tool used to generate the model.|
 |producer_version|string|A string representing the version of the generating tool.|
-|domain|string|A reverse-DNS name to indicate the model namespace or domain, for example, org.onnx|
+|domain|string|A reverse-DNS name to indicate the model namespace or domain, for example, 'org.onnx'|
 |model_version|int64|A version of the model itself, encoded in an integer.|
 |doc_string|string|A human-readable documentation for this model. Markdown is allowed.|
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 
+ Models MUST specify its domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
+ 
 The main purpose of the model structure is to associate metadata with the graph, which contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model.
 
 The metadata is also useful to tools, such as IDEs and model galleries, which needs it for the purpose of informing humans about a given model’s purpose and characteristics.
@@ -87,6 +114,8 @@ doc_string|string|A human-readable documentation for this set of operators. Mark
 operator|Operator[]|The operators of this operator set.
 
 The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published. No operator in a given operator set may have a version number greater than the operator set’s version.
+
+Operator sets other than the default operator set MUST specify its domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
 
 ### Operators
 
@@ -134,7 +163,7 @@ name|string|The name of the value/parameter.
 type|Type|The type of the value.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
-Each graph MUST specify a name and a domain. Domains MUST be specified using reverse domain names as organization identifiers, the same convention that is used for naming Java packages.
+Each graph MUST specify a name.
 
 Graphs SHOULD be populated with documentation strings, which MAY be interpreted using GitHub-style markdown syntax. HTML and other text-markup languages MAY NOT be used in documentation strings.
 
@@ -248,11 +277,33 @@ ONNX-ML|map|Maps represent associative tables, defined by a key type and a value
 
 #### Tensor shapes
 
-In addition to element type and dense/sparse properties, tensors have shape. A shape is a list of sizes that define whether the tensor is a vector, a matrix, or a higher-dimensioned structure. For example, a 100x100 matrix would have the shape [100,100].
+In addition to element type, tensors have shape. A tensor shape is a list of records that define whether the tensor is a vector, a matrix, or a higher-dimensional value. For example, a 100x100 matrix has the shape [100,100].
 
-The empty list of sizes, [], is a valid tensor shape. It's denotes a scalar value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality.
+The shape record is defined by 'TensorShapeProto':
 
-Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number, which is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
+```
+message TensorShapeProto {
+  message Dimension {
+    oneof value {
+      int64 dim_value = 1;
+      string dim_param = 2;
+    };
+  };
+  repeated Dimension dim = 1;
+}
+```
+Which is referenced by the Tensor type message:
+
+```
+  message Tensor {
+    optional TensorProto.DataType elem_type = 1;
+    optional TensorShapeProto shape = 2;
+  }
+```
+
+The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record.
+
+Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
 
 For example, a NxM matrix would have the shape list [N,M].
 
