@@ -128,10 +128,10 @@ print('The model before optimization:\n{}'.format(original_model))
 
 # A full list of supported optimization passes can be found here:
 # https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L21
-pass_list = ['fuse_consecutive_transposes']
+passes = ['fuse_consecutive_transposes']
 
 # Apply the optimization on the original model
-optimized_model = optimizer.optimize(original_model, pass_list)
+optimized_model = optimizer.optimize(original_model, passes)
 
 print('The model after optimization:\n{}'.format(optimized_model))
 

@@ -29,14 +29,14 @@ Supported pass names:
     -- fuse_consecutive_transposes
     -- fuse_transpose_into_gemm
 """
-def optimize(model, pass_list=None):
-    if pass_list is None or len(pass_list) == 0:
-        pass_list = ['eliminate_nop_transpose',
-                     'fuse_consecutive_transposes',
-                     'fuse_transpose_into_gemm']
+def optimize(model, passes=None):
+    if passes is None or len(passes) == 0:
+        passes = ['eliminate_nop_transpose',
+                  'fuse_consecutive_transposes',
+                  'fuse_transpose_into_gemm']
     if not isinstance(model, ModelProto):
-        raise ValueError('Optimizer only accepts ModelProto as first paramter, incorrect type: {}'.format(type(model)))
+        raise ValueError('Optimizer only accepts ModelProto, incorrect type: {}'.format(type(model)))
 
     model_str = model.SerializeToString()
-    optimized_model_str = C.optimize(model_str, pass_list)
+    optimized_model_str = C.optimize(model_str, passes)
     return onnx.load_from_string(optimized_model_str)
