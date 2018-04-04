@@ -1,8 +1,6 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.1)
 
-include(cmake/Utils.cmake)
-
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
@@ -202,24 +200,6 @@ target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}
 target_link_libraries(onnx PUBLIC onnx_proto)
 
 if(BUILD_PYTHON)
-  # Python site-packages
-  # Get canonical directory for python site packages (relative to install
-  # location).  It varys from system to system.
-  pycmd(PYTHON_SITE_PACKAGES "
-      from distutils import sysconfig
-      print(sysconfig.get_python_lib(prefix=''))
-  ")
-  # ---[ Options.
-  SET(PYTHON_LIB_REL_PATH "${PYTHON_SITE_PACKAGES}" CACHE STRING "Python installation path (relative to CMake installation prefix)")
-  message(STATUS "Using ${PYTHON_LIB_REL_PATH} as python relative installation path")
-  # Python extension suffix
-  # Try to get from python through sysconfig.get_env_var('EXT_SUFFIX') first,
-  # fallback to ".pyd" if windows and ".so" for all others.
-  pycmd(PY_EXT_SUFFIX "
-      from distutils import sysconfig
-      ext_suffix = sysconfig.get_config_var('EXT_SUFFIX')
-      print(ext_suffix if ext_suffix else '')
-  ")
   if("${PY_EXT_SUFFIX}" STREQUAL "")
     if (MSVC)
       set(PY_EXT_SUFFIX ".pyd")

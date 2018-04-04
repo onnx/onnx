@@ -147,6 +147,7 @@ class cmake_build(setuptools.Command):
                 '-DBUILD_PYTHON=ON',
                 '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
+                '-DPY_EXT_SUFFIX={}'.format(sysconfig.get_config_var('EXT_SUFFIX') or ''),
             ]
             if WINDOWS:
                 cmake_args.extend([
