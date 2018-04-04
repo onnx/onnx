@@ -16,8 +16,7 @@ import onnx
 onnx_model = ... # Your model in memory
 
 # Save the ONNX model
-with open('path/to/the/model', 'wb') as f:
-    f.write(onnx_model.SerializeToString())
+onnx.save(onnx_model, 'path/to/the/model')
 ```
 Runnable IPython notebooks:
 - [save_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/save_model.ipynb)
@@ -68,14 +67,14 @@ from onnx import AttributeProto, TensorProto, GraphProto
 X = helper.make_tensor_value_info('X', TensorProto.FLOAT, [1, 2])
 
 # Create one output (ValueInfoProto)
-Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [1, 2])
+Y = helper.make_tensor_value_info('Y', TensorProto.FLOAT, [1, 4])
 
 # Create a node (NodeProto)
 node_def = helper.make_node(
     'Pad', # node name
     ['X'], # inputs
     ['Y'], # outputs
-    mode='constant', # Attributes
+    mode='constant', # attributes
     value=1.5,
     pads=[0, 1, 0, 1],
 )
@@ -83,7 +82,7 @@ node_def = helper.make_node(
 # Create the graph (GraphProto)
 graph_def = helper.make_graph(
     [node_def],
-    "test-model",
+    'test-model',
     [X],
     [Y],
 )
@@ -121,7 +120,7 @@ Runnable IPython notebooks:
 import onnx
 from onnx import optimizer
 
-# Preprocessing: load the model contains two transposes.
+# Preprocessing: load the model to be optimized.
 model_path = 'path/to/the/model'
 original_model = onnx.load(model_path)
 original_model_str = original_model.SerializeToString()
