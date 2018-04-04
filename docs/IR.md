@@ -1,11 +1,9 @@
-Open Neural Network Exchange (ONNX)
+Open Neural Network Exchange (ONNX) v1
 =========
 
-ONNX is an open specification that consists of the following components:
+__Purpose__
 
-1)  A definition of an extensible computation graph model
-
-2)  Definitions of built-in operators and standard data types
+This document contains the normative specification of the semantics of ONNX. The .proto and .proto3 files found under the ‘onnx’ folder form the normative specification of its syntax. Commentary found in the .proto and .proto3 files are intended to improve readability of those files, but are not normative if they conflict with this document. Such conflicts should be reported as documentation bugs.
 
 __Notes on language in this and all related documents__:
 
@@ -13,66 +11,196 @@ __Notes on language in this and all related documents__:
 
 2. The use of 'list' shall denote an ordered collection of items, 'set' shall denote an unordered collection of unique elements, and 'bag' an unordered collection of possibly non-unique elements.
 
-Extensible computation graph model
-----------------------------------
+## Components
 
-ONNX specifies the portable, serialized format of the computation graph. It may not be the form a framework chooses to use and manipulate. For example, a framework may keep the graph in memory in a format that it finds more efficient to manipulate for optimization passes. We make use of protobuf2 (with oneof, added in protobuf 2.6.1) for the serialized format.
+ONNX is an open specification that consists of the following components:
 
-### Model
+1)  A definition of an extensible computation graph model.
 
-The top-level container object in an ONNX model file is a ModelProto object that combines a computation graph with the following metadata properties.
+2)  Definitions of standard data types.
 
-#### Model Metadata
+3)  Definitions of built-in operators.
 
-|Name|Type|Format|Description|
-|----|----|------|-----------|
-|ir_version|int64||The version of the IR format specification|
-|opset_import|||Custom operator sets imported by the model|
-|domain|string|Valid DNS name|A namespace for the model, following the style of package names, that is, reverse DNS domain name.|
-|model_version|int64||The version of the model|
-|producer_name|string||Name of framework/tool that generated this model|
-|producer_version|string||Version of the framework/tool that generated this model|
+Of these, #1 and #2 are covered in this document; the built-in operators are covered separately in files listed at the end of this document.
 
-See [versioning documentation](Versioning.md) for more information about the versioning policies.
-Further metadata may be added to a model via its `metadata_props` field (as described further in the Extensibility section below).
+## Runtime Agnostic
+
+ONNX does not pre-suppose or imply any particular method of runtime implementation. 
+
+An implementation may consist of a rich runtime which interprets the model; it may be a code generator that translates the model to executable code for some target programming language in its entirety; it may be a combination of the two.
+
+Nothing in this specification should be construed as advocating one implementation approach over any other; any comments on the inner workings of concrete implementations are to be interpreted as examples.
+
+## Extensible computation graph model
+
+ONNX specifies the portable, serialized format of a computation graph. It does not have to be the form a framework chooses to use and manipulate the computation internally. For example, an implementation may represent the model differently in memory if it is more efficient to manipulate during optimization passes.
+
+An implementation MAY extend ONNX is by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support.
+
+### Models
+
+The top-level ONNX construct is a ‘Model,’ which has the following components:
+
+|Name|Type|Description|
+|---|---|---|
+|ir_version|int64|The ONNX version assumed by the model.|
+|opset_import|OperatorSetId|A collection of operator set identifiers made available to the model. An implementation must support all operators in the set or reject the model.|
+|producer_name|string|The name of the tool used to generate the model.|
+|producer_version|string|A string representing the version of the generating tool.|
+|domain|string|A reverse-DNS name to indicate the model namespace or domain, for example, org.onnx|
+|model_version|Int64|A version of the model itself, encoded in an integer.|
+|doc_string|string|A human-readable documentation for this model. Markdown is allowed.|
+|graph|Graph|The parameterized graph that is evaluated to execute the model.|
+|metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
+
+The main purpose of the model structure is to associate metadata with the graph, which contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model.
+
+The metadata is also useful to tools, such as IDEs and model galleries, which needs it for the purpose of informing humans about a given model’s purpose and characteristics.
+
+### Optional Metadata
+
+The 'metadata_props' field in the model is available for any kind of optional metadata that a tool or model developer chooses to place there. The following are the defined “standard” optional metadata properties of a model. 
+
+Name|Type|Format|Description
+|---|---|---|---|
+model_author|string|A comma-separated list of names.|The personal name of the author(s) of the model, and/or their organizations.
+model_license|string|Name or URL.|The well-known name or URL of the license under which the model is made available.
+
+
+### Operator Sets
+
+Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains.
+
+Each operator set is defined in a separate document, also using protobuf as the serialization format. How operator set documents are found and identified is implementation-dependent.
+
+The properties of an operator set are:
+
+Name|Type|Description
+|---|---|---|
+magic|string|The value ‘ONXXOPSET’
+ir_version|int32|The ONNX version corresponding to the operators.
+ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
+ir_build_metadata|string|The symbolic identifier of the operator to invoke.
+domain|String|The domain of the operator set. Must be unique among all sets.
+opset_version|int64|The version of the set of operators. 
+doc_string|String|A human-readable documentation for this set of operators. Markdown is allowed.
+operator|Operator[]|The operators of this operator set.
+
+The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published. No operator in a given operator set may have a version number greater than the operator set’s version.
+
+### Operators
+
+Each operator used within a graph MUST be explicitly declared by one of the operator sets imported by the model.
+
+The properties of an operator definition are:
+
+Name|Type|Description
+|---|---|---|
+op_type|string|The name of the operator, as used in graph nodes. MUST be unique within the operator set’s domain.
+since_version|int64|The version of the operator set when this operator was introduced.
+status|OperatorStatus|One of ‘EXPERIMENTAL’ or ‘STABLE.’
+doc_string|string|A human-readable documentation string for this operator. Markdown is allowed.
+
+The version value MUST be the same value as the operator set version when the operator was first published. Subsequent versions of the operator set MUST NOT alter the signature or semantics of the operator once published as STABLE.
+
+The ‘status’ property indicates whether the syntax, semantics, or presence of the operator is in an experimental or stable stage. Once an operator is published as STABLE, it’s syntax and semantics MUST NOT change in subsequent versions of the operator set.
+
+There are two distinct ways to pass information to operators – inputs and attributes. The latter are used for values that are literal constants in the graph, while the former represent graph inputs or values computed elsewhere in the graph. This distinction may be highly relevant to good performance for some implementations, while completely irrelevant to others.
 
 ### Graphs
 
-Each computation dataflow graph is structured as a list of nodes that form a graph. Each node is a call to an operator. Nodes have zero or more inputs, one or more outputs, and zero or more attribute-value pairs. Additionally, a valid ONNX graph must fulfill the following requirements:
+A serialized graph is comprised of a set of metadata fields, a list of model parameters, and a list of computation nodes.
 
-- The graph MUST be free of cycles.
-- The graph MUST be in SSA (static single assignment) form, meaning outputs of all nodes are unique.
-- The nodes list MUST be in topologically sorted order, meaning if input of node `N2` is the output of node `N1`, `N2` must appear after `N1` in the nodes list.
+Each computation dataflow graph is structured as a list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
 
-#### Model Graph Metadata
+Graphs have the following properties:
 
-The following describes the metadata properties of a model graph:
+|Name|Type|Description|
+|---|---|---|
+name|String|The name of the model graph.
+node|Node[]|A list of nodes, forming a partially ordered computation graph based on input/output data dependencies.
+initializer|Tensor[]|A list of named tensor values, used to specify default values for some of the inputs of the graph. Each initializer value is associated with an input by name matching.
+doc_string|String|A human-readable documentation for this model. Markdown is allowed.
+input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
+output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
+value_info|ValueInfo|???
+__TODO: determine the description for value_info__
 
-|Name|Type|Format|Description|
-|----|----|------|-----------|
-|name|string|Valid C identifier|A name for the model.|
-|doc_string|string|Free form|A human-readable documentation string intended to summarize the purpose of the model. Markdown is allowed.|
+Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
-#### Names Within a Graph
+Name|Type|Description
+|---|---|---|
+name|String|The name of the value/parameter.
+type|Type|The type of the value.
+doc_string|String|A human-readable documentation for this value. Markdown is allowed.
 
-Names are organized into separate namespaces, and must be unique within a namespace. The namespaces include the following:
- - `Node`: names that identify specific nodes in the graph, but not necessarily any particular input or output of the node.
- - `Graph`: names that identify graphs in the protobuf.
- - `Attribute`: names that identify attribute names for extra attributes that are passed to operators.
- - `Operator`: names that identify particular operators.
- - `Tensor`: names that identify intermediate tensor values flowing through the computation of a graph.
+Each graph MUST specify a name and a domain. Domains MUST be specified using reverse domain names as organization identifiers, the same convention that is used for naming Java packages.
+
+Graphs SHOULD be populated with documentation strings, which MAY be interpreted using GitHub-style markdown syntax. HTML and other text-markup languages MAY NOT be used in documentation strings.
+
+### Names Within a Graph
 
 All names MUST adhere to C identifier syntax rules.
 
-#### Nodes
+Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique within that graph. 
 
-Each computation node consists of a name, the identifier of the operator to be invoked, a list of named inputs and outputs, and a list of attribute-value pairs.
+The namespaces are:
 
-Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
+Namespace|Description
+|---|---|
+Attribute|The names of attributes of an operator. Unique for each operator.
+Value|The names of values – node inputs & outputs, tensor values (if named), graph inputs, outputs.
+Node|The names of graph nodes.
+Graph|The names of graphs within a domain.
+Operator|The names of operators within a domain.
+Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.
 
-Names of tensor values flowing through the graph are unique - a particular name can reference either a graph input or an output of a single node. Reuse of names for several outputs is not allowed.
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically \- that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
+### Nodes
+
+Computation nodes are comprised of a name, a list of named inputs, a list of named outputs, and a list of attributes. 
+
+They have the following properties:
+
+Name|Type|Description
+|---|---|---|
+name|String|An optional name of the node, used for diagnostic purposes only.
+input|String[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
+output|String[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a new value in the graph or refers to a graph output.
+op_type|String|The symbolic identifier of the operator to invoke.
+domain|String|The domain of the operator set that contains the operator names by the op_type.
+attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
+doc_string|String|A human-readable documentation for this value. Markdown is allowed.
+
+Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node. Node output names MUST be unique within the graph, except that a node output may refer to a graph output. Node dependencies MAY NOT create cycles in the computation graph. 
+
+__[[ DESCRIBE VARARGS ]]__
+
+The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K; further, no control input of N may refer to K.
+
+Node attributes are used to pass literal (static) values to operators.
+
+#### Attributes
+
+Attributes, which represent literal constants passed to operators from nodes, have the following properties:
+
+Name|Type|Description
+|---|---|---|
+name|String|The name of the attribute. Must be unique among attributes, inputs, and outputs for any given operator and node.
+doc_string|String|A human-readable documentation for this value. Markdown is allowed.
+type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.
+f|float|A floating-point value.
+i|int64|An integer value
+S|byte[]|UTF-8 string
+t|Tensor|A tensor value
+g|Graph|A graph
+floats|float[]|List of floats
+ints|int64[]|List of integers
+strings|byte[][]|List of strings
+tensors|Tensor[]|List of tensor values
+graphs|Graph[]|List of graphs
+
+The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
 
 #### Values
 
@@ -82,9 +210,9 @@ The types of the inputs and outputs of the model must be specified, including th
 
 #### Optional Inputs
 
-Some Operators have inputs that are marked as optional. There are two ways to leave an optional input unspecified. The first is to simply not provide that input. However, this is not always possible - for example, if you wish to leave the fourth input unspecified, but still provide a value for the fifth input. Therefore, any input with a name of the empty string is treated as an unspecified optional input.
+Some operators have inputs that are marked as optional. There are two ways to leave an optional input unspecified. The first is to simply not provide that input. However, this is not always possible - for example, if you wish to leave the fourth input unspecified, but still provide a value for the fifth input. Therefore, any input with a name of the empty string is treated as an unspecified optional input.
 
-Built-in Operators and Standard Data Types
+Standard Data Types
 ------------------------------------------
 
 ### Operators
@@ -92,36 +220,80 @@ Built-in Operators and Standard Data Types
 See the [operator documentation](Operators.md) for details.
 
 
-### Standard data types
+## Standard data types
 
-The following data types are supported by ONNX. Additional data types can be supported by frameworks.
+There are two official ONNX variants; the main distinction between the two is found in the supported types. The neural-network-only __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__ also recognizes sequences and maps.
 
-|Group|Name|Description|
-|-----|----|-----------|
-|Floating Point Types|__float16, float (32 bit), double (64 bit)__|Values adhering to the IEEE 754-2008 standard representation of floating-point data.|
-|Signed Integer Types|__int8, int16,int32,int64__|Signed integers are supported for 8-64 bit widths.|
-|Unsigned Integer Types|__uint8,uint16__| Unsigned integers of 8 or 16 bits are supported.|
-|Complex Types|__complex64,complex128__|A complex number with either 32- or 64-bit real and imaginary parts.|
-|Other|__string__|Strings represent textual data. All strings are encoded using UTF-8.|
-|Other|__bool__|Boolean value represent data with only two values, typically _true_ and _false_.|
-|Other|__handle__|Handles are opaque types holding a 64-bit integer.|
-|Collections|__sparse and dense tensor__|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is equivalent to a scalar.|
+The following data types are supported by ONNX for inputs and outputs of graphs and nodes. They also define the types used for the initializer values of a graph.
 
-Extensibility
--------------
+Primitive numeric, string, and Boolean types MUST be used as elements of tensors. Maps and sequences MUST contain tensors as values.
 
-ONNX is expected to evolve over time and provides features that enable users to experiment and implement additions before they are added to the specifications.
+### Tensor Element Types
 
-### Metadata
+| | | 
+|---|---|---|
+Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
+Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
+Unsigned Integer Types|uint8, uint16|Unsigned integers of 8 or 16 bits are supported.
+Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
+Other|string|Strings represent textual data. All strings are encoded using UTF-8.
+Other|bool|Boolean value represent data with only two values, typically true and false.
 
-A model allows named metadata strings to be added via its `metadata_props` field, typically for use by tools such as converters, indexers, or documentation generators. Names are not prescribed, but some name recommendations are provided for implementations that want to record such concepts.
+### Input / Output Data Types
 
-- `author`: the name of the person(s) who authored the model
-- `company`: the name of the company or organization that authored the model
-- `converted_from`: if converted from a different format, the name of the source format or framework
-- `license`: a human-readable name for a license, if applicable
-- `license_url`: the URL where the license text is provided
+The following types are used to define the types of graph and node inputs and outputs.
+
+|Variant | Type | Description | 
+|---|---|---|
+ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
+ONNX-ML|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
+ONNX-ML|map|Maps represent associative tables, defined by a key type and a value type.
+
+
+#### Tensor shapes
+
+In addition to element type and dense/sparse properties, tensors have shape. A shape is a list of sizes that define whether the tensor is a vector, a matrix, or a higher-dimensioned structure. For example, a 100x100 matrix would have the shape [100,100].
+
+The empty list of sizes, [], is a valid tensor shape. It's denotes a scalar value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality.
+
+Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number, which is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
+
+For example, a NxM matrix would have the shape list [N,M].
+
+The name of each dimension variable MUST adhere to C identifier syntax.
+
+Dimension variables are scoped to the declaration (graph signature, node signature, or single operator declaration) that they appear in. Thus, any given name denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related. For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and produce an output of shape [K,N].
+
+Shapes MAY be defined using a combination of integers and variables.
+
+### Attribute Types
+
+The type system used for attributes is a superset of that used for of inputs and outputs. In addition to tensors, attribute values may be scalar numerical values, strings, and graphs. Sequences are available for attributes in both ONNX and ONNX-ML. Maps are not available for attributes in either variant. 
+
+## Other Specification Documents 
+
+The ONNX and ONNX-ML specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining the operator semantics and the IR syntax. The syntax is specified as Protobuf v2 and v3 schema files.
 
 ### Operators
 
-Operators may be extended via custom domain names in the `opset_import` field.
+[Neural Network Operators](Operators.md)
+
+[Classical Machine Learning operators](Operators-ml.md)
+
+### Syntax
+
+[ONNX Models and Graphs - protobuf v2](../onnx/onnx.proto)
+
+[ONNX Models and Graphs - protobuf v3](../onnx/onnx.proto3)
+
+[ONNX-ML Models and Graphs - protobuf v2](../onnx/onnx-ml.proto)
+
+[ONNX-ML Models and Graphs - protobuf v3](../onnx/onnx-ml.proto3)
+
+[ONNX Operator Sets - protobuf v2](../onnx/onnx-operators.proto)
+
+[ONNX Operator Sets - protobuf v3](../onnx/onnx-operators.proto3)
+
+[ONNX-ML Operator Sets - protobuf v2](../onnx/onnx-operators-ml.proto)
+
+[ONNX-ML Operator Sets - protobuf v3](../onnx/onnx-operators-ml.proto3)
