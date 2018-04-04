@@ -199,9 +199,7 @@ class build_ext(setuptools.command.build_ext.build_ext):
         setuptools.command.build_ext.build_ext.run(self)
 
     def build_extensions(self):
-        i = 0
-        while i < len(self.extensions):
-            ext = self.extensions[i]
+        for ext in self.extensions:
             fullname = self.get_ext_fullname(ext.name)
             filename = os.path.basename(self.get_ext_filename(fullname))
 
@@ -216,7 +214,6 @@ class build_ext(setuptools.command.build_ext.build_ext):
             src = os.path.join(lib_path, filename)
             dst = os.path.join(os.path.realpath(self.build_lib), "onnx", filename)
             self.copy_file(src, dst)
-            i += 1
 
 
 cmdclass = {
