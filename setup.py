@@ -238,7 +238,7 @@ cmdclass = {
 
 ext_modules = [
     setuptools.Extension(
-        name=str(('onnx.' if os.name != 'nt' else '') + 'onnx_cpp2py_export'),
+        name=str('onnx.onnx_cpp2py_export'),
         sources=[])
 ]
 
