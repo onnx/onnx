@@ -584,4 +584,51 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
   }
   return numReplaced;
 }
+
+TensorProto::DataType datatypeFromString(const std::string& type) {
+  if (type == "FLOAT") {
+    return TensorProto::FLOAT;
+  }
+  if (type == "UINT8") {
+    return TensorProto::UINT8;
+  }
+  if (type == "INT8") {
+    return TensorProto::INT8;
+  }
+  if (type == "UINT16") {
+    return TensorProto::UINT16;
+  }
+  if (type == "INT16") {
+    return TensorProto::INT16;
+  }
+  if (type == "INT32") {
+    return TensorProto::INT32;
+  }
+  if (type == "INT64") {
+    return TensorProto::INT64;
+  }
+  if (type == "BOOL") {
+    return TensorProto::BOOL;
+  }
+  if (type == "FLOAT16") {
+    return TensorProto::FLOAT16;
+  }
+  if (type == "DOUBLE") {
+    return TensorProto::DOUBLE;
+  }
+  if (type == "COMPLEX64") {
+    return TensorProto::COMPLEX64;
+  }
+  if (type == "COMPLEX128") {
+    return TensorProto::COMPLEX128;
+  }
+  if (type == "UINT32") {
+    return TensorProto::UINT32;
+  }
+  if (type == "UINT64") {
+    return TensorProto::UINT64;
+  }
+  return TensorProto::UNDEFINED;
+}
+
 } // namespace ONNX_NAMESPACE

@@ -121,25 +121,30 @@ void InferShapes(ModelProto& m) {
         }
       }
 
-      if (existingType->has_shape()) {
-        if (inferredType.shape().dim_size() != existingType->shape().dim_size()) {
-          throw std::runtime_error("inferred type and existing type are of different rank");
-        }
-      } else {
-        for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-          existingType->mutable_shape()->add_dim();
-        }
-      }
-
-      for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-        const auto& inferredDim = inferredType.shape().dim(j);
-        auto* existingDim = existingType->mutable_shape()->mutable_dim(j);
-        if (inferredDim.has_dim_value()) {
-          auto inferredDimValue = inferredDim.dim_value();
-          if (existingDim->has_dim_value() && existingDim->dim_value() != inferredDimValue) {
-            throw std::runtime_error("inferred dimension differs from existing dimension");
+      if (inferredType.has_shape()) {
+        if (existingType->has_shape()) {
+          if (inferredType.shape().dim_size() != existingType->shape().dim_size()) {
+            throw std::runtime_error("inferred type and existing type are of different rank");
           }
-          *existingDim = inferredDim;
+        } else {
+          // make sure has_shape() == True for scalars
+          existingType->mutable_shape();
+
+          for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
+            existingType->mutable_shape()->add_dim();
+          }
+        }
+
+        for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
+          const auto& inferredDim = inferredType.shape().dim(j);
+          auto* existingDim = existingType->mutable_shape()->mutable_dim(j);
+          if (inferredDim.has_dim_value()) {
+            auto inferredDimValue = inferredDim.dim_value();
+            if (existingDim->has_dim_value() && existingDim->dim_value() != inferredDimValue) {
+              throw std::runtime_error("inferred dimension differs from existing dimension");
+            }
+            *existingDim = inferredDim;
+          }
         }
       }
 
