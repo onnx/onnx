@@ -141,14 +141,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
     endif()
 
-    set(GEN_PROTO_ARGS "${ONNX_NAMESPACE}" -o "${OUTPUT_PROTO_DIR}" "${FILE_WE}")
+    set(GEN_PROTO_ARGS -p "${ONNX_NAMESPACE}" -o "${OUTPUT_PROTO_DIR}" "${FILE_WE}")
     if(ONNX_ML)
       list(APPEND GEN_PROTO_ARGS -m)
     endif()
     add_custom_command(
       OUTPUT "${GENERATED_PROTO}"
-      COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
-      ARGS -p ${GEN_PROTO_ARGS}
+      COMMAND "${GEN_PROTO_PY}"
+      ARGS ${GEN_PROTO_ARGS}
       DEPENDS ${INFILE}
       COMMENT "Running gen_proto.py on ${INFILE}"
       VERBATIM )
