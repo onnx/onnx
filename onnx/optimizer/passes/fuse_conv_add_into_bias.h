@@ -12,7 +12,7 @@ struct FuseConvAddIntoBias final : public OptimizePass {
     : OptimizePass("fuse_conv_add_into_bias", API_TYPE::IR) {
   }
 
-  static int idx_of_conv(const onnx::ArrayRef<onnx::Value *> & values) {
+  static int idx_of_conv(const ArrayRef<Value *> & values) {
     for (size_t i = 0; i < values.size(); i++)
       if (values[i]->node()->kind() == kConv)
         return i;
