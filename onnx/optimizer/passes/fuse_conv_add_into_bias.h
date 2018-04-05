@@ -27,9 +27,15 @@ struct FuseConvAddIntoBias final : public OptimizePass {
         if (idx != -1 && n->inputs()[idx]->node()->inputs().size() <= 2) {
           auto origConv = n->inputs()[idx];
           auto origBias = n->inputs()[1 - idx];
-          origConv->node()->addInput(origBias);
-          n->replaceAllUsesWith(origConv->node());
-          it.destroyCurrent();
+          auto broadcast = kbroadcast;
+          auto axis = kaxis;
+          auto size = ksize;
+          if (n->hasAttribute(broadcast) && n->i(broadcast) == 1
+                  && n->hasAttribute(axis) && n->i(axis) == 1) {
+            origConv->node()->addInput(origBias);
+            n->replaceAllUsesWith(origConv->node());
+            it.destroyCurrent();
+          }
         }
       }
     }
