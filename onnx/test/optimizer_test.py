@@ -110,7 +110,7 @@ class TestOptimizer(unittest.TestCase):
 
         assert len(list(optimized_model.graph.node)) == 1
 
-    def test_fuse_conv_add_into_bias_negative(self):
+    def test_fuse_conv_add_into_bias_no_fuse(self):
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=2)
         graph = helper.make_graph(
