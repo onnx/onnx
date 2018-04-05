@@ -1,4 +1,4 @@
-Open Neural Network Exchange - ONNX v1
+Open Neural Network Exchange - ONNX
 =========
 
 __Purpose__
@@ -27,7 +27,7 @@ ONNX is an open specification that consists of the following components:
 
 Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this.
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__ also recognizes sequences and maps.
+There are two official ONNX variants; the main distinction between the two is found in the supported types. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps.
 
 ## Runtime Agnostic
 
@@ -253,7 +253,7 @@ Some operators have inputs that are marked as optional. There are two ways to le
 
 ## Standard data types
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types. As mentioned earlier, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension. __ONNX-ML__ also recognizes sequences and maps.
+There are two official ONNX variants; the main distinction between the two is found in the supported types. As mentioned earlier, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension. __ONNX-ML__, also recognizes sequences and maps.
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
@@ -261,7 +261,7 @@ Primitive numeric, string, and Boolean types MUST be used as elements of tensors
 
 ### Tensor Element Types
 
-| | | 
+|Group|Types|Description| 
 |---|---|---|
 Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
 Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
