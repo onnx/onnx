@@ -1,4 +1,4 @@
-Open Neural Network Exchange (ONNX) v1
+Open Neural Network Exchange - ONNX v1
 =========
 
 __Purpose__
@@ -25,7 +25,9 @@ ONNX is an open specification that consists of the following components:
 
 3)  Definitions of built-in operators.
 
-Of these, #1 and #2 are covered in this document; the built-in operators are covered separately in files listed at the end of this document.
+Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this.
+
+There are two official ONNX variants; the main distinction between the two is found in the supported types. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__ also recognizes sequences and maps.
 
 ## Runtime Agnostic
 
@@ -48,14 +50,14 @@ The valid IR versions is defined by an enumeration, which currently has the foll
   //  version we published on Oct 10, 2017.
   IR_VERSION_2017_10_10 = 0x0000000000000001;
 
-  // IR_VERSION 0.0.2 published on Oct 30, 2017
+  // IR_VERSION 2 published on Oct 30, 2017
   IR_VERSION_2017_10_30 = 0x0000000000000002;
 
-  // IR VERSION 0.0.3 published on Nov 3, 2017
+  // IR VERSION 3 published on Nov 3, 2017
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple number as the version number. This specification does not provide guidance on what versioning scheme models should be using.
+Operator sets use a simple number as the version number. This specification does not provide guidance on what versioning scheme model producers should be using.
 
 
 ## Extensible computation graph model
@@ -82,9 +84,7 @@ The top-level ONNX construct is a ‘Model,’ which has the following component
 
  Models MUST specify its domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
  
-The main purpose of the model structure is to associate metadata with the graph, which contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model.
-
-The metadata is also useful to tools, such as IDEs and model galleries, which needs it for the purpose of informing humans about a given model’s purpose and characteristics.
+The main purpose of the model structure is to associate metadata with the graph, which contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model, generate logging messages, error reports, etc. Further, the metadata is useful to tools, such as IDEs and model galleries, which need it for informing humans about a given model’s purpose and characteristics.
 
 ### Optional Metadata
 
@@ -98,9 +98,9 @@ model_license|string|Name or URL.|The well-known name or URL of the license unde
 
 ### Operator Sets
 
-Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains.
+Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
 
-Each operator set is defined in a separate document, also using protobuf as the serialization format. How operator set documents are found and identified is implementation-dependent.
+Each operator set SHALL be defined in a separate document, also using protobuf as the serialization format. How operator set documents are found at runtime is implementation-dependent.
 
 The properties of an operator set are:
 
@@ -115,7 +115,7 @@ opset_version|int64|The version of the set of operators.
 doc_string|string|A human-readable documentation for this set of operators. Markdown is allowed.
 operator|Operator[]|The operators of this operator set.
 
-The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published. No operator in a given operator set may have a version number greater than the operator set’s version.
+The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published.
 
 Operator sets other than the default operator set MUST specify its domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
 
@@ -136,7 +136,7 @@ The version value MUST be the same value as the operator set version when the op
 
 The ‘status’ property indicates whether the syntax, semantics, or presence of the operator is in an experimental or stable stage. Once an operator is published as STABLE, it’s syntax and semantics MUST NOT change in subsequent versions of the operator set.
 
-There are two distinct ways to pass information to operators – inputs and attributes. The latter are used for values that are literal constants in the graph, while the former represent graph inputs or values computed elsewhere in the graph. This distinction may be highly relevant to good performance for some implementations, while completely irrelevant to others.
+There are two distinct ways to pass information to operators – inputs and attributes. The latter are used for values that are literal constants in the graph, while the former represent graph inputs or values computed elsewhere in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
 
 ### Graphs
 
