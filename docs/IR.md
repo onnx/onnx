@@ -1,4 +1,4 @@
-Open Neural Network Exchange - ONNX v1
+Open Neural Network Exchange - ONNX
 =========
 
 __Purpose__
