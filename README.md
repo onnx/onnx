@@ -28,6 +28,7 @@ Check ONNX design choices and internals:
 * [ONNX intermediate representation spec](docs/IR.md)
 * [Versioning principles of the spec](docs/Versioning.md)
 * [Operators documentation](docs/Operators.md)
+* [Important Python functions](docs/ImportantPythonFunctions.md)
 
 # Tools
 * [Netron: a viewer for ONNX models](https://github.com/lutzroeder/Netron)
