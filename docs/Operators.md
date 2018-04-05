@@ -6997,6 +6997,35 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 </details>
 
 
+<details>
+<summary>default_values</summary>
+
+```python
+input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3']
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_default_axis')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
+```
+
+</details>
+
+
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
