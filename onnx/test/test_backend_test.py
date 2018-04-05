@@ -7,6 +7,7 @@ import os
 import unittest
 import onnx.backend.base
 import onnx.backend.test
+from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 
 
@@ -34,6 +35,13 @@ class DummyBackend(onnx.backend.base.Backend):
         super(DummyBackend, cls).run_node(node, inputs, device=device, outputs_info=outputs_info)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
+
+    @classmethod
+    def supports_device(cls, device):
+        d = Device(device)
+        if d.type == DeviceType.CPU:
+            return True
+        return False
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
