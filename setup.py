@@ -33,7 +33,7 @@ ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
 
 WINDOWS = (os.name == 'nt')
 
-CMAKE = find_executable('cmake')
+CMAKE = find_executable('cmake3') or find_executable('cmake')
 MAKE = find_executable('make')
 
 install_requires = []
