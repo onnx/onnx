@@ -74,6 +74,16 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         self.assertEqual(attr.s, b"test")
         checker.check_attribute(attr)
 
+    def test_attr_attribute(self):
+        # nested attribute
+        nested_attr = helper.make_attribute("str", "test")
+        attr = helper.make_attribute("attr", nested_attr)
+
+        self.assertEqual(attr.name, "attr")
+        self.assertEqual(attr.a.name, "str")
+        self.assertEqual(attr.a.s, b"test")
+        checker.check_attribute(attr)
+
     def test_attr_repeated_float(self):
         attr = helper.make_attribute("floats", [1.0, 2.0])
         self.assertEqual(attr.name, "floats")
@@ -118,6 +128,16 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         attr = helper.make_attribute("graphs", graphs)
         self.assertEqual(attr.name, "graphs")
         self.assertEqual(list(attr.graphs), graphs)
+        checker.check_attribute(attr)
+
+    def test_attr_repeated_attribute_proto(self):
+        # nested attributes
+        attributes = [helper.make_attribute("str1", "test1"),
+                      helper.make_attribute("str2", "test2")]
+
+        attr = helper.make_attribute("attributes", attributes)
+        self.assertEqual(attr.name, "attributes")
+        self.assertEqual(list(attr.attributes), attributes)
         checker.check_attribute(attr)
 
     def test_is_attr_legal(self):

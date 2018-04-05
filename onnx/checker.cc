@@ -172,11 +172,13 @@ void check_attribute(
   check_singular_field(s, AttributeProto::STRING);
   check_singular_field(t, AttributeProto::TENSOR);
   check_singular_field(g, AttributeProto::GRAPH);
+  check_singular_field(a, AttributeProto::ATTRIBUTE);
   check_repeated_field(floats, AttributeProto::FLOATS);
   check_repeated_field(ints, AttributeProto::INTS);
   check_repeated_field(strings, AttributeProto::STRINGS);
   check_repeated_field(tensors, AttributeProto::TENSORS);
   check_repeated_field(graphs, AttributeProto::GRAPHS);
+  check_repeated_field(attributes, AttributeProto::ATTRIBUTES);
 
 #undef check_type
 #undef check_singular_field

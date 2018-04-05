@@ -178,6 +178,9 @@ def make_attribute(key, value, doc_string=None):
     elif isinstance(value, GraphProto):
         attr.g.CopyFrom(value)
         attr.type = AttributeProto.GRAPH
+    elif isinstance(value, AttributeProto):
+        attr.a.CopyFrom(value)
+        attr.type = AttributeProto.ATTRIBUTE
     # third, iterable cases
     elif is_iterable:
         byte_array = [_to_bytes_or_false(v) for v in value]
@@ -197,6 +200,9 @@ def make_attribute(key, value, doc_string=None):
         elif all(isinstance(v, GraphProto) for v in value):
             attr.graphs.extend(value)
             attr.type = AttributeProto.GRAPHS
+        elif all(isinstance(v, AttributeProto) for v in value):
+            attr.attributes.extend(value)
+            attr.type = AttributeProto.ATTRIBUTES
         else:
             raise ValueError(
                 "You passed in an iterable attribute but I cannot figure out "
