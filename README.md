@@ -6,13 +6,13 @@
 | [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
 
 [Open Neural Network Exchange (ONNX)](http://onnx.ai) is the first step toward an open ecosystem that empowers AI developers
-to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
-It defines an extensible computation graph model, as well as definitions of built-in operators and standard 
+to choose the right tools as their project evolves. ONNX provides an open source format for AI models.
+It defines an extensible computation graph model, as well as definitions of built-in operators and standard
 data types. Initially we focus on the capabilities needed for inferencing (evaluation).
 
-Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different 
-frameworks and streamlining the path from research to production will increase the speed of innovation in 
-the AI community. We are an early stage and we invite the community to submit feedback and help us further 
+Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different
+frameworks and streamlining the path from research to production will increase the speed of innovation in
+the AI community. We are an early stage and we invite the community to submit feedback and help us further
 evolve ONNX.
 
 # Use ONNX
@@ -28,7 +28,7 @@ Check ONNX design choices and internals:
 * [ONNX intermediate representation spec](docs/IR.md)
 * [Versioning principles of the spec](docs/Versioning.md)
 * [Operators documentation](docs/Operators.md)
-* [Important Python functions](docs/ImportantPythonFunctions.md)
+* [Python API Overview](docs/PythonAPIOverview.md)
 
 # Tools
 * [Netron: a viewer for ONNX models](https://github.com/lutzroeder/Netron)
