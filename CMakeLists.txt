@@ -152,7 +152,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     endif()
     add_custom_command(
       OUTPUT "${GENERATED_PROTO}"
-      COMMAND "${__python_exe}" "${GEN_PROTO_PY}"
+      COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
       ARGS ${GEN_PROTO_ARGS}
       DEPENDS ${INFILE}
       COMMENT "Running gen_proto.py on ${INFILE}"
