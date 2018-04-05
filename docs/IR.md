@@ -43,7 +43,7 @@ Versioning features in several places in ONNX -- the IR specification itself, th
 
 Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use  the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number.
 
-Also by convention, the most significant bytes SHOULD be 0 if using simple-number versioning, while semantic versioning must have a non-zero major or the minor version number.
+Also by convention, the four most significant bytes SHOULD be 0 if using simple-number versioning, while semantic versioning must have a non-zero major or the minor version number.
 
 The valid IR versions is defined by an enumeration, which currently has the following values:
 ```
@@ -68,7 +68,11 @@ An implementation MAY extend ONNX is by adding operators expressing semantics be
 
 ### Models
 
-The top-level ONNX construct is a ‘Model,’ which has the following components:
+The top-level ONNX construct is a ‘Model.’
+
+The main purpose of the model structure is to associate metadata with a graph, which is what contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model, generate logging messages, error reports, etc. Further, the metadata is useful to tools, such as IDEs and model galleries, which need it for informing humans about a given model’s purpose and characteristics.
+
+Each model has has the following components:
 
 |Name|Type|Description|
 |---|---|---|
@@ -82,9 +86,8 @@ The top-level ONNX construct is a ‘Model,’ which has the following component
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
 
- Models MUST specify its domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
+ Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
  
-The main purpose of the model structure is to associate metadata with the graph, which contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model, generate logging messages, error reports, etc. Further, the metadata is useful to tools, such as IDEs and model galleries, which need it for informing humans about a given model’s purpose and characteristics.
 
 ### Optional Metadata
 
@@ -101,6 +104,8 @@ model_license|string|Name or URL.|The well-known name or URL of the license unde
 Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
 
 Each operator set SHALL be defined in a separate document, also using protobuf as the serialization format. How operator set documents are found at runtime is implementation-dependent.
+
+__Note: As of this writing, no ONNX implementation is known to process operator set documents.__
 
 The properties of an operator set are:
 
@@ -156,7 +161,6 @@ input|ValueInfo[]|The input “parameters” of the graph, possibly initialized 
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo|__TODO: Write this description__
 
-
 Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
 Name|Type|Description
@@ -189,7 +193,9 @@ Shape|The names of tensor shape variables – scoped to the value information re
 
 ### Nodes
 
-Computation nodes are comprised of a name, a list of named inputs, a list of named outputs, and a list of attributes. 
+Computation nodes are comprised of a name, the name of an operator that it invokes, a list of named inputs, a list of named outputs, and a list of attributes. 
+
+Input and outputs are positionally associated with operator inputs and outputs. Attributes are associated with operator attributes by name.
 
 They have the following properties:
 
@@ -205,7 +211,7 @@ doc_string|string|A human-readable documentation for this value. Markdown is all
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-Node inputs MAY also refer to graph inputs and initializers. The outputs of a given node MAY introduce new names into the graph, name a graph output, or coincide with the outputs of other nodes. Thus, using overlapping output names, two nodes MAY compute the same output value. For example, when used with the (experimental) <a href="Operators.md#If">conditional operator 'If()'</a>, it is expected that each of its two branches will compute the same set of values. Graph outputs MAY NOT be used to establish data dependency edges in the graph by being named as node inputs.
+Node inputs MAY also refer to graph inputs and initializers. The outputs of a given node MAY introduce new names into the graph, name a graph output, or coincide with the outputs of other nodes. Thus, using overlapping output names, two nodes MAY compute the same output value. Graph outputs MAY NOT be used to establish data dependency edges in the graph by being named as node inputs.
 
  Node dependencies MUST NOT create cycles in the computation graph. 
 
@@ -239,9 +245,9 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 #### Values
 
-The representation distinguishes between two kinds of values: attribute values, which are statically known, and runtime values. The type of values permitted in the two cases are different. The permitted types of attribute values are indicated by the enumeration `AttributeType`, while the permitted types of runtime values are described by `TypeProto`. 
+The representation distinguishes between two kinds of values: attribute values, which are statically known, and runtime values. The types of values permitted in the two cases are different.
 
-The types of the inputs and outputs of the model must be specified, including the shapes of tensors. While the ranks of input and output tensors are statically specified, the sizes of specific dimensions (axis) may be statically unknown and are indicated so using symbolic identifiers in the shape. 
+The types of the inputs and outputs of a graph must be specified.
 
 #### Optional Inputs
 
@@ -249,9 +255,9 @@ Some operators have inputs that are marked as optional. There are two ways to le
 
 ## Standard data types
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types. The neural-network-only __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__ also recognizes sequences and maps.
+There are two official ONNX variants; the main distinction between the two is found in the supported types. As mentioned earlier, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension. __ONNX-ML__ also recognizes sequences and maps.
 
-The following data types are supported by ONNX for inputs and outputs of graphs and nodes. They also define the types used for the initializer values of a graph.
+The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
 Primitive numeric, string, and Boolean types MUST be used as elements of tensors. Maps and sequences MUST contain tensors as values.
 
@@ -276,6 +282,7 @@ ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas
 ONNX-ML|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
 ONNX-ML|map|Maps represent associative tables, defined by a key type and a value type.
 
+ONNX currently does not define a sparse tensor type.
 
 #### Tensor shapes
 
@@ -321,7 +328,7 @@ The type system used for attributes is a superset of that used for of inputs and
 
 ## Other Specification Documents 
 
-The ONNX and ONNX-ML specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining the operator semantics and the IR syntax. The syntax is specified as Protobuf v2 and v3 schema files.
+The ONNX specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining standard operator semantics and the IR syntax. The latter is specified as Protobuf v2 and v3 schema files.
 
 ### Operators
 
