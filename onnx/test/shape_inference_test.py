@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, ModelProto, TensorProto
+from onnx import checker, helper, TensorProto
 
 import onnx.shape_inference
 import unittest

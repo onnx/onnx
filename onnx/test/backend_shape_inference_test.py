@@ -9,7 +9,7 @@ import onnx.backend.base
 import onnx.backend.test
 
 import onnx
-from onnx import helper, ModelProto
+from onnx import helper
 from onnx.mapping import NP_TYPE_TO_TENSOR_TYPE
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt

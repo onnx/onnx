@@ -22,9 +22,12 @@ bug in shape inference), and the result is unspecified.
 Arguments:
     input (string): serialized ModelProto
 """
+
+
 def infer_shapes(model):
     if not isinstance(model, ModelProto):
-        raise ValueError('Shape inference only accepts ModelProto, incorrect type: {}'.format(type(model)))
+        raise ValueError('Shape inference only accepts ModelProto, '
+                         'incorrect type: {}'.format(type(model)))
 
     model_str = model.SerializeToString()
     inferred_model_str = C.infer_shapes(model_str)
