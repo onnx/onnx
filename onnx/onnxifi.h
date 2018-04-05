@@ -608,8 +608,8 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  *
  * ONNXIFI backend is a combination of software layer and hardware device used
  * to run an ONNX graph. The same software layer may expose multiple backends
- * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNX backend for
- * GPU and another for CPU, both implemented in the same software). Backends
+ * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNXIFI backend
+ * for GPU and another for CPU, both implemented in the same software). Backends
  * implemented in the same software, but targeting different devices (e.g.
  * "MyNN" for CPU and "MyNN" for GPU) are counted separately.
  */
@@ -619,15 +619,15 @@ ONNXIFI_PUBLIC uint32_t ONNXIFI_ABI
 /**
  * Query high-level information about the backend and its target device.
  *
- * ONNX backend is a combination of software layer and hardware device used to
- * run an ONNX graph. The same software layer may expose multiple backends (e.g.
- * one ONNX backend for each GPU in the system, or one ONNX backend for GPU and
- * another for CPU, both implemented in the same software).
+ * ONNXIFI backend is a combination of software layer and hardware device used
+ * to run an ONNX graph. The same software layer may expose multiple backends
+ * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNXIFI backend
+ * for GPU and another for CPU, both implemented in the same software).
  *
  * The content and data type of information provided by this function depends
  * infoType value as specified below:
  *
- *      infoType value                                 data type
+ *         infoType value                                 data type
  *     ONNXIFI_BACKEND_NAME                                 char[]
  *     ONNXIFI_BACKEND_VENDOR                               char[]
  *     ONNXIFI_BACKEND_VERSION                              char[]
@@ -779,19 +779,19 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     const void* onnxModel);
 
 /**
- * Initialize an ONNX backend.
+ * Initialize an ONNXIFI backend.
  *
- * ONNX backend is a combination of software layer and hardware device used to
- * run an ONNX graph. The same software layer may expose multiple backends (e.g.
- * one ONNX backend for each GPU in the system, or one ONNX backend for GPU and
- * another for CPU, both implemented in the same software).
+ * ONNXIFI backend is a combination of software layer and hardware device used
+ * to run an ONNXIFI graph. The same software layer may expose multiple backends
+ * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNXIFI backend
+ * for GPU and another for CPU, both implemented in the same software).
  *
  * @param index - index of the backend to initialize.
  * @param[in] auxPropertiesList - optional list of backend initialization
  *                                properties, terminated by
- *                                ONNXIFI_BACKEND_PROPERTY_NONE entry. Can be NULL
- *                                or empty.
- * @param[out] backend - pointer to an opaque handle for the initialized ONNX
+ *                                ONNXIFI_BACKEND_PROPERTY_NONE entry. Can be
+ *                                NULL or empty.
+ * @param[out] backend - pointer to an opaque handle for the initialized ONNXIFI
  *                       backend. If the function fails, the handle is
  *                       initialized to NULL.
  *
@@ -995,8 +995,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                weights and all metadata, including shape,
  *                                into its own memory before the function
  *                                returns.
- * @param[out] graph - pointer to the opaque handle for the created ONNX graph.
- *                     If the function fails, the handle is initialized to NULL.
+ * @param[out] graph - pointer to the opaque handle for the created ONNXIFI
+ *                     graph. If the function fails, the handle is initialized
+ *                     to NULL.
  *
  * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the model
  *                                graph was successfully initialized on the backend.
@@ -1011,7 +1012,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                 unit-group convolution operators, it must
  *                                 return this code.
  * @retval ONNXIFI_STATUS_INVALID_BACKEND The function call failed because
- *                                        backend is not an ONNX backend handle.
+ *                                        backend is not an ONNXIFI backend
+ *                                        handle.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
  *                                        onnxModel is NULL.
  * @retval ONNXIFI_STATUS_INVALID_SIZE The function call failed because
@@ -1063,10 +1065,10 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     onnxGraph* graph);
 
 /**
- * Set locations for inputs and outputs of an ONNX graph.
+ * Set locations for inputs and outputs of an ONNXIFI graph.
  *
  * The caller MUST ensure that the memory buffers specified for input and output
- * tensors remain accessible for the life-time of the ONNX graph. The caller
+ * tensors remain accessible for the life-time of the ONNXIFI graph. The caller
  * can discard other data data in tensor descriptors, including shape, once the
  * function returns.
  *
@@ -1086,7 +1088,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                inputs and outputs were matched to a memory
  *                                location.
  * @retval ONNXIFI_STATUS_INVALID_GRAPH The function call failed because
- *                                      graph is not an ONNX graph handle.
+ *                                      graph is not an ONNXIFI graph handle.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
  *                                        inputDescriptors or outputDescriptors
  *                                        pointer is NULL.
@@ -1146,7 +1148,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     const onnxTensorDescriptor* outputDescriptors);
 
 /**
- * Asynchronously execute operations in an ONNX graph using pre-specified
+ * Asynchronously execute operations in an ONNXIFI graph using pre-specified
  * locations for inputs and outputs.
  *
  * This function operates asynchronously: it doesn't require that the locations
@@ -1185,7 +1187,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                inputs and outputs were matched to a memory
  *                                location.
  * @retval ONNXIFI_STATUS_INVALID_GRAPH The function call failed because
- *                                      graph is not an ONNX graph handle.
+ *                                      graph is not an ONNXIFI graph handle.
  * @retval ONNXIFI_STATUS_UNIDENTIFIED_NAME The function call failed because
  *                                          some of the ValueInfoProto.name
  *                                          value in ModelProto.graph.input or
@@ -1219,7 +1221,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     onnxMemoryFence* outputFence);
 
 /**
- * Deinitialize an ONNX graph and release associated resources.
+ * Deinitialize an ONNXIFI graph and release associated resources.
  *
  * If there are in-flight asynchronous inference operations on this graph,
  * the function MUST block until all outstanding operations complete.
@@ -1230,7 +1232,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                resources were released to the operating
  *                                system.
  * @retval ONNXIFI_STATUS_INVALID_GRAPH The function call failed because graph
- *                                      is not an ONNX graph handle.
+ *                                      is not an ONNXIFI graph handle.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       graph backend experienced an
  *                                       unrecovered internal error.
