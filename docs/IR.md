@@ -41,19 +41,17 @@ Nothing in this specification should be construed as advocating one implementati
 
 Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Futhermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
-Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use  the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number.
-
-Also by convention, the four most significant bytes SHOULD be 0 if using simple-number versioning, while semantic versioning must have a non-zero major or the minor version number.
+Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number.
 
 The valid IR versions is defined by an enumeration, which currently has the following values:
 ```
   //  version we published on Oct 10, 2017.
   IR_VERSION_2017_10_10 = 0x0000000000000001;
 
-  // IR_VERSION 2 published on Oct 30, 2017
+  // IR_VERSION 0.0.2 published on Oct 30, 2017
   IR_VERSION_2017_10_30 = 0x0000000000000002;
 
-  // IR VERSION 3 published on Nov 3, 2017
+  // IR VERSION 0.0.3 published on Nov 3, 2017
   IR_VERSION = 0x0000000000000003;
 ```
 
@@ -105,7 +103,7 @@ Each model MUST explicitly name the operator sets that it relies on for its func
 
 Each operator set SHALL be defined in a separate document, also using protobuf as the serialization format. How operator set documents are found at runtime is implementation-dependent.
 
-__Note: As of this writing, no ONNX implementation is known to process operator set documents.__
+__Note: As of the publication of this document, no ONNX implementation is known to process operator set documents.__
 
 The properties of an operator set are:
 
