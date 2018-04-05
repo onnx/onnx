@@ -13,10 +13,7 @@ class TestShapeInference(unittest.TestCase):
 
     def _inferred(self, graph):
         orig_model = helper.make_model(graph, producer_name='onnx-test')
-        orig_model_str = orig_model.SerializeToString()
-        inferred_model_str = onnx.shape_inference.infer_shapes(orig_model_str)
-        inferred_model = ModelProto()
-        inferred_model.ParseFromString(inferred_model_str)
+        inferred_model = onnx.shape_inference.infer_shapes(orig_model)
         checker.check_model(inferred_model)
         return inferred_model
 

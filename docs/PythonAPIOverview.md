@@ -164,9 +164,7 @@ onnx.checker.check_model(original_model)
 print('Before shape inference, the shape info of Y is:\n{}'.format(original_model.graph.value_info))
 
 # Apply shape inference on the model
-original_model_str = original_model.SerializeToString()
-inferred_model_str = shape_inference.infer_shapes(original_model_str)
-inferred_model = onnx.load_from_string(inferred_model_str)
+inferred_model = shape_inference.infer_shapes(original_model)
 
 # Check the model and print Y's shape information
 onnx.checker.check_model(inferred_model)
