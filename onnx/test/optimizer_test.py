@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, ModelProto, TensorProto
+from onnx import checker, helper, TensorProto
 
 import onnx.optimizer
 import unittest
@@ -13,10 +13,7 @@ class TestOptimizer(unittest.TestCase):
 
     def _optimized(self, graph, opts):
         orig_model = helper.make_model(graph, producer_name='onnx-test')
-        orig_model_str = orig_model.SerializeToString()
-        optimized_model_str = onnx.optimizer.optimize(orig_model_str, opts)
-        optimized_model = ModelProto()
-        optimized_model.ParseFromString(optimized_model_str)
+        optimized_model = onnx.optimizer.optimize(orig_model, opts)
         checker.check_model(optimized_model)
         return optimized_model
 
