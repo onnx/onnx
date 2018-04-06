@@ -144,8 +144,6 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
-  const AttributeProto* consume_attr = nullptr;
-
   for (const auto& attr_proto : node.attribute()) {
     const auto& name = attr_proto.name();
 

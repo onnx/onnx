@@ -9,8 +9,10 @@ import onnx.backend.base
 import onnx.backend.test
 
 import onnx
-from onnx import helper, ModelProto
+from onnx import helper
 from onnx.mapping import NP_TYPE_TO_TENSOR_TYPE
+from onnx.backend.base import Device, DeviceType
+from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
 
 
@@ -18,7 +20,8 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def prepare(cls, model, device='CPU', **kwargs):
         super(DummyBackend, cls).prepare(model, device, **kwargs)
-        raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
+        raise BackendIsNotSupposedToImplementIt(
+            "This is the dummy backend test that doesn't verify the results but does run the shape inference")
 
     @classmethod
     def run_node(cls, node, inputs, device='CPU', outputs_info=None):
@@ -30,16 +33,21 @@ class DummyBackend(onnx.backend.base.Backend):
         if outputs_info:
             graph = helper.make_graph([node], "test", input_value_infos, [])
             orig_model = helper.make_model(graph, producer_name='onnx-test')
-            orig_model_str = orig_model.SerializeToString()
-            inferred_model_str = onnx.shape_inference.infer_shapes(orig_model_str)
-            inferred_model = ModelProto()
-            inferred_model.ParseFromString(inferred_model_str)
+            inferred_model = onnx.shape_inference.infer_shapes(orig_model)
 
             # Allow shape inference to not return anything, but if it
             # does then check that it's correct
             if inferred_model.graph.value_info:
                 assert(list(inferred_model.graph.value_info) == output_value_infos)
-        raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
+        raise BackendIsNotSupposedToImplementIt(
+            "This is the dummy backend test that doesn't verify the results but does run the shape inference")
+
+    @classmethod
+    def supports_device(cls, device):
+        d = Device(device)
+        if d.type == DeviceType.CPU:
+            return True
+        return False
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
