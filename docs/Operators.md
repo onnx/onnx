@@ -6901,7 +6901,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Which axis to split on</dd>
+<dd>Which axis to split on (default to 0)</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -7003,6 +7003,7 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 ```python
 input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
 
+# If axis is not specified, split is applied on default axis 0
 node = onnx.helper.make_node(
     'Split',
     inputs=['input'],

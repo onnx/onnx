@@ -71,6 +71,7 @@ class Split(Base):
     def export_default_values():
         input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
 
+        # If axis is not specified, split is applied on default axis 0
         node = onnx.helper.make_node(
             'Split',
             inputs=['input'],

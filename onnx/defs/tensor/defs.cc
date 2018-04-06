@@ -151,13 +151,13 @@ ONNX_OPERATOR_SCHEMA(Split)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input types to float tensors.")
-    .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL)
+    .Attr("axis", "Which axis to split on (default to 0)", AttributeProto::INT, OPTIONAL)
     .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
 Otherwise, the tensor is split to equal sized parts.
 )DOC");
- 
+
 ONNX_OPERATOR_SCHEMA(Slice)
     .SetDoc(R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
