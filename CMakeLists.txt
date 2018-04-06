@@ -241,13 +241,16 @@ if(BUILD_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
+    find_package(PythonInterp ${PY_VERSION} REQUIRED)
+    find_package(PythonLibs ${PY_VERSION} REQUIRED)
+    target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
-        /MP
-        /MX
-        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
-        /wd4503 # identifier' : decorated name length exceeded, name was truncated
-        )
-      target_compile_options(onnx_cpp2py_export PRIVATE /MT)
+      /MP
+      /MX
+      /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+      /wd4503 # identifier' : decorated name length exceeded, name was truncated
+      )
+    target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
 endif()
 
@@ -269,9 +272,6 @@ set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
 set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
 
 if (MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
-    find_package(PythonLibs ${PY_VERSION} REQUIRED)
-    target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_proto PRIVATE
         /MP
         /MX
