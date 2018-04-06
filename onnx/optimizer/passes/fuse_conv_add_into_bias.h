@@ -40,8 +40,8 @@ struct FuseConvAddIntoBias final : public OptimizePass {
           if (n->hasAttribute(kbroadcast) && n->i(kbroadcast) == 1
                   && n->hasAttribute(kaxis) &&
               (n->i(kaxis) == 1 || n->i(kaxis) == 1 - conv_shape.size())) {
-            origConv->node()->addInput(origBias);
-            n->replaceAllUsesWith(origConv->node());
+            orig_conv->node()->addInput(orig_bias);
+            n->replaceAllUsesWith(orig_conv->node());
             it.destroyCurrent();
           }
         }
