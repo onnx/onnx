@@ -9,7 +9,7 @@ import onnx.backend.base
 import onnx.backend.test
 
 import onnx
-from onnx import helper, ModelProto
+from onnx import helper
 from onnx.mapping import NP_TYPE_TO_TENSOR_TYPE
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
@@ -33,10 +33,7 @@ class DummyBackend(onnx.backend.base.Backend):
         if outputs_info:
             graph = helper.make_graph([node], "test", input_value_infos, [])
             orig_model = helper.make_model(graph, producer_name='onnx-test')
-            orig_model_str = orig_model.SerializeToString()
-            inferred_model_str = onnx.shape_inference.infer_shapes(orig_model_str)
-            inferred_model = ModelProto()
-            inferred_model.ParseFromString(inferred_model_str)
+            inferred_model = onnx.shape_inference.infer_shapes(orig_model)
 
             # Allow shape inference to not return anything, but if it
             # does then check that it's correct
