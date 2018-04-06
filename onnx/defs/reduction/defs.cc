@@ -32,7 +32,7 @@ False instead of True.)DOC";
     schema.TypeConstraint(
         "T",
         OpSchema::high_precision_numeric_types(),
-        "Constrain input and output types to all numeric tensors.");
+        "Constrain input and output types to high-precision numeric tensors.");
   };
 }
 
@@ -90,7 +90,7 @@ The type of the output tensor is integer.)DOC";
     schema.TypeConstraint(
         "T",
         OpSchema::all_numeric_types(),
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to all numeric tensors.");
   };
 }
 

@@ -258,7 +258,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 ### <a name="ArgMin-1"></a>**ArgMin-1**</a>
@@ -299,7 +299,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 ### <a name="AveragePool-1"></a>**AveragePool-1**</a>
@@ -3680,7 +3680,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceL2-1"></a>**ReduceL2-1**</a>
@@ -3723,7 +3723,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**</a>
@@ -3766,7 +3766,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**</a>
@@ -3809,7 +3809,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMax-1"></a>**ReduceMax-1**</a>
@@ -3852,7 +3852,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMean-1"></a>**ReduceMean-1**</a>
@@ -3895,7 +3895,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMin-1"></a>**ReduceMin-1**</a>
@@ -3938,7 +3938,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceProd-1"></a>**ReduceProd-1**</a>
@@ -3981,7 +3981,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceSum-1"></a>**ReduceSum-1**</a>
@@ -4024,7 +4024,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**</a>
@@ -4067,7 +4067,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to all numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Relu-1"></a>**Relu-1**</a>
@@ -4968,7 +4968,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Constrain index tensor to uint64</dd>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 ### <a name="Transpose-1"></a>**Transpose-1**</a>
@@ -5643,7 +5643,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="BatchNormalization-6"></a>**BatchNormalization-6**</a>
@@ -5835,7 +5835,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Dropout-6"></a>**Dropout-6**</a>
@@ -6332,7 +6332,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Neg-6"></a>**Neg-6**</a>
@@ -6619,7 +6619,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to numeric tensors.</dd>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Sum-6"></a>**Sum-6**</a>
