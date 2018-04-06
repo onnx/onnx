@@ -34,7 +34,7 @@ struct FuseConvAddIntoBias final : public OptimizePass {
             size_lack_count += 1;
             continue;
           }
-          if (bias_shape[0].dim != conv_shape[1].dim) {
+          if (bias_shape.size() != 1 || bias_shape[0].dim != conv_shape[1].dim) {
             continue;
           }
           if (n->hasAttribute(kbroadcast) && n->i(kbroadcast) == 1
