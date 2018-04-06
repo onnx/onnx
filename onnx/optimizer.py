@@ -17,11 +17,11 @@ from onnx import ModelProto
 """Apply the optimization on the serialized ModelProto.
 
 Arguments:
-    input (string or ModelProto): (serialized) model
+    input (ModelProto): model
     names (list of string): list of optimization names
 
 Return:
-    return (string or ModelProto depends on input) (serialized) optimized model
+    return (ModelProto) optimized model
 
 Supported pass names:
     -- nop
