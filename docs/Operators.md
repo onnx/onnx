@@ -3200,7 +3200,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ```python
 def hardmax_2d(x):
-    return np.eye(x.shape[1])[np.argmax(x, axis=1)]
+    return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 node = onnx.helper.make_node(
