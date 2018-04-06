@@ -235,8 +235,8 @@ computes the output.)DOC";
         "Input data tensor from previous layer; "
         "has size (N x C x H x W), where N is the batch size, "
         "C is the number of channels, and H and W are the "
-        "height and width. Note that this is for the 2D image."
-        "Otherwise the size is (N x D1 x D2 ... x Dn)",
+        "height and width. Note that this is for the 2D image. "
+        "Otherwise the size is (N x C x D1 x D2 ... x Dn)",
         "T");
     schema.Input(
         1,
