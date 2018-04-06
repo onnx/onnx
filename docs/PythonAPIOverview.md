@@ -123,18 +123,21 @@ from onnx import optimizer
 # Preprocessing: load the model to be optimized.
 model_path = 'path/to/the/model'
 original_model = onnx.load(model_path)
-original_model_str = original_model.SerializeToString()
 
 print('The model before optimization:\n{}'.format(original_model))
 
 # A full list of supported optimization passes can be found here:
 # https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L21
-pass_list = ['fuse_consecutive_transposes']
+passes = ['fuse_consecutive_transposes']
 
-# Apply the optimization on the original serialized model
-optimized_model = onnx.load_from_string(optimizer.optimize(original_model_str, pass_list))
+# Apply the optimization on the original model
+optimized_model = optimizer.optimize(original_model, passes)
 
 print('The model after optimization:\n{}'.format(optimized_model))
+
+# Users can also apply the default passes on the (serialized) model
+# Check the default passes here: https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L34
+optimized_model = optimizer.optimie(original_model)
 ```
 Runnable IPython notebooks:
 - [optimize_onnx.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/optimize_onnx.ipynb)
