@@ -20,7 +20,10 @@ graph, that means that the provided values are invalid (or there is a
 bug in shape inference), and the result is unspecified.
 
 Arguments:
-    input (string): serialized ModelProto
+    input (ModelProto): ModelProto
+
+Return:
+    return (ModelProto) model with inferred shape information
 """
 
 
