@@ -29,6 +29,8 @@ Supported pass names:
     -- fuse_consecutive_transposes
     -- fuse_transpose_into_gemm
 """
+
+
 def optimize(model, passes=None):
     if passes is None or len(passes) == 0:
         passes = ['eliminate_nop_transpose',
