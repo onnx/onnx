@@ -199,9 +199,6 @@ class develop(setuptools.command.develop.develop):
 
 
 class build_ext(setuptools.command.build_ext.build_ext):
-    def get_outputs(self):
-        return [self.build_lib]
-
     def run(self):
         self.run_command('cmake_build')
         setuptools.command.build_ext.build_ext.run(self)
