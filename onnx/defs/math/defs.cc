@@ -59,7 +59,7 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::all_numeric_types(),
+        OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to numeric tensors.");
   };
 }
@@ -631,7 +631,7 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "Constrain input and output types to float tensors.")
     .TypeConstraint(
         "I",
-        {"tensor(uint64)"},
+        {"tensor(int64)"},
         "Constrain index tensor to uint64")
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(

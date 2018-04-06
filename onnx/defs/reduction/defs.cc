@@ -31,7 +31,7 @@ False instead of True.)DOC";
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::all_numeric_types(),
+        OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to all numeric tensors.");
   };
 }
@@ -86,7 +86,7 @@ The type of the output tensor is integer.)DOC";
         0,
         "reduced",
         "Reduced output tensor with integer data type.",
-        "tensor(uint64)");
+        "tensor(int64)");
     schema.TypeConstraint(
         "T",
         OpSchema::all_numeric_types(),
