@@ -20,24 +20,37 @@ struct FuseConvAddIntoBias final : public OptimizePass {
   }
 
   void fuse_conv_add_into_bias(Graph& graph) {
+    int size_lack_count = 0;
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
       if (n->kind() == kAdd) {
         int idx = idx_of_conv(n->inputs());
         if (idx != -1 && n->inputs()[idx]->node()->inputs().size() <= 2) {
-          auto origConv = n->inputs()[idx];
-          auto origBias = n->inputs()[1 - idx];
-          auto broadcast = kbroadcast;
-          auto axis = kaxis;
-          auto size = ksize;
-          if (n->hasAttribute(broadcast) && n->i(broadcast) == 1
-                  && n->hasAttribute(axis) && n->i(axis) == 1) {
+          auto orig_conv = n->inputs()[idx];
+          auto orig_bias = n->inputs()[1 - idx];
+          auto conv_shape = orig_conv->sizes();
+          auto bias_shape = orig_bias->sizes();
+          if (bias_shape.size() == 0 || conv_shape.size() == 0) {
+            size_lack_count += 1;
+            continue;
+          }
+          if (bias_shape[0].dim != conv_shape[1].dim) {
+            continue;
+          }
+          if (n->hasAttribute(kbroadcast) && n->i(kbroadcast) == 1
+                  && n->hasAttribute(kaxis) &&
+              (n->i(kaxis) == 1 || n->i(kaxis) == 1 - conv_shape.size())) {
             origConv->node()->addInput(origBias);
             n->replaceAllUsesWith(origConv->node());
             it.destroyCurrent();
           }
         }
       }
+    }
+    if (size_lack_count != 0) {
+      std::cout <<
+                "We can't fuse some operations due to lack of size information."
+                << std::endl;
     }
   }
 
