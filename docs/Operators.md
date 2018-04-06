@@ -8701,3 +8701,37 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>upsample</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Upsample',
+    inputs=['x'],
+    outputs=['y'],
+    height_scale=2.0,
+    width_scale=3.0,
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[output],
+       name='test_upsample')
+```
+
+</details>
+
+
