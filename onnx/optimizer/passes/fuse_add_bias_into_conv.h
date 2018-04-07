@@ -49,7 +49,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
     }
     if (size_lack_count != 0) {
       std::cout <<
-                "We can't fuse some operations due to lack of size information."
+                "Warning: failed to fuse Add into Conv bias due to lack of size information."
                 << std::endl;
     }
   }
