@@ -32,23 +32,39 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           auto bias_shape = orig_bias->sizes();
           auto weight_shape = orig_conv->node()->inputs()[1]->sizes();
           if (bias_shape.size() == 0
-              || conv_shape.size() == 0
-                  || weight_shape.size() == 0) {
+              || (conv_shape.size() == 0
+                  && weight_shape.size() == 0)) {
             size_lack_count += 1;
             continue;
           }
-          if (bias_shape.size() != 1
-              || bias_shape[0].dim != conv_shape[1].dim
-                  || bias_shape[0].dim != weight_shape[0].dim) {
+          std::vector<Dimension> new_bias_shape;
+          for (auto d : bias_shape) {
+            if (d.dim != 1) {
+              new_bias_shape.push_back(d);
+            }
+          }
+          if (new_bias_shape.size() != 1
+              && ((conv_shape.size() != 0 && new_bias_shape[0].dim != conv_shape[1].dim)
+                  || (weight_shape.size() != 0 && new_bias_shape[0].dim != weight_shape[0].dim))) {
             continue;
           }
-          if (n->hasAttribute(kbroadcast) && n->i(kbroadcast) == 1
-                  && n->hasAttribute(kaxis) &&
-              (n->i(kaxis) == 1 || n->i(kaxis) == 1 - conv_shape.size())) {
-            orig_conv->node()->addInput(orig_bias);
-            n->replaceAllUsesWith(orig_conv->node());
-            it.destroyCurrent();
+          if (bias_shape.size() != new_bias_shape.size()) {
+            Node *squeeze = graph.create(kSqueeze);
+            squeeze->addInput(orig_bias);
+            squeeze->insertBefore(orig_bias->node());
+            orig_bias = squeeze->outputs()[0];
           }
+          if (bias_shape.size() < conv_shape.size()) {
+            if (!n->hasAttribute(kbroadcast) || !n->hasAttribute(kaxis)) {
+              continue;
+            }
+            if (n->i(kbroadcast) != 1 || (n->i(kaxis) != 1 && n->i(kaxis) != 1 - conv_shape.size())) {
+              continue;
+            }
+          }
+          orig_conv->node()->addInput(orig_bias);
+          n->replaceAllUsesWith(orig_conv->node());
+          it.destroyCurrent();
         }
       }
     }
