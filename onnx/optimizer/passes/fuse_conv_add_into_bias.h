@@ -25,7 +25,7 @@ struct FuseConvAddIntoBias final : public OptimizePass {
       auto* n = *it;
       if (n->kind() == kAdd) {
         int idx = idx_of_conv(n->inputs());
-        if (idx != -1 && n->inputs()[idx]->node()->inputs().size() <= 2) {
+        if (idx != -1 && n->inputs()[idx]->node()->inputs().size() == 2) {
           auto orig_conv = n->inputs()[idx];
           auto orig_bias = n->inputs()[1 - idx];
           auto conv_shape = orig_conv->sizes();
