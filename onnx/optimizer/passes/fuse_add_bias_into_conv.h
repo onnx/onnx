@@ -38,22 +38,6 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             continue;
           }
           std::vector<Dimension> new_bias_shape;
-          for (auto d : bias_shape) {
-            if (d.dim != 1) {
-              new_bias_shape.push_back(d);
-            }
-          }
-          if (new_bias_shape.size() != 1
-              && ((conv_shape.size() != 0 && new_bias_shape[0].dim != conv_shape[1].dim)
-                  || (weight_shape.size() != 0 && new_bias_shape[0].dim != weight_shape[0].dim))) {
-            continue;
-          }
-          if (bias_shape.size() != new_bias_shape.size()) {
-            Node *squeeze = graph.create(kSqueeze);
-            squeeze->addInput(orig_bias);
-            squeeze->insertBefore(orig_bias->node());
-            orig_bias = squeeze->outputs()[0];
-          }
           if (bias_shape.size() < conv_shape.size()) {
             if (!n->hasAttribute(kbroadcast) || !n->hasAttribute(kaxis)) {
               continue;
@@ -61,6 +45,27 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             if (n->i(kbroadcast) != 1 || (n->i(kaxis) != 1 && n->i(kaxis) != 1 - conv_shape.size())) {
               continue;
             }
+          }
+          std::vector<int64_t> squeeze_axes;
+          int axis = 0;
+          for (auto d : bias_shape) {
+            if (d.dim != 1) {
+              new_bias_shape.push_back(d);
+            } else {
+              squeeze_axes.push_back(axis);
+            }
+            axis++;
+          }
+          if (new_bias_shape.size() != 1
+              && ((conv_shape.size() != 0 && new_bias_shape[0].dim != conv_shape[1].dim)
+                  || (weight_shape.size() != 0 && new_bias_shape[0].dim != weight_shape[0].dim))) {
+            continue;
+          }
+          if (bias_shape.size() != new_bias_shape.size()) {
+            Node *squeeze = graph.create(kSqueeze, orig_bias);
+            squeeze->is_(kaxes, std::move(squeeze_axes));
+            squeeze->insertBefore(orig_conv->node());
+            orig_bias = squeeze->outputs()[0];
           }
           orig_conv->node()->addInput(orig_bias);
           n->replaceAllUsesWith(orig_conv->node());
