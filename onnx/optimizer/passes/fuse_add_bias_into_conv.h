@@ -30,11 +30,16 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           auto orig_bias = n->inputs()[1 - idx];
           auto conv_shape = orig_conv->sizes();
           auto bias_shape = orig_bias->sizes();
-          if (bias_shape.size() == 0 || conv_shape.size() == 0) {
+          auto weight_shape = orig_conv->node()->inputs()[1]->sizes();
+          if (bias_shape.size() == 0
+              || conv_shape.size() == 0
+                  || weight_shape.size() == 0) {
             size_lack_count += 1;
             continue;
           }
-          if (bias_shape.size() != 1 || bias_shape[0].dim != conv_shape[1].dim) {
+          if (bias_shape.size() != 1
+              || bias_shape[0].dim != conv_shape[1].dim
+                  || bias_shape[0].dim != weight_shape[0].dim) {
             continue;
           }
           if (n->hasAttribute(kbroadcast) && n->i(kbroadcast) == 1
