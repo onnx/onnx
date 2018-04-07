@@ -7,9 +7,9 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-struct FuseConvAddIntoBias final : public OptimizePass {
-  explicit FuseConvAddIntoBias()
-    : OptimizePass("fuse_conv_add_into_bias", API_TYPE::IR) {
+struct FuseAddBiasIntoConv final : public OptimizePass {
+  explicit FuseAddBiasIntoConv()
+    : OptimizePass("fuse_add_bias_into_conv", API_TYPE::IR) {
   }
 
   static int idx_of_conv(const ArrayRef<Value *> & values) {
@@ -19,7 +19,7 @@ struct FuseConvAddIntoBias final : public OptimizePass {
     return -1;
   }
 
-  void fuse_conv_add_into_bias(Graph& graph) {
+  void fuse_add_bias_into_conv(Graph& graph) {
     int size_lack_count = 0;
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
@@ -55,7 +55,7 @@ struct FuseConvAddIntoBias final : public OptimizePass {
   }
 
   void optimize(Graph& graph) override {
-    fuse_conv_add_into_bias(graph);
+    fuse_add_bias_into_conv(graph);
   }
 };
 
