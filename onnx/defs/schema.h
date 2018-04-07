@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -32,19 +33,6 @@ using DataTypeSet = std::unordered_set<DataType>;
 // description.
 using TypeConstraintMap =
     std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>;
-
-typedef TensorShapeProto_Dimension InferenceDimension;
-
-struct InferenceContext {
-  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
-  virtual size_t getNumInputTypes() const = 0;
-  virtual const TypeProto_Tensor* getInputType(size_t index) const = 0;
-  virtual size_t getNumOutputTypes() const = 0;
-  virtual TypeProto_Tensor* getOutputType(size_t index) = 0;
-  virtual ~InferenceContext() {}
-};
-
-typedef void (*InferenceFunction)(InferenceContext&);
 
 /**
  * @brief A class to record the schema of an op.

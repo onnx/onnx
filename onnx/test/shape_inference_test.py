@@ -48,7 +48,27 @@ class TestShapeInference(unittest.TestCase):
         inferred_model = self._inferred(graph)
 
         vis_expected = [
-            helper.make_tensor_value_info("Y", TensorProto.FLOAT, ())
+            helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))
+        ]
+
+        assert list(inferred_model.graph.value_info) == vis_expected, \
+            inferred_model.graph.value_info
+
+    def test_transpose_partial(self):
+        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
+        graph = helper.make_graph(
+            [trans],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [])
+        graph.value_info.extend([
+            helper.make_tensor_value_info("Y", TensorProto.UNDEFINED, (3, "a", "b"))
+        ])
+
+        inferred_model = self._inferred(graph)
+
+        vis_expected = [
+            helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))
         ]
 
         assert list(inferred_model.graph.value_info) == vis_expected, \
@@ -65,14 +85,12 @@ class TestShapeInference(unittest.TestCase):
             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5))
         ])
 
-        inferred_model = self._inferred(graph)
+        try:
+            self._inferred(graph)
+        except RuntimeError:
+            return
 
-        vis_expected = [
-            helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5))
-        ]
-
-        assert list(inferred_model.graph.value_info) == vis_expected, \
-            inferred_model.graph.value_info
+        assert False
 
     def test_transpose_preexisting_incorrect_type(self):
         trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
@@ -82,17 +100,15 @@ class TestShapeInference(unittest.TestCase):
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
             [])
         graph.value_info.extend([
-            helper.make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 5))
+            helper.make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))
         ])
 
-        inferred_model = self._inferred(graph)
+        try:
+            self._inferred(graph)
+        except RuntimeError:
+            return
 
-        vis_expected = [
-            helper.make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 5))
-        ]
-
-        assert list(inferred_model.graph.value_info) == vis_expected, \
-            inferred_model.graph.value_info
+        assert False
 
 
 if __name__ == '__main__':
