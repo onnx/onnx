@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.1)
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
-option(BUILD_PYTHON "Build Python binaries" ON)
+option(BUILD_ONNX_PYTHON "Build Python binaries" ON)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -159,7 +159,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
       VERBATIM )
 
     set(PROTOC_ARGS ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR} --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
-    if(BUILD_PYTHON)
+    if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
       if(NOT WIN32)
         # Haven't figured out how to generate mypy stubs on Windows yet
@@ -208,7 +208,7 @@ add_library(onnx ${onnx_src})
 target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
 
-if(BUILD_PYTHON)
+if(BUILD_ONNX_PYTHON)
   if("${PY_EXT_SUFFIX}" STREQUAL "")
     if (MSVC)
       set(PY_EXT_SUFFIX ".pyd")

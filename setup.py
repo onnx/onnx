@@ -145,7 +145,7 @@ class cmake_build(setuptools.Command):
                 CMAKE,
                 '-DPYTHON_INCLUDE_DIR={}'.format(sysconfig.get_python_inc()),
                 '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
-                '-DBUILD_PYTHON=ON',
+                '-DBUILD_ONNX_PYTHON=ON',
                 '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
                 '-DPY_EXT_SUFFIX={}'.format(sysconfig.get_config_var('EXT_SUFFIX') or ''),
