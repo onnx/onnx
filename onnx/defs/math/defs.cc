@@ -59,8 +59,8 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
     schema.TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        OpSchema::high_precision_numeric_types(),
+        "Constrain input and output types to high-precision numeric tensors.");
   };
 }
 
@@ -138,8 +138,14 @@ the tensor elementwise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float)",
+         "tensor(int32)",
+         "tensor(int8)",
+         "tensor(int16)",
+         "tensor(int64)",
+         "tensor(float16)",
+         "tensor(double)"},
+        "Constrain input and output types to signed numeric tensors.");
 
 ONNX_OPERATOR_SCHEMA(Abs)
     .SinceVersion(6)
@@ -152,8 +158,8 @@ the tensor elementwise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        OpSchema::all_numeric_types(),
+        "Constrain input and output types to all numeric tensors.");
 
 ONNX_OPERATOR_SCHEMA(Reciprocal)
     .SinceVersion(6)
@@ -484,12 +490,12 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
         "min",
         "Minimum value, under which element is replaced by min",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        std::numeric_limits<float>::lowest())
     .Attr(
         "max",
         "Maximum value, above which element is replaced by max",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        std::numeric_limits<float>::max())
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
     .TypeConstraint(
