@@ -21,6 +21,9 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   # Also test in python2 mode (but this is still in the python 3 CI
   # instance, because mypy itself needs python 3)
   time mypy --py2 .
+
+  pip uninstall -y onnx
+  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -v .
 fi
 
 # check line endings to be UNIX
