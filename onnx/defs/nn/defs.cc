@@ -78,7 +78,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the "
         "width of the data. For non image case, the "
-        "dimension are in the form of "
+        "dimensions are in the form of "
         "(N x C x D1 x D2 ... Dn), where N is the batch "
         "size.",
         "T");
@@ -150,7 +150,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the "
         "width of the data. For non image case, the "
-        "dimension are in the form of "
+        "dimensions are in the form of "
         "(N x C x D1 x D2 ... Dn), where N is the "
         "batch size.",
         "T");
@@ -411,7 +411,7 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         "dimensions for image case are (N x C x H x W), "
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the width "
-        "of the data. For non image case, the dimension are "
+        "of the data. For non image case, the dimensions are "
         "in the form of (N x C x D1 x D2 ... Dn), "
         "where N is the batch size.",
         "T");
@@ -459,7 +459,7 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         "dimensions for image case are (N x C x H x W), "
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the width "
-        "of the data. For non image case, the dimension are "
+        "of the data. For non image case, the dimensions are "
         "in the form of (N x C x D1 x D2 ... Dn), "
         "where N is the batch size.",
         "T");
@@ -515,7 +515,18 @@ Output case #2: Y (test mode)
         "e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.",
         AttributeProto::FLOAT,
         0.9f)
-    .Input(0, "X", "The input 4-dimensional tensor of shape NCHW.", "T")
+    .Input(
+        0,
+        "X",
+        "Input data tensor from the previous operator; "
+        "dimensions for image case are (N x C x H x W), "
+        "where N is the batch size, C is the number of "
+        "channels, and H and W are the height and the "
+        "width of the data. For non image case, the "
+        "dimensions are in the form of "
+        "(N x C x D1 x D2 ... Dn), where N is the batch "
+        "size.",
+        "T")
     .Input(
         1,
         "scale",
@@ -543,7 +554,7 @@ Output case #2: Y (test mode)
     .Output(
         0,
         "Y",
-        "The output 4-dimensional tensor of the same shape as X.",
+        "The output tensor of the same shape as X.",
         "T")
     .Output(
         1,
@@ -593,13 +604,24 @@ where mean and variance are computed per instance per channel.
         "The epsilon value to use to avoid division by zero, default is 1e-5f.",
         AttributeProto::FLOAT,
         1e-5f)
-    .Input(0, "input", "The input 4-dimensional tensor of shape NCHW.", "T")
+    .Input(
+        0,
+        "input",
+        "Input data tensor from the previous operator; "
+        "dimensions for image case are (N x C x H x W), "
+        "where N is the batch size, C is the number of "
+        "channels, and H and W are the height and the "
+        "width of the data. For non image case, the "
+        "dimensions are in the form of "
+        "(N x C x D1 x D2 ... Dn), where N is the batch "
+        "size.",
+        "T")
     .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
     .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
     .Output(
         0,
         "output",
-        "The output 4-dimensional tensor of the same shape as input.",
+        "The output tensor of the same shape as input.",
         "T")
     .TypeConstraint(
         "T",
