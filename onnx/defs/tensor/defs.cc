@@ -151,7 +151,7 @@ ONNX_OPERATOR_SCHEMA(Split)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input types to float tensors.")
-    .Attr("axis", "Which axis to split on (default to 0)", AttributeProto::INT, OPTIONAL)
+    .Attr("axis", "Which axis to split on (defaults to 0)", AttributeProto::INT, static_cast<int64_t>(0))
     .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.

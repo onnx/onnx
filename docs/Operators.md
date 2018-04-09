@@ -6901,7 +6901,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Which axis to split on (default to 0)</dd>
+<dd>Which axis to split on (defaults to 0)</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
