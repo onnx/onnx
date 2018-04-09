@@ -348,33 +348,49 @@ class OpSchema final {
       std::string description);
 
   // Convenience members for types
-  static const std::vector<std::string>& all_integral_types() {
-    static const std::vector<std::string> all_integral_types = {"float",
-                                                                "int32",
-                                                                "string",
-                                                                "bool",
-                                                                "uint8",
-                                                                "int8",
-                                                                "uint16",
-                                                                "int16",
-                                                                "int64",
-                                                                "float16",
-                                                                "double"};
-    return all_integral_types;
+
+  // All high-precision numeric types.
+  static const std::vector<std::string>& high_precision_numeric_types() {
+    static const std::vector<std::string> high_precision_numeric_types = {
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float)",
+        "tensor(double)"};
+    return high_precision_numeric_types;
+  }
+
+  static const std::vector<std::string>& all_numeric_types() {
+      static const std::vector<std::string> all_numeric_types = {
+          +"tensor(uint8)",
+          +"tensor(uint16)",
+          +"tensor(uint32)",
+          +"tensor(uint64)",
+          +"tensor(int8)",
+          +"tensor(int16)",
+          +"tensor(int32)",
+          +"tensor(int64)",
+          +"tensor(float16)",
+          +"tensor(float)",
+          +"tensor(double)" };
+      return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types = {"tensor(float)",
-                                                              "tensor(int32)",
-                                                              "tensor(string)",
-                                                              "tensor(bool)",
-                                                              "tensor(uint8)",
-                                                              "tensor(int8)",
+    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
                                                               "tensor(uint16)",
+                                                              "tensor(uint32)",
+                                                              "tensor(uint64)",
+                                                              "tensor(int8)",
                                                               "tensor(int16)",
+                                                              "tensor(int32)",
                                                               "tensor(int64)",
                                                               "tensor(float16)",
-                                                              "tensor(double)"};
+                                                              "tensor(float)",
+                                                              "tensor(double)",
+                                                              "tensor(string)",
+                                                              "tensor(bool)"};
     return all_tensor_types;
   }
 
