@@ -175,7 +175,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 All names MUST adhere to C identifier syntax rules.
 
-Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique within that graph. 
+Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. 
 
 The namespaces are:
 
@@ -184,7 +184,7 @@ Namespace|Description
 Attribute|The names of attributes of an operator. Unique for each operator.
 Value|The names of values – node inputs & outputs, tensor values (if named), graph inputs, outputs.
 Node|The names of graph nodes.
-Graph|The names of graphs within a domain.
+Graph|The names of graphs within a domain, unique within the model domain.
 Operator|The names of operators within a domain.
 Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.
 
@@ -209,11 +209,13 @@ doc_string|string|A human-readable documentation for this value. Markdown is all
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-Node inputs MAY also refer to graph inputs and initializers. The outputs of a given node MAY introduce new names into the graph, name a graph output, or coincide with the outputs of other nodes. Thus, using overlapping output names, two nodes MAY compute the same output value. Graph outputs MAY NOT be used to establish data dependency edges in the graph by being named as node inputs.
+The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node.
 
- Node dependencies MUST NOT create cycles in the computation graph. 
+The graph must use single-static assignment for all node outputs. All node output namess MUST be unique within the graph.
 
-__[[ DESCRIBE VARARGS ]]__
+Node dependencies MUST NOT create cycles in the computation graph.
+
+The number of inputs and outputs in a node, their types, the set of attributes specified in a node and their types MUST satisfy the constraints imposed by the signature of the node’s operator.
 
 The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
 
@@ -247,9 +249,15 @@ The representation distinguishes between two kinds of values: attribute values, 
 
 The types of the inputs and outputs of a graph must be specified.
 
-#### Optional Inputs
+#### Variadic Inputs and Outputs
+ 
+The last input or output of an operator MAY be marked as variadic. For each variadic operator input, one or more node inputs must be specified. For each variadic operator output, one or more node outputs must be specified. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
+
+#### Optional Inputs and Outputs
 
 Some operators have inputs that are marked as optional. There are two ways to leave an optional input unspecified. The first is to simply not provide that input. However, this is not always possible - for example, if you wish to leave the fourth input unspecified, but still provide a value for the fifth input. Therefore, any input with a name of the empty string is treated as an unspecified optional input.
+
+Some operators have outputs that are optional. This means that an operator, depending on its input parameters and/or attributes, may not compute the corresponding value. Each node referring to such an operator must have knowledge of the circumstances under which output is computed or not, and provide a name for the output when it is computed. Failure to do so will result in the output not being captured.
 
 ## Standard data types
 
