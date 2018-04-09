@@ -145,8 +145,8 @@ class TestOptimizer(unittest.TestCase):
         )
         optimized_model = self._optimized(graph, ["fuse_add_bias_into_conv"])
 
-        assert len([node for node in optimized_model.graph.node if node.op_type == 'Squeeze']) == 1
-        assert len([node for node in optimized_model.graph.node if node.op_type == 'Add']) == 0
+        assert len([node for node in optimized_model.graph.node if node.op_type == "Squeeze"]) == 1
+        assert len([node for node in optimized_model.graph.node if node.op_type == "Add"]) == 0
         assert len(list(optimized_model.graph.node)) == 2
 
     def test_fuse_add_bias_into_conv_no_fuse_squeeze_4d_bias(self):
@@ -162,8 +162,8 @@ class TestOptimizer(unittest.TestCase):
         )
         optimized_model = self._optimized(graph, ["fuse_add_bias_into_conv"])
 
-        assert len([node for node in optimized_model.graph.node if node.op_type == 'Squeeze']) == 1
-        assert len([node for node in optimized_model.graph.node if node.op_type == 'Add']) == 0
+        assert len([node for node in optimized_model.graph.node if node.op_type == "Squeeze"]) == 1
+        assert len([node for node in optimized_model.graph.node if node.op_type == "Add"]) == 0
         assert len(list(optimized_model.graph.node)) == 2
 
     def test_preserve_value_info(self):
