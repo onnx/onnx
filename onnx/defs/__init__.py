@@ -40,4 +40,4 @@ def _Attribute_default_value(self):
     return attr
 
 
-OpSchema.Attribute.default_value = _Attribute_default_value
+OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
