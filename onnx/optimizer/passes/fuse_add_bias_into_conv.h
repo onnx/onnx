@@ -3,6 +3,15 @@
 
 #pragma once
 
+// Z = Conv(X, Y)
+// B = Z + A
+//
+// the pass can handle the following cases:
+//   case 1: A is 1D tensor and A.dim[0] == Z.dim[1]
+//   case 2: A is 1-element 1D tensor
+
+
+
 #include "onnx/optimizer/passes/optimize_pass.h"
 
 namespace ONNX_NAMESPACE { namespace optimization {
@@ -12,6 +21,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
     : OptimizePass("fuse_add_bias_into_conv", API_TYPE::IR) {
   }
 
+  // NB: when numpy style broadcasting is enabled, this function will be more useful.
   static int idx_of_conv(const ArrayRef<Value *> & values) {
     for (size_t i = 0; i < values.size(); i++)
       if (values[i]->node()->kind() == kConv)
@@ -25,7 +35,8 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
       auto* n = *it;
       if (n->kind() == kAdd) {
         int idx = idx_of_conv(n->inputs());
-        if (idx != -1 && n->inputs()[idx]->node()->inputs().size() == 2) {
+        // due to current broadcasting's constraint, Conv has to be the first oprand
+        if (idx == 0 && n->inputs()[idx]->node()->inputs().size() == 2) {
           auto orig_conv = n->inputs()[idx];
           auto orig_bias = n->inputs()[1 - idx];
           // check if bias is Const or in graph's initializers
@@ -34,72 +45,78 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             continue;
           }
           // check if conv is only used by Add
-          if (std::find_if(orig_conv->uses().begin(),
-                           orig_conv->uses().end(),
-                           [n](Use u){ return u.user != n; })
-              != orig_conv->uses().end()) {
+          if (orig_conv->uses().size() > 1) {
             continue;
           }
           auto conv_shape = orig_conv->sizes();
           auto bias_shape = orig_bias->sizes();
           auto weight_shape = orig_conv->node()->inputs()[1]->sizes();
           int64_t M = -1;
-          // check if has int conv_shape
-          // get feature M
+          // try to get feature M from conv_shape
           if (conv_shape.size() > 1 && conv_shape[1].is_int) {
             M = conv_shape[1].dim;
           }
-          // check if has int weight_shape
-          // get feature M
+          // try to get feature M from weight_shape
           if (weight_shape.size() > 0 && weight_shape[0].is_int) {
             ONNX_ASSERT(M == -1 || M == weight_shape[0].dim);
             M = weight_shape[0].dim;
           }
-          // check if there is enough information
           if (M == -1 || bias_shape.size() == 0 || !bias_shape[0].is_int) {
+            // No enough information, bail out
             size_lack_count += 1;
             continue;
           }
-          // check attributes
-          std::vector<Dimension> new_bias_shape;
-          if (bias_shape.size() < conv_shape.size()) {
-            if (!n->hasAttribute(kbroadcast) || !n->hasAttribute(kaxis)) {
-              continue;
-            }
-            if (n->i(kbroadcast) != 1 || (n->i(kaxis) != 1 && n->i(kaxis) != 1 - conv_shape.size())) {
-              continue;
-            }
-          }
-          // check if need squeeze and make squeeze axes
-          std::vector<int64_t> squeeze_axes;
-          int axis = 0;
-          for (auto d : bias_shape) {
-            if (d.is_int && d.dim != 1) {
-              new_bias_shape.push_back(d);
+          if (bias_shape.size() == 1) {
+            ONNX_ASSERT(n->hasAttribute(kbroadcast) && n->i(kbroadcast) == static_cast<int64_t>(1));
+            if (bias_shape[0].dim == 1) {
+              Symbol sym = Symbol("value");
+              Node* constant1 = graph.create(kConstant, 1);
+              Tensor t1;
+              t1.sizes().push_back(static_cast<int64_t>(1));
+              t1.int64s().push_back(M);
+              t1.elem_type() = TensorProto_DataType_INT64;
+              constant1->t_(sym, t1);
+              constant1->insertBefore(orig_conv->node());
+              Node* constant2 = graph.create(kConstant, 1);
+              Tensor t2;
+              t2.sizes().push_back(static_cast<int64_t>(1));
+              t2.int64s().push_back(0);
+              t2.elem_type() = TensorProto_DataType_INT64;
+              constant2->t_(sym, t2);
+              constant2->insertBefore(orig_conv->node());
+              Node* tile = graph.create(kTile, 1);
+              tile->addInput(orig_bias);
+              tile->addInput(constant1->output());
+              tile->addInput(constant2->output());
+              tile->insertBefore(orig_conv->node());
+              orig_conv->node()->addInput(tile->output());
+              if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
+                std::vector<Dimension> conv_shape(n->output()->sizes());
+                orig_conv->setSizes(conv_shape);
+              }
+              if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
+                orig_conv->setElemType(n->output()->elemType());
+              }
+              n->replaceAllUsesWith(orig_conv->node());
+              it.destroyCurrent();
+            } else if (bias_shape[0].dim == M &&
+                (!n->hasAttribute(kaxis) || n->i(kaxis) == 1)) { // default axis is 1
+              if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
+                std::vector<Dimension> conv_shape(n->output()->sizes());
+                orig_conv->setSizes(conv_shape);
+              }
+              if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
+                orig_conv->setElemType(n->output()->elemType());
+              }
+              orig_conv->node()->addInput(orig_bias);
+              n->replaceAllUsesWith(orig_conv->node());
+              it.destroyCurrent();
             } else {
-              squeeze_axes.push_back(axis);
+              continue;
             }
-            axis++;
-          }
-          if (new_bias_shape.size() != 1) {
+          } else {
             continue;
           }
-          // check if mismatch M
-          if (new_bias_shape[0].dim != M) {
-            continue;
-          }
-          // insert Squeeze node if necessary
-          if (squeeze_axes.size() > 0) {
-            Node *squeeze = graph.create(kSqueeze, orig_bias);
-            squeeze->is_(kaxes, std::move(squeeze_axes));
-            squeeze->insertBefore(orig_conv->node());
-            orig_bias = squeeze->output();
-          }
-          // add bias as 3rd input
-          orig_conv->node()->addInput(orig_bias);
-          // replace the use of n with conv
-          n->replaceAllUsesWith(orig_conv->node());
-          it.destroyCurrent();
         }
       }
     }
