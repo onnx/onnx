@@ -1,6 +1,7 @@
 #pragma once
 
-#include "data_type_utils.h"
+#include "onnx/proto_utils.h"
+#include "onnx/defs/data_type_utils.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -14,9 +15,6 @@ struct InferenceContext {
 };
 
 typedef void (*InferenceFunction)(InferenceContext&);
-
-template<typename T> inline google::protobuf::RepeatedField<T> retrieveValues(const AttributeProto& attr);
-template<> inline google::protobuf::RepeatedField<int64_t> retrieveValues(const AttributeProto& attr) { return attr.ints(); }
 
 template<typename T>
 inline bool getRepeatedAttribute(InferenceContext& ctx,
