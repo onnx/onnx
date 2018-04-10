@@ -251,13 +251,20 @@ The types of the inputs and outputs of a graph must be specified.
 
 #### Variadic Inputs and Outputs
  
-The last input or output of an operator MAY be marked as variadic. For each variadic operator input, one or more node inputs must be specified. For each variadic operator output, one or more node outputs must be specified. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
+The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
+
+For each variadic operator input, one or more node inputs must be specified. For each variadic operator output, one or more node outputs must be specified. 
 
 #### Optional Inputs and Outputs
 
-Some operators have inputs that are marked as optional. There are two ways to leave an optional input unspecified. The first is to simply not provide that input. However, this is not always possible - for example, if you wish to leave the fourth input unspecified, but still provide a value for the fifth input. Therefore, any input with a name of the empty string is treated as an unspecified optional input.
+Some operators have inputs that are marked as optional, which means that a referring node MAY choose not to provide a value for that input.
 
-Some operators have outputs that are optional. This means that an operator, depending on its input parameters and/or attributes, may not compute the corresponding value. Each node referring to such an operator must have knowledge of the circumstances under which output is computed or not, and provide a name for the output when it is computed. Failure to do so will result in the output not being captured.
+Some operators have outputs that are optional, which means that an operator, depending on its input parameters and/or attributes, MAY choose not to compute all its declared outputs. 
+
+There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
+
+Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
+
 
 ## Standard data types
 
@@ -324,7 +331,11 @@ For example, a NxM matrix would have the shape list [N,M].
 
 The name of each dimension variable MUST adhere to C identifier syntax.
 
-Dimension variables are scoped to the declaration (graph signature, node signature, or single operator declaration) that they appear in. Thus, any given name denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related. For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and produce an output of shape [K,N].
+Dimension variables are scoped to the declaration that they appear in. For graph inputs and outputs, the graph itself is the declaration. Dimension variables appearing in a graph's 'value_info' record are scoped to the value. Consequently, any name that is repeated denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related.
+
+For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
+
+The emptry string "", when used as a dimension name, denotes a single dimension of any cardinality. The string "*", when used as a dimension name, denotes zero or more dimensions of unknown cardinality.
 
 Shapes MAY be defined using a combination of integers and variables.
 
