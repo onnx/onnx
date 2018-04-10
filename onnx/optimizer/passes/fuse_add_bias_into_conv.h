@@ -68,6 +68,11 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           }
           if (bias_shape.size() == 1) {
             ONNX_ASSERT(n->hasAttribute(kbroadcast) && n->i(kbroadcast) == static_cast<int64_t>(1));
+            bool able_to_optimize = bias_shape[0].dim == 1 ||
+              (bias_shape[0].dim == M && (!n->hasAttribute(kaxis) || n->i(kaxis) == 1));
+            if (!able_to_optimize) {
+              continue;
+            }
             if (bias_shape[0].dim == 1) {
               Symbol sym = Symbol("value");
               Node* constant1 = graph.create(kConstant, 1);
@@ -90,30 +95,19 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
               tile->addInput(constant2->output());
               tile->insertBefore(orig_conv->node());
               orig_conv->node()->addInput(tile->output());
-              if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
-                std::vector<Dimension> conv_shape(n->output()->sizes());
-                orig_conv->setSizes(conv_shape);
-              }
-              if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
-                orig_conv->setElemType(n->output()->elemType());
-              }
-              n->replaceAllUsesWith(orig_conv->node());
-              it.destroyCurrent();
             } else if (bias_shape[0].dim == M &&
                 (!n->hasAttribute(kaxis) || n->i(kaxis) == 1)) { // default axis is 1
-              if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
-                std::vector<Dimension> conv_shape(n->output()->sizes());
-                orig_conv->setSizes(conv_shape);
-              }
-              if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
-                orig_conv->setElemType(n->output()->elemType());
-              }
               orig_conv->node()->addInput(orig_bias);
-              n->replaceAllUsesWith(orig_conv->node());
-              it.destroyCurrent();
-            } else {
-              continue;
             }
+            if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
+              std::vector<Dimension> conv_shape(n->output()->sizes());
+              orig_conv->setSizes(conv_shape);
+            }
+            if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
+              orig_conv->setElemType(n->output()->elemType());
+            }
+            n->replaceAllUsesWith(orig_conv->node());
+            it.destroyCurrent();
           } else {
             continue;
           }
