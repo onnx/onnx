@@ -1292,7 +1292,7 @@ test_cases = {
 }
 
 for test_case, values in test_cases.items():
-    values = [np.asarray(v) for v in values]
+    values = [np.asarray(v, dtype=np.float32) for v in values]
     for i in range(len(values[0].shape)):
         in_args = ['value' + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
@@ -8699,5 +8699,39 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Upsample',
+    inputs=['x'],
+    outputs=['y'],
+    height_scale=2.0,
+    width_scale=3.0,
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[output],
+       name='test_upsample_nearest')
+```
+
+</details>
 
 
