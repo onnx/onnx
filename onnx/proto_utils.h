@@ -32,4 +32,8 @@ bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
   coded_stream.SetTotalBytesLimit((2048LL << 20) - 1, 512LL << 20);
   return proto->ParseFromCodedStream(&coded_stream);
 }
+
+template<typename T> inline google::protobuf::RepeatedField<T> retrieveValues(const AttributeProto& attr);
+template<> inline google::protobuf::RepeatedField<int64_t> retrieveValues(const AttributeProto& attr) { return attr.ints(); }
+
 } // namespace ONNX_NAMESPACE
