@@ -2,7 +2,6 @@
 
 #include "onnx/proto_utils.h"
 #include "onnx/defs/schema.h"
-#include "onnx/checker.h"
 
 namespace ONNX_NAMESPACE { namespace shape_inference {
 
@@ -54,13 +53,10 @@ struct InferenceContextImpl : public InferenceContext {
 }
 
 void InferShapes(ModelProto& m) {
-  checker::CheckerContext cctx;
-  cctx.set_ir_version(static_cast<int>(m.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  cctx.set_opset_imports(opset_imports);
 
   auto* g = m.mutable_graph();
 
@@ -77,7 +73,6 @@ void InferShapes(ModelProto& m) {
 
   for (const auto& n : g->node()) {
     // Resolve domain for node
-    const auto& opset_imports = cctx.get_opset_imports();
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
       continue;

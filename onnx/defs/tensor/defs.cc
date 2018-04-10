@@ -245,9 +245,12 @@ will be (2, 1, 3).
         if(!ctx.getInputType(0)) {
           return;
         }
+        if (!ctx.getInputType(0)->has_shape()) {
+          return;
+        }
 
         std::vector<int64_t> perm;
-        if (!getRepeatedAttribute(ctx, "perm", perm) && ctx.getInputType(0)->has_shape()) {
+        if (!getRepeatedAttribute(ctx, "perm", perm)) {
           for (int i = ctx.getInputType(0)->shape().dim_size() - 1; i >= 0; --i) {
             perm.push_back(i);
           }
