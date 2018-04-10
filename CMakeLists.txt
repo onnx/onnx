@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.1)
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
-option(BUILD_ONNX_PYTHON "Build Python binaries" ON)
+option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
