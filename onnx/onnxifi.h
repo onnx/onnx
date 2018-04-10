@@ -123,10 +123,13 @@ typedef uint64_t onnxPointer;
 #define ONNXIFI_STATUS_INVALID_STATE 0x0018
 #define ONNXIFI_STATUS_INVALID_NAME 0x0019
 #define ONNXIFI_STATUS_INVALID_SHAPE 0x001A
+#define ONNXIFI_STATUS_INVALID_DATATYPE 0x001B
 #define ONNXIFI_STATUS_UNSUPPORTED_VERSION 0x0020
 #define ONNXIFI_STATUS_UNSUPPORTED_OPERATOR 0x0021
 #define ONNXIFI_STATUS_UNSUPPORTED_PARAMETER 0x0022
-#define ONNXIFI_STATUS_UNIDENTIFIED_NAME 0x0023
+#define ONNXIFI_STATUS_UNSUPPORTED_SHAPE 0x0023
+#define ONNXIFI_STATUS_UNSUPPORTED_DATATYPE 0x0024
+#define ONNXIFI_STATUS_UNIDENTIFIED_NAME 0x0025
 #define ONNXIFI_STATUS_NO_SYSTEM_MEMORY 0x0030
 #define ONNXIFI_STATUS_NO_DEVICE_MEMORY 0x0031
 #define ONNXIFI_STATUS_NO_SYSTEM_RESOURCES 0x0032
@@ -764,8 +767,34 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                             backend.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_PARAMETER The function call failed because
  *                                              the backend does not support the
- *                                              particular parameter values in
- *                                              one of the operators.
+ *                                              particular AttributeProto
+ *                                              values in one of the operators.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_SHAPE The function call failed because the
+ *                                          backend does not support the
+ *                                          tensor shapes in an input or output
+ *                                          of one of the operators. The
+ *                                          problematic tensor shapes could be
+ *                                          directly specified through
+ *                                          ValueInfoProto in GraphProto.input,
+ *                                          GraphProto.output, or
+ *                                          GraphProto.value_info, through
+ *                                          TensorProto in
+ *                                          GraphProto.initializer, or inferred
+ *                                          from the inputs by the backend.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_DATATYPE The function call failed because
+ *                                             the backend does not support the
+ *                                             data types in an input or output
+ *                                             of one of the operators. The
+ *                                             problematic data types could be
+ *                                             directly specified through
+ *                                             ValueInfoProto in
+ *                                             GraphProto.input,
+ *                                             GraphProto.output, or
+ *                                             GraphProto.value_info, through
+ *                                             TensorProto in
+ *                                             GraphProto.initializer, or
+ *                                             inferred from the inputs by the
+ *                                             backend.
  * @retval ONNXIFI_STATUS_NO_SYSTEM_MEMORY The function call failed because the
  *                                         backend could not allocate enough
  *                                         system memory to parse and analyze
@@ -1017,7 +1046,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                        backend is not an ONNXIFI backend
  *                                        handle.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
- *                                        onnxModel is NULL.
+ *                                        onnxModel or weightDescriptors is
+ *                                        NULL.
  * @retval ONNXIFI_STATUS_INVALID_SIZE The function call failed because
  *                                     onnxModelSize is 0.
  * @retval ONNXIFI_STATUS_INVALID_PROTOBUF The function call failed because it
@@ -1038,8 +1068,37 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                             backend.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_PARAMETER The function call failed because
  *                                              the backend does not support the
- *                                              particular parameter values in
- *                                              one of the operators.
+ *                                              particular AttributeProto
+ *                                              values in one of the operators.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_SHAPE The function call failed because the
+ *                                          backend does not support the
+ *                                          tensor shapes in an input or
+ *                                          output of one of the operators.
+ *                                          The problematic tensor shapes could
+ *                                          be directly specified through
+ *                                          ValueInfoProto in GraphProto.input,
+ *                                          GraphProto.output, or
+ &                                          GraphProto.value_info, through
+ *                                          TensorProto in
+ *                                          GraphProto.initializer, through
+ *                                          weightDescriptors argument,
+ *                                          or inferred from the inputs by the
+ *                                          backend.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_DATATYPE The function call failed because
+ *                                             the backend does not support the
+ *                                             data types in an input or output
+ *                                             of one of the operators. The
+ *                                             problematic data types could be
+ *                                             directly specified through
+ *                                             ValueInfoProto in
+ *                                             GraphProto.input,
+ *                                             GraphProto.output, or
+ *                                             GraphProto.value_info, through
+ *                                             TensorProto in
+ *                                             GraphProto.initializer, through
+ *                                             weightDescriptors argument,
+ *                                             or inferred from the inputs by
+ *                                             the backend.
  * @retval ONNXIFI_STATUS_NO_SYSTEM_MEMORY The function call failed because the
  *                                         backend could not allocate enough
  *                                         system memory to parse, analyze, and
@@ -1108,12 +1167,19 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                              type, or shape specified in one
  *                                              of the operators.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_SHAPE The function call failed because the
- *                                          backend does can not support the
- *                                          shape of input or output tensors.
- *                                          This error code may be returned when
- *                                          the backend supports variable-size
- *                                          inputs and outputs, and the tensor
- *                                          shape was provided to the graph as a
+ *                                          backend does not support the
+ *                                          tensor shapes in an input or output
+ *                                          of one of the operators. The
+ *                                          problematic tensor shapes could be
+ *                                          directly specified through
+ *                                          inputDescriptors or
+ *                                          outputDescriptors argument,
+ *                                          or inferred from the inputs by the
+ *                                          backend. This error code can be
+ *                                          returned when the backend supports
+ *                                          variable-size inputs and outputs,
+ *                                          and the problematic tensor shape was
+ *                                          provided in the ValueInfoProto as a
  *                                          symbolic variable.
  * @retval ONNXIFI_STATUS_UNIDENTIFIED_NAME The function call failed because one
  *                                          of the ValueInfoProto.name value in
