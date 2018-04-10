@@ -33,7 +33,7 @@ bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
   return proto->ParseFromCodedStream(&coded_stream);
 }
 
-template<typename T> inline google::protobuf::RepeatedField<T> retrieveValues(const AttributeProto& attr);
-template<> inline google::protobuf::RepeatedField<int64_t> retrieveValues(const AttributeProto& attr) { return attr.ints(); }
+template<typename T> inline google::protobuf::RepeatedField<T> RetrieveValues(const AttributeProto& attr);
+template<> inline google::protobuf::RepeatedField<int64_t> RetrieveValues(const AttributeProto& attr) { return attr.ints(); }
 
 } // namespace ONNX_NAMESPACE

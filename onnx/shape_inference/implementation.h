@@ -79,7 +79,7 @@ void InferShapes(ModelProto& m) {
     }
     auto domain_version = dit->second;
 
-    auto schema = OpSchemaRegistry::Schema(n.op_type(), domain_version, n.domain());
+    const auto schema = OpSchemaRegistry::Schema(n.op_type(), domain_version, n.domain());
     if (!schema) {
       continue;
     }
@@ -121,11 +121,18 @@ void InferShapes(ModelProto& m) {
         }
       }
 
-      for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
-        const auto& inferredDim = inferredType.shape().dim(j);
-        if (existingType->mutable_shape()->dim_size() <= j) {
+      if (existingType->has_shape()) {
+        if (inferredType.shape().dim_size() != existingType->shape().dim_size()) {
+          throw std::runtime_error("inferred type and existing type are of different rank");
+        }
+      } else {
+        for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
           existingType->mutable_shape()->add_dim();
         }
+      }
+
+      for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
+        const auto& inferredDim = inferredType.shape().dim(j);
         auto* existingDim = existingType->mutable_shape()->mutable_dim(j);
         if (inferredDim.has_dim_value()) {
           auto inferredDimValue = inferredDim.dim_value();
