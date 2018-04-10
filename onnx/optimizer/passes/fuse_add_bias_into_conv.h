@@ -28,15 +28,39 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
         if (idx != -1 && n->inputs()[idx]->node()->inputs().size() == 2) {
           auto orig_conv = n->inputs()[idx];
           auto orig_bias = n->inputs()[1 - idx];
+          // check if bias is Const or in graph's initializers
+          if (orig_bias->node()->kind() != kConstant
+              && orig_bias->node()->kind() != kParam) {
+            continue;
+          }
+          // check if conv is only used by Add
+          if (std::find_if(orig_conv->uses().begin(),
+                           orig_conv->uses().end(),
+                           [n](Use u){ return u.user != n; })
+              != orig_conv->uses().end()) {
+            continue;
+          }
           auto conv_shape = orig_conv->sizes();
           auto bias_shape = orig_bias->sizes();
           auto weight_shape = orig_conv->node()->inputs()[1]->sizes();
-          if (bias_shape.size() == 0
-              || (conv_shape.size() == 0
-                  && weight_shape.size() == 0)) {
+          int64_t M = -1;
+          // check if has int conv_shape
+          // get feature M
+          if (conv_shape.size() > 1 && conv_shape[1].is_int) {
+            M = conv_shape[1].dim;
+          }
+          // check if has int weight_shape
+          // get feature M
+          if (weight_shape.size() > 0 && weight_shape[0].is_int) {
+            ONNX_ASSERT(M == -1 || M == weight_shape[0].dim);
+            M = weight_shape[0].dim;
+          }
+          // check if there is enough information
+          if (M == -1 || bias_shape.size() == 0 || !bias_shape[0].is_int) {
             size_lack_count += 1;
             continue;
           }
+          // check attributes
           std::vector<Dimension> new_bias_shape;
           if (bias_shape.size() < conv_shape.size()) {
             if (!n->hasAttribute(kbroadcast) || !n->hasAttribute(kaxis)) {
@@ -46,28 +70,34 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
               continue;
             }
           }
+          // check if need squeeze and make squeeze axes
           std::vector<int64_t> squeeze_axes;
           int axis = 0;
           for (auto d : bias_shape) {
-            if (d.dim != 1) {
+            if (d.is_int && d.dim != 1) {
               new_bias_shape.push_back(d);
             } else {
               squeeze_axes.push_back(axis);
             }
             axis++;
           }
-          if (new_bias_shape.size() != 1
-              && ((conv_shape.size() != 0 && new_bias_shape[0].dim != conv_shape[1].dim)
-                  || (weight_shape.size() != 0 && new_bias_shape[0].dim != weight_shape[0].dim))) {
+          if (new_bias_shape.size() != 1) {
             continue;
           }
-          if (bias_shape.size() != new_bias_shape.size()) {
+          // check if mismatch M
+          if (new_bias_shape[0].dim != M) {
+            continue;
+          }
+          // insert Squeeze node if necessary
+          if (squeeze_axes.size() > 0) {
             Node *squeeze = graph.create(kSqueeze, orig_bias);
             squeeze->is_(kaxes, std::move(squeeze_axes));
             squeeze->insertBefore(orig_conv->node());
-            orig_bias = squeeze->outputs()[0];
+            orig_bias = squeeze->output();
           }
+          // add bias as 3rd input
           orig_conv->node()->addInput(orig_bias);
+          // replace the use of n with conv
           n->replaceAllUsesWith(orig_conv->node());
           it.destroyCurrent();
         }
