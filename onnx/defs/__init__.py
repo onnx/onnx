@@ -33,7 +33,7 @@ def get_all_schemas_with_history():
 OpSchema = C.OpSchema
 
 
-@property
+@property  # type: ignore
 def _Attribute_default_value(self):
     attr = onnx.AttributeProto()
     attr.ParseFromString(self._default_value)
