@@ -8704,7 +8704,7 @@ This version of the operator has been available since version 1 of the default O
 #### Examples
 
 <details>
-<summary>upsample</summary>
+<summary>nearest</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -8729,7 +8729,7 @@ output = np.array([[[
 ]]], dtype=np.float32)
 
 expect(node, inputs=[data], outputs=[output],
-       name='test_upsample')
+       name='test_upsample_nearest')
 ```
 
 </details>
