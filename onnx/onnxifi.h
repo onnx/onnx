@@ -1058,6 +1058,13 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                      parsed ModelProto message does not
  *                                      satisfy ONNX requirements and
  *                                      constraints.
+ * @retval ONNXIFI_STATUS_INVALID_SHAPE The function call failed because one of
+ *                                      the shape dimensions in
+ *                                      weightDescriptors is 0.
+ * @retval ONNXIFI_STATUS_INVALID_DATATYPE The function call failed because
+ *                                         one of the data types in
+ *                                         weightDescriptors is unknown to the
+ *                                         backend.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_VERSION The function call failed because
  *                                            the ONNX IR version or operator
  *                                            version is not supported by the
@@ -1161,6 +1168,10 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                     descriptor.
  * @retval ONNXIFI_STATUS_INVALID_SHAPE The function call failed because one of
  *                                      the shape dimensions is 0.
+ * @retval ONNXIFI_STATUS_INVALID_DATATYPE The function call failed because
+ *                                         one of the data types in
+ *                                         inputDescriptors or outputDescriptors
+ *                                         is unknown to the backend.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_PARAMETER The function call failed because
  *                                              the backend does not support the
  *                                              particular data type, memory
