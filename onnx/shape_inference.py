@@ -8,7 +8,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import onnx
-import onnx.onnx_cpp2py_export.shape_inference as C
+import onnx.onnx_cpp2py_export.shape_inference as C  # type: ignore
 from onnx import ModelProto
 
 """Apply shape inference to the provided ModelProto.
