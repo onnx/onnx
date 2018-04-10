@@ -2371,6 +2371,72 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = np.ones((1, 3*hidden_size, input_size)).astype(np.float32)
+R = np.ones((1, 3*hidden_size, hidden_size)).astype(np.float32)
+
+output = np.array([[ 0.04719133,  0.04719133,  0.04719133,  0.04719133],
+                   [ 0.04791026,  0.04791026,  0.04791026,  0.04791026],
+                   [ 0.04792343,  0.04792343,  0.04792343,  0.04792343]]).astype(np.float32)
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+custom_bias = 0.1
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = np.ones((1, 3*hidden_size, input_size)).astype(np.float32)
+R = np.ones((1, 3*hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, 3*hidden_size)).astype(np.float32)
+R_B = np.zeros((1, 3*hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis = 1)
+
+output = np.array([[ 0.04293266,  0.04293266,  0.04293266,  0.04293266],
+                   [ 0.04359724,  0.04359724,  0.04359724,  0.04359724],
+                   [ 0.04360932,  0.04360932,  0.04360932,  0.04360932]]).astype(np.float32)
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
+```
+
+</details>
+
+
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
@@ -3301,6 +3367,102 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = np.ones((1, 4*hidden_size, input_size)).astype(np.float32)
+R = np.ones((1, 4*hidden_size, hidden_size)).astype(np.float32)
+
+output = np.array([[ 0.70377535,  0.70377535,  0.70377535,  0.70377535],
+                   [ 0.96009213,  0.96009213,  0.96009213,  0.96009213],
+                   [ 0.99451119,  0.99451119,  0.99451119,  0.99451119]]).astype(np.float32)
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_lstm_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+custom_bias = 0.1
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = np.ones((1, 4*hidden_size, input_size)).astype(np.float32)
+R = np.ones((1, 4*hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, 4*hidden_size)).astype(np.float32)
+R_B = np.zeros((1, 4*hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis = 1)
+
+output = np.array([[ 0.70919698,  0.70919698,  0.70919698,  0.70919698],
+                   [ 0.96049958,  0.96049958,  0.96049958,  0.96049958],
+                   [ 0.99456745,  0.99456745,  0.99456745,  0.99456745]]).astype(np.float32)
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_lstm_with_initial_bias')
+```
+
+</details>
+
+
+<details>
+<summary>peepholes</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', 'P'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = np.ones((1, 4*hidden_size, input_size)).astype(np.float32)
+R = np.ones((1, 4*hidden_size, hidden_size)).astype(np.float32)
+P = np.ones((1, 3*hidden_size, )).astype(np.float32)
+
+output = np.array([[ 0.724828  ,  0.724828  ,  0.724828  ,  0.724828  ],
+                   [ 0.96014303,  0.96014303,  0.96014303,  0.96014303],
+                   [ 0.99451232,  0.99451232,  0.99451232,  0.99451232]]).astype(np.float32)
+
+expect(node, inputs=[input, W, R, P], outputs=[output], name='test_lstm_with_peepholes')
+```
+
+</details>
 
 
 ### <a name="LeakyRelu"></a><a name="leakyrelu">**LeakyRelu**</a>
@@ -5297,6 +5459,75 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+output = np.array([[ 0.29131261,  0.29131261,  0.29131261,  0.29131261],
+                   [ 0.67317414,  0.67317414,  0.67317414,  0.67317414],
+                   [ 0.87852567,  0.87852567,  0.87852567,  0.87852567]]).astype(np.float32)
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+custom_bias = 0.1
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
+R_B = np.zeros((1, hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis = 1)
+
+output = np.array([[ 0.37994897,  0.37994897,  0.37994897,  0.37994897],
+                   [ 0.74067795,  0.74067795,  0.74067795,  0.74067795],
+                   [ 0.90447217,  0.90447217,  0.90447217,  0.90447217]]).astype(np.float32)
+
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
+```
+
+</details>
 
 
 ### <a name="RandomNormal"></a><a name="randomnormal">**RandomNormal**</a>
