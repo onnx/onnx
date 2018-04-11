@@ -146,7 +146,7 @@ class TestOptimizer(unittest.TestCase):
              helper.make_tensor_value_info("A", TensorProto.FLOAT, (16,))],
             [helper.make_tensor_value_info("B", TensorProto.FLOAT, (1, 16, 3, 3))],
             value_info=[
-              helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 3, 3))
+                helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 3, 3))
             ],
         )
         optimized_model = self._optimized(graph, ["fuse_add_bias_into_conv"])
