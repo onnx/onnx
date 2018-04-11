@@ -991,7 +991,8 @@ inline Value::Value(Node * node_, size_t offset_)
   offset_(offset_),
   unique_(node_->graph_->next_unique_++),
   stage_(node_->graph_->new_node_stage_),
-  has_unique_name_(false) {
+  has_unique_name_(false),
+  elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
   node_->graph_->all_values.emplace(this);
 }
 
