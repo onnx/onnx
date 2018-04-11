@@ -11,7 +11,7 @@ import onnx.helper  # noqa
 import onnx.checker  # noqa
 import onnx.defs  # noqa
 
-import google.protobuf.message
+import google.protobuf.message  # type: ignore
 
 
 def load(obj):

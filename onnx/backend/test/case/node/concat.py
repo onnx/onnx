@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -24,7 +24,7 @@ class Concat(Base):
         }
 
         for test_case, values in test_cases.items():
-            values = [np.asarray(v) for v in values]
+            values = [np.asarray(v, dtype=np.float32) for v in values]
             for i in range(len(values[0].shape)):
                 in_args = ['value' + str(k) for k in range(len(values))]
                 node = onnx.helper.make_node(

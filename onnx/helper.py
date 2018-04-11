@@ -8,7 +8,7 @@ import numbers
 
 from six import text_type, integer_types, binary_type
 
-import google.protobuf.message
+import google.protobuf.message  # type: ignore
 from onnx import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, IR_VERSION
 import onnx.defs as defs
@@ -46,15 +46,18 @@ def make_node(
     return node
 
 
-def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None):
+def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None, value_info=None):
     if initializer is None:
         initializer = []
+    if value_info is None:
+        value_info = []
     graph = GraphProto()
     graph.node.extend(nodes)
     graph.name = name
     graph.input.extend(inputs)
     graph.output.extend(outputs)
     graph.initializer.extend(initializer)
+    graph.value_info.extend(value_info)
     if doc_string:
         graph.doc_string = doc_string
     return graph

@@ -250,15 +250,15 @@ This version of the operator has been available since version 1 of the default O
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int32)</dt>
+<dt><tt>reduced</tt> : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 ### <a name="ArgMin-1"></a>**ArgMin-1**</a>
@@ -291,15 +291,15 @@ This version of the operator has been available since version 1 of the default O
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int32)</dt>
+<dt><tt>reduced</tt> : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 ### <a name="AveragePool-1"></a>**AveragePool-1**</a>
@@ -348,7 +348,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -715,7 +715,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
 <dt><tt>B</tt> (optional) : T</dt>
@@ -1605,7 +1605,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -1674,7 +1674,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -1893,7 +1893,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
@@ -2505,7 +2505,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int64</dt>
 <dd>Only int64</dd>
@@ -2547,7 +2547,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int32</dt>
 <dd>Indices</dd>
@@ -2753,7 +2753,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -3679,8 +3679,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceL2-1"></a>**ReduceL2-1**</a>
@@ -3722,8 +3722,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSum-1"></a>**ReduceLogSum-1**</a>
@@ -3765,8 +3765,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceLogSumExp-1"></a>**ReduceLogSumExp-1**</a>
@@ -3808,8 +3808,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMax-1"></a>**ReduceMax-1**</a>
@@ -3851,8 +3851,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMean-1"></a>**ReduceMean-1**</a>
@@ -3894,8 +3894,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceMin-1"></a>**ReduceMin-1**</a>
@@ -3937,8 +3937,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceProd-1"></a>**ReduceProd-1**</a>
@@ -3980,8 +3980,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceSum-1"></a>**ReduceSum-1**</a>
@@ -4023,8 +4023,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="ReduceSumSquare-1"></a>**ReduceSumSquare-1**</a>
@@ -4066,8 +4066,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Relu-1"></a>**Relu-1**</a>
@@ -5182,7 +5182,7 @@ This version of the operator has been available since version 2 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -5230,7 +5230,7 @@ This version of the operator has been available since version 2 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -5319,7 +5319,7 @@ This version of the operator has been available since version 2 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Which axis to split on</dd>
+<dd>Which axis to split on (defaults to 0)</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -5585,8 +5585,8 @@ This version of the operator has been available since version 6 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 ### <a name="Add-6"></a>**Add-6**</a>
@@ -5642,8 +5642,8 @@ This version of the operator has been available since version 6 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="BatchNormalization-6"></a>**BatchNormalization-6**</a>
@@ -5677,7 +5677,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
 <dt><tt>B</tt> : T</dt>
@@ -5692,7 +5692,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>The output 4-dimensional tensor of the same shape as X.</dd>
+<dd>The output tensor of the same shape as X.</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
@@ -5834,8 +5834,8 @@ This version of the operator has been available since version 6 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Dropout-6"></a>**Dropout-6**</a>
@@ -6100,7 +6100,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The input 1-dimensional scale tensor of size C.</dd>
 <dt><tt>B</tt> : T</dt>
@@ -6111,7 +6111,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output 4-dimensional tensor of the same shape as input.</dd>
+<dd>The output tensor of the same shape as input.</dd>
 </dl>
 
 #### Type Constraints
@@ -6331,8 +6331,8 @@ This version of the operator has been available since version 6 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Neg-6"></a>**Neg-6**</a>
@@ -6362,8 +6362,8 @@ This version of the operator has been available since version 6 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
 ### <a name="PRelu-6"></a>**PRelu-6**</a>
@@ -6618,8 +6618,8 @@ This version of the operator has been available since version 6 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Sum-6"></a>**Sum-6**</a>
