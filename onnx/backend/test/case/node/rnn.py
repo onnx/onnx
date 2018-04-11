@@ -62,6 +62,5 @@ class RNN(Base):
             output = np.array([[ 0.37994897,  0.37994897,  0.37994897,  0.37994897],
                                [ 0.74067795,  0.74067795,  0.74067795,  0.74067795],
                                [ 0.90447217,  0.90447217,  0.90447217,  0.90447217]]).astype(np.float32)
-
                             
             expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')

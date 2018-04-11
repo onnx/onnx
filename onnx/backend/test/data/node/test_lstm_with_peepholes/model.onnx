@@ -1,8 +1,13 @@
-backend-test:¢
-&
+backend-test:Ö
+Q
 X
 W
-RY"LSTM*
+R
+B
+sequence_lens
+	initial_h
+	initial_c
+PY"LSTM*
 hidden_size test_lstm_with_peepholesZ
 X
 
@@ -18,7 +23,29 @@
 
 
 
-b
+Z
+B
+
+
+ Z
+sequence_lens
+
+
+Z
+	initial_h
+
+
+
+Z
+	initial_c
+
+
+
+Z
+P
+
+
+b
 Y
 
 
