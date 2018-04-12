@@ -172,8 +172,7 @@ class TestOptimizer(unittest.TestCase):
                                         name="bias",
                                         data_type=TensorProto.FLOAT,
                                         dims=(16,),
-                                        vals=np.random.randn(16).astype(np.float32).tolist(),
-                                    ))
+                                        vals=np.random.randn(16).astype(np.float32).tolist()))
         add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)
         graph = helper.make_graph(
             [conv, constant, add],
@@ -193,7 +192,6 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.output[0].name == 'Z'
         assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
         assert len(optimized_model.graph.output[0].type.tensor_type.shape.dim) == 4
-
 
     def test_fuse_add_bias_into_conv_squeeze_1d_bias_no_fuse(self):
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
