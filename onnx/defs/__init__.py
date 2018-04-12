@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import onnx
-import onnx.onnx_cpp2py_export.defs as C  # type: ignore
+import onnx.onnx_cpp2py_export.defs as C
 
 
 ONNX_DOMAIN = ""
@@ -40,4 +40,4 @@ def _Attribute_default_value(self):
     return attr
 
 
-OpSchema.Attribute.default_value = _Attribute_default_value
+OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
