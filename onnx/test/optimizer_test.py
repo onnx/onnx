@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 
 from onnx import checker, helper, TensorProto
 
+import numpy as np  # type: ignore
+
 import onnx.optimizer
 import unittest
 
@@ -127,6 +129,11 @@ class TestOptimizer(unittest.TestCase):
         optimized_model = self._optimized(graph, ["fuse_add_bias_into_conv"])
 
         assert len(list(optimized_model.graph.node)) == 4
+        assert len(optimized_model.graph.value_info) == 2
+        assert optimized_model.graph.value_info[0].type.tensor_type.elem_type == TensorProto.INT64
+        assert optimized_model.graph.value_info[1].type.tensor_type.elem_type == TensorProto.INT64
+        assert len(optimized_model.graph.value_info[0].type.tensor_type.shape.dim) == 1
+        assert len(optimized_model.graph.value_info[1].type.tensor_type.shape.dim) == 1
         assert optimized_model.graph.node[0].op_type == 'Constant'
         assert optimized_model.graph.node[1].op_type == 'Constant'
         assert optimized_model.graph.node[2].op_type == 'Tile'
@@ -157,6 +164,36 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.output[0].name == 'Z'
         assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
         assert len(optimized_model.graph.output[0].type.tensor_type.shape.dim) == 4
+
+    def test_fuse_add_bias_into_conv_use_move_constant(self):
+        conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
+        constant = helper.make_node("Constant", [], ["A"],
+                                    value=helper.make_tensor(
+                                        name="bias",
+                                        data_type=TensorProto.FLOAT,
+                                        dims=(16,),
+                                        vals=np.random.randn(16).astype(np.float32).tolist(),
+                                    ))
+        add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)
+        graph = helper.make_graph(
+            [conv, constant, add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 3, 3)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (1, 16, 3, 3))],
+            value_info=[
+                helper.make_tensor_value_info("A", TensorProto.FLOAT, (16,)),
+            ]
+        )
+        optimized_model = self._optimized(graph, ["fuse_add_bias_into_conv"])
+
+        assert len(optimized_model.graph.node) == 2
+        assert optimized_model.graph.node[0].op_type == 'Constant'
+        assert optimized_model.graph.node[1].op_type == 'Conv'
+        assert optimized_model.graph.output[0].name == 'Z'
+        assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+        assert len(optimized_model.graph.output[0].type.tensor_type.shape.dim) == 4
+
 
     def test_fuse_add_bias_into_conv_squeeze_1d_bias_no_fuse(self):
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])

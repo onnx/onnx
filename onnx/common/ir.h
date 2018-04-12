@@ -671,6 +671,23 @@ public:
     inputs_.clear();
   }
 
+  // Check whether this node is before node n in the graph.
+  bool isBefore(Node* n) {
+    if (n == nullptr || this == n) {
+      // Bail out early.
+      return false;
+    }
+    ONNX_ASSERT(n->inGraphList());
+    Node* p = next();
+    while (p != nullptr) {
+      if (p == n) {
+        return true;
+      }
+      p = next();
+    }
+    return false;
+  }
+
   // iterators of the node list starting at this node
   // useful for resuming a search starting at this node
   graph_node_list_iterator iterator();

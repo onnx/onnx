@@ -21,14 +21,6 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
     : OptimizePass("fuse_add_bias_into_conv", API_TYPE::IR) {
   }
 
-  // NB: when numpy style broadcasting is enabled, this function will be more useful.
-  //static int idx_of_conv(const ArrayRef<Value *> & values) {
-  //  for (size_t i = 0; i < values.size(); i++)
-  //    if (values[i]->node()->kind() == kConv)
-  //      return i;
-  //  return -1;
-  //}
-
   void fuse_add_bias_into_conv(Graph& graph) {
     int size_lack_count = 0;
     for (auto it = graph.begin(); it != graph.end(); ++it) {
@@ -72,6 +64,11 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           if (!able_to_optimize) {
             continue;
           }
+          // move the bias before Conv.
+          // if necessary, insert tile before Conv (after bias)
+          if (orig_bias->node()->kind() != kParam && orig_conv->node()->isBefore(orig_bias->node())) {
+            orig_bias->node()->moveBefore(orig_conv->node());
+          }
           if (bias_shape[0].dim == 1) {
             Symbol sym = Symbol("value");
             Node* constant1 = graph.create(kConstant, 1);
@@ -80,6 +77,9 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             t1.int64s().push_back(M);
             t1.elem_type() = TensorProto_DataType_INT64;
             constant1->t_(sym, t1);
+            std::vector<Dimension> s1 = {1};
+            constant1->output()->setSizes(s1);
+            constant1->output()->setElemType(TensorProto_DataType_INT64);
             constant1->insertBefore(orig_conv->node());
             Node* constant2 = graph.create(kConstant, 1);
             Tensor t2;
@@ -87,6 +87,9 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             t2.int64s().push_back(0);
             t2.elem_type() = TensorProto_DataType_INT64;
             constant2->t_(sym, t2);
+            std::vector<Dimension> s2 = {1};
+            constant2->output()->setSizes(s2);
+            constant2->output()->setElemType(TensorProto_DataType_INT64);
             constant2->insertBefore(orig_conv->node());
             Node* tile = graph.create(kTile, 1);
             tile->addInput(orig_bias);
