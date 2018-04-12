@@ -33,7 +33,7 @@ class RNN(Base):
         output = np.array([[0.29131261, 0.29131261, 0.29131261, 0.29131261],
                             [0.67317414, 0.67317414, 0.67317414, 0.67317414],
                             [0.87852567, 0.87852567, 0.87852567, 0.87852567]]).astype(np.float32)
-        
+
         expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
 
     @staticmethod
