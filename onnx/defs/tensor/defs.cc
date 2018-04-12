@@ -151,7 +151,7 @@ ONNX_OPERATOR_SCHEMA(Split)
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input types to float tensors.")
-    .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL)
+    .Attr("axis", "Which axis to split on (defaults to 0)", AttributeProto::INT, static_cast<int64_t>(0))
     .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
     .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
 'axis'. Lengths of the parts can be specified using argument 'split'.
@@ -242,37 +242,25 @@ will be (2, 1, 3).
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .ShapeInferenceFunction([](InferenceContext& ctx) {
-      if (ctx.getNumInputTypes() != 1) {
-        return;
-      }
-      std::vector<int64_t> perm;
-      {
-        auto perm_attr = ctx.getAttribute("perm");
-        if (perm_attr) {
-          for (auto dim : perm_attr->ints()) {
-            perm.push_back(dim);
-          }
-        } else {
-          int ndims = ctx.getInputType(0)->shape().dim_size();
-          for (int i = 0; i < ndims; i++) {
-            perm.push_back(ndims - i - 1);
+        if(!ctx.getInputType(0)) {
+          return;
+        }
+        if (!ctx.getInputType(0)->has_shape()) {
+          return;
+        }
+
+        std::vector<int64_t> perm;
+        if (!getRepeatedAttribute(ctx, "perm", perm)) {
+          for (int i = ctx.getInputType(0)->shape().dim_size() - 1; i >= 0; --i) {
+            perm.push_back(i);
           }
         }
-      }
 
-      TypeProto_Tensor tt;
-      {
-        tt.set_elem_type(ctx.getInputType(0)->elem_type());
-        auto shape = tt.mutable_shape();
-
-        for (size_t i = 0; i < perm.size(); i++) {
-          auto dim = shape->add_dim();
-          *dim = ctx.getInputType(0)->shape().dim(perm[i]);
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        for (size_t i = 0; i < perm.size(); ++i) {
+          appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, perm[i]);
         }
-      }
-
-      *ctx.getOutputType(0) = tt;
-    });
+      });
 
 ONNX_OPERATOR_SCHEMA(Gather)
     .SetDoc(R"DOC(

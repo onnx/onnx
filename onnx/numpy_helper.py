@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import sys
 
-import numpy as np
+import numpy as np  # type: ignore
 from onnx import TensorProto
 from onnx import mapping
 

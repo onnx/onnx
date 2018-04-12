@@ -8,7 +8,7 @@ import numbers
 
 from six import text_type, integer_types, binary_type
 
-import google.protobuf.message
+import google.protobuf.message  # type: ignore
 from onnx import TensorProto, AttributeProto, ValueInfoProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, IR_VERSION
 import onnx.defs as defs
@@ -247,23 +247,26 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
 
     tensor_shape_proto = tensor_type_proto.shape
 
-    # You might think this is a no-op (extending a normal Python list by []
-    # certainly is), but protobuf lists work a little differently; if a field is never
-    # set, it is omitted from the resulting protobuf; a list that is explicitly
-    # set to be empty will get an (empty) entry in the protobuf. This difference
-    # is visible to our consumers, so make sure we emit an empty shape!
-    tensor_shape_proto.dim.extend([])
+    if shape is not None:
+        # You might think this is a no-op (extending a normal Python
+        # list by [] certainly is), but protobuf lists work a little
+        # differently; if a field is never set, it is omitted from the
+        # resulting protobuf; a list that is explicitly set to be
+        # empty will get an (empty) entry in the protobuf. This
+        # difference is visible to our consumers, so make sure we emit
+        # an empty shape!
+        tensor_shape_proto.dim.extend([])
 
-    for d in shape:
-        dim = tensor_shape_proto.dim.add()
-        if isinstance(d, integer_types):
-            dim.dim_value = d
-        elif isinstance(d, text_type):
-            dim.dim_param = d
-        else:
-            raise ValueError(
-                'Invalid item in shape: {}. '
-                'Needs to of integer_types or text_type.'.format(d))
+        for d in shape:
+            dim = tensor_shape_proto.dim.add()
+            if isinstance(d, integer_types):
+                dim.dim_value = d
+            elif isinstance(d, text_type):
+                dim.dim_param = d
+            else:
+                raise ValueError(
+                    'Invalid item in shape: {}. '
+                    'Needs to of integer_types or text_type.'.format(d))
 
     return value_info_proto
 

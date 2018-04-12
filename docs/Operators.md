@@ -7136,7 +7136,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Which axis to split on</dd>
+<dd>Which axis to split on (defaults to 0)</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -7161,6 +7161,105 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>1d</summary>
+
+```python
+input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3'],
+    axis=0
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_1d')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=0,
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
+```
+
+</details>
+
+
+<details>
+<summary>2d</summary>
+
+```python
+input = np.array([[1., 2., 3., 4., 5., 6.],
+                  [7., 8., 9., 10., 11., 12.]]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=1
+)
+
+expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
+                    np.array([[4., 5., 6.], [10., 11., 12.]]).astype(np.float32)]
+
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=1,
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
+                    np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
+
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
+```
+
+</details>
+
+
+<details>
+<summary>default_values</summary>
+
+```python
+input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
+
+# If axis is not specified, split is applied on default axis 0
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3']
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_default_axis')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
+```
+
+</details>
 
 
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>
