@@ -27,7 +27,7 @@ ONNX is an open specification that consists of the following components:
 
 Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this.
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps.
+There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with  ML algorithms that are not based on neural networks.
 
 ## Runtime Agnostic
 
@@ -57,6 +57,7 @@ The valid IR versions is defined by an enumeration, which currently has the foll
 
 Operator sets use a simple number as the version number. This specification does not provide guidance on what versioning scheme model producers should be using.
 
+More details on conventions and best practices for versioning of IR, pperator sets, and models can be found in [Versioning](Versioning.md).
 
 ## Extensible computation graph model
 
@@ -211,7 +212,7 @@ Edges in the computation graph are established by outputs of one node being refe
 
 The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node.
 
-The graph must use single-static assignment for all node outputs. All node output namess MUST be unique within the graph.
+The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph.
 
 Node dependencies MUST NOT create cycles in the computation graph.
 
@@ -235,11 +236,11 @@ i|int64|An integer value
 S|byte[]|UTF-8 string
 t|Tensor|A tensor value
 g|Graph|A graph
-floats|float[]|List of floats
-ints|int64[]|List of integers
-strings|byte[][]|List of strings
-tensors|Tensor[]|List of tensor values
-graphs|Graph[]|List of graphs
+floats|float[]|A list of floats
+ints|int64[]|A list of integers
+strings|byte[][]|A list of strings
+tensors|Tensor[]|A list of tensor values
+graphs|Graph[]|A list of graphs
 
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
 
@@ -247,7 +248,10 @@ The properties ‘name’ and ‘type’ are required on all attributes, and ‘
 
 The representation distinguishes between two kinds of values: attribute values, which are statically known, and runtime values. The types of values permitted in the two cases are different.
 
-The types of the inputs and outputs of a graph must be specified.
+Attribute values are only found in nodes, passed to operators by name association. Attribute values are runtime constants, in that their value is determined when a model graph is constructed.
+
+Runtime values are found as graph inputs, outputs, and initializers, and as node inputs and outputs. Their values are determined at runtime, either by the code that initiates model execution, or by operators computing output values.
+
 
 #### Variadic Inputs and Outputs
  
@@ -257,9 +261,9 @@ For each variadic operator input, one or more node inputs must be specified. For
 
 #### Optional Inputs and Outputs
 
-Some operators have inputs that are marked as optional, which means that a referring node MAY choose not to provide a value for that input.
+Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
-Some operators have outputs that are optional, which means that an operator, depending on its input parameters and/or attributes, MAY choose not to compute all its declared outputs. 
+Some operators have outputs that are optional, which means that an operator, depending on its input parameters and/or attributes, MAY forgo computing values for such outputs. 
 
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
@@ -268,7 +272,9 @@ Each node referring to an operator with optional outputs MUST provide a name for
 
 ## Standard data types
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types. As mentioned earlier, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension. __ONNX-ML__, also recognizes sequences and maps.
+There are two official ONNX variants; the main distinction between the two is found in the supported types and the supported operators.
+
+With respect to supported types, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension. __ONNX-ML__, also recognizes sequences and maps.
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
@@ -323,7 +329,7 @@ Which is referenced by the Tensor type message:
   }
 ```
 
-The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record.
+The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for an input, a tensor value of any shape may be passed from the caller. When the shape property is absent for an output, the caller should expect that the output value may be of any shape.
 
 Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
 
@@ -331,7 +337,7 @@ For example, a NxM matrix would have the shape list [N,M].
 
 The name of each dimension variable MUST adhere to C identifier syntax.
 
-Dimension variables are scoped to the declaration that they appear in. For graph inputs and outputs, the graph itself is the declaration. Dimension variables appearing in a graph's 'value_info' record are scoped to the value. Consequently, any name that is repeated denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related.
+Dimension variables are scoped to the declaration that they appear in. For graph inputs and outputs, the graph itself is the declaration. Consequently, any name that is repeated denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related. Dimension variables appearing in a graph's 'value_info' record are scoped to each value, allowing each value to have its shape defined independently. 
 
 For example, a graph that performs matrix cross-product may be defined as taking two inputs of shape [K,M] and [M,N], and producing an output of shape [K,N].
 
@@ -370,3 +376,7 @@ The ONNX specification is comprised of this document, which defines the semantic
 [ONNX-ML Operator Sets - protobuf v2](../onnx/onnx-operators-ml.proto)
 
 [ONNX-ML Operator Sets - protobuf v3](../onnx/onnx-operators-ml.proto3)
+
+### Versioning Conventions and Best Practices
+
+[Versioning](Versioning.md)
