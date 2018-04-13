@@ -17,6 +17,33 @@ class TestOptimizer(unittest.TestCase):
         checker.check_model(optimized_model)
         return optimized_model
 
+    def test_identity(self):
+        identity = helper.make_node("Identity", ["X"], ["Y"])
+        graph = helper.make_graph(
+            [identity],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        optimized_model = self._optimized(graph, ["eliminate_identity"])
+
+        for node in optimized_model.graph.node:
+            assert node.op_type != "Identity"
+
+    def test_identity_multiple_uses(self):
+        identity = helper.make_node("Identity", ["X"], ["Y"])
+        add = helper.make_node("Add", ["Z", "Y"], ["A"])
+        mul = helper.make_node("Mul", ["A", "Y"], ["B"])
+        graph = helper.make_graph(
+            [identity, add, mul],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (5,))])
+        optimized_model = self._optimized(graph, ["eliminate_identity"])
+
+        for node in optimized_model.graph.node:
+            assert node.op_type != "Identity"
+
     def test_nop_transpose(self):
         trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])
         graph = helper.make_graph(
