@@ -43,7 +43,7 @@ is applied to the tensor elementwise.
     .Attr("alpha",
           "Threshold value",
           AttributeProto::FLOAT,
-          0.0f)
+          1.0f)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
