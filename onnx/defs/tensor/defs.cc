@@ -120,7 +120,7 @@ Takes a tensor as input and outputs a int64 scalar that equals to the total numb
          "tensor(uint16)",
          "tensor(bool)"},
         "Input tensor can be of arbitrary type.")
-    .TypeConstraint("T1", {"int64"}, "Constrains output to int64 scalar.");
+    .TypeConstraint("T1", {"tensor(int64)"}, "Constrains output to int64 tensor, which should be a scalar.");
 
 ONNX_OPERATOR_SCHEMA(Concat)
     .SinceVersion(4)
