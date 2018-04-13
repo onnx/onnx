@@ -373,7 +373,10 @@ message TensorProto {
 
 // Defines a tensor shape. A dimension can be either an integer value
 // or a symbolic variable. A symbolic variable represents an unknown
-// dimension.
+// dimension. In general, any two dimensions in the graph with the
+// same value of dim_param are constrained to be equal. The only
+// exception to this is the emtpy string, which is a special value
+// that is treated as always being unique.
 message TensorShapeProto {
   message Dimension {
     oneof value {

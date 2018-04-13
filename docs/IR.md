@@ -55,12 +55,13 @@ The following describes the metadata properties of a model graph:
 
 #### Names Within a Graph
 
-Names are organized into separate namespaces, and must be unique within a namespace. The namespaces include the following:
- - `Node`: names that identify specific nodes in the graph, but not necessarily any particular input or output of the node.
- - `Graph`: names that identify graphs in the protobuf.
+Names are organized into separate namespaces. The namespaces include the following:
+ - `Node`: names that identify specific nodes in the graph, but not necessarily any particular input or output of the node. Each node name must be unique per graph.
+ - `Graph`: names that identify graphs in the protobuf. Each graph name must be unique in the model.
  - `Attribute`: names that identify attribute names for extra attributes that are passed to operators.
- - `Operator`: names that identify particular operators.
- - `Tensor`: names that identify intermediate tensor values flowing through the computation of a graph.
+ - `Operator`: names that identify particular operators. Each operator name must be unique in its domain.
+ - `Tensor`: names that identify intermediate tensor values flowing through the computation of a graph. Each tensor name must be unique in the model.
+ - `Shape`: names that identify symbolic dimensions. Shape names that occur more than once are constrained to take on the same value at each usage, except for the empty string name. The empty string is a special value which is treated as a unique name.
 
 All names MUST adhere to C identifier syntax rules.
 
@@ -76,9 +77,9 @@ The list of nodes defining the top-level computation graph MUST be ordered topol
 
 #### Values
 
-The representation distinguishes between two kinds of values: attribute values, which are statically known, and runtime values. The type of values permitted in the two cases are different. The permitted types of attribute values are indicated by the enumeration `AttributeType`, while the permitted types of runtime values are described by `TypeProto`. 
+The representation distinguishes between two kinds of values: attribute values, which are statically known, and runtime values. The type of values permitted in the two cases are different. The permitted types of attribute values are indicated by the enumeration `AttributeType`, while the permitted types of runtime values are described by `TypeProto`.
 
-The types of the inputs and outputs of the model must be specified, including the shapes of tensors. While the ranks of input and output tensors are statically specified, the sizes of specific dimensions (axis) may be statically unknown and are indicated so using symbolic identifiers in the shape. 
+The types of the inputs and outputs of the model must be specified, including the shapes of tensors. While the ranks of input and output tensors are statically specified, the sizes of specific dimensions (axis) may be statically unknown and are indicated so using symbolic identifiers in the shape.
 
 #### Optional Inputs
 
