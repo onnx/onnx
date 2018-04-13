@@ -154,11 +154,11 @@ Takes a tensor as input and outputs a int64 scalar that equals to the total numb
     .TypeConstraint(
         "T1",
         {"tensor(int64)"},
-        "Constrains output to int64 tensor, which should be a scalar though.");
-.ShapeInferenceFunction([](InferenceContext& ctx) {
-  ctx.getOutputType(0)->set_elem_type(TensorProto::INT64);
-  ctx.getOutputType(0)->mutable_shape();
-});
+        "Constrains output to int64 tensor, which should be a scalar though.")
+    .ShapeInferenceFunction([](InferenceContext& ctx) {
+      ctx.getOutputType(0)->set_elem_type(TensorProto::INT64);
+      ctx.getOutputType(0)->mutable_shape();
+    });
 
 ONNX_OPERATOR_SCHEMA(Concat)
     .SinceVersion(4)
