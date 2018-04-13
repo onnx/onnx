@@ -283,6 +283,7 @@ if (MSVC)
     target_compile_options(onnx PRIVATE
         /MP
         /MX
+        /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
     )

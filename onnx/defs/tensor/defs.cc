@@ -183,7 +183,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
         if (!axisAttr) {
           return;
         }
-        int axis = axisAttr->i();
+        int axis = static_cast<int>(axisAttr->i());
 
         bool found_exemplar = false;
         TensorShapeProto shape_exemplar;
@@ -199,7 +199,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
             for (int j = 0; j < shape.dim_size(); j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
-                  total_length += shape.dim(j).dim_value();
+                  total_length += static_cast<int>(shape.dim(j).dim_value());
                 } else {
                   all_lengths_known = false;
                 }
@@ -259,7 +259,7 @@ Otherwise, the tensor is split to equal sized parts.
         }
 
         auto axisAttr = ctx.getAttribute("axis");
-        int axis = axisAttr ? axisAttr->i() : 0;
+        int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
         std::vector<int64_t> split;
         if (!getRepeatedAttribute(ctx, "split", split)) {
           if (!ctx.getInputType(0)->has_shape()) {
@@ -269,9 +269,9 @@ Otherwise, the tensor is split to equal sized parts.
           if (!splitDim.has_dim_value()) {
             return;
           }
-          int splitDimValue = splitDim.dim_value();
-          int chunkSize = splitDimValue / ctx.getNumOutputs();
-          int leftOver = splitDimValue - (chunkSize * ctx.getNumOutputs());
+          int splitDimValue = static_cast<int>(splitDim.dim_value());
+          int chunkSize = splitDimValue / static_cast<int>(ctx.getNumOutputs());
+          int leftOver = splitDimValue - (chunkSize * static_cast<int>(ctx.getNumOutputs()));
           for (int i = 0; i < ctx.getNumOutputs(); i++) {
             split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
           }
