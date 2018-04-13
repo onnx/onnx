@@ -3,8 +3,11 @@
 
 #pragma once
 
-// Z = Conv(X, Y)
-// B = Z + A
+// Before:
+//   Z = Conv(X, Y)
+//   B = Z + A
+// After:
+//   B = Conv(X, Y, A)
 //
 // the pass can handle the following cases:
 //   case 1: A is 1D tensor and A.dim[0] == Z.dim[1]

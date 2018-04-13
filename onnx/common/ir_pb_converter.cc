@@ -20,7 +20,6 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto & tp) {
   switch(tp.data_type()) {
   case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
   case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
-    // TODO: fix this handling
     ret.floats().reserve(tp.float_data_size());
     for (int i = 0; i < tp.float_data_size(); i++) {
       ret.floats().push_back(tp.float_data(i));
