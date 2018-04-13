@@ -130,6 +130,8 @@ typedef uint64_t onnxPointer;
 #define ONNXIFI_STATUS_UNSUPPORTED_SHAPE 0x0023
 #define ONNXIFI_STATUS_UNSUPPORTED_DATATYPE 0x0024
 #define ONNXIFI_STATUS_UNIDENTIFIED_NAME 0x0025
+#define ONNXIFI_STATUS_MISMATCHING_SHAPE 0x0026
+#define ONNXIFI_STATUS_MISMATCHING_DATATYPE 0x0027
 #define ONNXIFI_STATUS_NO_SYSTEM_MEMORY 0x0030
 #define ONNXIFI_STATUS_NO_DEVICE_MEMORY 0x0031
 #define ONNXIFI_STATUS_NO_SYSTEM_RESOURCES 0x0032
@@ -795,6 +797,16 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                             GraphProto.initializer, or
  *                                             inferred from the inputs by the
  *                                             backend.
+ * @retval ONNXIFI_STATUS_MISMATCHING_SHAPE The function call failed because
+ *                                          output or intermediate shapes
+ *                                          specified in the ONNX model graph do
+ *                                          not match the shapes inferred from
+ *                                          input shapes.
+ * @retval ONNXIFI_STATUS_MISMATCHING_DATATYPE The function call failed because
+ *                                             output or intermediate data types
+ *                                             specified in the ONNX model graph
+ *                                             do not match the data types
+ *                                             inferred from graph inputs.
  * @retval ONNXIFI_STATUS_NO_SYSTEM_MEMORY The function call failed because the
  *                                         backend could not allocate enough
  *                                         system memory to parse and analyze
@@ -1106,6 +1118,22 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                             weightDescriptors argument,
  *                                             or inferred from the inputs by
  *                                             the backend.
+ * @retval ONNXIFI_STATUS_MISMATCHING_SHAPE The function call failed because
+ *                                          the shapes specified in weight
+ *                                          descriptors do not match the shapes
+ *                                          specified in the ONNX model graph,
+ *                                          or output or intermediate shapes
+ *                                          specified in the ONNX model graph do
+ *                                          not match the shapes inferred from
+ *                                          input shapes.
+ * @retval ONNXIFI_STATUS_MISMATCHING_DATATYPE The function call failed because
+ *                                             data types specified in weight
+ *                                             descriptors do not match the data
+ *                                             types specified in ONNX model
+ *                                             graph, or output or intermediate
+ *                                             data types specified in the ONNX
+ *                                             model graph do not match the data
+ *                                             types inferred from graph inputs.
  * @retval ONNXIFI_STATUS_NO_SYSTEM_MEMORY The function call failed because the
  *                                         backend could not allocate enough
  *                                         system memory to parse, analyze, and
@@ -1198,6 +1226,19 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                          ModelProto.graph.output doesn't have
  *                                          a match in the inputDescriptors or
  *                                          outputDescriptors.
+ * @retval ONNXIFI_STATUS_MISMATCHING_SHAPE The function call failed because
+ *                                          the shapes specified through
+ *                                          inputDescriptors or
+ *                                          outputDescriptors argument are
+ *                                          inconsistent with the shapes
+ *                                          specified in the ONNX model graph.
+ * @retval ONNXIFI_STATUS_MISMATCHING_DATATYPE The function call failed because
+ *                                             data types specified through
+ *                                             inputDescriptors or
+ *                                             outputDescriptors argument are
+ *                                             inconsistent with the data types
+ *                                             specified in the ONNX model
+ *                                             graph.
  * @retval ONNXIFI_STATUS_NO_SYSTEM_MEMORY The function call failed because the
  *                                         backend could not allocate enough
  *                                         system memory to parse, analyze, and
