@@ -19,7 +19,7 @@ class TestOptimizer(unittest.TestCase):
         checker.check_model(optimized_model)
         return optimized_model
 
-    def test_identity(self):
+    def test_eliminate_identity_single_use(self):
         identity = helper.make_node("Identity", ["X"], ["Y"])
         graph = helper.make_graph(
             [identity],
@@ -30,8 +30,10 @@ class TestOptimizer(unittest.TestCase):
 
         for node in optimized_model.graph.node:
             assert node.op_type != "Identity"
+        assert optimized_model.graph.output[0].name == "X"
+        assert len(optimized_model.graph.node) == 0
 
-    def test_identity_multiple_uses(self):
+    def test_eliminate_identity_multiple_uses(self):
         identity = helper.make_node("Identity", ["X"], ["Y"])
         add = helper.make_node("Add", ["Z", "Y"], ["A"])
         mul = helper.make_node("Mul", ["A", "Y"], ["B"])
@@ -45,6 +47,7 @@ class TestOptimizer(unittest.TestCase):
 
         for node in optimized_model.graph.node:
             assert node.op_type != "Identity"
+        assert len(optimized_model.graph.node) == 2
 
     def test_nop_transpose(self):
         trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])
