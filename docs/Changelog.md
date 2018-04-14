@@ -4368,8 +4368,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : int64</dt>
-<dd>Constrains output to int64 scalar.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 ### <a name="Slice-1"></a>**Slice-1**</a>
