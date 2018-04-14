@@ -190,7 +190,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
       bool all_lengths_known = true;
       int total_length = 0;
 
-      for (int i = 0; i < ctx.getNumInputs(); i++) {
+      for (size_t i = 0; i < ctx.getNumInputs(); i++) {
         if (!ctx.getInputType(i)->has_shape()) {
           return;
         }
@@ -278,12 +278,12 @@ Otherwise, the tensor is split to equal sized parts.
         int splitDimValue = static_cast<int>(splitDim.dim_value());
         int chunkSize = splitDimValue / static_cast<int>(ctx.getNumOutputs());
         int leftOver = splitDimValue - (chunkSize * static_cast<int>(ctx.getNumOutputs()));
-        for (int i = 0; i < ctx.getNumOutputs(); i++) {
+        for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
           split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
         }
       }
 
-      for (int i = 0; i < ctx.getNumOutputs(); i++) {
+      for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
         *ctx.getOutputType(i)->mutable_shape() = ctx.getInputType(0)->shape();
         ctx.getOutputType(i)->mutable_shape()->mutable_dim(axis)->set_dim_value(
             split[i]);
@@ -381,7 +381,7 @@ will be (2, 1, 3).
 
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       for (size_t i = 0; i < perm.size(); ++i) {
-        appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, perm[i]);
+        appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
       }
     });
 
