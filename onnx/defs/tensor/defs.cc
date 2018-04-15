@@ -17,7 +17,7 @@ NOTE: Casting to and from strings is not supported yet.
         "to",
         "The data type to which the elements of the input tensor are cast."
         "Strictly must be one of the types from DataType enum in TensorProto",
-        AttributeProto::STRING)
+        AttributeProto::INT)
     .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
