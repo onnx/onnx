@@ -61,11 +61,8 @@ NOTE: Casting to and from strings is not supported yet.
       }
 
       propagateShapeFromInputToOutput(ctx, 0, 0);
-
-      auto type = ctx.getAttribute("to");
-      if (type) {
-        ctx.getOutputType(0)->set_elem_type(datatypeFromString(type->s()));
-      }
+      ctx.getOutputType(0)->set_elem_type(
+          static_cast<TensorProto_DataType>(ctx.getAttribute("to")->i()));
     });
 
 ONNX_OPERATOR_SCHEMA(Reshape)
