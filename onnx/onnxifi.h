@@ -442,6 +442,34 @@ typedef int32_t onnxBackendInfo;
  * onnxInitBackend.
  */
 #define ONNXIFI_BACKEND_PROPERTY_NONE 0
+/**
+ * Optimization target for graphs initialized on the backend.
+ *
+ * Possible values:
+ *     ONNXIFI_OPTIMIZATION_HIGH_THROUGHPUT
+ *     ONNXIFI_OPTIMIZATION_LOW_LATENCY
+ *     ONNXIFI_OPTIMIZATION_LOW_POWER
+ *     ONNXIFI_OPTIMIZATION_LOW_DELAY
+ */
+#define ONNXIFI_BACKEND_PROPERTY_OPTIMIZATION 1
+
+/**
+ * Optimize graph representation and compilation for highest throughput.
+ */
+#define ONNXIFI_OPTIMIZATION_HIGH_THROUGHPUT 0
+/**
+ * Optimize graph representation and compilation for lowest latency.
+ */
+#define ONNXIFI_OPTIMIZATION_LOW_LATENCY 1
+/**
+ * Optimize graph representation and compilation for lowest power consumption.
+ */
+#define ONNXIFI_OPTIMIZATION_LOW_POWER 2
+/**
+ * Optimize graph representation and compilation for lowest delay until first
+ * result.
+ */
+#define ONNXIFI_OPTIMIZATION_LOW_DELAY 3
 
 typedef struct onnxTensorDescriptor {
   /**
