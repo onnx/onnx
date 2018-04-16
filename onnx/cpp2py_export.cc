@@ -104,14 +104,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       });
   defs.def("get_schema", [](const std::string& op_type,
                             const int& maxInclusiveVersion,
-							const std::string& domain) -> OpSchema {
+                            const std::string& domain) -> OpSchema {
     const auto* schema = OpSchemaRegistry::Schema(op_type, maxInclusiveVersion, domain);
     if (!schema) {
       throw std::runtime_error("No schema registered for '" + op_type + "'!");
     }
     return *schema;
   }).def("get_schema", [](const std::string& op_type,
-						   const int& maxInclusiveVersion) -> OpSchema {
+			  const int& maxInclusiveVersion) -> OpSchema {
 	const auto* schema = OpSchemaRegistry::Schema(op_type, maxInclusiveVersion);
 	if (!schema) {
 		throw std::runtime_error("No schema registered for '" + op_type + "'!");
