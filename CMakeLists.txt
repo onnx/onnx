@@ -283,8 +283,10 @@ if (MSVC)
     target_compile_options(onnx PRIVATE
         /MP
         /MX
+        /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")

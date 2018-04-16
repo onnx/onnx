@@ -8,6 +8,7 @@
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
+#include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
@@ -25,6 +26,7 @@ struct Optimizer {
     _registerOptimizer<FuseConsecutiveTransposes>();
     _registerOptimizer<EliminateNopTranspose>();
     _registerOptimizer<FuseTransposeIntoGemm>();
+    _registerOptimizer<FuseAddBiasIntoConv>();
     _registerOptimizer<Nop>();
     _registerOptimizer<SplitInit>();
     _registerOptimizer<SplitPredict>();

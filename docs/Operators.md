@@ -557,8 +557,8 @@ This version of the operator has been available since version 1 of the default O
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -1003,7 +1003,6 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  
   NOTE: Casting to and from strings is not supported yet.
 
 #### Version
@@ -2376,7 +2375,6 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  
   Example 1:
     data = [
         [1.0, 1.2],
@@ -2397,7 +2395,6 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
             [4.5, 5.7],
         ],
     ]
-  
   Example 2:
     data = [
         [1.0, 1.2, 1.9],
@@ -3924,8 +3921,8 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -4942,17 +4939,14 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
   Given `data` tensor, pads, mode, and value.
-  
   Example:
     Insert 0 pads to the beginning of the second dimension.
-  
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
     pads = [0, 2, 0, 0]
-  
     output = [
         [
             [0.0, 0.0, 1.0, 1.2],
@@ -6047,9 +6041,7 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Reshape"></a><a name="reshape">**Reshape**</a>
 
   Reshape the input tensor similar to numpy.reshape.
-  
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
-  
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
@@ -6362,8 +6354,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : int64</dt>
-<dd>Constrains output to int64 scalar.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 
@@ -6402,7 +6394,6 @@ expect(node, inputs=[x], outputs=[y],
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  
   Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
@@ -6411,9 +6402,7 @@ expect(node, inputs=[x], outputs=[y],
   number of elements in this dimension), it represents `n`. For slicing to the
   end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
-  
   Example 1:
-  
     data = [
         [1, 2, 3, 4],
         [5, 6, 7, 8],
@@ -6421,25 +6410,19 @@ expect(node, inputs=[x], outputs=[y],
     axes = [0, 1]
     starts = [1, 0]
     ends = [2, 3]
-  
     result = [
         [5, 6, 7],
     ]
-  
-  
   Example 2:
-  
     data = [
         [1, 2, 3, 4],
         [5, 6, 7, 8],
     ]
     starts = [0, 1]
     ends = [-1, 1000]
-  
     result = [
         [2, 3, 4],
     ]
-  
 
 #### Version
 
@@ -7597,10 +7580,8 @@ expect(node, inputs=[data], outputs=[transposed],
   Insert single-dimensional entries to the shape of a tensor.
   Takes one required argument `axes`, a list of dimensions that will be inserted.
   Dimension indices in `axes` are as seen in the output tensor. For example:
-  
     Given a tensor such that tensor with shape [3, 4, 5], then
     Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
-  
 
 #### Version
 

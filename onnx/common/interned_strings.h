@@ -36,6 +36,7 @@ _(Squeeze) \
 _(Undefined) \
 _(FusionGroup) \
 _(Gemm) \
+_(Tile) \
 _(SubConstant) \
 _(Scale) \
 _(Transpose) \

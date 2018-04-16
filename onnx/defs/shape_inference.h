@@ -32,13 +32,29 @@ inline bool getRepeatedAttribute(InferenceContext& ctx,
 
 }
 
+inline bool hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::string& opname) {
+  if (static_cast<int>(ctx.getNumInputs()) != n) {
+    throw std::runtime_error(opname + " has wrong number of inputs");
+  }
+  for (int i = 0; i < n; i++) {
+    if (!ctx.getInputType(i)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   ctx.getOutputType(outputIndex)->set_elem_type(ctx.getInputType(inputIndex)->elem_type());
 }
 
 inline void appendSingleDimCopiedFromInputTypeToOutputType(InferenceContext& ctx, size_t inputIndex, size_t outputIndex, size_t fromDimIndex) {
   auto* dim = ctx.getOutputType(outputIndex)->mutable_shape()->add_dim();
-  *dim = ctx.getInputType(inputIndex)->shape().dim(fromDimIndex);
+  *dim = ctx.getInputType(inputIndex)->shape().dim(static_cast<int>(fromDimIndex));
+}
+
+inline void propagateShapeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  *ctx.getOutputType(outputIndex)->mutable_shape() = ctx.getInputType(inputIndex)->shape();
 }
 
 } // namespace ONNX_NAMESPACE
