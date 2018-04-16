@@ -14,7 +14,7 @@ flake8
 # Mypy only works with Python 3
 if [ "${PYTHON_VERSION}" != "python2" ]; then
   # Mypy only works with our generated _pb.py files when we install in develop mode, so let's do that
-  pip uninstall -y onnx
+  pip uninstall -y onnx || :
   time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
 
   time mypy .
@@ -22,7 +22,7 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   # instance, because mypy itself needs python 3)
   time mypy --py2 .
 
-  pip uninstall -y onnx
+  pip uninstall -y onnx || :
   rm -rf .setuptools-cmake-build
   time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -v .
 fi

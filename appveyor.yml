@@ -41,6 +41,9 @@ before_build:
 build_script:
 # Build and test onnx.
 - cmd: cd c:\projects\onnx
+- cmd: pip install -v -e .
+- cmd: dir /s /b /a-d "onnx_gtests.exe" >UT.txt & set /p _UT= < UT.txt & %_UT%
+- cmd: python setup.py develop --uninstall
 - cmd: python setup.py bdist_wheel --universal --dist-dir .
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
 - cmd: pip install %_wheel%

@@ -15,6 +15,11 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
+if(ENABLE_GTESTS)
+	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/external)
+	include(googletest)
+endif()
+
 # Set default build type
 if(NOT CMAKE_BUILD_TYPE)
     message(STATUS "Build type not set - defaulting to Release")
@@ -185,12 +190,13 @@ RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
     onnx/onnx.in.proto
 )
 
+file(GLOB_RECURSE onnx_INCLUDE_DIRS "${ONNX_ROOT}/onnx/*.h")
 file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
     "${ONNX_ROOT}/onnx/*.cc"
 )
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-
+list(FILTER onnx_src EXCLUDE REGEX ".*/gtests/.*.cc$")
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
@@ -283,10 +289,8 @@ if (MSVC)
     target_compile_options(onnx PRIVATE
         /MP
         /MX
-        /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
-        /wd4146 # unary minus operator applied to unsigned type, result still unsigned
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -314,4 +318,16 @@ endif()
 
 if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
+endif()
+
+if(ENABLE_GTESTS)
+    include_directories(
+        ${ONNX_ROOT}
+        ${googletest_BUILD}
+        ${CMAKE_CURRENT_BINARY_DIR}
+        ${googletest_INCLUDE_DIRS}
+        ${PROTOBUF_INCLUDE_DIR}
+        protobuf::libprotobuf
+    )
+	include(unittest.cmake)
 endif()
