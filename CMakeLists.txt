@@ -195,8 +195,12 @@ file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
     "${ONNX_ROOT}/onnx/*.cc"
 )
+file(GLOB_RECURSE onnx_gtests_src
+    "${ONNX_ROOT}/onnx/test/gtests/*.h"
+    "${ONNX_ROOT}/onnx/test/gtests/*.cc"
+)
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(FILTER onnx_src EXCLUDE REGEX ".*/gtests/.*.cc$")
+list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
