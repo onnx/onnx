@@ -879,7 +879,10 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 /**
  * Deinitialize an ONNXIFI backend and release associated resources.
  *
- * @param backend - backend handle created by onnxInitBackend.
+ * The user MUST deinitialize all objects created on this backend (onnxGraph,
+ * onnxEvent) before calling this function to deinitialize the backend.
+ *
+ * @param backend - ONNXIFI backend handle created by onnxInitBackend.
  *
  * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the backend
  *                                resources were released to the operating
