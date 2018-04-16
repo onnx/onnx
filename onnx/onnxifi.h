@@ -1023,7 +1023,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * @param onnxModelSize - size of the serialized ONNX ModelProto message,
  *                        in bytes.
  * @param[in] onnxModel - pointer to serialized ONNX ModelProto message
- *                        representing the model graph.
+ *                        representing the model graph. The backend MUST not
+ *                        assume that the serialized ModelProto message is
+ *                        present at this address after the function returns.
  * @param weightsCount - number of weights specified in this function call
  *                       through tensor descriptors. Alternatively, the weights
  *                       can be specified in ModelProto.graph.initializer
