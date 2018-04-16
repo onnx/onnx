@@ -117,14 +117,12 @@ def make_tensor(name, data_type, dims, vals, raw=False):
     tensor.data_type = data_type
     tensor.name = name
 
-    if data_type == TensorProto.STRING:
-        assert not raw, "Can not use raw_data to store string type"
-        tensor.string_data.extend(vals)
-
     if (data_type == TensorProto.COMPLEX64 or
             data_type == TensorProto.COMPLEX128):
         vals = split_complex_to_pairs(vals)
     if raw:
+        if data_type == TensorProto.STRING:
+            assert not raw, "Can not use raw_data to store string type"
         tensor.raw_data = vals
     else:
         field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[
