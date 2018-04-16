@@ -92,7 +92,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
   defs.def("has_schema", [](const std::string& op_type,
-							const std::string& domain) -> bool {
+			    const std::string& domain) -> bool {
     return OpSchemaRegistry::Schema(op_type, domain) != nullptr;
   }).def("has_schema", [](const std::string& op_type) -> bool {
 	  return OpSchemaRegistry::Schema(op_type) != nullptr;
