@@ -91,8 +91,11 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
-  defs.def("has_schema", [](const std::string& op_type) -> bool {
-    return OpSchemaRegistry::Schema(op_type) != nullptr;
+  defs.def("has_schema", [](const std::string& op_type,
+			    const std::string& domain) -> bool {
+    return OpSchemaRegistry::Schema(op_type, domain) != nullptr;
+  }).def("has_schema", [](const std::string& op_type) -> bool {
+	  return OpSchemaRegistry::Schema(op_type) != nullptr;
   });
   defs.def(
       "schema_version_map",
@@ -100,12 +103,20 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         return OpSchemaRegistry::DomainToVersionRange::Instance().Map();
       });
   defs.def("get_schema", [](const std::string& op_type,
-                            const int& maxInclusiveVersion) -> OpSchema {
-    const auto* schema = OpSchemaRegistry::Schema(op_type, maxInclusiveVersion);
+                            const int& maxInclusiveVersion,
+                            const std::string& domain) -> OpSchema {
+    const auto* schema = OpSchemaRegistry::Schema(op_type, maxInclusiveVersion, domain);
     if (!schema) {
       throw std::runtime_error("No schema registered for '" + op_type + "'!");
     }
     return *schema;
+  }).def("get_schema", [](const std::string& op_type,
+			  const int& maxInclusiveVersion) -> OpSchema {
+	const auto* schema = OpSchemaRegistry::Schema(op_type, maxInclusiveVersion);
+	if (!schema) {
+		throw std::runtime_error("No schema registered for '" + op_type + "'!");
+	}
+	return *schema;
   });
 
   defs.def("get_all_schemas", []() -> const std::vector<OpSchema> {
