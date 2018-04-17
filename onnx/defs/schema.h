@@ -667,6 +667,4 @@ class OpSchemaRegistry final {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
-TensorProto::DataType datatypeFromString(const std::string&);
-
 } // namespace ONNX_NAMESPACE
