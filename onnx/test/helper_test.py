@@ -291,8 +291,6 @@ class TestHelperTensorFunctions(unittest.TestCase):
             vals=string_list,
             raw=False
         )
-        print(string_list)
-        print(list(tensor.string_data))
         self.assertEqual(string_list, list(tensor.string_data))
 
     def test_make_tensor_value_info(self):
