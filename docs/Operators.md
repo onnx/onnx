@@ -1012,7 +1012,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>to</tt> : string (required)</dt>
+<dt><tt>to</tt> : int (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
@@ -1056,16 +1056,14 @@ test_cases = [
     ('DOUBLE', 'FLOAT16'),
 ]
 
-for case in test_cases:
-    from_type = case[0]
-    to_type = case[1]
+for from_type, to_type in test_cases:
     input = np.random.random_sample(shape).astype(
         TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
         outputs=['output'],
-        to=to_type
+        to=getattr(TensorProto, to_type),
     )
     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     expect(node, inputs=[input], outputs=[output],
