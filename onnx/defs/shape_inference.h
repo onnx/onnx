@@ -44,8 +44,22 @@ inline bool hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::strin
   return true;
 }
 
+inline bool hasNInputShapes(InferenceContext& ctx, int n) {
+  if (static_cast<int>(ctx.getNumInputs()) < n) {
+    throw std::runtime_error("operator has too few inputs");
+  }
+  for (int i = 0; i < n; i++) {
+    if (!ctx.getInputType(i) || !ctx.getInputType(i)->has_shape()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  ctx.getOutputType(outputIndex)->set_elem_type(ctx.getInputType(inputIndex)->elem_type());
+  if (ctx.getInputType(inputIndex)) {
+    ctx.getOutputType(outputIndex)->set_elem_type(ctx.getInputType(inputIndex)->elem_type());
+  }
 }
 
 inline void appendSingleDimCopiedFromInputTypeToOutputType(InferenceContext& ctx, size_t inputIndex, size_t outputIndex, size_t fromDimIndex) {

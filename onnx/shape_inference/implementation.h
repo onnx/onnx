@@ -36,12 +36,18 @@ struct InferenceContextImpl : public InferenceContext {
     return allInputTypes_.size();
   }
   const TypeProto_Tensor* getInputType(size_t index) const override {
+    if (index >= allInputTypes_.size()) {
+      throw std::runtime_error("input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
     return allInputTypes_[index];
   }
   size_t getNumOutputs() const override {
     return allOutputTypes_.size();
   }
   TypeProto_Tensor* getOutputType(size_t index) override {
+    if (index >= allOutputTypes_.size()) {
+      throw std::runtime_error("output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
     return &allOutputTypes_[index];
   }
   std::unordered_map<std::string, const AttributeProto *> attributesByName_;
