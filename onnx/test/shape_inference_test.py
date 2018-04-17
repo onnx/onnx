@@ -84,7 +84,7 @@ class TestShapeInference(unittest.TestCase):
     def test_cast(self):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
-            [make_node("Cast", ["x"], ["y"], to="UINT8")],
+            [make_node("Cast", ["x"], ["y"], to=TensorProto.UINT8)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3))])
 

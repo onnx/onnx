@@ -1,7 +1,8 @@
-backend-test:x
-'
-inputoutput"Cast*
-to"FLOAT16 test_cast_FLOAT_to_FLOAT16Z
+backend-test:q
+ 
+inputoutput"Cast*	
+to
+ test_cast_FLOAT_to_FLOAT16Z
 input
 
 

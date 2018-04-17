@@ -17,7 +17,7 @@ NOTE: Casting to and from strings is not supported yet.
         "to",
         "The data type to which the elements of the input tensor are cast."
         "Strictly must be one of the types from DataType enum in TensorProto",
-        AttributeProto::STRING)
+        AttributeProto::INT)
     .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
@@ -61,11 +61,8 @@ NOTE: Casting to and from strings is not supported yet.
       }
 
       propagateShapeFromInputToOutput(ctx, 0, 0);
-
-      auto type = ctx.getAttribute("to");
-      if (type) {
-        ctx.getOutputType(0)->set_elem_type(datatypeFromString(type->s()));
-      }
+      ctx.getOutputType(0)->set_elem_type(
+          static_cast<TensorProto_DataType>(ctx.getAttribute("to")->i()));
     });
 
 ONNX_OPERATOR_SCHEMA(Reshape)
