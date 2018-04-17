@@ -283,6 +283,18 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
+        string_list = list(s.encode('ascii') for s in ['Amy', 'Billy', 'Cindy', 'David'])
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.STRING,
+            dims=(2, 2),
+            vals=string_list,
+            raw=False
+        )
+        print(string_list)
+        print(list(tensor.string_data))
+        self.assertEqual(string_list, list(tensor.string_data))
+
     def test_make_tensor_value_info(self):
         vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))
         checker.check_value_info(vi)

@@ -119,7 +119,6 @@ def make_tensor(name, data_type, dims, vals, raw=False):
 
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
-        tensor.string_data.extend(vals)
 
     if (data_type == TensorProto.COMPLEX64 or
             data_type == TensorProto.COMPLEX128):
