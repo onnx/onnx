@@ -1,25 +1,26 @@
 #pragma once
 
-#include "onnx/proto_utils.h"
 #include "onnx/defs/data_type_utils.h"
+#include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE {
 
 struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
-  virtual const TypeProto_Tensor* getInputType(size_t index) const = 0;
+  virtual const TypeProto* getInputType(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
-  virtual TypeProto_Tensor* getOutputType(size_t index) = 0;
+  virtual TypeProto* getOutputType(size_t index) = 0;
   virtual ~InferenceContext() {}
 };
 
 typedef void (*InferenceFunction)(InferenceContext&);
 
-template<typename T>
-inline bool getRepeatedAttribute(InferenceContext& ctx,
-                                 std::string attr_name,
-                                 std::vector<T>& values) {
+template <typename T>
+inline bool getRepeatedAttribute(
+    InferenceContext& ctx,
+    std::string attr_name,
+    std::vector<T>& values) {
   const auto* attr = ctx.getAttribute(attr_name);
   if (attr) {
     for (const auto& value : RetrieveValues<T>(*attr)) {
@@ -29,10 +30,10 @@ inline bool getRepeatedAttribute(InferenceContext& ctx,
   } else {
     return false;
   }
-
 }
 
-inline bool hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::string& opname) {
+inline bool
+hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::string& opname) {
   if (static_cast<int>(ctx.getNumInputs()) != n) {
     throw std::runtime_error(opname + " has wrong number of inputs");
   }
@@ -44,17 +45,43 @@ inline bool hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::strin
   return true;
 }
 
-inline void propagateElemTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  ctx.getOutputType(outputIndex)->set_elem_type(ctx.getInputType(inputIndex)->elem_type());
+inline void propagateElemTypeFromInputToOutput(
+    InferenceContext& ctx,
+    size_t inputIndex,
+    size_t outputIndex) {
+  *ctx.getOutputType(outputIndex) = *ctx.getInputType(inputIndex);
 }
 
-inline void appendSingleDimCopiedFromInputTypeToOutputType(InferenceContext& ctx, size_t inputIndex, size_t outputIndex, size_t fromDimIndex) {
-  auto* dim = ctx.getOutputType(outputIndex)->mutable_shape()->add_dim();
-  *dim = ctx.getInputType(inputIndex)->shape().dim(static_cast<int>(fromDimIndex));
+inline void appendSingleDimCopiedFromInputTypeToOutputType(
+    InferenceContext& ctx,
+    size_t inputIndex,
+    size_t outputIndex,
+    size_t fromDimIndex) {
+  auto output_type = ctx.getOutputType(outputIndex);
+  auto input_type = ctx.getInputType(inputIndex);
+  if (TypeProto::kTensorType != output_type->value_case() ||
+      TypeProto::kTensorType != input_type->value_case()) {
+    return;
+  }
+  auto* dim = ctx.getOutputType(outputIndex)
+                  ->mutable_tensor_type()
+                  ->mutable_shape()
+                  ->add_dim();
+  *dim = input_type->tensor_type().shape().dim(static_cast<int>(fromDimIndex));
 }
 
-inline void propagateShapeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  *ctx.getOutputType(outputIndex)->mutable_shape() = ctx.getInputType(inputIndex)->shape();
+inline void propagateShapeFromInputToOutput(
+    InferenceContext& ctx,
+    size_t inputIndex,
+    size_t outputIndex) {
+  auto output_type = ctx.getOutputType(outputIndex);
+  auto input_type = ctx.getInputType(inputIndex);
+  if (TypeProto::kTensorType != output_type->value_case() ||
+      TypeProto::kTensorType != input_type->value_case()) {
+    return;
+  }
+  *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
+      ctx.getInputType(inputIndex)->tensor_type().shape();
 }
 
 } // namespace ONNX_NAMESPACE
