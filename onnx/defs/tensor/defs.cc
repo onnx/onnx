@@ -3,6 +3,8 @@
 
 #include "onnx/defs/schema.h"
 
+#include <algorithm>
+
 using namespace ONNX_NAMESPACE;
 
 ONNX_OPERATOR_SCHEMA(Cast)
@@ -485,7 +487,33 @@ Takes a  parameter `axes` with a list of axes to squeeze.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .ShapeInferenceFunction([](InferenceContext& ctx) {
+        if (!hasExactlyNInputTypes(ctx, 1, "Squeeze")) {
+          return;
+        }
+
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+        std::vector<int64_t> axes;
+        if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          return;
+        }
+
+        if (!ctx.getInputType(0)->has_shape()) {
+          return;
+        }
+
+        ctx.getOutputType(0)->mutable_shape();
+
+        for (int i = 0, j = 0; i < ctx.getInputType(0)->shape().dim_size(); ++i) {
+          if (static_cast<size_t>(j) < axes.size() && axes[j] == i) {
+            ++j;
+          } else {
+            *ctx.getOutputType(0)->mutable_shape()->add_dim() = ctx.getInputType(0)->shape().dim(i);
+          }
+        }
+      });
 
 ONNX_OPERATOR_SCHEMA(Unsqueeze)
     .Attr(
@@ -504,7 +532,39 @@ Dimension indices in `axes` are as seen in the output tensor. For example:
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .ShapeInferenceFunction([](InferenceContext& ctx) {
+        if (!hasExactlyNInputTypes(ctx, 1, "Unsqueeze")) {
+          return;
+        }
+
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+        std::vector<int64_t> axes;
+        if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          return;
+        }
+        std::sort(axes.begin(), axes.end());
+
+        if (!ctx.getInputType(0)->has_shape()) {
+          return;
+        }
+
+        ctx.getOutputType(0)->mutable_shape();
+
+        int j = 0;
+        for (int i = 0; i < ctx.getInputType(0)->shape().dim_size(); ++i) {
+          while (static_cast<size_t>(j) < axes.size() && axes[j] == ctx.getOutputType(0)->shape().dim_size()) {
+            ctx.getOutputType(0)->mutable_shape()->add_dim()->set_dim_value(1);
+            ++j;
+          }
+          *ctx.getOutputType(0)->mutable_shape()->add_dim() = ctx.getInputType(0)->shape().dim(i);
+        }
+        while (static_cast<size_t>(j) < axes.size() && axes[j] == ctx.getOutputType(0)->shape().dim_size()) {
+          ctx.getOutputType(0)->mutable_shape()->add_dim()->set_dim_value(1);
+          ++j;
+        }
+      });
 
 ONNX_OPERATOR_SCHEMA(Pad)
     .SinceVersion(2)
