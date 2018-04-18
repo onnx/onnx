@@ -11,14 +11,13 @@ The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
 in the 'DataType' enum field in the TensorProto message.
-
 NOTE: Casting to and from strings is not supported yet.
 )DOC")
     .Attr(
         "to",
         "The data type to which the elements of the input tensor are cast."
         "Strictly must be one of the types from DataType enum in TensorProto",
-        AttributeProto::STRING)
+        AttributeProto::INT)
     .Input(0, "input", "Input tensor to be cast.", "T1")
     .Output(
         0,
@@ -62,20 +61,15 @@ NOTE: Casting to and from strings is not supported yet.
       }
 
       propagateShapeFromInputToOutput(ctx, 0, 0);
-
-      auto type = ctx.getAttribute("to");
-      if (type) {
-        ctx.getOutputType(0)->set_elem_type(datatypeFromString(type->s()));
-      }
+      ctx.getOutputType(0)->set_elem_type(
+          static_cast<TensorProto_DataType>(ctx.getAttribute("to")->i()));
     });
 
 ONNX_OPERATOR_SCHEMA(Reshape)
     .SinceVersion(6)
     .SetDoc(R"DOC(
 Reshape the input tensor similar to numpy.reshape.
-
 First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
-
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
@@ -186,14 +180,14 @@ ONNX_OPERATOR_SCHEMA(Concat)
       if (!axisAttr) {
         return;
       }
-      int axis = axisAttr->i();
+      int axis = static_cast<int>(axisAttr->i());
 
       bool found_exemplar = false;
       TensorShapeProto shape_exemplar;
       bool all_lengths_known = true;
       int total_length = 0;
 
-      for (int i = 0; i < ctx.getNumInputs(); i++) {
+      for (size_t i = 0; i < ctx.getNumInputs(); i++) {
         if (!ctx.getInputType(i)->has_shape()) {
           return;
         }
@@ -202,7 +196,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
           for (int j = 0; j < shape.dim_size(); j++) {
             if (j == axis) {
               if (shape.dim(j).has_dim_value()) {
-                total_length += shape.dim(j).dim_value();
+                total_length += static_cast<int>(shape.dim(j).dim_value());
               } else {
                 all_lengths_known = false;
               }
@@ -268,7 +262,7 @@ Otherwise, the tensor is split to equal sized parts.
       }
 
       auto axisAttr = ctx.getAttribute("axis");
-      int axis = axisAttr ? axisAttr->i() : 0;
+      int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
       std::vector<int64_t> split;
       if (!getRepeatedAttribute(ctx, "split", split)) {
         if (!ctx.getInputType(0)->has_shape()) {
@@ -278,15 +272,15 @@ Otherwise, the tensor is split to equal sized parts.
         if (!splitDim.has_dim_value()) {
           return;
         }
-        int splitDimValue = splitDim.dim_value();
-        int chunkSize = splitDimValue / ctx.getNumOutputs();
-        int leftOver = splitDimValue - (chunkSize * ctx.getNumOutputs());
-        for (int i = 0; i < ctx.getNumOutputs(); i++) {
+        int splitDimValue = static_cast<int>(splitDim.dim_value());
+        int chunkSize = splitDimValue / static_cast<int>(ctx.getNumOutputs());
+        int leftOver = splitDimValue - (chunkSize * static_cast<int>(ctx.getNumOutputs()));
+        for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
           split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
         }
       }
 
-      for (int i = 0; i < ctx.getNumOutputs(); i++) {
+      for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
         *ctx.getOutputType(i)->mutable_shape() = ctx.getInputType(0)->shape();
         ctx.getOutputType(i)->mutable_shape()->mutable_dim(axis)->set_dim_value(
             split[i]);
@@ -297,7 +291,6 @@ ONNX_OPERATOR_SCHEMA(Slice)
     .SetDoc(R"DOC(
 Produces a slice of the input tensor along multiple axes. Similar to numpy:
 https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-
 Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
 dimension for each axis in the list of axes, it uses this information to
 slice the input `data` tensor. If a negative value is passed for any of the
@@ -306,9 +299,7 @@ dimension. If the value passed to start or end is larger than the `n` (the
 number of elements in this dimension), it represents `n`. For slicing to the
 end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
 If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
-
 Example 1:
-
   data = [
       [1, 2, 3, 4],
       [5, 6, 7, 8],
@@ -316,25 +307,19 @@ Example 1:
   axes = [0, 1]
   starts = [1, 0]
   ends = [2, 3]
-
   result = [
       [5, 6, 7],
   ]
-
-
 Example 2:
-
   data = [
       [1, 2, 3, 4],
       [5, 6, 7, 8],
   ]
   starts = [0, 1]
   ends = [-1, 1000]
-
   result = [
       [2, 3, 4],
   ]
-
 )DOC")
     .Input(0, "data", "Tensor of data to extract slices from.", "T")
     .Attr(
@@ -393,7 +378,7 @@ will be (2, 1, 3).
 
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       for (size_t i = 0; i < perm.size(); ++i) {
-        appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, perm[i]);
+        appendSingleDimCopiedFromInputTypeToOutputType(ctx, 0, 0, static_cast<size_t>(perm[i]));
       }
     });
 
@@ -402,7 +387,6 @@ ONNX_OPERATOR_SCHEMA(Gather)
 Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
 entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
 them in an output tensor of rank q + (r - 1).
-
 Example 1:
   data = [
       [1.0, 1.2],
@@ -423,7 +407,6 @@ Example 1:
           [4.5, 5.7],
       ],
   ]
-
 Example 2:
   data = [
       [1.0, 1.2, 1.9],
@@ -513,10 +496,8 @@ ONNX_OPERATOR_SCHEMA(Unsqueeze)
 Insert single-dimensional entries to the shape of a tensor.
 Takes one required argument `axes`, a list of dimensions that will be inserted.
 Dimension indices in `axes` are as seen in the output tensor. For example:
-
   Given a tensor such that tensor with shape [3, 4, 5], then
   Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
-
 )DOC")
     .Input(0, "data", "Original tensor", "T")
     .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
@@ -548,17 +529,14 @@ ONNX_OPERATOR_SCHEMA(Pad)
         0.0f)
     .SetDoc(R"DOC(
 Given `data` tensor, pads, mode, and value.
-
 Example:
   Insert 0 pads to the beginning of the second dimension.
-
   data = [
       [1.0, 1.2],
       [2.3, 3.4],
       [4.5, 5.7],
   ]
   pads = [0, 2, 0, 0]
-
   output = [
       [
           [0.0, 0.0, 1.0, 1.2],
