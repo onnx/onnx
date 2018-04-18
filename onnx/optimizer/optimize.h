@@ -6,6 +6,7 @@
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
+#include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
@@ -23,8 +24,9 @@ struct Optimizer {
 
   Optimizer() {
     // Register the optimization passes to the optimizer.
-    _registerOptimizer<FuseConsecutiveTransposes>();
+    _registerOptimizer<EliminateIdentity>();
     _registerOptimizer<EliminateNopTranspose>();
+    _registerOptimizer<FuseConsecutiveTransposes>();
     _registerOptimizer<FuseTransposeIntoGemm>();
     _registerOptimizer<FuseAddBiasIntoConv>();
     _registerOptimizer<Nop>();
