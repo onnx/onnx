@@ -126,6 +126,20 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
 
+    def test_squeeze(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
+            [make_node('Squeeze', 'x', 'y', axes=[0, 2, 3, 5])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 2))])
+
+    def test_unsqueeze(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2))],
+            [make_node('Unsqueeze', 'x', 'y', axes=[0, 1, 3, 5])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 3, 1, 2, 1))])
+
 
 if __name__ == '__main__':
     unittest.main()
