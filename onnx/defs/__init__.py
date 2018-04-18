@@ -11,16 +11,13 @@ ONNX_DOMAIN = ""
 
 
 has = C.has_schema
+get_schema = C.get_schema
 get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
 
 
 def onnx_opset_version():
     return C.schema_version_map()[ONNX_DOMAIN][1]
-
-
-def get_schema(op_type, max_inclusive_version=onnx_opset_version(), domain=ONNX_DOMAIN):
-    return C.get_schema(op_type, max_inclusive_version, domain)
 
 
 OpSchema = C.OpSchema
