@@ -32,55 +32,59 @@ class TestBasicFunctions(unittest.TestCase):
         )
         return tensor
 
-    def test_serialize_and_deserialize(self):
-        opts = {
-            '_simple_model': ModelProto,
-            '_simple_tensor': TensorProto,
-        }
-        for gen in opts:
-            obj = getattr(self, gen)()
-            cls = opts[gen]
-            se_obj = onnx.serialize(obj)
-            de_obj = onnx.deserialize(se_obj, cls)
-            se_obj2 = onnx.serialize(de_obj)
-            de_obj2 = onnx.deserialize(se_obj, cls())
-            self.assertTrue(obj == de_obj)
-            self.assertTrue(se_obj == se_obj2)
-            self.assertTrue(de_obj == de_obj2)
-            self.assertRaises(ValueError, onnx.serialize, object())
-            self.assertRaises(ValueError, onnx.deserialize, se_obj, object())
+    def test_save_and_load_model(self):
+        proto = self._simple_model()
+        cls = ModelProto
+        proto_string = onnx._serialize(proto)
 
-    def test_save_and_load(self):
-        opts = {
-            '_simple_model': ModelProto,
-            '_simple_tensor': TensorProto,
-        }
-        for gen in opts:
-            proto = getattr(self, gen)()
-            cls = opts[gen]
-            proto_string = onnx.serialize(proto)
+        # Test if input is string
+        loaded_proto = onnx.load_model_from_string(proto_string)
+        self.assertTrue(proto == loaded_proto)
 
-            # Test if input is string
-            loaded_proto = onnx.load_from_string(proto_string, cls)
+        # Test if input has a read function
+        f = io.BytesIO()
+        onnx.save_model(proto_string, f)
+        f = io.BytesIO(f.getvalue())
+        loaded_proto = onnx.load_model(f, cls)
+        self.assertTrue(proto == loaded_proto)
+
+        # Test if input is a file name
+        try:
+            f = tempfile.NamedTemporaryFile(delete=False)
+            onnx.save_model(proto, f)
+            f.close()
+
+            loaded_proto = onnx.load_model(f.name, cls)
             self.assertTrue(proto == loaded_proto)
+        finally:
+            os.remove(f.name)
 
-            # Test if input has a read function
-            f = io.BytesIO()
-            onnx.save(proto_string, f)
-            f = io.BytesIO(f.getvalue())
-            loaded_proto = onnx.load(f, cls)
+    def test_save_and_load_tensor(self):
+        proto = self._simple_tensor()
+        cls = TensorProto
+        proto_string = onnx._serialize(proto)
+
+        # Test if input is string
+        loaded_proto = onnx.load_tensor_from_string(proto_string)
+        self.assertTrue(proto == loaded_proto)
+
+        # Test if input has a read function
+        f = io.BytesIO()
+        onnx.save_tensor(proto_string, f)
+        f = io.BytesIO(f.getvalue())
+        loaded_proto = onnx.load_tensor(f, cls)
+        self.assertTrue(proto == loaded_proto)
+
+        # Test if input is a file name
+        try:
+            f = tempfile.NamedTemporaryFile(delete=False)
+            onnx.save_tensor(proto, f)
+            f.close()
+
+            loaded_proto = onnx.load_tensor(f.name, cls)
             self.assertTrue(proto == loaded_proto)
-
-            # Test if input is a file name
-            try:
-                f = tempfile.NamedTemporaryFile(delete=False)
-                onnx.save(proto, f)
-                f.close()
-
-                loaded_proto = onnx.load(f.name, cls)
-                self.assertTrue(proto == loaded_proto)
-            finally:
-                os.remove(f.name)
+        finally:
+            os.remove(f.name)
 
     def test_existence(self):
         try:
