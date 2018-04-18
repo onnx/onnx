@@ -25,6 +25,7 @@ Return:
 
 Supported pass names:
     -- nop
+    -- eliminate_identity
     -- eliminate_nop_transpose
     -- fuse_consecutive_transposes
     -- fuse_add_bias_into_conv
