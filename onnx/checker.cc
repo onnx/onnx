@@ -45,8 +45,6 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
-    default:
-      fail_check("Unrecognized type value case: ", value_case);
   }
 }
 
@@ -129,7 +127,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         break;
 
       default:
-        fail_check("Unrecognized data_type: ", tensor.data_type());
+        fail_check("Unrecognized data_type (tensor's name is ", tensor.name(), "): ", tensor.data_type());
     }
   }
 
@@ -336,8 +334,7 @@ void check_model(const ModelProto& model) {
   for (const auto& opset_import : model.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  auto dit = opset_imports.find(ONNX_DOMAIN);
-  if (dit == opset_imports.end()) {
+  if (opset_imports.size() < 1) {
     if (model.ir_version() >= 3) {
       fail_check(
           "model with IR version >= 3 must specify opset_import for ONNX");
