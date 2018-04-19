@@ -354,6 +354,9 @@ void check_model(const ModelProto& model) {
   } else {
     if (opset_imports.empty())
       opset_imports[ONNX_DOMAIN] = 1;
+    else
+      fail_check(
+          "model with IR version < 3 cannot have opset_import specified");
   }
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
