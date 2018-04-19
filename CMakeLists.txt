@@ -245,9 +245,7 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
-    find_package(PythonLibs ${PY_VERSION} REQUIRED)
-    target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
+    target_link_libraries(onnx_cpp2py_export PRIVATE)
     target_compile_options(onnx_cpp2py_export PRIVATE
       /MP
       /MX
