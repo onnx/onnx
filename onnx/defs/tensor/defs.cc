@@ -61,10 +61,9 @@ NOTE: Casting to and from strings is not supported yet.
       if (!hasExactlyNInputTypes(ctx, 1, "Cast")) {
         return;
       }
-
-      propagateShapeFromInputToOutput(ctx, 0, 0);
       ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
           static_cast<TensorProto_DataType>(ctx.getAttribute("to")->i()));
+      propagateShapeFromInputToOutput(ctx, 0, 0);
     });
 
 ONNX_OPERATOR_SCHEMA(Reshape)
@@ -89,7 +88,7 @@ from the input tensor).)DOC")
         return;
       }
 
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateTypeFromInputToOutput(ctx, 0, 0);
     });
 
 ONNX_OPERATOR_SCHEMA(Shape)
@@ -182,7 +181,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
         return;
       }
 
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateTypeFromInputToOutput(ctx, 0, 0);
 
       auto axisAttr = ctx.getAttribute("axis");
       if (!axisAttr) {
@@ -265,7 +264,7 @@ ONNX_OPERATOR_SCHEMA(Split)
 Otherwise, the tensor is split to equal sized parts.
 )DOC")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    propagateTypeFromInputToOutput(ctx, 0, 0);
 
       if (ctx.getNumOutputs() == 0) {
         return;
@@ -394,7 +393,7 @@ will be (2, 1, 3).
         }
       }
 
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateTypeFromInputToOutput(ctx, 0, 0);
       for (size_t i = 0; i < perm.size(); ++i) {
         appendSingleDimCopiedFromInputTypeToOutputType(
             ctx, 0, 0, static_cast<size_t>(perm[i]));
@@ -470,7 +469,7 @@ Example 2:
         return;
       }
 
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateTypeFromInputToOutput(ctx, 0, 0);
 
       if (!ctx.getInputType(0)->tensor_type().has_shape() ||
           !ctx.getInputType(1)->tensor_type().has_shape()) {
@@ -510,7 +509,7 @@ Takes a  parameter `axes` with a list of axes to squeeze.
         return;
       }
 
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateTypeFromInputToOutput(ctx, 0, 0);
 
       std::vector<int64_t> axes;
       if (!getRepeatedAttribute(ctx, "axes", axes)) {
@@ -560,7 +559,7 @@ Dimension indices in `axes` are as seen in the output tensor. For example:
         return;
       }
 
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateTypeFromInputToOutput(ctx, 0, 0);
 
       std::vector<int64_t> axes;
       if (!getRepeatedAttribute(ctx, "axes", axes)) {

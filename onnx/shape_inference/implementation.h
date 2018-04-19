@@ -76,6 +76,9 @@ void InferShapes(ModelProto& m) {
     valueTypesByName[vi.name()] = vi.mutable_type();
   }
 
+  int k;
+  std::cin >> k;
+  std::cout << k;
   for (const auto& n : g->node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -91,7 +94,6 @@ void InferShapes(ModelProto& m) {
     }
 
     InferenceContextImpl ctx(n, valueTypesByName);
-
     schema->GetTypeAndShapeInferenceFunction()(ctx);
 
     for (int i = 0; i < n.output_size(); ++i) {
@@ -108,13 +110,16 @@ void InferShapes(ModelProto& m) {
       // If there is already a ValueInfo associated with this
       // output, reuse it. Otherwise add a new one.
       auto iter = valueTypesByName.find(output);
+      TypeProto* type_proto= nullptr;
       TypeProto_Tensor* existingType = nullptr;
       if (iter != valueTypesByName.end()) {
-        existingType = iter->second->mutable_tensor_type();
+        type_proto = iter->second;
+        existingType = type_proto->mutable_tensor_type();
       } else {
         auto vi = g->add_value_info();
         vi->set_name(output);
-        existingType = vi->mutable_type()->mutable_tensor_type();
+        type_proto = vi->mutable_type();
+        existingType = type_proto->mutable_tensor_type();
       }
 
       // Incorporate the inferred information.
@@ -132,7 +137,7 @@ void InferShapes(ModelProto& m) {
           if (inferredType.shape().dim_size() !=
               existingType->shape().dim_size()) {
             throw std::runtime_error(
-                "inferred type and existing type are of different rank");
+                "inferred type and existing type are of different rank" +std::to_string(inferredType.shape().dim_size()) + " " + std::to_string(existingType->shape().dim_size()));
           }
         } else {
           // make sure has_shape() == True for scalars
@@ -159,7 +164,7 @@ void InferShapes(ModelProto& m) {
       }
 
       // Make it available to futher inference.
-      valueTypesByName[output] = iter->second;
+      valueTypesByName[output] = type_proto;
     }
   }
 }

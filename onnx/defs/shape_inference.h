@@ -45,7 +45,7 @@ hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::string& opname) {
   return true;
 }
 
-inline void propagateElemTypeFromInputToOutput(
+inline void propagateTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
     size_t outputIndex) {
@@ -76,10 +76,12 @@ inline void propagateShapeFromInputToOutput(
     size_t outputIndex) {
   auto output_type = ctx.getOutputType(outputIndex);
   auto input_type = ctx.getInputType(inputIndex);
-  if (TypeProto::kTensorType != output_type->value_case() ||
-      TypeProto::kTensorType != input_type->value_case()) {
+  if (TypeProto::kTensorType != input_type->value_case() ||
+      TypeProto::kTensorType != output_type->value_case()) {
+      throw std::runtime_error("zhangke: " + std::to_string(ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
     return;
   }
+  
   *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
       ctx.getInputType(inputIndex)->tensor_type().shape();
 }
