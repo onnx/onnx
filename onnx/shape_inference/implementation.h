@@ -96,65 +96,56 @@ void InferShapes(ModelProto& m) {
 
     for (int i = 0; i < n.output_size(); ++i) {
       const auto& output = n.output(i);
-      const auto& inferredType = *ctx.getOutputType(i);
-      if (TypeProto::kTensorType != inferredType.value_case()) {
-        continue;
-      }
+      const auto& inferredType = ctx.getOutputType(i)->tensor_type();
+
       // In this case, we have no new information, so don't bother
       // to add a contentless ValueInfo.
-      if (inferredType.tensor_type().elem_type() == TensorProto::UNDEFINED &&
-          !inferredType.tensor_type().has_shape()) {
+      if (inferredType.elem_type() == TensorProto::UNDEFINED &&
+          !inferredType.has_shape()) {
         continue;
       }
 
       // If there is already a ValueInfo associated with this
       // output, reuse it. Otherwise add a new one.
       auto iter = valueTypesByName.find(output);
-      TypeProto* existingType = nullptr;
+      TypeProto_Tensor* existingType = nullptr;
       if (iter != valueTypesByName.end()) {
-        existingType = iter->second;
+        existingType = iter->second->mutable_tensor_type();
       } else {
         auto vi = g->add_value_info();
         vi->set_name(output);
-        existingType = vi->mutable_type();
+        existingType = vi->mutable_type()->mutable_tensor_type();
       }
 
       // Incorporate the inferred information.
-      if (inferredType.tensor_type().elem_type() != TensorProto::UNDEFINED) {
-        if (existingType->mutable_tensor_type()->elem_type() !=
-                TensorProto::UNDEFINED &&
-            existingType->mutable_tensor_type()->elem_type() !=
-                inferredType.tensor_type().elem_type()) {
+      if (inferredType.elem_type() != TensorProto::UNDEFINED) {
+        if (existingType->elem_type() != TensorProto::UNDEFINED &&
+            existingType->elem_type() != inferredType.elem_type()) {
           throw std::runtime_error("inferred type differs from existing type");
         } else {
-          existingType->mutable_tensor_type()->set_elem_type(
-              inferredType.tensor_type().elem_type());
+          existingType->set_elem_type(inferredType.elem_type());
         }
       }
 
-      if (inferredType.tensor_type().has_shape()) {
-        if (existingType->mutable_tensor_type()->has_shape()) {
-          if (inferredType.tensor_type().shape().dim_size() !=
-              existingType->mutable_tensor_type()->shape().dim_size()) {
+      if (inferredType.has_shape()) {
+        if (existingType->has_shape()) {
+          if (inferredType.shape().dim_size() !=
+              existingType->shape().dim_size()) {
             throw std::runtime_error(
                 "inferred type and existing type are of different rank");
           }
         } else {
           // make sure has_shape() == True for scalars
-          existingType->mutable_tensor_type()->mutable_shape();
+          existingType->mutable_shape();
 
-          for (int j = 0; j < inferredType.tensor_type().shape().dim_size();
-               ++j) {
-            existingType->mutable_tensor_type()->mutable_shape()->add_dim();
+          for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
+            existingType->mutable_shape()->add_dim();
           }
         }
 
-        for (int j = 0; j < inferredType.tensor_type().shape().dim_size();
-             ++j) {
-          const auto& inferredDim = inferredType.tensor_type().shape().dim(j);
-          auto* existingDim =
-              existingType->mutable_tensor_type()->mutable_shape()->mutable_dim(
-                  j);
+        for (int j = 0; j < inferredType.shape().dim_size(); ++j) {
+          const auto& inferredDim = inferredType.shape().dim(j);
+          auto* existingDim = existingType->mutable_shape()->mutable_dim(j);
           if (inferredDim.has_dim_value()) {
             auto inferredDimValue = inferredDim.dim_value();
             if (existingDim->has_dim_value() &&
@@ -168,7 +159,7 @@ void InferShapes(ModelProto& m) {
       }
 
       // Make it available to futher inference.
-      valueTypesByName[output] = existingType;
+      valueTypesByName[output] = iter->second;
     }
   }
 }
