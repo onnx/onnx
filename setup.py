@@ -263,6 +263,7 @@ install_requires.extend([
 ################################################################################
 
 setup_requires.append('pytest-runner')
+setup_requires.append('protobuf')
 tests_require.append('pytest-cov')
 tests_require.append('nbval')
 tests_require.append('tabulate')
