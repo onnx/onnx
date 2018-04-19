@@ -223,9 +223,7 @@ if(BUILD_ONNX_PYTHON)
   set_target_properties(onnx_cpp2py_export PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
   target_include_directories(onnx_cpp2py_export PRIVATE "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}" "${PYTHON_INCLUDE_DIR}")
 
-  # pybind11 is a header only lib
-  find_package(pybind11)
-  if(pybind11_FOUND)
+  if(pybind11_INCLUDE_DIRS)
     target_include_directories(onnx_cpp2py_export PRIVATE ${pybind11_INCLUDE_DIRS})
   else()
     target_include_directories(onnx_cpp2py_export PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
