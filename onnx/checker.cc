@@ -45,13 +45,26 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
       enforce_has_field(type, elem_type);
       enforce_has_field(type, shape);
     } break;
+#ifdef ONNX_ML
+    case TypeProto::kSequenceType: {
+      const auto& type = value_info.type().sequence_type();
+      enforce_has_field(type, elem_type);
+    } break;
+    case TypeProto::kMapType: {
+      const auto& type = value_info.type().map_type();
+      enforce_has_field(type, key_type);
+      enforce_has_field(type, value_type);
+    } break;
+#endif
+    default:
+      fail_check("Unrecognized type value case (value_info name: ", value_info.name(), "): ", value_case);
   }
 }
 
 void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
-    fail_check("setting data_type field to UNDEFINED is not allowed");
+    fail_check("setting data_type field (tensor name: ", tensor.name(), ") to UNDEFINED is not allowed");
   }
 
   int num_value_fields = 0;
@@ -76,11 +89,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
 #undef check_data_field
 
   if (num_value_fields != 1) {
-    fail_check("TensorProto should contain one and only one value field.");
+    fail_check("TensorProto (tensor name: ", tensor.name(), ") should contain one and only one value field.");
   }
   if (has_raw_data) {
     if (tensor.data_type() == TensorProto::STRING) {
-      fail_check("STRING data should not be stored in raw_data field");
+      fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
     }
     return;
   } else {
@@ -127,7 +140,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
         break;
 
       default:
-        fail_check("Unrecognized data_type (tensor's name is ", tensor.name(), "): ", tensor.data_type());
+        fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
     }
   }
 
@@ -150,7 +163,7 @@ void check_attribute(
 
 #define check_type(expected_type)                        \
   if (attr.has_type() && attr.type() != expected_type) { \
-    fail_check("type field and data field mismatch.");   \
+    fail_check("type field and data field mismatch in attribute ", attr.name(), ".");   \
   }
 
 #define check_singular_field(field, type) \
@@ -181,7 +194,7 @@ void check_attribute(
 #undef check_repeated_field
 
   if (used_fields != 1) {
-    fail_check("Attribute should contain one and only one value field.");
+    fail_check("Attribute (name: ", attr.name(), ") should contain one and only one value field.");
   }
 
   if (attr.has_t()) {
@@ -207,7 +220,7 @@ void check_node(
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
-    fail_check("NodeProto has zero input and zero output.");
+    fail_check("NodeProto (name: ", node.name(), ", type: ", node.op_type(), ") has zero input and zero output.");
   }
 
   // Resolve domain for node
@@ -252,7 +265,7 @@ void check_graph(
   for (const auto& value_info : graph.input()) {
     if (output_names.count(value_info.name())) {
       fail_check(
-          "Graph must be in SSA form, however '",
+          "Graph must be in single static assignment (SSA) form, however '",
           value_info.name(),
           "' has been used as graph input names multiple times.");
     }
@@ -302,7 +315,7 @@ void check_graph(
       }
       if (output_names.count(output)) {
         fail_check(
-            "Graph must be in SSA form, however '",
+            "Graph must be in single static assignment form, however '",
             output,
             "' has been used as output names multiple times.");
       }
@@ -334,7 +347,7 @@ void check_model(const ModelProto& model) {
   for (const auto& opset_import : model.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  if (opset_imports.size() < 1) {
+  if (opset_imports.empty()) {
     if (model.ir_version() >= 3) {
       fail_check(
           "model with IR version >= 3 must specify opset_import for ONNX");
