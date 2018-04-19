@@ -23,9 +23,9 @@ struct OptimizePass {
     : name(std::move(name)), type(type) {
   }
 
-  virtual void optimize(ONNX_NAMESPACE::ModelProto& mp) {}
+  virtual void optimize(ONNX_NAMESPACE::ModelProto& /*mp*/) {}
 
-  virtual void optimize(Graph& graph) {}
+  virtual void optimize(Graph& /*graph*/) {}
 
 };
 
