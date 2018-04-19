@@ -347,13 +347,13 @@ void check_model(const ModelProto& model) {
   for (const auto& opset_import : model.opset_import()) {
     opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
   }
-  if (opset_imports.empty()) {
-    if (model.ir_version() >= 3) {
+  if (model.ir_version() >= 3) {
+    if (opset_imports.empty())
       fail_check(
           "model with IR version >= 3 must specify opset_import for ONNX");
-    } else {
+  } else {
+    if (opset_imports.empty())
       opset_imports[ONNX_DOMAIN] = 1;
-    }
   }
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
