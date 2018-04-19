@@ -315,7 +315,7 @@ void check_graph(
       }
       if (output_names.count(output)) {
         fail_check(
-            "Graph must be in single static assignment form, however '",
+            "Graph must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
       }
