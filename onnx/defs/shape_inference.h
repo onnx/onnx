@@ -45,11 +45,19 @@ hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::string& opname) {
   return true;
 }
 
-inline void propagateTypeFromInputToOutput(
+inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
-    size_t outputIndex) {
-  *ctx.getOutputType(outputIndex) = *ctx.getInputType(inputIndex);
+    size_t outputIndex) {  
+  auto input_type = ctx.getInputType(inputIndex);
+  if (input_type->value_case() != TypeProto::kTensorType) {
+      return;
+  }
+  auto output_type = ctx.getOutputType(outputIndex);
+  if (output_type->value_case() == TypeProto::kTensorType
+      || output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(input_type->tensor_type().elem_type());
+  }
 }
 
 inline void appendSingleDimCopiedFromInputTypeToOutputType(

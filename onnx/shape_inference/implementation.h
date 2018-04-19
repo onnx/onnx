@@ -76,9 +76,6 @@ void InferShapes(ModelProto& m) {
     valueTypesByName[vi.name()] = vi.mutable_type();
   }
 
-  int k;
-  std::cin >> k;
-  std::cout << k;
   for (const auto& n : g->node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
@@ -136,8 +133,7 @@ void InferShapes(ModelProto& m) {
         if (existingType->has_shape()) {
           if (inferredType.shape().dim_size() !=
               existingType->shape().dim_size()) {
-            throw std::runtime_error(
-                "inferred type and existing type are of different rank" +std::to_string(inferredType.shape().dim_size()) + " " + std::to_string(existingType->shape().dim_size()));
+            throw std::runtime_error("inferred type and existing type are of different rank");
           }
         } else {
           // make sure has_shape() == True for scalars
