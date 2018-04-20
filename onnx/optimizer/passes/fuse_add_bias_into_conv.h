@@ -105,8 +105,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             orig_conv->node()->addInput(orig_bias);
           }
           if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
-            std::vector<Dimension> conv_shape(n->output()->sizes());
-            orig_conv->setSizes(conv_shape);
+            orig_conv->setSizes(n->output()->sizes());
           }
           if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
             orig_conv->setElemType(n->output()->elemType());
