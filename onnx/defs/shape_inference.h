@@ -23,9 +23,7 @@ inline bool getRepeatedAttribute(
     std::vector<T>& values) {
   const auto* attr = ctx.getAttribute(attr_name);
   if (attr) {
-    for (const auto& value : RetrieveValues<T>(*attr)) {
-      values.push_back(value);
-    }
+    values = RetrieveValues<T>(*attr);
     return true;
   } else {
     return false;
