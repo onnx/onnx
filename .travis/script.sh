@@ -5,7 +5,7 @@ source "${script_path%/*}/setup.sh"
 
 # onnx tests
 pip install pytest-cov nbval
-pytest --pyargs onnx
+pytest
 
 # lint python code
 pip install flake8
