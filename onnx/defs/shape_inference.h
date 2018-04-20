@@ -102,7 +102,6 @@ inline void propagateShapeFromInputToOutput(
   if (TypeProto::kTensorType != input_type->value_case() ||
       TypeProto::kTensorType != output_type->value_case()) {
     throw std::runtime_error(
-        "zhangke: " +
         ONNX_NAMESPACE::to_string(
             ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
     return;
