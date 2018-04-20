@@ -200,8 +200,8 @@ class OpSchema final {
   //
   // Note that signatures are defined to allow for forward-declaring
   // any structs used from ir.h
-  OpSchema& ShapeInferenceFunction(InferenceFunction inferenceFunction);
-  InferenceFunction GetShapeInferenceFunction() const {
+  OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
+  InferenceFunction GetTypeAndShapeInferenceFunction() const {
     return tensor_inference_function_;
   }
 
