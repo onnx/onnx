@@ -36,6 +36,7 @@ _(Squeeze) \
 _(Undefined) \
 _(FusionGroup) \
 _(Gemm) \
+_(Tile) \
 _(SubConstant) \
 _(Scale) \
 _(Transpose) \
@@ -126,7 +127,8 @@ _(tan) \
 _(trunc) \
 _(zeros) \
 _(exponent) \
-_(device)
+_(device) \
+_(Identity)
 
 enum BuiltinSymbol {
   #define DEFINE_SYMBOL(s) \

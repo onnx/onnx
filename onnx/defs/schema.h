@@ -200,8 +200,8 @@ class OpSchema final {
   //
   // Note that signatures are defined to allow for forward-declaring
   // any structs used from ir.h
-  OpSchema& ShapeInferenceFunction(InferenceFunction inferenceFunction);
-  InferenceFunction GetShapeInferenceFunction() const {
+  OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
+  InferenceFunction GetTypeAndShapeInferenceFunction() const {
     return tensor_inference_function_;
   }
 
@@ -666,4 +666,5 @@ class OpSchemaRegistry final {
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
+
 } // namespace ONNX_NAMESPACE

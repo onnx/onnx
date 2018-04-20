@@ -119,7 +119,6 @@ def make_tensor(name, data_type, dims, vals, raw=False):
 
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
-        tensor.string_data.extend(vals)
 
     if (data_type == TensorProto.COMPLEX64 or
             data_type == TensorProto.COMPLEX128):
@@ -259,7 +258,9 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
 
         for d in shape:
             dim = tensor_shape_proto.dim.add()
-            if isinstance(d, integer_types):
+            if d is None:
+                pass
+            elif isinstance(d, integer_types):
                 dim.dim_value = d
             elif isinstance(d, text_type):
                 dim.dim_param = d
