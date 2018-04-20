@@ -1,6 +1,6 @@
 #include "onnx/checker.h"
 #include "onnx/proto_utils.h"
-
+#include "onnx/string_utils.h"
 #include "onnx/defs/schema.h"
 
 #include <unordered_set>
