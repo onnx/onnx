@@ -2,6 +2,7 @@
 
 #include "onnx/defs/data_type_utils.h"
 #include "onnx/proto_utils.h"
+#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -101,8 +102,7 @@ inline void propagateShapeFromInputToOutput(
   if (TypeProto::kTensorType != input_type->value_case() ||
       TypeProto::kTensorType != output_type->value_case()) {
     throw std::runtime_error(
-        "zhangke: " +
-        std::to_string(
+        ONNX_NAMESPACE::to_string(
             ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
     return;
   }
