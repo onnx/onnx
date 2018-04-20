@@ -61,7 +61,7 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
   }
 }
 
-void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
+void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check("setting data_type field (tensor name: ", tensor.name(), ") to UNDEFINED is not allowed");
