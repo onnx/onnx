@@ -37,13 +37,24 @@ struct InferenceContextImpl : public InferenceContext {
   size_t getNumInputs() const override {
     return allInputTypes_.size();
   }
+
   const TypeProto* getInputType(size_t index) const override {
+    if (index >= allInputTypes_.size()) {
+      throw std::runtime_error(
+          "input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
     return allInputTypes_[index];
   }
+
   size_t getNumOutputs() const override {
     return allOutputTypes_.size();
   }
+
   TypeProto* getOutputType(size_t index) override {
+    if (index >= allOutputTypes_.size()) {
+      throw std::runtime_error(
+          "output " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
     return &allOutputTypes_[index];
   }
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
@@ -107,7 +118,7 @@ void InferShapes(ModelProto& m) {
       // If there is already a ValueInfo associated with this
       // output, reuse it. Otherwise add a new one.
       auto iter = valueTypesByName.find(output);
-      TypeProto* type_proto= nullptr;
+      TypeProto* type_proto = nullptr;
       TypeProto_Tensor* existingType = nullptr;
       if (iter != valueTypesByName.end()) {
         type_proto = iter->second;
@@ -133,7 +144,8 @@ void InferShapes(ModelProto& m) {
         if (existingType->has_shape()) {
           if (inferredType.shape().dim_size() !=
               existingType->shape().dim_size()) {
-            throw std::runtime_error("inferred type and existing type are of different rank");
+            throw std::runtime_error(
+                "inferred type and existing type are of different rank");
           }
         } else {
           // make sure has_shape() == True for scalars

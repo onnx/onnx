@@ -58,11 +58,11 @@ NOTE: Casting to and from strings is not supported yet.
          "tensor(bool)"},
         "Constrain output types. Casting to strings and complex are not supported.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (!hasExactlyNInputTypes(ctx, 1, "Cast")) {
-        return;
-      }
       ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
           static_cast<TensorProto_DataType>(ctx.getAttribute("to")->i()));
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
       propagateShapeFromInputToOutput(ctx, 0, 0);
     });
 
@@ -84,10 +84,6 @@ from the input tensor).)DOC")
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (!hasExactlyNInputTypes(ctx, 2, "Reshape")) {
-        return;
-      }
-
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
     });
 
@@ -115,12 +111,12 @@ Takes a tensor as input and outputs an 1D int64 tensor containing the shape of t
         {"tensor(int64)"},
         "Constrains output to int64 tensor.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (!hasExactlyNInputTypes(ctx, 1, "Shape")) {
-        return;
-      }
-
       ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
           TensorProto::INT64);
+
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
 
       if (ctx.getInputType(0)->tensor_type().has_shape()) {
         ctx.getOutputType(0)
@@ -177,11 +173,10 @@ ONNX_OPERATOR_SCHEMA(Concat)
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (ctx.getNumInputs() == 0) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (!hasNInputShapes(ctx, 1)) {
         return;
       }
-
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
       auto axisAttr = ctx.getAttribute("axis");
       if (!axisAttr) {
@@ -264,9 +259,9 @@ ONNX_OPERATOR_SCHEMA(Split)
 Otherwise, the tensor is split to equal sized parts.
 )DOC")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-      if (ctx.getNumOutputs() == 0) {
+      if (!hasNInputShapes(ctx, 1)) {
         return;
       }
 
@@ -289,16 +284,16 @@ Otherwise, the tensor is split to equal sized parts.
         for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); i++) {
           split.push_back(i < leftOver ? chunkSize + 1 : chunkSize);
         }
-      }
 
-      for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
-        *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
-            ctx.getInputType(0)->tensor_type().shape();
-        ctx.getOutputType(i)
-            ->mutable_tensor_type()
-            ->mutable_shape()
-            ->mutable_dim(axis)
-            ->set_dim_value(split[i]);
+        for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
+          *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
+              ctx.getInputType(0)->tensor_type().shape();
+          ctx.getOutputType(i)
+              ->mutable_tensor_type()
+              ->mutable_shape()
+              ->mutable_dim(axis)
+              ->set_dim_value(split[i]);
+        }
       }
     });
 
@@ -377,10 +372,8 @@ will be (2, 1, 3).
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (!hasExactlyNInputTypes(ctx, 1, "Transpose")) {
-        return;
-      }
-      if (!ctx.getInputType(0)->tensor_type().has_shape()) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (!hasNInputShapes(ctx, 1)) {
         return;
       }
 
@@ -465,14 +458,8 @@ Example 2:
         {"tensor(int32)", "tensor(int64)"},
         "Constrain indices to integer types")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (!hasExactlyNInputTypes(ctx, 2, "Gather")) {
-        return;
-      }
-
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
-      if (!ctx.getInputType(0)->tensor_type().has_shape() ||
-          !ctx.getInputType(1)->tensor_type().has_shape()) {
+      if (!hasNInputShapes(ctx, 2)) {
         return;
       }
 
@@ -505,11 +492,10 @@ Takes a  parameter `axes` with a list of axes to squeeze.
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (!hasExactlyNInputTypes(ctx, 1, "Squeeze")) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (!hasNInputShapes(ctx, 1)) {
         return;
       }
-
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
       std::vector<int64_t> axes;
       if (!getRepeatedAttribute(ctx, "axes", axes)) {
@@ -555,11 +541,10 @@ Dimension indices in `axes` are as seen in the output tensor. For example:
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      if (!hasExactlyNInputTypes(ctx, 1, "Unsqueeze")) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (!hasNInputShapes(ctx, 1)) {
         return;
       }
-
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
       std::vector<int64_t> axes;
       if (!getRepeatedAttribute(ctx, "axes", axes)) {
