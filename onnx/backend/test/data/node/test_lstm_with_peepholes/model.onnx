@@ -8,45 +8,45 @@ Q
 	initial_h
 	initial_c
 PY"LSTM*
-hidden_size test_lstm_with_peepholesZ
+hidden_size test_lstm_with_peepholesZ
 X
 
 
-
-Z
+
+Z
 W
 
 
-
-Z
+
+Z
 R
 
 
-
-Z
+
+Z
 B
 
 
- Z
+Z
 sequence_lens
 
 
-Z
+Z
 	initial_h
 
 
-
-Z
+
+Z
 	initial_c
 
 
-
-Z
+
+Z
 P
 
 
-b
+	b
 Y
 
-
-B
+
+B
