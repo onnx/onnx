@@ -41,7 +41,7 @@ ONNX_OPERATOR_SCHEMA(Binarizer)
         "threshold",
         "Values greater than this are set to 1, else set to 0",
         AttributeProto::FLOAT,
-        OPTIONAL);
+        0.f);
 
 ONNX_OPERATOR_SCHEMA(CastMap)
     .SetDomain("ai.onnx.ml")
@@ -116,12 +116,12 @@ ONNX_OPERATOR_SCHEMA(CategoryMapper)
         "default_string",
         "string value to use if the int is not in the map",
         AttributeProto::STRING,
-        "_Unused")
+        std::string("_Unused"))
     .Attr(
         "default_int64",
         "int value to use if the string is not in the map",
         AttributeProto::INT,
-        OPTIONAL);
+        static_cast<int64_t>(-1));
 
 ONNX_OPERATOR_SCHEMA(DictVectorizer)
     .SetDomain("ai.onnx.ml")
@@ -229,7 +229,7 @@ ONNX_OPERATOR_SCHEMA(LabelEncoder)
         "default_string",
         "Default value if not in class list as string",
         AttributeProto::STRING,
-        OPTIONAL);
+        std::string("_Unused"));
 
 ONNX_OPERATOR_SCHEMA(LinearClassifier)
     .SetDomain("ai.onnx.ml")
@@ -280,7 +280,7 @@ ONNX_OPERATOR_SCHEMA(LinearClassifier)
         "post_transform",
         "enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        "NONE");
+        std::string("NONE"));
 
 ONNX_OPERATOR_SCHEMA(LinearRegressor)
     .SetDomain("ai.onnx.ml")
@@ -306,7 +306,7 @@ ONNX_OPERATOR_SCHEMA(LinearRegressor)
         "post_transform",
         "enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        "NONE")
+        std::string("NONE"))
     .Attr(
         "coefficients",
         "weights of the model(s)",
@@ -338,7 +338,11 @@ ONNX_OPERATOR_SCHEMA(Normalizer)
         "T",
         {"tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)"},
         " allowed types.")
-    .Attr("norm", "enum 'MAX', 'L1', 'L2'", AttributeProto::STRING, "MAX");
+    .Attr(
+        "norm",
+        "enum 'MAX', 'L1', 'L2'",
+        AttributeProto::STRING,
+        std::string("MAX"));
 
 ONNX_OPERATOR_SCHEMA(OneHotEncoder)
     .SetDomain("ai.onnx.ml")
@@ -451,7 +455,7 @@ ONNX_OPERATOR_SCHEMA(SVMClassifier)
         "post_transform",
         "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        "NONE")
+        std::string("NONE"))
     .Attr(
         "classlabels_strings",
         "class labels if using string labels",
@@ -512,7 +516,7 @@ ONNX_OPERATOR_SCHEMA(SVMRegressor)
         "post_transform",
         "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        "NONE")
+        std::string("NONE"))
     .Attr("rho", "", AttributeProto::FLOATS, OPTIONAL);
 
 ONNX_OPERATOR_SCHEMA(TreeEnsembleClassifier)
@@ -620,7 +624,7 @@ ONNX_OPERATOR_SCHEMA(TreeEnsembleClassifier)
         "post_transform",
         "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        OPTIONAL)
+        std::string("NONE"))
     .Attr(
         "base_values",
         "base values for classification, added to final class score, size must be the same as classes or can be left unassigned (assumed 0)",
@@ -717,12 +721,12 @@ ONNX_OPERATOR_SCHEMA(TreeEnsembleRegressor)
         "post_transform",
         "post eval transform for score, enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        OPTIONAL)
+        std::string("NONE"))
     .Attr(
         "aggregate_function",
         " enum, how to aggregate leaf values within a target, AVERAGE,SUM,MIN,MAX",
         AttributeProto::STRING,
-        OPTIONAL)
+        std::string("SUM"))
     .Attr(
         "base_values",
         "base values for regression, added to final score, size must be the same as n_outputs or can be left unassigned (assumed 0)",
@@ -779,7 +783,7 @@ ONNX_OPERATOR_SCHEMA(FeatureVectorizer)
     .Attr(
         "inputdimensions",
         "the size of each input in the input list",
-        AttributeProto::INT,
+        AttributeProto::INTS,
         OPTIONAL);
 
 #endif
