@@ -252,7 +252,7 @@ OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
   return *this;
 }
 
-OpSchema& OpSchema::ShapeInferenceFunction(InferenceFunction inferenceFunction) {
+OpSchema& OpSchema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction) {
   tensor_inference_function_ = inferenceFunction;
   return *this;
 }
@@ -584,4 +584,5 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
   }
   return numReplaced;
 }
+
 } // namespace ONNX_NAMESPACE

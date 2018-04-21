@@ -19,9 +19,9 @@ struct FuseConsecutiveTransposes : public OptimizePass {
     ONNX_ASSERT(t1.size() == t2.size());
     std::vector<int64_t> ret;
     for (size_t i = 0; i < t1.size(); i++) {
-      ONNX_ASSERT(   t1[i]  < (int)t2.size());
-      ONNX_ASSERT(t2[t1[i]] < (int)t2.size());
-      ret.push_back(t2[t1[i]]);
+      ONNX_ASSERT(   t1[i]  < static_cast<int64_t>(t2.size()));
+      ONNX_ASSERT(t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
+      ret.push_back(t2[static_cast<size_t>(t1[i])]);
     }
     return ret;
   }

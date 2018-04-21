@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.1)
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
-option(BUILD_PYTHON "Build Python binaries" ON)
+option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -159,8 +159,12 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
       VERBATIM )
 
     set(PROTOC_ARGS ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR} --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
-    if(BUILD_PYTHON)
+    if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+      if(NOT WIN32)
+        # Haven't figured out how to generate mypy stubs on Windows yet
+        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${ROOT_DIR}/tools/protoc-gen-mypy.py --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+      endif()
     endif()
     add_custom_command (
       OUTPUT "${OUTPUT_PB_SRC}"
@@ -204,7 +208,7 @@ add_library(onnx ${onnx_src})
 target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
 
-if(BUILD_PYTHON)
+if(BUILD_ONNX_PYTHON)
   if("${PY_EXT_SUFFIX}" STREQUAL "")
     if (MSVC)
       set(PY_EXT_SUFFIX ".pyd")
@@ -279,8 +283,10 @@ if (MSVC)
     target_compile_options(onnx PRIVATE
         /MP
         /MX
+        /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")

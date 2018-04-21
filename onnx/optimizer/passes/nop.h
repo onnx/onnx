@@ -3,17 +3,18 @@
 
 #include "onnx/optimizer/passes/optimize_pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-struct Nop : public OptimizePass {
-  explicit Nop()
-    : OptimizePass("nop", API_TYPE::IR) {
-  }
+struct Nop final : public OptimizePass {
+  explicit Nop() : OptimizePass("nop", API_TYPE::IR) {}
 
-  virtual void optimize(Graph& graph) {
-  }
+  void optimize(Graph& /*graph*/) override {}
+
+  void optimize(ONNX_NAMESPACE::ModelProto& /*mp*/) override {}
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE
 
 #endif
