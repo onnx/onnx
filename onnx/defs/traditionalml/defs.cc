@@ -290,7 +290,7 @@ ONNX_OPERATOR_SCHEMA(Normalizer)
     "T",
     { "tensor(float)", "tensor(double)", "tensor(int64)", "tensor(int32)" },
     " allowed types.")
-.Attr("norm", "0=Lmax, 1=L1, 2=L2", AttributeProto::STRING, OPTIONAL);
+.Attr("norm", "enum 'MAX', 'L1', 'L2'", AttributeProto::STRING, OPTIONAL);
 
 ONNX_OPERATOR_SCHEMA(OneHotEncoder)
 .SetDomain("ai.onnx.ml")

@@ -463,7 +463,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>norm</tt> : string</dt>
-<dd>0=Lmax, 1=L1, 2=L2</dd>
+<dd>enum 'MAX', 'L1', 'L2'</dd>
 </dl>
 
 #### Inputs
