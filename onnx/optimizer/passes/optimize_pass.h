@@ -8,19 +8,19 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-enum class API_TYPE : uint8_t {
+enum class API_TYPE {
   PROTO, IR
 };
 
 struct OptimizePass {
 
-  virtual ~OptimizePass() noexcept = 0;
+  virtual ~OptimizePass() {}
 
   std::string name;
   API_TYPE type;
 
-  explicit OptimizePass(std::string name, API_TYPE type)
-    : name(std::move(name)), type(type) {
+  explicit OptimizePass(const std::string& name, API_TYPE type)
+    : name(name), type(type) {
   }
 
   virtual void optimize(ONNX_NAMESPACE::ModelProto& /*mp*/) {}
@@ -29,6 +29,5 @@ struct OptimizePass {
 
 };
 
-inline OptimizePass::~OptimizePass() noexcept = default;
 
 }} // namespace ONNX_NAMESPACE::optimization

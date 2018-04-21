@@ -94,16 +94,23 @@ message AttributeProto {
     STRING = 3;
     TENSOR = 4;
     GRAPH = 5;
+    FUNCTION = 11;
 
     FLOATS = 6;
     INTS = 7;
     STRINGS = 8;
     TENSORS = 9;
     GRAPHS = 10;
+    FUNCTIONS = 12;
   }
 
   // The name field MUST be present for this version of the IR.
   string name = 1;           // namespace Attribute
+ 
+  // if ref_attr_name is not empty, ref_attr_name is the attribute name in parent function.
+  // In this case, this AttributeProto does not contain data, and it's a reference of attribute
+  // in parent scope.
+  string ref_attr_name = 21;
 
   // A human-readable documentation for this attribute. Markdown is allowed.
   string doc_string = 13;
@@ -187,7 +194,7 @@ message ModelProto {
   // with the same-domain/same-op_type operator with the HIGHEST version
   // in the referenced operator sets.
   repeated OperatorSetIdProto opset_import = 8;
-
+  
   // The name of the framework or tool used to generate this model.
   // This field SHOULD be present to indicate which implementation/tool/framework
   // emitted the model.
@@ -236,9 +243,13 @@ message GraphProto {
   // The name of the graph.
   string name = 2;   // namespace Graph
 
-  // A list of named tensor values, used to specify constant inputs of the graph.
+  // A list of named tensor values (constants), used to specify default
+  // values for some of the inputs of the graph.
   // Each TensorProto entry must have a distinct name (within the list) that
   // also appears in the input list.
+  // In an evaluation, the default value specified here is used if and only if
+  // user specifies no value for the corresponding input parameter.
+  // May be used to pass serialized parameters for networks.
   repeated TensorProto initializer = 5;
 
   // A human-readable documentation for this graph. Markdown is allowed.

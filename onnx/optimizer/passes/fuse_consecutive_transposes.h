@@ -7,7 +7,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-struct FuseConsecutiveTransposes final : public OptimizePass {
+struct FuseConsecutiveTransposes : public OptimizePass {
   explicit FuseConsecutiveTransposes()
     : OptimizePass("fuse_consecutive_transposes", API_TYPE::IR) {
   }
@@ -18,7 +18,6 @@ struct FuseConsecutiveTransposes final : public OptimizePass {
       const std::vector<int64_t> & t2) {
     ONNX_ASSERT(t1.size() == t2.size());
     std::vector<int64_t> ret;
-    ret.reserve(t1.size());
     for (size_t i = 0; i < t1.size(); i++) {
       ONNX_ASSERT(   t1[i]  < static_cast<int64_t>(t2.size()));
       ONNX_ASSERT(t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
@@ -54,7 +53,7 @@ struct FuseConsecutiveTransposes final : public OptimizePass {
     }
   }
 
-  void optimize(Graph& graph) override {
+  virtual void optimize(Graph& graph) {
     fuse_consecutive_transposes(graph);
   }
 };

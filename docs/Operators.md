@@ -121,9 +121,15 @@
   (Tensor<T>) where the absolute is, y = abs(x), is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 
@@ -191,9 +197,15 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
 
@@ -280,9 +292,15 @@ expect(node, inputs=[x, y], outputs=[x + y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -465,9 +483,15 @@ expect(node, inputs=[x, y], outputs=[z],
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -507,9 +531,15 @@ This version of the operator has been available since version 1 of the default O
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -567,9 +597,15 @@ This version of the operator has been available since version 1 of the default O
    The output of each pooling window is divided by the number of elements exclude pad.
    
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -940,9 +976,15 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   Output case #2: Y (test mode)
       
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>
 
@@ -1005,9 +1047,15 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
   in the 'DataType' enum field in the TensorProto message.
   NOTE: Casting to and from strings is not supported yet.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -1079,9 +1127,15 @@ for from_type, to_type in test_cases:
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Ceil-1">Ceil-1</a>
 
@@ -1139,9 +1193,15 @@ expect(node, inputs=[x], outputs=[y],
   specified with arguments 'min' and 'max'. They default to
   numeric_limits::lowest() and numeric_limits::max() respectively.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 
@@ -1238,9 +1298,15 @@ expect(node, inputs=[x], outputs=[y],
 
   Concatenate a list of tensors into a single tensor
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 4 of the default ONNX operator set.
+This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 4
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
@@ -1310,9 +1376,15 @@ for test_case, values in test_cases.items():
 
   A constant tensor.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -1370,9 +1442,15 @@ expect(node, inputs=[], outputs=[values],
   The convolution operator consumes an input tensor and a filter, and
   computes the output.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -1541,9 +1619,15 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -1599,9 +1683,15 @@ This version of the operator has been available since version 1 of the default O
   the input tensor where values from the depth dimension are moved in spatial blocks to the height
   and width dimensions.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -1711,9 +1801,15 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
 
@@ -1807,9 +1903,15 @@ expect(node, inputs=[x, y], outputs=[z],
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
 
@@ -1853,9 +1955,15 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
   
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Elu-1">Elu-1</a>
 
@@ -1944,9 +2052,15 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -2030,9 +2144,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Calculates the exponential of the given input tensor, element-wise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Exp-1">Exp-1</a>
 
@@ -2090,9 +2210,15 @@ expect(node, inputs=[x], outputs=[y],
   (d_0, d_1, ... d_n) then the output will have shape
   (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -2176,9 +2302,15 @@ expect(node, inputs=[a], outputs=[b],
   (Tensor<T>) where the floor is, y = floor(x), is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
 
@@ -2305,9 +2437,15 @@ expect(node, inputs=[x], outputs=[y],
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 3 of the default ONNX operator set.
+This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 3
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 
@@ -2411,9 +2549,15 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
         ],
     ]
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -2500,12 +2644,18 @@ expect(node, inputs=[data, indices], outputs=[y],
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
   dimension (M X N).
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-  the dimension requirement. A will be transposed before doing the computation
+  the dimension requirement. If A can be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 
@@ -2556,9 +2706,15 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
    the values in the same channel. This is equivalent to AveragePool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -2632,9 +2788,15 @@ expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 2
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpPool-1</a>
 
@@ -2673,9 +2835,15 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
    the values in the same channel. This is equivalent to MaxPool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -2753,9 +2921,15 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -2841,9 +3015,15 @@ expect(node, inputs=[x, y], outputs=[z],
   (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
   is applied to the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoid-1</a>
 
@@ -2944,9 +3124,15 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -3064,9 +3250,15 @@ expect(node, inputs=[x], outputs=[y],
   where mean and variance are computed per instance per channel.
   
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">InstanceNormalization-1</a>
 
@@ -3109,9 +3301,15 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
   Each input value is divided by
   (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -3231,9 +3429,15 @@ This version of the operator has been available since version 1 of the default O
   
     - Ht = ot (.) h(Ct)
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -3304,9 +3508,15 @@ This version of the operator has been available since version 1 of the default O
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
   `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">LeakyRelu-1</a>
 
@@ -3395,9 +3605,15 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -3481,9 +3697,15 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Calculates the natural log of the given input tensor, element-wise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Log-1">Log-1</a>
 
@@ -3553,9 +3775,15 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -3677,9 +3905,15 @@ expect(node, inputs=[x], outputs=[y],
 
   Given a matrix, apply Lp-normalization along the provided axis.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -3720,9 +3954,15 @@ This version of the operator has been available since version 1 of the default O
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 2
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
@@ -3767,9 +4007,15 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -3837,9 +4083,15 @@ expect(node, inputs=[a, b], outputs=[c],
   Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>
 
@@ -3929,9 +4181,15 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    The output of each pooling window is maximum number of elements exclude pad.
    
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -4299,9 +4557,15 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
    apply max pooling across each RoI, to produce output 4-D tensor of shape
    (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -4341,9 +4605,15 @@ This version of the operator has been available since version 1 of the default O
   Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>
 
@@ -4413,9 +4683,15 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>
 
@@ -4501,9 +4777,15 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
 
@@ -4595,9 +4877,15 @@ expect(node, inputs=[x, y], outputs=[z],
   (Tensor<T>) where each element flipped sign, y = -x, is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
 
@@ -4653,9 +4941,15 @@ expect(node, inputs=[x], outputs=[y],
 
   Returns the negation of the input tensor element-wise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -4719,9 +5013,15 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -4904,9 +5204,15 @@ expect(node, inputs=[x, y], outputs=[z],
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 
@@ -4953,9 +5259,15 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
         ],
     ]
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 2
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 
@@ -5070,9 +5382,15 @@ for mode in ['edge', 'reflect']:
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5232,9 +5550,15 @@ expect(node, inputs=[x, y], outputs=[z],
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5301,9 +5625,15 @@ This version of the operator has been available since version 1 of the default O
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5348,9 +5678,15 @@ This version of the operator has been available since version 1 of the default O
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5396,9 +5732,15 @@ This version of the operator has been available since version 1 of the default O
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5442,9 +5784,15 @@ This version of the operator has been available since version 1 of the default O
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5487,9 +5835,15 @@ This version of the operator has been available since version 1 of the default O
   (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Reciprocal-1">Reciprocal-1</a>
 
@@ -5550,9 +5904,15 @@ expect(node, inputs=[x], outputs=[y],
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5594,9 +5954,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5638,9 +6004,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5682,9 +6054,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5726,9 +6104,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5770,9 +6154,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5814,9 +6204,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5858,9 +6254,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5902,9 +6304,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5946,9 +6354,15 @@ This version of the operator has been available since version 1 of the default O
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -5987,9 +6401,15 @@ This version of the operator has been available since version 1 of the default O
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
 
@@ -6045,9 +6465,15 @@ expect(node, inputs=[x], outputs=[y],
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor).
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 5 of the default ONNX operator set.
+This operator is used if you are using version 5 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 5
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 
@@ -6113,9 +6539,15 @@ for test_name, shape in test_cases.items():
   `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
   is applied to the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 
@@ -6204,9 +6636,15 @@ expect(node, inputs=[x], outputs=[y],
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -6271,9 +6709,15 @@ expect(node, inputs=[x], outputs=[y],
   (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
   tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Sigmoid-1">Sigmoid-1</a>
 
@@ -6329,9 +6773,15 @@ expect(node, inputs=[x], outputs=[y],
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -6422,9 +6872,15 @@ expect(node, inputs=[x], outputs=[y],
         [2, 3, 4],
     ]
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -6593,9 +7049,15 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -6719,9 +7181,15 @@ expect(node, inputs=[x], outputs=[y],
   (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -6775,9 +7243,15 @@ expect(node, inputs=[x], outputs=[y],
 
   Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -6833,9 +7307,15 @@ expect(node, inputs=[x], outputs=[y],
   this op outputs a copy of the input tensor where values from the height and width dimensions
   are moved to the depth dimension.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -6872,9 +7352,15 @@ This version of the operator has been available since version 1 of the default O
   'axis'. Lengths of the parts can be specified using argument 'split'.
   Otherwise, the tensor is split to equal sized parts.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 2 of the default ONNX operator set.
+This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 2
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
@@ -7014,9 +7500,15 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
   (Tensor<T>) where the square root is, y = x^0.5, is applied to
   the tensor elementwise. If x is negative, then it will return NaN.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Sqrt-1">Sqrt-1</a>
 
@@ -7073,9 +7565,15 @@ expect(node, inputs=[x], outputs=[y],
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -7149,9 +7647,15 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
 
@@ -7242,9 +7746,15 @@ expect(node, inputs=[x, y], outputs=[z],
   Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>
 
@@ -7313,9 +7823,15 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 6
+}
+~~~~
 
 Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
 
@@ -7371,9 +7887,15 @@ expect(node, inputs=[x], outputs=[y],
 
   Repeat the elements of a tensor along an axis.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -7414,9 +7936,15 @@ This version of the operator has been available since version 1 of the default O
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -7448,8 +7976,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64)</dt>
-<dd>Constrain index tensor to int64</dd>
+<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
+<dd>Constrain index tensor to integral types</dd>
 </dl>
 
 
@@ -7474,12 +8002,12 @@ values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
     [11, 10, 9],
-], dtype=np.float32)
+])
 indices_ref = np.array([
     [3, 2, 1],
     [3, 2, 1],
     [3, 2, 1],
-], dtype=np.int64)
+], dtype=np.int32)
 
 expect(node, inputs=[X], outputs=[values_ref, indices_ref],
        name='test_top_k')
@@ -7494,9 +8022,15 @@ expect(node, inputs=[X], outputs=[values_ref, indices_ref],
   perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -7581,9 +8115,15 @@ expect(node, inputs=[data], outputs=[transposed],
     Given a tensor such that tensor with shape [3, 4, 5], then
     Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -7645,9 +8185,15 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -7829,9 +8375,15 @@ expect(node, inputs=[x, y], outputs=[z],
   to allow for quick prototyping when ONNX is missing standard versions of
   and op
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs (1 - &#8734;)
 
@@ -7861,9 +8413,15 @@ This version of the operator has been available since version 1 of the default O
   (Tensor<T>) where the affine function, y = alpha * x + beta,
   is applied to the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -7917,9 +8475,15 @@ This version of the operator has been available since version 1 of the default O
   
   NOTE: Currently, it supports data type of float, int32, int64, and bool.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -7966,9 +8530,15 @@ This version of the operator has been available since version 1 of the default O
   then optionally start the crop offset by the left/top border amounts.
   If scale is not provided, crop the borders as provided.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8021,9 +8591,15 @@ This version of the operator has been available since version 1 of the default O
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8069,9 +8645,15 @@ This version of the operator has been available since version 1 of the default O
   activations, avoiding computation if the input is invalid (as in, the
   value at X[t][n] >= seqLengths[n].
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8110,9 +8692,15 @@ This version of the operator has been available since version 1 of the default O
 
 ### <sub>experimental</sub> <a name="GivenTensorFill"></a><a name="giventensorfill">**GivenTensorFill**</a>
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8153,9 +8741,15 @@ This version of the operator has been available since version 1 of the default O
 
   Identity operator
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Inputs
 
@@ -8183,9 +8777,15 @@ This version of the operator has been available since version 1 of the default O
 
   If conditional
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8225,9 +8825,15 @@ This version of the operator has been available since version 1 of the default O
   Scale and bias the input image. Bias values are stored in
   the same ordering as the image pixel format.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8382,9 +8988,15 @@ This version of the operator has been available since version 1 of the default O
   pipelined/"wavefront" fashion.
   
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8427,9 +9039,15 @@ This version of the operator has been available since version 1 of the default O
 
   This is a special operator only valid inside the loop that supports the common case behavior of accessing the correct element of the input sequence in an RNN. This operator MUST be directly given the passed-in iteration number to the body of a Loop graph. This signals to back-ends that this is a direct indexing operation, with no transforms applied to the index.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8468,9 +9086,15 @@ This version of the operator has been available since version 1 of the default O
 
   Perform mean variance normalization.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8509,9 +9133,15 @@ This version of the operator has been available since version 1 of the default O
   (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
   the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8549,9 +9179,15 @@ This version of the operator has been available since version 1 of the default O
   Scale takes one input data (Tensor<float>) and produces one output data
   (Tensor<float>) whose value is the input data tensor scaled element-wise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8589,9 +9225,15 @@ This version of the operator has been available since version 1 of the default O
   by providing the same input and output blobs.
       
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8630,9 +9272,15 @@ This version of the operator has been available since version 1 of the default O
   (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
   is applied to the tensor elementwise.
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 
@@ -8742,9 +9390,15 @@ expect(node, inputs=[x], outputs=[y],
         [3, 3, 4, 4]
     ]]]
 
-#### Version
+#### Versioning
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
 
 #### Attributes
 

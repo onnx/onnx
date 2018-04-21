@@ -14,14 +14,10 @@ import unittest
 
 class TestProtobufExists(unittest.TestCase):
 
-    def _simple_model(self):
+    def test_load(self):
         # Create a model proto.
         model = ModelProto()
         model.ir_version = IR_VERSION
-        return model
-
-    def test_load(self):
-        model = self._simple_model()
         model_string = model.SerializeToString()
 
         # Test if input is string
@@ -34,33 +30,12 @@ class TestProtobufExists(unittest.TestCase):
         self.assertTrue(model == loaded_model)
 
         # Test if input is a file name
-        try:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            f.write(model_string)
-            f.close()
-            loaded_model = onnx.load(f.name)
-            self.assertTrue(model == loaded_model)
-        finally:
-            os.remove(f.name)
-
-    def test_save(self):
-        # Create a model proto.
-        model = self._simple_model()
-
-        # Test writable parameter
-        try:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            onnx.save(model, f)
-            f.close()
-            loaded_model = onnx.load(f.name)
-            self.assertTrue(model == loaded_model)
-
-            # Test path string paramter
-            onnx.save(model, f.name)
-            loaded_model = onnx.load(f.name)
-            self.assertTrue(model == loaded_model)
-        finally:
-            os.remove(f.name)
+        f = tempfile.NamedTemporaryFile(delete=False)
+        f.write(model_string)
+        f.close()
+        loaded_model = onnx.load(f.name)
+        self.assertTrue(model == loaded_model)
+        os.remove(f.name)
 
     def test_existence(self):
         try:

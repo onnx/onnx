@@ -481,7 +481,6 @@ using OpName_Domain_Version_Schema_Map = std::unordered_map<
  */
 class OpSchemaRegistry final {
  public:
-  // A singleton class to store domain to min/max op_set version map.
   class DomainToVersionRange final {
    public:
     DomainToVersionRange() {
@@ -496,18 +495,6 @@ class OpSchemaRegistry final {
       return map_;
     }
 
-    // Add customized domain to min/max version.
-    // Onnx partners are able to use onnx operator schema api to
-    // register customized op in their own domain.
-    void AddDomainToVersion(
-        const std::string& domain,
-        int min_version,
-        int max_version) {
-      std::lock_guard<std::mutex> lock(mutex_);
-      assert(map_.end() == map_.find(domain));
-      map_[domain] = std::make_pair(min_version, max_version);
-    }
-
     static DomainToVersionRange& Instance() {
       static DomainToVersionRange domain_to_version_range;
       return domain_to_version_range;
@@ -516,8 +503,6 @@ class OpSchemaRegistry final {
    private:
     // Key: domain. Value: <lowest version, highest version> pair.
     std::unordered_map<std::string, std::pair<int, int>> map_;
-
-    std::mutex mutex_;
   };
 
   class OpSchemaRegisterOnce final {
