@@ -194,15 +194,15 @@ void check_attribute(
 #undef check_repeated_field
 
   if (ctx.is_main_graph()) {
-	  if (used_fields != 1) {
-		  fail_check("Attribute (name: ", attr.name(), ") should contain one and only one value field.");
-	  }
+	if (used_fields != 1) {
+	  fail_check("Attribute (name: ", attr.name(), ") should contain one and only one value field.");
+	}
   }
   else {
-	  // It's an attribute of a node in function body.
-	  if (used_fields != 1 && (used_fields != 0 || !attr.has_ref_attr_name())) {
-		  fail_check("Attribute (name: ", attr.name(), ") should contain one value field or refer to attribute declared in function.");
-	  }
+	// It's an attribute of a node in function body.
+	if (used_fields != 1 && (used_fields != 0 || !attr.has_ref_attr_name())) {
+	  fail_check("Attribute (name: ", attr.name(), ") should contain one value field or refer to attribute declared in function.");
+	}
   }
 
   if (attr.has_t()) {
