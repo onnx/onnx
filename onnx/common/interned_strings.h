@@ -128,7 +128,14 @@ _(trunc) \
 _(zeros) \
 _(exponent) \
 _(device) \
-_(Identity)
+_(Identity) \
+_(Loop) \
+_(If) \
+_(body) \
+_(then_branch) \
+_(else_branch) \
+_(Captured) \
+_(__num_control_inputs)
 
 enum BuiltinSymbol {
   #define DEFINE_SYMBOL(s) \

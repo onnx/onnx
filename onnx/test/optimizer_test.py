@@ -13,10 +13,11 @@ import unittest
 
 class TestOptimizer(unittest.TestCase):
 
-    def _optimized(self, graph, opts):
+    def _optimized(self, graph, opts, check=True):
         orig_model = helper.make_model(graph, producer_name='onnx-test')
         optimized_model = onnx.optimizer.optimize(orig_model, opts)
-        checker.check_model(optimized_model)
+        if check:
+            checker.check_model(optimized_model)
         return optimized_model
 
     # input_types and output_types are lists of triples of (name, type, shape)
@@ -42,6 +43,19 @@ class TestOptimizer(unittest.TestCase):
             helper.make_node("Constant", [], ["trip_count"], value=zero),
             helper.make_node("Constant", [], ["condition"], value=true),
             helper.make_node("Loop", loop_inputs, loop_outputs, body=body_graph)
+        ]
+        return retval_nodes
+
+    def _make_fake_if_op(self, true_nodes, false_nodes, output_types):
+        true = helper.make_tensor("condition", TensorProto.BOOL, (), [True])
+        true_graph = helper.make_graph(true_nodes, "true_graph", [], [])
+        false_graph = helper.make_graph(false_nodes, "false_graph", [], [])
+        if_inputs = ["condition"]
+        if_outputs = [name for _, _, name in output_types]
+        retval_nodes = [
+            helper.make_node("Constant", [], ["condition"], value=true),
+            helper.make_node("If", if_inputs, if_outputs, then_branch=true_graph,
+                             else_branch=false_graph)
         ]
         return retval_nodes
 
@@ -424,6 +438,52 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(len(predict_model.graph.node), 0)
         self.assertEqual(len(predict_model.graph.input), 1)
         self.assertEqual(predict_model.graph.input[0].name, 'X')
+
+    def test_lift_lex_loop(self):
+        nodes = [helper.make_node("Identity", ["X"], ["Y"])]
+        nodes.extend(self._make_fake_loop_op(
+            [helper.make_node("Identity", ["X"], ["_Y2"]),
+             helper.make_node("Identity", ["Y"], ["_Y3"])],
+            [],
+            [(TensorProto.FLOAT, (5,), "Y2"),
+             (TensorProto.FLOAT, (5,), "Y3")]))
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,))])
+        optimized_model = self._optimized(graph, ["lift_lexical_references"])
+        assert len(optimized_model.graph.node) == 4
+        assert len(optimized_model.graph.node[3].input) == 4
+        assert optimized_model.graph.node[3].input[2] == "Y"
+        assert optimized_model.graph.node[3].input[3] == "X"
+
+    def test_lift_lex_if(self):
+        nodes = [helper.make_node("Identity", ["X"], ["Y"])]
+        nodes.extend(self._make_fake_if_op(
+            [helper.make_node("Identity", ["X"], ["_Y2"]),
+             helper.make_node("Identity", ["Y"], ["_Y3"])],
+            [helper.make_node("Identity", ["X"], ["_Y2"]),
+             helper.make_node("Identity", ["X"], ["_Y3"])],
+            [(TensorProto.FLOAT, (5,), "Y2"),
+             (TensorProto.FLOAT, (5,), "Y3")]))
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,))])
+        # "If" node now diverges from ONNX schema. Disable checking.
+        optimized_model = self._optimized(graph, ["lift_lexical_references"],
+                                          check=False)
+
+        # Identity, Constant (condition), If
+        assert len(optimized_model.graph.node) == 3
+        # condition, X, Y
+        assert len(optimized_model.graph.node[2].input) == 3
+        assert optimized_model.graph.node[2].input[1] == "X"
+        assert optimized_model.graph.node[2].input[2] == "Y"
 
 
 if __name__ == '__main__':

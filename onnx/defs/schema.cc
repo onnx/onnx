@@ -142,6 +142,11 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
+  auto isInternalSymbol = [](const std::string& sym) -> bool {
+    if (sym.length() >= 2 && sym[0] == '_' && sym[1] == '_') return true;
+    return false;
+  };
+
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
   for (const auto& attr_proto : node.attribute()) {
@@ -155,7 +160,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     AttributeProto::AttributeType expected_type;
     if (search != attributes_.end()) {
       expected_type = search->second.type;
-    } else if (allows_unchecked_attributes_) {
+    } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
       continue;
     } else {
       fail_check("Unrecognized attribute: ", name);
