@@ -456,8 +456,8 @@ class TestOptimizer(unittest.TestCase):
         optimized_model = self._optimized(graph, ["lift_lexical_references"])
         assert len(optimized_model.graph.node) == 4
         assert len(optimized_model.graph.node[3].input) == 4
-        assert optimized_model.graph.node[3].input[2] == "Y"
-        assert optimized_model.graph.node[3].input[3] == "X"
+        assert optimized_model.graph.node[3].input[2] == "X"
+        assert optimized_model.graph.node[3].input[3] == "Y"
 
     def test_lift_lex_if(self):
         nodes = [helper.make_node("Identity", ["X"], ["Y"])]

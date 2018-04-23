@@ -43,8 +43,8 @@ struct LiftLexicalReferences : public OptimizePass {
   using ValueTable = std::unordered_map<std::string, Value*>;
   using EnvStack = std::vector<ValueTable>;
 
-  std::unordered_set<std::string> liftReferences(Graph* g, EnvStack *es) {
-    std::unordered_set<std::string> unresolved_references;
+  std::set<std::string> liftReferences(Graph* g, EnvStack *es) {
+    std::set<std::string> unresolved_references;
     es->push_back(ValueTable());
     for (auto &inp : g->inputs()) {
       es->back()[inp->uniqueName()] = inp;
@@ -62,7 +62,7 @@ struct LiftLexicalReferences : public OptimizePass {
         }
       }
 
-      std::unordered_set<std::string> local_unresolved;
+      std::set<std::string> local_unresolved;
       if (n->kind() == ONNX_NAMESPACE::kLoop) {
         auto *body_graph = n->g(ONNX_NAMESPACE::kbody).get();
         local_unresolved = liftReferences(body_graph, es);
