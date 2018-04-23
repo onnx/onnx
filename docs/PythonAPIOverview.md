@@ -4,7 +4,8 @@
 ```python
 import onnx
 
-onnx_model = onnx.load('path/to/the/model')
+onnx_model = onnx.load('path/to/the/model.onnx')
+# `onnx_model` is a ModelProto struct
 ```
 Runnable IPython notebooks:
 - [load_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/load_model.ipynb)
@@ -13,10 +14,10 @@ Runnable IPython notebooks:
 ```python
 import onnx
 
-onnx_model = ... # Your model in memory
+onnx_model = ... # Your model in memory as ModelProto
 
 # Save the ONNX model
-onnx.save(onnx_model, 'path/to/the/model')
+onnx.save(onnx_model, 'path/to/the/model.onnx')
 ```
 Runnable IPython notebooks:
 - [save_model.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/save_model.ipynb)
@@ -103,7 +104,7 @@ Runnable IPython notebooks:
 import onnx
 
 # Preprocessing: load the ONNX model
-model_path = 'path/to/the/model'
+model_path = 'path/to/the/model.onnx'
 onnx_model = onnx.load(model_path)
 
 print('The model is:\n{}'.format(onnx_model))
@@ -121,20 +122,23 @@ import onnx
 from onnx import optimizer
 
 # Preprocessing: load the model to be optimized.
-model_path = 'path/to/the/model'
+model_path = 'path/to/the/model.onnx'
 original_model = onnx.load(model_path)
-original_model_str = original_model.SerializeToString()
 
 print('The model before optimization:\n{}'.format(original_model))
 
 # A full list of supported optimization passes can be found here:
 # https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L21
-pass_list = ['fuse_consecutive_transposes']
+passes = ['fuse_consecutive_transposes']
 
-# Apply the optimization on the original serialized model
-optimized_model = onnx.load_from_string(optimizer.optimize(original_model_str, pass_list))
+# Apply the optimization on the original model
+optimized_model = optimizer.optimize(original_model, passes)
 
 print('The model after optimization:\n{}'.format(optimized_model))
+
+# One can also apply the default passes on the (serialized) model
+# Check the default passes here: https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L34
+optimized_model = optimizer.optimize(original_model)
 ```
 Runnable IPython notebooks:
 - [optimize_onnx.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/optimize_onnx.ipynb)

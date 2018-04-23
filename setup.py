@@ -39,6 +39,7 @@ MAKE = find_executable('make')
 install_requires = []
 setup_requires = []
 tests_require = []
+extras_require = {}
 
 ################################################################################
 # Version
@@ -111,7 +112,7 @@ class create_version(ONNXCommand):
 
 class cmake_build(setuptools.Command):
     """
-    Compiles everything when `python setup.py build` is run using cmake.
+    Compiles everything when `python setupmnm.py build` is run using cmake.
 
     Custom args can be passed to cmake by specifying the `CMAKE_ARGS`
     environment variable.
@@ -144,7 +145,7 @@ class cmake_build(setuptools.Command):
                 CMAKE,
                 '-DPYTHON_INCLUDE_DIR={}'.format(sysconfig.get_python_inc()),
                 '-DPYTHON_EXECUTABLE={}'.format(sys.executable),
-                '-DBUILD_PYTHON=ON',
+                '-DBUILD_ONNX_PYTHON=ON',
                 '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
                 '-DPY_EXT_SUFFIX={}'.format(sysconfig.get_config_var('EXT_SUFFIX') or ''),
@@ -173,7 +174,9 @@ class cmake_build(setuptools.Command):
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, '--build', os.curdir]
-            if self.jobs is not None and not WINDOWS:
+            if WINDOWS:
+                build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
+            else:
                 build_args.extend(['--', '-j', str(self.jobs)])
             subprocess.check_call(build_args)
 
@@ -183,8 +186,11 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('create_version')
         self.run_command('cmake_build')
 
-        for src in glob.glob(
-                os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')):
+        generated_python_files = \
+          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
+          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
+
+        for src in generated_python_files:
             dst = os.path.join(
                 TOP_DIR, os.path.relpath(src, CMAKE_BUILD_DIR))
             self.copy_file(src, dst)
@@ -199,9 +205,6 @@ class develop(setuptools.command.develop.develop):
 
 
 class build_ext(setuptools.command.build_ext.build_ext):
-    def get_outputs(self):
-        return [self.build_lib]
-
     def run(self):
         self.run_command('cmake_build')
         setuptools.command.build_ext.build_ext.run(self)
@@ -249,7 +252,13 @@ ext_modules = [
 # no need to do fancy stuff so far
 packages = setuptools.find_packages()
 
-install_requires.extend(['protobuf', 'numpy', 'six'])
+install_requires.extend([
+    'protobuf',
+    'numpy',
+    'six',
+    'typing>=3.6.4',
+    'typing-extensions>=3.6.2.1',
+])
 
 ################################################################################
 # Test
@@ -259,6 +268,12 @@ setup_requires.append('pytest-runner')
 tests_require.append('pytest-cov')
 tests_require.append('nbval')
 tests_require.append('tabulate')
+tests_require.append('typing')
+tests_require.append('typing-extensions')
+
+if sys.version_info[0] == 3:
+    # Mypy doesn't work with Python 2
+    extras_require['mypy'] = ['mypy==0.570']
 
 ################################################################################
 # Final
@@ -275,6 +290,7 @@ setuptools.setup(
     install_requires=install_requires,
     setup_requires=setup_requires,
     tests_require=tests_require,
+    extras_require=extras_require,
     author='bddppq',
     author_email='jbai@fb.com',
     url='https://github.com/onnx/onnx',
