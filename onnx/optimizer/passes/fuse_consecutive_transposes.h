@@ -30,6 +30,7 @@ struct FuseConsecutiveTransposes final : public OptimizePass {
   void fuse_consecutive_transposes(Graph& graph) {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
+      DescendOnGraphAttributes(n, [this](Graph& g){fuse_consecutive_transposes(g);});
       if (n->kind() == kTranspose && n->input()->node()->kind() == kTranspose) {
         auto origInput = n->input();
         if (!n->hasAttribute(kperm) && !origInput->node()->hasAttribute(kperm)) {

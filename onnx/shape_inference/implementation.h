@@ -2,6 +2,7 @@
 
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
+#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {

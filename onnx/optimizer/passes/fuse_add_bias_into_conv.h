@@ -28,6 +28,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
     int size_lack_count = 0;
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
+      DescendOnGraphAttributes(n, [this](Graph& g){fuse_add_bias_into_conv(g);});
       if (n->kind() == kAdd && n->inputs()[0]->node()->kind() == kConv
           && n->inputs()[0]->node()->inputs().size() == 2) {
         // due to current broadcasting's constraint, Conv has to be the first oprand
