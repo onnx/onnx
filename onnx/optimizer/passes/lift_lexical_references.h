@@ -57,7 +57,8 @@ struct LiftLexicalReferences : public OptimizePass {
         continue;
       }
       for (auto *inp : n->inputs()) {
-        if (!es->back().count(inp->uniqueName())) {
+        // Empty string is 0-input variadic argument. Skip that one.
+        if (!inp->uniqueName().empty() && !es->back().count(inp->uniqueName())) {
           unresolved_references.insert(inp->uniqueName());
         }
       }
@@ -75,11 +76,10 @@ struct LiftLexicalReferences : public OptimizePass {
         local_unresolved.insert(else_unresolved.begin(), else_unresolved.end());
       }
 
-      size_t num_control_inputs = 0;
+      std::vector<std::string> control_inputs;
       for (auto &unresolved : local_unresolved) {
         if (es->back().count(unresolved)) {
-          n->addInput(es->back()[unresolved]);
-          num_control_inputs++;
+          control_inputs.push_back(unresolved);
         } else {
           unresolved_references.insert(unresolved);
         }
@@ -87,7 +87,9 @@ struct LiftLexicalReferences : public OptimizePass {
 
       // Create this attribute so the backend knows how many of these inputs
       // are simply there for control dependencies
-      n->i_(ONNX_NAMESPACE::k__num_control_inputs, num_control_inputs);
+      if (!control_inputs.empty()) {
+        n->ss_(ONNX_NAMESPACE::k__control_inputs, std::move(control_inputs));
+      }
 
       for (auto *out : n->outputs()) {
         es->back()[out->uniqueName()] = out;

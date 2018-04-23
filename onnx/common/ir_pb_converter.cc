@@ -6,7 +6,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested=false);
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto & tp) {
   Tensor ret;
@@ -299,7 +299,7 @@ std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
     return nullptr;
   }
 
-  return graphProtoToGraph(mp.graph());
+  return graphProtoToGraph(mp.graph(), false);
 }
 
 

@@ -13,11 +13,10 @@ import unittest
 
 class TestOptimizer(unittest.TestCase):
 
-    def _optimized(self, graph, opts, check=True):
+    def _optimized(self, graph, opts):
         orig_model = helper.make_model(graph, producer_name='onnx-test')
         optimized_model = onnx.optimizer.optimize(orig_model, opts)
-        if check:
-            checker.check_model(optimized_model)
+        checker.check_model(optimized_model)
         return optimized_model
 
     # input_types and output_types are lists of triples of (name, type, shape)
@@ -38,6 +37,9 @@ class TestOptimizer(unittest.TestCase):
                                        graph_outputs)
         loop_inputs = ["trip_count", "condition"]
         loop_inputs.extend([name for _, _, name in input_types])
+        # TODO: fix checker to accept 0-input variadic inputs
+        if len(loop_inputs) == 2:
+            loop_inputs.append("")
         loop_outputs = [name for _, _, name in output_types]
         retval_nodes = [
             helper.make_node("Constant", [], ["trip_count"], value=zero),
@@ -455,9 +457,11 @@ class TestOptimizer(unittest.TestCase):
              helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,))])
         optimized_model = self._optimized(graph, ["lift_lexical_references"])
         assert len(optimized_model.graph.node) == 4
-        assert len(optimized_model.graph.node[3].input) == 4
-        assert optimized_model.graph.node[3].input[2] == "X"
-        assert optimized_model.graph.node[3].input[3] == "Y"
+        # body_graph, __control_inputs
+        assert len(optimized_model.graph.node[3].attribute) == 2
+        assert optimized_model.graph.node[3].attribute[1].name == "__control_inputs"
+        assert optimized_model.graph.node[3].attribute[1].strings[0] == b"X"
+        assert optimized_model.graph.node[3].attribute[1].strings[1] == b"Y"
 
     def test_lift_lex_if(self):
         nodes = [helper.make_node("Identity", ["X"], ["Y"])]
@@ -475,15 +479,15 @@ class TestOptimizer(unittest.TestCase):
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,)),
              helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,))])
         # "If" node now diverges from ONNX schema. Disable checking.
-        optimized_model = self._optimized(graph, ["lift_lexical_references"],
-                                          check=False)
+        optimized_model = self._optimized(graph, ["lift_lexical_references"])
 
         # Identity, Constant (condition), If
         assert len(optimized_model.graph.node) == 3
-        # condition, X, Y
-        assert len(optimized_model.graph.node[2].input) == 3
-        assert optimized_model.graph.node[2].input[1] == "X"
-        assert optimized_model.graph.node[2].input[2] == "Y"
+        # else_branch, then_branch, __control_inputs
+        assert len(optimized_model.graph.node[2].attribute) == 3
+        assert optimized_model.graph.node[2].attribute[2].name == "__control_inputs"
+        assert optimized_model.graph.node[2].attribute[2].strings[0] == b"X"
+        assert optimized_model.graph.node[2].attribute[2].strings[1] == b"Y"
 
 
 if __name__ == '__main__':

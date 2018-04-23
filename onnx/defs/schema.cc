@@ -142,9 +142,11 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
   }
 
+  // An internal symbol is defined as starting with two underscores. Attributes
+  // with names meeting this condition are considered implementation details
+  // and should be ignored for the purpose of schema checking.
   auto isInternalSymbol = [](const std::string& sym) -> bool {
-    if (sym.length() >= 2 && sym[0] == '_' && sym[1] == '_') return true;
-    return false;
+    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
   };
 
   // Check attributes

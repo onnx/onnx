@@ -135,7 +135,7 @@ _(body) \
 _(then_branch) \
 _(else_branch) \
 _(Captured) \
-_(__num_control_inputs)
+_(__control_inputs)
 
 enum BuiltinSymbol {
   #define DEFINE_SYMBOL(s) \
