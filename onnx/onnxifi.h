@@ -75,6 +75,14 @@ typedef unsigned __int64 uint64_t;
 #endif /* !defined(ONNXIFI_NO_STDINT_H) */
 
 /**
+ * Opaque ONNXIFI backend ID.
+ * ONNXIFI backend is a combination of software layer and hardware device used
+ * to run an ONNX graph. Backend ID is a stable identifier for a backend.
+ * Backend ID stays valid even if the hardware device used by the backend
+ * disconnects from the system.
+ */
+typedef void* onnxBackendID;
+/**
  * Opaque ONNXIFI backend handle.
  * ONNXIFI backend is a combination of software layer and hardware device used
  * to run an ONNX graph.
@@ -112,7 +120,7 @@ typedef uint64_t onnxPointer;
 
 #define ONNXIFI_STATUS_SUCCESS 0x0000
 #define ONNXIFI_STATUS_FALLBACK 0x0001
-#define ONNXIFI_STATUS_INVALID_INDEX 0x0010
+#define ONNXIFI_STATUS_INVALID_ID 0x0010
 #define ONNXIFI_STATUS_INVALID_SIZE 0x0011
 #define ONNXIFI_STATUS_INVALID_POINTER 0x0012
 #define ONNXIFI_STATUS_INVALID_PROTOBUF 0x0013
@@ -136,7 +144,8 @@ typedef uint64_t onnxPointer;
 #define ONNXIFI_STATUS_NO_DEVICE_MEMORY 0x0031
 #define ONNXIFI_STATUS_NO_SYSTEM_RESOURCES 0x0032
 #define ONNXIFI_STATUS_NO_DEVICE_RESOURCES 0x0033
-#define ONNXIFI_STATUS_INTERNAL_ERROR 0x0034
+#define ONNXIFI_STATUS_BACKEND_UNAVAILABLE 0x0034
+#define ONNXIFI_STATUS_INTERNAL_ERROR 0x0035
 
 /** Special-purpose accelerator for neural network */
 #define ONNXIFI_DEVICE_TYPE_NPU 0x01
@@ -182,6 +191,14 @@ typedef uint64_t onnxPointer;
  * call is interpreted as the upper limit.
  */
 #define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x04
+/**
+ * The backend uses a hot-pluggable device, and can be disconnected at any time.
+ *
+ * If the underlying device disconnects from the system, subsequent operations
+ * with the backend, or objects created on the backend, will fail with
+ * ONNXIFI_STATUS_BACKEND_UNAVAILABLE status code.
+ */
+#define ONNXIFI_CAPABILITY_HOT_PLUGGABLE 0x08
 
 /**
  * Type of the backend information.
@@ -580,22 +597,27 @@ typedef struct onnxMemoryFence {
 } onnxMemoryFence;
 
 /* Function pointer declarations for dynamic loading */
-typedef ONNXIFI_CHECK_RESULT uint32_t
-  (ONNXIFI_ABI* onnxGetNumBackendsFunction)(void);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxGetBackendIDsFunction)(
+    onnxBackendID* backendIDs,
+    size_t* numBackends);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxReleaseBackendIDFunction)(
+    onnxBackendID backendID);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxGetBackendInfoFunction)(
-    uint32_t index,
+    onnxBackendID backendID,
     onnxBackendInfo infoType,
     void* infoValue,
     size_t* infoValueSize);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxGetBackendCompatibilityFunction)(
-    uint32_t index,
+    onnxBackendID backendID,
     size_t onnxModelSize,
     const void* onnxModel);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxInitBackendFunction)(
-    uint32_t index,
+    onnxBackendID backendID,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
@@ -639,17 +661,85 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
     onnxGraph graph);
 
 /**
- * Query the number of available backends on the system.
+ * Get stable IDs of available backends on the system.
  *
  * ONNXIFI backend is a combination of software layer and hardware device used
  * to run an ONNX graph. The same software layer may expose multiple backends
  * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNXIFI backend
  * for GPU and another for CPU, both implemented in the same software). Backends
  * implemented in the same software, but targeting different devices (e.g.
- * "MyNN" for CPU and "MyNN" for GPU) are counted separately.
+ * "MyNN" for CPU and "MyNN" for GPU) have different backend IDs.
+ *
+ * Note that some (hot-pluggable) backends can be connected and disconnected at
+ * any time, and thus subsequent calls to this function may return different
+ * number or set of backend IDs. The returned IDs, however, stay valid even if
+ * the hardware device used by the backend disconnects from the system.
+ *
+ * To avoid resource leak, the backend ID MUST be released through a call to
+ * onnxReleaseBackendID when it is no longer needed.
+ *
+ * @param backendIDs[out] - pointer to the memory location where the backend IDs
+ *                          will be returned. If the pointer is NULL, it is
+ *                          ignored, and the function returns only the number
+ *                          of backend IDs through numBackendIDs pointer.
+ * @param numBackendIDs[in,out] - pointer to a variable specifying number of
+ *                                available backends. On function entry, the
+ *                                variable MUST contain the capacity, in number
+ *                                of backend IDs, of the memory buffer specified
+ *                                by backendIDs. For successful completion, this
+ *                                capacity must be at least as large as the
+ *                                number of available backends. If the function
+ *                                completes with either ONNXIFI_STATUS_SUCCESS
+ *                                or ONNXIFI_STATUS_FALLBACK status codes, the
+ *                                number of backend IDs written into backendIDs
+ *                                buffer is stored in the variable specified by
+ *                                this pointer.
+ *
+ * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded, and backend IDs
+ *                                are stored in the location specified by
+ *                                backendIDs, and the number of the backends
+ *                                is stored in the location specified by
+ *                                numBackends.
+ * @retval ONNXIFI_STATUS_FALLBACK The function call completed, but the
+ *                                 backend IDs were not stored in the
+ *                                 location specified by backendIDs, either
+ *                                 because it is NULL, or because the size of
+ *                                 the memory buffer is insufficient to store
+ *                                 all available backend IDs. The number of
+ *                                 available backends is stored in the
+ *                                 location specified by numBackends.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        numBackends is NULL.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       implementation experienced an
+ *                                       unrecovered internal error.
  */
-ONNXIFI_PUBLIC uint32_t ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxGetNumBackends)(void);
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  ONNXIFI_SYMBOL_NAME(onnxGetBackendIDs)(
+    onnxBackendID* backendIDs,
+    size_t* numBackends);
+
+/**
+ * Deinitialize ONNXIFI backend IDs and release associated resources.
+ *
+ * The user MUST deinitialize all objects created with this backend ID
+ * (onnxBackend, onnxGraph, onnxEvent) before calling this function to
+ * deinitialize the backend ID.
+ *
+ * @param backendID - backend ID returned by onnxGetBackendIDs.
+ *
+ * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the resources
+ *                                associated to the backend ID were released to
+ *                                the operating system.
+ * @retval ONNXIFI_STATUS_INVALID_ID The function call failed because backendID
+ *                                   is not an ONNXIFI backend ID.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       implementation experienced an
+ *                                       unrecovered internal error.
+ */
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  ONNXIFI_SYMBOL_NAME(onnxReleaseBackendID)(
+    onnxBackendID backendID);
 
 /**
  * Query high-level information about the backend and its target device.
@@ -681,7 +771,7 @@ ONNXIFI_PUBLIC uint32_t ONNXIFI_ABI
  *     ONNXIFI_BACKEND_CPU_MEMORY_READ_BANDWIDTH           uint64_t
  *     ONNXIFI_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH          uint64_t
  *
- * @param index - index of the backend to query.
+ * @param backendID - ID of the backend to query.
  * @param infoType - type of the backend information to query. Must be one of
  *                   the ONNXIFI_BACKEND_* constants. If this value is not
  *                   supported by the backend, the function will fail with
@@ -715,10 +805,8 @@ ONNXIFI_PUBLIC uint32_t ONNXIFI_ABI
  *                                 value. The actual size of the requested value
  *                                 is stored in the location specified by
  *                                 infoValueSize.
- * @retval ONNXIFI_STATUS_INVALID_INDEX The function call failed because backend
- *                                      index is out of bounds (is greater or
- *                                      equal to the value returned by
- *                                      onnxGetNumBackends)
+ * @retval ONNXIFI_STATUS_INVALID_ID The function call failed because backendID
+ *                                   is not an ONNXIFI backend ID.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
  *                                        infoValueSize is NULL.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_PARAMETER The function call failed because
@@ -727,7 +815,7 @@ ONNXIFI_PUBLIC uint32_t ONNXIFI_ABI
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
   ONNXIFI_SYMBOL_NAME(onnxGetBackendInfo)(
-    uint32_t index,
+    onnxBackendID backendID,
     onnxBackendInfo infoType,
     void* infoValue,
     size_t* infoValueSize);
@@ -753,7 +841,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * the backend. Backend implementations SHOULD optimize performance for this
  * use-case.
  *
- * @param index - index of the backend to query.
+ * @param backend - ID of the backend to query.
  * @param onnxModelSize - size of the serialized ONNX ModelProto message,
  *                        in bytes.
  * @param[in] onnxModel - pointer to serialized ONNX ModelProto message
@@ -771,10 +859,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                 can execute it as multiple unit-group
  *                                 convolution operators, it must returns this
  *                                 code.
- * @retval ONNXIFI_STATUS_INVALID_INDEX The function call failed because backend
- *                                      index is out of bounds (is greater or
- *                                      equal to the value returned by
- *                                      onnxGetNumBackends)
+ * @retval ONNXIFI_STATUS_INVALID_ID The function call failed because backendID
+ *                                   is not an ONNXIFI backend ID.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
  *                                        onnxModel is NULL.
  * @retval ONNXIFI_STATUS_INVALID_SIZE The function call failed because
@@ -845,7 +931,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
   ONNXIFI_SYMBOL_NAME(onnxGetBackendCompatibility)(
-    uint32_t index,
+    onnxBackendID backendID,
     size_t onnxModelSize,
     const void* onnxModel);
 
@@ -857,7 +943,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNXIFI backend
  * for GPU and another for CPU, both implemented in the same software).
  *
- * @param index - index of the backend to initialize.
+ * @param backendID - ID of the backend to initialize.
  * @param[in] auxPropertiesList - optional list of backend initialization
  *                                properties, terminated by
  *                                ONNXIFI_BACKEND_PROPERTY_NONE entry. Can be
@@ -868,10 +954,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *
  * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the backend
  *                                was successfully initialized.
- * @retval ONNXIFI_STATUS_INVALID_INDEX The function call failed because backend
- *                                      index is out of bounds (is greater or
- *                                      equal to the value returned by
- *                                      onnxGetNumBackends)
+ * @retval ONNXIFI_STATUS_INVALID_ID The function call failed because backendID
+ *                                   is not an ONNXIFI backend ID.
  * @retval ONNXIFI_STATUS_INVALID_PARAMETER The function call failed because one
  *                                          of the initialization parameter
  *                                          values is invalid.
@@ -900,7 +984,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
   ONNXIFI_SYMBOL_NAME(onnxInitBackend)(
-    uint32_t index,
+    onnxBackendID backendID,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
 
