@@ -15,6 +15,7 @@ struct EliminateIdentity final : public OptimizePass {
   void eliminate_identity(Graph& graph) {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
+      DescendOnGraphAttributes(n, [this](Graph& g){eliminate_identity(g);});
       if (n->kind() == kIdentity) {
         n->output()->replaceAllUsesWith(n->input());
         it.destroyCurrent();
