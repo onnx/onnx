@@ -27,12 +27,12 @@ class RNN_Helper():
 
         if(num_directions == 1):
             for k in params.keys():
-                params[k] = np.squeeze(params[k], axis = 0)
-            
+                params[k] = np.squeeze(params[k], axis=0)
+
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[0]
 
-            b = params[B] if B in params else np.zeros(2*hidden_size)
+            b = params[B] if B in params else np.zeros(2 * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
 
             self.X = params[X]
@@ -51,6 +51,7 @@ class RNN_Helper():
 
         H = self.f(np.dot(self.X, np.transpose(self.W)) + np.dot(self.H_0, self.R) + w_b + r_b)
         return H
+
 
 class RNN(Base):
 

@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-class LSTM_Helper():   
+class LSTM_Helper():
     def __init__(self, **params):
         #LSTM Input Names
         X = 'X'
@@ -23,13 +23,13 @@ class LSTM_Helper():
 
         required_inputs = [X, W, R]
         for i in required_inputs:
-            assert i in params,"Missing Required Input: {0}".format(i)
+            assert i in params, "Missing Required Input: {0}".format(i)
 
         num_directions = params[W].shape[0]
-        
+
         if(num_directions == 1):
             for k in params.keys():
-                params[k] = np.squeeze(params[k], axis = 0)
+                params[k] = np.squeeze(params[k], axis=0)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[0]
@@ -38,7 +38,7 @@ class LSTM_Helper():
             p = params[P] if P in params else np.zeros(3 * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             c_0 = params[C_0] if C_0 in params else np.zeros((batch_size, hidden_size))
-        
+
             self.X = params[X]
             self.W = params[W]
             self.R = params[R]
@@ -64,7 +64,7 @@ class LSTM_Helper():
         [p_i, p_o, p_f] = np.split(self.P, 3)
         [w_bi, w_bo, w_bf, w_bc, r_bi, r_bo, r_bf, r_bc] = np.split(self.B, 8)
 
-        i = self.f(np.dot(self.X, np.transpose(w_i)) + np.dot(self.H_0, r_i) + w_bi + r_bi + p_i * self.C_0) 
+        i = self.f(np.dot(self.X, np.transpose(w_i)) + np.dot(self.H_0, r_i) + w_bi + r_bi + p_i * self.C_0)
         f = self.f(np.dot(self.X, np.transpose(w_f)) + np.dot(self.H_0, r_f) + w_bf + r_bf + p_f * self.C_0)
         c = self.g(np.dot(self.X, np.transpose(w_c)) + np.dot(self.H_0, r_c) + w_bc + r_bc)
         C = f * self.C_0 + i * c

@@ -22,20 +22,20 @@ class GRU_Helper():
 
         required_inputs = [X, W, R]
         for i in required_inputs:
-            assert i in params,"Missing Required Input: {0}".format(i)
+            assert i in params, "Missing Required Input: {0}".format(i)
 
         num_directions = params[W].shape[0]
 
         if(num_directions == 1):
             for k in params.keys():
-                params[k] = np.squeeze(params[k], axis = 0)
+                params[k] = np.squeeze(params[k], axis=0)
 
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[0]
 
             b = params[B] if B in params else np.zeros(6 * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
-            lbr = params[lbr] if LBR in params else 0
+            lbr = params[LBR] if LBR in params else 0
 
             self.X = params[X]
             self.W = params[W]
@@ -58,13 +58,14 @@ class GRU_Helper():
         [r_z, r_r, r_h] = np.split(self.R, 3)
         [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = np.split(self.B, 6)
 
-        z = self.f(np.dot(self.X, np.transpose(w_z)) + np.dot(self.H_0, r_z) + w_bz + r_bz) 
+        z = self.f(np.dot(self.X, np.transpose(w_z)) + np.dot(self.H_0, r_z) + w_bz + r_bz)
         r = self.f(np.dot(self.X, np.transpose(w_r)) + np.dot(self.H_0, r_r) + w_br + r_br)
         h_default = self.g(np.dot(self.X, np.transpose(w_h)) + np.dot(r * self.H_0, r_h) + w_bh + r_bh)
         h_linear = self.g(np.dot(self.X, np.transpose(w_h)) + r * (np.dot(self.H_0, r_h) + r_bh) + w_bh)
         h = h_linear if self.LBR else h_default
         H = (1 - z) * h + z * self.H_0
         return H
+
 
 class GRU(Base):
 
