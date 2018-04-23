@@ -32,16 +32,6 @@ enum OperatorStatus {
     STABLE = 1;
 }
 
-// Defines an attribute declaration.
-message AttrDeclProto {
-
-  // The attribute name. Must be present.
-  optional string name = 1;
-
-  // The type of this attribute.
-  optional AttributeProto.AttributeType type = 2;
-};
-
 message FunctionProto {
   // The name of the function, similar usage of op_type in OperatorProto.
   optional string name = 1;
@@ -66,8 +56,8 @@ message FunctionProto {
   repeated string input = 4;
   repeated string output = 5;
 
-  // The attributes declaration of the function.
-  repeated AttrDeclProto attr_decl = 6;
+  // The attributes of the function.
+  repeated string attribute= 6;
   
   // The nodes in the function.
   repeated NodeProto node = 7;
