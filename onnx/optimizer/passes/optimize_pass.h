@@ -27,6 +27,20 @@ struct OptimizePass {
 
   virtual void optimize(Graph& /*graph*/) {}
 
+  void DescendOnGraphAttributes(Node * n, std::function<void(Graph&)> fn) {
+    for (auto name : n->attributeNames()) {
+      auto kind = n->kindOf(name);
+      if (kind == AttributeKind::g) {
+        fn(*n->g(name));
+      }
+      if (kind == AttributeKind::gs) {
+        for (auto & g  : n->gs(name)) {
+          fn(*g);
+        }
+      }
+    }
+  }
+
 };
 
 inline OptimizePass::~OptimizePass() noexcept = default;
