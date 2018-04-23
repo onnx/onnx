@@ -12,6 +12,40 @@ namespace ONNX_NAMESPACE { namespace optimization {
 // blocks for frameworks that use those dependencies to schedule parallel
 // execution. e.g. caffe2 graph execution.
 //
+// Example:
+// ******************************** Before *************************************
+// graph test (%X[FLOAT, 5]) {
+//   %Y = Identity(%X)
+//   %trip_count = Constant[value = <Scalar Tensor [10]>]()
+//   %condition = Constant[value = <Scalar Tensor [1]>]()
+//   %Y2, %Y3 = Loop[body = <graph body_graph>](%trip_count, %condition, %)
+//   return %Y, %Y2
+// }
+//
+// graph body_graph (%i[INT32, scalar], %cond[BOOL, scalar]) {
+//   %_Y2 = Identity(%X)
+//   %_Y3 = Identity(%Y)
+//   return %cond, %_Y2, %_Y3
+// }
+//
+// ******************************** After **************************************
+// graph test (%X[FLOAT, 5]) {
+//   %Y = Identity(%X)
+//   %trip_count = Constant[value = <Scalar Tensor [10]>]()
+//   %condition = Constant[value = <Scalar Tensor [1]>]()
+//   %Y2, %Y3 = Loop[__control_inputs = ['X', 'Y'], body = <graph body_graph>](%trip_count, %condition, %)
+//                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+//   return %Y, %Y2
+// }
+//
+// graph body_graph (%i[INT32, scalar], %cond[BOOL, scalar]) {
+//   %_Y2 = Identity(%X)
+//   %_Y3 = Identity(%Y)
+//   return %cond, %_Y2, %_Y3
+// }
+//
+// ******************************** Continue Docs*******************************
+//
 // The algorithm is roughly:
 //  symbol_table_stack = empty stack of symbol tables
 //
@@ -108,7 +142,7 @@ struct LiftLexicalReferences : public OptimizePass {
     if (unresolved.size()) {
       std::string errmsg = "Unresolved value references: ";
       for (auto& ref : unresolved) {
-        errmsg += ref;
+        errmsg += ref + ",";
       }
       throw std::runtime_error(errmsg);
     }
