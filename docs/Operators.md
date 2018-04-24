@@ -2464,7 +2464,7 @@ data = np.random.randn(5, 4, 3, 2).astype(np.float32)
 indices = np.array([0, 1, 3])
 y = np.take(data, indices, axis=0)
 
-expect(node, inputs=[data, indices], outputs=[y],
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_0')
 ```
 
@@ -2485,7 +2485,7 @@ data = np.random.randn(5, 4, 3, 2).astype(np.float32)
 indices = np.array([0, 1, 3])
 y = np.take(data, indices, axis=1)
 
-expect(node, inputs=[data, indices], outputs=[y],
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
 ```
 
@@ -7931,9 +7931,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>input_as_shape</tt> : int</dt>
 <dd>1D tensor containing the desired output shape.  First input must be in CPU context.</dd>
 <dt><tt>shape</tt> : list of ints</dt>
-<dd>The shape of the output tensor.Cannot set the shape argument and pass in an input at the same time.</dd>
+<dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
 <dt><tt>value</tt> : float</dt>
-<dd>The value for the elements of the output tensor.</dd>
+<dd>The value for the elements of the output tensor. Default is 0.</dd>
 </dl>
 
 #### Inputs (0 - 1)
