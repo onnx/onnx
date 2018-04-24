@@ -425,6 +425,89 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(len(predict_model.graph.input), 1)
         self.assertEqual(predict_model.graph.input[0].name, 'X')
 
+    def test_speculate_split(self):
+        def make_if_op(true_nodes, true_outputs, false_nodes, false_outputs, if_outputs):
+            true = helper.make_tensor("condition", TensorProto.BOOL, (), [True])
+            true_outputs = [helper.make_tensor_value_info(name, TensorProto.FLOAT, (1,)) for name in true_outputs]
+            false_outputs = [helper.make_tensor_value_info(name, TensorProto.FLOAT, (1,)) for name in false_outputs]
+            true_graph = helper.make_graph(true_nodes, "true_graph", [], true_outputs)
+            false_graph = helper.make_graph(false_nodes, "false_graph", [], false_outputs)
+            if_inputs = ["condition"]
+            retval_nodes = [
+                helper.make_node("Constant", [], ["condition"], value=true),
+                helper.make_node("If", if_inputs, if_outputs, then_branch=true_graph,
+                                 else_branch=false_graph)
+            ]
+            return retval_nodes
+
+        node = onnx.helper.make_node(
+            'Constant',
+            inputs=[],
+            outputs=['X'],
+            value=onnx.helper.make_tensor(
+                name='X',
+                data_type=TensorProto.FLOAT,
+                dims=[1],
+                vals=[5],
+            ),
+        )
+
+        capture_node = onnx.helper.make_node('Captured', [], ['X'])
+        transpose_node = onnx.helper.make_node(
+            'Transpose',
+            inputs=['X'],
+            outputs=['transposed']
+        )
+
+        if_stmt = make_if_op(
+            [capture_node, transpose_node], ['transposed'],
+            [capture_node], ['X'],
+            ['output'])
+
+        graph = helper.make_graph(
+            [node] + if_stmt,
+            'test-optimize-split',
+            [],
+            [helper.make_tensor_value_info('output', TensorProto.FLOAT, (1,))])
+
+        def opt(graph, opts):
+            orig_model = helper.make_model(graph, producer_name='onnx-test')
+            return onnx.optimizer.optimize(orig_model, opts).graph
+
+        def pretty(g):
+            def ftensor(xs):
+                return ', '.join([x.name for x in xs])
+
+            def fio(xs):
+                return ', '.join(xs)
+
+            def fnode(n):
+                text = [
+                    '  {} = {}({})'.format(fio(n.output), n.op_type, fio(n.input))
+                ]
+                for attr in n.attribute:
+                    if attr.type == onnx.AttributeProto.GRAPH:
+                        text.append('    ' + attr.name + ':')
+                        text += ['      ' + x for x in pretty(attr.g).split('\n')]
+                return '\n'.join(text)
+
+            template = """
+graph({}) {{
+{}
+    return {}
+}}
+            """
+
+            return template.format(
+                ftensor(g.input),
+                '\n'.join(fnode(n) for n in g.node),
+                ftensor(g.output))
+
+        init = pretty(opt(graph, ['split_init']))
+        split = pretty(opt(graph, ['split_predict']))
+        assert('transposed = Transpose(X)' in init)
+        assert('transposed = Captured()' in split)
+
 
 if __name__ == '__main__':
     unittest.main()
