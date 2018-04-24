@@ -6,7 +6,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp);
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto & tp) {
   Tensor ret;
@@ -140,13 +140,13 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto & ap, Node * n) {
     break;
   }
   case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPH:
-    n->g_(sym, graphProtoToGraph(ap.g()));
+    n->g_(sym, graphProtoToGraph(ap.g(), true));
     break;
   case ONNX_NAMESPACE::AttributeProto_AttributeType_GRAPHS: {
     std::vector<std::shared_ptr<Graph>> graphs;
     graphs.reserve(ap.graphs_size());
     for (int i = 0; i < ap.graphs_size(); i++) {
-      graphs.push_back(graphProtoToGraph(ap.graphs(i)));
+      graphs.push_back(graphProtoToGraph(ap.graphs(i), true));
     }
     n->gs_(sym, std::move(graphs));
     break;
@@ -176,7 +176,7 @@ std::vector<Dimension> tensorShapeProtoToDimensions(const ONNX_NAMESPACE::Tensor
   return dims;
 }
 
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp) {
+std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested) {
   std::unique_ptr<Graph> g(new Graph());
 
   if (gp.has_name()) {
@@ -260,7 +260,16 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp) {
       continue;
     }
     for (auto input : search->second) {
-      n->addInput(value_by_name_of[input]);
+      if (!value_by_name_of.count(input) && nested) {
+        // Undefined reference to an input in a nested block. This may be a
+        // captured value. Create a dummy node that we ignore later.
+        auto * undef = g->create(kCaptured, 1);
+        g->appendNode(undef);
+        undef->outputs()[0]->setUniqueName(input);
+        value_by_name_of[input] = undef->outputs()[0];
+      }
+
+      n->addInput(value_by_name_of.at(input));
     }
   }
 
@@ -290,7 +299,7 @@ std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
     return nullptr;
   }
 
-  return graphProtoToGraph(mp.graph());
+  return graphProtoToGraph(mp.graph(), false);
 }
 
 
@@ -472,7 +481,7 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
   std::unordered_set<Value*> graph_outputs(g->outputs().begin(), g->outputs().end());
 
   for (auto node : g->nodes()) {
-    if (node->kind() == kUndefined) {
+    if (node->kind() == kUndefined || node->kind() == kCaptured) {
       // Undefined nodes are used to represent optional inputs that are not provided.
       continue;
     }
