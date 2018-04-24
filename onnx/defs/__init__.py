@@ -27,8 +27,6 @@ def _Attribute_default_value(self):
     attr = onnx.AttributeProto()
     attr.ParseFromString(self._default_value)
     return attr
-def onnx_opset_version():
-    return C.schema_version_map()[ONNX_DOMAIN][1]
 
 
 OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
