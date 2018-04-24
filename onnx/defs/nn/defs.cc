@@ -297,6 +297,94 @@ computes the output.)DOC";
 
 ONNX_OPERATOR_SCHEMA(Conv).FillUsing(ConvOpSchemaGenerator("a filter"));
 
+ONNX_OPERATOR_SCHEMA(Conv_Integer)
+    .SetDoc(
+        "The integer convolution operator consumes an input tensor, a filter and a padding value, and computes the output. "
+        "The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.")
+    .Input(
+        0,
+        "X",
+        "Input data tensor from previous layer; "
+        "has size (N x C x H x W), where N is the batch size, "
+        "C is the number of channels, and H and W are the "
+        "height and width. Note that this is for the 2D image. "
+        "Otherwise the size is (N x C x D1 x D2 ... x Dn)",
+        "T1")
+    .Input(
+        1,
+        "W",
+        "The weight tensor that will be used in the "
+        "convolutions; has size (M x C x kH x kW), where C "
+        "is the number of channels, and kH and kW are the "
+        "height and width of the kernel, and M is the number "
+        "of feature maps. For more than 2 dimensions, the "
+        "kernel shape will be (M x C x k1 x k2 x ... x kn), "
+        "where is the dimension of the kernel",
+        "T2")
+    .Input(
+        2,
+        "B",
+        "Optional 1D bias to be added to the convolution, has size of M.",
+        "T3",
+        OpSchema::Optional)
+    .Input(
+        3,
+        "Z",
+        "padding value (zero_point normally), which should be a scalar tensor.",
+        "T1",
+        OpSchema::Optional)
+    .Output(
+        0,
+        "Y",
+        "Output data tensor that contains the result of the "
+        "convolution. The output dimensions are functions "
+        "of the kernel size, stride size, and pad lengths.",
+        "tensor(int32)")
+    .TypeConstraint(
+        "T1",
+        {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
+        "Constrain input and output types to float tensors.")
+    .TypeConstraint(
+        "T2",
+        {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
+        "Constrain input and output types to float tensors.")
+    .TypeConstraint(
+        "T3",
+        {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // TODO:: add type inference function later.
+      // TODO: do we need to verify the input type to ensure both inputs (X and
+      // W) have same bit width?
+      // TODO: Should we enforce B has the same type as W?
+    })
+    .Attr(
+        "kernel_shape",
+        "The shape of the convolution kernel. If not present, should be inferred from input W.",
+        AttributeProto::INTS,
+        OPTIONAL)
+    .Attr(
+        "dilations",
+        "dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.",
+        AttributeProto::INTS,
+        OPTIONAL)
+    .Attr(
+        "strides",
+        "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
+        AttributeProto::INTS,
+        OPTIONAL)
+    .Attr(
+        "auto_pad",
+        auto_pad_doc.c_str(),
+        AttributeProto::STRING,
+        std::string("NOTSET"))
+    .Attr("pads", pads_doc.c_str(), AttributeProto::INTS, OPTIONAL)
+    .Attr(
+        "group",
+        "number of groups input channels and output channels are divided into, default is 1.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1));
+
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
@@ -551,11 +639,7 @@ Output case #2: Y (test mode)
         "The running variance (training) or the estimated "
         "variance (testing) as a 1-dimensional tensor of size C.",
         "T")
-    .Output(
-        0,
-        "Y",
-        "The output tensor of the same shape as X.",
-        "T")
+    .Output(0, "Y", "The output tensor of the same shape as X.", "T")
     .Output(
         1,
         "mean",
@@ -618,11 +702,7 @@ where mean and variance are computed per instance per channel.
         "T")
     .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
     .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
-    .Output(
-        0,
-        "output",
-        "The output tensor of the same shape as input.",
-        "T")
+    .Output(0, "output", "The output tensor of the same shape as input.", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},

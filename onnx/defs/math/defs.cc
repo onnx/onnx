@@ -598,6 +598,33 @@ ONNX_OPERATOR_SCHEMA(MatMul)
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC");
 
+ONNX_OPERATOR_SCHEMA(MatMul_Integer)
+    .Input(0, "A", "N-dimensional matrix A", "T1")
+    .Input(1, "B", "N-dimensional matrix B", "T2")
+    .Output(0, "Y", "Matrix multiply results from A * B", "tensor(int32)")
+    .TypeConstraint(
+        "T1",
+        {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
+        "Constrain input types.")
+    .TypeConstraint(
+        "T2",
+        {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
+        "Constrain input types.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // TODO:: add type inference function later.
+      // int8 * uint8  | uint8 * int8
+      // int8 * int8	 | uint8 * uint8
+      // int16 * uint16 | uint16 * int16
+      // int16 * int16  | uint16 * uint16
+
+      // TODO: do we need to verify the input type to ensure both inputs have
+      // same bit width?
+    })
+    .SetDoc(R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html. The production MUST never overflow.
+The accumulation may overflow if and only if in 32 bits.
+)DOC");
+
 ONNX_OPERATOR_SCHEMA(TopK)
     .SetDoc(R"DOC(
 Retrieve the top-K elements along a specified axis. Given an input tensor of
@@ -629,10 +656,7 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .TypeConstraint(
-        "I",
-        {"tensor(int64)"},
-        "Constrain index tensor to int64")
+    .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(
         "axis",
