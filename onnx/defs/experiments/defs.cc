@@ -43,7 +43,7 @@ is applied to the tensor elementwise.
     .Attr("alpha",
           "Threshold value",
           AttributeProto::FLOAT,
-          OPTIONAL)
+          1.0f)
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -102,9 +102,9 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
 )DOC")
     .Attr(
         "value",
-        "The value for the elements of the output tensor.",
+        "The value for the elements of the output tensor. Default is 0.",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        0.0f)
     .Attr(
         "dtype",
         "The data type for the elements of the output tensor."
@@ -113,7 +113,7 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         static_cast<int64_t>(TensorProto::FLOAT))
     .Attr(
         "shape",
-        "The shape of the output tensor."
+        "The shape of the output tensor. "
         "Cannot set the shape argument and pass in an input at the same time.",
         AttributeProto::INTS,
         OPTIONAL)

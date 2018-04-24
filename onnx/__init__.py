@@ -11,7 +11,7 @@ import onnx.helper  # noqa
 import onnx.checker  # noqa
 import onnx.defs  # noqa
 
-import google.protobuf.message
+import google.protobuf.message  # type: ignore
 
 
 def load(obj):
@@ -47,3 +47,26 @@ def load_from_string(s):
             "Protobuf decoding consumed too few bytes: {} out of {}".format(
                 decoded, len(s)))
     return model
+
+
+def _save(model, writable):
+    if isinstance(model, ModelProto):
+        writable.write(model.SerializeToString())
+    elif isinstance(model, str):
+        writable.write(model)
+    else:
+        raise ValueError('Model is neither ModelProto nor str.\n{}'.format(model))
+
+
+def save(model, f):
+    '''
+    Saves the model to the specified path.
+
+    @params
+    Takes an ONNX model (ModelProto or string) and a path (writable or string)
+    '''
+    if hasattr(f, 'write') and callable(f.write):
+        _save(model, f)
+    else:
+        with open(f, 'wb') as writable:
+            _save(model, writable)

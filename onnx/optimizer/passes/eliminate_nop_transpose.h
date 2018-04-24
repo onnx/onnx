@@ -7,7 +7,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-struct EliminateNopTranspose : public OptimizePass {
+struct EliminateNopTranspose final : public OptimizePass {
   explicit EliminateNopTranspose()
     : OptimizePass("eliminate_nop_transpose", API_TYPE::IR) {
   }
@@ -22,10 +22,10 @@ struct EliminateNopTranspose : public OptimizePass {
   void eliminate_nop_transpose(Graph& graph) {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
-
+      DescendOnGraphAttributes(n, [this](Graph& g){eliminate_nop_transpose(g);});
       if (n->kind() == kTranspose && n->hasAttribute(kperm)) {
         if (is_nop_transpose(n->is(kperm))) {
-          n->replaceAllUsesWith(n->input()->node());
+          n->output()->replaceAllUsesWith(n->input());
           it.destroyCurrent();
           continue;
         }
@@ -33,7 +33,7 @@ struct EliminateNopTranspose : public OptimizePass {
     }
   }
 
-  virtual void optimize(Graph& graph) {
+  void optimize(Graph& graph) override {
     eliminate_nop_transpose(graph);
   }
 };

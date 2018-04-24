@@ -7,7 +7,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-struct FuseConsecutiveTransposes : public OptimizePass {
+struct FuseConsecutiveTransposes final : public OptimizePass {
   explicit FuseConsecutiveTransposes()
     : OptimizePass("fuse_consecutive_transposes", API_TYPE::IR) {
   }
@@ -18,10 +18,11 @@ struct FuseConsecutiveTransposes : public OptimizePass {
       const std::vector<int64_t> & t2) {
     ONNX_ASSERT(t1.size() == t2.size());
     std::vector<int64_t> ret;
+    ret.reserve(t1.size());
     for (size_t i = 0; i < t1.size(); i++) {
-      ONNX_ASSERT(   t1[i]  < (int)t2.size());
-      ONNX_ASSERT(t2[t1[i]] < (int)t2.size());
-      ret.push_back(t2[t1[i]]);
+      ONNX_ASSERT(   t1[i]  < static_cast<int64_t>(t2.size()));
+      ONNX_ASSERT(t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
+      ret.push_back(t2[static_cast<size_t>(t1[i])]);
     }
     return ret;
   }
@@ -29,6 +30,7 @@ struct FuseConsecutiveTransposes : public OptimizePass {
   void fuse_consecutive_transposes(Graph& graph) {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
+      DescendOnGraphAttributes(n, [this](Graph& g){fuse_consecutive_transposes(g);});
       if (n->kind() == kTranspose && n->input()->node()->kind() == kTranspose) {
         auto origInput = n->input();
         if (!n->hasAttribute(kperm) && !origInput->node()->hasAttribute(kperm)) {
@@ -53,7 +55,7 @@ struct FuseConsecutiveTransposes : public OptimizePass {
     }
   }
 
-  virtual void optimize(Graph& graph) {
+  void optimize(Graph& graph) override {
     fuse_consecutive_transposes(graph);
   }
 };

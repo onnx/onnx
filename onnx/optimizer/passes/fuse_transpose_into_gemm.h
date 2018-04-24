@@ -7,7 +7,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-struct FuseTransposeIntoGemm : public OptimizePass {
+struct FuseTransposeIntoGemm final : public OptimizePass {
   explicit FuseTransposeIntoGemm()
     : OptimizePass("fuse_transpose_into_gemm", API_TYPE::IR) {
   }
@@ -17,6 +17,7 @@ struct FuseTransposeIntoGemm : public OptimizePass {
 
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
+      DescendOnGraphAttributes(n, [this](Graph& g){fuse_transpose_into_gemm(g);});
 
       if (n->kind() == kGemm) {
         for (size_t i : {0,1}) {
@@ -34,7 +35,7 @@ struct FuseTransposeIntoGemm : public OptimizePass {
     }
   }
 
-  virtual void optimize(Graph& graph) {
+  void optimize(Graph& graph) override {
     fuse_transpose_into_gemm(graph);
   }
 };

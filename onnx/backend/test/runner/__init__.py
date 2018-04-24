@@ -14,7 +14,7 @@ import tarfile
 import tempfile
 import unittest
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from onnx import numpy_helper
@@ -71,7 +71,7 @@ class Runner(object):
         return self
 
     def enable_report(self):
-        import pytest
+        import pytest  # type: ignore
 
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():
@@ -146,6 +146,7 @@ class Runner(object):
     def _assert_similar_outputs(ref_outputs, outputs):
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
+            np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],

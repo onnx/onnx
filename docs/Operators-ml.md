@@ -26,26 +26,19 @@
 ## ai.onnx.ml
 ### <a name="ai.onnx.ml.ArrayFeatureExtractor"></a><a name="ai.onnx.ml.arrayfeatureextractor">**ai.onnx.ml.ArrayFeatureExtractor**</a>
 
-  Select a subset of the data based on the indices passed.
+  Select a subset of the data X based on the indices provided Y.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T1</dt>
 <dd>Data to be selected</dd>
-<dt><tt>Y</tt> : T2</dt>
-<dd>The index values to select as a tensor of int64s</dd>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>The index values to select as a int64 tensor</dd>
 </dl>
 
 #### Outputs
@@ -59,9 +52,7 @@ opset_import {
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
-<dd> allowed types.</dd>
-<dt><tt>T2</tt> : tensor(int64)</dt>
-<dd> Index value types .</dd>
+<dd>allowed types.</dd>
 </dl>
 
 
@@ -69,16 +60,9 @@ opset_import {
 
   Makes values 1 or 0 based on a single threshold.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -105,7 +89,7 @@ opset_import {
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd> allowed types.</dd>
+<dd>allowed types.</dd>
 </dl>
 
 
@@ -115,22 +99,15 @@ opset_import {
       in ascending order based on this key.  Supports dense packing or sparse packing.
       If using sparse packing, the key cannot exceed the max_map-1 value.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
 <dl>
 <dt><tt>cast_to</tt> : string</dt>
-<dd>what to cast output to, enum 'TO_FLOAT', 'TO_STRING', 'TO_INT64', default is 'TO_FLOAT'</dd>
+<dd>what type of tensor to cast the input to, enum 'TO_FLOAT','TO_STRING','TO_INT64', default is 'TO_FLOAT'</dd>
 <dt><tt>map_form</tt> : string</dt>
 <dd>whether to only output as many values as are in the input, or position the input based on using the key of the map as the index of the output (sparse), enum 'DENSE', 'SPARSE', default is 'DENSE'</dd>
 <dt><tt>max_map</tt> : int</dt>
@@ -172,16 +149,9 @@ opset_import {
       If the string default value is set, it will convert ints to strings.
       If the int default value is set, it will convert strings to ints.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -233,16 +203,9 @@ opset_import {
       then an input of ``{"a": 4, "c": 8}`` will produce an output of ``[4, 8, 0, 0]``.
       
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -285,21 +248,14 @@ opset_import {
       All inputs are tensors of float.  Any feature that is not a tensor of float should
       be converted using either Cast or CastMap.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
 <dl>
-<dt><tt>inputdimensions</tt> : int</dt>
+<dt><tt>inputdimensions</tt> : list of ints</dt>
 <dd>the size of each input in the input list</dd>
 </dl>
 
@@ -335,16 +291,9 @@ opset_import {
       Only one of imputed_value_floats or imputed_value_int64s should be used.
       The size can be 1 element, which will be reused, or the size of the feature set F in input N,F
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -387,16 +336,9 @@ opset_import {
       In both cases the operator is instantiated with the list of class strings.
       The integral value of the string is the index position in the list.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -437,16 +379,9 @@ opset_import {
 
   Linear classifier prediction (choose class)
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -500,16 +435,9 @@ opset_import {
       Coefficients are of the same length as an n, and coefficients for each target are contiguous.
       Intercepts are optional but if provided must match the number of targets.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -554,22 +482,15 @@ opset_import {
       L1  .. math::  z = ||x||_1 = \sum_{i=1}^{n} |x_i|
       L2  .. math::  z = ||x||_2 = \sqrt{\sum_{i=1}^{n} x_i^2}
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
 <dl>
 <dt><tt>norm</tt> : string</dt>
-<dd>0=Lmax, 1=L1, 2=L2</dd>
+<dd>enum 'MAX', 'L1', 'L2'</dd>
 </dl>
 
 #### Inputs
@@ -608,16 +529,9 @@ opset_import {
   	If the input is a tensor of float, int32, or double, the data will be cast
       to int64s and the cats_int64s category list will be used for the lookups.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -627,7 +541,7 @@ opset_import {
 <dt><tt>cats_strings</tt> : list of strings</dt>
 <dd>list of categories, strings</dd>
 <dt><tt>zeros</tt> : int</dt>
-<dd>if true and category is not present, will return all zeros, if false and missing category, operator will return false</dd>
+<dd>if true and category is not present, will return all zeros, if false and missing category, operator will return false. Default is true (1).</dd>
 </dl>
 
 #### Inputs
@@ -656,16 +570,9 @@ opset_import {
 
   SVM classifier prediction
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -724,16 +631,9 @@ opset_import {
 
   SVM regression prediction and one-class svm anomaly detection
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -782,16 +682,9 @@ opset_import {
 
   Rescale input data, for example to standardize features by removing the mean and scaling to unit variance.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -838,16 +731,9 @@ opset_import {
       will be passed and the class_ids are an index into this list.
       Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -927,16 +813,9 @@ opset_import {
       All trees must have their node ids start at 0 and increment by 1.
       Mode enum is BRANCH_LEQ, BRANCH_LT, BRANCH_GTE, BRANCH_GT, BRANCH_EQ, BRANCH_NEQ, LEAF
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 
@@ -1008,16 +887,9 @@ opset_import {
       but each input in the batch must be the size of the keys specified by the attributes.
       The order of the input and attributes determines the key-value mapping.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of operator set 'ai.onnx.ml' until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-  domain = 'ai.onnx.ml'
-}
-~~~~
+This version of the operator has been available since version 1 of the 'ai.onnx.ml' operator set.
 
 #### Attributes
 

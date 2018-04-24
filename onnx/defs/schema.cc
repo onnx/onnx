@@ -144,8 +144,6 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   // Check attributes
   std::unordered_set<std::string> seen_attr_names{};
-  const AttributeProto* consume_attr = nullptr;
-
   for (const auto& attr_proto : node.attribute()) {
     const auto& name = attr_proto.name();
 
@@ -254,7 +252,7 @@ OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
   return *this;
 }
 
-OpSchema& OpSchema::ShapeInferenceFunction(InferenceFunction inferenceFunction) {
+OpSchema& OpSchema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction) {
   tensor_inference_function_ = inferenceFunction;
   return *this;
 }
@@ -586,4 +584,5 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to) {
   }
   return numReplaced;
 }
+
 } // namespace ONNX_NAMESPACE

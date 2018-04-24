@@ -59,8 +59,8 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
     schema.TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        OpSchema::high_precision_numeric_types(),
+        "Constrain input and output types to high-precision numeric tensors.");
   };
 }
 
@@ -138,8 +138,14 @@ the tensor elementwise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float)",
+         "tensor(int32)",
+         "tensor(int8)",
+         "tensor(int16)",
+         "tensor(int64)",
+         "tensor(float16)",
+         "tensor(double)"},
+        "Constrain input and output types to signed numeric tensors.");
 
 ONNX_OPERATOR_SCHEMA(Abs)
     .SinceVersion(6)
@@ -152,8 +158,8 @@ the tensor elementwise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        OpSchema::all_numeric_types(),
+        "Constrain input and output types to all numeric tensors.");
 
 ONNX_OPERATOR_SCHEMA(Reciprocal)
     .SinceVersion(6)
@@ -484,12 +490,12 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
         "min",
         "Minimum value, under which element is replaced by min",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        std::numeric_limits<float>::lowest())
     .Attr(
         "max",
         "Maximum value, above which element is replaced by max",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        std::numeric_limits<float>::max())
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
     .TypeConstraint(
@@ -543,7 +549,7 @@ Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
 , input tensor B has dimension (K X N), input tensor C and output tensor Y have
 dimension (M X N).
 If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-the dimension requirement. If A can be transposed before doing the computation
+the dimension requirement. A will be transposed before doing the computation
 if attribute transA is non-zero, same for B and transB.
 )DOC")
     .Input(0, "A", "Input tensor A", "T")
@@ -625,8 +631,8 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "Constrain input and output types to float tensors.")
     .TypeConstraint(
         "I",
-        {"tensor(int64)", "tensor(int32)"},
-        "Constrain index tensor to integral types")
+        {"tensor(int64)"},
+        "Constrain index tensor to int64")
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(
         "axis",

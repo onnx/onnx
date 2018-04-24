@@ -121,15 +121,9 @@
   (Tensor<T>) where the absolute is, y = abs(x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 
@@ -150,8 +144,8 @@ Other versions of this operator: <a href="Changelog.md#Abs-1">Abs-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -197,15 +191,9 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
 
@@ -237,8 +225,8 @@ Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -292,15 +280,9 @@ expect(node, inputs=[x, y], outputs=[x + y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -483,15 +465,9 @@ expect(node, inputs=[x, y], outputs=[z],
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -512,15 +488,15 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int32)</dt>
+<dt><tt>reduced</tt> : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -531,15 +507,9 @@ opset_import {
   If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
   The type of the output tensor is integer.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -560,15 +530,15 @@ opset_import {
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int32)</dt>
+<dt><tt>reduced</tt> : tensor(int64)</dt>
 <dd>Reduced output tensor with integer data type.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
 
 
@@ -587,8 +557,8 @@ opset_import {
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -597,15 +567,9 @@ opset_import {
    The output of each pooling window is divided by the number of elements exclude pad.
    
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -624,7 +588,7 @@ opset_import {
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -976,15 +940,9 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   Output case #2: Y (test mode)
       
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>
 
@@ -1005,7 +963,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
 <dt><tt>B</tt> : T</dt>
@@ -1020,7 +978,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>The output 4-dimensional tensor of the same shape as X.</dd>
+<dd>The output tensor of the same shape as X.</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
@@ -1045,23 +1003,16 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  
   NOTE: Casting to and from strings is not supported yet.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
 <dl>
-<dt><tt>to</tt> : string (required)</dt>
+<dt><tt>to</tt> : int (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
@@ -1105,16 +1056,14 @@ test_cases = [
     ('DOUBLE', 'FLOAT16'),
 ]
 
-for case in test_cases:
-    from_type = case[0]
-    to_type = case[1]
+for from_type, to_type in test_cases:
     input = np.random.random_sample(shape).astype(
         TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
         outputs=['output'],
-        to=to_type
+        to=getattr(TensorProto, to_type),
     )
     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     expect(node, inputs=[input], outputs=[output],
@@ -1130,15 +1079,9 @@ for case in test_cases:
   (Tensor<T>) where the ceil is, y = ceil(x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Ceil-1">Ceil-1</a>
 
@@ -1196,15 +1139,9 @@ expect(node, inputs=[x], outputs=[y],
   specified with arguments 'min' and 'max'. They default to
   numeric_limits::lowest() and numeric_limits::max() respectively.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 
@@ -1301,15 +1238,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Concatenate a list of tensors into a single tensor
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 4 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 4
-}
-~~~~
+This version of the operator has been available since version 4 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 
@@ -1358,7 +1289,7 @@ test_cases = {
 }
 
 for test_case, values in test_cases.items():
-    values = [np.asarray(v) for v in values]
+    values = [np.asarray(v, dtype=np.float32) for v in values]
     for i in range(len(values[0].shape)):
         in_args = ['value' + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
@@ -1379,15 +1310,9 @@ for test_case, values in test_cases.items():
 
   A constant tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1445,15 +1370,9 @@ expect(node, inputs=[], outputs=[values],
   The convolution operator consumes an input tensor and a filter, and
   computes the output.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1476,7 +1395,7 @@ opset_import {
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
 <dt><tt>B</tt> (optional) : T</dt>
@@ -1622,15 +1541,9 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1686,15 +1599,9 @@ opset_import {
   the input tensor where values from the depth dimension are moved in spatial blocks to the height
   and width dimensions.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -1804,15 +1711,9 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
 
@@ -1844,8 +1745,8 @@ Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -1906,15 +1807,9 @@ expect(node, inputs=[x, y], outputs=[z],
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
 
@@ -1958,15 +1853,9 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
   0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Elu-1">Elu-1</a>
 
@@ -2055,15 +1944,9 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -2147,15 +2030,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Calculates the exponential of the given input tensor, element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Exp-1">Exp-1</a>
 
@@ -2213,15 +2090,9 @@ expect(node, inputs=[x], outputs=[y],
   (d_0, d_1, ... d_n) then the output will have shape
   (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -2305,15 +2176,9 @@ expect(node, inputs=[a], outputs=[b],
   (Tensor<T>) where the floor is, y = floor(x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Floor-1">Floor-1</a>
 
@@ -2440,15 +2305,9 @@ expect(node, inputs=[x], outputs=[y],
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 3 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 3
-}
-~~~~
+This version of the operator has been available since version 3 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 
@@ -2514,7 +2373,6 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  
   Example 1:
     data = [
         [1.0, 1.2],
@@ -2535,7 +2393,6 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
             [4.5, 5.7],
         ],
     ]
-  
   Example 2:
     data = [
         [1.0, 1.2, 1.9],
@@ -2554,15 +2411,9 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
         ],
     ]
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -2649,18 +2500,12 @@ expect(node, inputs=[data, indices], outputs=[y],
   , input tensor B has dimension (K X N), input tensor C and output tensor Y have
   dimension (M X N).
   If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-  the dimension requirement. If A can be transposed before doing the computation
+  the dimension requirement. A will be transposed before doing the computation
   if attribute transA is non-zero, same for B and transB.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 
@@ -2711,21 +2556,15 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
    the values in the same channel. This is equivalent to AveragePool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -2793,15 +2632,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpPool-1</a>
 
@@ -2816,7 +2649,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -2840,21 +2673,15 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
    the values in the same channel. This is equivalent to MaxPool with kernel size
    equal to the spatial dimension of input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -2926,15 +2753,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3020,15 +2841,9 @@ expect(node, inputs=[x, y], outputs=[z],
   (Tensor<T>) where the HardSigmoid function, y = max(0, min(1, alpha * x + beta)),
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoid-1</a>
 
@@ -3129,15 +2944,9 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3200,7 +3009,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ```python
 def hardmax_2d(x):
-    return np.eye(x.shape[1])[np.argmax(x, axis=1)]
+    return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
 node = onnx.helper.make_node(
@@ -3255,15 +3064,9 @@ expect(node, inputs=[x], outputs=[y],
   where mean and variance are computed per instance per channel.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">InstanceNormalization-1</a>
 
@@ -3278,7 +3081,7 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>The input 4-dimensional tensor of shape NCHW.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 <dt><tt>scale</tt> : T</dt>
 <dd>The input 1-dimensional scale tensor of size C.</dd>
 <dt><tt>B</tt> : T</dt>
@@ -3289,7 +3092,7 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output 4-dimensional tensor of the same shape as input.</dd>
+<dd>The output tensor of the same shape as input.</dd>
 </dl>
 
 #### Type Constraints
@@ -3306,15 +3109,9 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
   Each input value is divided by
   (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3434,15 +3231,9 @@ opset_import {
   
     - Ht = ot (.) h(Ct)
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3513,15 +3304,9 @@ opset_import {
   output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
   `f(x) = x for x >= 0`, is applied to the data tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">LeakyRelu-1</a>
 
@@ -3610,15 +3395,9 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3702,15 +3481,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
   Calculates the natural log of the given input tensor, element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Log-1">Log-1</a>
 
@@ -3780,15 +3553,9 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3910,15 +3677,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Given a matrix, apply Lp-normalization along the provided axis.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -3959,15 +3720,9 @@ opset_import {
    of the input tensor according to the kernel size and downsampling the
    data into the output tensor Y for further processing.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
@@ -3990,7 +3745,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -4012,15 +3767,9 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -4088,15 +3837,9 @@ expect(node, inputs=[a, b], outputs=[c],
   Element-wise max of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>
 
@@ -4176,8 +3919,8 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -4186,15 +3929,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    The output of each pooling window is maximum number of elements exclude pad.
    
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -4213,7 +3950,7 @@ opset_import {
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimension are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 </dl>
 
 #### Outputs
@@ -4562,15 +4299,9 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
    apply max pooling across each RoI, to produce output 4-D tensor of shape
    (num_rois, channels, pooled_shape[0], pooled_shape[1]).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -4610,15 +4341,9 @@ opset_import {
   Element-wise mean of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>
 
@@ -4688,15 +4413,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   Element-wise min of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>
 
@@ -4782,15 +4501,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
 
@@ -4822,8 +4535,8 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -4882,15 +4595,9 @@ expect(node, inputs=[x, y], outputs=[z],
   (Tensor<T>) where each element flipped sign, y = -x, is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
 
@@ -4911,8 +4618,8 @@ Other versions of this operator: <a href="Changelog.md#Neg-1">Neg-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to signed numeric tensors.</dd>
 </dl>
 
 
@@ -4946,15 +4653,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Returns the negation of the input tensor element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -5018,15 +4719,9 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5209,15 +4904,9 @@ expect(node, inputs=[x, y], outputs=[z],
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 
@@ -5248,17 +4937,14 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 ### <a name="Pad"></a><a name="pad">**Pad**</a>
 
   Given `data` tensor, pads, mode, and value.
-  
   Example:
     Insert 0 pads to the beginning of the second dimension.
-  
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
     pads = [0, 2, 0, 0]
-  
     output = [
         [
             [0.0, 0.0, 1.0, 1.2],
@@ -5267,15 +4953,9 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
         ],
     ]
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 
@@ -5390,15 +5070,9 @@ for mode in ['edge', 'reflect']:
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5558,15 +5232,9 @@ expect(node, inputs=[x, y], outputs=[z],
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5633,15 +5301,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5686,15 +5348,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5740,15 +5396,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5792,15 +5442,9 @@ opset_import {
   be one of the data types specified in the 'DataType' enum field in the
   TensorProto message.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5843,15 +5487,9 @@ opset_import {
   (Tensor<T>) where the reciprocal is, y = 1/x, is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Reciprocal-1">Reciprocal-1</a>
 
@@ -5912,15 +5550,9 @@ expect(node, inputs=[x], outputs=[y],
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5948,8 +5580,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -5962,15 +5594,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -5998,8 +5624,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6012,15 +5638,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6048,8 +5668,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6062,15 +5682,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6098,8 +5712,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6112,15 +5726,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6148,8 +5756,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6162,15 +5770,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6198,8 +5800,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6212,15 +5814,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6248,8 +5844,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6262,15 +5858,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6298,8 +5888,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6312,15 +5902,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6348,8 +5932,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6362,15 +5946,9 @@ opset_import {
   The above behavior is similar to numpy, with the exception that numpy default keepdims to
   False instead of True.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -6398,8 +5976,8 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -6409,15 +5987,9 @@ opset_import {
   (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
 
@@ -6467,23 +6039,15 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Reshape"></a><a name="reshape">**Reshape**</a>
 
   Reshape the input tensor similar to numpy.reshape.
-  
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
-  
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
   from the input tensor).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 5 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 5
-}
-~~~~
+This version of the operator has been available since version 5 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 
@@ -6549,15 +6113,9 @@ for test_name, shape in test_cases.items():
   `y = gamma * (alpha * e^x - alpha) for x <= 0`, `y = gamma * x for x > 0`,
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 
@@ -6646,15 +6204,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Takes a tensor as input and outputs an 1D int64 tensor containing the shape of the input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -6719,15 +6271,9 @@ expect(node, inputs=[x], outputs=[y],
   (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
   tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Sigmoid-1">Sigmoid-1</a>
 
@@ -6783,15 +6329,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -6812,8 +6352,8 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : int64</dt>
-<dd>Constrains output to int64 scalar.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 
@@ -6852,7 +6392,6 @@ expect(node, inputs=[x], outputs=[y],
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  
   Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
@@ -6861,9 +6400,7 @@ expect(node, inputs=[x], outputs=[y],
   number of elements in this dimension), it represents `n`. For slicing to the
   end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
-  
   Example 1:
-  
     data = [
         [1, 2, 3, 4],
         [5, 6, 7, 8],
@@ -6871,35 +6408,23 @@ expect(node, inputs=[x], outputs=[y],
     axes = [0, 1]
     starts = [1, 0]
     ends = [2, 3]
-  
     result = [
         [5, 6, 7],
     ]
-  
-  
   Example 2:
-  
     data = [
         [1, 2, 3, 4],
         [5, 6, 7, 8],
     ]
     starts = [0, 1]
     ends = [-1, 1000]
-  
     result = [
         [2, 3, 4],
     ]
-  
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7068,15 +6593,9 @@ expect(node, inputs=[x], outputs=[y],
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7200,15 +6719,9 @@ expect(node, inputs=[x], outputs=[y],
   (Tensor<T>) where the softplus function, y = ln(exp(x) + 1), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -7262,15 +6775,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -7326,15 +6833,9 @@ expect(node, inputs=[x], outputs=[y],
   this op outputs a copy of the input tensor where values from the height and width dimensions
   are moved to the depth dimension.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7371,15 +6872,9 @@ opset_import {
   'axis'. Lengths of the parts can be specified using argument 'split'.
   Otherwise, the tensor is split to equal sized parts.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 2 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 2
-}
-~~~~
+This version of the operator has been available since version 2 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
@@ -7387,7 +6882,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>Which axis to split on</dd>
+<dd>Which axis to split on (defaults to 0)</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -7414,21 +6909,114 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>1d</summary>
+
+```python
+input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3'],
+    axis=0
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_1d')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=0,
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_1d')
+```
+
+</details>
+
+
+<details>
+<summary>2d</summary>
+
+```python
+input = np.array([[1., 2., 3., 4., 5., 6.],
+                  [7., 8., 9., 10., 11., 12.]]).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=1
+)
+
+expected_outputs = [np.array([[1., 2., 3.], [7., 8., 9.]]).astype(np.float32),
+                    np.array([[4., 5., 6.], [10., 11., 12.]]).astype(np.float32)]
+
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_2d')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    axis=1,
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([[1., 2.], [7., 8.]]).astype(np.float32),
+                    np.array([[3., 4., 5., 6.], [9., 10., 11., 12.]]).astype(np.float32)]
+
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_2d')
+```
+
+</details>
+
+
+<details>
+<summary>default_values</summary>
+
+```python
+input = np.array([1., 2., 3., 4., 5., 6.]).astype(np.float32)
+
+# If axis is not specified, split is applied on default axis 0
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2', 'output_3']
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4.]).astype(np.float32), np.array([5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_equal_parts_default_axis')
+
+node = onnx.helper.make_node(
+    'Split',
+    inputs=['input'],
+    outputs=['output_1', 'output_2'],
+    split=[2, 4]
+)
+
+expected_outputs = [np.array([1., 2.]).astype(np.float32), np.array([3., 4., 5., 6.]).astype(np.float32)]
+expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_split_variable_parts_default_axis')
+```
+
+</details>
+
+
 ### <a name="Sqrt"></a><a name="sqrt">**Sqrt**</a>
 
   Square root takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>) where the square root is, y = x^0.5, is applied to
   the tensor elementwise. If x is negative, then it will return NaN.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Sqrt-1">Sqrt-1</a>
 
@@ -7485,15 +7073,9 @@ expect(node, inputs=[x], outputs=[y],
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7567,15 +7149,9 @@ expect(node, inputs=[x], outputs=[y],
   
   Attribute `broadcast=1` needs to be passed to enable broadcasting.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
 
@@ -7607,8 +7183,8 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 
@@ -7666,15 +7242,9 @@ expect(node, inputs=[x, y], outputs=[z],
   Element-wise sum of each of the input tensors. All inputs and outputs must
   have the same shape and data type.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>
 
@@ -7743,15 +7313,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 6 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 6
-}
-~~~~
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
 
@@ -7807,15 +7371,9 @@ expect(node, inputs=[x], outputs=[y],
 
   Repeat the elements of a tensor along an axis.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -7856,15 +7414,9 @@ opset_import {
   Given two equivalent values, this operator uses the indices along the axis  as
    a tiebreaker. That is, the element with the lower index will appear first.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -7896,8 +7448,8 @@ opset_import {
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>I</tt> : tensor(int64), tensor(int32)</dt>
-<dd>Constrain index tensor to integral types</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 
@@ -7922,12 +7474,12 @@ values_ref = np.array([
     [3, 2, 1],
     [7, 6, 5],
     [11, 10, 9],
-])
+], dtype=np.float32)
 indices_ref = np.array([
     [3, 2, 1],
     [3, 2, 1],
     [3, 2, 1],
-], dtype=np.int32)
+], dtype=np.int64)
 
 expect(node, inputs=[X], outputs=[values_ref, indices_ref],
        name='test_top_k')
@@ -7942,15 +7494,9 @@ expect(node, inputs=[X], outputs=[values_ref, indices_ref],
   perm=(1, 0, 2), given an input tensor of shape (1, 2, 3), the output shape
   will be (2, 1, 3).
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8032,20 +7578,12 @@ expect(node, inputs=[data], outputs=[transposed],
   Insert single-dimensional entries to the shape of a tensor.
   Takes one required argument `axes`, a list of dimensions that will be inserted.
   Dimension indices in `axes` are as seen in the output tensor. For example:
-  
     Given a tensor such that tensor with shape [3, 4, 5], then
     Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
-  
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8107,15 +7645,9 @@ expect(node, inputs=[x], outputs=[y],
   to match the shape of left-hand-side argument. See the doc of `Add` for a
   detailed description of the broadcasting rules.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8297,15 +7829,9 @@ expect(node, inputs=[x, y], outputs=[z],
   to allow for quick prototyping when ONNX is missing standard versions of
   and op
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs (1 - &#8734;)
 
@@ -8335,15 +7861,9 @@ opset_import {
   (Tensor<T>) where the affine function, y = alpha * x + beta,
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8397,15 +7917,9 @@ opset_import {
   
   NOTE: Currently, it supports data type of float, int32, int64, and bool.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8417,9 +7931,9 @@ opset_import {
 <dt><tt>input_as_shape</tt> : int</dt>
 <dd>1D tensor containing the desired output shape.  First input must be in CPU context.</dd>
 <dt><tt>shape</tt> : list of ints</dt>
-<dd>The shape of the output tensor.Cannot set the shape argument and pass in an input at the same time.</dd>
+<dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
 <dt><tt>value</tt> : float</dt>
-<dd>The value for the elements of the output tensor.</dd>
+<dd>The value for the elements of the output tensor. Default is 0.</dd>
 </dl>
 
 #### Inputs (0 - 1)
@@ -8452,15 +7966,9 @@ opset_import {
   then optionally start the crop offset by the left/top border amounts.
   If scale is not provided, crop the borders as provided.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8513,15 +8021,9 @@ opset_import {
   Each of these dimensions must be matched correctly, or else the operator
   will throw errors.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8567,15 +8069,9 @@ opset_import {
   activations, avoiding computation if the input is invalid (as in, the
   value at X[t][n] >= seqLengths[n].
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8614,15 +8110,9 @@ opset_import {
 
 ### <sub>experimental</sub> <a name="GivenTensorFill"></a><a name="giventensorfill">**GivenTensorFill**</a>
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8663,15 +8153,9 @@ opset_import {
 
   Identity operator
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Inputs
 
@@ -8699,15 +8183,9 @@ opset_import {
 
   If conditional
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8735,7 +8213,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
@@ -8747,15 +8225,9 @@ opset_import {
   Scale and bias the input image. Bias values are stored in
   the same ordering as the image pixel format.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8910,15 +8382,9 @@ opset_import {
   pipelined/"wavefront" fashion.
   
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8948,7 +8414,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int64</dt>
 <dd>Only int64</dd>
@@ -8961,15 +8427,9 @@ opset_import {
 
   This is a special operator only valid inside the loop that supports the common case behavior of accessing the correct element of the input sequence in an RNN. This operator MUST be directly given the passed-in iteration number to the body of a Loop graph. This signals to back-ends that this is a direct indexing operation, with no transforms applied to the index.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -8997,7 +8457,7 @@ opset_import {
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int32</dt>
 <dd>Indices</dd>
@@ -9008,15 +8468,9 @@ opset_import {
 
   Perform mean variance normalization.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9055,15 +8509,9 @@ opset_import {
   (Tensor<T>) where the softplus function, y = alpha * ln(exp(beta * x) + 1), is applied to
   the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9101,15 +8549,9 @@ opset_import {
   Scale takes one input data (Tensor<float>) and produces one output data
   (Tensor<float>) whose value is the input data tensor scaled element-wise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9147,15 +8589,9 @@ opset_import {
   by providing the same input and output blobs.
       
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9194,15 +8630,9 @@ opset_import {
   (Tensor<T>) where the rectified linear function, y = x for x > alpha, y = 0 otherwise,
   is applied to the tensor elementwise.
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9312,15 +8742,9 @@ expect(node, inputs=[x], outputs=[y],
         [3, 3, 4, 4]
     ]]]
 
-#### Versioning
+#### Version
 
-This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
-
-~~~~
-opset_import {
-  version = 1
-}
-~~~~
+This version of the operator has been available since version 1 of the default ONNX operator set.
 
 #### Attributes
 
@@ -9353,5 +8777,39 @@ opset_import {
 <dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Upsample',
+    inputs=['x'],
+    outputs=['y'],
+    height_scale=2.0,
+    width_scale=3.0,
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[output],
+       name='test_upsample_nearest')
+```
+
+</details>
 
 

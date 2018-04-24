@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import os
 
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore
 
 import onnx
 from onnx import defs, helper
