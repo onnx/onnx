@@ -323,12 +323,6 @@ ONNX_OPERATOR_SCHEMA(Conv_Integer)
         "T2")
     .Input(
         2,
-        "B",
-        "Optional 1D bias to be added to the convolution, has size of M.",
-        "T3",
-        OpSchema::Optional)
-    .Input(
-        3,
         "Z",
         "padding value (zero_point normally), which should be a scalar tensor.",
         "T1",
@@ -346,10 +340,6 @@ ONNX_OPERATOR_SCHEMA(Conv_Integer)
         "Constrain input and output types to float tensors.")
     .TypeConstraint(
         "T2",
-        {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
-        "Constrain input and output types to float tensors.")
-    .TypeConstraint(
-        "T3",
         {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
