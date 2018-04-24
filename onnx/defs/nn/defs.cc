@@ -81,9 +81,9 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "dimensions are in the form of "
         "(N x C x D1 x D2 ... Dn), where N is the batch "
         "size. Optionally, if dimension denotation is "
-        "in effect, the the operation expects X to arrive "
-        "with the dimension denotation of [DATA_BATCH, "
-        "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+        "in effect, the operation expects the input "
+        "data tensor to arrive with the dimension denotation "
+        "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
         "T");
     schema.Output(
         0,
@@ -241,8 +241,8 @@ computes the output.)DOC";
         "height and width. Note that this is for the 2D image. "
         "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
         "Optionally, if dimension denotation is "
-        "in effect, the the operation expects X to arrive "
-        "with the dimension denotation of [DATA_BATCH, "
+        "in effect, the operation expects input data tensor "
+        "to arrive with the dimension denotation of [DATA_BATCH, "
         "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
         "T");
     schema.Input(
@@ -255,8 +255,8 @@ computes the output.)DOC";
         "of feature maps. For more than 2 dimensions, the "
         "kernel shape will be (M x C x k1 x k2 x ... x kn), "
         "where is the dimension of the kernel. "
-        "Optionally, if dimension denotation is "
-        "in effect, the the operation expects X to arrive "
+        "Optionally, if dimension denotation is in effect, "
+        "the operation expects the weight tensor to arrive "
         "with the dimension denotation of [FILTER_IN_CHANNEL, "
         "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].",
         "T");
