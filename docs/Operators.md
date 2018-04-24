@@ -7380,9 +7380,9 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor of any shape.</dd>
-<dt><tt>tiles</tt> : T</dt>
+<dt><tt>tiles</tt> : tensor(int64)</dt>
 <dd>Number of repeated copies to make of the input tensor.</dd>
-<dt><tt>axis</tt> : T</dt>
+<dt><tt>axis</tt> : tensor(int64)</dt>
 <dd>Axis along which to repeat.</dd>
 </dl>
 
