@@ -11,8 +11,67 @@ static constexpr const char* impure_operators[] = {
   "RandomNormal",
   "RandomNormalLike",
   "RandomUniform",
-  "RandomUniformLike"
+  "RandomUniformLike",
+  "If",
+  "Loop",
 };
+
+static bool is_safe_to_speculate(Node* n) {
+  return n->kind() == kTranspose;
+}
+
+static void speculate_ops(Graph& graph, std::unordered_map<std::string, Value*>& capture_map) {
+  for(Value* input : graph.inputs()) {
+    capture_map[input->uniqueName()] = input;
+  }
+  for(auto it = graph.nodes().begin(), end = graph.nodes().end();
+      it != end;
+      ++it) {
+    Node * n = *it;
+
+    // prevent overwriting entries in the capture map with the using capture nodes
+    if(n->kind() == Symbol("Captured")) {
+      continue;
+    }
+
+    for(Value* o : n->outputs() ) {
+      capture_map[o->uniqueName()] = o;
+    }
+
+    for(auto s : n->attributeNames()) {
+      auto kind = n->kindOf(s);
+      if(kind == AttributeKind::g) {
+        speculate_ops(*n->g(s), capture_map);
+      } else if(kind == AttributeKind::gs) {
+        for(auto g : n->gs(s)) {
+          speculate_ops(*g, capture_map);
+        }
+      }
+    }
+
+    // XXX - only works for nodes with a single input
+    // move node n outside of the control flow it is nested in
+    if(is_safe_to_speculate(n) && n->input()->node()->kind() == Symbol("Captured")) {
+      Value* captured = n->input();
+      Value* v = capture_map.at(captured->uniqueName());
+      Graph* outer = v->owningGraph();
+      Node* new_n = outer->create(n->kind(), {v}, 1)->insertAfter(v->node());
+      new_n->output()->copyMetadata(n->output());
+      auto new_inner = graph.create(Symbol("Captured"), 1)->insertBefore(n);
+
+      n->replaceAllUsesWith(new_inner);
+      it.destroyCurrent();
+      if(captured->uses().size() == 0) {
+        captured->node()->destroy();
+      }
+      new_inner->output()->setUniqueName(new_n->output()->uniqueName());
+    }
+  }
+}
+static void speculate_ops(Graph& graph) {
+  std::unordered_map<std::string, Value*> capture_map;
+  speculate_ops(graph, capture_map);
+}
 
 static bool is_pure_operator(Node * n) {
   for (auto x : impure_operators) {
@@ -43,6 +102,7 @@ static bool is_pure_operator(Node * n) {
 // net, and are constant across runs of the predict net.
 //
 static void split_init_and_predict(Graph& graph, bool init, bool predict) {
+  speculate_ops(graph);
   // The first step is to identify which Values are reachable from
   // either of
   //   - inputs without corresponding initializers
