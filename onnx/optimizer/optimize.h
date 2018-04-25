@@ -11,6 +11,7 @@
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
+#include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
 #include "onnx/proto_utils.h"
@@ -32,6 +33,7 @@ struct Optimizer {
     _registerOptimizer<Nop>();
     _registerOptimizer<SplitInit>();
     _registerOptimizer<SplitPredict>();
+    _registerOptimizer<LiftLexicalReferences>();
   }
 
   virtual ~Optimizer() = default;
