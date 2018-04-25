@@ -696,8 +696,8 @@ ONNX_OPERATOR_SCHEMA(Tile)
         1,
         "tiles",
         "Number of repeated copies to make of the input tensor.",
-        "T")
-    .Input(2, "axis", "Axis along which to repeat.", "T")
+        "tensor(int64)")
+    .Input(2, "axis", "Axis along which to repeat.", "tensor(int64)")
     .Output(0, "output", "Output tensor of same shape and type as input.", "T")
     .TypeConstraint(
         "T",
