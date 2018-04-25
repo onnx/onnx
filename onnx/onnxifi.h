@@ -812,6 +812,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * @retval ONNXIFI_STATUS_UNSUPPORTED_PARAMETER The function call failed because
  *                                              the value of infoType is not
  *                                              supported by the backend.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
   ONNXIFI_SYMBOL_NAME(onnxGetBackendInfo)(
@@ -925,6 +928,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                         backend could not allocate enough
  *                                         system memory to parse and analyze
  *                                         the model graph.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       backend experienced an unrecovered
  *                                       internal error.
@@ -978,6 +984,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                            backend-specific resources (e.g.
  *                                            command queues) to initialize the
  *                                            backend.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       backend experienced an unrecovered
  *                                       internal error.
@@ -1043,6 +1052,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                            backend-specific resources (e.g.
  *                                            command queues) to initialize the
  *                                            event.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       backend experienced an unrecovered
  *                                       internal error.
@@ -1065,6 +1077,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                      is not an ONNXIFI event handle.
  * @retval ONNXIFI_STATUS_INVALID_STATE The function call failed because event
  *                                      is already in the signalled state.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       implementation experienced an
  *                                       unrecovered internal error.
@@ -1085,6 +1100,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                signalled state.
  * @retval ONNXIFI_STATUS_INVALID_EVENT The function call failed because event
  *                                      is not an ONNXIFI event handle.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       implementation experienced an
  *                                       unrecovered internal error.
@@ -1267,6 +1285,12 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                            backend-specific resources (e.g.
  *                                            command queues) to initialize the
  *                                            graph.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       implementation experienced an
+ *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
   ONNXIFI_SYMBOL_NAME(onnxInitGraph)(
@@ -1372,6 +1396,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                            backend-specific resources (e.g.
  *                                            command queues) to initialize the
  *                                            tensor locations.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       backend experienced an unrecovered
  *                                       internal error.
@@ -1447,6 +1474,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                            backend-specific resources (e.g.
  *                                            command queues) to execute the
  *                                            graph.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
  * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
  *                                       backend experienced an unrecovered
  *                                       internal error.
