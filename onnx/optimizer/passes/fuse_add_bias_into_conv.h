@@ -85,20 +85,9 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             constant1->output()->setSizes(s1);
             constant1->output()->setElemType(TensorProto_DataType_INT64);
             constant1->insertBefore(orig_conv->node());
-            Node* constant2 = graph.create(kConstant, 1);
-            Tensor t2;
-            t2.sizes().push_back(static_cast<int64_t>(1));
-            t2.int64s().push_back(0);
-            t2.elem_type() = TensorProto_DataType_INT64;
-            constant2->t_(sym, t2);
-            std::vector<Dimension> s2 = {1};
-            constant2->output()->setSizes(s2);
-            constant2->output()->setElemType(TensorProto_DataType_INT64);
-            constant2->insertBefore(orig_conv->node());
             Node* tile = graph.create(kTile, 1);
             tile->addInput(orig_bias);
             tile->addInput(constant1->output());
-            tile->addInput(constant2->output());
             tile->insertBefore(orig_conv->node());
             orig_conv->node()->addInput(tile->output());
           } else if (bias_shape[0].dim == M &&

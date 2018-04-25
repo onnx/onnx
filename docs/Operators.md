@@ -2464,7 +2464,7 @@ data = np.random.randn(5, 4, 3, 2).astype(np.float32)
 indices = np.array([0, 1, 3])
 y = np.take(data, indices, axis=0)
 
-expect(node, inputs=[data, indices], outputs=[y],
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_0')
 ```
 
@@ -2485,7 +2485,7 @@ data = np.random.randn(5, 4, 3, 2).astype(np.float32)
 indices = np.array([0, 1, 3])
 y = np.take(data, indices, axis=1)
 
-expect(node, inputs=[data, indices], outputs=[y],
+expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
        name='test_gather_1')
 ```
 
@@ -7369,7 +7369,9 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Tile"></a><a name="tile">**Tile**</a>
 
-  Repeat the elements of a tensor along an axis.
+  Constructs a tensor by tiling a given tensor.
+  This is the same as function `tile` in Numpy, but no broadcast.
+  For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
 
 #### Version
 
@@ -7380,24 +7382,24 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor of any shape.</dd>
-<dt><tt>tiles</tt> : T</dt>
-<dd>Number of repeated copies to make of the input tensor.</dd>
-<dt><tt>axis</tt> : T</dt>
-<dd>Axis along which to repeat.</dd>
+<dt><tt>repeats</tt> : T1</dt>
+<dd>1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Output tensor of same shape and type as input.</dd>
+<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dd>Constrain input and output's types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
 
 

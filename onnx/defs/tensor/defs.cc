@@ -690,16 +690,32 @@ and width dimensions.
         "Constrain input types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Tile)
-    .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
-    .Input(0, "input", "Input tensor of any shape.", "T")
+    .SetDoc(R"DOC(Constructs a tensor by tiling a given tensor.
+This is the same as function `tile` in Numpy, but no broadcast.
+For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
+)DOC")
+    .Input(
+        0,
+        "input",
+        "Input tensor of any shape.",
+        "T")
     .Input(
         1,
-        "tiles",
-        "Number of repeated copies to make of the input tensor.",
+        "repeats",
+        "1D int64 tensor of the same length as input's dimension number, "
+        "includes numbers of repeated copies along input's dimensions.",
+        "T1")
+    .Output(
+        0,
+        "output",
+        "Output tensor of the same dimension and type as tensor input. "
+        "output_dim[i] = input_dim[i] * repeats[i]",
         "T")
-    .Input(2, "axis", "Axis along which to repeat.", "T")
-    .Output(0, "output", "Output tensor of same shape and type as input.", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        "Constrain input and output's types to float tensors.")
+    .TypeConstraint(
+        "T1",
+        {"tensor(int64)"},
+        "Constrain repeat's type to int64 tensors.");
