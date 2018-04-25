@@ -158,10 +158,10 @@ typedef uint64_t onnxPointer;
 /** Field-programmable gate array */
 #define ONNXIFI_DEVICE_TYPE_FPGA 0x10
 /**
- * High-level framework which internally arbitrates or distributes work between
- * multiple device types/
+ * Heterogeneous backend whichinternally arbitrates or distributes work between
+ * multiple device types.
  */
-#define ONNXIFI_DEVICE_TYPE_FRAMEWORK 0x20
+#define ONNXIFI_DEVICE_TYPE_HETEROGENEOUS 0x20
 
 /**
  * The backend supports multi-threaded access to ONNXIFI backend, graph, and
@@ -281,7 +281,7 @@ typedef int32_t onnxBackendInfo;
  *      ONNXIFI_DEVICE_TYPE_GPU
  *      ONNXIFI_DEVICE_TYPE_CPU
  *      ONNXIFI_DEVICE_TYPE_FPGA
- *      ONNXIFI_DEVICE_TYPE_FRAMEWORK
+ *      ONNXIFI_DEVICE_TYPE_HETEROGENEOUS
  */
 #define ONNXIFI_BACKEND_DEVICE_TYPE 6
 
