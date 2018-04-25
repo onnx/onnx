@@ -44,8 +44,8 @@ def collect_testcases():
         ('test_resnet50', 'resnet50'),
         ('test_shufflenet', 'shufflenet'),
         ('test_squeezenet', 'squeezenet'),
-        ('test_vgg16', 'vgg16'),
         ('test_vgg19', 'vgg19'),
+        ('test_zfnet', 'zfnet'),
     ]
 
     for test_name, model_name in model_tests:
