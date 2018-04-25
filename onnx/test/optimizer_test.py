@@ -273,16 +273,13 @@ class TestOptimizer(unittest.TestCase):
         )
         optimized_model = self._optimized(graph, ["fuse_add_bias_into_conv"])
 
-        assert len(list(optimized_model.graph.node)) == 4
-        assert len(optimized_model.graph.value_info) == 2
+        assert len(list(optimized_model.graph.node)) == 3
+        assert len(optimized_model.graph.value_info) == 1
         assert optimized_model.graph.value_info[0].type.tensor_type.elem_type == TensorProto.INT64
-        assert optimized_model.graph.value_info[1].type.tensor_type.elem_type == TensorProto.INT64
         assert len(optimized_model.graph.value_info[0].type.tensor_type.shape.dim) == 1
-        assert len(optimized_model.graph.value_info[1].type.tensor_type.shape.dim) == 1
         assert optimized_model.graph.node[0].op_type == 'Constant'
-        assert optimized_model.graph.node[1].op_type == 'Constant'
-        assert optimized_model.graph.node[2].op_type == 'Tile'
-        assert optimized_model.graph.node[3].op_type == 'Conv'
+        assert optimized_model.graph.node[1].op_type == 'Tile'
+        assert optimized_model.graph.node[2].op_type == 'Conv'
         assert optimized_model.graph.output[0].name == 'Z'
 
     def test_fuse_add_bias_into_conv_use_conv_shape(self):
