@@ -1074,4 +1074,5 @@ inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
 }
 
+
 } // namespace ONNX_NAMESPACE
