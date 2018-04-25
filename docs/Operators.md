@@ -2379,6 +2379,7 @@ input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 input_size = 2
 hidden_size = 5
 weight_scale = 0.1
+number_of_gates = 3
 
 node = onnx.helper.make_node(
     'GRU',
@@ -2387,8 +2388,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, 3 * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, 3 * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 gru = GRU_Helper(X=input, W=W, R=R)
 output = gru.step().astype(np.float32)
@@ -2409,6 +2410,7 @@ input_size = 3
 hidden_size = 3
 weight_scale = 0.1
 custom_bias = 0.1
+number_of_gates = 3
 
 node = onnx.helper.make_node(
     'GRU',
@@ -2417,12 +2419,12 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, 3 * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, 3 * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((1, 3 * hidden_size)).astype(np.float32)
-R_B = np.zeros((1, 3 * hidden_size)).astype(np.float32)
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
@@ -3375,6 +3377,7 @@ input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 input_size = 2
 hidden_size = 3
 weight_scale = 0.1
+number_of_gates = 4
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -3383,8 +3386,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, 4 * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, 4 * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R)
 output = lstm.step()
@@ -3405,6 +3408,7 @@ input_size = 3
 hidden_size = 4
 weight_scale = 0.1
 custom_bias = 0.1
+number_of_gates = 4
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -3413,12 +3417,12 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, 4 * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, 4 * hidden_size, hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 # Adding custom bias
-W_B = custom_bias * np.ones((1, 4 * hidden_size)).astype(np.float32)
-R_B = np.zeros((1, 4 * hidden_size)).astype(np.float32)
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
@@ -3439,6 +3443,8 @@ input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
 input_size = 4
 hidden_size = 3
 weight_scale = 0.1
+number_of_gates = 4
+number_of_peepholes = 3
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -3448,13 +3454,13 @@ node = onnx.helper.make_node(
 )
 
 # Initializing Inputs
-W = weight_scale * np.ones((1, 4 * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, 4 * hidden_size, hidden_size)).astype(np.float32)
-B = np.zeros((1, 8 * hidden_size)).astype(np.float32)
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
 seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.float32)
 init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-P = weight_scale * np.ones((1, 3 * hidden_size)).astype(np.float32)
+P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
 output = lstm.step()

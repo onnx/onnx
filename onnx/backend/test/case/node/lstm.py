@@ -20,6 +20,8 @@ class LSTM_Helper():
         H_0 = 'initial_h'
         C_0 = 'initial_c'
         P = 'P'
+        number_of_gates = 4
+        number_of_peepholes = 3
 
         required_inputs = [X, W, R]
         for i in required_inputs:
@@ -34,8 +36,8 @@ class LSTM_Helper():
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[0]
 
-            b = params[B] if B in params else np.zeros(8 * hidden_size)
-            p = params[P] if P in params else np.zeros(3 * hidden_size)
+            b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
+            p = params[P] if P in params else np.zeros(number_of_peepholes * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             c_0 = params[C_0] if C_0 in params else np.zeros((batch_size, hidden_size))
 
@@ -82,6 +84,7 @@ class LSTM(Base):
         input_size = 2
         hidden_size = 3
         weight_scale = 0.1
+        number_of_gates = 4
 
         node = onnx.helper.make_node(
             'LSTM',
@@ -90,8 +93,8 @@ class LSTM(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, 4 * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, 4 * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
         lstm = LSTM_Helper(X=input, W=W, R=R)
         output = lstm.step()
@@ -106,6 +109,7 @@ class LSTM(Base):
         hidden_size = 4
         weight_scale = 0.1
         custom_bias = 0.1
+        number_of_gates = 4
 
         node = onnx.helper.make_node(
             'LSTM',
@@ -114,12 +118,12 @@ class LSTM(Base):
             hidden_size=hidden_size
         )
 
-        W = weight_scale * np.ones((1, 4 * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, 4 * hidden_size, hidden_size)).astype(np.float32)
+        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
         # Adding custom bias
-        W_B = custom_bias * np.ones((1, 4 * hidden_size)).astype(np.float32)
-        R_B = np.zeros((1, 4 * hidden_size)).astype(np.float32)
+        W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+        R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
         B = np.concatenate((W_B, R_B), 1)
 
         lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
@@ -134,6 +138,8 @@ class LSTM(Base):
             input_size = 4
             hidden_size = 3
             weight_scale = 0.1
+            number_of_gates = 4
+            number_of_peepholes = 3
 
             node = onnx.helper.make_node(
                 'LSTM',
@@ -143,13 +149,13 @@ class LSTM(Base):
             )
 
             # Initializing Inputs
-            W = weight_scale * np.ones((1, 4 * hidden_size, input_size)).astype(np.float32)
-            R = weight_scale * np.ones((1, 4 * hidden_size, hidden_size)).astype(np.float32)
-            B = np.zeros((1, 8 * hidden_size)).astype(np.float32)
+            W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+            R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+            B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
             seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.float32)
             init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
             init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-            P = weight_scale * np.ones((1, 3 * hidden_size)).astype(np.float32)
+            P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
 
             lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
             output = lstm.step()

@@ -19,6 +19,7 @@ class GRU_Helper():
         B = 'B'
         H_0 = 'initial_h'
         LBR = 'linear_before_reset'
+        number_of_gates = 3
 
         required_inputs = [X, W, R]
         for i in required_inputs:
@@ -33,7 +34,7 @@ class GRU_Helper():
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[0]
 
-            b = params[B] if B in params else np.zeros(6 * hidden_size)
+            b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
             h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
             lbr = params[LBR] if LBR in params else 0
 
@@ -76,6 +77,7 @@ class GRU(Base):
             input_size = 2
             hidden_size = 5
             weight_scale = 0.1
+            number_of_gates = 3
 
             node = onnx.helper.make_node(
                 'GRU',
@@ -84,8 +86,8 @@ class GRU(Base):
                 hidden_size=hidden_size
             )
 
-            W = weight_scale * np.ones((1, 3 * hidden_size, input_size)).astype(np.float32)
-            R = weight_scale * np.ones((1, 3 * hidden_size, hidden_size)).astype(np.float32)
+            W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+            R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
             gru = GRU_Helper(X=input, W=W, R=R)
             output = gru.step().astype(np.float32)
@@ -100,6 +102,7 @@ class GRU(Base):
             hidden_size = 3
             weight_scale = 0.1
             custom_bias = 0.1
+            number_of_gates = 3
 
             node = onnx.helper.make_node(
                 'GRU',
@@ -108,12 +111,12 @@ class GRU(Base):
                 hidden_size=hidden_size
             )
 
-            W = weight_scale * np.ones((1, 3 * hidden_size, input_size)).astype(np.float32)
-            R = weight_scale * np.ones((1, 3 * hidden_size, hidden_size)).astype(np.float32)
+            W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+            R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
             # Adding custom bias
-            W_B = custom_bias * np.ones((1, 3 * hidden_size)).astype(np.float32)
-            R_B = np.zeros((1, 3 * hidden_size)).astype(np.float32)
+            W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+            R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
             B = np.concatenate((W_B, R_B), axis=1)
 
             gru = GRU_Helper(X=input, W=W, R=R, B=B)
