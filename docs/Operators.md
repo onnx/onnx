@@ -7413,6 +7413,31 @@ node = onnx.helper.make_node(
     outputs=['z']
 )
 
+x = np.random.rand(2, 3, 4, 5).astype(np.float32)
+
+repeats = np.random.randint(low=1, high=10, size=(len(x),)).astype(np.int64)
+
+z = np.tile(x, repeats)
+
+expect(node,
+       inputs=[x, repeats],
+       outputs=[z],
+       name='test_tile')
+```
+
+</details>
+
+
+<details>
+<summary>tile_precomputed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tile',
+    inputs=['x', 'y'],
+    outputs=['z']
+)
+
 x = np.array([
     [0, 1],
     [2, 3]
@@ -7430,7 +7455,7 @@ z = np.array([
 expect(node,
        inputs=[x, repeats],
        outputs=[z],
-       name='test_tile')
+       name='test_tile_precomputed')
 ```
 
 </details>
