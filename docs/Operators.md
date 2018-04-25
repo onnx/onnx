@@ -7414,14 +7414,17 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([
-    [0, 1, 2, 3]
+    [0, 1],
+    [2, 3]
 ], dtype=np.float32)
 
 repeats = np.array([2, 2], dtype=np.int64)
 
 z = np.array([
-    [0, 1, 2, 3, 0, 1, 2, 3],
-    [0, 1, 2, 3, 0, 1, 2, 3]
+    [0, 1, 0, 1],
+    [2, 3, 2, 3],
+    [0, 1, 0, 1],
+    [2, 3, 2, 3]
 ], dtype=np.float32)
 
 expect(node,
