@@ -255,13 +255,13 @@ def make_tensor_value_info(name, elem_type, shape, doc_string="", shape_denotati
         # difference is visible to our consumers, so make sure we emit
         # an empty shape!
         tensor_shape_proto.dim.extend([])
-        
+
         if shape_denotation:
             if len(shape_denotation) != len(shape):
                 raise ValueError(
                     'Invalid shape_denotation. '
                     'Must be of the same length as shape.')
-                
+
         for i, d in enumerate(shape):
             dim = tensor_shape_proto.dim.add()
             if d is None:
