@@ -37,11 +37,27 @@ class TestOptimizer(unittest.TestCase):
                                        graph_outputs)
         loop_inputs = ["trip_count", "condition"]
         loop_inputs.extend([name for _, _, name in input_types])
+        # TODO: fix checker to accept 0-input variadic inputs
+        if len(loop_inputs) == 2:
+            loop_inputs.append("")
         loop_outputs = [name for _, _, name in output_types]
         retval_nodes = [
             helper.make_node("Constant", [], ["trip_count"], value=zero),
             helper.make_node("Constant", [], ["condition"], value=true),
             helper.make_node("Loop", loop_inputs, loop_outputs, body=body_graph)
+        ]
+        return retval_nodes
+
+    def _make_fake_if_op(self, true_nodes, false_nodes, output_types):
+        true = helper.make_tensor("condition", TensorProto.BOOL, (), [True])
+        true_graph = helper.make_graph(true_nodes, "true_graph", [], [])
+        false_graph = helper.make_graph(false_nodes, "false_graph", [], [])
+        if_inputs = ["condition"]
+        if_outputs = [name for _, _, name in output_types]
+        retval_nodes = [
+            helper.make_node("Constant", [], ["condition"], value=true),
+            helper.make_node("If", if_inputs, if_outputs, then_branch=true_graph,
+                             else_branch=false_graph)
         ]
         return retval_nodes
 
@@ -257,16 +273,13 @@ class TestOptimizer(unittest.TestCase):
         )
         optimized_model = self._optimized(graph, ["fuse_add_bias_into_conv"])
 
-        assert len(list(optimized_model.graph.node)) == 4
-        assert len(optimized_model.graph.value_info) == 2
+        assert len(list(optimized_model.graph.node)) == 3
+        assert len(optimized_model.graph.value_info) == 1
         assert optimized_model.graph.value_info[0].type.tensor_type.elem_type == TensorProto.INT64
-        assert optimized_model.graph.value_info[1].type.tensor_type.elem_type == TensorProto.INT64
         assert len(optimized_model.graph.value_info[0].type.tensor_type.shape.dim) == 1
-        assert len(optimized_model.graph.value_info[1].type.tensor_type.shape.dim) == 1
         assert optimized_model.graph.node[0].op_type == 'Constant'
-        assert optimized_model.graph.node[1].op_type == 'Constant'
-        assert optimized_model.graph.node[2].op_type == 'Tile'
-        assert optimized_model.graph.node[3].op_type == 'Conv'
+        assert optimized_model.graph.node[1].op_type == 'Tile'
+        assert optimized_model.graph.node[2].op_type == 'Conv'
         assert optimized_model.graph.output[0].name == 'Z'
 
     def test_fuse_add_bias_into_conv_use_conv_shape(self):
@@ -424,6 +437,54 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(len(predict_model.graph.node), 0)
         self.assertEqual(len(predict_model.graph.input), 1)
         self.assertEqual(predict_model.graph.input[0].name, 'X')
+
+    def test_lift_lex_loop(self):
+        nodes = [helper.make_node("Identity", ["X"], ["Y"])]
+        nodes.extend(self._make_fake_loop_op(
+            [helper.make_node("Identity", ["X"], ["_Y2"]),
+             helper.make_node("Identity", ["Y"], ["_Y3"])],
+            [],
+            [(TensorProto.FLOAT, (5,), "Y2"),
+             (TensorProto.FLOAT, (5,), "Y3")]))
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,))])
+        optimized_model = self._optimized(graph, ["lift_lexical_references"])
+        assert len(optimized_model.graph.node) == 4
+        # body_graph, __control_inputs
+        assert len(optimized_model.graph.node[3].attribute) == 2
+        assert optimized_model.graph.node[3].attribute[1].name == "__control_inputs"
+        assert optimized_model.graph.node[3].attribute[1].strings[0] == b"X"
+        assert optimized_model.graph.node[3].attribute[1].strings[1] == b"Y"
+
+    def test_lift_lex_if(self):
+        nodes = [helper.make_node("Identity", ["X"], ["Y"])]
+        nodes.extend(self._make_fake_if_op(
+            [helper.make_node("Identity", ["X"], ["_Y2"]),
+             helper.make_node("Identity", ["Y"], ["_Y3"])],
+            [helper.make_node("Identity", ["X"], ["_Y2"]),
+             helper.make_node("Identity", ["X"], ["_Y3"])],
+            [(TensorProto.FLOAT, (5,), "Y2"),
+             (TensorProto.FLOAT, (5,), "Y3")]))
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("Y2", TensorProto.FLOAT, (5,))])
+        # "If" node now diverges from ONNX schema. Disable checking.
+        optimized_model = self._optimized(graph, ["lift_lexical_references"])
+
+        # Identity, Constant (condition), If
+        assert len(optimized_model.graph.node) == 3
+        # else_branch, then_branch, __control_inputs
+        assert len(optimized_model.graph.node[2].attribute) == 3
+        assert optimized_model.graph.node[2].attribute[2].name == "__control_inputs"
+        assert optimized_model.graph.node[2].attribute[2].strings[0] == b"X"
+        assert optimized_model.graph.node[2].attribute[2].strings[1] == b"Y"
 
 
 if __name__ == '__main__':
