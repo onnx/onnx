@@ -22,7 +22,7 @@ class Tile(Base):
 
         x = np.random.rand(2, 3, 4, 5).astype(np.float32)
 
-        repeats = np.random.randint(low=1, high=10, size=(len(x),)).astype(np.int64)
+        repeats = np.random.randint(low=1, high=10, size=(np.ndim(x),)).astype(np.int64)
 
         z = np.tile(x, repeats)
 
