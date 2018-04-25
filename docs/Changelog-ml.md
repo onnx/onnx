@@ -881,7 +881,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : map(string, float), map(int64, float)</dt>
+<dt><tt>T</tt> : seq(map(string, float)), seq(map(int64, float))</dt>
 <dd> allowed types.</dd>
 </dl>
 
