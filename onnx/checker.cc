@@ -1,7 +1,7 @@
 #include "onnx/checker.h"
+#include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
-#include "onnx/defs/schema.h"
 
 #include <unordered_set>
 
@@ -57,14 +57,21 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
     } break;
 #endif
     default:
-      fail_check("Unrecognized type value case (value_info name: ", value_info.name(), "): ", value_case);
+      fail_check(
+          "Unrecognized type value case (value_info name: ",
+          value_info.name(),
+          "): ",
+          value_case);
   }
 }
 
 void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
-    fail_check("setting data_type field (tensor name: ", tensor.name(), ") to UNDEFINED is not allowed");
+    fail_check(
+        "setting data_type field (tensor name: ",
+        tensor.name(),
+        ") to UNDEFINED is not allowed");
   }
 
   int num_value_fields = 0;
@@ -89,11 +96,17 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 #undef check_data_field
 
   if (num_value_fields != 1) {
-    fail_check("TensorProto (tensor name: ", tensor.name(), ") should contain one and only one value field.");
+    fail_check(
+        "TensorProto (tensor name: ",
+        tensor.name(),
+        ") should contain one and only one value field.");
   }
   if (has_raw_data) {
     if (tensor.data_type() == TensorProto::STRING) {
-      fail_check("STRING data (tensor name: ", tensor.name(), ") should not be stored in raw_data field");
+      fail_check(
+          "STRING data (tensor name: ",
+          tensor.name(),
+          ") should not be stored in raw_data field");
     }
     return;
   } else {
@@ -140,7 +153,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         break;
 
       default:
-        fail_check("Unrecognized data_type (tensor name: ", tensor.name(), "): ", tensor.data_type());
+        fail_check(
+            "Unrecognized data_type (tensor name: ",
+            tensor.name(),
+            "): ",
+            tensor.data_type());
     }
   }
 
@@ -161,9 +178,10 @@ void check_attribute(
 
   int used_fields = 0;
 
-#define check_type(expected_type)                        \
-  if (attr.has_type() && attr.type() != expected_type) { \
-    fail_check("type field and data field mismatch in attribute ", attr.name(), ".");   \
+#define check_type(expected_type)                                              \
+  if (attr.has_type() && attr.type() != expected_type) {                       \
+    fail_check(                                                                \
+        "type field and data field mismatch in attribute ", attr.name(), "."); \
   }
 
 #define check_singular_field(field, type) \
@@ -193,8 +211,21 @@ void check_attribute(
 #undef check_singular_field
 #undef check_repeated_field
 
-  if (used_fields != 1) {
-    fail_check("Attribute (name: ", attr.name(), ") should contain one and only one value field.");
+  if (ctx.is_main_graph()) {
+    if (used_fields != 1) {
+      fail_check(
+          "Attribute (name: ",
+          attr.name(),
+          ") should contain one and only one value field.");
+    }
+  } else {
+    // It's an attribute of a node in function body.
+    if (used_fields != 1 && (used_fields != 0 || !attr.has_ref_attr_name())) {
+      fail_check(
+          "Attribute (name: ",
+          attr.name(),
+          ") should contain one value field or refer to attribute declared in function.");
+    }
   }
 
   if (attr.has_t()) {
@@ -220,7 +251,12 @@ void check_node(
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
-    fail_check("NodeProto (name: ", node.name(), ", type: ", node.op_type(), ") has zero input and zero output.");
+    fail_check(
+        "NodeProto (name: ",
+        node.name(),
+        ", type: ",
+        node.op_type(),
+        ") has zero input and zero output.");
   }
 
   // Resolve domain for node
@@ -345,7 +381,8 @@ void check_model(const ModelProto& model) {
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] = static_cast<int>(opset_import.version());
+    opset_imports[opset_import.domain()] =
+        static_cast<int>(opset_import.version());
   }
   if (model.ir_version() >= 3) {
     if (opset_imports.empty())
