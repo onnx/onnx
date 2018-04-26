@@ -30,23 +30,32 @@ class ValidationError final : public std::runtime_error {
   throw ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
 class CheckerContext final {
-  int ir_version;
-  std::unordered_map<std::string, int> opset_imports;
-
  public:
   int get_ir_version() const {
-    return ir_version;
+    return ir_version_;
   }
   void set_ir_version(int v) {
-    ir_version = v;
+    ir_version_ = v;
   }
   const std::unordered_map<std::string, int>& get_opset_imports() const {
-    return opset_imports;
+    return opset_imports_;
   }
   void set_opset_imports(std::unordered_map<std::string, int> imps) {
-    opset_imports = std::move(imps);
+    opset_imports_ = std::move(imps);
   }
-  explicit CheckerContext() : ir_version(-1) {}
+  bool is_main_graph() const {
+	return is_main_graph_;
+  }
+  void set_is_main_graph(bool is_main_graph) {
+	  is_main_graph_ = is_main_graph;
+  }
+
+  explicit CheckerContext() : ir_version_(-1) {}
+
+private:
+	int ir_version_;
+	std::unordered_map<std::string, int> opset_imports_;
+	bool is_main_graph_ = true;
 };
 
 struct LexicalScopeContext final {

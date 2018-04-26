@@ -25,8 +25,8 @@ Affine takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the affine function, y = alpha * x + beta,
 is applied to the tensor elementwise.
 )DOC")
-    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT, OPTIONAL)
-    .Attr("beta" , "Value of beta", AttributeProto::FLOAT, OPTIONAL)
+    .Attr("alpha", "Value of alpha", AttributeProto::FLOAT, 1.0f)
+    .Attr("beta" , "Value of beta", AttributeProto::FLOAT, 0.0f)
     .Input(0, "X", "1D input tensor", "T")
     .Output(0, "Y", "1D output tensor", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
