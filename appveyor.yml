@@ -15,7 +15,6 @@ clone_depth: 2
 environment:
   global:
     ONNX_NAMESPACE: ONNX_NAMESPACE_FOO_BAR_FOR_CI
-    APPVEYOR_RDP_PASSWORD: arst1234@
 
   matrix:
   # onnx-ml
@@ -33,9 +32,6 @@ environment:
 
 install:
 - cmd: git submodule update --init --recursive
-
-on_finish:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
