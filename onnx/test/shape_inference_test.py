@@ -88,6 +88,22 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3))])
 
+    def test_concat(self):
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4, 3)),
+             ("y", TensorProto.FLOAT, (7, 4, 3))],
+            [make_node("Concat", ['x', 'y'], ['z'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (9, 4, 3))])
+
+    def test_concat_3d_axis_2(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2, 2)),
+             ('y', TensorProto.FLOAT, (2, 2, 2))],
+            [make_node('Concat', ['x', 'y'], ['z'], axis=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 2, 4))])
+
     def test_reshape(self):
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (2, 4, 3)),

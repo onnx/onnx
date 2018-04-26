@@ -747,7 +747,7 @@ ONNX_OPERATOR_SCHEMA(ZipMap)
     .Output(0, "Z", "The output map", "T")
     .TypeConstraint(
         "T",
-        {"map(string, float)", "map(int64, float)"},
+        {"seq(map(string, float))", "seq(map(int64, float))"},
         " allowed types.")
     .Attr(
         "classlabels_strings",
