@@ -99,6 +99,12 @@ message AttributeProto {
 
   // The name field MUST be present for this version of the IR.
   optional string name = 1;           // namespace Attribute
+ 
+  // if ref_attr_name is not empty, ref_attr_name is the attribute name in parent function.
+  // In this case, this AttributeProto does not contain data, and it's a reference of attribute
+  // in parent scope.
+  // NOTE: This should ONLY be used in function (sub-graph). It's invalid to be used in main graph.
+  optional string ref_attr_name = 21;
 
   // A human-readable documentation for this attribute. Markdown is allowed.
   optional string doc_string = 13;

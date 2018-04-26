@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -24,7 +24,7 @@ class Gather(Base):
         indices = np.array([0, 1, 3])
         y = np.take(data, indices, axis=0)
 
-        expect(node, inputs=[data, indices], outputs=[y],
+        expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_0')
 
     @staticmethod
@@ -39,5 +39,5 @@ class Gather(Base):
         indices = np.array([0, 1, 3])
         y = np.take(data, indices, axis=1)
 
-        expect(node, inputs=[data, indices], outputs=[y],
+        expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
                name='test_gather_1')

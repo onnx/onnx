@@ -20,6 +20,8 @@
 *.pb.cc
 *_pb2.py
 *_pb.py
+*_pb2.pyi
+*_pb.pyi
 
 # Compiled python
 *.pyc
@@ -86,3 +88,7 @@ onnx/examples/.coverage.nbval
 
 # autocomplete
 .ycm_extra_conf.py
+
+.mypy_cache
+virtualenv
+venv

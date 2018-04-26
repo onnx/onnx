@@ -4,7 +4,7 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* name) {
+std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(
         "direction",

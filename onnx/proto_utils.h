@@ -32,4 +32,10 @@ bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
   coded_stream.SetTotalBytesLimit((2048LL << 20) - 1, 512LL << 20);
   return proto->ParseFromCodedStream(&coded_stream);
 }
+
+template<typename T> inline std::vector<T> RetrieveValues(const AttributeProto& attr);
+template<> inline std::vector<int64_t> RetrieveValues(const AttributeProto& attr) {
+    return {attr.ints().begin(), attr.ints().end()};
+}
+
 } // namespace ONNX_NAMESPACE

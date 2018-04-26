@@ -493,7 +493,7 @@ public:
       outputs()[i]->replaceAllUsesWith(n->outputs()[i]);
     }
   }
-  // lots of things like chunk have a single input or singel output, so we have a
+  // lots of things like chunk have a single input or single output, so we have a
   // helper to make accessing it easier
   Value * input() {
     ONNX_ASSERT(inputs_.size() == 1);
@@ -669,6 +669,23 @@ public:
     for(size_t i = 0; i < inputs().size(); ++i)
       dropInput(i);
     inputs_.clear();
+  }
+
+  // Check whether this node is before node n in the graph.
+  bool isBefore(Node* n) {
+    if (n == nullptr || this == n) {
+      // Bail out early.
+      return false;
+    }
+    ONNX_ASSERT(n->inGraphList());
+    Node* p = next();
+    while (p != nullptr) {
+      if (p == n) {
+        return true;
+      }
+      p = next();
+    }
+    return false;
   }
 
   // iterators of the node list starting at this node
@@ -991,7 +1008,8 @@ inline Value::Value(Node * node_, size_t offset_)
   offset_(offset_),
   unique_(node_->graph_->next_unique_++),
   stage_(node_->graph_->new_node_stage_),
-  has_unique_name_(false) {
+  has_unique_name_(false),
+  elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
   node_->graph_->all_values.emplace(this);
 }
 
@@ -1055,5 +1073,6 @@ inline const_graph_node_list_iterator Node::iterator() const {
 inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
 }
+
 
 } // namespace ONNX_NAMESPACE

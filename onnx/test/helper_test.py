@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import random
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
 from onnx import AttributeProto, TensorProto, GraphProto
@@ -282,6 +282,16 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+        string_list = list(s.encode('ascii') for s in ['Amy', 'Billy', 'Cindy', 'David'])
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.STRING,
+            dims=(2, 2),
+            vals=string_list,
+            raw=False
+        )
+        self.assertEqual(string_list, list(tensor.string_data))
 
     def test_make_tensor_value_info(self):
         vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))
