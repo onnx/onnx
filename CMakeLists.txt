@@ -315,3 +315,7 @@ endif()
 if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
+
+# ---[ ONNX Interface for Framework Integratin (ONNXIFI)
+add_library(onnxifi INTERFACE)
+target_include_directories(onnxifi INTERFACE onnx)

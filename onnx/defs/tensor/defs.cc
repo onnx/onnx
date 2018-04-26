@@ -178,60 +178,53 @@ ONNX_OPERATOR_SCHEMA(Concat)
         return;
       }
 
+      for (size_t i = 0; i < ctx.getNumInputs(); i++) {
+        if (!ctx.getInputType(i)->tensor_type().has_shape()) {
+          return;
+        }
+      }
+
       auto axisAttr = ctx.getAttribute("axis");
       if (!axisAttr) {
         return;
       }
       int axis = static_cast<int>(axisAttr->i());
-
-      bool found_exemplar = false;
-      TensorShapeProto shape_exemplar;
-      bool all_lengths_known = true;
-      int total_length = 0;
-
-      for (size_t i = 0; i < ctx.getNumInputs(); i++) {
-        if (!ctx.getInputType(i)->tensor_type().has_shape()) {
-          return;
-        }
-        const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-        if (found_exemplar) {
-          for (int j = 0; j < shape.dim_size(); j++) {
-            if (j == axis) {
-              if (shape.dim(j).has_dim_value()) {
-                total_length += static_cast<int>(shape.dim(j).dim_value());
-              } else {
-                all_lengths_known = false;
-              }
-            } else {
-              if (shape.dim(j).has_dim_value() &&
-                  shape_exemplar.dim(j).has_dim_value() &&
-                  shape.dim(j).dim_value() !=
-                      shape_exemplar.dim(j).dim_value()) {
-                return;
-              }
-            }
-          }
-        } else {
-          shape_exemplar = shape;
-          found_exemplar = true;
-        }
-      }
-
-      if (!found_exemplar) {
+      if (axis < 0) {
         return;
       }
 
-      if (all_lengths_known) {
-        shape_exemplar.mutable_dim(axis)->set_dim_value(total_length);
-      } else {
-        shape_exemplar.mutable_dim(axis)->set_dim_param("");
+      bool all_lengths_known = true;
+      int total_length = 0;
+
+      auto * output_shape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+      for (int64_t i = 0; i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+        output_shape->add_dim();
       }
 
-      for (int i = 0; i < shape_exemplar.dim_size(); i++) {
-        *ctx.getOutputType(0)
-             ->mutable_tensor_type()
-             ->mutable_shape()
-             ->add_dim() = shape_exemplar.dim(i);
+      for (size_t i = 0; i < ctx.getNumInputs(); i++) {
+        const auto& shape = ctx.getInputType(i)->tensor_type().shape();
+        for (int j = 0; j < shape.dim_size(); j++) {
+          if (j == axis) {
+            if (shape.dim(j).has_dim_value()) {
+              total_length += static_cast<int>(shape.dim(j).dim_value());
+            } else {
+              all_lengths_known = false;
+            }
+          } else if (shape.dim(j).has_dim_value()) {
+            if (output_shape->dim(j).has_dim_value()) {
+              if (shape.dim(j).dim_value() != output_shape->dim(j).dim_value()) {
+                return;
+              }
+            } else {
+              *output_shape->mutable_dim(j) = shape.dim(j);
+            }
+          }
+        }
+      }
+
+      if (all_lengths_known) {
+        output_shape->mutable_dim(axis)->set_dim_value(total_length);
       }
     });
 
@@ -267,6 +260,9 @@ Otherwise, the tensor is split to equal sized parts.
 
       auto axisAttr = ctx.getAttribute("axis");
       int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
+      if (axis < 0) {
+        return;
+      }
       std::vector<int64_t> split;
       if (!getRepeatedAttribute(ctx, "split", split)) {
         if (!ctx.getInputType(0)->tensor_type().has_shape()) {
