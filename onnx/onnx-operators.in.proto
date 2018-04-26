@@ -166,5 +166,5 @@ message OperatorSetProto {
   
   // The functions specified by this operator set.
   // The (name, version) MUST be unique across all OperatorProtos/FunctionProtos in operator/functions
-  repeated FunctionProto functions = 5;
+  repeated FunctionProto functions = 9;
 }
