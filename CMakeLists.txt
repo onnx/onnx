@@ -183,6 +183,7 @@ endfunction()
 
 RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
     onnx/onnx.in.proto
+    onnx/onnx-operators.in.proto
 )
 
 file(GLOB_RECURSE onnx_src
