@@ -104,6 +104,12 @@ message AttributeProto {
 
   // The name field MUST be present for this version of the IR.
   string name = 1;           // namespace Attribute
+ 
+  // if ref_attr_name is not empty, ref_attr_name is the attribute name in parent function.
+  // In this case, this AttributeProto does not contain data, and it's a reference of attribute
+  // in parent scope.
+  // NOTE: This should ONLY be used in function (sub-graph). It's invalid to be used in main graph.
+  string ref_attr_name = 21;
 
   // A human-readable documentation for this attribute. Markdown is allowed.
   string doc_string = 13;
@@ -387,8 +393,37 @@ message TensorShapeProto {
       int64 dim_value = 1;
       string dim_param = 2;   // namespace Shape
     };
+    // Standard denotation can optionally be used to denote tensor
+    // dimensions with standard semantic descriptions to ensure
+    // that operations are applied to the correct axis of a tensor.
+    string denotation = 3;
   };
   repeated Dimension dim = 1;
+}
+
+// A set of pre-defined constants to be used as values for
+// the standard denotation field in TensorShapeProto.Dimension
+// for semantic description of the tensor dimension.
+message DenotationConstProto {
+  // Describe a batch number dimension.
+  string DATA_BATCH = 1 [default = "DATA_BATCH"];
+  // Describe a channel dimension.
+  string DATA_CHANNEL = 2 [default = "DATA_CHANNEL"];
+  // Describe a time dimension.
+  string DATA_TIME = 3 [default = "DATA_TIME"];
+  // Describe a feature dimension. This is typically a feature
+  // dimension in RNN and/or spatial dimension in CNN.
+  string DATA_FEATURE = 4 [default = "DATA_FEATURE"];
+  // Describe a filter in-channel dimension. This is the dimension
+  // that is identical (in size) to the channel dimension of the input
+  // image feature maps.
+  string FILTER_IN_CHANNEL = 5 [default = "FILTER_IN_CHANNEL"];
+  // Describe a filter out channel dimension. This is the dimension
+  // that is identical (int size) to the channel dimension of the output
+  // image feature maps.
+  string FILTER_OUT_CHANNEL = 6 [default = "FILTER_OUT_CHANNEL"];
+  // Describe a filter spatial dimension.
+  string FILTER_SPATIAL = 7 [default = "FILTER_SPATIAL"];
 }
 
 // Define the types.
