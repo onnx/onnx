@@ -12,13 +12,14 @@
 #include <ostream>
 #include <set>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/common/status.h"
 #include "onnx/defs/shape_inference.h"
+#include "onnx/onnx-operators_pb.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -350,19 +351,19 @@ class OpSchema final {
   }
 
   static const std::vector<std::string>& all_numeric_types() {
-      static const std::vector<std::string> all_numeric_types = {
-          +"tensor(uint8)",
-          +"tensor(uint16)",
-          +"tensor(uint32)",
-          +"tensor(uint64)",
-          +"tensor(int8)",
-          +"tensor(int16)",
-          +"tensor(int32)",
-          +"tensor(int64)",
-          +"tensor(float16)",
-          +"tensor(float)",
-          +"tensor(double)" };
-      return all_numeric_types;
+    static const std::vector<std::string> all_numeric_types = {
+        +"tensor(uint8)",
+        +"tensor(uint16)",
+        +"tensor(uint32)",
+        +"tensor(uint64)",
+        +"tensor(int8)",
+        +"tensor(int16)",
+        +"tensor(int32)",
+        +"tensor(int64)",
+        +"tensor(float16)",
+        +"tensor(float)",
+        +"tensor(double)"};
+    return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
@@ -666,5 +667,50 @@ class OpSchemaRegistry final {
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
+
+class Function {
+ public:
+  // Get input formal parameters.
+  const std::vector<OpSchema::FormalParameter>& inputs() const;
+
+  // Get output formal parameters.
+  const std::vector<OpSchema::FormalParameter>& outputs() const;
+
+  // Get function attributes' declarations.
+  const std::map<std::string, OpSchema::Attribute>& attributes() const;
+
+  // Get function name.
+  const std::string& name() const;
+
+  // Get the version of operator set where <*this> function (same semantics) was
+  // added for the first time.
+  const OperatorSetVersion since_version() const;
+
+  // Get function support-level.
+  OpSchema::SupportType support_level() const;
+
+  // Get function doc string.
+  const std::string& doc_string() const;
+
+  // Get function body - bunch of nodes.
+  const std::vector<NodeProto>& nodes() const;
+
+ private:
+  Function() = default;
+  Function(const FunctionProto& function_proto);
+};
+
+class FunctionBuilder {
+ public:
+  FunctionBuilder& SetFunctionProto(const FunctionProto& function_proto);
+  Function Build();
+};
+
+class FunctionRegistry {
+ public:
+  Common::Status Register(Function* function);
+
+  Common::Status GetAllFunctions(std::vector<Function*>& function_set) const;
+};
 
 } // namespace ONNX_NAMESPACE
