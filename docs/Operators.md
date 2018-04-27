@@ -5579,13 +5579,13 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomNormalLike"></a><a name="randomnormallike">**RandomNormalLike**</a>
 
-  Generate a tensor with random values drawn from a normal distribution. The shape
-  of the tensor is computed from the input argument and the parameter of the normal distribution
-  specified by `mean` and `scale`.
+  Generate a tensor with random values drawn from a normal distribution. 
+  The shape of the output tensor is inferred from the input tensor, 
+  and the parameters of the normal distribution are specified by `mean` and `scale`.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message.
+  The data type is specified by the 'dtype' argument, or inferred from the input tensor if not provided. 
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message, and be valid as an output type.
 
 #### Version
 
@@ -5607,8 +5607,8 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : tensor(int32)</dt>
-<dd>Input tensor to provide shape information.</dd>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor to infer shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
@@ -5674,12 +5674,13 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomUniformLike"></a><a name="randomuniformlike">**RandomUniformLike**</a>
 
-  Generate a tensor with random values drawn from a uniform distribution. The shape
-  of the tensor is computed from the input argument and the range by `low` and `high`.
+  Generate a tensor with random values drawn from a uniform distribution. 
+  The shape of the output tensor is inferred from the input tensor, and the parameters 
+  of the uniform distribution are specified by `low` and `high`.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message.
+  The data type is specified by the 'dtype' argument, or inferred from the input tensor if not provided. 
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
 
 #### Version
 
@@ -5701,8 +5702,8 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : tensor(int32)</dt>
-<dd>Input tensor to provide shape information.</dd>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor to infer shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
