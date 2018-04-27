@@ -31,19 +31,6 @@ inline bool getRepeatedAttribute(
   }
 }
 
-inline bool
-hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::string& opname) {
-  if (static_cast<int>(ctx.getNumInputs()) != n) {
-    throw std::runtime_error(opname + " has wrong number of inputs");
-  }
-  for (int i = 0; i < n; i++) {
-    if (!ctx.getInputType(i)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
