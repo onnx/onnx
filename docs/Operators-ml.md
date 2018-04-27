@@ -390,7 +390,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>class labels if using int labels</dd>
 <dt><tt>classlabels_strings</tt> : list of strings</dt>
 <dd>class labels if using string labels</dd>
-<dt><tt>coefficients</tt> : list of floats</dt>
+<dt><tt>coefficients</tt> : list of floats (required)</dt>
 <dd>weights of the model(s)</dd>
 <dt><tt>intercepts</tt> : list of floats</dt>
 <dd>weights of the intercepts (if used)</dd>
