@@ -7642,6 +7642,66 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>tile</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tile',
+    inputs=['x', 'y'],
+    outputs=['z']
+)
+
+x = np.random.rand(2, 3, 4, 5).astype(np.float32)
+
+repeats = np.random.randint(low=1, high=10, size=(np.ndim(x),)).astype(np.int64)
+
+z = np.tile(x, repeats)
+
+expect(node,
+       inputs=[x, repeats],
+       outputs=[z],
+       name='test_tile')
+```
+
+</details>
+
+
+<details>
+<summary>tile_precomputed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tile',
+    inputs=['x', 'y'],
+    outputs=['z']
+)
+
+x = np.array([
+    [0, 1],
+    [2, 3]
+], dtype=np.float32)
+
+repeats = np.array([2, 2], dtype=np.int64)
+
+z = np.array([
+    [0, 1, 0, 1],
+    [2, 3, 2, 3],
+    [0, 1, 0, 1],
+    [2, 3, 2, 3]
+], dtype=np.float32)
+
+expect(node,
+       inputs=[x, repeats],
+       outputs=[z],
+       name='test_tile_precomputed')
+```
+
+</details>
+
+
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
 
   Retrieve the top-K elements along a specified axis. Given an input tensor of
