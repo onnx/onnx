@@ -6460,9 +6460,9 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.6732.</dd>
+<dd>Coefficient of SELU default to 1.6732632423543772848170429916717.</dd>
 <dt><tt>gamma</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.0507.</dd>
+<dd>Coefficient of SELU default to 1.0507009873554804934193349852946.</dd>
 </dl>
 
 #### Inputs

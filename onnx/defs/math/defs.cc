@@ -254,14 +254,14 @@ ONNX_OPERATOR_SCHEMA(Selu)
     .SinceVersion(6)
     .Attr(
         "alpha",
-        "Coefficient of SELU default to 1.6732.",
+        "Coefficient of SELU default to 1.6732632423543772848170429916717.",
         AttributeProto::FLOAT,
-        1.6732f)
+        1.6732632423543772848170429916717f)
     .Attr(
         "gamma",
-        "Coefficient of SELU default to 1.0507.",
+        "Coefficient of SELU default to 1.0507009873554804934193349852946.",
         AttributeProto::FLOAT,
-        1.0507f)
+        1.0507009873554804934193349852946f)
     .SetDoc(R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
