@@ -2368,6 +2368,74 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+gru = GRU_Helper(X=input, W=W, R=R)
+output = gru.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 3
+weight_scale = 0.1
+custom_bias = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
+
+gru = GRU_Helper(X=input, W=W, R=R, B=B)
+output = gru.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
+```
+
+</details>
+
+
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
@@ -3296,6 +3364,111 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R)
+output = lstm.step()
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_lstm_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+custom_bias = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), 1)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
+output = lstm.step()
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_lstm_with_initial_bias')
+```
+
+</details>
+
+
+<details>
+<summary>peepholes</summary>
+
+```python
+input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
+
+input_size = 4
+hidden_size = 3
+weight_scale = 0.1
+number_of_gates = 4
+number_of_peepholes = 3
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+# Initializing Inputs
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
+seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.float32)
+init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
+init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
+P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
+output = lstm.step()
+
+expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[output], name='test_lstm_with_peepholes')
+```
+
+</details>
 
 
 ### <a name="LeakyRelu"></a><a name="leakyrelu">**LeakyRelu**</a>
@@ -5289,6 +5462,72 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R)
+output = rnn.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 5
+custom_bias = 0.1
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
+R_B = np.zeros((1, hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
+
+rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+output = rnn.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
+```
+
+</details>
 
 
 ### <a name="RandomNormal"></a><a name="randomnormal">**RandomNormal**</a>
