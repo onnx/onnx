@@ -164,11 +164,10 @@ void InferShapes(ModelProto& m) {
             auto inferredDimValue = inferredDim.dim_value();
             if (existingDim->has_dim_value() &&
                 existingDim->dim_value() != inferredDimValue) {
-              throw std::runtime_error(
-                  "inferred dimension differs from existing dimension");
+              throw std::runtime_error(std::string("inferred dimension differs from existing dimension for ") + n.op_type());
             }
-            *existingDim = inferredDim;
           }
+          *existingDim = inferredDim;
         }
       }
 
