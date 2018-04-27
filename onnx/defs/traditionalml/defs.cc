@@ -772,12 +772,11 @@ ONNX_OPERATOR_SCHEMA(FeatureVectorizer)
     Input tensors must all be of the same batch size.
 )DOC")
     .Input(0, "X", "ordered input tensors", "T1", OpSchema::Variadic)
-    .Output(0, "Y", "Output array, in same order as Input, as floats", "T2")
+    .Output(0, "Y", "Output array, in same order as Input, as floats", "tensor(float)")
     .TypeConstraint(
         "T1",
         {"tensor(int32)", "tensor(int64)", "tensor(float)", "tensor(double)"},
         " Allowed input types")
-    .TypeConstraint("T2", {"tensor(float)"}, " Output data type")
     .Attr(
         "inputdimensions",
         "the size of each input in the input list",
