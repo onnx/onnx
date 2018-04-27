@@ -668,49 +668,97 @@ class OpSchemaRegistry final {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
-class Function {
- public:
-  // Get input formal parameters.
-  const std::vector<OpSchema::FormalParameter>& inputs() const;
-
-  // Get output formal parameters.
-  const std::vector<OpSchema::FormalParameter>& outputs() const;
-
-  // Get function attributes' declarations.
-  const std::map<std::string, OpSchema::Attribute>& attributes() const;
-
-  // Get function name.
-  const std::string& name() const;
-
-  // Get the version of operator set where <*this> function (same semantics) was
-  // added for the first time.
-  const OperatorSetVersion since_version() const;
-
-  // Get function support-level.
-  OpSchema::SupportType support_level() const;
-
-  // Get function doc string.
-  const std::string& doc_string() const;
-
-  // Get function body - bunch of nodes.
-  const std::vector<NodeProto>& nodes() const;
-
- private:
-  Function() = default;
-  Function(const FunctionProto& function_proto);
-};
+typedef Common::Status (*BuildFunction)(std::shared_ptr<FunctionProto>*);
 
 class FunctionBuilder {
  public:
-  FunctionBuilder& SetFunctionProto(const FunctionProto& function_proto);
-  Function Build();
+  FunctionBuilder& SetDomain(const std::string& domain) {
+    domain_ = domain;
+    return *this;
+  }
+  const std::string& GetDomain() const {
+    return domain_;
+  }
+  FunctionBuilder& SetBuildFunction(BuildFunction build_func) {
+    build_func_ = build_func;
+    return *this;
+  }
+
+  BuildFunction GetBuildFunction() const {
+    return build_func_;
+  }
+
+ private:
+  std::string domain_;
+  BuildFunction build_func_;
 };
 
-class FunctionRegistry {
+class FunctionBuilderRegistry {
  public:
-  Common::Status Register(Function* function);
+  void Register(const FunctionBuilder& function_builder) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    function_builders.push_back(function_builder);
+  }
 
-  Common::Status GetAllFunctions(std::vector<Function*>& function_set) const;
-};
+  // Get functions for specific domain.
+  Common::Status GetFunctions(
+      const std::string& domain,
+      /*out*/
+      std::multimap<std::string, std::shared_ptr<FunctionProto>>* function_set)
+      const {
+    if (nullptr == function_set) {
+      return Common::Status(
+          Common::OPSCHEMA,
+          Common::INVALID_ARGUMENT,
+          "function_set should not be nullptr.");
+    }
+
+    for (auto func_builder : function_builders) {
+      if (func_builder.GetDomain() != domain) {
+        continue;
+      }
+      std::shared_ptr<FunctionProto> function_proto;
+      auto status = func_builder.GetBuildFunction()(&function_proto);
+      if (!status.IsOK()) {
+        return status;
+      }
+	  
+	  // TODO: check the function_proto.
+
+      auto& func_name = function_proto->name();
+      // Check no op version conflicts.
+      auto range = function_set->equal_range(func_name);
+      for (auto i = range.first; i != range.second; ++i) {
+        auto version = i->second->since_version();
+        if (function_proto->since_version() == version) {
+          // There's already a function with same name/since_version registered.
+          return Common::Status(
+              Common::OPSCHEMA,
+              Common::FAIL,
+              "A function (" + func_name + ") with version (" +
+                  std::to_string(version) + ") has already been registered.");
+        }
+      }
+      function_set->emplace(func_name, function_proto);
+    }
+
+    return Common::Status::OK();
+  }
+
+  static FunctionBuilderRegistry& Instance() {
+    static FunctionBuilderRegistry func_builder_registry;
+    return func_builder_registry;
+  }
+
+ private:
+  FunctionBuilderRegistry() {
+    // TODO: add all predefined function builder registration code here.
+    // Register(...);
+    // or using static variable trick and macro to register predefined function
+    // builder in each file separately.
+  }
+  std::vector<FunctionBuilder> function_builders;
+  std::mutex mutex_;
+}; // namespace ONNX_NAMESPACE
 
 } // namespace ONNX_NAMESPACE
