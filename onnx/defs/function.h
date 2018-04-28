@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include <xstring>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include "onnx/common/status.h"
