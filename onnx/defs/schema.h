@@ -17,8 +17,8 @@
 #include <vector>
 
 #include "data_type_utils.h"
-#include "onnx/common/status.h"
 #include "onnx/checker.h"
+#include "onnx/common/status.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx-operators_pb.h"
 
@@ -673,21 +673,11 @@ typedef Common::Status (*BuildFunction)(std::shared_ptr<FunctionProto>*);
 
 class FunctionBuilder {
  public:
-  FunctionBuilder& SetDomain(const std::string& domain) {
-    domain_ = domain;
-    return *this;
-  }
-  const std::string& GetDomain() const {
-    return domain_;
-  }
-  FunctionBuilder& SetBuildFunction(BuildFunction build_func) {
-    build_func_ = build_func;
-    return *this;
-  }
+  FunctionBuilder& SetDomain(const std::string& domain);
+  const std::string& GetDomain() const;
+  FunctionBuilder& SetBuildFunction(BuildFunction build_func);
 
-  BuildFunction GetBuildFunction() const {
-    return build_func_;
-  }
+  BuildFunction GetBuildFunction() const;
 
  private:
   std::string domain_;
@@ -698,65 +688,16 @@ class FunctionBuilderRegistry {
  public:
   FunctionBuilderRegistry() = default;
 
-  void Register(const FunctionBuilder& function_builder) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    function_builders.push_back(function_builder);
-  }
+  void Register(const FunctionBuilder& function_builder);
 
   // Get functions for specific domain.
-  Common::Status GetFunctions(
+  Status GetFunctions(
       const std::string& domain,
       /*out*/
       std::multimap<std::string, std::shared_ptr<FunctionProto>>* function_set)
-      const {
-    if (nullptr == function_set) {
-      return Common::Status(
-          Common::OPSCHEMA,
-          Common::INVALID_ARGUMENT,
-          "function_set should not be nullptr.");
-    }
+      const;
 
-    for (auto func_builder : function_builders) {
-      if (func_builder.GetDomain() != domain) {
-        continue;
-      }
-      std::shared_ptr<FunctionProto> function_proto;
-      auto status = func_builder.GetBuildFunction()(&function_proto);
-      if (!status.IsOK()) {
-        return status;
-      }
-
-      CheckerContext ctx;
-	  LexicalScopeContext lex_ctx;
-      status = check_function(*function_proto, ctx, lex_ctx);
-      if (!status.IsOK()) {
-        return status;
-      }
-
-      auto& func_name = function_proto->name();
-      // Check no op version conflicts.
-      auto range = function_set->equal_range(func_name);
-      for (auto i = range.first; i != range.second; ++i) {
-        auto version = i->second->since_version();
-        if (function_proto->since_version() == version) {
-          // There's already a function with same name/since_version registered.
-          return Common::Status(
-              Common::OPSCHEMA,
-              Common::FAIL,
-              "A function (" + func_name + ") with version (" +
-                  std::to_string(version) + ") has already been registered.");
-        }
-      }
-      function_set->emplace(func_name, function_proto);
-    }
-
-    return Common::Status::OK();
-  }
-
-  static FunctionBuilderRegistry& OnnxInstance() {
-    static FunctionBuilderRegistry func_builder_registry;
-    return func_builder_registry;
-  }
+  static FunctionBuilderRegistry& OnnxInstance();
 
  private:
   std::vector<FunctionBuilder> function_builders;
