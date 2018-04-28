@@ -3,11 +3,14 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+#include "onnx/common/status.h"
 #include "onnx/onnx_pb.h"
+#include "onnx/onnx-operators_pb.h"
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace checker {
+using namespace Common;
 class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -78,7 +81,7 @@ void check_graph(
     const GraphProto& graph,
     const CheckerContext&,
     const LexicalScopeContext&);
-Common::Status check_function(
+Status check_function(
     const FunctionProto& function,
     const CheckerContext&,
     const LexicalScopeContext&);

@@ -18,11 +18,12 @@
 
 #include "data_type_utils.h"
 #include "onnx/common/status.h"
+#include "onnx/checker.h"
 #include "onnx/defs/shape_inference.h"
 #include "onnx/onnx-operators_pb.h"
 
 namespace ONNX_NAMESPACE {
-
+using namespace checker;
 using OperatorSetVersion = int;
 
 constexpr const char* ONNX_DOMAIN = "";
@@ -725,9 +726,9 @@ class FunctionBuilderRegistry {
         return status;
       }
 
-      checker::CheckerContext ctx;
-      checker::LexicalScopeContext lex_ctx;
-      status = checker::check_function(function_proto, ctx, lex_ctx);
+      CheckerContext ctx;
+	  LexicalScopeContext lex_ctx;
+      status = check_function(*function_proto, ctx, lex_ctx);
       if (!status.IsOK()) {
         return status;
       }

@@ -360,7 +360,7 @@ void check_graph(
   }
 }
 
-Common::Status check_function(
+Status check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
@@ -370,8 +370,7 @@ Common::Status check_function(
   } catch (ValidationError& ex) {
     return Common::Status(
         Common::OPSCHEMA,
-        Common::INVALID_PROTOBUF,
-        "Bad function spec: " + ex.what);
+        Common::INVALID_PROTOBUF, ex.what());
   }
 
   std::unordered_set<std::string> output_names;
@@ -433,7 +432,7 @@ Common::Status check_function(
       return Common::Status(
           Common::OPSCHEMA,
           Common::INVALID_PROTOBUF,
-          "Bad node spec: " + ProtoDebugString(node));
+          ex.what());
     }
     // check for SSA form
     for (const auto& output : node.output()) {
@@ -450,6 +449,7 @@ Common::Status check_function(
       output_names.insert(output);
     }
   }
+  return Status::OK();
 }
 
 void check_model(const ModelProto& model) {
