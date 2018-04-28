@@ -42,8 +42,8 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
 
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
- VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
- SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+ VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+ SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
  ```
  And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
  ```
@@ -78,9 +78,12 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the "
         "width of the data. For non image case, the "
-        "dimension are in the form of "
+        "dimensions are in the form of "
         "(N x C x D1 x D2 ... Dn), where N is the batch "
-        "size.",
+        "size. Optionally, if dimension denotation is "
+        "in effect, the operation expects the input "
+        "data tensor to arrive with the dimension denotation "
+        "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
         "T");
     schema.Output(
         0,
@@ -150,7 +153,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the "
         "width of the data. For non image case, the "
-        "dimension are in the form of "
+        "dimensions are in the form of "
         "(N x C x D1 x D2 ... Dn), where N is the "
         "batch size.",
         "T");
@@ -235,8 +238,12 @@ computes the output.)DOC";
         "Input data tensor from previous layer; "
         "has size (N x C x H x W), where N is the batch size, "
         "C is the number of channels, and H and W are the "
-        "height and width. Note that this is for the 2D image."
-        "Otherwise the size is (N x D1 x D2 ... x Dn)",
+        "height and width. Note that this is for the 2D image. "
+        "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
+        "Optionally, if dimension denotation is "
+        "in effect, the operation expects input data tensor "
+        "to arrive with the dimension denotation of [DATA_BATCH, "
+        "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
         "T");
     schema.Input(
         1,
@@ -247,7 +254,11 @@ computes the output.)DOC";
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
         "kernel shape will be (M x C x k1 x k2 x ... x kn), "
-        "where is the dimension of the kernel",
+        "where (k1 x k2 x ... kn) is the dimension of the kernel. "
+        "Optionally, if dimension denotation is in effect, "
+        "the operation expects the weight tensor to arrive "
+        "with the dimension denotation of [FILTER_IN_CHANNEL, "
+        "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].",
         "T");
     schema.Input(
         2,
@@ -292,6 +303,93 @@ computes the output.)DOC";
         "number of groups input channels and output channels are divided into, default is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+        if (!hasNInputShapes(ctx, 2)) {
+          return;
+        }
+
+        // don't bother with legacy auto_pad for now
+        if (ctx.getAttribute("auto_pad")) {
+          return;
+        }
+
+        size_t n_input_dims = (size_t) (ctx.getInputType(0)->tensor_type().shape().dim_size() - 2);
+
+        std::vector<int64_t> dilations;
+        if (getRepeatedAttribute(ctx, "dilations", dilations)) {
+          if (dilations.size() != n_input_dims) {
+            return;
+          }
+        } else {
+          for (size_t i = 0; i < n_input_dims; ++i) {
+            dilations.push_back(1);
+          }
+        }
+
+        std::vector<int64_t> kernel_shape;
+        if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
+          if (kernel_shape.size() != ctx.getInputType(1)->tensor_type().shape().dim_size() - 2) {
+            return;
+          }
+        } else {
+          for (int i = 2; i < ctx.getInputType(1)->tensor_type().shape().dim_size(); ++i) {
+            kernel_shape.push_back(ctx.getInputType(1)->tensor_type().shape().dim(i).dim_value());
+          }
+        }
+
+        std::vector<int64_t> pads;
+        if (getRepeatedAttribute(ctx, "pads", pads)) {
+          if (pads.size() != n_input_dims * 2) {
+            return;
+          }
+        } else {
+          for (size_t i = 0; i < n_input_dims; ++i) {
+            pads.push_back(0);
+            pads.push_back(0);
+          }
+        }
+
+        std::vector<int64_t> strides;
+        if (getRepeatedAttribute(ctx, "strides", strides)) {
+          if (strides.size() != n_input_dims) {
+            return;
+          }
+        } else {
+          for (size_t i = 0; i < n_input_dims; ++i) {
+            strides.push_back(1);
+          }
+        }
+
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+          ctx.getInputType(0)->tensor_type().shape().dim(0);
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+          ctx.getInputType(1)->tensor_type().shape().dim(0);
+
+        for (size_t i = 0; i < kernel_shape.size(); ++i) {
+          if (!ctx.getInputType(0)->tensor_type().shape().dim(2 + (int)i).has_dim_value()) {
+            continue;
+          }
+          // how big is the input, including padding
+          int64_t effective_input_size = ctx.getInputType(0)->tensor_type().shape().dim(2 + (int)i).dim_value();
+          effective_input_size += pads[i];
+          effective_input_size += pads[i + kernel_shape.size()];
+
+          // accounting for dilation, how big is the kernel in this dimension
+          int64_t effective_kernel_size = kernel_shape[i];
+          effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
+
+          // how many times we can move the kernel from it's initial position, based on the stride
+          int64_t strided_kernel_positions = (effective_input_size - effective_kernel_size) / strides[i];
+
+          // add in the initial position
+          int64_t total_kernel_positions = 1 + strided_kernel_positions;
+
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim()->set_dim_value(total_kernel_positions);
+        }
+
+      });
   };
 }
 
@@ -324,8 +422,8 @@ and computes the output.)DOC";
         "is the number of channels, and kH and kW are the "
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
-        "kernel shape will be (C x M x k1 x k2 x ... x kn), "
-        "where is the dimension of the kernel",
+        "weight shape will be (C x M x k1 x k2 x ... x kn), "
+        "where (k1 x k2 x ... x kn) is the dimension of the kernel",
         "T");
     schema.Input(
         2,
@@ -411,7 +509,7 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         "dimensions for image case are (N x C x H x W), "
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the width "
-        "of the data. For non image case, the dimension are "
+        "of the data. For non image case, the dimensions are "
         "in the form of (N x C x D1 x D2 ... Dn), "
         "where N is the batch size.",
         "T");
@@ -459,7 +557,7 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         "dimensions for image case are (N x C x H x W), "
         "where N is the batch size, C is the number of "
         "channels, and H and W are the height and the width "
-        "of the data. For non image case, the dimension are "
+        "of the data. For non image case, the dimensions are "
         "in the form of (N x C x D1 x D2 ... Dn), "
         "where N is the batch size.",
         "T");
@@ -515,7 +613,18 @@ Output case #2: Y (test mode)
         "e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.",
         AttributeProto::FLOAT,
         0.9f)
-    .Input(0, "X", "The input 4-dimensional tensor of shape NCHW.", "T")
+    .Input(
+        0,
+        "X",
+        "Input data tensor from the previous operator; "
+        "dimensions for image case are (N x C x H x W), "
+        "where N is the batch size, C is the number of "
+        "channels, and H and W are the height and the "
+        "width of the data. For non image case, the "
+        "dimensions are in the form of "
+        "(N x C x D1 x D2 ... Dn), where N is the batch "
+        "size.",
+        "T")
     .Input(
         1,
         "scale",
@@ -543,7 +652,7 @@ Output case #2: Y (test mode)
     .Output(
         0,
         "Y",
-        "The output 4-dimensional tensor of the same shape as X.",
+        "The output tensor of the same shape as X.",
         "T")
     .Output(
         1,
@@ -593,13 +702,24 @@ where mean and variance are computed per instance per channel.
         "The epsilon value to use to avoid division by zero, default is 1e-5f.",
         AttributeProto::FLOAT,
         1e-5f)
-    .Input(0, "input", "The input 4-dimensional tensor of shape NCHW.", "T")
+    .Input(
+        0,
+        "input",
+        "Input data tensor from the previous operator; "
+        "dimensions for image case are (N x C x H x W), "
+        "where N is the batch size, C is the number of "
+        "channels, and H and W are the height and the "
+        "width of the data. For non image case, the "
+        "dimensions are in the form of "
+        "(N x C x D1 x D2 ... Dn), where N is the batch "
+        "size.",
+        "T")
     .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
     .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
     .Output(
         0,
         "output",
-        "The output 4-dimensional tensor of the same shape as input.",
+        "The output tensor of the same shape as input.",
         "T")
     .TypeConstraint(
         "T",

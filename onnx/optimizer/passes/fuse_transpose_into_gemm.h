@@ -17,6 +17,7 @@ struct FuseTransposeIntoGemm final : public OptimizePass {
 
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
+      DescendOnGraphAttributes(n, [this](Graph& g){fuse_transpose_into_gemm(g);});
 
       if (n->kind() == kGemm) {
         for (size_t i : {0,1}) {

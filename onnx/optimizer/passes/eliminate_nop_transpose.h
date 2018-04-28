@@ -22,10 +22,10 @@ struct EliminateNopTranspose final : public OptimizePass {
   void eliminate_nop_transpose(Graph& graph) {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
-
+      DescendOnGraphAttributes(n, [this](Graph& g){eliminate_nop_transpose(g);});
       if (n->kind() == kTranspose && n->hasAttribute(kperm)) {
         if (is_nop_transpose(n->is(kperm))) {
-          n->replaceAllUsesWith(n->input()->node());
+          n->output()->replaceAllUsesWith(n->input());
           it.destroyCurrent();
           continue;
         }

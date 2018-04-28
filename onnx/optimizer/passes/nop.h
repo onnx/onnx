@@ -10,10 +10,10 @@ struct Nop final : public OptimizePass {
     : OptimizePass("nop", API_TYPE::IR) {
   }
 
-  void optimize(Graph& graph) override {
+  void optimize(Graph& /*graph*/) override {
   }
 
-  void optimize(ONNX_NAMESPACE::ModelProto& mp) override {
+  void optimize(ONNX_NAMESPACE::ModelProto& /*mp*/) override {
   }
 };
 

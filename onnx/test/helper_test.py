@@ -5,10 +5,10 @@ from __future__ import unicode_literals
 
 import random
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx import AttributeProto, TensorProto, GraphProto
+from onnx import AttributeProto, TensorProto, GraphProto, DenotationConstProto
 
 import unittest
 
@@ -200,16 +200,25 @@ class TestHelperNodeFunctions(unittest.TestCase):
             helper.make_attribute("arg_value", 1))
 
     def test_graph(self):
-        node_def = helper.make_node(
+        node_def1 = helper.make_node(
             "Relu", ["X"], ["Y"])
+        node_def2 = helper.make_node(
+            "Add", ["X", "Y"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])]
         graph = helper.make_graph(
-            [node_def],
+            [node_def1, node_def2],
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
-        self.assertEqual(len(graph.node), 1)
-        self.assertEqual(graph.node[0], node_def)
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+            doc_string=None,
+            value_info=value_info,
+        )
+        self.assertEqual(graph.name, "test")
+        self.assertEqual(len(graph.node), 2)
+        self.assertEqual(graph.node[0], node_def1)
+        self.assertEqual(graph.node[1], node_def2)
         self.assertEqual(graph.doc_string, "")
+        self.assertEqual(graph.value_info[0], value_info[0])
 
     def test_graph_docstring(self):
         graph = helper.make_graph([], "my graph", [], [], None, "my docs")
@@ -249,6 +258,19 @@ class TestHelperNodeFunctions(unittest.TestCase):
         dupe.value = 'Other'
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
+    def test_shape_denotation(self):
+        shape_denotation = [DenotationConstProto().DATA_BATCH,
+                            DenotationConstProto().DATA_CHANNEL,
+                            DenotationConstProto().DATA_FEATURE,
+                            DenotationConstProto().DATA_FEATURE]
+        tensor = helper.make_tensor_value_info("X",
+                                                TensorProto.FLOAT,
+                                                [2, 2, 2, 2],
+                                                shape_denotation=shape_denotation)
+
+        for i, d in enumerate(tensor.type.tensor_type.shape.dim):
+            self.assertEqual(d.denotation, shape_denotation[i])
+
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
@@ -273,6 +295,16 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+        string_list = list(s.encode('ascii') for s in ['Amy', 'Billy', 'Cindy', 'David'])
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.STRING,
+            dims=(2, 2),
+            vals=string_list,
+            raw=False
+        )
+        self.assertEqual(string_list, list(tensor.string_data))
 
     def test_make_tensor_value_info(self):
         vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))

@@ -8,7 +8,7 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 
 // Warning: This function may be shared with old versions in old.cc.
-std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
+std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
                     "Must be one of forward (default), reverse, or bidirectional.",
