@@ -116,17 +116,12 @@ class TestOptimizer(unittest.TestCase):
             assert node.op_type != "Identity"
         assert len(optimized_model.graph.node) == 2
 
-<<<<<<< HEAD
-    def test_nop_transpose(self):
+    def test_nop_transpose(self):# type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])]
         nodes.extend(self._make_fake_loop_op(
             [helper.make_node("Transpose", ["_Y"], ["_Y2"], perm=[0, 1])],
             [(TensorProto.FLOAT, (2, 3), "Y")],
             [(TensorProto.FLOAT, (2, 3), "Y2")]))
-=======
-    def test_nop_transpose(self):  # type: () -> None
-        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])
->>>>>>> Add type hints
         graph = helper.make_graph(
             nodes,
             "test",
@@ -159,8 +154,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Transpose"
 
-<<<<<<< HEAD
-    def test_fuse_transpose(self):
+    def test_fuse_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2]),
                  helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1]),
                  helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])]
@@ -170,12 +164,6 @@ class TestOptimizer(unittest.TestCase):
              helper.make_node("Transpose", ["_Y3"], ["_Y4"], perm=[2, 0, 1])],
             [(TensorProto.FLOAT, (2, 3), "X")],
             [(TensorProto.FLOAT, (2, 3), "Y4")]))
-=======
-    def test_fuse_transpose(self):  # type: () -> None
-        trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
-        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
-        trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])
->>>>>>> Add type hints
         graph = helper.make_graph(
             nodes,
             "test",
@@ -215,8 +203,7 @@ class TestOptimizer(unittest.TestCase):
         for node in optimized_model.graph.node:
             assert node.op_type == "Transpose"
 
-<<<<<<< HEAD
-    def test_fuse_transpose_into_gemm(self):
+    def test_fuse_transpose_into_gemm(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["A"], perm=[1, 0]),
                  helper.make_node("Transpose", ["Y"], ["B"], perm=[1, 0]),
                  helper.make_node("Gemm", ["A", "B", "C"], ["Z"])]
@@ -228,12 +215,6 @@ class TestOptimizer(unittest.TestCase):
              (TensorProto.FLOAT, (5, 2), "Y"),
              (TensorProto.FLOAT, (3, 5), "C")],
             [(TensorProto.FLOAT, (2, 3), "Z2")]))
-=======
-    def test_fuse_transpose_into_gemm(self):  # type: () -> None
-        trans1 = helper.make_node("Transpose", ["X"], ["A"], perm=[1, 0])
-        trans2 = helper.make_node("Transpose", ["Y"], ["B"], perm=[1, 0])
-        gemm = helper.make_node("Gemm", ["A", "B", "C"], ["Z"])
->>>>>>> Add type hints
         graph = helper.make_graph(
             nodes,
             "test",
@@ -250,8 +231,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.node[3].attribute[0].g.node) == 1
         assert optimized_model.graph.node[3].attribute[0].g.node[0].op_type == "Gemm"
 
-<<<<<<< HEAD
-    def test_fuse_add_bias_into_conv_use_weight_shape(self):
+    def test_fuse_add_bias_into_conv_use_weight_shape(self):  # type: () -> None
         nodes = [helper.make_node("Conv", ["X", "Y"], ["Z"]),
                  helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)]
         nodes.extend(self._make_fake_loop_op(
@@ -261,11 +241,6 @@ class TestOptimizer(unittest.TestCase):
              (TensorProto.FLOAT, (16, 5, 3, 3), "Y"),
              (TensorProto.FLOAT, (16,), "A")],
             [(TensorProto.FLOAT, (1, 16, 3, 3), "B2")]))
-=======
-    def test_fuse_add_bias_into_conv_use_weight_shape(self):  # type: () -> None
-        conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
-        add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)
->>>>>>> Add type hints
         graph = helper.make_graph(
             nodes,
             "test",

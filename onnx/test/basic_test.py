@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import AttributeProto, NodeProto, GraphProto, ModelProto, TensorProto, IR_VERSION
+from typing import IO
 
 import io
 import onnx
