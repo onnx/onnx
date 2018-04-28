@@ -2600,7 +2600,7 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B</dd>
 <dt><tt>C</tt> : T</dt>
-<dd>Input tensor C, can be inplace.</dd>
+<dd>Input tensor C</dd>
 </dl>
 
 #### Outputs
