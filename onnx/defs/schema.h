@@ -695,6 +695,8 @@ class FunctionBuilder {
 
 class FunctionBuilderRegistry {
  public:
+  FunctionBuilderRegistry() = default;
+
   void Register(const FunctionBuilder& function_builder) {
     std::lock_guard<std::mutex> lock(mutex_);
     function_builders.push_back(function_builder);
@@ -722,8 +724,13 @@ class FunctionBuilderRegistry {
       if (!status.IsOK()) {
         return status;
       }
-	  
-	  // TODO: check the function_proto.
+
+      checker::CheckerContext ctx;
+      checker::LexicalScopeContext lex_ctx;
+      status = checker::check_function(function_proto, ctx, lex_ctx);
+      if (!status.IsOK()) {
+        return status;
+      }
 
       auto& func_name = function_proto->name();
       // Check no op version conflicts.
@@ -745,18 +752,12 @@ class FunctionBuilderRegistry {
     return Common::Status::OK();
   }
 
-  static FunctionBuilderRegistry& Instance() {
+  static FunctionBuilderRegistry& OnnxInstance() {
     static FunctionBuilderRegistry func_builder_registry;
     return func_builder_registry;
   }
 
  private:
-  FunctionBuilderRegistry() {
-    // TODO: add all predefined function builder registration code here.
-    // Register(...);
-    // or using static variable trick and macro to register predefined function
-    // builder in each file separately.
-  }
   std::vector<FunctionBuilder> function_builders;
   std::mutex mutex_;
 }; // namespace ONNX_NAMESPACE
