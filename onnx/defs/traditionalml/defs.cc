@@ -762,23 +762,20 @@ ONNX_OPERATOR_SCHEMA(ZipMap)
 ONNX_OPERATOR_SCHEMA(FeatureVectorizer)
     .SetDomain("ai.onnx.ml")
     .SetDoc(R"DOC(
-    Concatenates input features into one continuous output.
-    Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
+    Concatenates input features into one continuous output of floats.
+    inputdimensions is the size of each input feature.
     Inputs will be written to the output in the order of the input arguments.
-    All inputs are tensors of float.  Any feature that is not a tensor of float should
-    be converted using either Cast or CastMap.
+    If an input tensor is shorter than its matching input dimension the output will be padded with zeros.
+    If an input tensor is longer than its matching input dimension, the additional input will be ignored.
+    Input tensors must all be of the same type. Use Cast as needed.  
+    Input tensors must all be of the same batch size.
 )DOC")
     .Input(0, "X", "ordered input tensors", "T1", OpSchema::Variadic)
-    .Output(
-        0,
-        "Y",
-        "Full output array, in order assigned in the inputlist, as floats",
-        "T2")
+    .Output(0, "Y", "Output array, in same order as Input, as floats", "tensor(float)")
     .TypeConstraint(
         "T1",
         {"tensor(int32)", "tensor(int64)", "tensor(float)", "tensor(double)"},
         " Allowed input types")
-    .TypeConstraint("T2", {"tensor(float)"}, " Output data type")
     .Attr(
         "inputdimensions",
         "the size of each input in the input list",
