@@ -3462,7 +3462,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="RandomNormalLike-1"></a>**RandomNormalLike-1**</a>
 
   Generate a tensor with random values drawn from a normal distribution. 
-  The shape of the output tensor is inferred from the input tensor, 
+  The shape of the output tensor is copied from the shape of the input tensor, 
   and the parameters of the normal distribution are specified by `mean` and `scale`.
   
   The data type is specified by the 'dtype' argument, or inferred from the input tensor if not provided. 
@@ -3555,8 +3555,8 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="RandomUniformLike-1"></a>**RandomUniformLike-1**</a>
 
   Generate a tensor with random values drawn from a uniform distribution. 
-  The shape of the output tensor is inferred from the input tensor, and the parameters 
-  of the uniform distribution are specified by `low` and `high`.
+  The shape of the output tensor is copied from the shape of the input tensor, 
+  and the parameters of the uniform distribution are specified by `low` and `high`.
   
   The data type is specified by the 'dtype' argument, or inferred from the input tensor if not provided. 
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
