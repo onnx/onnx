@@ -18,13 +18,14 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* name) {
         schema.Attr("activation_alpha",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
-                    "in LSTM.",
+                    "in LSTM. Default values are the same as of corresponding ONNX operators."
+                    "For example with LeakyRelu, the default alpha is 0.01.",
                     AttributeProto::FLOATS,
                     OPTIONAL);
         schema.Attr("activation_beta",
                     "Optional scaling values used by some activation functions. The values "
                     "are consumed in the order of activation functions, for example (f, g, h) "
-                    "in LSTM.",
+                    "in LSTM. Default values are the same as of corresponding ONNX operators.",
                     AttributeProto::FLOATS,
                     OPTIONAL);
         schema.Attr("output_sequence",

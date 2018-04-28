@@ -430,7 +430,7 @@ Example:
 ONNX_OPERATOR_SCHEMA(SpaceToDepth)
     .Attr(
         "blocksize",
-        "Blocks of [blocksize, blocksize] are moved.",
+        "Blocks of [blocksize, blocksize] are moved. Default blocksize is 1.",
         AttributeProto::INT,
         OPTIONAL)
     .SetDoc(
@@ -457,7 +457,7 @@ are moved to the depth dimension.
 ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr(
         "blocksize",
-        "Blocks of [blocksize, blocksize] are moved.",
+        "Blocks of [blocksize, blocksize] are moved. Default blocksize is 1.",
         AttributeProto::INT,
         OPTIONAL)
     .SetDoc(

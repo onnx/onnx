@@ -18,7 +18,7 @@ False instead of True.)DOC";
         ReplaceAll(doc, "{name}", name);
         schema.SetDoc(doc);
         schema.Attr("axes",
-                    "A list of integers, along which to reduce.",
+                    "A list of integers, along which to reduce. If not specified, reduce operation will be along the last axis",
                     AttributeProto::INTS,
                     OPTIONAL);
         schema.Attr("keepdims",
@@ -77,7 +77,7 @@ The type of the output tensor is integer.)DOC";
         ReplaceAll(doc, "{name}", name);
         schema.SetDoc(doc);
         schema.Attr("axis",
-                    "The axis in which to compute the arg indices",
+                    "The axis in which to compute the arg indices. By default it shall compute along the last axis.",
                     AttributeProto::INT,
                     OPTIONAL);
         schema.Attr("keepdims",
