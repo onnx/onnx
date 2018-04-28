@@ -19,10 +19,11 @@ struct EliminateUnusedInitializer final : public OptimizePass {
       auto* n = *it;
       DescendOnGraphAttributes(n, [this](Graph& g){eliminate_unused_initializer(g);});
       // put any initializer used as input of any node to new vector
-      for (auto *input : n->inputs()) {
-        if (std::find(graph.initializer_names().begin(),
-                      graph.initializer_names().end(), input->uniqueName())
-            != graph.initializer_names().end()) {
+      for (auto* input : n->inputs()) {
+        if (std::find(
+                graph.initializer_names().begin(),
+                graph.initializer_names().end(),
+                input->uniqueName()) != graph.initializer_names().end()) {
           Tensor initializer;
           for (auto _init : graph.initializers()) {
             if (_init.name() == input->uniqueName()) {
@@ -36,21 +37,25 @@ struct EliminateUnusedInitializer final : public OptimizePass {
     }
     // get diff between old and new initializers vector
     std::vector<std::string> diff_initializer_names, removed_initializer_names;
-    std::set_difference(graph.initializer_names().begin(), graph.initializer_names().end(),
-                        new_initializer_names.begin(), new_initializer_names.end(),
-                        std::inserter(diff_initializer_names, diff_initializer_names.begin()));
+    std::set_difference(
+        graph.initializer_names().begin(),
+        graph.initializer_names().end(),
+        new_initializer_names.begin(),
+        new_initializer_names.end(),
+        std::inserter(diff_initializer_names, diff_initializer_names.begin()));
     // get removed initializer names if it is not an output
-    std::copy_if(diff_initializer_names.begin(),
-                 diff_initializer_names.end(),
-                 std::back_inserter(removed_initializer_names),
-                 [&graph](std::string name) {
-      for (auto *output : graph.outputs()) {
-        if (output->uniqueName() == name) {
-          return false;
-        }
-      }
-      return true;
-    });
+    std::copy_if(
+        diff_initializer_names.begin(),
+        diff_initializer_names.end(),
+        std::back_inserter(removed_initializer_names),
+        [&graph](std::string name) {
+          for (auto* output : graph.outputs()) {
+            if (output->uniqueName() == name) {
+              return false;
+            }
+          }
+          return true;
+        });
     // re-add initializer to graph
     if (!removed_initializer_names.empty()) {
       graph.clearInitializers();
