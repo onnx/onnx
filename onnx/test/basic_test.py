@@ -71,21 +71,21 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input has a read function
         f = io.BytesIO()
-        onnx.save_tensor(proto_string, f)
+        onnx.save_tensor(loaded_proto, f)
         f = io.BytesIO(f.getvalue())
         loaded_proto = onnx.load_tensor(f, cls)
         self.assertTrue(proto == loaded_proto)
 
         # Test if input is a file name
         try:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            onnx.save_tensor(proto, f)
-            f.close()
+            file = tempfile.NamedTemporaryFile(delete=False)
+            onnx.save_tensor(proto, file)
+            file.close()
 
-            loaded_proto = onnx.load_tensor(f.name, cls)
+            loaded_proto = onnx.load_tensor(file.name, cls)
             self.assertTrue(proto == loaded_proto)
         finally:
-            os.remove(f.name)
+            os.remove(file.name)
 
     def test_existence(self):  # type: () -> None
         try:
