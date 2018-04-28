@@ -254,8 +254,7 @@ ONNX_OPERATOR_SCHEMA(LinearClassifier)
     .Attr(
         "coefficients",
         "weights of the model(s)",
-        AttributeProto::FLOATS,
-        OPTIONAL)
+        AttributeProto::FLOATS)
     .Attr(
         "intercepts",
         "weights of the intercepts (if used)",
