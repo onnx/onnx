@@ -12,16 +12,16 @@
 #include <ostream>
 #include <set>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
 #include "data_type_utils.h"
-#include "onnx/checker.h"
 #include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
-using namespace checker;
+
 using OperatorSetVersion = int;
 
 constexpr const char* ONNX_DOMAIN = "";
@@ -350,19 +350,19 @@ class OpSchema final {
   }
 
   static const std::vector<std::string>& all_numeric_types() {
-    static const std::vector<std::string> all_numeric_types = {
-        +"tensor(uint8)",
-        +"tensor(uint16)",
-        +"tensor(uint32)",
-        +"tensor(uint64)",
-        +"tensor(int8)",
-        +"tensor(int16)",
-        +"tensor(int32)",
-        +"tensor(int64)",
-        +"tensor(float16)",
-        +"tensor(float)",
-        +"tensor(double)"};
-    return all_numeric_types;
+      static const std::vector<std::string> all_numeric_types = {
+          +"tensor(uint8)",
+          +"tensor(uint16)",
+          +"tensor(uint32)",
+          +"tensor(uint64)",
+          +"tensor(int8)",
+          +"tensor(int16)",
+          +"tensor(int32)",
+          +"tensor(int64)",
+          +"tensor(float16)",
+          +"tensor(float)",
+          +"tensor(double)" };
+      return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
