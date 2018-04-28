@@ -6,7 +6,7 @@ namespace Common {
 
 Status::Status(StatusCategory category, int code, const std::string& msg) {
   assert(static_cast<int>(StatusCode::OK) != code);
-  state_ = std::make_unique<State>(category, code, msg);
+  state_.reset(new State(category, code, msg));
 }
 
 Status::Status(StatusCategory category, int code)
