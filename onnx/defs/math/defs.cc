@@ -556,7 +556,7 @@ if attribute transA is non-zero, same for B and transB.
 )DOC")
     .Input(0, "A", "Input tensor A", "T")
     .Input(1, "B", "Input tensor B", "T")
-    .Input(2, "C", "Input tensor C, can be inplace.", "T")
+    .Input(2, "C", "Input tensor C", "T")
     .Output(0, "Y", "Output tensor.", "T")
     .TypeConstraint(
         "T",
