@@ -174,7 +174,7 @@ TensorProto message, and be valid as an output type.
     .Input(
            0,
            "input",
-          "Input tensor to infer shape and optionally type information from.", "T")
+           "Input tensor to infer shape and optionally type information from.", "T")
     .Output(
             0,
             "output",
