@@ -6003,7 +6003,7 @@ This version of the operator has been available since version 6 of the default O
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B</dd>
 <dt><tt>C</tt> : T</dt>
-<dd>Input tensor C, can be inplace.</dd>
+<dd>Input tensor C</dd>
 </dl>
 
 #### Outputs
@@ -6461,9 +6461,9 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.6732.</dd>
+<dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
 <dt><tt>gamma</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.0507.</dd>
+<dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
 #### Inputs
