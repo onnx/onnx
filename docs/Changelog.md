@@ -3490,7 +3490,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>Input tensor to infer shape and optionally type information from.</dd>
+<dd>Input tensor to copy shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
@@ -3583,7 +3583,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>Input tensor to infer shape and optionally type information from.</dd>
+<dd>Input tensor to copy shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
