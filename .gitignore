@@ -9,6 +9,7 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
+onnx/onnx_cpp2py_export.cp36-win_amd64.pyd
 
 # Compiled Static libraries
 *.lai
@@ -78,7 +79,6 @@ compile_commands.json
 
 # generated files
 onnx/version.py
-onnx/onnx_cpp2py_export.cp36-win_amd64.pyd
 compile_commands.json
 
 # test generated files

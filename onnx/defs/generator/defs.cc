@@ -104,7 +104,7 @@ Generate a tensor with random values drawn from a uniform distribution.
 The shape of the output tensor is copied from the shape of the input tensor, 
 and the parameters of the uniform distribution are specified by `low` and `high`.
 
-The data type is specified by the 'dtype' argument, or inferred from the input tensor if not provided. 
+The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message and be valid as an output type.
 )DOC")
@@ -132,12 +132,28 @@ TensorProto message and be valid as an output type.
     .Input(
            0,
            "input",
-           "Input tensor to copy shape and optionally type information from.", "T")
+           "Input tensor to copy shape and optionally type information from.", "T1")
     .Output(
             0,
             "output",
-            "Output tensor of random values drawn from uniform distribution", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Output tensor of random values drawn from uniform distribution", "T2")
+    .TypeConstraint(
+        "T1",
+        {"tensor(float16)",
+         "tensor(float)",
+         "tensor(double)",
+         "tensor(int8)",
+         "tensor(int16)",
+         "tensor(int32)",
+         "tensor(int64)",
+         "tensor(uint8)",
+         "tensor(uint16)",
+         "tensor(uint32)",
+         "tensor(uint64)",
+         "tensor(bool)",
+         "tensor(string)"},
+        "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
+    .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(RandomNormalLike)
@@ -146,7 +162,7 @@ Generate a tensor with random values drawn from a normal distribution.
 The shape of the output tensor is copied from the shape of the input tensor, 
 and the parameters of the normal distribution are specified by `mean` and `scale`.
 
-The data type is specified by the 'dtype' argument, or inferred from the input tensor if not provided. 
+The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message, and be valid as an output type.
 )DOC")
@@ -174,10 +190,26 @@ TensorProto message, and be valid as an output type.
     .Input(
            0,
            "input",
-           "Input tensor to copy shape and optionally type information from.", "T")
+           "Input tensor to copy shape and optionally type information from.", "T1")
     .Output(
             0,
             "output",
-            "Output tensor of random values drawn from normal distribution", "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
+            "Output tensor of random values drawn from normal distribution", "T2")
+    .TypeConstraint(
+        "T1",
+        {"tensor(float16)",
+         "tensor(float)",
+         "tensor(double)",
+         "tensor(int8)",
+         "tensor(int16)",
+         "tensor(int32)",
+         "tensor(int64)",
+         "tensor(uint8)",
+         "tensor(uint16)",
+         "tensor(uint32)",
+         "tensor(uint64)",
+         "tensor(bool)",
+         "tensor(string)"},
+        "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
+    .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.");
