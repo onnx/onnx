@@ -416,7 +416,10 @@ typedef int32_t onnxBackendInfo;
 /**
  * DirectX ID of the backend device.
  *
- * Value type: GUID (16 bytes).
+ * This is the value that would be returned by ID3D12Device::GetAdapterLuid()
+ * for the hardware device used by the backend.
+ *
+ * Value type: LUID (8 bytes).
  */
 #define ONNXIFI_BACKEND_DIRECTX_ID 43
 
