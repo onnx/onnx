@@ -76,8 +76,13 @@ ONNX_OPERATOR_SCHEMA(CastMap)
         AttributeProto::INT,
         static_cast<int64_t>(1))
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      auto& cast_to = ctx.getAttribute("cast_to")->s();
-      auto output_type = ctx.getOutputType(0)->mutable_tensor_type();
+	  auto cast_to_attr = ctx.getAttribute("cast_to");
+	  auto output_type = ctx.getOutputType(0)->mutable_tensor_type();
+	  if (nullptr == cast_to_attr) {
+		  output_type->set_elem_type(TensorProto::FLOAT);
+		  return;
+	  }
+      auto& cast_to = cast_to_attr->s();
       if (0 == cast_to.compare("TO_FLOAT")) {
         output_type->set_elem_type(TensorProto::FLOAT);
       } else if (0 == cast_to.compare("TO_INT64")) {
@@ -134,6 +139,7 @@ ONNX_OPERATOR_SCHEMA(CategoryMapper)
         AttributeProto::INT,
         static_cast<int64_t>(-1))
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	
       auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
       auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
       if (TensorProto::STRING == input_elem_type) {
