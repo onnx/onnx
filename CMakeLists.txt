@@ -330,6 +330,7 @@ endif()
 # ---[ ONNX Interface for Framework Integratin (ONNXIFI)
 add_library(onnxifi INTERFACE)
 target_include_directories(onnxifi INTERFACE onnx)
+
 if(ENABLE_GTESTS)
     include_directories(
         ${ONNX_ROOT}
