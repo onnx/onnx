@@ -5320,7 +5320,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([1, 2, 3]).astype(np.float32)
-y = np.array([2]).astype(np.float32)
+y = np.array(2).astype(np.float32)
 z = np.power(x, y)  # expected output [1., 4., 9.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast')
