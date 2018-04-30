@@ -839,6 +839,7 @@ public:
   }
   void clearInitializers() {
     initializers_.clear();
+    initializer_names_.clear();
   }
   const std::vector<Tensor>& initializers() {
     return initializers_;
@@ -1073,5 +1074,6 @@ inline const_graph_node_list_iterator Node::iterator() const {
 inline const_graph_node_list_iterator Node::reverseIterator() const {
   return iterator().reverse();
 }
+
 
 } // namespace ONNX_NAMESPACE

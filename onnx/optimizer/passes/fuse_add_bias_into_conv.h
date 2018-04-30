@@ -28,6 +28,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
     int size_lack_count = 0;
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
+      DescendOnGraphAttributes(n, [this](Graph& g){fuse_add_bias_into_conv(g);});
       if (n->kind() == kAdd && n->inputs()[0]->node()->kind() == kConv
           && n->inputs()[0]->node()->inputs().size() == 2) {
         // due to current broadcasting's constraint, Conv has to be the first oprand
@@ -84,20 +85,9 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             constant1->output()->setSizes(s1);
             constant1->output()->setElemType(TensorProto_DataType_INT64);
             constant1->insertBefore(orig_conv->node());
-            Node* constant2 = graph.create(kConstant, 1);
-            Tensor t2;
-            t2.sizes().push_back(static_cast<int64_t>(1));
-            t2.int64s().push_back(0);
-            t2.elem_type() = TensorProto_DataType_INT64;
-            constant2->t_(sym, t2);
-            std::vector<Dimension> s2 = {1};
-            constant2->output()->setSizes(s2);
-            constant2->output()->setElemType(TensorProto_DataType_INT64);
-            constant2->insertBefore(orig_conv->node());
             Node* tile = graph.create(kTile, 1);
             tile->addInput(orig_bias);
             tile->addInput(constant1->output());
-            tile->addInput(constant2->output());
             tile->insertBefore(orig_conv->node());
             orig_conv->node()->addInput(tile->output());
           } else if (bias_shape[0].dim == M &&
@@ -105,8 +95,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             orig_conv->node()->addInput(orig_bias);
           }
           if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
-            std::vector<Dimension> conv_shape(n->output()->sizes());
-            orig_conv->setSizes(conv_shape);
+            orig_conv->setSizes(n->output()->sizes());
           }
           if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
             orig_conv->setElemType(n->output()->elemType());

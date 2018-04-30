@@ -1,6 +1,12 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.1)
 
+# Set default build type
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Build type not set - defaulting to Release")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
+endif()
+
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
@@ -18,12 +24,6 @@ list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 if(ENABLE_GTESTS)
 	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/external)
 	include(googletest)
-endif()
-
-# Set default build type
-if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Build type not set - defaulting to Release")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
 endif()
 
 if(TARGET protobuf::libprotobuf)
@@ -188,6 +188,7 @@ endfunction()
 
 RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
     onnx/onnx.in.proto
+    onnx/onnx-operators.in.proto
 )
 
 file(GLOB_RECURSE onnx_INCLUDE_DIRS "${ONNX_ROOT}/onnx/*.h")
@@ -293,8 +294,10 @@ if (MSVC)
     target_compile_options(onnx PRIVATE
         /MP
         /MX
+        /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -324,6 +327,9 @@ if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
 
+# ---[ ONNX Interface for Framework Integratin (ONNXIFI)
+add_library(onnxifi INTERFACE)
+target_include_directories(onnxifi INTERFACE onnx)
 if(ENABLE_GTESTS)
     include_directories(
         ${ONNX_ROOT}
