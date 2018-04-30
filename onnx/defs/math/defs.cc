@@ -61,6 +61,7 @@ Performs element-wise binary {name} (with limited broadcast support).
         "T",
         OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to high-precision numeric tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
 }
 
@@ -229,7 +230,8 @@ the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(LeakyRelu)
     .SinceVersion(6)
@@ -466,7 +468,8 @@ have the same shape and data type.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Mean)
     .SinceVersion(6)
@@ -586,7 +589,26 @@ if attribute transA is non-zero, same for B and transB.
         "beta",
         "Scalar multiplier for input tensor C",
         AttributeProto::FLOAT,
-        1.0f);
+        1.0f)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (hasNInputShapes(ctx, 2)) {
+          auto transAAttr = ctx.getAttribute("transA");
+          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+          auto transBAttr = ctx.getAttribute("transB");
+          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
+        } else if (hasInputShape(ctx, 2) &&
+                   (!ctx.getAttribute("broadcast") ||
+                    static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
+            ctx.getInputType(2)->tensor_type().shape();
+        }
+      });
 
 ONNX_OPERATOR_SCHEMA(MatMul)
     .Input(0, "A", "N-dimensional matrix A", "T")

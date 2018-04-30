@@ -260,6 +260,91 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 1))])
 
+    def test_relu(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Relu', 'x', 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_add(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Add', ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_sum_single(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Sum', 'x', 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_sum_multi(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (30, 4, 5)),
+             ('z', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Sum', ['x', 'y', 'z'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_gemm(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (7, 5)),
+             ('y', TensorProto.FLOAT, (5, 11)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_transA(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 7)),
+             ('y', TensorProto.FLOAT, (5, 11)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_transB(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (7, 5)),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transB=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_transA_and_transB(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 7)),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_shape_from_C(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, None),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, (7, None))],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])
+
+    def test_gemm_shape_from_C_broadcast_false(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, None),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, (7, None))],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1, broadcast=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])
+
 
 if __name__ == '__main__':
     unittest.main()
