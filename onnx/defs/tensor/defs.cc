@@ -700,9 +700,8 @@ Example:
 ONNX_OPERATOR_SCHEMA(SpaceToDepth)
     .Attr(
         "blocksize",
-        "Blocks of [blocksize, blocksize] are moved. Default blocksize is 1.",
-        AttributeProto::INT,
-        OPTIONAL)
+        "Blocks of [blocksize, blocksize] are moved.",
+        AttributeProto::INT)
     .SetDoc(
         R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
@@ -727,9 +726,8 @@ are moved to the depth dimension.
 ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr(
         "blocksize",
-        "Blocks of [blocksize, blocksize] are moved. Default blocksize is 1.",
-        AttributeProto::INT,
-        OPTIONAL)
+        "Blocks of [blocksize, blocksize] are moved.",
+        AttributeProto::INT)
     .SetDoc(
         R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
