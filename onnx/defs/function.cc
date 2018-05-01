@@ -1,8 +1,8 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "onnx/checker.h"
 #include "onnx/defs/function.h"
+#include "onnx/checker.h"
 
 namespace ONNX_NAMESPACE {
 using namespace checker;
@@ -24,10 +24,11 @@ BuildFunction FunctionBuilder::GetBuildFunction() const {
   return build_func_;
 }
 
-void FunctionBuilderRegistry::Register(
+Status FunctionBuilderRegistry::Register(
     const FunctionBuilder& function_builder) {
   std::lock_guard<std::mutex> lock(mutex_);
   function_builders.push_back(function_builder);
+  return Status::OK();
 }
 
 // Get functions for specific domain.
@@ -82,27 +83,7 @@ Status FunctionBuilderRegistry::GetFunctions(
 
 FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
   static FunctionBuilderRegistry func_builder_registry;
-
-  //func_builder_registry.Register(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
-
   return func_builder_registry;
 }
-
-//Common::Status BuildFc(std::shared_ptr<FunctionProto>* func_proto) {
-//	if (nullptr == func_proto) {
-//		return Status(Common::OPSCHEMA, Common::INVALID_ARGUMENT, "func_proto should not be nullptr.");
-//	}
-//
-//	func_proto->reset(new FunctionProto);
-//	auto& func = **func_proto;
-//	func.set_name("FC");
-//	// set function inputs.
-//	// set function outputs.
-//	// set function attributes.
-//	// set function description.
-//	// set function body (nodes).
-//
-//	return Status::OK();
-//}
 
 } // namespace ONNX_NAMESPACE
