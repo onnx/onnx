@@ -588,7 +588,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
@@ -1395,9 +1395,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn)</dd>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_IN_CHANNEL, FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
@@ -1572,7 +1572,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+<dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the weight shape will be (C x M x k1 x k2 x ... x kn), where (k1 x k2 x ... x kn) is the dimension of the kernel</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
 </dl>
@@ -2368,6 +2368,74 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 5
+weight_scale = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+gru = GRU_Helper(X=input, W=W, R=R)
+output = gru.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 3
+weight_scale = 0.1
+custom_bias = 0.1
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
+
+gru = GRU_Helper(X=input, W=W, R=R, B=B)
+output = gru.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
+```
+
+</details>
+
+
 ### <a name="Gather"></a><a name="gather">**Gather**</a>
 
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
@@ -2532,7 +2600,7 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B</dd>
 <dt><tt>C</tt> : T</dt>
-<dd>Input tensor C, can be inplace.</dd>
+<dd>Input tensor C</dd>
 </dl>
 
 #### Outputs
@@ -3298,6 +3366,111 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 3
+weight_scale = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R)
+output = lstm.step()
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_lstm_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 4
+weight_scale = 0.1
+custom_bias = 0.1
+number_of_gates = 4
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
+R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), 1)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
+output = lstm.step()
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_lstm_with_initial_bias')
+```
+
+</details>
+
+
+<details>
+<summary>peepholes</summary>
+
+```python
+input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
+
+input_size = 4
+hidden_size = 3
+weight_scale = 0.1
+number_of_gates = 4
+number_of_peepholes = 3
+
+node = onnx.helper.make_node(
+    'LSTM',
+    inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+# Initializing Inputs
+W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
+seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.float32)
+init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
+init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
+P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
+
+lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
+output = lstm.step()
+
+expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[output], name='test_lstm_with_peepholes')
+```
+
+</details>
+
+
 ### <a name="LeakyRelu"></a><a name="leakyrelu">**LeakyRelu**</a>
 
   LeakyRelu takes input data (Tensor<T>) and an argument alpha, and produces one
@@ -3950,7 +4123,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
@@ -5147,7 +5320,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([1, 2, 3]).astype(np.float32)
-y = np.array([2]).astype(np.float32)
+y = np.array(2).astype(np.float32)
 z = np.power(x, y)  # expected output [1., 4., 9.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast')
@@ -5289,6 +5462,72 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>defaults</summary>
+
+```python
+input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
+
+input_size = 2
+hidden_size = 4
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+rnn = RNN_Helper(X=input, W=W, R=R)
+output = rnn.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
+```
+
+</details>
+
+
+<details>
+<summary>initial_bias</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 5
+custom_bias = 0.1
+weight_scale = 0.1
+
+node = onnx.helper.make_node(
+    'RNN',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
+R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
+
+# Adding custom bias
+W_B = custom_bias * np.ones((1, hidden_size)).astype(np.float32)
+R_B = np.zeros((1, hidden_size)).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
+
+rnn = RNN_Helper(X=input, W=W, R=R, B=B)
+output = rnn.step().astype(np.float32)
+
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
+```
+
+</details>
 
 
 ### <a name="RandomNormal"></a><a name="randomnormal">**RandomNormal**</a>
@@ -6123,9 +6362,9 @@ Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.6732.</dd>
+<dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
 <dt><tt>gamma</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.0507.</dd>
+<dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
 #### Inputs
@@ -6183,8 +6422,8 @@ expect(node, inputs=[x], outputs=[y],
 <summary>selu_default</summary>
 
 ```python
-default_alpha = 1.6732
-default_gamma = 1.0507
+default_alpha = 1.67326319217681884765625
+default_gamma = 1.05070102214813232421875
 node = onnx.helper.make_node(
     'Selu',
     inputs=['x'],
@@ -7401,6 +7640,66 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>tile</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tile',
+    inputs=['x', 'y'],
+    outputs=['z']
+)
+
+x = np.random.rand(2, 3, 4, 5).astype(np.float32)
+
+repeats = np.random.randint(low=1, high=10, size=(np.ndim(x),)).astype(np.int64)
+
+z = np.tile(x, repeats)
+
+expect(node,
+       inputs=[x, repeats],
+       outputs=[z],
+       name='test_tile')
+```
+
+</details>
+
+
+<details>
+<summary>tile_precomputed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tile',
+    inputs=['x', 'y'],
+    outputs=['z']
+)
+
+x = np.array([
+    [0, 1],
+    [2, 3]
+], dtype=np.float32)
+
+repeats = np.array([2, 2], dtype=np.int64)
+
+z = np.array([
+    [0, 1, 0, 1],
+    [2, 3, 2, 3],
+    [0, 1, 0, 1],
+    [2, 3, 2, 3]
+], dtype=np.float32)
+
+expect(node,
+       inputs=[x, repeats],
+       outputs=[z],
+       name='test_tile_precomputed')
+```
+
+</details>
 
 
 ### <a name="TopK"></a><a name="topk">**TopK**</a>
