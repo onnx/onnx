@@ -52,7 +52,7 @@ void convPoolTypeAndShapeInference(InferenceContext& ctx, bool use_dilation, boo
 
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
-    if (kernel_shape.size() != ctx.getInputType(0)->tensor_type().shape().dim_size() - 2) {
+    if (kernel_shape.size() != static_cast<size_t>(ctx.getInputType(0)->tensor_type().shape().dim_size() - 2)) {
       return;
     }
   } else if (require_kernel_shape) {
