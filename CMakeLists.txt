@@ -320,3 +320,13 @@ endif()
 # ---[ ONNX Interface for Framework Integratin (ONNXIFI)
 add_library(onnxifi INTERFACE)
 target_include_directories(onnxifi INTERFACE onnx)
+
+
+install(TARGETS onnx onnx_proto
+    DESTINATION lib)
+install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")
