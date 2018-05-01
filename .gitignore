@@ -9,7 +9,7 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-onnx/onnx_cpp2py_export.cp36-win_amd64.pyd
+*.pyd
 
 # Compiled Static libraries
 *.lai
