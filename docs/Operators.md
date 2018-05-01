@@ -2600,7 +2600,7 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B</dd>
 <dt><tt>C</tt> : T</dt>
-<dd>Input tensor C, can be inplace.</dd>
+<dd>Input tensor C</dd>
 </dl>
 
 #### Outputs
@@ -5320,7 +5320,7 @@ node = onnx.helper.make_node(
 )
 
 x = np.array([1, 2, 3]).astype(np.float32)
-y = np.array([2]).astype(np.float32)
+y = np.array(2).astype(np.float32)
 z = np.power(x, y)  # expected output [1., 4., 9.]
 expect(node, inputs=[x, y], outputs=[z],
        name='test_pow_bcast')
@@ -6362,9 +6362,9 @@ Other versions of this operator: <a href="Changelog.md#Selu-1">Selu-1</a>
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.6732.</dd>
+<dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
 <dt><tt>gamma</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.0507.</dd>
+<dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
 #### Inputs
@@ -6422,8 +6422,8 @@ expect(node, inputs=[x], outputs=[y],
 <summary>selu_default</summary>
 
 ```python
-default_alpha = 1.6732
-default_gamma = 1.0507
+default_alpha = 1.67326319217681884765625
+default_gamma = 1.05070102214813232421875
 node = onnx.helper.make_node(
     'Selu',
     inputs=['x'],
