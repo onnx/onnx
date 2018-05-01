@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include <functional>
+#include <algorithm>
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
