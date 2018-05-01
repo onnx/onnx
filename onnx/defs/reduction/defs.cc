@@ -33,6 +33,47 @@ False instead of True.)DOC";
         "T",
         OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to high-precision numeric tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
+
+      int64_t keep_dims = 1;
+      auto attr_proto = ctx.getAttribute("keepdims");
+      if (attr_proto) {
+        if (!attr_proto->has_i()) // incorrect attribtue
+          return;
+        keep_dims = attr_proto->i();
+      }
+      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      int64_t input_ndim = input_shape.dim_size();
+      auto output_shape =
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      std::vector<int64_t> axes;
+      auto axes_proto = ctx.getAttribute("axes");
+      if (axes_proto)
+        axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
+
+      for (int i = 0; i < axes.size(); ++i) {
+        if (axes[i] < 0)
+          axes[i] += input_ndim;
+      }
+      // do we need handle negative axis?
+      for (int i = 0; i < input_ndim; ++i) {
+        // axes empty means reduce all dim
+        if (!axes.empty() &&
+            std::find(axes.begin(), axes.end(), i) == axes.end()) {
+          auto dim = output_shape->add_dim();
+          dim->CopyFrom(input_shape.dim()[i]);
+        } else {
+          if (keep_dims == 1) {
+            auto dim = output_shape->add_dim();
+            dim->set_dim_value(1);
+          }
+        }
+      }
+    });
   };
 }
 
@@ -91,8 +132,54 @@ The type of the output tensor is integer.)DOC";
         "T",
         OpSchema::all_numeric_types(),
         "Constrain input and output types to all numeric tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      // set output element type to int64
+      auto output_type = ctx.getOutputType(0);
+      if (output_type->value_case() == TypeProto::kTensorType ||
+          output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+        output_type->mutable_tensor_type()->set_elem_type(
+            TensorProto_DataType_INT64);
+      }
+      if (!hasNInputShapes(ctx, 1)) {
+        return;
+      }
+
+      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+      auto output_shape =
+          ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      int64_t input_ndim = input_shape.dim_size();
+      int64_t axis = 0; // default to 0
+      auto axis_proto = ctx.getAttribute("axis");
+      if (axis_proto) {
+        if (!axis_proto->has_i()) // incorrect attribute
+          return;
+        axis = axis_proto->i();
+        if (axis < 0)
+          axis += input_ndim;
+      }
+
+      int64_t keep_dims = 1;
+      auto attr_proto = ctx.getAttribute("keepdims");
+      if (attr_proto) {
+        if (!attr_proto->has_i()) // incorrect attribute
+          return;
+        keep_dims = attr_proto->i();
+      }
+      // do we need handle negative axis?
+      for (int i = 0; i < input_ndim; ++i) {
+        if (i != axis) {
+          auto dim = output_shape->add_dim();
+          dim->CopyFrom(input_shape.dim()[i]);
+        } else {
+          if (keep_dims == 1) {
+            auto dim = output_shape->add_dim();
+            dim->set_dim_value(1);
+          }
+        }
+      }
+    });
   };
-}
+} // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(ArgMax).FillUsing(ArgReduceDocGenerator("max"));
 
