@@ -82,7 +82,27 @@ Status FunctionBuilderRegistry::GetFunctions(
 
 FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
   static FunctionBuilderRegistry func_builder_registry;
+
+  //func_builder_registry.Register(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
+
   return func_builder_registry;
 }
+
+//Common::Status BuildFc(std::shared_ptr<FunctionProto>* func_proto) {
+//	if (nullptr == func_proto) {
+//		return Status(Common::OPSCHEMA, Common::INVALID_ARGUMENT, "func_proto should not be nullptr.");
+//	}
+//
+//	func_proto->reset(new FunctionProto);
+//	auto& func = **func_proto;
+//	func.set_name("FC");
+//	// set function inputs.
+//	// set function outputs.
+//	// set function attributes.
+//	// set function description.
+//	// set function body (nodes).
+//
+//	return Status::OK();
+//}
 
 } // namespace ONNX_NAMESPACE
