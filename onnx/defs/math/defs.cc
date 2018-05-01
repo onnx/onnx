@@ -59,8 +59,9 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
     schema.TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        OpSchema::high_precision_numeric_types(),
+        "Constrain input and output types to high-precision numeric tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
 }
 
@@ -138,8 +139,14 @@ the tensor elementwise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        {"tensor(float)",
+         "tensor(int32)",
+         "tensor(int8)",
+         "tensor(int16)",
+         "tensor(int64)",
+         "tensor(float16)",
+         "tensor(double)"},
+        "Constrain input and output types to signed numeric tensors.");
 
 ONNX_OPERATOR_SCHEMA(Abs)
     .SinceVersion(6)
@@ -152,8 +159,8 @@ the tensor elementwise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        OpSchema::all_numeric_types(),
+        "Constrain input and output types to all numeric tensors.");
 
 ONNX_OPERATOR_SCHEMA(Reciprocal)
     .SinceVersion(6)
@@ -223,7 +230,8 @@ the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(LeakyRelu)
     .SinceVersion(6)
@@ -248,14 +256,16 @@ ONNX_OPERATOR_SCHEMA(Selu)
     .SinceVersion(6)
     .Attr(
         "alpha",
-        "Coefficient of SELU default to 1.6732.",
+        "Coefficient of SELU default to 1.67326319217681884765625 "
+        "(i.e., float32 approximation of 1.6732632423543772848170429916717).",
         AttributeProto::FLOAT,
-        1.6732f)
+        1.67326319217681884765625f)
     .Attr(
         "gamma",
-        "Coefficient of SELU default to 1.0507.",
+        "Coefficient of SELU default to 1.05070102214813232421875 "
+        "(i.e., float32 approximation of 1.0507009873554804934193349852946).",
         AttributeProto::FLOAT,
-        1.0507f)
+        1.05070102214813232421875f)
     .SetDoc(R"DOC(
 Selu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the scaled exponential linear unit function,
@@ -458,7 +468,8 @@ have the same shape and data type.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Mean)
     .SinceVersion(6)
@@ -484,12 +495,12 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
         "min",
         "Minimum value, under which element is replaced by min",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        std::numeric_limits<float>::lowest())
     .Attr(
         "max",
         "Maximum value, above which element is replaced by max",
         AttributeProto::FLOAT,
-        OPTIONAL)
+        std::numeric_limits<float>::max())
     .Input(0, "input", "Input tensor whose elements to be clipped", "T")
     .Output(0, "output", "Output tensor with clipped input elements", "T")
     .TypeConstraint(
@@ -548,7 +559,7 @@ if attribute transA is non-zero, same for B and transB.
 )DOC")
     .Input(0, "A", "Input tensor A", "T")
     .Input(1, "B", "Input tensor B", "T")
-    .Input(2, "C", "Input tensor C, can be inplace.", "T")
+    .Input(2, "C", "Input tensor C", "T")
     .Output(0, "Y", "Output tensor.", "T")
     .TypeConstraint(
         "T",
@@ -578,7 +589,26 @@ if attribute transA is non-zero, same for B and transB.
         "beta",
         "Scalar multiplier for input tensor C",
         AttributeProto::FLOAT,
-        1.0f);
+        1.0f)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (hasNInputShapes(ctx, 2)) {
+          auto transAAttr = ctx.getAttribute("transA");
+          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+          auto transBAttr = ctx.getAttribute("transB");
+          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
+        } else if (hasInputShape(ctx, 2) &&
+                   (!ctx.getAttribute("broadcast") ||
+                    static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
+            ctx.getInputType(2)->tensor_type().shape();
+        }
+      });
 
 ONNX_OPERATOR_SCHEMA(MatMul)
     .Input(0, "A", "N-dimensional matrix A", "T")

@@ -3,99 +3,347 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, ModelProto, TensorProto
+from onnx import checker, helper, TensorProto
+from onnx.helper import make_node, make_tensor_value_info
 
 import onnx.shape_inference
 import unittest
 
 
 class TestShapeInference(unittest.TestCase):
+    def _make_graph(self, seed_values, nodes, value_info):
+        input_value_infos = []
+        for name, dtype, shape in seed_values:
+            # introduce the starting values as the output of reshape,
+            # so that the sizes are guaranteed to be unknown
+            value_info.append(make_tensor_value_info(name, dtype, shape))
+            input_value_infos.append(make_tensor_value_info('SEED_' + name, TensorProto.UNDEFINED, ()))
+            input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + name, TensorProto.UNDEFINED, ()))
+            nodes[:0] = [make_node("Reshape", ['SEED_' + name, 'UNKNOWN_SHAPE_' + name], [name])]
+        return helper.make_graph(nodes, "test", input_value_infos, [], value_info=value_info)
 
     def _inferred(self, graph):
         orig_model = helper.make_model(graph, producer_name='onnx-test')
-        orig_model_str = orig_model.SerializeToString()
-        inferred_model_str = onnx.shape_inference.infer_shapes(orig_model_str)
-        inferred_model = ModelProto()
-        inferred_model.ParseFromString(inferred_model_str)
+        inferred_model = onnx.shape_inference.infer_shapes(orig_model)
         checker.check_model(inferred_model)
         return inferred_model
 
-    def test_transpose(self):
-        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
-        graph = helper.make_graph(
-            [trans],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
-            [])
-
+    def _assert_inferred(self, graph, vis):
+        names_in_vis = set(x.name for x in vis)
+        vis = list(x for x in graph.value_info if x.name not in names_in_vis) + vis
         inferred_model = self._inferred(graph)
+        inferred_vis = list(inferred_model.graph.value_info)
 
-        vis_expected = [
-            helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))
-        ]
+        vis = list(sorted(vis, key=lambda x: x.name))
+        inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))
+        if vis == inferred_vis:
+            return
+        # otherwise some custom logic to give a nicer diff
+        vis_names = set(x.name for x in vis)
+        inferred_vis_names = set(x.name for x in inferred_vis)
+        assert vis_names == inferred_vis_names, (vis_names, inferred_vis_names)
+        for vi, inferred_vi in zip(vis, inferred_vis):
+            assert vi == inferred_vi, '\n%s\n%s\n' % (vi, inferred_vi)
+        assert False
 
-        assert list(inferred_model.graph.value_info) == vis_expected, \
-            inferred_model.graph.value_info
+    def test_transpose(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))])
 
     def test_transpose_preexisting(self):
-        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
-        graph = helper.make_graph(
-            [trans],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
-            [])
-        graph.value_info.extend([
-            helper.make_tensor_value_info("Y", TensorProto.FLOAT, ())
-        ])
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
+            [make_tensor_value_info("Y", TensorProto.FLOAT, None)])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))])
 
-        inferred_model = self._inferred(graph)
-
-        vis_expected = [
-            helper.make_tensor_value_info("Y", TensorProto.FLOAT, ())
-        ]
-
-        assert list(inferred_model.graph.value_info) == vis_expected, \
-            inferred_model.graph.value_info
+    def test_transpose_partial(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
+            [make_tensor_value_info("Y", TensorProto.UNDEFINED, (3, "a", "b"))])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))])
 
     def test_transpose_preexisting_incorrect_shape(self):
-        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
-        graph = helper.make_graph(
-            [trans],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
-            [])
-        graph.value_info.extend([
-            helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5))
-        ])
-
-        inferred_model = self._inferred(graph)
-
-        vis_expected = [
-            helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5))
-        ]
-
-        assert list(inferred_model.graph.value_info) == vis_expected, \
-            inferred_model.graph.value_info
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
+            [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5, 5))])
+        self.assertRaises(RuntimeError, self._inferred, graph)
 
     def test_transpose_preexisting_incorrect_type(self):
-        trans = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
-        graph = helper.make_graph(
-            [trans],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])],
+            [make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))])
+        self.assertRaises(RuntimeError, self._inferred, graph)
+
+    def test_cast(self):
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Cast", ["x"], ["y"], to=TensorProto.UINT8)],
             [])
-        graph.value_info.extend([
-            helper.make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 5))
-        ])
+        self._assert_inferred(graph, [make_tensor_value_info("y", TensorProto.UINT8, (2, 4, 3))])
 
-        inferred_model = self._inferred(graph)
+    def test_concat(self):
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4, 3)),
+             ("y", TensorProto.FLOAT, (7, 4, 3))],
+            [make_node("Concat", ['x', 'y'], ['z'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (9, 4, 3))])
 
-        vis_expected = [
-            helper.make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 5))
-        ]
+    def test_concat_3d_axis_2(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 2, 2)),
+             ('y', TensorProto.FLOAT, (2, 2, 2))],
+            [make_node('Concat', ['x', 'y'], ['z'], axis=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 2, 4))])
 
-        assert list(inferred_model.graph.value_info) == vis_expected, \
-            inferred_model.graph.value_info
+    def test_reshape(self):
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4, 3)),
+             ('shape', TensorProto.UNDEFINED, (2,))],
+            [make_node("Reshape", ['x', 'shape'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, None)])
+
+    def test_shape(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Shape", ['x'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (3,))])
+
+    def test_size(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 4, 3))],
+            [make_node("Size", ['x'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, ())])
+
+    def test_gather(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2)),
+             ('i', TensorProto.INT64, (2,))],
+            [make_node("Gather", ['x', 'i'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])
+
+    def test_gather_into_scalar(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3,)),
+             ('i', TensorProto.INT64, ())],
+            [make_node("Gather", ['x', 'i'], ['y'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ())])
+
+    def test_squeeze(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, 3, 1, 1, 2, 1))],
+            [make_node('Squeeze', 'x', 'y', axes=[0, 2, 3, 5])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, 2))])
+
+    def test_unsqueeze(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2))],
+            [make_node('Unsqueeze', 'x', 'y', axes=[0, 1, 3, 5])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 3, 1, 2, 1))])
+
+    def test_slice(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2))],
+            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, 0], ends=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 2))])
+
+    def test_slice_unsorted_axes(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2))],
+            [make_node('Slice', 'x', 'y', axes=[1, 0], starts=[1, 0], ends=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])
+
+    def test_slice_giant_number(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2))],
+            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, 0], ends=[200, 22000])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 2))])
+
+    def test_slice_negative_end(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2))],
+            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, 0], ends=[200, -1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])
+
+    def test_slice_negative_start(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 2))],
+            [make_node('Slice', 'x', 'y', axes=[0, 1], starts=[1, -2], ends=[200, 3])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, None))])
+
+    def test_slice_variable_copy(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ("a", 2))],
+            [make_node('Slice', 'x', 'y', axes=[1], starts=[1], ends=[200])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, ("a", 1))])
+
+    def test_pad(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (1, None, 2))],
+            [make_node('Pad', 'x', 'y', pads=[1, 3, 1, 1, 0, 1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (3, None, 4))])
+
+    def test_constant_pad_2d(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 4))],
+            [make_node('Pad', 'x', 'y', pads=[0, 0, 3, 1, 0, 0, 4, 2], mode="constant", value=2.0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3, 11, 7))])
+
+    def test_conv(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
+             ('y', TensorProto.FLOAT, (5, 4, 2, 4, 3))],
+            [make_node('Conv', ['x', 'y'], 'z', pads=[0, 1, 1, 0, 0, 1], dilations=[1, 2, 2], strides=[1, 1, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (3, 5, 4, 1, 3))])
+
+    def test_conv_1d_simple(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (50, 4, 2))],
+            [make_node('Conv', ['x', 'y'], 'z', dilations=[1])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 4))])
+
+    def test_conv_dilations(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 8, 8, 8)),
+             ('y', TensorProto.FLOAT, (50, 4, 3, 3, 3))],
+            [make_node('Conv', ['x', 'y'], 'z', dilations=[1, 2, 3])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 6, 4, 2))])
+
+    def test_conv_strides(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 8, 8, 8)),
+             ('y', TensorProto.FLOAT, (50, 4, 3, 3, 3))],
+            [make_node('Conv', ['x', 'y'], 'z', strides=[1, 2, 3])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 6, 3, 2))])
+
+    def test_conv_pads(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 7, 6, 4)),
+             ('y', TensorProto.FLOAT, (50, 4, 3, 3, 3))],
+            [make_node('Conv', ['x', 'y'], 'z', pads=[1, 1, 2, 0, 1, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 6, 6, 6))])
+
+    def test_conv_only_one_pos(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (50, 4, 5))],
+            [make_node('Conv', ['x', 'y'], 'z', strides=[2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 1))])
+
+    def test_relu(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Relu', 'x', 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_add(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Add', ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_sum_single(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Sum', 'x', 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_sum_multi(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (30, 4, 5)),
+             ('z', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Sum', ['x', 'y', 'z'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_gemm(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (7, 5)),
+             ('y', TensorProto.FLOAT, (5, 11)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_transA(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 7)),
+             ('y', TensorProto.FLOAT, (5, 11)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_transB(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (7, 5)),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transB=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_transA_and_transB(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 7)),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, None)],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
+
+    def test_gemm_shape_from_C(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, None),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, (7, None))],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])
+
+    def test_gemm_shape_from_C_broadcast_false(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, None),
+             ('y', TensorProto.FLOAT, (11, 5)),
+             ('z', TensorProto.FLOAT, (7, None))],
+            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1, broadcast=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])
 
 
 if __name__ == '__main__':
