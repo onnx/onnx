@@ -139,19 +139,7 @@ TensorProto message and be valid as an output type.
             "Output tensor of random values drawn from uniform distribution", "T2")
     .TypeConstraint(
         "T1",
-        {"tensor(float16)",
-         "tensor(float)",
-         "tensor(double)",
-         "tensor(int8)",
-         "tensor(int16)",
-         "tensor(int32)",
-         "tensor(int64)",
-         "tensor(uint8)",
-         "tensor(uint16)",
-         "tensor(uint32)",
-         "tensor(uint64)",
-         "tensor(bool)",
-         "tensor(string)"},
+        OpSchema::all_tensor_types(),
         "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
     .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.");
@@ -197,19 +185,7 @@ TensorProto message, and be valid as an output type.
             "Output tensor of random values drawn from normal distribution", "T2")
     .TypeConstraint(
         "T1",
-        {"tensor(float16)",
-         "tensor(float)",
-         "tensor(double)",
-         "tensor(int8)",
-         "tensor(int16)",
-         "tensor(int32)",
-         "tensor(int64)",
-         "tensor(uint8)",
-         "tensor(uint16)",
-         "tensor(uint32)",
-         "tensor(uint64)",
-         "tensor(bool)",
-         "tensor(string)"},
+        OpSchema::all_tensor_types(),
         "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
     .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.");
