@@ -119,16 +119,11 @@ std::string DataTypeUtils::ToString(
     const std::string& right) {
   switch (type_proto.value_case()) {
     case TypeProto::ValueCase::kTensorType: {
-      if (type_proto.tensor_type().has_shape() &&
-          type_proto.tensor_type().shape().dim_size() == 0) {
-        // Scalar case.
-        return left + ToDataTypeString(type_proto.tensor_type().elem_type()) +
-            right;
-      } else {
+        // Note: We do not distinguish tensors with zero rank (a shape consisting of
+        // an empty sequence of dimensions) here.
         return left + "tensor(" +
             ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" +
             right;
-      }
     }
 #ifdef ONNX_ML
     case TypeProto::ValueCase::kSequenceType: {

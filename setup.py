@@ -174,7 +174,9 @@ class cmake_build(setuptools.Command):
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, '--build', os.curdir]
-            if self.jobs is not None and not WINDOWS:
+            if WINDOWS:
+                build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
+            else:
                 build_args.extend(['--', '-j', str(self.jobs)])
             subprocess.check_call(build_args)
 

@@ -317,8 +317,8 @@ This version of the operator has been available since version 1 of the default O
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -348,7 +348,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
@@ -437,7 +437,6 @@ This version of the operator has been available since version 1 of the default O
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  
   NOTE: Casting to and from strings is not supported yet.
 
 #### Version
@@ -447,7 +446,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>to</tt> : string (required)</dt>
+<dt><tt>to</tt> : int (required)</dt>
 <dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
@@ -657,9 +656,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>input_as_shape</tt> : int</dt>
 <dd>1D tensor containing the desired output shape.  First input must be in CPU context.</dd>
 <dt><tt>shape</tt> : list of ints</dt>
-<dd>The shape of the output tensor.Cannot set the shape argument and pass in an input at the same time.</dd>
+<dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
 <dt><tt>value</tt> : float</dt>
-<dd>The value for the elements of the output tensor.</dd>
+<dd>The value for the elements of the output tensor. Default is 0.</dd>
 </dl>
 
 #### Inputs (0 - 1)
@@ -715,9 +714,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn)</dd>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_IN_CHANNEL, FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
@@ -772,7 +771,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image.Otherwise the size is (N x D1 x D2 ... x Dn)</dd>
 <dt><tt>W</tt> : T</dt>
-<dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (C x M x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
+<dd>The weight tensor that will be used in the convolutions; has size (C x M x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the weight shape will be (C x M x k1 x k2 x ... x kn), where (k1 x k2 x ... x kn) is the dimension of the kernel</dd>
 <dt><tt>B</tt> (optional) : T</dt>
 <dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
 </dl>
@@ -1420,7 +1419,6 @@ This version of the operator has been available since version 1 of the default O
   Given `data` tensor of rank r >= 1, and `indices` tensor of rank q, gather
   entries of the axis dimension of `data` (by default outer-most one as axis=0) indexed by `indices`, and concatenates
   them in an output tensor of rank q + (r - 1).
-  
   Example 1:
     data = [
         [1.0, 1.2],
@@ -1441,7 +1439,6 @@ This version of the operator has been available since version 1 of the default O
             [4.5, 5.7],
         ],
     ]
-  
   Example 2:
     data = [
         [1.0, 1.2, 1.9],
@@ -2722,8 +2719,8 @@ This version of the operator has been available since version 1 of the default O
   
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
-   VALID: output_spatial_shape[i] = floor((input_spatial_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = floor(input_spatial_shape[i] / strides_spatial_shape[i] + 1)
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
    ```
    And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
    ```
@@ -2753,7 +2750,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
@@ -3464,13 +3461,13 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomNormalLike-1"></a>**RandomNormalLike-1**</a>
 
-  Generate a tensor with random values drawn from a normal distribution. The shape
-  of the tensor is computed from the input argument and the parameter of the normal distribution
-  specified by `mean` and `scale`.
+  Generate a tensor with random values drawn from a normal distribution. 
+  The shape of the output tensor is copied from the shape of the input tensor, 
+  and the parameters of the normal distribution are specified by `mean` and `scale`.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message.
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message, and be valid as an output type.
 
 #### Version
 
@@ -3492,21 +3489,23 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : tensor(int32)</dt>
-<dd>Input tensor to provide shape information.</dd>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to copy shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> : T2</dt>
 <dd>Output tensor of random values drawn from normal distribution</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
@@ -3557,12 +3556,13 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomUniformLike-1"></a>**RandomUniformLike-1**</a>
 
-  Generate a tensor with random values drawn from a uniform distribution. The shape
-  of the tensor is computed from the input argument and the range by `low` and `high`.
+  Generate a tensor with random values drawn from a uniform distribution. 
+  The shape of the output tensor is copied from the shape of the input tensor, 
+  and the parameters of the uniform distribution are specified by `low` and `high`.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message.
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
 
 #### Version
 
@@ -3584,21 +3584,23 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : tensor(int32)</dt>
-<dd>Input tensor to provide shape information.</dd>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to copy shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> : T2</dt>
 <dd>Output tensor of random values drawn from uniform distribution</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
@@ -4368,15 +4370,14 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
-<dt><tt>T1</tt> : int64</dt>
-<dd>Constrains output to int64 scalar.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrains output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 ### <a name="Slice-1"></a>**Slice-1**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
   https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
-  
   Slices uses `axes`, `starts` and `ends` attributes to specify the start and end
   dimension for each axis in the list of axes, it uses this information to
   slice the input `data` tensor. If a negative value is passed for any of the
@@ -4385,9 +4386,7 @@ This version of the operator has been available since version 1 of the default O
   number of elements in this dimension), it represents `n`. For slicing to the
   end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
   If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
-  
   Example 1:
-  
     data = [
         [1, 2, 3, 4],
         [5, 6, 7, 8],
@@ -4395,25 +4394,19 @@ This version of the operator has been available since version 1 of the default O
     axes = [0, 1]
     starts = [1, 0]
     ends = [2, 3]
-  
     result = [
         [5, 6, 7],
     ]
-  
-  
   Example 2:
-  
     data = [
         [1, 2, 3, 4],
         [5, 6, 7, 8],
     ]
     starts = [0, 1]
     ends = [-1, 1000]
-  
     result = [
         [2, 3, 4],
     ]
-  
 
 #### Version
 
@@ -4889,7 +4882,9 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Tile-1"></a>**Tile-1**</a>
 
-  Repeat the elements of a tensor along an axis.
+  Constructs a tensor by tiling a given tensor.
+  This is the same as function `tile` in Numpy, but no broadcast.
+  For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
 
 #### Version
 
@@ -4900,24 +4895,24 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor of any shape.</dd>
-<dt><tt>tiles</tt> : T</dt>
-<dd>Number of repeated copies to make of the input tensor.</dd>
-<dt><tt>axis</tt> : T</dt>
-<dd>Axis along which to repeat.</dd>
+<dt><tt>repeats</tt> : T1</dt>
+<dd>1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Output tensor of same shape and type as input.</dd>
+<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dd>Constrain input and output's types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
 
 ### <a name="TopK-1"></a>**TopK-1**</a>
@@ -5014,10 +5009,8 @@ This version of the operator has been available since version 1 of the default O
   Insert single-dimensional entries to the shape of a tensor.
   Takes one required argument `axes`, a list of dimensions that will be inserted.
   Dimension indices in `axes` are as seen in the output tensor. For example:
-  
     Given a tensor such that tensor with shape [3, 4, 5], then
     Unsqueeze(tensor, axes=[0, 4]) has shape [1, 3, 4, 5, 1]
-  
 
 #### Version
 
@@ -5250,17 +5243,14 @@ This version of the operator has been available since version 2 of the default O
 ### <a name="Pad-2"></a>**Pad-2**</a>
 
   Given `data` tensor, pads, mode, and value.
-  
   Example:
     Insert 0 pads to the beginning of the second dimension.
-  
     data = [
         [1.0, 1.2],
         [2.3, 3.4],
         [4.5, 5.7],
     ]
     pads = [0, 2, 0, 0]
-  
     output = [
         [
             [0.0, 0.0, 1.0, 1.2],
@@ -5522,9 +5512,7 @@ This version of the operator has been available since version 4 of the default O
 ### <a name="Reshape-5"></a>**Reshape-5**</a>
 
   Reshape the input tensor similar to numpy.reshape.
-  
   First input is the data tensor, second input is a shape tensor which specifies the output shape. It outputs the reshaped tensor.
-  
   At most one dimension of the new shape can be -1. In this case, the value is
   inferred from the size of the tensor and the remaining dimensions. A dimension
   could also be 0, in which case the actual dimension value is unchanged (i.e. taken
@@ -6019,7 +6007,7 @@ This version of the operator has been available since version 6 of the default O
 <dt><tt>B</tt> : T</dt>
 <dd>Input tensor B</dd>
 <dt><tt>C</tt> : T</dt>
-<dd>Input tensor C, can be inplace.</dd>
+<dd>Input tensor C</dd>
 </dl>
 
 #### Outputs
@@ -6477,9 +6465,9 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.6732.</dd>
+<dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
 <dt><tt>gamma</tt> : float</dt>
-<dd>Coefficient of SELU default to 1.0507.</dd>
+<dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
 #### Inputs
