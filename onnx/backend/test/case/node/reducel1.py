@@ -34,14 +34,15 @@ class ReduceL1(Base):
         #print(reduced)
         #[[3, 7], [11, 15], [19, 23]]
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_do_not_keepdims1')
+        expect(node, inputs=[data], outputs=[reduced], 
+            name='test_reduce_l1_do_not_keepdims1')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape)
         reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_do_not_keepdims2')
+            name='test_reduce_l1_do_not_keepdims2')
 
     @staticmethod
     def export_keepdims():
@@ -97,11 +98,11 @@ class ReduceL1(Base):
         #[[[78]]]
 
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_default_axes_keepdims1')
+            name='test_reduce_l1_default_axes_keepdims1')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape)
         reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_default_axes_keepdims2')
+            name='test_reduce_l1_default_axes_keepdims2')
