@@ -21,7 +21,7 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
-if(ENABLE_GTESTS)
+if(ONNX_ENABLE_GTESTS)
 	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
 	include(googletest)
 endif()
@@ -343,7 +343,7 @@ install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
     FILES_MATCHING
     PATTERN "*.h")
-if(ENABLE_GTESTS)
+if(ONNX_ENABLE_GTESTS)
     include_directories(
         ${ONNX_ROOT}
         ${googletest_BUILD}
