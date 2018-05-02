@@ -15,9 +15,9 @@ namespace ONNX_NAMESPACE
 			EXPECT_EQ(opSchema->inputs()[0].GetTypes(), opSchema->outputs()[0].GetTypes());
 			size_t attr_size = opSchema->attributes().size();
 			EXPECT_EQ(attr_size, 2);
-			EXPECT_NE(opSchema->attributes().find("alpha"), opSchema->attributes().end());
+			EXPECT_NE(opSchema->attributes().count("alpha"), 0);
 			EXPECT_EQ(opSchema->attributes().at("alpha").type, AttributeProto_AttributeType_FLOAT);
-			EXPECT_NE(opSchema->attributes().find("beta"), opSchema->attributes().end());
+			EXPECT_NE(opSchema->attributes().count("beta"), 0);
 			EXPECT_EQ(opSchema->attributes().at("beta").type, AttributeProto_AttributeType_FLOAT);
 		}
 	}

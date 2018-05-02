@@ -20,25 +20,6 @@ set(${UT_NAME}_libs
 )
 
 if(NOT TARGET protobuf::libprotobuf)
-  find_program(PROTOBUF_PROTOC_EXECUTABLE
-    NAMES protoc
-    DOC "The Google Protocol Buffers Compiler")
-  if(PROTOBUF_PROTOC_EXECUTABLE)
-    set(ONNX_PROTOC_EXECUTABLE ${PROTOBUF_PROTOC_EXECUTABLE})
-    get_filename_component(
-      _PROTOBUF_INSTALL_PREFIX
-      ${PROTOBUF_PROTOC_EXECUTABLE}
-      DIRECTORY)
-    get_filename_component(
-      _PROTOBUF_INSTALL_PREFIX
-      ${_PROTOBUF_INSTALL_PREFIX}/..
-      REALPATH)
-    find_library(PROTOBUF_LIBRARY
-      NAMES protobuf
-      PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-      NO_DEFAULT_PATH)
-    find_package(Protobuf REQUIRED)
-  endif()
   list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARY})
   # Link the library as CMakeList did
   list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
@@ -50,7 +31,7 @@ add_whole_archive_flag(onnx tmp)
 list(APPEND ${UT_NAME}_libs ${tmp})
 
 file(GLOB_RECURSE ${UT_NAME}_src
-    "${ONNX_ROOT}/onnx/test/gtests/*.cc"
+    "${ONNX_ROOT}/onnx/test/c++/*.cc"
 )
 
 function(AddTest)
@@ -95,7 +76,7 @@ AddTest(
     LIBS ${${UT_NAME}_libs}
 )
 
-set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/gtests/testdata)
+set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/c++/testdata)
 set(TEST_DATA_DES $<TARGET_FILE_DIR:${UT_NAME}>/testdata)
 
 # Copy test data from source to destination.

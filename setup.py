@@ -30,7 +30,7 @@ CMAKE_BUILD_DIR = os.path.join(TOP_DIR, '.setuptools-cmake-build')
 DEFAULT_ONNX_NAMESPACE = 'onnx'
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
-ONNX_ENABLE_GTESTS = bool(os.getenv('ONNX_ENABLE_GTESTS') == '1')
+ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 WINDOWS = (os.name == 'nt')
 
 CMAKE = find_executable('cmake3') or find_executable('cmake')
@@ -164,8 +164,8 @@ class cmake_build(setuptools.Command):
                     cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
-            if ONNX_ENABLE_GTESTS:
-                cmake_args.append('-DONNX_ENABLE_GTESTS=1')
+            if ONNX_BUILD_TESTS:
+                cmake_args.append('-DONNX_BUILD_TESTS=ON')
             if 'CMAKE_ARGS' in os.environ:
                 extra_cmake_args = shlex.split(os.environ['CMAKE_ARGS'])
                 # prevent crossfire with downstream scripts

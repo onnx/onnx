@@ -13,6 +13,8 @@ option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 
+option(ONNX_BUILD_TESTS "Build ONNX micro-benchmarks" OFF)
+
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
 
@@ -21,7 +23,7 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
-if(ONNX_ENABLE_GTESTS)
+if(ONNX_BUILD_TESTS)
 	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
 	include(googletest)
 endif()
@@ -191,14 +193,14 @@ RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
     onnx/onnx-operators.in.proto
 )
 
-file(GLOB_RECURSE onnx_INCLUDE_DIRS "${ONNX_ROOT}/onnx/*.h")
+
 file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
     "${ONNX_ROOT}/onnx/*.cc"
 )
 file(GLOB_RECURSE onnx_gtests_src
-    "${ONNX_ROOT}/onnx/test/gtests/*.h"
-    "${ONNX_ROOT}/onnx/test/gtests/*.cc"
+    "${ONNX_ROOT}/onnx/test/c++/*.h"
+    "${ONNX_ROOT}/onnx/test/c++/*.cc"
 )
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
@@ -343,14 +345,10 @@ install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
     FILES_MATCHING
     PATTERN "*.h")
-if(ONNX_ENABLE_GTESTS)
+if(ONNX_BUILD_TESTS)
     include_directories(
         ${ONNX_ROOT}
-        ${googletest_BUILD}
         ${CMAKE_CURRENT_BINARY_DIR}
-        ${googletest_INCLUDE_DIRS}
-        ${PROTOBUF_INCLUDE_DIR}
-        protobuf::libprotobuf
     )
 	include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
