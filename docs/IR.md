@@ -7,7 +7,7 @@ This document contains the normative specification of the semantics of ONNX. The
 
 __Notes on model validation__
 
-A [Python-based tool](../onnx/checker.py) is available to perform general validation of models against this specification.
+A [tool](../onnx/checker.py) is available to perform general validation of models against this specification. It is implemented in C++ with Python command-line wrapper.
 
 __Notes on language in this and all related documents__:
 
@@ -55,7 +55,9 @@ The valid IR versions is defined by an enumeration, which currently has the foll
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple number as the version number. This specification does not provide guidance on what versioning scheme model producers should be using.
+Operator sets use a simple number as the version number. Each operator set version represents the combination of the most recent version of each operator.
+
+This specification does not provide guidance on what versioning scheme model producers should be using.
 
 More details on conventions and best practices for versioning of IR, operator sets, and models can be found in [Versioning](Versioning.md).
 
@@ -71,7 +73,7 @@ The top-level ONNX construct is a ‘Model.’
 
 The main purpose of the model structure is to associate metadata with a graph, which is what contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model, generate logging messages, error reports, etc. Further, the metadata is useful to tools, such as IDEs and model galleries, which need it for informing humans about a given model’s purpose and characteristics.
 
-Each model has has the following components:
+Each model has the following components:
 
 |Name|Type|Description|
 |---|---|---|
@@ -110,7 +112,7 @@ The properties of an operator set are:
 
 Name|Type|Description
 |---|---|---|
-magic|string|The value ‘ONXXOPSET’
+magic|string|The value ‘ONNXOPSET’
 ir_version|int32|The ONNX version corresponding to the operators.
 ir_version_prerelease|string|The prerelease component of the SemVer of the IR.
 ir_build_metadata|string|The symbolic identifier of the operator to invoke.
@@ -231,16 +233,16 @@ Name|Type|Description
 name|string|The name of the attribute. Must be unique among attributes, inputs, and outputs for any given operator and node.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.
-f|float|A floating-point value.
-i|int64|An integer value
-S|byte[]|UTF-8 string
-t|Tensor|A tensor value
-g|Graph|A graph
-floats|float[]|A list of floats
-ints|int64[]|A list of integers
-strings|byte[][]|A list of strings
-tensors|Tensor[]|A list of tensor values
-graphs|Graph[]|A list of graphs
+f|float|A 32-bit floating-point value.
+i|int64|A 64-bit integer value.
+S|byte[]|UTF-8 string.
+t|Tensor|A tensor value.
+g|Graph|A graph.
+floats|float[]|A list of 32-bit floating-point values.
+ints|int64[]|A list of 64-bit integer values.
+strings|byte[][]|A list of UTF-8 strings.
+tensors|Tensor[]|A list of tensor values.
+graphs|Graph[]|A list of graphs.
 
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
 
