@@ -666,6 +666,7 @@ Given two equivalent values, this operator uses the indices along the axis  as
         static_cast<int64_t>(-1));
 
 ONNX_OPERATOR_SCHEMA(Sin)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Calculates the sine of the given input tensor, element-wise.
 )DOC")
@@ -682,6 +683,7 @@ Calculates the sine of the given input tensor, element-wise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Cos)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Calculates the cosine of the given input tensor, element-wise.
 )DOC")
@@ -699,6 +701,7 @@ Calculates the cosine of the given input tensor, element-wise.
 
 
 ONNX_OPERATOR_SCHEMA(Tan)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Calculates the tangent of the given input tensor, element-wise.
 )DOC")
@@ -715,6 +718,7 @@ Calculates the tangent of the given input tensor, element-wise.
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Asin)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
 )DOC")
@@ -731,6 +735,7 @@ Calculates the arcsine (inverse of sine) of the given input tensor, element-wise
         "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(Acos)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
 )DOC")
@@ -748,6 +753,7 @@ Calculates the arccosine (inverse of cosine) of the given input tensor, element-
 
 
 ONNX_OPERATOR_SCHEMA(Atan)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
 )DOC")
