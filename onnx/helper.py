@@ -119,7 +119,6 @@ def make_tensor(name, data_type, dims, vals, raw=False):
 
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
-        tensor.string_data.extend(vals)
 
     if (data_type == TensorProto.COMPLEX64 or
             data_type == TensorProto.COMPLEX128):
@@ -235,7 +234,7 @@ def get_attribute_value(attr):
         raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
-def make_tensor_value_info(name, elem_type, shape, doc_string=""):
+def make_tensor_value_info(name, elem_type, shape, doc_string="", shape_denotation=None):
     """Makes a TypeProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
@@ -257,9 +256,17 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
         # an empty shape!
         tensor_shape_proto.dim.extend([])
 
-        for d in shape:
+        if shape_denotation:
+            if len(shape_denotation) != len(shape):
+                raise ValueError(
+                    'Invalid shape_denotation. '
+                    'Must be of the same length as shape.')
+
+        for i, d in enumerate(shape):
             dim = tensor_shape_proto.dim.add()
-            if isinstance(d, integer_types):
+            if d is None:
+                pass
+            elif isinstance(d, integer_types):
                 dim.dim_value = d
             elif isinstance(d, text_type):
                 dim.dim_param = d
@@ -267,6 +274,9 @@ def make_tensor_value_info(name, elem_type, shape, doc_string=""):
                 raise ValueError(
                     'Invalid item in shape: {}. '
                     'Needs to of integer_types or text_type.'.format(d))
+
+            if shape_denotation:
+                dim.denotation = shape_denotation[i]
 
     return value_info_proto
 
