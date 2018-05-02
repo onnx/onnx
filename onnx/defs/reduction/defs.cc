@@ -56,7 +56,7 @@ False instead of True.)DOC";
       if (axes_proto)
         axes.assign(axes_proto->ints().begin(), axes_proto->ints().end());
 
-      for (int i = 0; i < axes.size(); ++i) {
+      for (size_t i = 0; i < axes.size(); ++i) {
         if (axes[i] < 0)
           axes[i] += input_ndim;
       }
