@@ -48,14 +48,18 @@ inline void propagateElemTypeFromInputToOutput(
   }
 }
 
-inline bool hasNInputShapes(InferenceContext& ctx, int n) {
+inline bool hasInputShape(InferenceContext& ctx, int n) {
   if (static_cast<int>(ctx.getNumInputs()) < n) {
     throw std::runtime_error("operator has too few inputs");
   }
+  return ctx.getInputType(n) &&
+    ctx.getInputType(n)->has_tensor_type() &&
+    ctx.getInputType(n)->tensor_type().has_shape();
+}
+
+inline bool hasNInputShapes(InferenceContext& ctx, int n) {
   for (int i = 0; i < n; i++) {
-    auto input_type = ctx.getInputType(i);
-    if (nullptr == input_type || !input_type->has_tensor_type() ||
-        !input_type->tensor_type().has_shape()) {
+    if (!hasInputShape(ctx, i)) {
       return false;
     }
   }
@@ -97,5 +101,14 @@ inline void propagateShapeFromInputToOutput(
   *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
       ctx.getInputType(inputIndex)->tensor_type().shape();
 }
+
+inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  propagateShapeFromInputToOutput(ctx, 0, 0);
+}
+
 
 } // namespace ONNX_NAMESPACE
