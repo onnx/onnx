@@ -620,7 +620,90 @@ ONNX_OPERATOR_SCHEMA(MatMul)
         "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
-)DOC");
+)DOC")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (!hasNInputShapes(ctx, 2)) {
+          return;
+        }
+
+        auto shape0 = ctx.getInputType(0)->tensor_type().shape();
+        auto shape1 = ctx.getInputType(1)->tensor_type().shape();
+
+        if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
+          return;
+        }
+
+        TensorShapeProto paddedShapeL;
+        TensorShapeProto paddedShapeR;
+
+        if (shape0.dim_size() == 1) {
+          paddedShapeL.add_dim()->set_dim_value(1);
+          *paddedShapeL.add_dim() = shape0.dim(0);
+        } else {
+          paddedShapeL = shape0;
+        }
+
+        if (shape1.dim_size() == 1) {
+          *paddedShapeR.add_dim() = shape1.dim(0);
+          paddedShapeR.add_dim()->set_dim_value(1);
+        } else {
+          paddedShapeR = shape1;
+        }
+
+        auto dimSize = paddedShapeL.dim_size();
+
+        if (paddedShapeR.dim_size() != dimSize) {
+          return;
+        }
+
+        {
+          // check for compatible matrix dimensions
+          auto dimL = paddedShapeL.dim(dimSize - 1);
+          auto dimR = paddedShapeR.dim(dimSize - 2);
+          if (dimL.has_dim_value() && dimR.has_dim_value() &&
+              dimL.dim_value() != dimR.dim_value()) {
+            return;
+          }
+        }
+
+        TensorShapeProto resultShape;
+
+        for (int64_t i = 0; i < dimSize - 2; ++i) {
+          auto newdim = resultShape.add_dim();
+          if (paddedShapeL.dim(i).has_dim_value() && paddedShapeR.dim(i).has_dim_value()) {
+            auto dimL = paddedShapeL.dim(i).dim_value();
+            auto dimR = paddedShapeR.dim(i).dim_value();
+            if (dimL == dimR) {
+              newdim->set_dim_value(dimL);
+            } else if (dimL == 1) {
+              newdim->set_dim_value(dimR);
+            } else if (dimR == 1) {
+              newdim->set_dim_value(dimL);
+            } else {
+              return;
+            }
+          } else if (paddedShapeL.dim(i).has_dim_value()) {
+            auto dimL = paddedShapeL.dim(i).dim_value();
+            if (dimL != 1) {
+              newdim->set_dim_value(dimL);
+            }
+          } else if (paddedShapeR.dim(i).has_dim_value()) {
+            auto dimR = paddedShapeR.dim(i).dim_value();
+            if (dimR != 1) {
+              newdim->set_dim_value(dimR);
+            }
+          }
+        }
+        if (shape0.dim_size() != 1) {
+          *resultShape.add_dim() = paddedShapeL.dim(dimSize - 2);
+        }
+        if (shape1.dim_size() != 1) {
+          *resultShape.add_dim() = paddedShapeR.dim(dimSize - 1);
+        }
+
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+      });
 
 ONNX_OPERATOR_SCHEMA(TopK)
     .SetDoc(R"DOC(
