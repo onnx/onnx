@@ -427,6 +427,10 @@ message TypeProto {
     // This field MUST be present for this version of the IR.
     TensorProto.DataType elem_type = 1;
     TensorShapeProto shape = 2;
+    // An optional denotation can be used to denote the whole 
+    // tensor with a standard semantic description as to what is 
+    // stored inside
+    string denotation = 3;
   }
 
 
@@ -435,6 +439,18 @@ message TypeProto {
     Tensor tensor_type = 1;
 
   }
+}
+
+// A set of pre-defined constants to be used as values for
+// the standard denotation field in Tensor for semantic 
+// description of the tensor.
+message TensorDenotationConstProto {
+  // An image is stored inside this tensor
+  string IMAGE = 1 [default = "IMAGE"];
+  // Audio is stored inside this tensor
+  string AUDIO = 2 [default = "AUDIO"];
+  // Text is stored inside this tensor
+  string TEXT = 3 [default = "TEXT"];
 }
 
 // OperatorSets are uniquely identified by a (domain, opset_version) pair.

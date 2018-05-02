@@ -43,3 +43,7 @@ for i, j in enumerate(perm):
 ## Denotation Verification
 
 Denotation Verification happens when an operation expects its input to arrive in a particular format. An example operation where denotation verification happens is AveragePool operation where the input, if annotated with dimension denotation, in the 2D case should have the denotation [`DATA_BATCH`, `DATA_CHANNEL`, `DATA_FEATURE`, `DATA_FEATURE`]. If there is a mismatch between the expected dimension denotation and the actual dimension denotation, an error should be reported.
+
+## Tensor Denotation
+
+See the [tensor denotation documentation](TensorDenotation.md) for more details on denotation applied at the tensor level.
