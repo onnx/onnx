@@ -117,7 +117,7 @@ inline void updateOutputElemType(
   auto output_type = ctx.getOutputType(outputIndex);
   if ((output_type != nullptr) &&
       (output_type->value_case() == TypeProto::kTensorType ||
-    output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
+       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
     output_type->mutable_tensor_type()->set_elem_type(elemType);
   }
 }

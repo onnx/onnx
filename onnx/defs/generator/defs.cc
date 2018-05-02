@@ -65,8 +65,8 @@ TensorProto message.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	  propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-	  propagateShapeFromAttributeToOutput(ctx, "shape", 0);
+        propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        propagateShapeFromAttributeToOutput(ctx, "shape", 0);
     });
 
 ONNX_OPERATOR_SCHEMA(RandomNormal)
@@ -110,8 +110,8 @@ TensorProto message.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	  propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-	  propagateShapeFromAttributeToOutput(ctx, "shape", 0);
+        propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        propagateShapeFromAttributeToOutput(ctx, "shape", 0);
     });
 
 ONNX_OPERATOR_SCHEMA(RandomUniformLike)
@@ -161,13 +161,13 @@ TensorProto message and be valid as an output type.
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         if (ctx.getAttribute("dtype") != nullptr) 
-	  propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-	else
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        else
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
         if (!hasNInputShapes(ctx, 1)) {
           return;
-	}
-	propagateShapeFromInputToOutput(ctx, 0, 0);
+        }
+        propagateShapeFromInputToOutput(ctx, 0, 0);
     });
 
 ONNX_OPERATOR_SCHEMA(RandomNormalLike)
@@ -217,11 +217,11 @@ TensorProto message, and be valid as an output type.
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         if (ctx.getAttribute("dtype") != nullptr) 
-	  propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-	else
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        else
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
         if (!hasNInputShapes(ctx, 1)) {
           return;
-	}
-	propagateShapeFromInputToOutput(ctx, 0, 0);
+        }
+        propagateShapeFromInputToOutput(ctx, 0, 0);
     });
