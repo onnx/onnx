@@ -40,6 +40,8 @@ if(NOT TARGET protobuf::libprotobuf)
     find_package(Protobuf REQUIRED)
   endif()
   list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARY})
+  # Link the library as CMakeList did
+  list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 endif()
 
 add_whole_archive_flag(onnx_proto tmp)
