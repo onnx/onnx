@@ -664,3 +664,101 @@ Given two equivalent values, this operator uses the indices along the axis  as
         " axis",
         AttributeProto::INT,
         static_cast<int64_t>(-1));
+
+ONNX_OPERATOR_SCHEMA(Sin)
+    .SetDoc(R"DOC(
+Calculates the sine of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The sine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+ONNX_OPERATOR_SCHEMA(Cos)
+    .SetDoc(R"DOC(
+Calculates the cosine of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The cosine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+
+ONNX_OPERATOR_SCHEMA(Tan)
+    .SetDoc(R"DOC(
+Calculates the tangent of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The tangent of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+ONNX_OPERATOR_SCHEMA(Asin)
+    .SetDoc(R"DOC(
+Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The arcsine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+ONNX_OPERATOR_SCHEMA(Acos)
+    .SetDoc(R"DOC(
+Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The arccosine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+
+
+ONNX_OPERATOR_SCHEMA(Atan)
+    .SetDoc(R"DOC(
+Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The arctangent of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
