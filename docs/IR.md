@@ -27,7 +27,7 @@ ONNX is an open specification that consists of the following components:
 
 Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this.
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with  ML algorithms that are not based on neural networks.
+There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks.
 
 ## Runtime Agnostic
 
@@ -57,7 +57,7 @@ The valid IR versions is defined by an enumeration, which currently has the foll
 
 Operator sets use a simple number as the version number. This specification does not provide guidance on what versioning scheme model producers should be using.
 
-More details on conventions and best practices for versioning of IR, pperator sets, and models can be found in [Versioning](Versioning.md).
+More details on conventions and best practices for versioning of IR, operator sets, and models can be found in [Versioning](Versioning.md).
 
 ## Extensible computation graph model
 
