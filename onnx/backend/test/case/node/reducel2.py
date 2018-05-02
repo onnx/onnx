@@ -37,7 +37,7 @@ class ReduceL2(Base):
         # [7.81024968, 10.63014581],
         # [13.45362405, 16.2788206]]
 
-        expect(node, inputs=[data], outputs=[reduced],  
+        expect(node, inputs=[data], outputs=[reduced],
             name='test_reduce_l2_do_not_keepdims1')
 
         np.random.seed(0)
@@ -55,25 +55,25 @@ class ReduceL2(Base):
         keepdims = 1
 
         node = onnx.helper.make_node(
-           'ReduceL2',
-           inputs=['data'],
-           outputs=['reduced'],
-           axes=axes,
-           keepdims=keepdims
+            'ReduceL2',
+            inputs=['data'],
+            outputs=['reduced'],
+            axes=axes,
+            keepdims=keepdims
         )
 
         data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
         #print(data)
         #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
 
-        reduced = np.sqrt(np.sum( 
-            a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1)) 
+        reduced = np.sqrt(np.sum(
+            a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
         #print(reduced)
         #[[2.23606777, 5.],
         # [7.81024933, 10.63014507],
         # [13.45362377, 16.27882004]]
 
-        expect(node, inputs=[data], outputs=[reduced], 
+        expect(node, inputs=[data], outputs=[reduced],
             name='test_reduce_l2_keep_dims1')
 
         np.random.seed(0)
@@ -90,10 +90,10 @@ class ReduceL2(Base):
         keepdims = 1
 
         node = onnx.helper.make_node(
-           'ReduceL2',
-           inputs=['data'],
-           outputs=['reduced'],
-           keepdims=keepdims
+            'ReduceL2',
+            inputs=['data'],
+            outputs=['reduced'],
+            keepdims=keepdims
         )
 
         data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)

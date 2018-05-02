@@ -34,7 +34,7 @@ class ReduceL1(Base):
         #print(reduced)
         #[[3, 7], [11, 15], [19, 23]]
 
-        expect(node, inputs=[data], outputs=[reduced], 
+        expect(node, inputs=[data], outputs=[reduced],
             name='test_reduce_l1_do_not_keepdims1')
 
         np.random.seed(0)
