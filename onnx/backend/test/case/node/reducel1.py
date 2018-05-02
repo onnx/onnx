@@ -13,8 +13,8 @@ from . import expect
 class ReduceL1(Base):
 
     @staticmethod
-    def export_do_not_keepdims(): 
-        shape = [3,2,2]
+    def export_do_not_keepdims():
+        shape = [3, 2, 2]
         axes = [2]
         keepdims = 0
 
@@ -24,7 +24,7 @@ class ReduceL1(Base):
             outputs=['reduced'],
             axes=axes,
             keepdims=keepdims
-            )
+        )
 
         data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
         #print(data)
@@ -38,24 +38,24 @@ class ReduceL1(Base):
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape)
-        reduced = np.sum(a = np.abs(data), axis = tuple(axes), keepdims = keepdims == 1)
+        reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced],
             name='test_do_not_keepdims2')
 
     @staticmethod
     def export_keepdims():
-        shape = [3,2,2]
+        shape = [3, 2, 2]
         axes = [2]
         keepdims = 1
 
-        node = onnx.helper.make_node( 
+        node = onnx.helper.make_node(
             'ReduceL1',
             inputs=['data'],
             outputs=['reduced'],
             axes=axes,
             keepdims=keepdims
-            )
+        )
 
         data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
         #print(data)
@@ -77,7 +77,7 @@ class ReduceL1(Base):
 
     @staticmethod
     def export_default_axes_keepdims():
-        shape = [3,2,2]
+        shape = [3, 2, 2]
         axes = None
         keepdims = 1
 
@@ -86,7 +86,7 @@ class ReduceL1(Base):
             inputs=['data'],
             outputs=['reduced'],
             keepdims=keepdims
-            )
+        )
 
         data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
         #print(data)
@@ -101,7 +101,7 @@ class ReduceL1(Base):
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape)
-        reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)   
+        reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)
 
-        expect(node, inputs=[data], outputs=[reduced], 
-            name='test_default_axes_keepdims2')       
+        expect(node, inputs=[data], outputs=[reduced],
+            name='test_default_axes_keepdims2')
