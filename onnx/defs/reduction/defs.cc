@@ -66,7 +66,7 @@ False instead of True.)DOC";
         if (!axes.empty() &&
             std::find(axes.begin(), axes.end(), i) == axes.end()) {
           auto dim = output_shape->add_dim();
-          dim->CopyFrom(input_shape.dim()[i]);
+          dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
             auto dim = output_shape->add_dim();
@@ -170,7 +170,7 @@ The type of the output tensor is integer.)DOC";
       for (int i = 0; i < input_ndim; ++i) {
         if (i != axis) {
           auto dim = output_shape->add_dim();
-          dim->CopyFrom(input_shape.dim()[i]);
+          dim->CopyFrom(input_shape.dim(i));
         } else {
           if (keep_dims == 1) {
             auto dim = output_shape->add_dim();
