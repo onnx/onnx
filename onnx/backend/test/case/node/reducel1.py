@@ -13,42 +13,94 @@ from . import expect
 class ReduceL1(Base):
 
     @staticmethod
-    def export():
+def export_do_not_keepdims(): 
+    shape = [3,2,2]
+    axes = [2]
+    keepdims = 0
 
-        data = np.array(
-            [[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]],
-            dtype=np.float32)
-
-        node = onnx.helper.make_node(
-            'ReduceL1',
-            inputs=['data'],
-            outputs=['reduced'],
-            axes=[2],
-            keepdims=0
+    node = onnx.helper.make_node(
+        'ReduceL1',
+        inputs=['data'],
+        outputs=['reduced'],
+        axes=axes,
+        keepdims=keepdims
         )
 
-        reduced = np.array([
-            [3., 7.],
-            [11., 15.],
-            [19., 23.]],
-            dtype=np.float32)
+    data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+    #print(data)
+    #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
 
-        expect(node, inputs=[data], outputs=[reduced],
-               name='test_reduce_l1_do_not_keep_dims')
+    reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+    #print(reduced)
+    #[[3, 7], [11, 15], [19, 23]]
 
-        node = onnx.helper.make_node(
-            'ReduceL1',
-            inputs=['data'],
-            outputs=['reduced'],
-            axes=[2],
-            keepdims=1
+    expect(node, inputs=[data], outputs=[reduced], name='test_do_not_keepdims1')
+
+    np.random.seed(0)
+    data = np.random.uniform(-10, 10, shape)
+    reduced = np.sum(a = np.abs(data), axis = tuple(axes), keepdims = keepdims == 1)
+
+    expect(node, inputs=[data], outputs=[reduced],
+        name='test_do_not_keepdims2')
+
+def export_keepdims():
+    shape = [3,2,2]
+    axes = [2]
+    keepdims = 1
+
+    node = onnx.helper.make_node( 
+        'ReduceL1',
+        inputs=['data'],
+        outputs=['reduced'],
+        axes=axes,
+        keepdims=keepdims
         )
 
-        reduced = np.array([
-            [[3.], [7.]],
-            [[11.], [15.]],
-            [[19.], [23.]]],
-            dtype=np.float32)
+    data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+    #print(data)
+    #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
 
-        expect(node, inputs=[data], outputs=[reduced],
-               name='test_reduce_l1_keep_dims')
+    reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+    #print(reduced)
+    #[[[3], [7]], [[11], [15]], [[19], [23]]]
+
+    expect(node, inputs=[data], outputs=[reduced],
+        name='test_reduce_l1_keep_dims1')
+
+    np.random.seed(0)
+    data = np.random.uniform(-10, 10, shape)
+    reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
+
+    expect(node, inputs=[data], outputs=[reduced],
+        name='test_reduce_l1_keep_dims2')
+
+def export_default_axes_keepdims():
+    shape = [3,2,2]
+    axes = None
+    keepdims = 1
+
+    node = onnx.helper.make_node(
+        'ReduceL1',
+        inputs=['data'],
+        outputs=['reduced'],
+        axes=axes,
+        keepdims=keepdims
+        )
+
+    data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+    #print(data)
+    #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+
+    reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)
+    #print(reduced)
+    #[[[78]]]
+
+    expect(node, inputs=[data], outputs=[reduced],
+        name='test_default_axes_keepdims1')
+
+    np.random.seed(0)
+    data = np.random.uniform(-10, 10, shape)
+    reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)   
+
+    expect(node, inputs=[data], outputs=[reduced], 
+        name='test_default_axes_keepdims2')       
