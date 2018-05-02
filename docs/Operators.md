@@ -5579,13 +5579,13 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomNormalLike"></a><a name="randomnormallike">**RandomNormalLike**</a>
 
-  Generate a tensor with random values drawn from a normal distribution. The shape
-  of the tensor is computed from the input argument and the parameter of the normal distribution
-  specified by `mean` and `scale`.
+  Generate a tensor with random values drawn from a normal distribution. 
+  The shape of the output tensor is copied from the shape of the input tensor, 
+  and the parameters of the normal distribution are specified by `mean` and `scale`.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message.
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message, and be valid as an output type.
 
 #### Version
 
@@ -5607,21 +5607,23 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : tensor(int32)</dt>
-<dd>Input tensor to provide shape information.</dd>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to copy shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> : T2</dt>
 <dd>Output tensor of random values drawn from normal distribution</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
@@ -5674,12 +5676,13 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomUniformLike"></a><a name="randomuniformlike">**RandomUniformLike**</a>
 
-  Generate a tensor with random values drawn from a uniform distribution. The shape
-  of the tensor is computed from the input argument and the range by `low` and `high`.
+  Generate a tensor with random values drawn from a uniform distribution. 
+  The shape of the output tensor is copied from the shape of the input tensor, 
+  and the parameters of the uniform distribution are specified by `low` and `high`.
   
-  The data type is specified by the 'dtype' argument. The 'dtype' argument must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message.
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
 
 #### Version
 
@@ -5701,21 +5704,23 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>input</tt> : tensor(int32)</dt>
-<dd>Input tensor to provide shape information.</dd>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to copy shape and optionally type information from.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T</dt>
+<dt><tt>output</tt> : T2</dt>
 <dd>Output tensor of random values drawn from uniform distribution</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
 </dl>
 
