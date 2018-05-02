@@ -22,7 +22,7 @@ set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
 if(ENABLE_GTESTS)
-	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/external)
+	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
 	include(googletest)
 endif()
 
@@ -340,5 +340,5 @@ if(ENABLE_GTESTS)
         ${PROTOBUF_INCLUDE_DIR}
         protobuf::libprotobuf
     )
-	include(unittest.cmake)
+	include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
