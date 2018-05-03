@@ -376,7 +376,7 @@ Example 2:
 
         for (size_t i = 0, j = 0; (int64_t) i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
           auto* newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-          if (j < axes.size() && axes[j] == i) {
+          if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
             // There's a lot of potential behaviors. For now just
             // handle some simple cases.
             if (ctx.getInputType(0)->tensor_type().shape().dim((int)i).has_dim_value() &&
@@ -681,7 +681,7 @@ Example:
 
         std::vector<int64_t> pads;
         if (!getRepeatedAttribute(ctx, "pads", pads) ||
-            pads.size() != ctx.getInputType(0)->tensor_type().shape().dim_size() * 2) {
+            pads.size() != static_cast<size_t>(ctx.getInputType(0)->tensor_type().shape().dim_size() * 2)) {
           return;
         }
 
