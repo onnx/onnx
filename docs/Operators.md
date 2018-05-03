@@ -5911,43 +5911,54 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
+
 #### Examples
 
 <details>
-<summary>reduce_log_sum</summary>
+<summary>keepdims</summary>
 
 ```python
 node = onnx.helper.make_node(
-    'ReduceLogSum',
-    inputs=['data'],
-    outputs=["reduced"],
-    axes=[2, 1],
-    keepdims=0
-)
-data = np.random.ranf([3, 4, 5]).astype("float32")
-reduced = np.log(np.sum(data, axis=(2, 1), keepdims=False))
+        'ReduceLogSum',
+        inputs=['data'],
+        outputs=["reduced"]
+    )
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, keepdims=True))
 expect(node, inputs=[data], outputs=[reduced],
-        name='test_reduce_log_sum')
+           name='test_reduce_log_sum_default')
 ```
 
 </details>
 
 
 <details>
-<summary>reduce_log_sum_default</summary>
+<summary>nokeepdims</summary>
 
 ```python
+node = onnx.helper.make_node(
+        'ReduceLogSum',
+        inputs=['data'],
+        outputs=["reduced"],
+        axes=[2, 1],
+        keepdims=0
+    )
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, axis=(2, 1), keepdims=False))
+expect(node, inputs=[data], outputs=[reduced],
+           name='test_reduce_log_sum_desc_axes')
 
 node = onnx.helper.make_node(
-    'ReduceLogSum',
-    inputs=['data'],
-    outputs=["reduced"],
-    axes=[2, 1]
-)
-data = np.random.ranf([3, 4, 5]).astype("float32")
-reduced = np.log(np.sum(data, axis=(2, 1), keepdims=True))
+        'ReduceLogSum',
+        inputs=['data'],
+        outputs=["reduced"],
+        axes=[0, 1],
+        keepdims=0
+    )
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, axis=(0, 1), keepdims=False))
 expect(node, inputs=[data], outputs=[reduced],
-        name='test_reduce_log_sum_default')
+           name='test_reduce_log_sum_asc_axes')
 ```
 
 </details>
