@@ -821,20 +821,17 @@ For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4,
 
 ONNX_OPERATOR_SCHEMA(Upsample)
     .Attr(
-        "width_scale",
-        "The scale along width dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT)
-    .Attr(
-        "height_scale",
-        "The scale along height dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT)
+        "scales",
+        "The scale array along each dimension. It takes value greater than or equal to 1."
+		" The number of elements of scales should be the same as the rank of input X.",
+        AttributeProto::FLOATS)
     .Attr(
         "mode",
         "Two interpolation modes: nearest(default), bilinear",
         AttributeProto::STRING,
         std::string("nearest"))
-    .Input(0, "X", "4-D tensor, [N,C,H,W]", "T")
-    .Output(0, "Y", "4-D tensor after resizing, [N,C,H,W]", "T")
+    .Input(0, "X", "N-D tensor", "T")
+    .Output(0, "Y", "N-D tensor after resizing", "T")
     .TypeConstraint(
         "T",
         {"tensor(bool)",
@@ -846,20 +843,18 @@ ONNX_OPERATOR_SCHEMA(Upsample)
         "Constrain output types to bool, int32, int64, float16, float, double tensors.")
     .SetDoc(R"DOC(
 Upsample the input tensor.
-The width and height of the output tensor are:
-  output_width = floor(input_width * width_scale),
-  output_height = floor(input_height * height_scale).
+Each dimension value of the output tensor is:
+  output_dimension = floor(input_dimension * scale),
 
 Example:
-  Given `data` tensor, width_scale, height_scale, mode,
-  Upsample the input 4-D tensor in nearest mode:
+  Given `data` tensor, scales, mode,
+  Upsample the input N-D tensor in nearest mode:
 
   data = [[[
       [1, 2],
       [3, 4]
   ]]]
-  width_scale = 2
-  height_scale = 2
+  scales = [1,1,2,2]
   mode = "nearest"
 
   output = [[[
