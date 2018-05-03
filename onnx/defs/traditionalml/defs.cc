@@ -10,15 +10,15 @@ ONNX_OPERATOR_SCHEMA(ArrayFeatureExtractor)
     .SetDoc(R"DOC(
     Select a subset of the data X based on the indices provided Y.
 )DOC")
-    .Input(0, "X", "Data to be selected", "T1")
+    .Input(0, "X", "Data to be selected", "T")
     .Input(
         1,
         "Y",
         "The index values to select as a int64 tensor",
         "tensor(int64)")
-    .Output(0, "Z", "Selected output data as an array", "T1")
+    .Output(0, "Z", "Selected output data as an array", "T")
     .TypeConstraint(
-        "T1",
+        "T",
         {"tensor(float)",
          "tensor(double)",
          "tensor(int64)",
@@ -76,12 +76,12 @@ ONNX_OPERATOR_SCHEMA(CastMap)
         AttributeProto::INT,
         static_cast<int64_t>(1))
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	  auto cast_to_attr = ctx.getAttribute("cast_to");
-	  auto output_type = ctx.getOutputType(0)->mutable_tensor_type();
-	  if (nullptr == cast_to_attr) {
-		  output_type->set_elem_type(TensorProto::FLOAT);
-		  return;
-	  }
+      auto cast_to_attr = ctx.getAttribute("cast_to");
+      auto output_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (nullptr == cast_to_attr) {
+        output_type->set_elem_type(TensorProto::FLOAT);
+        return;
+      }
       auto& cast_to = cast_to_attr->s();
       if (0 == cast_to.compare("TO_FLOAT")) {
         output_type->set_elem_type(TensorProto::FLOAT);
@@ -139,7 +139,7 @@ ONNX_OPERATOR_SCHEMA(CategoryMapper)
         AttributeProto::INT,
         static_cast<int64_t>(-1))
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	
+
       auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
       auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
       if (TensorProto::STRING == input_elem_type) {
@@ -320,7 +320,19 @@ ONNX_OPERATOR_SCHEMA(LinearClassifier)
         "post_transform",
         "enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        std::string("NONE"));
+        std::string("NONE"))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      std::vector<std::string> label_strs;
+      auto result =
+          getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+      bool using_strings = (result && !label_strs.empty());
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (using_strings) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      } else {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(LinearRegressor)
     .SetDomain("ai.onnx.ml")
@@ -505,7 +517,19 @@ ONNX_OPERATOR_SCHEMA(SVMClassifier)
         "classlabels_ints",
         "class labels if using int labels",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      std::vector<std::string> label_strs;
+      auto result =
+          getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+      bool using_strings = (result && !label_strs.empty());
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (using_strings) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      } else {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(SVMRegressor)
     .SetDomain("ai.onnx.ml")
@@ -669,7 +693,19 @@ ONNX_OPERATOR_SCHEMA(TreeEnsembleClassifier)
         "base_values",
         "base values for classification, added to final class score, size must be the same as classes or can be left unassigned (assumed 0)",
         AttributeProto::FLOATS,
-        OPTIONAL);
+        OPTIONAL)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      std::vector<std::string> label_strs;
+      auto result =
+          getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+      bool using_strings = (result && !label_strs.empty());
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (using_strings) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      } else {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(TreeEnsembleRegressor)
     .SetDomain("ai.onnx.ml")
