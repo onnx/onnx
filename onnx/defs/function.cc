@@ -56,9 +56,11 @@ Status FunctionBuilderRegistry::GetFunctions(
 
     CheckerContext ctx;
     LexicalScopeContext lex_ctx;
-    status = check_function(*function_proto, ctx, lex_ctx);
-    if (!status.IsOK()) {
-      return status;
+    try {
+      check_function(*function_proto, ctx, lex_ctx);
+    } catch (ValidationError& ex) {
+      return Common::Status(
+          Common::OPSCHEMA, Common::INVALID_PROTOBUF, ex.what());
     }
 
     auto& func_name = function_proto->name();

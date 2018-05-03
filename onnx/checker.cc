@@ -360,50 +360,41 @@ void check_graph(
   }
 }
 
-Status check_function(
+void check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
-  try {
-    enforce_non_empty_field(function, name);
-    enforce_has_field(function, since_version);
-  } catch (ValidationError& ex) {
-    return Common::Status(
-        Common::OPSCHEMA,
-        Common::INVALID_PROTOBUF, ex.what());
-  }
+  enforce_non_empty_field(function, name);
+  enforce_has_field(function, since_version);
 
   std::unordered_set<std::string> output_names;
   for (const auto& input : function.input()) {
     auto result = output_names.insert(input);
     if (!result.second) {
-      return Common::Status(
-          Common::OPSCHEMA,
-          Common::INVALID_PROTOBUF,
-          "function (" + function.name() +
-              ") should not have duplicate inputs specified.");
+      fail_check(
+          "function (",
+          function.name(),
+          ") should not have duplicate inputs specified.");
     }
   }
   std::unordered_set<std::string> outputs;
   for (const auto& output : function.output()) {
     auto result = outputs.insert(output);
     if (!result.second) {
-      return Common::Status(
-          Common::OPSCHEMA,
-          Common::INVALID_PROTOBUF,
-          "function (" + function.name() +
-              ") should not have duplicate outputs specified.");
+      fail_check(
+          "function (",
+          function.name(),
+          ") should not have duplicate outputs specified.");
     }
   }
   std::unordered_set<std::string> attrs;
   for (const auto& attr : function.attribute()) {
     auto result = attrs.insert(attr);
     if (!result.second) {
-      return Common::Status(
-          Common::OPSCHEMA,
-          Common::INVALID_PROTOBUF,
-          "function (" + function.name() +
-              ") should not have duplicate attributes specified.");
+      fail_check(
+          "function (",
+          function.name(),
+          ") should not have duplicate attributes specified.");
     }
   }
 
@@ -426,14 +417,7 @@ Status check_function(
 
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
-    try {
-      check_node(node, ctx, lex_ctx);
-    } catch (ValidationError& ex) {
-      return Common::Status(
-          Common::OPSCHEMA,
-          Common::INVALID_PROTOBUF,
-          ex.what());
-    }
+    check_node(node, ctx, lex_ctx);
     // check for SSA form
     for (const auto& output : node.output()) {
       // optional output
@@ -449,7 +433,6 @@ Status check_function(
       output_names.insert(output);
     }
   }
-  return Status::OK();
 }
 
 void check_model(const ModelProto& model) {
