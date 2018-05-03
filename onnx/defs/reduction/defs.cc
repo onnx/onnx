@@ -19,7 +19,8 @@ False instead of True.)DOC";
     schema.SetDoc(doc);
     schema.Attr(
         "axes",
-        "A list of integers, along which to reduce.",
+        "A list of integers, along which to reduce. The default is to reduce over "
+        "all the dimensions of the input tensor.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
@@ -73,7 +74,7 @@ The type of the output tensor is integer.)DOC";
     schema.SetDoc(doc);
     schema.Attr(
         "axis",
-        "The axis in which to compute the arg indices",
+        "The axis in which to compute the arg indices. Default is 0.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Attr(
