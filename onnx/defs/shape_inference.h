@@ -31,19 +31,6 @@ inline bool getRepeatedAttribute(
   }
 }
 
-inline bool
-hasExactlyNInputTypes(InferenceContext& ctx, int n, const std::string& opname) {
-  if (static_cast<int>(ctx.getNumInputs()) != n) {
-    throw std::runtime_error(opname + " has wrong number of inputs");
-  }
-  for (int i = 0; i < n; i++) {
-    if (!ctx.getInputType(i)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
@@ -61,14 +48,16 @@ inline void propagateElemTypeFromInputToOutput(
   }
 }
 
+inline bool hasInputShape(InferenceContext& ctx, int n) {
+  return ctx.getNumInputs() > static_cast<size_t>(n) &&
+    ctx.getInputType(n) &&
+    ctx.getInputType(n)->has_tensor_type() &&
+    ctx.getInputType(n)->tensor_type().has_shape();
+}
+
 inline bool hasNInputShapes(InferenceContext& ctx, int n) {
-  if (static_cast<int>(ctx.getNumInputs()) < n) {
-    throw std::runtime_error("operator has too few inputs");
-  }
   for (int i = 0; i < n; i++) {
-    auto input_type = ctx.getInputType(i);
-    if (nullptr == input_type || !input_type->has_tensor_type() ||
-        !input_type->tensor_type().has_shape()) {
+    if (!hasInputShape(ctx, i)) {
       return false;
     }
   }
@@ -109,6 +98,90 @@ inline void propagateShapeFromInputToOutput(
 
   *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
       ctx.getInputType(inputIndex)->tensor_type().shape();
+}
+
+inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+  propagateShapeFromInputToOutput(ctx, 0, 0);
+}
+
+inline void updateOutputElemType(
+    InferenceContext& ctx,
+    size_t outputIndex,
+    TensorProto_DataType elemType) {
+  auto output_type = ctx.getOutputType(outputIndex);
+  if ((output_type != nullptr) &&
+      (output_type->value_case() == TypeProto::kTensorType ||
+       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
+    output_type->mutable_tensor_type()->set_elem_type(elemType);
+  }
+}
+
+// Infer type of an output from the value of a specified attribute, which is expected
+// to have a valid value representing a TensorProto_DataType.
+inline void propagateElemTypeFromAttributeToOutput(
+    InferenceContext& ctx,
+    const std::string& attributeName,
+    size_t outputIndex) {
+  auto attr_proto = ctx.getAttribute(attributeName);
+  if (nullptr == attr_proto) return; // attribute not present
+  if (!attr_proto->has_i()) return; // attribute not of right type
+  auto attr_value = attr_proto->i();
+  auto elem_type = static_cast<TensorProto_DataType>(attr_value);
+  if (!TensorProto_DataType_IsValid(elem_type)) return; // out-of-range attribute value
+  updateOutputElemType(ctx, outputIndex, elem_type);
+}
+
+inline void updateOutputShape(
+    InferenceContext& ctx,
+    size_t outputIndex,
+    const TensorShapeProto& shape) {
+  auto output_type = ctx.getOutputType(outputIndex);
+  if ((output_type != nullptr) &&
+      (output_type->value_case() == TypeProto::kTensorType ||
+       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
+    *output_type->mutable_tensor_type()->mutable_shape() = shape;
+  }
+}
+
+inline void updateOutputShape(
+    InferenceContext& ctx,
+    size_t outputIndex,
+    const TensorProto& tensorProto) {
+  auto output_type = ctx.getOutputType(outputIndex);
+  if ((output_type != nullptr) &&
+      (output_type->value_case() == TypeProto::kTensorType ||
+       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
+    auto* output_shape = output_type->mutable_tensor_type()->mutable_shape();
+    for (auto d : tensorProto.dims()) {
+      auto* dim = output_shape->add_dim();
+      dim->set_dim_value(d);
+    }
+  }
+}
+
+// Infer shape of an output from the value of a specified attribute, which is expected
+// to be a list of integers specifying a valid shape.
+inline void propagateShapeFromAttributeToOutput(
+    InferenceContext& ctx,
+    const std::string& attributeName,
+    size_t outputIndex) {
+
+  auto attr_proto = ctx.getAttribute(attributeName);
+  if (nullptr == attr_proto) return; // attribute not present
+  if (!attr_proto->has_type()) return; // invalid attribute: has no type
+  if (attr_proto->type() != AttributeProto_AttributeType_INTS) return; // invalid attribute type
+  auto& int_list = attr_proto->ints();
+  TensorShapeProto shape;
+  for (auto dim_size : int_list) {
+    if (dim_size < 0) return; // invalid dimension size
+    shape.add_dim()->set_dim_value(dim_size);
+  }
+
+  updateOutputShape(ctx, outputIndex, shape);
 }
 
 } // namespace ONNX_NAMESPACE
