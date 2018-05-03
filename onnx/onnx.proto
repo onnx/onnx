@@ -431,7 +431,6 @@ message DenotationConstProto {
 // Types
 //
 // The standard ONNX data types.
-
 message TypeProto {
 
   message Tensor {
