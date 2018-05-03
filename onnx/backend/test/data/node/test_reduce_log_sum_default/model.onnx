@@ -1,7 +1,6 @@
-backend-test:†
-,
-datareduced"ReduceLogSum*
-axes@@ test_reduce_log_sum_defaultZ
+backend-test:w
+
+datareduced"ReduceLogSumtest_reduce_log_sum_defaultZ
 data
 
 
@@ -9,6 +8,6 @@
 b
 reduced
 
-
+
 
 B
