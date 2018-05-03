@@ -348,14 +348,14 @@ class TestShapeInference(unittest.TestCase):
     def test_reduce_op_shape_2_axis(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
-            [make_node('ReduceL1', 'x', 'y', axes=(1,2), keepdims=0)],
+            [make_node('ReduceL1', 'x', 'y', axes=(1, 2), keepdims=0)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24,))])
 
     def test_reduce_op_shape_keep_dims(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
-            [make_node('ReduceL1', 'x', 'y', axes=(1,2), keepdims=1)],
+            [make_node('ReduceL1', 'x', 'y', axes=(1, 2), keepdims=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24, 1, 1))])
 
@@ -369,7 +369,7 @@ class TestShapeInference(unittest.TestCase):
     def test_reduce_op_shape_negative_axis(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (24, 4, 11))],
-            [make_node('ReduceL1', 'x', 'y', axes = (-1, -2))],
+            [make_node('ReduceL1', 'x', 'y', axes=(-1, -2))],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24, 1, 1))])
 
@@ -400,6 +400,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('ArgMax', 'x', 'y', axis=-2)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (24, 1, 11))])
+
 
 if __name__ == '__main__':
     unittest.main()

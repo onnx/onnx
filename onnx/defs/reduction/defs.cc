@@ -1,8 +1,8 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include <functional>
 #include <algorithm>
+#include <functional>
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
@@ -43,8 +43,6 @@ False instead of True.)DOC";
       int64_t keep_dims = 1;
       auto attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
-        if (!attr_proto->has_i()) // incorrect attribtue
-          return;
         keep_dims = attr_proto->i();
       }
       auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
@@ -152,8 +150,6 @@ The type of the output tensor is integer.)DOC";
       int64_t axis = 0; // default to 0
       auto axis_proto = ctx.getAttribute("axis");
       if (axis_proto) {
-        if (!axis_proto->has_i()) // incorrect attribute
-          return;
         axis = axis_proto->i();
         if (axis < 0)
           axis += input_ndim;
@@ -162,8 +158,6 @@ The type of the output tensor is integer.)DOC";
       int64_t keep_dims = 1;
       auto attr_proto = ctx.getAttribute("keepdims");
       if (attr_proto) {
-        if (!attr_proto->has_i()) // incorrect attribute
-          return;
         keep_dims = attr_proto->i();
       }
       // do we need handle negative axis?
