@@ -591,24 +591,33 @@ if attribute transA is non-zero, same for B and transB.
         AttributeProto::FLOAT,
         1.0f)
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        if (hasNInputShapes(ctx, 2)) {
-          auto transAAttr = ctx.getAttribute("transA");
-          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
-          auto transBAttr = ctx.getAttribute("transB");
-          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasNInputShapes(ctx, 2)) {
+        auto transAAttr = ctx.getAttribute("transA");
+        bool transA =
+            transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+        auto transBAttr = ctx.getAttribute("transB");
+        bool transB =
+            transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
 
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+        *ctx.getOutputType(0)
+             ->mutable_tensor_type()
+             ->mutable_shape()
+             ->add_dim() =
             ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+        *ctx.getOutputType(0)
+             ->mutable_tensor_type()
+             ->mutable_shape()
+             ->add_dim() =
             ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
-        } else if (hasInputShape(ctx, 2) &&
-                   (!ctx.getAttribute("broadcast") ||
-                    static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
+      } else if (
+          hasInputShape(ctx, 2) &&
+          (!ctx.getAttribute("broadcast") ||
+           static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
+        *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
             ctx.getInputType(2)->tensor_type().shape();
-        }
-      });
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(MatMul)
     .Input(0, "A", "N-dimensional matrix A", "T")
@@ -620,7 +629,72 @@ ONNX_OPERATOR_SCHEMA(MatMul)
         "Constrain input and output types to float tensors.")
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
-)DOC");
+)DOC")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasNInputShapes(ctx, 2)) {
+        auto& left_shape = ctx.getInputType(0)->tensor_type().shape();
+        auto& right_shape = ctx.getInputType(1)->tensor_type().shape();
+        int left_num_dims = left_shape.dim_size();
+        int right_num_dims = right_shape.dim_size();
+        if (left_num_dims == 0 || right_num_dims == 0)
+          return;
+
+        bool has_1D_input = (left_num_dims == 1 || right_num_dims == 1);
+        int num_input_dims = std::max(left_num_dims, right_num_dims);
+        // output shape would squeeze the reduced 1D dimension
+        int num_output_dims = num_input_dims - (has_1D_input ? 1 : 0);
+
+        auto output_shape =
+            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+        int pad = std::abs(left_num_dims - right_num_dims);
+        if (pad > 0 && has_1D_input)
+          pad--;
+
+        int i = 0, j = 0;
+		//fill the pad dims first
+        auto* pad_shape =
+            left_num_dims > right_num_dims ? &left_shape : &right_shape;
+        int* pad_index = left_num_dims > right_num_dims ? &i : &j;
+        while (pad > 0) {
+          *(output_shape->add_dim()) = pad_shape->dim(*pad_index);
+          pad--;
+          (*pad_index)++;
+        }
+		// fill the broadcast dims
+        int left_matmul_start = left_num_dims == 1 ? 0 : left_num_dims - 2;
+        int right_matmul_start = right_num_dims == 1 ? 0 : right_num_dims - 2;
+
+        while (i < left_matmul_start && j < right_matmul_start) {
+          auto& left = left_shape.dim(i++);
+          auto& right = right_shape.dim(j++);
+          if (left.has_dim_value() && right.has_dim_value()) {
+            int64_t max = std::max(left.dim_value(), right.dim_value());
+            if ((max % left.dim_value() != 0 ||
+                 max % right.dim_value() != 0)) { // can't broadcast
+              output_shape->Clear();
+              return;
+            }
+            output_shape->add_dim()->set_dim_value(max);
+          } else if (
+              left.has_dim_param() && right.has_dim_param() &&
+              left.dim_param() == right.dim_param()) {
+            *(output_shape->add_dim()) = left;
+          } else { // only one side is symbolic shape or symbolic shape mismatch
+                   // don't know could it broadcast or not, fail it now.
+            output_shape->Clear();
+            return;
+          }
+        }
+		// the matmul part.
+        if (left_num_dims != 1) {
+          *(output_shape->add_dim()) = left_shape.dim(i);
+        }
+        if (right_num_dims != 1) {
+          *(output_shape->add_dim()) = right_shape.dim(j + 1);
+        }
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(TopK)
     .SetDoc(R"DOC(
@@ -653,10 +727,7 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .TypeConstraint(
-        "I",
-        {"tensor(int64)"},
-        "Constrain index tensor to int64")
+    .TypeConstraint("I", {"tensor(int64)"}, "Constrain index tensor to int64")
     .Attr("k", "Number of top elements to retrieve", AttributeProto::INT, true)
     .Attr(
         "axis",
