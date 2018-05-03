@@ -13,7 +13,7 @@ struct EliminateUnusedInitializer final : public OptimizePass {
   }
 
   void eliminate_unused_initializer(Graph& graph) {
-    std::unordered_set<std::string> new_initializer_names;
+    std::unordered_set<std::string> used_initializer_names;
     // get outputs unique names
     std::vector<std::string> outputs_unique_names;
     std::transform(
@@ -24,13 +24,13 @@ struct EliminateUnusedInitializer final : public OptimizePass {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
       DescendOnGraphAttributes(n, [this](Graph& g){eliminate_unused_initializer(g);});
-      // put all initializers used as input of any node to new vector
+      // put all initializers used as input of any node
       for (auto* input : n->inputs()) {
         if (std::find(
                 graph.initializer_names().begin(),
                 graph.initializer_names().end(),
                 input->uniqueName()) != graph.initializer_names().end()) {
-          new_initializer_names.insert(input->uniqueName());
+          used_initializer_names.insert(input->uniqueName());
         }
       }
     }
@@ -43,9 +43,9 @@ struct EliminateUnusedInitializer final : public OptimizePass {
         graph.initializer_names().begin(),
         graph.initializer_names().end(),
         std::back_inserter(removed_initializer_names),
-        [&new_initializer_names, &outputs_unique_names](std::string name) {
-          return new_initializer_names.find(name) ==
-              new_initializer_names.end() &&
+        [&used_initializer_names, &outputs_unique_names](std::string name) {
+          return used_initializer_names.find(name) ==
+              used_initializer_names.end() &&
               std::find(
                   outputs_unique_names.begin(),
                   outputs_unique_names.end(),
