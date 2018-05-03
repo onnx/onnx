@@ -5047,20 +5047,18 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="Upsample-1"></a>**Upsample-1**</a>
 
   Upsample the input tensor.
-  The width and height of the output tensor are:
-    output_width = floor(input_width * width_scale),
-    output_height = floor(input_height * height_scale).
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale),
   
   Example:
-    Given `data` tensor, width_scale, height_scale, mode,
+    Given `data` tensor, 'scales', 'mode',
     Upsample the input 4-D tensor in nearest mode:
   
     data = [[[
         [1, 2],
         [3, 4]
     ]]]
-    width_scale = 2
-    height_scale = 2
+    scales = [1,1,2,2]
     mode = "nearest"
   
     output = [[[
@@ -5077,26 +5075,24 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>height_scale</tt> : float (required)</dt>
-<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
 <dt><tt>mode</tt> : string</dt>
 <dd>Two interpolation modes: nearest(default), bilinear</dd>
-<dt><tt>width_scale</tt> : float (required)</dt>
-<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
+<dt><tt>scales</tt> : list of floats (required)</dt>
+<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>4-D tensor, [N,C,H,W]</dd>
+<dd>N-D tensor</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>4-D tensor after resizing, [N,C,H,W]</dd>
+<dd>N-D tensor after resizing</dd>
 </dl>
 
 #### Type Constraints

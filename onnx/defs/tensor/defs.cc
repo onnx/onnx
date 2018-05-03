@@ -823,7 +823,7 @@ ONNX_OPERATOR_SCHEMA(Upsample)
     .Attr(
         "scales",
         "The scale array along each dimension. It takes value greater than or equal to 1."
-		" The number of elements of scales should be the same as the rank of input X.",
+		" The number of elements of 'scales' should be the same as the rank of input 'X'.",
         AttributeProto::FLOATS)
     .Attr(
         "mode",
@@ -847,8 +847,8 @@ Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale),
 
 Example:
-  Given `data` tensor, scales, mode,
-  Upsample the input N-D tensor in nearest mode:
+  Given `data` tensor, 'scales', 'mode',
+  Upsample the input 4-D tensor in nearest mode:
 
   data = [[[
       [1, 2],

@@ -18,8 +18,7 @@ class Upsample(Base):
             'Upsample',
             inputs=['x'],
             outputs=['y'],
-            height_scale=2.0,
-            width_scale=3.0,
+            scales=[1,1,2,3],
             mode='nearest',
         )
 
