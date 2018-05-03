@@ -386,7 +386,7 @@ class TestShapeInference(unittest.TestCase):
              ('var', TensorProto.FLOAT, (4,))],
             [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'], is_test=0)],
             [])
-        self._assert_inferred(graph, [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 
     def test_softmax(self):
         graph = self._make_graph(
