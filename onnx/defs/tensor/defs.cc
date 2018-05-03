@@ -743,8 +743,7 @@ ONNX_OPERATOR_SCHEMA(SpaceToDepth)
     .Attr(
         "blocksize",
         "Blocks of [blocksize, blocksize] are moved.",
-        AttributeProto::INT,
-        OPTIONAL)
+        AttributeProto::INT)
     .SetDoc(
         R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
@@ -770,8 +769,7 @@ ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr(
         "blocksize",
         "Blocks of [blocksize, blocksize] are moved.",
-        AttributeProto::INT,
-        OPTIONAL)
+        AttributeProto::INT)
     .SetDoc(
         R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
