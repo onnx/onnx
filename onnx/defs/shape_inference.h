@@ -49,10 +49,8 @@ inline void propagateElemTypeFromInputToOutput(
 }
 
 inline bool hasInputShape(InferenceContext& ctx, int n) {
-  if (static_cast<int>(ctx.getNumInputs()) < n) {
-    throw std::runtime_error("operator has too few inputs");
-  }
-  return ctx.getInputType(n) &&
+  return ctx.getNumInputs() > static_cast<size_t>(n) &&
+    ctx.getInputType(n) &&
     ctx.getInputType(n)->has_tensor_type() &&
     ctx.getInputType(n)->tensor_type().has_shape();
 }
