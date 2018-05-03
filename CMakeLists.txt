@@ -13,7 +13,7 @@ option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 
-option(ONNX_BUILD_TESTS "Build ONNX micro-benchmarks" OFF)
+option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -346,9 +346,5 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
     FILES_MATCHING
     PATTERN "*.h")
 if(ONNX_BUILD_TESTS)
-    include_directories(
-        ${ONNX_ROOT}
-        ${CMAKE_CURRENT_BINARY_DIR}
-    )
 	include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()

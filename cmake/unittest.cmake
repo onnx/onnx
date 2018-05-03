@@ -19,11 +19,7 @@ set(${UT_NAME}_libs
     ${googletest_STATIC_LIBRARIES}
 )
 
-if(NOT TARGET protobuf::libprotobuf)
-  list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARY})
-  # Link the library as CMakeList did
-  list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
-endif()
+list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 add_whole_archive_flag(onnx_proto tmp)
 list(APPEND ${UT_NAME}_libs ${tmp})
@@ -43,7 +39,7 @@ function(AddTest)
   add_executable(${_UT_TARGET} ${_UT_SOURCES})
   add_dependencies(${_UT_TARGET} onnx onnx_proto googletest)
 
-  target_include_directories(${_UT_TARGET} PUBLIC ${googletest_INCLUDE_DIRS} ${onnx_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS})
+  target_include_directories(${_UT_TARGET} PUBLIC ${googletest_INCLUDE_DIRS} ${ONNX_INCLUDE_DIRS} ${PROTOBUF_INCLUDE_DIRS} ${ONNX_ROOT} ${CMAKE_CURRENT_BINARY_DIR})
   target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT})
   if(TARGET protobuf::libprotobuf)
     target_link_libraries(${_UT_TARGET} protobuf::libprotobuf)
