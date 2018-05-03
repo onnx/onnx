@@ -473,7 +473,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>The axis in which to compute the arg indices</dd>
+<dd>The axis in which to compute the arg indices. Default is 0.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -515,7 +515,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>The axis in which to compute the arg indices</dd>
+<dd>The axis in which to compute the arg indices. Default is 0.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -1606,7 +1606,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>blocksize</tt> : int</dt>
+<dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
 </dl>
 
@@ -2315,9 +2315,9 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 
 <dl>
 <dt><tt>activation_alpha</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.For example with LeakyRelu, the default alpha is 0.01.</dd>
 <dt><tt>activation_beta</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 2 (or 4 if bidirectional) activation functions for update, reset, and hidden gates. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
@@ -3307,9 +3307,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>activation_alpha</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.For example with LeakyRelu, the default alpha is 0.01.</dd>
 <dt><tt>activation_beta</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>A list of 3 (or 6 if bidirectional) activation functions for input, output, forget, cell, and hidden. The activation functions must be one of the activation functions specified above. Optional: See the equations for default if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
@@ -5413,9 +5413,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>activation_alpha</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.For example with LeakyRelu, the default alpha is 0.01.</dd>
 <dt><tt>activation_beta</tt> : list of floats</dt>
-<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM.</dd>
+<dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
 <dt><tt>activations</tt> : list of strings</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
@@ -5802,7 +5802,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -5846,7 +5846,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -5890,7 +5890,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -5934,7 +5934,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -5978,7 +5978,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -6022,7 +6022,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -6066,7 +6066,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -6110,7 +6110,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -6154,7 +6154,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -6198,7 +6198,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>A list of integers, along which to reduce.</dd>
+<dd>A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor.</dd>
 <dt><tt>keepdims</tt> : int</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -7084,7 +7084,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>blocksize</tt> : int</dt>
+<dt><tt>blocksize</tt> : int (required)</dt>
 <dd>Blocks of [blocksize, blocksize] are moved.</dd>
 </dl>
 

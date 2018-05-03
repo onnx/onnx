@@ -112,6 +112,7 @@ will throw errors.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
 }
 
