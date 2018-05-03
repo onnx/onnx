@@ -5076,7 +5076,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>mode</tt> : string</dt>
-<dd>Two interpolation modes: nearest(default), bilinear</dd>
+<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
 <dt><tt>scales</tt> : list of floats (required)</dt>
 <dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>

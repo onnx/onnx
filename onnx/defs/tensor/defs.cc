@@ -827,7 +827,7 @@ ONNX_OPERATOR_SCHEMA(Upsample)
         AttributeProto::FLOATS)
     .Attr(
         "mode",
-        "Two interpolation modes: nearest(default), bilinear",
+        "Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)",
         AttributeProto::STRING,
         std::string("nearest"))
     .Input(0, "X", "N-D tensor", "T")
