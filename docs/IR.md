@@ -123,7 +123,7 @@ operator|Operator[]|The operators of this operator set.
 
 The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published.
 
-Operator sets other than the default operator set MUST specify its domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
+Operator sets other than the default operator set MUST specify its domain and SHOULD use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 ### Operators
 
@@ -142,7 +142,7 @@ The version value MUST be the same value as the operator set version when the op
 
 The ‘status’ property indicates whether the syntax, semantics, or presence of the operator is in an experimental or stable stage. Once an operator is published as STABLE, it’s syntax and semantics MUST NOT change in subsequent versions of the operator set.
 
-There are two distinct ways to pass information to operators – inputs and attributes. The latter are used for values that are literal constants in the graph, while the former represent graph inputs or values computed elsewhere in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
+There are two distinct ways to pass information to operators – inputs and attributes. The latter are used for values that are constants in the graph, while the former represent graph inputs or values computed elsewhere in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
 
 ### Graphs
 
@@ -160,7 +160,7 @@ initializer|Tensor[]|A list of named tensor values, used to specify default valu
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
-value_info|ValueInfo|__TODO: Write this description__
+value_info|ValueInfo|Used to store the type and shape information of values that are not inputs or outputs.
 
 Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
@@ -171,6 +171,8 @@ type|Type|The type of the value.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
 Each graph MUST specify a name.
+
+The graph MUST adhere to single static assignment (SSA) for all node outputs; this means that all node output names MUST be unique within a graph.
 
 Graphs SHOULD be populated with documentation strings, which MAY be interpreted using GitHub-style markdown syntax. HTML and other text-markup languages MAY NOT be used in documentation strings.
 
