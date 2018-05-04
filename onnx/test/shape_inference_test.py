@@ -327,6 +327,27 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])
 
+    def test_constant_fill(self):
+        graph = self._make_graph(
+            [],
+            [make_node('ConstantFill', [], ['out'], dtype=TensorProto.INT, shape=(3, 4, 5))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT, (3, 4, 5))])
+
+    def test_constant_fill_with_input(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT, (2, 3, 4))])
+
+    def test_constant_fill_with_extra_shape(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT, extra_shape=(5))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT, (2, 3, 4, 5))])
+
     def test_gemm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
