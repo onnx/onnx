@@ -360,6 +360,54 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])
 
+    def test_matmul_shape(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 5, 7)),
+             ('y', TensorProto.FLOAT, (2, 3, 7, 11))],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 5, 11))])
+
+    def test_matmul_shape_left_broadcast(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 5, 4, 6, 5, 7)),
+             ('y', TensorProto.FLOAT, (2, 3, 7, 11))],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 5, 4, 6, 5, 11))])
+
+    def test_matmul_shape_right_broadcast(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 5, 7)),
+             ('y', TensorProto.FLOAT, (2, 5, 4, 6, 7, 11))],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 5, 4, 6, 5, 11))])
+
+    def test_matmul_shape_1d_tensor(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (7, )),
+             ('y', TensorProto.FLOAT, (2, 3, 7, 11))],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 11))])
+
+    def test_matmul_shape_1d_both_side(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (7, )),
+             ('y', TensorProto.FLOAT, (7, ))],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ())])
+
+    def test_matmul_shape_symbolic(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ('X', 'Z', 7)),
+             ('y', TensorProto.FLOAT, ('Y', 'X', 7, 11))],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ('Y', 'X', 'Z', 11))])
+
     def test_dropout(self):
         self._identity_prop('Dropout')
 
@@ -395,6 +443,6 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5))])
 
-
+        
 if __name__ == '__main__':
     unittest.main()
