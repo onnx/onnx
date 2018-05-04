@@ -5048,25 +5048,11 @@ This version of the operator has been available since version 1 of the default O
 
   Upsample the input tensor.
   Each dimension value of the output tensor is:
-    output_dimension = floor(input_dimension * scale),
+    output_dimension = floor(input_dimension * scale).
   
   Example:
     Given `data` tensor, 'scales', 'mode',
     Upsample the input 4-D tensor in nearest mode:
-  
-    data = [[[
-        [1, 2],
-        [3, 4]
-    ]]]
-    scales = [1,1,2,2]
-    mode = "nearest"
-  
-    output = [[[
-        [1, 1, 2, 2],
-        [1, 1, 2, 2],
-        [3, 3, 4, 4],
-        [3, 3, 4, 4]
-    ]]]
 
 #### Version
 
@@ -5098,8 +5084,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input/output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Xor-1"></a>**Xor-1**</a>
