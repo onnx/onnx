@@ -20,6 +20,7 @@ class Gemm(Base):
             outputs=['y'],
             alpha=0.5,
             beta=0.5,
+            broadcast=1,
             transA=1,
             transB=1
         )
