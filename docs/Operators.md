@@ -997,25 +997,6 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 </dl>
 
 
-#### Examples
-
-<details>
-<summary>batchnormalization</summary>
-
-```python
-node = onnx.helper.make_node(
-    'BatchNormalization',
-    inputs=['X', 'scale', 'B', 'mean', 'var'],
-    outputs=['y'],
-    kernel_shape=[5, 5],
-    pads=[2, 2, 2, 2]
-
-)
-```
-
-</details>
-
-
 ### <a name="Cast"></a><a name="cast">**Cast**</a>
 
   The operator casts the elements of a given input tensor to a data type
