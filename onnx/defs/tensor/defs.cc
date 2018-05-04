@@ -835,33 +835,14 @@ ONNX_OPERATOR_SCHEMA(Upsample)
     .Output(0, "Y", "N-D tensor after resizing", "T")
     .TypeConstraint(
         "T",
-        {"tensor(bool)",
-         "tensor(int32)",
-         "tensor(int64)",
-         "tensor(float16)",
-         "tensor(float)",
-         "tensor(double)"},
-        "Constrain output types to bool, int32, int64, float16, float, double tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain input/output types to all tensor types.")
     .SetDoc(R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
-  output_dimension = floor(input_dimension * scale),
+  output_dimension = floor(input_dimension * scale).
 
 Example:
   Given `data` tensor, 'scales', 'mode',
   Upsample the input 4-D tensor in nearest mode:
-
-  data = [[[
-      [1, 2],
-      [3, 4]
-  ]]]
-  scales = [1,1,2,2]
-  mode = "nearest"
-
-  output = [[[
-      [1, 1, 2, 2],
-      [1, 1, 2, 2],
-      [3, 3, 4, 4],
-      [3, 3, 4, 4]
-  ]]]
 )DOC");
