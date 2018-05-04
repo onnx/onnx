@@ -385,7 +385,7 @@ Example 2:
                            ->mutable_tensor_type()
                            ->mutable_shape()
                            ->add_dim();
-        if (j < axes.size() && axes[j] == i) {
+        if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
           // There's a lot of potential behaviors. For now just
           // handle some simple cases.
           if (ctx.getInputType(0)
@@ -702,7 +702,8 @@ Example:
       std::vector<int64_t> pads;
       if (!getRepeatedAttribute(ctx, "pads", pads) ||
           pads.size() !=
-              ctx.getInputType(0)->tensor_type().shape().dim_size() * 2) {
+              static_cast<size_t>(
+                  ctx.getInputType(0)->tensor_type().shape().dim_size() * 2)) {
         return;
       }
 
@@ -823,7 +824,7 @@ ONNX_OPERATOR_SCHEMA(Upsample)
     .Attr(
         "scales",
         "The scale array along each dimension. It takes value greater than or equal to 1."
-		" The number of elements of 'scales' should be the same as the rank of input 'X'.",
+        " The number of elements of 'scales' should be the same as the rank of input 'X'.",
         AttributeProto::FLOATS)
     .Attr(
         "mode",
