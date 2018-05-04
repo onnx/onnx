@@ -841,8 +841,4 @@ ONNX_OPERATOR_SCHEMA(Upsample)
 Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
-
-Example:
-  Given `data` tensor, 'scales', 'mode',
-  Upsample the input 4-D tensor in nearest mode:
 )DOC");
