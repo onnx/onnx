@@ -35,6 +35,7 @@
   * <a href="#Greater">Greater</a>
   * <a href="#HardSigmoid">HardSigmoid</a>
   * <a href="#Hardmax">Hardmax</a>
+  * <a href="#Identity">Identity</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
   * <a href="#LRN">LRN</a>
   * <a href="#LSTM">LSTM</a>
@@ -102,7 +103,6 @@
   * <sub>experimental</sub> <a href="#FC">FC</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
-  * <sub>experimental</sub> <a href="#Identity">Identity</a>
   * <sub>experimental</sub> <a href="#If">If</a>
   * <sub>experimental</sub> <a href="#ImageScaler">ImageScaler</a>
   * <sub>experimental</sub> <a href="#Loop">Loop</a>
@@ -3118,6 +3118,60 @@ node = onnx.helper.make_node(
 y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_2')
+```
+
+</details>
+
+
+### <a name="Identity"></a><a name="identity">**Identity**</a>
+
+  Identity operator
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor to copy input into.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>identity</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Identity',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[data],
+       name='test_identity')
 ```
 
 </details>
@@ -8445,36 +8499,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>The filled tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="Identity"></a><a name="identity">**Identity**</a>
-
-  Identity operator
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor to copy input into.</dd>
 </dl>
 
 #### Type Constraints

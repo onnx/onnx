@@ -780,3 +780,14 @@ For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4,
         "T1",
         {"tensor(int64)"},
         "Constrain repeat's type to int64 tensors.");
+
+ONNX_OPERATOR_SCHEMA(Identity)
+.SetDoc("Identity operator")
+.Input(0, "input", "Input tensor", "T")
+.Output(
+	0,
+	"output",
+	"Tensor to copy input into.",
+	"T")
+	.TypeConstraint("T", OpSchema::all_tensor_types(),
+		"Constrain input and output types to all tensor types.");
