@@ -226,9 +226,17 @@ The list of nodes defining the top-level computation graph MUST be ordered topol
 
 Node attributes are used to pass literal (static) values to operators.
 
+#### Input and Output Values
+
+The representation distinguishes between two kinds of values: attribute values, which are statically known, and input/output values. The types of values permitted in the two cases are different.
+
+Input and output values are found as graph inputs, outputs, and initializers, and as node inputs and outputs. Their values are determined at runtime, either by the code that initiates model execution, or by operators computing output values.
+
 #### Attributes
 
-Attributes, which represent literal constants passed to operators from nodes, have the following properties:
+Attribute values are only found in nodes, passed to operators by name association. Attribute values are runtime constants, in that their values are determined when a model graph is constructed and therfore not computed at runtime. A common use for attributes is to represent coefficients established during model training.
+
+Attributes have the following properties:
 
 Name|Type|Description
 |---|---|---|
@@ -247,14 +255,6 @@ tensors|Tensor[]|A list of tensor values.
 graphs|Graph[]|A list of graphs.
 
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
-
-#### Values
-
-The representation distinguishes between two kinds of values: attribute values, which are statically known, and runtime values. The types of values permitted in the two cases are different.
-
-Attribute values are only found in nodes, passed to operators by name association. Attribute values are runtime constants, in that their value is determined when a model graph is constructed.
-
-Runtime values are found as graph inputs, outputs, and initializers, and as node inputs and outputs. Their values are determined at runtime, either by the code that initiates model execution, or by operators computing output values.
 
 
 #### Variadic Inputs and Outputs
