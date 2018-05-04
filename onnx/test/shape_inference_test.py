@@ -306,6 +306,27 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (30, 4, 5))])
 
+    def test_random_normal(self):
+        graph = self._make_graph(
+            [],
+            [make_node('RandomNormal', [], ['out'], dtype=TensorProto.DOUBLE, shape=(3, 4, 5))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (3, 4, 5))])
+
+    def test_random_normal_like(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('RandomNormalLike', ['X'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (2, 3, 4))])
+
+    def test_random_normal_like_with_dtype(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('RandomNormalLike', ['X'], ['out'], dtype=TensorProto.DOUBLE,)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])
+
     def test_gemm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
