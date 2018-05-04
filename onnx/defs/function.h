@@ -37,7 +37,7 @@ class FunctionBuilderRegistry {
   Status GetFunctions(
       const std::string& domain,
       /*out*/
-      std::multimap<std::string, std::shared_ptr<FunctionProto>>* function_set)
+      std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
       const;
 
   static FunctionBuilderRegistry& OnnxInstance();

@@ -36,7 +36,7 @@ Status FunctionBuilderRegistry::Register(
 Status FunctionBuilderRegistry::GetFunctions(
     const std::string& domain,
     /*out*/
-    std::multimap<std::string, std::shared_ptr<FunctionProto>>* function_set)
+    std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
     const {
   if (nullptr == function_set) {
     return Common::Status(
