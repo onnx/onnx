@@ -11,7 +11,7 @@ namespace Common {
 
 enum StatusCategory {
   NONE = 0,
-  OPSCHEMA = 1,
+  CHECKER = 1,
   OPTIMIZER = 2,
 };
 

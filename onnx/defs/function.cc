@@ -3,6 +3,7 @@
 
 #include "onnx/defs/function.h"
 #include "onnx/checker.h"
+#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 using namespace checker;
@@ -39,7 +40,7 @@ Status FunctionBuilderRegistry::GetFunctions(
     const {
   if (nullptr == function_set) {
     return Common::Status(
-        Common::OPSCHEMA,
+        Common::CHECKER,
         Common::INVALID_ARGUMENT,
         "function_set should not be nullptr.");
   }
@@ -48,7 +49,7 @@ Status FunctionBuilderRegistry::GetFunctions(
     if (func_builder.GetDomain() != domain) {
       continue;
     }
-    std::shared_ptr<FunctionProto> function_proto;
+    std::unique_ptr<FunctionProto> function_proto;
     auto status = func_builder.GetBuildFunction()(&function_proto);
     if (!status.IsOK()) {
       return status;
@@ -60,7 +61,7 @@ Status FunctionBuilderRegistry::GetFunctions(
       check_function(*function_proto, ctx, lex_ctx);
     } catch (ValidationError& ex) {
       return Common::Status(
-          Common::OPSCHEMA, Common::INVALID_PROTOBUF, ex.what());
+          Common::CHECKER, Common::INVALID_PROTOBUF, ex.what());
     }
 
     auto& func_name = function_proto->name();
@@ -71,13 +72,17 @@ Status FunctionBuilderRegistry::GetFunctions(
       if (function_proto->since_version() == version) {
         // There's already a function with same name/since_version registered.
         return Common::Status(
-            Common::OPSCHEMA,
+            Common::CHECKER,
             Common::FAIL,
-            "A function (" + func_name + ") with version (" +
-                std::to_string(version) + ") has already been registered.");
+            ONNX_NAMESPACE::MakeString(
+                "A function (",
+                func_name,
+                ") with version (",
+                version,
+                ") has already been registered."));
       }
     }
-    function_set->emplace(func_name, function_proto);
+    function_set->emplace(func_name, std::move(function_proto));
   }
 
   return Common::Status::OK();

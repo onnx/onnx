@@ -1,5 +1,6 @@
 #include "status.h"
 #include <assert.h>
+#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace Common {
@@ -35,14 +36,14 @@ std::string Status::ToString() const {
 
   std::string result;
 
-  if (StatusCategory::OPSCHEMA == state_->category) {
-    result += "[OpSchemaError]";
+  if (StatusCategory::CHECKER == state_->category) {
+    result += "[CheckerError]";
   } else if (StatusCategory::OPTIMIZER == state_->category) {
     result += "[OptimizerError]";
   }
 
   result += " : ";
-  result += std::to_string(Code());
+  result += ONNX_NAMESPACE::to_string(Code());
   std::string msg;
 
   switch (static_cast<StatusCode>(Code())) {
