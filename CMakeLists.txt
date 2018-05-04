@@ -12,6 +12,7 @@ project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
+option(ONNX_NO_WERROR "Disable use of Werror" OFF)
 
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
@@ -328,7 +329,9 @@ if (MSVC)
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
 elseif(APPLE)
 else()
-  target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
+  if (NOT ${ONNX_NO_WERROR})
+    target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
+  endif()
 endif()
 
 if(APPLE)
