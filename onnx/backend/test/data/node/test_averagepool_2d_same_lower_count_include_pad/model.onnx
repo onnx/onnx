@@ -1,0 +1,19 @@
+backend-test:Í
+_
+xy"AveragePool*
+auto_pad"
+SAME_LOWER *
+count_include_pad *
+kernel_shape@@ 0test_averagepool_2d_same_lower_count_include_padZ
+x
+
+
+
+ 
+ b
+y
+
+
+
+ 
+ B
