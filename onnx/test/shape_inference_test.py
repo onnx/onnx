@@ -330,23 +330,23 @@ class TestShapeInference(unittest.TestCase):
     def test_constant_fill(self):
         graph = self._make_graph(
             [],
-            [make_node('ConstantFill', [], ['out'], dtype=TensorProto.INT, shape=(3, 4, 5))],
+            [make_node('ConstantFill', [], ['out'], dtype=TensorProto.INT32, shape=(3, 4, 5))],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT, (3, 4, 5))])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (3, 4, 5))])
 
     def test_constant_fill_with_input(self):
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
-            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT)],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT, (2, 3, 4))])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4))])
 
     def test_constant_fill_with_extra_shape(self):
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (2, 3, 4))],
-            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT, extra_shape=(5))],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32, extra_shape=(5,6))],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT, (2, 3, 4, 5))])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4, 5, 6))])
 
     def test_gemm(self):
         graph = self._make_graph(
