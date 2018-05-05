@@ -252,6 +252,11 @@ message GraphProto {
   // Information for the values in the graph. The ValueInfoProto.name's
   // must be distinct. It is optional for a value to appear in value_info list.
   repeated ValueInfoProto value_info = 13;
+  
+  // Functions referred by this graph. A function is a subgraph composed of
+  // primitive ONNX ops. A node may use function graph's name as its op_type
+  // when referring to a function instead of a primitive ONNX op.
+  repeated GraphProto function = 14;
 
   // DO NOT USE the following fields, they were deprecated before
   // repeated string input = 3;

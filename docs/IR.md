@@ -125,3 +125,11 @@ A model allows named metadata strings to be added via its `metadata_props` field
 ### Operators
 
 Operators may be extended via custom domain names in the `opset_import` field.
+
+### Function
+A function is a subgraph composed of primitive ONNX ops. A node in a model (main graph) may invoke a function, just like a primitive ONNX op.
+The meaning of a model that contains function invocations is the same as that of the graph obtained by unfolding (inlining) every function-invocation node
+by the corresponding subgraph (after replacing the formal input and output parameter names by the corresponding actual parameter names).
+Functions enable a more compact representation of a graph. It also provides a way to name a subgraph and makes it easier to describe a partition
+of the entire model into different subgraphs. A function’s subgraph can be executed using an optimized kernel by a runtime if it has one for that subgraph.
+Otherwise, it can use the kernels of the primitive ONNX ops to execute the subgraph.
