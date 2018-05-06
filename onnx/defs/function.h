@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "onnx/common/status.h"
+#include "onnx/defs/schema.h"
 #include "onnx/onnx-operators_pb.h"
 
 namespace ONNX_NAMESPACE {
@@ -27,9 +28,17 @@ class FunctionBuilder {
   BuildFunction build_func_;
 };
 
+using FuncName_Domain_Version_Proto_Map = std::unordered_map<
+    std::string,
+    std::unordered_map<
+        std::string,
+        std::map<OperatorSetVersion, FunctionProto>>>;
+
 class FunctionBuilderRegistry {
  public:
-  FunctionBuilderRegistry() = default;
+  FunctionBuilderRegistry(
+      const std::unordered_map<std::string, std::pair<int, int>>&
+          domain_version_range);
 
   // Register function proto builder.
   // This is not thread-safe.
@@ -41,14 +50,15 @@ class FunctionBuilderRegistry {
 
   // Get all function protos.
   // This should be called after Init() function call.
-  const std::multimap<std::string, FunctionProto>& GetFunctions() const;
+  const FuncName_Domain_Version_Proto_Map& GetFunctions() const;
 
   static FunctionBuilderRegistry& OnnxInstance();
 
  private:
-  std::vector<FunctionBuilder> function_builders;
-  std::multimap<std::string, FunctionProto> function_set_;
+  std::vector<FunctionBuilder> function_builders_;
+  FuncName_Domain_Version_Proto_Map function_set_;
   std::unique_ptr<Status> init_status_;
+  std::unordered_map<std::string, std::pair<int, int>> domain_version_range_;
 };
 
 #define ONNX_FUNCTION(function_builder) \
@@ -62,7 +72,7 @@ class FunctionBuilderRegistry {
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
 // Example to register a function.
-//Common::Status BuildFc(FunctionProto* func_proto) {
+// Common::Status BuildFc(FunctionProto* func_proto) {
 //  if (nullptr == func_proto) {
 //    return Status(
 //        Common::CHECKER,
@@ -80,6 +90,6 @@ class FunctionBuilderRegistry {
 //  return Status::OK();
 //}
 //
-//ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
+// ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
 
 } // namespace ONNX_NAMESPACE
