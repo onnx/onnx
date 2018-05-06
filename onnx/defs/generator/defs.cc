@@ -225,3 +225,53 @@ TensorProto message, and be valid as an output type.
         }
         propagateShapeFromInputToOutput(ctx, 0, 0);
     });
+
+ONNX_OPERATOR_SCHEMA(Multinomial)
+.SetDoc(R"DOC(
+Generate a tensor of samples from a multinomial distribution according to the probabilities
+of each of the possible outcomes.
+)DOC")
+.Attr(
+	"sample_size",
+	"Number of times to sample.",
+	AttributeProto::INT,
+	static_cast<int64_t>(0))
+	.Attr(
+		"seed",
+		"(Optional) Seed to the random generator, if not specified we will auto generate one.",
+		AttributeProto::FLOAT,
+		OPTIONAL)
+	.Input(
+		0,
+		"input",
+		"Input tensor with shape [batch_size, class_size], where class_size is the number of all possible outcomes.", "T1")
+	.Output(
+		0,
+		"output",
+		"Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. ", "T2")
+	.TypeConstraint(
+		"T1",
+		{ "tensor(float16)", "tensor(float)", "tensor(double)" },
+		"Constrain input types to float tensors.")
+	.TypeConstraint(
+		"T2",
+		{ "tensor(int32)", "tensor(int64)" },
+		"Constrain output types to integral tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	auto output_type = ctx.getOutputType(0);
+	auto input_type = ctx.getInputType(0);
+	if (TypeProto::kTensorType != output_type->value_case() ||
+		TypeProto::kTensorType != input_type->value_case()) {
+		return;
+	}
+	auto sample_size = ctx.getAttribute("sample_size");
+	if (nullptr == sample_size ||   // attribute not present
+		!sample_size->has_type() || // invalid attribute : has no type
+		sample_size->type() != AttributeProto_AttributeType_INT) { // invalid attribute type
+		return;
+	}
+	auto shape = output_type->mutable_tensor_type()->mutable_shape();
+	auto dim = shape->add_dim();
+	*dim = input_type->tensor_type().shape().dim(static_cast<int>(0));
+	shape->add_dim()->set_dim_value(sample_size->i());
+});
