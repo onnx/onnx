@@ -13,7 +13,7 @@
 namespace ONNX_NAMESPACE {
 using namespace Common;
 
-typedef Common::Status (*BuildFunction)(std::unique_ptr<FunctionProto>*);
+typedef Common::Status (*BuildFunction)(FunctionProto*);
 
 class FunctionBuilder {
  public:
@@ -31,20 +31,24 @@ class FunctionBuilderRegistry {
  public:
   FunctionBuilderRegistry() = default;
 
+  // Register function proto builder.
+  // This is not thread-safe.
   Status Register(const FunctionBuilder& function_builder);
 
-  // Get functions for specific domain.
-  Status GetFunctions(
-      const std::string& domain,
-      /*out*/
-      std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-      const;
+  // Initialize function protos hold by this registry.
+  // This is not thread-safe.
+  Status Init();
+
+  // Get all function protos.
+  // This should be called after Init() function call.
+  const std::multimap<std::string, FunctionProto>& GetFunctions() const;
 
   static FunctionBuilderRegistry& OnnxInstance();
 
  private:
   std::vector<FunctionBuilder> function_builders;
-  std::mutex mutex_;
+  std::multimap<std::string, FunctionProto> function_set_;
+  std::unique_ptr<Status> init_status_;
 };
 
 #define ONNX_FUNCTION(function_builder) \
@@ -58,7 +62,7 @@ class FunctionBuilderRegistry {
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
 // Example to register a function.
-// Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
+//Common::Status BuildFc(FunctionProto* func_proto) {
 //  if (nullptr == func_proto) {
 //    return Status(
 //        Common::CHECKER,
@@ -66,18 +70,16 @@ class FunctionBuilderRegistry {
 //        "func_proto should not be nullptr.");
 //  }
 //
-//  func_proto->reset(new FunctionProto);
-//  auto& func = **func_proto;
-//  func.set_name("FC");
-//   set function inputs.
-//   set function outputs.
-//   set function attributes.
-//   set function description.
-//   set function body (nodes).
+//  func_proto->set_name("FC");
+//  // set function inputs.
+//  // set function outputs.
+//  // set function attributes.
+//  // set function description.
+//  // set function body (nodes).
 //
 //  return Status::OK();
 //}
 //
-// ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
+//ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
 
 } // namespace ONNX_NAMESPACE

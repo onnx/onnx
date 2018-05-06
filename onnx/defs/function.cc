@@ -27,51 +27,47 @@ BuildFunction FunctionBuilder::GetBuildFunction() const {
 
 Status FunctionBuilderRegistry::Register(
     const FunctionBuilder& function_builder) {
-  std::lock_guard<std::mutex> lock(mutex_);
   function_builders.push_back(function_builder);
   return Status::OK();
 }
 
+const std::multimap<std::string, FunctionProto>&
+FunctionBuilderRegistry::GetFunctions() const {
+  return function_set_;
+}
+
 // Get functions for specific domain.
-Status FunctionBuilderRegistry::GetFunctions(
-    const std::string& domain,
-    /*out*/
-    std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-    const {
-  if (nullptr == function_set) {
-    return Common::Status(
-        Common::CHECKER,
-        Common::INVALID_ARGUMENT,
-        "function_set should not be nullptr.");
+Status FunctionBuilderRegistry::Init() {
+  if (nullptr != init_status_) {
+    return *init_status_;
   }
 
+  init_status_.reset(new Status());
   for (auto func_builder : function_builders) {
-    if (func_builder.GetDomain() != domain) {
-      continue;
-    }
-    std::unique_ptr<FunctionProto> function_proto;
-    auto status = func_builder.GetBuildFunction()(&function_proto);
-    if (!status.IsOK()) {
-      return status;
+    FunctionProto function_proto;
+	*init_status_ = func_builder.GetBuildFunction()(&function_proto);
+    if (!init_status_->IsOK()) {
+      return *init_status_;
     }
 
     CheckerContext ctx;
     LexicalScopeContext lex_ctx;
     try {
-      check_function(*function_proto, ctx, lex_ctx);
+      check_function(function_proto, ctx, lex_ctx);
     } catch (ValidationError& ex) {
-      return Common::Status(
-          Common::CHECKER, Common::INVALID_PROTOBUF, ex.what());
+      init_status_.reset(
+          new Status(Common::CHECKER, Common::INVALID_PROTOBUF, ex.what()));
+      return *init_status_;
     }
 
-    auto& func_name = function_proto->name();
+    auto& func_name = function_proto.name();
     // Check no op version conflicts.
-    auto range = function_set->equal_range(func_name);
+    auto range = function_set_.equal_range(func_name);
     for (auto i = range.first; i != range.second; ++i) {
-      auto version = i->second->since_version();
-      if (function_proto->since_version() == version) {
+      auto version = i->second.since_version();
+      if (function_proto.since_version() == version) {
         // There's already a function with same name/since_version registered.
-        return Common::Status(
+        init_status_.reset(new Status(
             Common::CHECKER,
             Common::FAIL,
             ONNX_NAMESPACE::MakeString(
@@ -79,13 +75,14 @@ Status FunctionBuilderRegistry::GetFunctions(
                 func_name,
                 ") with version (",
                 version,
-                ") has already been registered."));
+                ") has already been registered.")));
+        return *init_status_;
       }
     }
-    function_set->emplace(func_name, std::move(function_proto));
+    function_set_.emplace(func_name, std::move(function_proto));
   }
 
-  return Common::Status::OK();
+  return *init_status_;
 }
 
 FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
