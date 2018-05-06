@@ -51,6 +51,7 @@
   * <a href="#Mean">Mean</a>
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
+  * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
   * <a href="#Not">Not</a>
   * <a href="#Or">Or</a>
@@ -4760,6 +4761,48 @@ expect(node, inputs=[x, y], outputs=[z],
 ```
 
 </details>
+
+
+### <a name="Multinomial"></a><a name="multinomial">**Multinomial**</a>
+
+  Generate a tensor of samples from a multinomial distribution according to the probabilities
+  of each of the possible outcomes.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>sample_size</tt> : int</dt>
+<dd>Number of times to sample.</dd>
+<dt><tt>seed</tt> : float</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor with shape [batch_size, class_size], where class_size is the number of all possible outcomes.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. </dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain output types to integral tensors.</dd>
+</dl>
 
 
 ### <a name="Neg"></a><a name="neg">**Neg**</a>
