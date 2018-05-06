@@ -790,4 +790,5 @@ ONNX_OPERATOR_SCHEMA(Identity)
 	"Tensor to copy input into.",
 	"T")
 	.TypeConstraint("T", OpSchema::all_tensor_types(),
-		"Constrain input and output types to all tensor types.");
+		"Constrain input and output types to all tensor types.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);

@@ -11,6 +11,7 @@ import unittest
 
 import numpy as np
 
+
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self, seed_values, nodes, value_info):
         input_value_infos = []
@@ -102,16 +103,16 @@ class TestShapeInference(unittest.TestCase):
     def test_matmul_all_dims_known(self):
         self._make_matmul_test_all_dims_known((2,), (2,))
 
-        self._make_matmul_test_all_dims_known((4,2), (2,4))
-        self._make_matmul_test_all_dims_known((5,2), (2,4))
-        self._make_matmul_test_all_dims_known((5,2), (2,1))
-        self._make_matmul_test_all_dims_known((1,2), (2,3))
-        self._make_matmul_test_all_dims_known((2,), (2,3))
-        self._make_matmul_test_all_dims_known((4,2), (2,))
-        self._make_matmul_test_all_dims_known((1,4,2), (3,2,3))
-        self._make_matmul_test_all_dims_known((3,4,2), (3,2,3))
-        self._make_matmul_test_all_dims_known((5,1,4,2), (1,3,2,3))
-        self._make_matmul_test_all_dims_known((4,2), (3,2,3))
+        self._make_matmul_test_all_dims_known((4, 2), (2, 4))
+        self._make_matmul_test_all_dims_known((5, 2), (2, 4))
+        self._make_matmul_test_all_dims_known((5, 2), (2, 1))
+        self._make_matmul_test_all_dims_known((1, 2), (2, 3))
+        self._make_matmul_test_all_dims_known((2,), (2, 3))
+        self._make_matmul_test_all_dims_known((4, 2), (2,))
+        self._make_matmul_test_all_dims_known((1, 4, 2), (3, 2, 3))
+        self._make_matmul_test_all_dims_known((3, 4, 2), (3, 2, 3))
+        self._make_matmul_test_all_dims_known((5, 1, 4, 2), (1, 3, 2, 3))
+        self._make_matmul_test_all_dims_known((4, 2), (3, 2, 3))
 
     def _make_matmul_test_allow_unknown(self, shape1, shape2, expected_out_shape):
         graph = self._make_graph(
@@ -124,12 +125,12 @@ class TestShapeInference(unittest.TestCase):
     def test_matmul_allow_unknown(self):
         self._make_matmul_test_allow_unknown((None,), (None,), ())
         self._make_matmul_test_allow_unknown((3,), (None,), ())
-        self._make_matmul_test_allow_unknown((2,), (2,"a"), ("a",))
-        self._make_matmul_test_allow_unknown((4,2), (2,"a"), (4,"a"))
-        self._make_matmul_test_allow_unknown((4,None), (2,"a"), (4,"a"))
-        self._make_matmul_test_allow_unknown((4,None), (None,"a"), (4,"a"))
-        self._make_matmul_test_allow_unknown((1,4,2), ("a",2,5), ("a",4,5))
-        self._make_matmul_test_allow_unknown((1,3,4,2), ("a",2,5), (1,3,4,5))
+        self._make_matmul_test_allow_unknown((2,), (2, "a"), ("a",))
+        self._make_matmul_test_allow_unknown((4, 2), (2, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown((4, None), (2, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown((4, None), (None, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), ("a", 4, 5))
+        self._make_matmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, 3, 4, 5))
 
     def test_cast(self):
         graph = self._make_graph(
@@ -369,6 +370,27 @@ class TestShapeInference(unittest.TestCase):
             [make_node('RandomNormalLike', ['X'], ['out'], dtype=TensorProto.DOUBLE,)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])
+
+    def test_constant_fill(self):
+        graph = self._make_graph(
+            [],
+            [make_node('ConstantFill', [], ['out'], dtype=TensorProto.INT32, shape=(3, 4, 5))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (3, 4, 5))])
+
+    def test_constant_fill_with_input(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4))])
+
+    def test_constant_fill_with_extra_shape(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32, extra_shape=(5, 6))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4, 5, 6))])
 
     def test_gemm(self):
         graph = self._make_graph(
