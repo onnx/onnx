@@ -7182,7 +7182,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>1-D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
@@ -7722,7 +7722,7 @@ Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>1-D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
@@ -9037,7 +9037,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>1-D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
