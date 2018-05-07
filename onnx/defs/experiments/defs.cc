@@ -6,19 +6,6 @@ using namespace ONNX_NAMESPACE;
 
 using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
 
-ONNX_OPERATOR_SCHEMA(Identity)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .SetDoc("Identity operator")
-    .Input(0, "input", "Input tensor", "T")
-    .Output(
-        0,
-        "output",
-        "Tensor to copy input into.",
-        "T")
-    .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.")
-    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
-
 ONNX_OPERATOR_SCHEMA(Affine)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(R"DOC(
