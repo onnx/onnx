@@ -3270,6 +3270,51 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LRN',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=0.0002,
+    beta=0.5,
+    size=1
+)
+x = np.random.ranf([5, 5, 5, 5]).astype(np.float32) * 1000
+y = [i/((1 + 0.0002 * i ** 2) ** 0.5) for i in x][0]
+expect(node, inputs=[x], outputs=[y],
+       name='test_lrn_default')
+```
+
+</details>
+
+
+<details>
+<summary>lrn</summary>
+
+```python
+node = onnx.helper.make_node(
+    'LRN',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=0.0002,
+    beta=0.5,
+    bias=2.0,
+    size=1
+)
+x = np.random.ranf([5, 5, 5, 5]).astype(np.float32) * 1000
+y = [i/((2 + 0.0002 * i ** 2) ** 0.5) for i in x][0]
+expect(node, inputs=[x], outputs=[y],
+       name='test_lrn')
+```
+
+</details>
+
+
 ### <a name="LSTM"></a><a name="lstm">**LSTM**</a>
 
   Computes an one-layer LSTM. This operator is usually supported via some
