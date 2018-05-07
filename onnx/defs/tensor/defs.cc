@@ -347,7 +347,51 @@ Example 2:
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (!hasNInputShapes(ctx, 1)) {
+          return;
+        }
+        std::vector<int64_t> starts;
+        std::vector<int64_t> ends;
+        if (!getRepeatedAttribute(ctx, "starts", starts) ||
+            !getRepeatedAttribute(ctx, "ends", ends) ||
+            starts.size() != ends.size()) {
+          return;
+        }
+        std::vector<int64_t> axes;
+        if (!getRepeatedAttribute(ctx, "axes", axes)) {
+          for (int i = 0; (size_t) i < starts.size(); ++i) {
+            axes.push_back(i);
+          }
+        } else if (axes.size() != starts.size()) {
+          return;
+        } else if (!std::is_sorted(axes.begin(), axes.end())) {
+          // TODO support shape inference for unsorted axes
+          return;
+        }
+
+        ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+        for (size_t i = 0, j = 0; (int64_t) i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+          auto* newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+          if (j < axes.size() && static_cast<size_t>(axes[j]) == i) {
+            // There's a lot of potential behaviors. For now just
+            // handle some simple cases.
+            if (ctx.getInputType(0)->tensor_type().shape().dim((int)i).has_dim_value() &&
+                starts[j] >= 0 && ends[j] >= 0) {
+              auto newval = std::min(ctx.getInputType(0)->tensor_type().shape().dim((int)i).dim_value(), ends[j]) - starts[j];
+              if (newval >= 0) {
+                newdim->set_dim_value(newval);
+              }
+            }
+            ++j;
+          } else {
+            *newdim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+          }
+        }
+      });
 
 ONNX_OPERATOR_SCHEMA(Transpose)
     .SetDoc(R"DOC(
@@ -628,14 +672,36 @@ Example:
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (!hasNInputShapes(ctx, 1)) {
+          return;
+        }
+
+        std::vector<int64_t> pads;
+        if (!getRepeatedAttribute(ctx, "pads", pads) ||
+            pads.size() != static_cast<size_t>(ctx.getInputType(0)->tensor_type().shape().dim_size() * 2)) {
+          return;
+        }
+
+        ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+        for (size_t i = 0; (int64_t) i < ctx.getInputType(0)->tensor_type().shape().dim_size(); ++i) {
+          auto* newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+          if (ctx.getInputType(0)->tensor_type().shape().dim((int)i).has_dim_value()) {
+            newdim->set_dim_value(ctx.getInputType(0)->tensor_type().shape().dim((int)i).dim_value() + pads[i] + pads[ctx.getInputType(0)->tensor_type().shape().dim_size() + i]);
+          } else if (pads[i] + pads[ctx.getInputType(0)->tensor_type().shape().dim_size() + i] == 0) {
+            *newdim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+          }
+        }
+      });
 
 ONNX_OPERATOR_SCHEMA(SpaceToDepth)
     .Attr(
         "blocksize",
         "Blocks of [blocksize, blocksize] are moved.",
-        AttributeProto::INT,
-        OPTIONAL)
+        AttributeProto::INT)
     .SetDoc(
         R"DOC(SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
 this op outputs a copy of the input tensor where values from the height and width dimensions
@@ -661,8 +727,7 @@ ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr(
         "blocksize",
         "Blocks of [blocksize, blocksize] are moved.",
-        AttributeProto::INT,
-        OPTIONAL)
+        AttributeProto::INT)
     .SetDoc(
         R"DOC(DepthToSpace rearranges (permutes) data from depth into blocks of spatial data.
 This is the reverse transformation of SpaceToDepth. More specifically, this op outputs a copy of
@@ -715,3 +780,15 @@ For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4,
         "T1",
         {"tensor(int64)"},
         "Constrain repeat's type to int64 tensors.");
+
+ONNX_OPERATOR_SCHEMA(Identity)
+.SetDoc("Identity operator")
+.Input(0, "input", "Input tensor", "T")
+.Output(
+	0,
+	"output",
+	"Tensor to copy input into.",
+	"T")
+	.TypeConstraint("T", OpSchema::all_tensor_types(),
+		"Constrain input and output types to all tensor types.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);

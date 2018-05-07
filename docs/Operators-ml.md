@@ -35,7 +35,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Data to be selected</dd>
 <dt><tt>Y</tt> : tensor(int64)</dt>
 <dd>The index values to select as a int64 tensor</dd>
@@ -44,14 +44,14 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Outputs
 
 <dl>
-<dt><tt>Z</tt> : T1</dt>
+<dt><tt>Z</tt> : T</dt>
 <dd>Selected output data as an array</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
 <dd>allowed types.</dd>
 </dl>
 
@@ -242,11 +242,13 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 ### <a name="ai.onnx.ml.FeatureVectorizer"></a><a name="ai.onnx.ml.featurevectorizer">**ai.onnx.ml.FeatureVectorizer**</a>
 
-  Concatenates input features into one continuous output.
-      Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
+  Concatenates input features into one continuous output of floats.
+      inputdimensions is the size of each input feature.
       Inputs will be written to the output in the order of the input arguments.
-      All inputs are tensors of float.  Any feature that is not a tensor of float should
-      be converted using either Cast or CastMap.
+      If an input tensor is shorter than its matching input dimension the output will be padded with zeros.
+      If an input tensor is longer than its matching input dimension, the additional input will be ignored.
+      Input tensors must all be of the same type. Use Cast as needed.  
+      Input tensors must all be of the same batch size.
 
 #### Version
 
@@ -269,8 +271,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : T2</dt>
-<dd>Full output array, in order assigned in the inputlist, as floats</dd>
+<dt><tt>Y</tt> : tensor(float)</dt>
+<dd>Output array, in same order as Input, as floats</dd>
 </dl>
 
 #### Type Constraints
@@ -278,8 +280,6 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
 <dd> Allowed input types</dd>
-<dt><tt>T2</tt> : tensor(float)</dt>
-<dd> Output data type</dd>
 </dl>
 
 

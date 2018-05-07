@@ -12,6 +12,7 @@ project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
+option(ONNX_NO_WERROR "Disable use of Werror" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -274,7 +275,10 @@ endif()
 
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
-set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+endif()
 
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
@@ -311,6 +315,11 @@ if (MSVC)
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
+elseif(APPLE)
+else()
+  if (NOT ${ONNX_NO_WERROR})
+    target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
+  endif()
 endif()
 
 if(APPLE)
@@ -320,3 +329,13 @@ endif()
 # ---[ ONNX Interface for Framework Integratin (ONNXIFI)
 add_library(onnxifi INTERFACE)
 target_include_directories(onnxifi INTERFACE onnx)
+
+
+install(TARGETS onnx onnx_proto
+    DESTINATION lib)
+install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")

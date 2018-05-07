@@ -839,6 +839,7 @@ public:
   }
   void clearInitializers() {
     initializers_.clear();
+    initializer_names_.clear();
   }
   const std::vector<Tensor>& initializers() {
     return initializers_;
