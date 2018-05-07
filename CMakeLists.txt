@@ -47,36 +47,36 @@ else()
   # Customized version of find Protobuf. We need to avoid situations mentioned
   # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
   # The following section is stolen from cmake/ProtoBuf.cmake in Caffe2
-  find_program(PROTOBUF_PROTOC_EXECUTABLE
+  find_program(Protobuf_PROTOC_EXECUTABLE
     NAMES protoc
     DOC "The Google Protocol Buffers Compiler")
 
   # Only if protoc was found, seed the include directories and libraries.
   # We assume that protoc is installed at PREFIX/bin.
   # We use get_filename_component to resolve PREFIX.
-  if(PROTOBUF_PROTOC_EXECUTABLE)
-    set(ONNX_PROTOC_EXECUTABLE ${PROTOBUF_PROTOC_EXECUTABLE})
+  if(Protobuf_PROTOC_EXECUTABLE)
+    set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
     get_filename_component(
       _PROTOBUF_INSTALL_PREFIX
-      ${PROTOBUF_PROTOC_EXECUTABLE}
+      ${Protobuf_PROTOC_EXECUTABLE}
       DIRECTORY)
     get_filename_component(
       _PROTOBUF_INSTALL_PREFIX
       ${_PROTOBUF_INSTALL_PREFIX}/..
       REALPATH)
-    find_library(PROTOBUF_LIBRARY
+    find_library(Protobuf_LIBRARY
       NAMES protobuf
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_library(PROTOBUF_PROTOC_LIBRARY
+    find_library(Protobuf_PROTOC_LIBRARY
       NAMES protoc
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_library(PROTOBUF_LITE_LIBRARY
+    find_library(Protobuf_LITE_LIBRARY
       NAMES protobuf-lite
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_path(PROTOBUF_INCLUDE_DIR
+    find_path(Protobuf_INCLUDE_DIR
       google/protobuf/service.h
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
       NO_DEFAULT_PATH)
