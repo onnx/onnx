@@ -418,7 +418,7 @@ class TestShapeInference(unittest.TestCase):
     def test_equal(self):
         self._logical_binary_op('Equal', TensorProto.FLOAT);
         
-    def logical_not(self):
+    def test_logical_not(self):
         graph = self._make_graph(
             [('x', TensorProto.BOOL, (30, 4, 5))],
             [make_node('Not', ['x'], 'z')],
