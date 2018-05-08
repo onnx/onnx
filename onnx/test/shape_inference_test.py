@@ -392,6 +392,39 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4, 5, 6))])
 
+    def _logical_binary_op(self, op, input_type):
+        graph = self._make_graph(
+            [('x', input_type, (30, 4, 5)),
+             ('y', input_type, (30, 4, 5))],
+            [make_node(op, ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
+
+    def test_logical_and(self):
+        self._logical_binary_op('And', TensorProto.BOOL)
+
+    def test_logical_or(self):
+        self._logical_binary_op('Or', TensorProto.BOOL)
+
+    def test_logical_xor(self):
+        self._logical_binary_op('Xor', TensorProto.BOOL)
+
+    def test_greater(self):
+        self._logical_binary_op('Greater', TensorProto.FLOAT)
+
+    def test_less(self):
+        self._logical_binary_op('Less', TensorProto.FLOAT)
+
+    def test_equal(self):
+        self._logical_binary_op('Equal', TensorProto.FLOAT)
+
+    def test_logical_not(self):
+        graph = self._make_graph(
+            [('x', TensorProto.BOOL, (30, 4, 5))],
+            [make_node('Not', ['x'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
+
     def test_gemm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
