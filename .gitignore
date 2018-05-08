@@ -9,6 +9,7 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
+*.pyd
 
 # Compiled Static libraries
 *.lai
@@ -92,3 +93,4 @@ onnx/examples/.coverage.nbval
 .mypy_cache
 virtualenv
 venv
+
