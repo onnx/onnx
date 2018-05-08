@@ -9,7 +9,7 @@ from onnx.helper import make_node, make_tensor_value_info
 import onnx.shape_inference
 import unittest
 
-import numpy as np
+import numpy as np  # type: ignore
 
 
 class TestShapeInference(unittest.TestCase):
