@@ -147,7 +147,8 @@ the tensor elementwise.
          "tensor(int64)",
          "tensor(float16)",
          "tensor(double)"},
-        "Constrain input and output types to signed numeric tensors.");
+        "Constrain input and output types to signed numeric tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Abs)
     .SinceVersion(6)
@@ -161,7 +162,8 @@ the tensor elementwise.
     .TypeConstraint(
         "T",
         OpSchema::all_numeric_types(),
-        "Constrain input and output types to all numeric tensors.");
+        "Constrain input and output types to all numeric tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Reciprocal)
     .SinceVersion(6)
@@ -175,7 +177,8 @@ the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Floor)
     .SinceVersion(6)
@@ -189,7 +192,8 @@ the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Ceil)
     .SinceVersion(6)
@@ -203,7 +207,8 @@ the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Sqrt)
     .SinceVersion(6)
@@ -217,7 +222,8 @@ the tensor elementwise. If x is negative, then it will return NaN.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Relu)
     .SinceVersion(6)
@@ -251,7 +257,8 @@ output data (Tensor<T>) where the function `f(x) = alpha * x for x < 0`,
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Selu)
     .SinceVersion(6)
@@ -278,7 +285,8 @@ is applied to the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Elu)
     .SinceVersion(6)
@@ -298,7 +306,8 @@ Elu takes one input data (Tensor<T>) and produces one output data
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Exp)
     .SinceVersion(6)
@@ -315,7 +324,8 @@ Calculates the exponential of the given input tensor, element-wise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Log)
     .SinceVersion(6)
@@ -332,14 +342,15 @@ Calculates the natural log of the given input tensor, element-wise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Tanh)
     .SinceVersion(6)
     .SetDoc(R"DOC(
 Calculates the hyperbolic tangent of the given input tensor element-wise.
 )DOC")
-    .Input(0, "input", "1-D input tensor", "T")
+    .Input(0, "input", "Input tensor", "T")
     .Output(
         0,
         "output",
@@ -349,7 +360,8 @@ Calculates the hyperbolic tangent of the given input tensor element-wise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Pow)
     .SetDoc(R"DOC(
@@ -378,7 +390,8 @@ is applied to the data tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(PRelu)
     .SinceVersion(6)
@@ -400,7 +413,8 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Sigmoid)
     .SinceVersion(6)
@@ -414,7 +428,8 @@ tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(HardSigmoid)
     .SinceVersion(6)
@@ -430,7 +445,8 @@ is applied to the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Max)
     .SinceVersion(6)
@@ -443,7 +459,8 @@ have the same shape and data type.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Min)
     .SinceVersion(6)
@@ -456,7 +473,8 @@ have the same shape and data type.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Sum)
     .SinceVersion(6)
@@ -483,7 +501,8 @@ have the same shape and data type.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Clip)
     .SinceVersion(6)
@@ -507,7 +526,8 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Softmax).FillUsing(
     SoftmaxFamilyDocGenerator("softmax", "normalized exponential"));
@@ -523,7 +543,7 @@ ONNX_OPERATOR_SCHEMA(Softsign)
     .SetDoc(R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 )DOC")
-    .Input(0, "input", "1-D input tensor", "T")
+    .Input(0, "input", "Input tensor", "T")
     .Output(
         0,
         "output",
@@ -532,7 +552,8 @@ Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Softplus)
     .SetDoc(R"DOC(
@@ -545,7 +566,8 @@ the tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Gemm)
     .SinceVersion(6)
