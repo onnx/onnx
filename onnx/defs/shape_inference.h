@@ -31,6 +31,13 @@ inline bool getRepeatedAttribute(
   }
 }
 
+inline int64_t getAttribute(InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+  auto attr_proto = ctx.getAttribute(attributeName);
+  if ((nullptr != attr_proto) && attr_proto->has_i())
+    return attr_proto->i();
+  return defaultValue;
+}
+
 inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
@@ -49,10 +56,8 @@ inline void propagateElemTypeFromInputToOutput(
 }
 
 inline bool hasInputShape(InferenceContext& ctx, int n) {
-  if (static_cast<int>(ctx.getNumInputs()) < n) {
-    throw std::runtime_error("operator has too few inputs");
-  }
-  return ctx.getInputType(n) &&
+  return ctx.getNumInputs() > static_cast<size_t>(n) &&
+    ctx.getInputType(n) &&
     ctx.getInputType(n)->has_tensor_type() &&
     ctx.getInputType(n)->tensor_type().has_shape();
 }
@@ -127,9 +132,14 @@ inline void updateOutputElemType(
 inline void propagateElemTypeFromAttributeToOutput(
     InferenceContext& ctx,
     const std::string& attributeName,
-    size_t outputIndex) {
+    size_t outputIndex,
+    TensorProto_DataType default_value = TensorProto::UNDEFINED) {
   auto attr_proto = ctx.getAttribute(attributeName);
-  if (nullptr == attr_proto) return; // attribute not present
+  if (nullptr == attr_proto) { // attribute not present
+    if (default_value != TensorProto::UNDEFINED)
+      updateOutputElemType(ctx, outputIndex, default_value);
+    return;
+  }  
   if (!attr_proto->has_i()) return; // attribute not of right type
   auto attr_value = attr_proto->i();
   auto elem_type = static_cast<TensorProto_DataType>(attr_value);
