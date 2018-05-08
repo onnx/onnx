@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 import onnx
 import onnx.onnx_cpp2py_export.defs as C
+from typing import Sequence, Any, Text
 
 
 ONNX_DOMAIN = ""
