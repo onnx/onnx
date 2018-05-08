@@ -1,11 +1,18 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.1)
 
+# Set default build type
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Build type not set - defaulting to Release")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
+endif()
+
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
+option(ONNX_WERROR "Build with Werror" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -14,12 +21,6 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
-
-# Set default build type
-if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Build type not set - defaulting to Release")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
-endif()
 
 if(TARGET protobuf::libprotobuf)
   # Sometimes we need to use protoc compiled for host architecture while
@@ -183,6 +184,7 @@ endfunction()
 
 RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
     onnx/onnx.in.proto
+    onnx/onnx-operators.in.proto
 )
 
 file(GLOB_RECURSE onnx_src
@@ -273,7 +275,10 @@ endif()
 
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
-set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+endif()
 
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
@@ -310,8 +315,27 @@ if (MSVC)
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
+elseif(APPLE)
+else()
+  if (${ONNX_WERROR})
+    target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
+  endif()
 endif()
 
 if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
+
+# ---[ ONNX Interface for Framework Integratin (ONNXIFI)
+add_library(onnxifi INTERFACE)
+target_include_directories(onnxifi INTERFACE onnx)
+
+
+install(TARGETS onnx onnx_proto
+    DESTINATION lib)
+install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")

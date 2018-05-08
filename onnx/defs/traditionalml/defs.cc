@@ -10,15 +10,15 @@ ONNX_OPERATOR_SCHEMA(ArrayFeatureExtractor)
     .SetDoc(R"DOC(
     Select a subset of the data X based on the indices provided Y.
 )DOC")
-    .Input(0, "X", "Data to be selected", "T1")
+    .Input(0, "X", "Data to be selected", "T")
     .Input(
         1,
         "Y",
         "The index values to select as a int64 tensor",
         "tensor(int64)")
-    .Output(0, "Z", "Selected output data as an array", "T1")
+    .Output(0, "Z", "Selected output data as an array", "T")
     .TypeConstraint(
-        "T1",
+        "T",
         {"tensor(float)",
          "tensor(double)",
          "tensor(int64)",
@@ -74,7 +74,23 @@ ONNX_OPERATOR_SCHEMA(CastMap)
         "max_map",
         "if map_form packing is SPARSE, what is the total length of each output in N (max index value)",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      auto cast_to_attr = ctx.getAttribute("cast_to");
+      auto output_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (nullptr == cast_to_attr) {
+        output_type->set_elem_type(TensorProto::FLOAT);
+        return;
+      }
+      auto& cast_to = cast_to_attr->s();
+      if (0 == cast_to.compare("TO_FLOAT")) {
+        output_type->set_elem_type(TensorProto::FLOAT);
+      } else if (0 == cast_to.compare("TO_INT64")) {
+        output_type->set_elem_type(TensorProto::INT64);
+      } else if (0 == cast_to.compare("TO_STRING")) {
+        output_type->set_elem_type(TensorProto::STRING);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(CategoryMapper)
     .SetDomain("ai.onnx.ml")
@@ -121,7 +137,17 @@ ONNX_OPERATOR_SCHEMA(CategoryMapper)
         "default_int64",
         "int value to use if the string is not in the map",
         AttributeProto::INT,
-        static_cast<int64_t>(-1));
+        static_cast<int64_t>(-1))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+
+      auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (TensorProto::STRING == input_elem_type) {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      } else if (TensorProto::INT64 == input_elem_type) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(DictVectorizer)
     .SetDomain("ai.onnx.ml")
@@ -160,7 +186,16 @@ ONNX_OPERATOR_SCHEMA(DictVectorizer)
         "int64_vocabulary",
         "The vocabulary vector",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      auto input_elem_type = ctx.getInputType(0)
+                                 ->map_type()
+                                 .value_type()
+                                 .tensor_type()
+                                 .elem_type();
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      output_elem_type->set_elem_type(input_elem_type);
+    });
 
 ONNX_OPERATOR_SCHEMA(Imputer)
     .SetDomain("ai.onnx.ml")
@@ -229,7 +264,16 @@ ONNX_OPERATOR_SCHEMA(LabelEncoder)
         "default_string",
         "Default value if not in class list as string",
         AttributeProto::STRING,
-        std::string("_Unused"));
+        std::string("_Unused"))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (TensorProto::STRING == input_elem_type) {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      } else if (TensorProto::INT64 == input_elem_type) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(LinearClassifier)
     .SetDomain("ai.onnx.ml")
@@ -251,11 +295,7 @@ ONNX_OPERATOR_SCHEMA(LinearClassifier)
         "T2",
         {"tensor(string)", "tensor(int64)"},
         " allowed types.")
-    .Attr(
-        "coefficients",
-        "weights of the model(s)",
-        AttributeProto::FLOATS,
-        OPTIONAL)
+    .Attr("coefficients", "weights of the model(s)", AttributeProto::FLOATS)
     .Attr(
         "intercepts",
         "weights of the intercepts (if used)",
@@ -280,7 +320,19 @@ ONNX_OPERATOR_SCHEMA(LinearClassifier)
         "post_transform",
         "enum NONE, SOFTMAX, LOGISTIC, SOFTMAX_ZERO, PROBIT",
         AttributeProto::STRING,
-        std::string("NONE"));
+        std::string("NONE"))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      std::vector<std::string> label_strs;
+      auto result =
+          getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+      bool using_strings = (result && !label_strs.empty());
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (using_strings) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      } else {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(LinearRegressor)
     .SetDomain("ai.onnx.ml")
@@ -465,7 +517,19 @@ ONNX_OPERATOR_SCHEMA(SVMClassifier)
         "classlabels_ints",
         "class labels if using int labels",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      std::vector<std::string> label_strs;
+      auto result =
+          getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+      bool using_strings = (result && !label_strs.empty());
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (using_strings) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      } else {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(SVMRegressor)
     .SetDomain("ai.onnx.ml")
@@ -629,7 +693,19 @@ ONNX_OPERATOR_SCHEMA(TreeEnsembleClassifier)
         "base_values",
         "base values for classification, added to final class score, size must be the same as classes or can be left unassigned (assumed 0)",
         AttributeProto::FLOATS,
-        OPTIONAL);
+        OPTIONAL)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      std::vector<std::string> label_strs;
+      auto result =
+          getRepeatedAttribute(ctx, "classlabels_strings", label_strs);
+      bool using_strings = (result && !label_strs.empty());
+      auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+      if (using_strings) {
+        output_elem_type->set_elem_type(TensorProto::STRING);
+      } else {
+        output_elem_type->set_elem_type(TensorProto::INT64);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(TreeEnsembleRegressor)
     .SetDomain("ai.onnx.ml")
@@ -758,28 +834,50 @@ ONNX_OPERATOR_SCHEMA(ZipMap)
         "classlabels_int64s",
         "keys if using int keys",
         AttributeProto::INTS,
-        OPTIONAL);
+        OPTIONAL)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      std::vector<std::string> classlabels_strings;
+      bool result =
+          getRepeatedAttribute(ctx, "classlabels_strings", classlabels_strings);
+      auto output_map_type = ctx.getOutputType(0)
+                                 ->mutable_sequence_type()
+                                 ->mutable_elem_type()
+                                 ->mutable_map_type();
+      output_map_type->mutable_value_type()
+          ->mutable_tensor_type()
+          ->set_elem_type(TensorProto::FLOAT);
+      if (result && !classlabels_strings.empty()) {
+        output_map_type->set_key_type(TensorProto::STRING);
+      }
+      std::vector<int64_t> classlabels_int64s;
+      result =
+          getRepeatedAttribute(ctx, "classlabels_int64s", classlabels_int64s);
+      if (result && !classlabels_int64s.empty()) {
+        output_map_type->set_key_type(TensorProto::INT64);
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(FeatureVectorizer)
     .SetDomain("ai.onnx.ml")
     .SetDoc(R"DOC(
-    Concatenates input features into one continuous output.
-    Inputlist is a list of input feature names, inputdimensions is the size of each input feature.
+    Concatenates input features into one continuous output of floats.
+    inputdimensions is the size of each input feature.
     Inputs will be written to the output in the order of the input arguments.
-    All inputs are tensors of float.  Any feature that is not a tensor of float should
-    be converted using either Cast or CastMap.
+    If an input tensor is shorter than its matching input dimension the output will be padded with zeros.
+    If an input tensor is longer than its matching input dimension, the additional input will be ignored.
+    Input tensors must all be of the same type. Use Cast as needed.  
+    Input tensors must all be of the same batch size.
 )DOC")
     .Input(0, "X", "ordered input tensors", "T1", OpSchema::Variadic)
     .Output(
         0,
         "Y",
-        "Full output array, in order assigned in the inputlist, as floats",
-        "T2")
+        "Output array, in same order as Input, as floats",
+        "tensor(float)")
     .TypeConstraint(
         "T1",
         {"tensor(int32)", "tensor(int64)", "tensor(float)", "tensor(double)"},
         " Allowed input types")
-    .TypeConstraint("T2", {"tensor(float)"}, " Output data type")
     .Attr(
         "inputdimensions",
         "the size of each input in the input list",
