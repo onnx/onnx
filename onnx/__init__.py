@@ -12,6 +12,7 @@ import onnx.checker  # noqa
 import onnx.defs  # noqa
 
 import google.protobuf.message  # type: ignore
+from typing import Union, Optional, Text, IO
 
 from typing import Union, Text, IO, Optional, cast, TypeVar, Any
 
