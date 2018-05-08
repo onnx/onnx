@@ -27,6 +27,27 @@ For example, the following tensor shapes are supported (with broadcast=1):
 Attribute `broadcast=1` needs to be passed to enable broadcasting.
 )DOC";
 
+const char* kBroadcastDoc_old_opset6 = R"DOC(
+If necessary the right-hand-side argument will be broadcasted to match the
+shape of left-hand-side argument. When broadcasting is specified, the second
+tensor can either be of element size 1 (including a scalar tensor and any
+tensor with rank equal to or smaller than the first tensor), or having its
+shape as a contiguous subset of the first tensor's shape. The starting of the
+mutually equal shape is specified by the argument "axis", and if it is not set,
+suffix matching is assumed. 1-dim expansion doesn't work yet.
+
+For example, the following tensor shapes are supported (with broadcast=1):
+
+  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
+  shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
+  shape(A) = (2, 3, 4, 5), shape(B) = (5,)
+  shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
+  shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
+  shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
+
+Attribute `broadcast=1` needs to be passed to enable broadcasting.
+)DOC";
+
 std::function<void(OpSchema&)> MathDocGenerator_old(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
@@ -73,6 +94,46 @@ Performs element-wise binary {name} (with limited broadcast support).
   };
 }
 
+std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+Performs element-wise binary {name} (with limited broadcast support).
+{broadcast_doc})DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old_opset6);
+    schema.SetDoc(doc);
+    schema.Attr(
+        "broadcast",
+        "Pass 1 to enable broadcasting",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
+    schema.Attr(
+        "axis",
+        "If set, defines the broadcast dimensions. See doc for details.",
+        AttributeProto::INT,
+        OPTIONAL);
+    schema.Input(
+        0,
+        "A",
+        "First operand, should share the type with the second operand.",
+        "T");
+    schema.Input(
+        1,
+        "B",
+        "Second operand. With broadcasting can be of smaller size than A. "
+        "If broadcasting is disabled it should be of the same size.",
+        "T");
+    schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
+    schema.TypeConstraint(
+        "T",
+        OpSchema::high_precision_numeric_types(),
+        "Constrain input and output types to high-precision numeric tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+    schema.SinceVersion(6);
+  };
+}
+
+
 ONNX_OPERATOR_SCHEMA(Add).FillUsing(MathDocGenerator_old("addition"));
 
 ONNX_OPERATOR_SCHEMA(Sub).FillUsing(MathDocGenerator_old("subtraction"));
@@ -80,6 +141,15 @@ ONNX_OPERATOR_SCHEMA(Sub).FillUsing(MathDocGenerator_old("subtraction"));
 ONNX_OPERATOR_SCHEMA(Mul).FillUsing(MathDocGenerator_old("multiplication"));
 
 ONNX_OPERATOR_SCHEMA(Div).FillUsing(MathDocGenerator_old("division"));
+
+ONNX_OPERATOR_SCHEMA(Add).FillUsing(MathDocGenerator_old_opset6("addition"));
+
+ONNX_OPERATOR_SCHEMA(Sub).FillUsing(MathDocGenerator_old_opset6("subtraction"));
+
+ONNX_OPERATOR_SCHEMA(Mul).FillUsing(MathDocGenerator_old_opset6("multiplication"));
+
+ONNX_OPERATOR_SCHEMA(Div).FillUsing(MathDocGenerator_old_opset6("division"));
+
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(Neg)

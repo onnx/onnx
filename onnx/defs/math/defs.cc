@@ -9,24 +9,8 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 
 const char* kBroadcastDoc = R"DOC(
-If necessary the right-hand-side argument will be broadcasted to match the
-shape of left-hand-side argument. When broadcasting is specified, the second
-tensor can either be of element size 1 (including a scalar tensor and any
-tensor with rank equal to or smaller than the first tensor), or having its
-shape as a contiguous subset of the first tensor's shape. The starting of the
-mutually equal shape is specified by the argument "axis", and if it is not set,
-suffix matching is assumed. 1-dim expansion doesn't work yet.
-
-For example, the following tensor shapes are supported (with broadcast=1):
-
-  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-  shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-  shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-  shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-  shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-  shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-
-Attribute `broadcast=1` needs to be passed to enable broadcasting.
+This operator supports Numpy-style broadcasting; for more details
+please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
 )DOC";
 
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
@@ -118,16 +102,16 @@ will throw errors.
   };
 }
 
-ONNX_OPERATOR_SCHEMA(Add).SinceVersion(6).FillUsing(
+ONNX_OPERATOR_SCHEMA(Add).SinceVersion(7).FillUsing(
     MathDocGenerator("addition"));
 
-ONNX_OPERATOR_SCHEMA(Sub).SinceVersion(6).FillUsing(
+ONNX_OPERATOR_SCHEMA(Sub).SinceVersion(7).FillUsing(
     MathDocGenerator("subtraction"));
 
-ONNX_OPERATOR_SCHEMA(Mul).SinceVersion(6).FillUsing(
+ONNX_OPERATOR_SCHEMA(Mul).SinceVersion(7).FillUsing(
     MathDocGenerator("multiplication"));
 
-ONNX_OPERATOR_SCHEMA(Div).SinceVersion(6).FillUsing(
+ONNX_OPERATOR_SCHEMA(Div).SinceVersion(7).FillUsing(
     MathDocGenerator("division"));
 } // namespace ONNX_NAMESPACE
 

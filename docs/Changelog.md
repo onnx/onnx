@@ -3186,24 +3186,8 @@ This version of the operator has been available since version 1 of the default O
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
 
 #### Version
 
@@ -6730,6 +6714,49 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Add-7"></a>**Add-7**</a>
+
+  Performs element-wise binary addition (with limited broadcast support).
+  
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
 ### <a name="Asin-7"></a>**Asin-7**</a>
 
   Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
@@ -6985,6 +7012,49 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Div-7"></a>**Div-7**</a>
+
+  Performs element-wise binary division (with limited broadcast support).
+  
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="GRU-7"></a>**GRU-7**</a>
@@ -7271,6 +7341,49 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
+### <a name="Mul-7"></a>**Mul-7**</a>
+
+  Performs element-wise binary multiplication (with limited broadcast support).
+  
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
 ### <a name="Multinomial-7"></a>**Multinomial-7**</a>
 
   Generate a tensor of samples from a multinomial distribution according to the probabilities
@@ -7462,6 +7575,49 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Sub-7"></a>**Sub-7**</a>
+
+  Performs element-wise binary subtraction (with limited broadcast support).
+  
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
+<dt><tt>broadcast</tt> : int</dt>
+<dd>Pass 1 to enable broadcasting</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand, should share the type with the second operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same dimensions and type as A</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Tan-7"></a>**Tan-7**</a>

@@ -237,30 +237,14 @@ expect(node, inputs=[x], outputs=[y],
 
   Performs element-wise binary addition (with limited broadcast support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
+Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>, <a href="Changelog.md#Add-6">Add-6</a>
 
 #### Attributes
 
@@ -1932,30 +1916,14 @@ expect(node, inputs=[x], outputs=[y],
 
   Performs element-wise binary division (with limited broadcast support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
+Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>, <a href="Changelog.md#Div-6">Div-6</a>
 
 #### Attributes
 
@@ -5008,30 +4976,14 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
   Performs element-wise binary multiplication (with limited broadcast support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
+Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>, <a href="Changelog.md#Mul-6">Mul-6</a>
 
 #### Attributes
 
@@ -5623,24 +5575,8 @@ for mode in ['edge', 'reflect']:
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
 
 #### Version
 
@@ -8848,30 +8784,14 @@ expect(node, inputs=[x], outputs=[y],
 
   Performs element-wise binary subtraction (with limited broadcast support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
+Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>, <a href="Changelog.md#Sub-6">Sub-6</a>
 
 #### Attributes
 
