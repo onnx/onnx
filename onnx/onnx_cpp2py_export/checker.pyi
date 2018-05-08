@@ -6,7 +6,7 @@ class CheckerContext(object):
     opset_imports: Dict[Text, int] = ...
 
 
-class ValidationError(BaseException):
+class ValidationError(Exception):
     ...
 
 
