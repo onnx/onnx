@@ -35,11 +35,11 @@ bool ParseProtoFromBytes(Proto* proto, const char* buffer, size_t length) {
 
 template<typename T> inline std::vector<T> RetrieveValues(const AttributeProto& attr);
 template<> inline std::vector<int64_t> RetrieveValues(const AttributeProto& attr) {
-    return {attr.ints().begin(), attr.ints().end()};
+  return {attr.ints().begin(), attr.ints().end()};
 }
 
 template<> inline std::vector<std::string> RetrieveValues(const AttributeProto& attr) {
-	return { attr.strings().begin(), attr.strings().end() };
+  return { attr.strings().begin(), attr.strings().end() };
 }
 
 } // namespace ONNX_NAMESPACE
