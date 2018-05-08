@@ -12,29 +12,31 @@ import onnx.checker  # noqa
 import onnx.defs  # noqa
 
 import google.protobuf.message  # type: ignore
+from typing import Union, Optional, Text, IO
 
+from typing import Union, Text, IO, Optional, cast, TypeVar, Any
 
 # f should be either readable or a file path
-def _load_bytes(f):
-    if hasattr(f, 'read') and callable(f.read):
-        s = f.read()
+def _load_bytes(f):  # type: (Union[IO[bytes], Text]) -> bytes
+    if hasattr(f, 'read') and callable(f.read):  # type: ignore
+        s = f.read()  # type: ignore
     else:
-        with open(f, 'rb') as readable:
+        with open(f, 'rb') as readable:  # type: ignore
             s = readable.read()
     return s
 
 
 # str should be bytes,
 # f should be either writable or a file path
-def _save_bytes(str, f):
-    if hasattr(f, 'write') and callable(f.write):
-        f.write(str)
+def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
+    if hasattr(f, 'write') and callable(f.write):  # type: ignore
+        f.write(str)  # type: ignore
     else:
-        with open(f, 'wb') as writable:
+        with open(f, 'wb') as writable:  # type: ignore
             writable.write(str)
 
 
-def _serialize(proto):
+def _serialize(proto):  # type: (google.protobuf.message.Message) -> bytes
     '''
     Serialize a in-memory proto to bytes
 
@@ -47,13 +49,16 @@ def _serialize(proto):
     if isinstance(proto, bytes):
         return proto
     elif hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
-        return proto.SerializeToString()
+        result = proto.SerializeToString()  # type: bytes
+        return result
     else:
         raise ValueError('No SerializeToString method is detected. '
                          'neither proto is a str.\ntype is {}'.format(type(proto)))
 
 
-def _deserialize(s, proto):
+_Proto = TypeVar('_Proto', bound=google.protobuf.message.Message)
+
+def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
     '''
     Parse bytes into a in-memory proto
 
@@ -71,7 +76,7 @@ def _deserialize(s, proto):
         raise ValueError('No ParseFromString method is detected. '
                          '\ntype is {}'.format(type(proto)))
 
-    decoded = proto.ParseFromString(s)
+    decoded = proto.ParseFromString(s)  # type: ignore
     if decoded is not None and decoded != len(s):
         raise google.protobuf.message.DecodeError(
             "Protobuf decoding consumed too few bytes: {} out of {}".format(
@@ -79,7 +84,7 @@ def _deserialize(s, proto):
     return proto
 
 
-def load_model(f, format=None):
+def load_model(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> ModelProto
     '''
     Loads a serialized ModelProto into memory
 
@@ -94,7 +99,7 @@ def load_model(f, format=None):
     return load_model_from_string(s, format=format)
 
 
-def load_tensor(f, format=None):
+def load_tensor(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> TensorProto
     '''
     Loads a serialized TensorProto into memory
 
@@ -109,7 +114,7 @@ def load_tensor(f, format=None):
     return load_tensor_from_string(s, format=format)
 
 
-def load_model_from_string(s, format=None):
+def load_model_from_string(s, format=None):  # type: (bytes, Optional[Any]) -> ModelProto
     '''
     Loads a binary string (bytes) that contains serialized ModelProto
 
@@ -123,7 +128,7 @@ def load_model_from_string(s, format=None):
     return _deserialize(s, ModelProto())
 
 
-def load_tensor_from_string(s, format=None):
+def load_tensor_from_string(s, format=None):  # type: (bytes, Optional[Any]) -> TensorProto
     '''
     Loads a binary string (bytes) that contains serialized TensorProto
 
@@ -137,7 +142,7 @@ def load_tensor_from_string(s, format=None):
     return _deserialize(s, TensorProto())
 
 
-def save_model(proto, f, format=None):
+def save_model(proto, f, format=None):  # type: (ModelProto, Union[IO[bytes], Text], Optional[Any]) -> None
     '''
     Saves the ModelProto to the specified path.
 
@@ -150,7 +155,7 @@ def save_model(proto, f, format=None):
     _save_bytes(s, f)
 
 
-def save_tensor(proto, f):
+def save_tensor(proto, f):  # type: (TensorProto, Union[IO[bytes], Text]) -> None
     '''
     Saves the TensorProto to the specified path.
 

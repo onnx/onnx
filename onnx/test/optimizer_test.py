@@ -3,7 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, TensorProto
+from onnx import checker, helper, ModelProto, TensorProto, GraphProto
+from typing import Sequence, Text
 
 import numpy as np  # type: ignore
 
@@ -13,7 +14,7 @@ import unittest
 
 class TestOptimizer(unittest.TestCase):
 
-    def _optimized(self, graph, opts):
+    def _optimized(self, graph, opts):  # type: (GraphProto, Sequence[Text]) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test')
         optimized_model = onnx.optimizer.optimize(orig_model, opts)
         checker.check_model(optimized_model)
@@ -72,7 +73,7 @@ class TestOptimizer(unittest.TestCase):
                     for gr in attr.graphs:
                         self._visit_all_nodes_recursive(gr, fn)
 
-    def test_eliminate_identity_single_use(self):
+    def test_eliminate_identity_single_use(self):  # type: () -> None
         nodes = [helper.make_node("Identity", ["X"], ["Y"])]
         nodes.extend(self._make_fake_loop_op(
             [helper.make_node("Identity", ["_Y"], ["_Y2"])],
@@ -99,7 +100,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.node[2].attribute[0].g.output) == 2
         assert optimized_model.graph.node[2].attribute[0].g.output[1].name == "_Y"
 
-    def test_eliminate_identity_multiple_uses(self):
+    def test_eliminate_identity_multiple_uses(self):  # type: () -> None
         identity = helper.make_node("Identity", ["X"], ["Y"])
         add = helper.make_node("Add", ["Z", "Y"], ["A"])
         mul = helper.make_node("Mul", ["A", "Y"], ["B"])
@@ -115,7 +116,7 @@ class TestOptimizer(unittest.TestCase):
             assert node.op_type != "Identity"
         assert len(optimized_model.graph.node) == 2
 
-    def test_nop_transpose(self):
+    def test_nop_transpose(self):# type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])]
         nodes.extend(self._make_fake_loop_op(
             [helper.make_node("Transpose", ["_Y"], ["_Y2"], perm=[0, 1])],
@@ -141,7 +142,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.node[2].attribute[0].g.output) == 2
         assert optimized_model.graph.node[2].attribute[0].g.output[1].name == "_Y"
 
-    def test_nop_transpose_default(self):
+    def test_nop_transpose_default(self):  # type: () -> None
         trans = helper.make_node("Transpose", ["X"], ["Y"])
         graph = helper.make_graph(
             [trans],
@@ -153,7 +154,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Transpose"
 
-    def test_fuse_transpose(self):
+    def test_fuse_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2]),
                  helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1]),
                  helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])]
@@ -176,7 +177,7 @@ class TestOptimizer(unittest.TestCase):
         # Transpose
         assert len(optimized_model.graph.node[3].attribute[0].g.node) == 1
 
-    def test_fuse_transpose_default(self):
+    def test_fuse_transpose_default(self):  # type: () -> None
         trans1 = helper.make_node("Transpose", ["X"], ["Y"])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"])
         graph = helper.make_graph(
@@ -188,7 +189,7 @@ class TestOptimizer(unittest.TestCase):
 
         assert len(list(optimized_model.graph.node)) == 0
 
-    def test_fuse_transpose_default_no_fuse(self):
+    def test_fuse_transpose_default_no_fuse(self):  # type: () -> None
         trans1 = helper.make_node("Transpose", ["X"], ["Y"])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[0, 1, 2])
         graph = helper.make_graph(
@@ -202,7 +203,7 @@ class TestOptimizer(unittest.TestCase):
         for node in optimized_model.graph.node:
             assert node.op_type == "Transpose"
 
-    def test_fuse_transpose_into_gemm(self):
+    def test_fuse_transpose_into_gemm(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["A"], perm=[1, 0]),
                  helper.make_node("Transpose", ["Y"], ["B"], perm=[1, 0]),
                  helper.make_node("Gemm", ["A", "B", "C"], ["Z"])]
@@ -230,7 +231,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(optimized_model.graph.node[3].attribute[0].g.node) == 1
         assert optimized_model.graph.node[3].attribute[0].g.node[0].op_type == "Gemm"
 
-    def test_fuse_add_bias_into_conv_use_weight_shape(self):
+    def test_fuse_add_bias_into_conv_use_weight_shape(self):  # type: () -> None
         nodes = [helper.make_node("Conv", ["X", "Y"], ["Z"]),
                  helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)]
         nodes.extend(self._make_fake_loop_op(
@@ -260,7 +261,7 @@ class TestOptimizer(unittest.TestCase):
         # Output 1 since 0 is 'cond'
         assert optimized_model.graph.node[3].attribute[0].g.output[1].name == '_Z'
 
-    def test_fuse_add_bias_into_conv_use_weight_shape_with_tile(self):
+    def test_fuse_add_bias_into_conv_use_weight_shape_with_tile(self):  # type: () -> None
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)
         graph = helper.make_graph(
@@ -282,7 +283,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[2].op_type == 'Conv'
         assert optimized_model.graph.output[0].name == 'Z'
 
-    def test_fuse_add_bias_into_conv_use_conv_shape(self):
+    def test_fuse_add_bias_into_conv_use_conv_shape(self):  # type: () -> None
         sub = helper.make_node("Sub", ["M", "N"], ["Y"])
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)
@@ -307,7 +308,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
         assert len(optimized_model.graph.output[0].type.tensor_type.shape.dim) == 4
 
-    def test_fuse_add_bias_into_conv_use_move_constant(self):
+    def test_fuse_add_bias_into_conv_use_move_constant(self):  # type: () -> None
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         constant = helper.make_node("Constant", [], ["A"],
                                     value=helper.make_tensor(
@@ -335,7 +336,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
         assert len(optimized_model.graph.output[0].type.tensor_type.shape.dim) == 4
 
-    def test_fuse_add_bias_into_conv_squeeze_1d_bias_no_fuse(self):
+    def test_fuse_add_bias_into_conv_squeeze_1d_bias_no_fuse(self):  # type: () -> None
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=3)
         graph = helper.make_graph(
@@ -355,7 +356,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == 'Conv'
         assert optimized_model.graph.node[1].op_type == 'Add'
 
-    def test_fuse_add_bias_into_conv_squeeze_3d_bias_no_fuse(self):
+    def test_fuse_add_bias_into_conv_squeeze_3d_bias_no_fuse(self):  # type: () -> None
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"], broadcast=1, axis=1)
         graph = helper.make_graph(
@@ -375,7 +376,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == 'Conv'
         assert optimized_model.graph.node[1].op_type == 'Add'
 
-    def test_fuse_add_bias_into_conv_squeeze_4d_bias_no_fuse(self):
+    def test_fuse_add_bias_into_conv_squeeze_4d_bias_no_fuse(self):  # type: () -> None
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"])
         graph = helper.make_graph(
@@ -392,7 +393,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == 'Conv'
         assert optimized_model.graph.node[1].op_type == 'Add'
 
-    def test_preserve_value_info(self):
+    def test_preserve_value_info(self):  # type: () -> None
         trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
         trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])
