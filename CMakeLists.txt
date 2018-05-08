@@ -12,7 +12,7 @@ project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
-option(ONNX_NO_WERROR "Disable use of Werror" OFF)
+option(ONNX_WERROR "Build with Werror" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -317,7 +317,7 @@ if (MSVC)
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
 elseif(APPLE)
 else()
-  if (NOT ${ONNX_NO_WERROR})
+  if (${ONNX_WERROR})
     target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
   endif()
 endif()
