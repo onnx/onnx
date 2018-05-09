@@ -16,7 +16,7 @@ get_all_schemas = C.get_all_schemas
 get_all_schemas_with_history = C.get_all_schemas_with_history
 
 
-def onnx_opset_version():
+def onnx_opset_version():  # type: () -> int
     return C.schema_version_map()[ONNX_DOMAIN][1]
 
 

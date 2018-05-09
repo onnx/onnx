@@ -11,6 +11,8 @@ from collections import defaultdict
 from onnx import defs
 from onnx.defs import OpSchema
 from onnx.backend.test.case import collect_snippets
+from typing import Text, Sequence, Dict, List, Type
+
 
 SNIPPETS = collect_snippets()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
@@ -21,13 +23,13 @@ else:
     ext = '.md'
 
 
-def display_number(v):
+def display_number(v):  # type: (int) -> Text
     if defs.OpSchema.is_infinite(v):
         return '&#8734;'
-    return str(v)
+    return Text(v)
 
 
-def should_render_domain(domain):
+def should_render_domain(domain):  # type: (Text) -> bool
     if domain == 'ai.onnx.ml' and not ONNX_ML:
         return False
     elif ONNX_ML and domain != 'ai.onnx.ml':
@@ -35,29 +37,29 @@ def should_render_domain(domain):
     return True
 
 
-def display_attr_type(v):
+def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
     assert isinstance(v, OpSchema.AttrType)
-    s = str(v)
+    s = Text(v)
     s = s[s.rfind('.') + 1:].lower()
     if s[-1] == 's':
         s = 'list of ' + s
     return s
 
 
-def display_domain(domain):
+def display_domain(domain):  # type: (Text) -> Text
     if domain:
         return "the '{}' operator set".format(domain)
     else:
         return "the default ONNX operator set"
 
 
-def display_version_link(name, version):
+def display_version_link(name, version):  # type: (Text, int) -> Text
     changelog_md = 'Changelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
     return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
 
 
-def display_schema(schema, versions):
+def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
     s = ''
 
     if schema.domain:
@@ -79,7 +81,7 @@ def display_schema(schema, versions):
     if len(versions) > 1:
         # TODO: link to the Changelog.md
         s += '\nOther versions of this operator: {}\n'.format(
-            ', '.join(display_version_link(domain_prefix + s.name, s.since_version) for s in versions[:-1]))
+            ', '.join(display_version_link(domain_prefix + v.name, v.since_version) for v in versions[:-1]))
 
     # attributes
     if schema.attributes:
@@ -149,12 +151,12 @@ def display_schema(schema, versions):
     return s
 
 
-def support_level_str(level):
+def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
     return \
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-def main(args):
+def main(args):  # type: (Type[Args]) -> None
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
         fout.write(
@@ -163,13 +165,13 @@ def main(args):
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> version -> [schema]
-        index = defaultdict(lambda: defaultdict(list))
+        dv_index = defaultdict(lambda: defaultdict(list))  # type: Dict[Text, Dict[int, List[OpSchema]]]
         for schema in defs.get_all_schemas_with_history():
-            index[schema.domain][schema.since_version].append(schema)
+            dv_index[schema.domain][schema.since_version].append(schema)
 
         fout.write('\n')
 
-        for domain, versionmap in sorted(index.items()):
+        for domain, versionmap in sorted(dv_index.items()):
             if not should_render_domain(domain):
                 continue
 
@@ -199,7 +201,7 @@ def main(args):
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> support level -> name -> [schema]
-        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # type: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]]
         for schema in defs.get_all_schemas_with_history():
             index[schema.domain][int(schema.support_level)][schema.name].append(schema)
 
