@@ -735,7 +735,10 @@ where mean and variance are computed per instance per channel.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateShapeAndTypeFromFirstInput(ctx);
+      });
 
 ONNX_OPERATOR_SCHEMA(LpNormalization)
     .Input(0, "input", "Input matrix", "T")
