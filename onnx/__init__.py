@@ -12,16 +12,16 @@ import onnx.checker  # noqa
 import onnx.defs  # noqa
 
 import google.protobuf.message  # type: ignore
-from typing import Union, Optional, Text, IO
 
 from typing import Union, Text, IO, Optional, cast, TypeVar, Any
 
+
 # f should be either readable or a file path
 def _load_bytes(f):  # type: (Union[IO[bytes], Text]) -> bytes
-    if hasattr(f, 'read') and callable(f.read):  # type: ignore
+    if hasattr(f, 'read') and callable(cast(IO[bytes], f).read):
         s = f.read()  # type: ignore
     else:
-        with open(f, 'rb') as readable:  # type: ignore
+        with open(cast(Text, f), 'rb') as readable:
             s = readable.read()
     return s
 
@@ -36,7 +36,7 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
             writable.write(str)
 
 
-def _serialize(proto):  # type: (google.protobuf.message.Message) -> bytes
+def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) -> bytes
     '''
     Serialize a in-memory proto to bytes
 
@@ -57,6 +57,7 @@ def _serialize(proto):  # type: (google.protobuf.message.Message) -> bytes
 
 
 _Proto = TypeVar('_Proto', bound=google.protobuf.message.Message)
+
 
 def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
     '''
