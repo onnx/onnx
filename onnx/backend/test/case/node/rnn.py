@@ -23,17 +23,17 @@ class RNN_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        num_directions = params[W].shape[0]
+        self.num_directions = params[W].shape[0]
 
-        if(num_directions == 1):
+        if(self.num_directions == 1):
             for k in params.keys():
                 params[k] = np.squeeze(params[k], axis=0)
 
-            hidden_size = params[R].shape[-1]
-            batch_size = params[X].shape[0]
+            self.hidden_size = params[R].shape[-1]
+            self.batch_size = params[X].shape[0]
 
-            b = params[B] if B in params else np.zeros(2 * hidden_size)
-            h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
+            b = params[B] if B in params else np.zeros(2 * self.hidden_size)
+            h_0 = params[H_0] if H_0 in params else np.zeros((self.batch_size, self.hidden_size))
 
             self.X = params[X]
             self.W = params[W]
@@ -49,9 +49,8 @@ class RNN_Helper():
     def step(self):
         [w_b, r_b] = np.split(self.B, 2)
 
-        H = self.f(np.dot(self.X, np.transpose(self.W)) + np.dot(self.H_0, self.R) + w_b + r_b)
-        return H
-
+        H = self.f(np.dot(self.X, np.transpose(self.W)) + np.dot(self.H_0, self.R) + w_b + r_b)            
+        return np.reshape(H, (self.num_directions, self.batch_size, self.hidden_size))
 
 class RNN(Base):
 
