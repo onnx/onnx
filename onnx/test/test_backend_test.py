@@ -30,8 +30,7 @@ class DummyBackend(onnx.backend.base.Backend):
         super(DummyBackend, cls).prepare(model, device, **kwargs)
 
         # test shape inference
-        # TODO: shape_inference test is disabled, to unbreak ci
-        #onnx.shape_inference.infer_shapes(model)
+        onnx.shape_inference.infer_shapes(model)
 
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")

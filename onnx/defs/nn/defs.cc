@@ -23,6 +23,96 @@ static std::string auto_pad_doc =
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
+
+void convPoolTypeAndShapeInference(InferenceContext& ctx, bool use_dilation, bool require_kernel_shape) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  // don't bother with legacy auto_pad for now
+  if (ctx.getAttribute("auto_pad")) {
+    return;
+  }
+
+  size_t n_input_dims = (size_t) (ctx.getInputType(0)->tensor_type().shape().dim_size() - 2);
+
+  // Pooling operations don't support dilation, only Conv. For
+  // simplicity of the code, we just treat them as having all-1s
+  // dilation.
+  std::vector<int64_t> dilations;
+  if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
+    if (dilations.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    dilations.assign(n_input_dims, 1);
+  }
+
+  std::vector<int64_t> kernel_shape;
+  if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
+    if (kernel_shape.size() != ctx.getInputType(0)->tensor_type().shape().dim_size() - 2) {
+      return;
+    }
+  } else if (require_kernel_shape) {
+    return;
+  } else {
+    for (int i = 2; i < ctx.getInputType(1)->tensor_type().shape().dim_size(); ++i) {
+      if (!ctx.getInputType(1)->tensor_type().shape().dim(i).has_dim_value()) {
+        return;
+      }
+      kernel_shape.push_back(ctx.getInputType(1)->tensor_type().shape().dim(i).dim_value());
+    }
+  }
+
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      return;
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+  }
+
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    strides.assign(n_input_dims, 1);
+  }
+
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+    ctx.getInputType(0)->tensor_type().shape().dim(0);
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+    ctx.getInputType(1)->tensor_type().shape().dim(0);
+
+  for (int i = 0; i < static_cast<int>(kernel_shape.size()); ++i) {
+    auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
+    if (!ctx.getInputType(0)->tensor_type().shape().dim(2 + i).has_dim_value()) {
+      continue;
+    }
+    // how big is the input, including padding
+    int64_t effective_input_size = ctx.getInputType(0)->tensor_type().shape().dim(2 + i).dim_value();
+    effective_input_size += pads[i];
+    effective_input_size += pads[i + static_cast<int>(kernel_shape.size())];
+
+    // accounting for dilation, how big is the kernel in this dimension
+    int64_t effective_kernel_size = kernel_shape[i];
+    effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
+
+    // how many times we can move the kernel from it's initial position, based on the stride
+    int64_t strided_kernel_positions = (effective_input_size - effective_kernel_size) / strides[i];
+
+    // add in the initial position
+    int64_t total_kernel_positions = 1 + strided_kernel_positions;
+
+    newdim->set_dim_value(total_kernel_positions);
+  }
+}
+
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
@@ -97,6 +187,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { convPoolTypeAndShapeInference(ctx, false, true); });
   };
 }
 
@@ -254,7 +345,7 @@ computes the output.)DOC";
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
         "kernel shape will be (M x C x k1 x k2 x ... x kn), "
-        "where is the dimension of the kernel. "
+        "where (k1 x k2 x ... kn) is the dimension of the kernel. "
         "Optionally, if dimension denotation is in effect, "
         "the operation expects the weight tensor to arrive "
         "with the dimension denotation of [FILTER_IN_CHANNEL, "
@@ -303,6 +394,7 @@ computes the output.)DOC";
         "number of groups input channels and output channels are divided into, default is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { convPoolTypeAndShapeInference(ctx, true, false); });
   };
 }
 
@@ -335,8 +427,8 @@ and computes the output.)DOC";
         "is the number of channels, and kH and kW are the "
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
-        "kernel shape will be (C x M x k1 x k2 x ... x kn), "
-        "where is the dimension of the kernel",
+        "weight shape will be (C x M x k1 x k2 x ... x kn), "
+        "where (k1 x k2 x ... x kn) is the dimension of the kernel",
         "T");
     schema.Input(
         2,
@@ -598,7 +690,13 @@ Output case #2: Y (test mode)
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateShapeAndTypeFromFirstInput(ctx);
+        // TODO in training mode, it may be possible to infer some of
+        // the other outputs as well.
+      });
+
 
 ONNX_OPERATOR_SCHEMA(InstanceNormalization)
     .SinceVersion(6)
@@ -691,7 +789,8 @@ the training phase, so during testing nothing needs to be done.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Flatten)
     .SetDoc(R"DOC(
@@ -738,4 +837,5 @@ ONNX_OPERATOR_SCHEMA(LRN)
 Local Response Normalization. It normalizes over local input regions.
 Each input value is divided by
 (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
-)DOC");
+)DOC")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
