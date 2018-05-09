@@ -49,8 +49,9 @@ class RNN_Helper():
     def step(self):
         [w_b, r_b] = np.split(self.B, 2)
 
-        H = self.f(np.dot(self.X, np.transpose(self.W)) + np.dot(self.H_0, self.R) + w_b + r_b)            
+        H = self.f(np.dot(self.X, np.transpose(self.W)) + np.dot(self.H_0, self.R) + w_b + r_b)
         return np.reshape(H, (self.num_directions, self.batch_size, self.hidden_size))
+
 
 class RNN(Base):
 
