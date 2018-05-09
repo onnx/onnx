@@ -12,12 +12,14 @@ In the case of images there are many option for providing valid image data.  How
 be used during inferencing.
 
 The goal is this proposal is to provide enough metadata that the model consumer can perform their own featurization prior to running the model and provide a compatible input 
-or retrive an output and know what it's format is.
+or retrive an output and know what its format is.
 
 ## Image Category Definition
 
 For every tensor in this model that uses [Tensor Denotation](TensorDenotation.md) to declare itself an `IMAGE`, you can provide more information to the model consumer.  Note that any metadata provided using this mechanism is global to ALL tensors
 with the accompanying denotation.
+
+Keys and values are case insenstive.
 
 Specifically, we define here the following set image metadata:
 

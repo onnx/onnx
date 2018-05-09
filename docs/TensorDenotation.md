@@ -19,7 +19,7 @@ In order to run this model the user needs a lot of information.    In this case 
 
 This proposal consists of three key components to provide all of this information: Tensor Denotation, [Dimension Denotation](DimensionDenotation.md), and [model metadata](MetadataProps.md).  Each of which will be discussed in detail.
 
-## Tensor Denotatio Definition
+## Tensor Denotation Definition
 
 To begin with, we define a set of semantic types that define what models generally consume as inputs and produce as outputs.
 
