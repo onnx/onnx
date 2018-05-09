@@ -19,7 +19,7 @@ from typing import Union, Text, IO, Optional, cast, TypeVar, Any
 # f should be either readable or a file path
 def _load_bytes(f):  # type: (Union[IO[bytes], Text]) -> bytes
     if hasattr(f, 'read') and callable(cast(IO[bytes], f).read):
-        s = f.read()  # type: ignore
+        s = cast(IO[bytes], f).read()
     else:
         with open(cast(Text, f), 'rb') as readable:
             s = readable.read()
@@ -29,10 +29,10 @@ def _load_bytes(f):  # type: (Union[IO[bytes], Text]) -> bytes
 # str should be bytes,
 # f should be either writable or a file path
 def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
-    if hasattr(f, 'write') and callable(f.write):  # type: ignore
-        f.write(str)  # type: ignore
+    if hasattr(f, 'write') and callable(cast(IO[bytes], f).write):
+        cast(IO[bytes], f).write(str)
     else:
-        with open(f, 'wb') as writable:  # type: ignore
+        with open(cast(Text, f), 'wb') as writable:
             writable.write(str)
 
 
