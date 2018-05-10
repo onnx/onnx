@@ -174,14 +174,8 @@ ONNX_OPERATOR_SCHEMA(Concat)
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (!hasNInputShapes(ctx, 1)) {
+      if (ctx.getNumInputs() < 1 || !hasNInputShapes(ctx, static_cast<int>(ctx.getNumInputs()))) {
         return;
-      }
-
-      for (size_t i = 0; i < ctx.getNumInputs(); i++) {
-        if (!ctx.getInputType(i)->tensor_type().has_shape()) {
-          return;
-        }
       }
 
       auto axisAttr = ctx.getAttribute("axis");
@@ -252,7 +246,9 @@ ONNX_OPERATOR_SCHEMA(Split)
 Otherwise, the tensor is split to equal sized parts.
 )DOC")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+        propagateElemTypeFromInputToOutput(ctx, 0, i);
+      }
 
       if (!hasNInputShapes(ctx, 1)) {
         return;

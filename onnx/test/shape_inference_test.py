@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import checker, helper, TensorProto
-from onnx.helper import make_node, make_tensor_value_info
+from onnx.helper import make_node, make_tensor_value_info, make_empty_tensor_value_info
 
 import onnx.shape_inference
 import unittest
@@ -15,10 +15,15 @@ import numpy as np
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self, seed_values, nodes, value_info):
         input_value_infos = []
-        for name, dtype, shape in seed_values:
-            # introduce the starting values as the output of reshape,
-            # so that the sizes are guaranteed to be unknown
-            value_info.append(make_tensor_value_info(name, dtype, shape))
+        # introduce the starting values as the output of reshape,
+        # so that the sizes are guaranteed to be unknown
+        for seed_value in seed_values:
+            if isinstance(seed_value, tuple):
+                name = seed_value[0]
+                value_info.append(make_tensor_value_info(*seed_value))
+            else:
+                name = seed_value
+                value_info.append(make_empty_tensor_value_info(seed_value))
             input_value_infos.append(make_tensor_value_info('SEED_' + name, TensorProto.UNDEFINED, ()))
             input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + name, TensorProto.UNDEFINED, ()))
             nodes[:0] = [make_node("Reshape", ['SEED_' + name, 'UNKNOWN_SHAPE_' + name], [name])]
@@ -47,6 +52,12 @@ class TestShapeInference(unittest.TestCase):
         for vi, inferred_vi in zip(vis, inferred_vis):
             assert vi == inferred_vi, '\n%s\n%s\n' % (vi, inferred_vi)
         assert False
+
+    def test_empty_graph(self):
+        graph = self._make_graph(
+            ['y'],
+            [], [])
+        self._assert_inferred(graph, [])
 
     def _identity_prop(self, op, **kwargs):
         graph = self._make_graph(
@@ -146,6 +157,15 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Concat", ['x', 'y'], ['z'], axis=0)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (9, 4, 3))])
+
+    def test_concat_missing_shape(self):
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4, 3)),
+             "y",
+             ("z", TensorProto.FLOAT, (None, None, None))],
+            [make_node("Concat", ['x', 'y', 'z'], ['out'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, None)])
 
     def test_concat_3d_axis_2(self):
         graph = self._make_graph(
@@ -562,6 +582,36 @@ class TestShapeInference(unittest.TestCase):
             [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'], is_test=0)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
+
+    def test_split_from_GLU(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 6, 7))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7))])
+
+    def test_GLU_partial(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 6, 7))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1),
+             make_node('Sigmoid', ['z'], ['a'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('a', TensorProto.FLOAT, (5, 3, 7))])
+
+    def test_GLU(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 6, 7))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1),
+             make_node('Sigmoid', ['z'], ['a']),
+             make_node('Mul', ['y', 'a'], ['b'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('a', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('b', TensorProto.FLOAT, (5, 3, 7))])
 
     def test_softmax(self):
         graph = self._make_graph(
