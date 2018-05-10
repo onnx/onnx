@@ -13,15 +13,13 @@ ONNX defines the versioning policy and mechanism for three classes of entities:
 
 The versioning of all three of these entity types is distinct and largely independent. That is, the ONNX IR format evolves at a different rate than the set operators defined by ONNX – in which the former will version much slower than the latter.
 
-While the versioning mechanisms are clearly specified in this document, specific policies for version management are mandated only for IR version and operator version. For recommended for model versioning, they are to be interpreted as recommendations.
+While the versioning mechanisms are clearly specified in this document, specific policies for version management are mandated only for IR version and operator version. For model versioning, they are merely recommendations. For model version, ONNX users and systems MAY follow whichever local customs make sense; however, to facilitate easily managing shared collections of ONNX models, they SHOULD adhere to the policies described under model versioning.
 
-For model version, ONNX users and systems MAY follow whichever local customs make sense, however, to facilitate shared libraries or repositories of ONNX models to be manageable, models SHOULD adhere to the policies described under model versioning.
-
-In addition to versioning ONNX entities, progressive ONNX releases are assigned version numbers. The release versioning scheme is not described as part of the standard itself, but covered in the [ONNX release management document](../RELEASE-MANAGEMENT.md).
+In addition to versioning ONNX entities, progressive ONNX _releases_ are assigned increasing version numbers. The release versioning scheme is not described as part of the standard itself. It is discussed in the [ONNX release management document](../RELEASE-MANAGEMENT.md).
 
 ### Semantic Versioning or Simple Numbers?
 
-The ONNX versioning system allows for using either simple monotonically increasing numbers, or semantic versioning. For the IR format and operators, versioning based on simple numbers is used. For models, ONNX does not proscribe one or the other methodology.
+The ONNX versioning system allows for simple monotonically increasing numbers or semantic versioning. For IR and operator sets, versioning is based on simple numbers. For models, ONNX does not proscribe one or the other methodology, but (as stated earlier) recommends a set of shared conventions.
 
 Which versioning scheme is in use by a model is made clear by inspecting the most significant four bytes, which MUST be non-zero when using semantic versioning and MUST be zero when using simple numbers. In other words, when using semver, at least one of the MAJOR or MINOR numbers must be non-zero.
 
@@ -45,7 +43,7 @@ For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-pack
 
 For example, *1.2.345* is represented as *0x0001000200000159*.
 
-The prerelease and build metadata aren't stored in the model.
+Pre-release and build metadata are not stored in the model.
 
 ## IR versioning
 
@@ -59,7 +57,7 @@ As a general principle, implementations SHOULD be robust in the face of missing 
 
     // This field MUST be present for this version of the IR.
 
-For example, the `ModelProto.ir_version` MUST be present in every model. The ONNX checker (`onnx/checker.py`) will enforce these rules.
+For example, the `ModelProto.ir_version` property MUST be present in every model. The ONNX checker (`onnx/checker.py`) will enforce these rules.
 
 Because onnx.proto is expected to be consumed by multiple independent developers, changes to onnx.oroto SHOULD NOT break code that depends on generated language bindings (e.g., changing the type of an existing field).
 
