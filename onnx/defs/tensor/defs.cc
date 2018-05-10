@@ -817,6 +817,7 @@ For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4,
         "Constrain repeat's type to int64 tensors.");
 
 ONNX_OPERATOR_SCHEMA(Upsample)
+	.SinceVersion(7)
     .Attr(
         "scales",
         "The scale array along each dimension. It takes value greater than or equal to 1."
