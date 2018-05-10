@@ -260,6 +260,12 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
+def make_empty_tensor_value_info(name):
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+    return value_info_proto
+
+
 def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: TensorProto.DataType
