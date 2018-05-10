@@ -479,7 +479,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (2, 3, 100, 100))],
             [make_node('SpaceToDepth', ['x'], ['z'], blocksize=b)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2,3*b*b,100/b,100/b))])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2,3*b*b,100//b,100//b))])
 
     def test_space_to_depth_unknown_dim(self):
         b = 10
@@ -487,7 +487,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (2, 'N', 100, 100))],
             [make_node('SpaceToDepth', ['x'], ['z'], blocksize=b)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2,None,100/b,100/b))])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2,None,100//b,100//b))])
 
     def test_depth_to_space(self):
         b = 10
@@ -495,7 +495,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (2, 300, 10, 10))],
             [make_node('DepthToSpace', ['x'], ['z'], blocksize=b)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2,300/(b*b),10*b,10*b))])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2,300//(b*b),10*b,10*b))])
 
     def test_gemm(self):
         graph = self._make_graph(
