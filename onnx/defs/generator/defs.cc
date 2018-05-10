@@ -15,7 +15,15 @@ ONNX_OPERATOR_SCHEMA(Constant)
             "output",
             "Output tensor containing the same value of the provided tensor.", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        auto attr_proto = ctx.getAttribute("value");
+        if (nullptr == attr_proto) return; // attribute not present
+        if (!attr_proto->has_t()) return; // attribute has no tensor value
+        const TensorProto& tensor_proto = attr_proto->t();
+        updateOutputElemType(ctx, 0, tensor_proto.data_type());
+        updateOutputShape(ctx, 0, tensor_proto);
+    });
 
 ONNX_OPERATOR_SCHEMA(RandomUniform)
     .SetDoc(R"DOC(
@@ -55,7 +63,11 @@ TensorProto message.
             "output",
             "Output tensor of random values drawn from uniform distribution", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain output types to float tensors.");
+        "Constrain output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        propagateShapeFromAttributeToOutput(ctx, "shape", 0);
+    });
 
 ONNX_OPERATOR_SCHEMA(RandomNormal)
     .SetDoc(R"DOC(
@@ -96,7 +108,11 @@ TensorProto message.
             "output",
             "Output tensor of random values drawn from normal distribution", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain output types to float tensors.");
+        "Constrain output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        propagateShapeFromAttributeToOutput(ctx, "shape", 0);
+    });
 
 ONNX_OPERATOR_SCHEMA(RandomUniformLike)
     .SetDoc(R"DOC(
@@ -139,22 +155,20 @@ TensorProto message and be valid as an output type.
             "Output tensor of random values drawn from uniform distribution", "T2")
     .TypeConstraint(
         "T1",
-        {"tensor(float16)",
-         "tensor(float)",
-         "tensor(double)",
-         "tensor(int8)",
-         "tensor(int16)",
-         "tensor(int32)",
-         "tensor(int64)",
-         "tensor(uint8)",
-         "tensor(uint16)",
-         "tensor(uint32)",
-         "tensor(uint64)",
-         "tensor(bool)",
-         "tensor(string)"},
+        OpSchema::all_tensor_types(),
         "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
     .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain output types to float tensors.");
+        "Constrain output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        if (ctx.getAttribute("dtype") != nullptr) 
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        else
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (!hasNInputShapes(ctx, 1)) {
+          return;
+        }
+        propagateShapeFromInputToOutput(ctx, 0, 0);
+    });
 
 ONNX_OPERATOR_SCHEMA(RandomNormalLike)
     .SetDoc(R"DOC(
@@ -197,19 +211,17 @@ TensorProto message, and be valid as an output type.
             "Output tensor of random values drawn from normal distribution", "T2")
     .TypeConstraint(
         "T1",
-        {"tensor(float16)",
-         "tensor(float)",
-         "tensor(double)",
-         "tensor(int8)",
-         "tensor(int16)",
-         "tensor(int32)",
-         "tensor(int64)",
-         "tensor(uint8)",
-         "tensor(uint16)",
-         "tensor(uint32)",
-         "tensor(uint64)",
-         "tensor(bool)",
-         "tensor(string)"},
+        OpSchema::all_tensor_types(),
         "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
     .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-        "Constrain output types to float tensors.");
+        "Constrain output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        if (ctx.getAttribute("dtype") != nullptr) 
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        else
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (!hasNInputShapes(ctx, 1)) {
+          return;
+        }
+        propagateShapeFromInputToOutput(ctx, 0, 0);
+    });
