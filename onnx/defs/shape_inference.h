@@ -47,6 +47,9 @@ inline void propagateElemTypeFromInputToOutput(
       input_type->value_case() != TypeProto::kTensorType) {
     return;
   }
+  if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
+    return;
+  }
   auto output_type = ctx.getOutputType(outputIndex);
   if (output_type->value_case() == TypeProto::kTensorType ||
       output_type->value_case() == TypeProto::VALUE_NOT_SET) {
@@ -139,7 +142,7 @@ inline void propagateElemTypeFromAttributeToOutput(
     if (default_value != TensorProto::UNDEFINED)
       updateOutputElemType(ctx, outputIndex, default_value);
     return;
-  }  
+  }
   if (!attr_proto->has_i()) return; // attribute not of right type
   auto attr_value = attr_proto->i();
   auto elem_type = static_cast<TensorProto_DataType>(attr_value);
