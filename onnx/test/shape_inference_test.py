@@ -518,7 +518,8 @@ class TestShapeInference(unittest.TestCase):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7))],
             [make_node('LpNormalization', ['x'], ['out'])],
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7)))]
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 
     def test_instance_norm(self):
         graph = self._make_graph(
