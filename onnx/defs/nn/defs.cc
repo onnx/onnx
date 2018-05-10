@@ -829,14 +829,15 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
 	    if (hasInputShape(ctx, 0)) {
-		  auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+		  auto& input_shape = getInputShape(ctx,0);
 		  int rank = static_cast<int> (input_shape.dim_size());
 		  int axis = static_cast<int> (getAttribute(ctx, "axis", 1));
 		  if (axis > rank) axis = rank;
-		  TensorShapeProto result;
-		  *result.add_dim() = multiplyDims(input_shape, 0, axis);
-		  *result.add_dim() = multiplyDims(input_shape, axis, rank);
-		  updateOutputShape(ctx, 0, result);
+		  // TODO: is the operation defined for input-rank < 2?
+		  updateOutputShape(ctx, 0, {
+			  multiplyDims(input_shape, 0, axis),
+			  multiplyDims(input_shape, axis, rank)
+		  });
 	    }
     });
 
