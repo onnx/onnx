@@ -95,6 +95,7 @@
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
+  * <a href="#Upsample">Upsample</a>
   * <a href="#Xor">Xor</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
@@ -8058,6 +8059,80 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Upsample"></a><a name="upsample">**Upsample**</a>
+
+  Upsample the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string</dt>
+<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
+<dt><tt>scales</tt> : list of floats (required)</dt>
+<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>N-D tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input/output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Upsample',
+    inputs=['x'],
+    outputs=['y'],
+    scales=[1.0, 1.0, 2.0, 3.0],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[output],
+       name='test_upsample_nearest')
+```
+
+</details>
+
+
 ### <a name="Xor"></a><a name="xor">**Xor**</a>
 
   Returns the tensor resulted from performing the `xor` logical operation
@@ -9114,11 +9189,9 @@ expect(node, inputs=[x], outputs=[y],
   The width and height of the output tensor are:
     output_width = floor(input_width * width_scale),
     output_height = floor(input_height * height_scale).
-  
   Example:
     Given `data` tensor, width_scale, height_scale, mode,
     Upsample the input 4-D tensor in nearest mode:
-  
     data = [[[
         [1, 2],
         [3, 4]
@@ -9126,7 +9199,6 @@ expect(node, inputs=[x], outputs=[y],
     width_scale = 2
     height_scale = 2
     mode = "nearest"
-  
     output = [[[
         [1, 1, 2, 2],
         [1, 1, 2, 2],
@@ -9181,8 +9253,7 @@ node = onnx.helper.make_node(
     'Upsample',
     inputs=['x'],
     outputs=['y'],
-    height_scale=2.0,
-    width_scale=3.0,
+    scales=[1.0, 1.0, 2.0, 3.0],
     mode='nearest',
 )
 
