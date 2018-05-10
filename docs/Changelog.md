@@ -5044,6 +5044,65 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Upsample-1"></a>**Upsample-1**</a>
+
+  Upsample the input tensor.
+  The width and height of the output tensor are:
+    output_width = floor(input_width * width_scale),
+    output_height = floor(input_height * height_scale).
+  Example:
+    Given `data` tensor, width_scale, height_scale, mode,
+    Upsample the input 4-D tensor in nearest mode:
+    data = [[[
+        [1, 2],
+        [3, 4]
+    ]]]
+    width_scale = 2
+    height_scale = 2
+    mode = "nearest"
+    output = [[[
+        [1, 1, 2, 2],
+        [1, 1, 2, 2],
+        [3, 3, 4, 4],
+        [3, 3, 4, 4]
+    ]]]
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>height_scale</tt> : float (required)</dt>
+<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
+<dt><tt>mode</tt> : string</dt>
+<dd>Two interpolation modes: nearest(default), bilinear</dd>
+<dt><tt>width_scale</tt> : float (required)</dt>
+<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>4-D tensor, [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>4-D tensor after resizing, [N,C,H,W]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
+</dl>
+
 ### <a name="Xor-1"></a>**Xor-1**</a>
 
   Returns the tensor resulted from performing the `xor` logical operation

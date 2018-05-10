@@ -113,6 +113,7 @@
   * <sub>experimental</sub> <a href="#Scale">Scale</a>
   * <sub>experimental</sub> <a href="#ScaledTanh">ScaledTanh</a>
   * <sub>experimental</sub> <a href="#ThresholdedRelu">ThresholdedRelu</a>
+  * <sub>experimental</sub> <a href="#Upsample">Upsample</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
@@ -9167,6 +9168,99 @@ y[y == alpha] = 0
 
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu')
+```
+
+</details>
+
+
+### <sub>experimental</sub> <a name="Upsample"></a><a name="upsample">**Upsample**</a>
+
+  Upsample the input tensor.
+  The width and height of the output tensor are:
+    output_width = floor(input_width * width_scale),
+    output_height = floor(input_height * height_scale).
+  Example:
+    Given `data` tensor, width_scale, height_scale, mode,
+    Upsample the input 4-D tensor in nearest mode:
+    data = [[[
+        [1, 2],
+        [3, 4]
+    ]]]
+    width_scale = 2
+    height_scale = 2
+    mode = "nearest"
+    output = [[[
+        [1, 1, 2, 2],
+        [1, 1, 2, 2],
+        [3, 3, 4, 4],
+        [3, 3, 4, 4]
+    ]]]
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>height_scale</tt> : float (required)</dt>
+<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
+<dt><tt>mode</tt> : string</dt>
+<dd>Two interpolation modes: nearest(default), bilinear</dd>
+<dt><tt>width_scale</tt> : float (required)</dt>
+<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>4-D tensor, [N,C,H,W]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>4-D tensor after resizing, [N,C,H,W]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Upsample',
+    inputs=['x'],
+    outputs=['y'],
+    scales=[1.0, 1.0, 2.0, 3.0],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[output],
+       name='test_upsample_nearest')
 ```
 
 </details>
