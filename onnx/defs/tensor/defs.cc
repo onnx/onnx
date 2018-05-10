@@ -717,7 +717,24 @@ are moved to the depth dimension.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        "Constrain input types to float tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		auto blocksize = getAttribute(ctx, "blocksize", 0);
+		if (blocksize <= 0) return;
+		if (hasInputShape(ctx, 0)) {
+			auto& input_shape = getInputShape(ctx, 0);
+			if (input_shape.dim_size() == 4) {
+				// TODO: Clarify what behavior should be if H or W is not a multiple of blocksize.
+				updateOutputShape(ctx, 0, {
+					input_shape.dim(0),
+					input_shape.dim(1) * (blocksize * blocksize),
+					input_shape.dim(2) / blocksize,
+					input_shape.dim(3) / blocksize
+				});
+			}
+		}
+    });
 
 ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr(
@@ -744,7 +761,24 @@ and width dimensions.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        "Constrain input types to float tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		auto blocksize = getAttribute(ctx, "blocksize", 0);
+		if (blocksize <= 0) return;
+		if (hasInputShape(ctx, 0)) {
+			auto& input_shape = getInputShape(ctx, 0);
+			if (input_shape.dim_size() == 4) {
+				// TODO: Clarify what behavior should be if C is not a multiple of blocksize*blocksize.
+				updateOutputShape(ctx, 0, {
+					input_shape.dim(0),
+					input_shape.dim(1) / (blocksize * blocksize),
+					input_shape.dim(2) * blocksize,
+					input_shape.dim(3) * blocksize
+				});
+			}
+		}
+	});
 
 ONNX_OPERATOR_SCHEMA(Tile)
     .SetDoc(R"DOC(Constructs a tensor by tiling a given tensor.
