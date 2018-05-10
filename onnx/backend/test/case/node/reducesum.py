@@ -21,7 +21,7 @@ class ReduceSum(Base):
             'ReduceSum',
             inputs=['data'],
             outputs=['reduced'],
-            axes=[1],
+            axes=[axis],
             keepdims=keepdims
         )
 
