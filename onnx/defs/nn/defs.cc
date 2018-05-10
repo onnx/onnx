@@ -792,7 +792,10 @@ where mean and variance are computed per instance per channel.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateShapeAndTypeFromFirstInput(ctx);
+      });
 
 ONNX_OPERATOR_SCHEMA(LpNormalization)
     .Input(0, "input", "Input matrix", "T")
@@ -813,7 +816,10 @@ Given a matrix, apply Lp-normalization along the provided axis.
         "p",
         "(int64, default 2) the order of the normalization, only 1 or 2 are supported.",
         AttributeProto::INT,
-        static_cast<int64_t>(2));
+        static_cast<int64_t>(2))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateShapeAndTypeFromFirstInput(ctx);
+      });
 
 ONNX_OPERATOR_SCHEMA(Dropout)
     .SinceVersion(6)
