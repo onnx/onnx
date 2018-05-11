@@ -13,7 +13,7 @@ from . import expect
 class Div(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Div',
             inputs=['x', 'y'],
@@ -33,7 +33,7 @@ class Div(Base):
                name='test_div')
 
     @staticmethod
-    def export_div_broadcast():
+    def export_div_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Div',
             inputs=['x', 'y'],
