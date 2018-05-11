@@ -309,7 +309,7 @@ ONNX_OPERATOR_SCHEMA(LpPool).FillUsing(LpPoolOpSchemaGenerator("LpPool"));
 void roiPoolTypeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-  // expect only one input.
+  // rois is the second input.
   if (!hasNInputShapes(ctx, 2)) {
     return;
   }
@@ -329,11 +329,11 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
     return; // cannot produce output shape.
   }
 
-  int num_rios = static_cast<int>(rios_shape.dim(0).dim_value());
   // (num_rois, channels, pooled_shape[0], pooled_shape[1])
   auto output_shape =
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-  output_shape->add_dim()->set_dim_value(num_rios);
+
+  *output_shape->add_dim() = rios_shape.dim(0);
   *output_shape->add_dim() = input_shape.dim(1);
   output_shape->add_dim()->set_dim_value(pooled_shape[0]);
   output_shape->add_dim()->set_dim_value(pooled_shape[1]);
