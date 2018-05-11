@@ -350,7 +350,7 @@ ONNX_OPERATOR_SCHEMA(Tanh)
     .SetDoc(R"DOC(
 Calculates the hyperbolic tangent of the given input tensor element-wise.
 )DOC")
-    .Input(0, "input", "1-D input tensor", "T")
+    .Input(0, "input", "Input tensor", "T")
     .Output(
         0,
         "output",
@@ -543,7 +543,7 @@ ONNX_OPERATOR_SCHEMA(Softsign)
     .SetDoc(R"DOC(
 Calculates the softsign (x/(1+|x|)) of the given input tensor element-wise.
 )DOC")
-    .Input(0, "input", "1-D input tensor", "T")
+    .Input(0, "input", "Input tensor", "T")
     .Output(
         0,
         "output",
