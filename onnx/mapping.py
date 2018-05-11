@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import TensorProto
-import numpy as np
+import numpy as np  # type: ignore
 
 TENSOR_TYPE_TO_NP_TYPE = {
     TensorProto.FLOAT: np.dtype('float32'),
@@ -54,4 +54,5 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     TensorProto.UINT32: 'uint64_data',
     TensorProto.UINT64: 'uint64_data',
     TensorProto.STRING: 'string_data',
+    TensorProto.BOOL: 'int32_data',
 }

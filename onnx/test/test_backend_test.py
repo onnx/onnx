@@ -8,6 +8,9 @@ import unittest
 import onnx.backend.base
 import onnx.backend.test
 
+from onnx.backend.base import Device, DeviceType
+from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
+import onnx.shape_inference
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops
@@ -25,17 +28,30 @@ class DummyBackend(onnx.backend.base.Backend):
     @classmethod
     def prepare(cls, model, device='CPU', **kwargs):
         super(DummyBackend, cls).prepare(model, device, **kwargs)
-        raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
+
+        # test shape inference
+        onnx.shape_inference.infer_shapes(model)
+
+        raise BackendIsNotSupposedToImplementIt(
+            "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def run_node(cls, node, inputs, device='CPU'):
-        super(DummyBackend, cls).run_node(node, inputs, device)
-        raise unittest.SkipTest("This is the dummy backend test that doesn't verify the results but does run the checker")
+    def run_node(cls, node, inputs, device='CPU', outputs_info=None):
+        super(DummyBackend, cls).run_node(node, inputs, device=device, outputs_info=outputs_info)
+        raise BackendIsNotSupposedToImplementIt(
+            "This is the dummy backend test that doesn't verify the results but does run the checker")
+
+    @classmethod
+    def supports_device(cls, device):
+        d = Device(device)
+        if d.type == DeviceType.CPU:
+            return True
+        return False
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
 if os.getenv('APPVEYOR'):
-    backend_test.exclude(r'(test_vgg19|test_vgg16)')
+    backend_test.exclude(r'(test_vgg19|test_zfnet)')
 
 # import all test cases at global scope to make them visible to python.unittest
 globals().update(backend_test

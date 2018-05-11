@@ -3,13 +3,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import pytest
+import pytest  # type: ignore
 
-import onnx
 from .coverage import Coverage
+from typing import Dict, Text, Sequence, Any
 
 _coverage = Coverage()
-_marks = {}
+_marks = {}  # type: Dict[Text, Sequence[Any]]
 
 
 def _add_mark(mark, bucket):
@@ -31,7 +31,7 @@ def pytest_runtest_call(item):
 def pytest_runtest_logreport(report):
     if (report.when == 'call' and
         report.outcome == 'passed' and
-        report.nodeid in _marks):
+            report.nodeid in _marks):
         mark = _marks[report.nodeid]
         _add_mark(mark, 'passed')
 

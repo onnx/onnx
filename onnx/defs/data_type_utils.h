@@ -10,9 +10,9 @@
 #include <unordered_set>
 #include "onnx/onnx_pb.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 // String pointer as unique TypeProto identifier.
-typedef const std::string* DataType;
+using DataType = const std::string*;
 
 namespace Utils {
 
@@ -32,7 +32,7 @@ namespace Utils {
 //
 // Example: float, tensor(float), etc.
 //
-class DataTypeUtils {
+class DataTypeUtils final {
  public:
   static DataType ToType(const std::string& type_str);
 
@@ -63,6 +63,6 @@ class DataTypeUtils {
   static std::mutex& GetTypeStrLock();
 };
 } // namespace Utils
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
 
 #endif // ! ONNX_DATA_TYPE_UTILS_H

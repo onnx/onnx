@@ -5,10 +5,10 @@ from __future__ import unicode_literals
 
 import random
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from onnx import helper, defs, numpy_helper, checker
-from onnx import AttributeProto, TensorProto, GraphProto
+from onnx import AttributeProto, TensorProto, GraphProto, DenotationConstProto
 
 import unittest
 
@@ -138,17 +138,17 @@ class TestHelperAttributeFunctions(unittest.TestCase):
     def test_is_attr_legal_verbose(self):
 
         SET_ATTR = [
-            (lambda attr: setattr(attr, "f", 1.0) or \
+            (lambda attr: setattr(attr, "f", 1.0) or
              setattr(attr, 'type', AttributeProto.FLOAT)),
-            (lambda attr: setattr(attr, "i", 1) or \
+            (lambda attr: setattr(attr, "i", 1) or
              setattr(attr, 'type', AttributeProto.INT)),
-            (lambda attr: setattr(attr, "s", b"str") or \
+            (lambda attr: setattr(attr, "s", b"str") or
              setattr(attr, 'type', AttributeProto.STRING)),
-            (lambda attr: attr.floats.extend([1.0, 2.0]) or \
+            (lambda attr: attr.floats.extend([1.0, 2.0]) or
              setattr(attr, 'type', AttributeProto.FLOATS)),
-            (lambda attr: attr.ints.extend([1, 2]) or \
+            (lambda attr: attr.ints.extend([1, 2]) or
              setattr(attr, 'type', AttributeProto.INTS)),
-            (lambda attr: attr.strings.extend([b"a", b"b"]) or \
+            (lambda attr: attr.strings.extend([b"a", b"b"]) or
              setattr(attr, 'type', AttributeProto.STRINGS)),
         ]
         # Randomly set one field, and the result should be legal.
@@ -166,6 +166,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
             self.assertRaises(checker.ValidationError,
                               checker.check_attribute,
                               attr)
+
 
 class TestHelperNodeFunctions(unittest.TestCase):
 
@@ -199,16 +200,25 @@ class TestHelperNodeFunctions(unittest.TestCase):
             helper.make_attribute("arg_value", 1))
 
     def test_graph(self):
-        node_def = helper.make_node(
+        node_def1 = helper.make_node(
             "Relu", ["X"], ["Y"])
+        node_def2 = helper.make_node(
+            "Add", ["X", "Y"], ["Z"])
+        value_info = [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])]
         graph = helper.make_graph(
-            [node_def],
+            [node_def1, node_def2],
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
-        self.assertEqual(len(graph.node), 1)
-        self.assertEqual(graph.node[0], node_def)
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])],
+            doc_string=None,
+            value_info=value_info,
+        )
+        self.assertEqual(graph.name, "test")
+        self.assertEqual(len(graph.node), 2)
+        self.assertEqual(graph.node[0], node_def1)
+        self.assertEqual(graph.node[1], node_def2)
         self.assertEqual(graph.doc_string, "")
+        self.assertEqual(graph.value_info[0], value_info[0])
 
     def test_graph_docstring(self):
         graph = helper.make_graph([], "my graph", [], [], None, "my docs")
@@ -238,15 +248,29 @@ class TestHelperNodeFunctions(unittest.TestCase):
     def test_model_metadata_props(self):
         graph = helper.make_graph([], "my graph", [], [])
         model_def = helper.make_model(graph, doc_string='test')
-        helper.set_model_props(model_def, { 'Title': 'my graph', 'Keywords': 'test;graph' })
+        helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
         checker.check_model(model_def)
-        helper.set_model_props(model_def, { 'Title': 'my graph', 'Keywords': 'test;graph' })
-        checker.check_model(model_def) # helper replaces, so no dupe
+        helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
+        checker.check_model(model_def)  # helper replaces, so no dupe
 
         dupe = model_def.metadata_props.add()
         dupe.key = 'Title'
         dupe.value = 'Other'
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
+
+    def test_shape_denotation(self):
+        shape_denotation = [DenotationConstProto().DATA_BATCH,
+                            DenotationConstProto().DATA_CHANNEL,
+                            DenotationConstProto().DATA_FEATURE,
+                            DenotationConstProto().DATA_FEATURE]
+        tensor = helper.make_tensor_value_info("X",
+                                                TensorProto.FLOAT,
+                                                [2, 2, 2, 2],
+                                                shape_denotation=shape_denotation)
+
+        for i, d in enumerate(tensor.type.tensor_type.shape.dim):
+            self.assertEqual(d.denotation, shape_denotation[i])
+
 
 class TestHelperTensorFunctions(unittest.TestCase):
 
@@ -271,6 +295,16 @@ class TestHelperTensorFunctions(unittest.TestCase):
             raw=True,
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
+
+        string_list = list(s.encode('ascii') for s in ['Amy', 'Billy', 'Cindy', 'David'])
+        tensor = helper.make_tensor(
+            name='test',
+            data_type=TensorProto.STRING,
+            dims=(2, 2),
+            vals=string_list,
+            raw=False
+        )
+        self.assertEqual(string_list, list(tensor.string_data))
 
     def test_make_tensor_value_info(self):
         vi = helper.make_tensor_value_info('X', TensorProto.FLOAT, (2, 4))

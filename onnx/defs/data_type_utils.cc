@@ -5,14 +5,14 @@
 
 #include "data_type_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace Utils {
 
 // Singleton wrapper around allowed data types.
 // This implements construct on first use which is needed to ensure
 // static objects are initialized before use. Ops registration does not work
 // properly without this.
-class TypesWrapper {
+class TypesWrapper final {
  public:
   static TypesWrapper& GetTypesWrapper();
 
@@ -38,7 +38,7 @@ class TypesWrapper {
 // This can be used to track a "valid" range/slice of the string.
 // Caller should ensure StringRange is not used after external storage has
 // been freed.
-class StringRange {
+class StringRange final {
  public:
   StringRange();
   StringRange(const char* data, size_t size);
@@ -119,16 +119,11 @@ std::string DataTypeUtils::ToString(
     const std::string& right) {
   switch (type_proto.value_case()) {
     case TypeProto::ValueCase::kTensorType: {
-      if (type_proto.tensor_type().has_shape() &&
-          type_proto.tensor_type().shape().dim_size() == 0) {
-        // Scalar case.
-        return left + ToDataTypeString(type_proto.tensor_type().elem_type()) +
-            right;
-      } else {
+        // Note: We do not distinguish tensors with zero rank (a shape consisting of
+        // an empty sequence of dimensions) here.
         return left + "tensor(" +
             ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" +
             right;
-      }
     }
 #ifdef ONNX_ML
     case TypeProto::ValueCase::kSequenceType: {
@@ -408,4 +403,4 @@ TypesWrapper::TypesWrapper() {
   }
 }
 } // namespace Utils
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

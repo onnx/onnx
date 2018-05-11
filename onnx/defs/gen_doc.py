@@ -4,16 +4,15 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import argparse
-import inspect
 import io
-from textwrap import dedent
 import os
 from collections import defaultdict
 
 from onnx import defs
 from onnx.defs import OpSchema
-from onnx.backend.test.case.node import collect_snippets
+from onnx.backend.test.case import collect_snippets
+from typing import Text, Sequence, Dict, List, Type
+
 
 SNIPPETS = collect_snippets()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
@@ -23,41 +22,44 @@ if ONNX_ML:
 else:
     ext = '.md'
 
-def display_number(v):
+
+def display_number(v):  # type: (int) -> Text
     if defs.OpSchema.is_infinite(v):
         return '&#8734;'
-    return str(v)
+    return Text(v)
 
-def should_render_domain(domain):
+
+def should_render_domain(domain):  # type: (Text) -> bool
     if domain == 'ai.onnx.ml' and not ONNX_ML:
         return False
     elif ONNX_ML and domain != 'ai.onnx.ml':
         return False
     return True
 
-def display_attr_type(v):
+
+def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
     assert isinstance(v, OpSchema.AttrType)
-    s = str(v)
-    s = s[s.rfind('.')+1:].lower()
+    s = Text(v)
+    s = s[s.rfind('.') + 1:].lower()
     if s[-1] == 's':
         s = 'list of ' + s
     return s
 
 
-def display_domain(domain):
+def display_domain(domain):  # type: (Text) -> Text
     if domain:
-        return "operator set '{}'".format(domain)
+        return "the '{}' operator set".format(domain)
     else:
         return "the default ONNX operator set"
 
 
-def display_version_link(name, version):
+def display_version_link(name, version):  # type: (Text, int) -> Text
     changelog_md = 'Changelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
     return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
 
 
-def display_schema(schema, versions):
+def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
     s = ''
 
     if schema.domain:
@@ -73,19 +75,13 @@ def display_schema(schema, versions):
         s += '\n'
 
     # since version
-    s += '\n#### Versioning\n'
-    s += '\nThis operator is used if you are using version {} '.format(schema.since_version)
-    s += 'of {} until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:\n\n'.format(display_domain(schema.domain))
-    s += '~~~~\n'
-    s += 'opset_import {\n'
-    s += '  version = {}\n'.format(schema.since_version)
-    if schema.domain:
-        s += "  domain = '{}'\n".format(schema.domain)
-    s += '}\n'
-    s += '~~~~\n'
+    s += '\n#### Version\n'
+    s += '\nThis version of the operator has been available since version {}'.format(schema.since_version)
+    s += ' of {}.\n'.format(display_domain(schema.domain))
     if len(versions) > 1:
         # TODO: link to the Changelog.md
-        s += '\nOther versions of this operator: {}\n'.format(', '.join(display_version_link(domain_prefix + s.name, s.since_version) for s in versions[:-1]))
+        s += '\nOther versions of this operator: {}\n'.format(
+            ', '.join(display_version_link(domain_prefix + v.name, v.since_version) for v in versions[:-1]))
 
     # attributes
     if schema.attributes:
@@ -103,7 +99,7 @@ def display_schema(schema, versions):
     s += '\n#### Inputs'
     if schema.min_input != schema.max_input:
         s += ' ({} - {})'.format(display_number(schema.min_input),
-                            display_number(schema.max_input))
+                                 display_number(schema.max_input))
     s += '\n\n'
     if schema.inputs:
         s += '<dl>\n'
@@ -121,7 +117,7 @@ def display_schema(schema, versions):
     s += '\n#### Outputs'
     if schema.min_output != schema.max_output:
         s += ' ({} - {})'.format(display_number(schema.min_output),
-                             display_number(schema.max_output))
+                                 display_number(schema.max_output))
     s += '\n\n'
 
     if schema.outputs:
@@ -147,19 +143,20 @@ def display_schema(schema, versions):
                 allowedTypeStr = allowedTypes[0]
             for allowedType in allowedTypes[1:]:
                 allowedTypeStr += ', ' + allowedType
-            s += '<dt><tt>{}</tt> : {}</dt>\n'.format(type_constraint.type_param_str, allowedTypeStr)
+            s += '<dt><tt>{}</tt> : {}</dt>\n'.format(
+                type_constraint.type_param_str, allowedTypeStr)
             s += '<dd>{}</dd>\n'.format(type_constraint.description)
         s += '</dl>\n'
 
     return s
 
 
-def support_level_str(level):
+def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
     return \
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-def main(args):
+def main(args):  # type: (Type[Args]) -> None
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
         fout.write(
@@ -168,13 +165,13 @@ def main(args):
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> version -> [schema]
-        index = defaultdict(lambda: defaultdict(list))
+        dv_index = defaultdict(lambda: defaultdict(list))  # type: Dict[Text, Dict[int, List[OpSchema]]]
         for schema in defs.get_all_schemas_with_history():
-            index[schema.domain][schema.since_version].append(schema)
+            dv_index[schema.domain][schema.since_version].append(schema)
 
         fout.write('\n')
 
-        for domain, versionmap in sorted(index.items()):
+        for domain, versionmap in sorted(dv_index.items()):
             if not should_render_domain(domain):
                 continue
 
@@ -188,7 +185,8 @@ def main(args):
             for version, unsorted_schemas in sorted(versionmap.items()):
                 s += '## Version {} of {}\n'.format(version, display_domain(domain))
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
-                    name_with_ver = '{}-{}'.format(domain_prefix + schema.name, schema.since_version)
+                    name_with_ver = '{}-{}'.format(domain_prefix +
+                                                   schema.name, schema.since_version)
                     s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
@@ -203,7 +201,7 @@ def main(args):
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> support level -> name -> [schema]
-        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # type: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]]
         for schema in defs.get_all_schemas_with_history():
             index[schema.domain][int(schema.support_level)][schema.name].append(schema)
 
@@ -227,8 +225,8 @@ def main(args):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
-                            support_level_str(schema.support_level),
-                            domain_prefix + n, domain_prefix + n)
+                        support_level_str(schema.support_level),
+                        domain_prefix + n, domain_prefix + n)
                     fout.write(s)
 
         fout.write('\n')
@@ -274,6 +272,7 @@ def main(args):
 if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
     docs_dir = os.path.join(base_dir, 'docs')
+
     class Args(object):
         output = os.path.join(docs_dir, 'Operators' + ext)
         changelog = os.path.join(docs_dir, 'Changelog' + ext)

@@ -8,17 +8,23 @@ import functools
 import glob
 import os
 import re
+import shutil
+import sys
 import tarfile
 import tempfile
 import unittest
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
-from onnx import helper, numpy_helper
+from onnx import numpy_helper
 from six.moves.urllib.request import urlretrieve
-from ..loader import load_node_tests, load_model_tests
+from ..loader import load_model_tests
 from .item import TestItem
+
+
+class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
+    pass
 
 
 class Runner(object):
@@ -35,14 +41,20 @@ class Runner(object):
         # {category: {name: func}}
         self._test_items = defaultdict(dict)
 
-        for nt in load_node_tests():
-            self._add_node_test(nt)
+        for rt in load_model_tests(kind='node'):
+            self._add_model_test(rt, 'Node')
 
         for rt in load_model_tests(kind='real'):
             self._add_model_test(rt, 'Real')
 
-        for gt in load_model_tests(kind='pytorch-converted'):
-            self._add_model_test(gt, 'PyTorchConverted')
+        for rt in load_model_tests(kind='simple'):
+            self._add_model_test(rt, 'Simple')
+
+        for ct in load_model_tests(kind='pytorch-converted'):
+            self._add_model_test(ct, 'PyTorchConverted')
+
+        for ot in load_model_tests(kind='pytorch-operator'):
+            self._add_model_test(ot, 'PyTorchOperator')
 
     def _get_test_case(self, name):
         test_case = type(str(name), (unittest.TestCase,), {})
@@ -59,7 +71,7 @@ class Runner(object):
         return self
 
     def enable_report(self):
-        import pytest
+        import pytest  # type: ignore
 
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():
@@ -126,7 +138,7 @@ class Runner(object):
         '''
         tests = self._get_test_case('OnnxBackendTest')
         for _, items_map in sorted(self._filtered_test_items.values()):
-            for name, item in sorted(funcs_map.items()):
+            for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
 
@@ -134,20 +146,29 @@ class Runner(object):
     def _assert_similar_outputs(ref_outputs, outputs):
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
+            np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
-                rtol=1e-3)
+                rtol=1e-3,
+                atol=1e-7)
 
     def _prepare_model_data(self, model_test):
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
         model_dir = os.path.join(models_dir, model_test.model_name)
-        if not os.path.exists(model_dir):
+        if not os.path.exists(os.path.join(model_dir, 'model.onnx')):
+            if os.path.exists(model_dir):
+                bi = 0
+                while True:
+                    dest = '{}.old.{}'.format(model_dir, bi)
+                    if os.path.exists(dest):
+                        bi += 1
+                        continue
+                    shutil.move(model_dir, dest)
+                    break
             os.makedirs(model_dir)
-            url = 'https://s3.amazonaws.com/download.onnx/models/{}.tar.gz'.format(
-                model_test.model_name)
 
             # On Windows, NamedTemporaryFile can not be opened for a
             # second time
@@ -155,8 +176,8 @@ class Runner(object):
             try:
                 download_file.close()
                 print('Start downloading model {} from {}'.format(
-                    model_test.model_name, url))
-                urlretrieve(url, download_file.name)
+                    model_test.model_name, model_test.url))
+                urlretrieve(model_test.url, download_file.name)
                 print('Done')
                 with tarfile.open(download_file.name) as t:
                     t.extractall(models_dir)
@@ -186,7 +207,13 @@ class Runner(object):
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
             def device_test_func(*args, **kwargs):
-                return test_func(*args, device=device, **kwargs)
+                try:
+                    return test_func(*args, device=device, **kwargs)
+                except BackendIsNotSupposedToImplementIt as e:
+                    # hacky verbose reporting
+                    if '-v' in sys.argv or '--verbose' in sys.argv:
+                        print('Test {} is effectively skipped: {}'.format(
+                            device_test_name, e))
 
             self._test_items[category][device_test_name] = TestItem(
                 device_test_func, report_item)
@@ -204,7 +231,7 @@ class Runner(object):
                 model_dir = self._prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
-            model_pb_path = os.path.join(model_dir, 'model.pb')
+            model_pb_path = os.path.join(model_dir, 'model.onnx')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             prepared_model = self.backend.prepare(model, device)
@@ -240,17 +267,3 @@ class Runner(object):
                 self._assert_similar_outputs(ref_outputs, outputs)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
-
-    def _add_node_test(self, node_test):
-
-        def run(test_self, device):
-            np_inputs = [numpy_helper.to_array(tensor)
-                         for tensor in node_test.inputs]
-            ref_outputs = [numpy_helper.to_array(tensor)
-                           for tensor in node_test.outputs]
-
-            outputs = self.backend.run_node(
-                node_test.node, np_inputs, device)
-            self._assert_similar_outputs(ref_outputs, outputs)
-
-        self._add_test('Node', node_test.name, run, node_test.node)

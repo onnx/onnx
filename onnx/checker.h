@@ -2,12 +2,14 @@
 
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include "onnx/onnx_pb.h"
+#include "onnx/onnx-operators_pb.h"
 #include "onnx/string_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace checker {
-class ValidationError : public std::runtime_error {
+class ValidationError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
   const char* what() const noexcept override {
@@ -17,7 +19,7 @@ class ValidationError : public std::runtime_error {
     return std::runtime_error::what();
   }
   void AppendContext(const std::string& context) {
-    expanded_message_ = onnx::MakeString(
+    expanded_message_ = ONNX_NAMESPACE::MakeString(
         std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 
@@ -25,30 +27,63 @@ class ValidationError : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  throw onnx::checker::ValidationError(onnx::MakeString(__VA_ARGS__));
+#define fail_check(...)                           \
+  throw ONNX_NAMESPACE::checker::ValidationError( \
+      ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
-class CheckerContext {
-  int ir_version;
-  std::unordered_map<std::string, int> opset_imports;
-public:
-  int get_ir_version() const { return ir_version; }
-  void set_ir_version(int v) { ir_version = v; }
+class CheckerContext final {
+ public:
+  int get_ir_version() const {
+    return ir_version_;
+  }
+  void set_ir_version(int v) {
+    ir_version_ = v;
+  }
   const std::unordered_map<std::string, int>& get_opset_imports() const {
-    return opset_imports;
+    return opset_imports_;
   }
-  void set_opset_imports(const std::unordered_map<std::string, int>& imps) {
-    opset_imports = imps;
+  void set_opset_imports(std::unordered_map<std::string, int> imps) {
+    opset_imports_ = std::move(imps);
   }
-  explicit CheckerContext() : ir_version(-1) {}
+  bool is_main_graph() const {
+    return is_main_graph_;
+  }
+  void set_is_main_graph(bool is_main_graph) {
+    is_main_graph_ = is_main_graph;
+  }
+
+  explicit CheckerContext() : ir_version_(-1) {}
+
+ private:
+  int ir_version_;
+  std::unordered_map<std::string, int> opset_imports_;
+  bool is_main_graph_ = true;
+};
+
+struct LexicalScopeContext final {
+  std::unordered_set<std::string> output_names;
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
 void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
 void check_tensor(const TensorProto& tensor, const CheckerContext&);
-void check_attribute(const AttributeProto& attr, const CheckerContext&);
-void check_node(const NodeProto& node, const CheckerContext&);
-void check_graph(const GraphProto& graph, const CheckerContext&);
+void check_attribute(
+    const AttributeProto& attr,
+    const CheckerContext&,
+    const LexicalScopeContext&);
+void check_node(
+    const NodeProto& node,
+    const CheckerContext&,
+    const LexicalScopeContext&);
+void check_graph(
+    const GraphProto& graph,
+    const CheckerContext&,
+    const LexicalScopeContext&);
+void check_function(
+    const FunctionProto& function,
+    const CheckerContext&,
+    const LexicalScopeContext&);
+
 void check_model(const ModelProto& model);
 } // namespace checker
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

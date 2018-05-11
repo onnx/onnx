@@ -3,34 +3,49 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from collections import namedtuple
-import importlib
-import pkgutil
 import sys
 
-from . import base
-from .base import TestCase
+import onnx
+import onnx.mapping
+
+from ..utils import import_recursive
+from ..test_case import TestCase
+
+_NodeTestCases = []
 
 
-def _import_recursive(package):
-    """
-    Takes a package and imports all modules underneath it
-    """
+def _extract_value_info(arr, name):
+    return onnx.helper.make_tensor_value_info(
+        name=name,
+        elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
+        shape=arr.shape)
 
-    pkg_dir = package.__path__
-    module_location = package.__name__
-    for (_module_loader, name, ispkg) in pkgutil.iter_modules(pkg_dir):
-        module_name = "{}.{}".format(module_location, name)  # Module/package
-        module = importlib.import_module(module_name)
-        if ispkg:
-            import_recursive(module)
+
+def expect(node, inputs, outputs, name):
+    inputs_vi = [_extract_value_info(arr, arr_name)
+                 for arr, arr_name in zip(inputs, node.input)]
+    outputs_vi = [_extract_value_info(arr, arr_name)
+                  for arr, arr_name in zip(outputs, node.output)]
+    graph = onnx.helper.make_graph(
+        nodes=[node],
+        name=name,
+        inputs=inputs_vi,
+        outputs=outputs_vi)
+    model = onnx.helper.make_model(graph, producer_name='backend-test')
+
+    _NodeTestCases.append(TestCase(
+        name=name,
+        model_name=name,
+        url=None,
+        model_dir=None,
+        model=model,
+        data_sets=[(inputs, outputs)],
+        kind='node',
+    ))
 
 
 def collect_testcases():
-    _import_recursive(sys.modules[__name__])
-    return base.TestCases
-
-
-def collect_snippets():
-    _import_recursive(sys.modules[__name__])
-    return base.Snippets
+    '''Collect node test cases defined in python/numpy code.
+    '''
+    import_recursive(sys.modules[__name__])
+    return _NodeTestCases

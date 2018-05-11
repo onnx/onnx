@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 import unittest
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from onnx import checker, helper
 from onnx import TensorProto
@@ -121,7 +121,7 @@ class TestChecker(unittest.TestCase):
 
     def test_check_old_model(self):
         node = helper.make_node(
-            "Pad", ["X"], ["Y"], paddings=(0,0,0,0))
+            "Pad", ["X"], ["Y"], paddings=(0, 0, 0, 0))
         graph = helper.make_graph(
             [node],
             "test",
@@ -155,6 +155,38 @@ class TestChecker(unittest.TestCase):
         tensor = self._sample_float_tensor
         tensor.data_type = TensorProto.INT32
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+
+    def test_nested_graph(self):
+        n1 = helper.make_node(
+            "Scale", ["X"], ["Y"], scale=2., name="n1")
+        n2 = helper.make_node(
+            "Scale", ["Y"], ["Z"], scale=3., name="n2")
+
+        graph = helper.make_graph(
+            [n1, n2],
+            "nested",
+            inputs=[
+                helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])
+            ],
+            outputs=[
+                helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])
+            ]
+        )
+
+        i1 = helper.make_node(
+            "If", ["cond"], ["Z"], then_branch=graph, else_branch=graph)
+
+        graph = helper.make_graph(
+            [i1],
+            "test",
+            inputs=[
+                helper.make_tensor_value_info("cond", TensorProto.BOOL, [1])
+            ],
+            outputs=[],
+        )
+
+        checker.check_graph(graph)
+        #self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
 
 if __name__ == '__main__':

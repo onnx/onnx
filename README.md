@@ -1,18 +1,18 @@
 
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
-
+ 
 | Linux | Windows |
 |-------|---------|
 | [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
 
 [Open Neural Network Exchange (ONNX)](http://onnx.ai) is the first step toward an open ecosystem that empowers AI developers
-to choose the right tools as their project evolves. ONNX provides an open source format for AI models. 
-It defines an extensible computation graph model, as well as definitions of built-in operators and standard 
+to choose the right tools as their project evolves. ONNX provides an open source format for AI models.
+It defines an extensible computation graph model, as well as definitions of built-in operators and standard
 data types. Initially we focus on the capabilities needed for inferencing (evaluation).
 
-Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different 
-frameworks and streamlining the path from research to production will increase the speed of innovation in 
-the AI community. We are an early stage and we invite the community to submit feedback and help us further 
+Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different
+frameworks and streamlining the path from research to production will increase the speed of innovation in
+the AI community. We are an early stage and we invite the community to submit feedback and help us further
 evolve ONNX.
 
 # Use ONNX
@@ -28,6 +28,7 @@ Check ONNX design choices and internals:
 * [ONNX intermediate representation spec](docs/IR.md)
 * [Versioning principles of the spec](docs/Versioning.md)
 * [Operators documentation](docs/Operators.md)
+* [Python API Overview](docs/PythonAPIOverview.md)
 
 # Tools
 * [Netron: a viewer for ONNX models](https://github.com/lutzroeder/Netron)
@@ -35,6 +36,8 @@ Check ONNX design choices and internals:
 
 # Contribute
 ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
+You can join [one of the working groups](https://github.com/onnx/onnx/wiki/%5BAnnouncement%5D-ONNX-working-groups-established) and help shape the future of ONNX.
+
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md)
 and [call for contributions](https://github.com/onnx/onnx/issues/426) to get started.
 
@@ -67,7 +70,7 @@ way to get these dependencies is via
 [Anaconda](https://www.anaconda.com/download/):
 
 ```
-# Use conda-forge protobuf, as defaults doesn't come with protoc
+# Use conda-forge protobuf, as default doesn't come with protoc
 conda install -c conda-forge protobuf numpy
 ```
 

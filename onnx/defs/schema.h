@@ -18,39 +18,39 @@
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/defs/shape_inference.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 
 using OperatorSetVersion = int;
 
-const char* const ONNX_DOMAIN = "";
-const bool OPTIONAL = false;
+constexpr const char* ONNX_DOMAIN = "";
+constexpr bool OPTIONAL = false;
 
-typedef std::unordered_set<DataType> DataTypeSet;
+using DataTypeSet = std::unordered_set<DataType>;
 
 // Type constraint map. Key is type string. Value is data type set and
 // description.
-typedef std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>
-    TypeConstraintMap;
-
+using TypeConstraintMap =
+    std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>;
 
 /**
  * @brief A class to record the schema of an op.
  *
  * OpSchema records the common interface of an op specified by its name.
  *
- * To register an OpSchema, one can use the macro OPERATOR_SCHEMA(name) and
+ * To register an OpSchema, one can use the macro ONNX_OPERATOR_SCHEMA(name) and
  * then append the various functions in the class. For example, for an op
- * that itakes in two inputs, one output, and the first input and output
+ * that takes in two inputs, one output, and the first input and output
  * could be in-place, can be written as
  *
- *     OPERATOR_SCHEMA(name)
+ *     ONNX_OPERATOR_SCHEMA(name)
  *         .NumInputs(2).NumOutputs(1).AllowConsumed({{0, 0}});
  */
-class OpSchema {
+class OpSchema final {
  public:
   // Formal parameter options.
-  enum FormalParameterOption {
+  enum FormalParameterOption : uint8_t {
     // The input formal parameter is single and not optional.
     // Number of this input is 1.
     Single = 0,
@@ -64,22 +64,22 @@ class OpSchema {
 
   // Formal parameter represenation, including input/output name, typeStr,
   // description, and type constraints.
-  class FormalParameter {
+  class FormalParameter final {
    public:
     // Constructor.
     FormalParameter() = default;
 
     explicit FormalParameter(
-        const std::string& name,
-        const DataTypeSet& type_set,
-        const std::string& type_str,
-        const std::string& description,
+        std::string name,
+        DataTypeSet type_set,
+        std::string type_str,
+        std::string description,
         FormalParameterOption param_option = Single);
 
     explicit FormalParameter(
-        const std::string& name,
-        const std::string& description,
-        const std::string& type_str,
+        std::string name,
+        std::string description,
+        std::string type_str,
         FormalParameterOption param_option = Single);
 
     // Get formal parameter name.
@@ -121,31 +121,30 @@ class OpSchema {
     FormalParameterOption param_option_;
   };
 
-  enum class SupportType {
+  enum class SupportType : uint8_t {
     COMMON, // Supported by all frameworks that support this IR.
     EXPERIMENTAL, // This OP is experimental and can be changed or removed in
                   // the future.
   };
 
-  OpSchema()
-      : name_("unknown"),
-        file_("unknown"),
-        line_(0),
+  OpSchema() : OpSchema("unknown", "unknown", 0) {}
+  OpSchema(std::string name, std::string file, int line)
+      : name_(std::move(name)),
+        file_(std::move(file)),
+        line_(line),
         support_(SupportType::COMMON) {}
-  OpSchema(const std::string& name, const std::string& file, const int line)
-      : name_(name), file_(file), line_(line), support_(SupportType::COMMON) {}
 
   /**
    * @brief Returns the file that the op schema is registered from.
    */
-  inline const std::string& file() const {
+  const std::string& file() const {
     return file_;
   }
 
   /**
    * @brief Returns the line in file that the op schema is registered from.
    */
-  inline int line() const {
+  int line() const {
     return line_;
   }
 
@@ -159,7 +158,7 @@ class OpSchema {
   /**
    * @brief Returns the docstring of the op schema.
    */
-  inline const char* doc() const {
+  const char* doc() const {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
 
@@ -197,53 +196,46 @@ class OpSchema {
    */
   OpSchema& NumOutputs(std::set<int> allowed_output_nums);
 
-  // Sets the rule to allow optional in-place operation.
-  OpSchema& AllowConsumed(std::function<std::pair<bool, int>(int)> inplace);
-  OpSchema& AllowConsumed(std::unordered_map<int, int> inplace);
-  OpSchema& AllowOneToOneConsumed();
-  // Sets the rule to enforce in-place opeartion.
-  OpSchema& EnforceConsumed(std::function<std::pair<bool, int>(int)> inplace);
-  OpSchema& EnforceConsumed(std::unordered_map<int, int> inplace);
-  OpSchema& EnforceOneToOneConsumed();
+  // Shape Inference
+  //
+  // Note that signatures are defined to allow for forward-declaring
+  // any structs used from ir.h
+  OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
+  InferenceFunction GetTypeAndShapeInferenceFunction() const {
+    return tensor_inference_function_;
+  }
 
   // Set the support level for the op schema.
   OpSchema& SetSupportLevel(SupportType supportType);
 
   // Functions to do documentation for the operator schema.
-  OpSchema& SetDoc(const std::string& doc);
+  OpSchema& SetDoc(std::string doc);
 
   // Functions to specify domain for the operator schema.
   // Default domain value (ONNX_DOMAIN) means it's ONNX domain.
-  OpSchema& SetDomain(const std::string& domain);
+  OpSchema& SetDomain(std::string domain);
 
-  enum class UseType {
-    DEFAULT, // read only use of an input
-    CONSUME_ALLOWED, // allowed to be marked consumed by a "consumed_inputs"
-                     // attribute.
-    CONSUME_ENFORCED, // must be marked consumed by a "consumed_inputs"
-                      // attribute.
-  };
-
-  struct Attribute {
+  struct Attribute final {
     Attribute(
-        const std::string& name_,
-        const std::string& description_,
+        std::string name_,
+        std::string description_,
         AttributeProto::AttributeType type_,
         bool required_)
-        : name(name_),
-          description(description_),
+        : name(std::move(name_)),
+          description(std::move(description_)),
           type(type_),
-          required(required_) {}
+          required(required_),
+          default_value() {}
 
     Attribute(
-        const std::string& name_,
-        const std::string& description_,
+        std::string name_,
+        std::string description_,
         AttributeProto default_value_)
-        : name(name_),
-        description(description_),
-        type(default_value_.type()),
-        required(false),
-        default_value(default_value_) {}
+        : name(std::move(name_)),
+          description(std::move(description_)),
+          type(default_value_.type()),
+          required(false),
+          default_value(std::move(default_value_)) {}
 
     const std::string name;
     const std::string description;
@@ -252,18 +244,20 @@ class OpSchema {
     AttributeProto default_value;
   };
 
-  OpSchema& Attr(const Attribute& attr);
+  OpSchema& Attr(Attribute attr);
 
-  // Register "optional" attribute with default value.
-#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName)            \
-  OpSchema& Attr(const std::string& name,                   \
-              const std::string& description,               \
-              AttributeProto::AttributeType type,           \
-              const TypeName& defaultValue);                \
-  OpSchema& Attr(const std::string& name,                   \
-              const std::string& description,               \
-              AttributeProto::AttributeType type,           \
-              const std::vector<TypeName>& defaultValue);   \
+// Register "optional" attribute with default value.
+#define ATTR_SETTER_WITH_DEFAULT_VALUE(TypeName) \
+  OpSchema& Attr(                                \
+      std::string name,                          \
+      std::string description,                   \
+      AttributeProto::AttributeType type,        \
+      const TypeName& defaultValue);             \
+  OpSchema& Attr(                                \
+      std::string name,                          \
+      std::string description,                   \
+      AttributeProto::AttributeType type,        \
+      const std::vector<TypeName>& defaultValue);
 
   ATTR_SETTER_WITH_DEFAULT_VALUE(int64_t)
   ATTR_SETTER_WITH_DEFAULT_VALUE(float)
@@ -273,21 +267,21 @@ class OpSchema {
 
   // Register "required" attribute without default value.
   OpSchema& Attr(
-      const std::string& name,
-      const std::string& description,
+      std::string name,
+      std::string description,
       AttributeProto::AttributeType type,
       bool required = true);
   OpSchema& AllowUncheckedAttributes();
 
   // Type constraint.
-  struct TypeConstraintParam {
+  struct TypeConstraintParam final {
     TypeConstraintParam(
-        const std::string& type_param_str_,
-        const std::vector<std::string>& allowed_type_strs_,
-        const std::string& description_)
-        : type_param_str(type_param_str_),
-          allowed_type_strs(allowed_type_strs_),
-          description(description_) {}
+        std::string type_param_str_,
+        std::vector<std::string> allowed_type_strs_,
+        std::string description_)
+        : type_param_str(std::move(type_param_str_)),
+          allowed_type_strs(std::move(allowed_type_strs_)),
+          description(std::move(description_)) {}
 
     // Type parameter string, for example, "T", "T1", etc.
     std::string type_param_str;
@@ -313,7 +307,7 @@ class OpSchema {
   //       2) <type> ::= <data_type> means the data is scalar (zero dimension).
   //
   // Example:
-  // OPERATOR_SCHEMA(Sum)
+  // ONNX_OPERATOR_SCHEMA(Sum)
   // .Input(0, "input_a", "the first input", "T")
   // .Input(1, "input_b", "the second input", "T")
   // .Output(0, "sum", "the sum of two numbers", "T")
@@ -325,25 +319,72 @@ class OpSchema {
   // It's useful for complex situation when there are several independent
   // optional inputs.
   OpSchema& Input(
-      const int n,
-      const std::string& name,
-      const std::string& description,
-      const std::string& type_str,
+      int n,
+      std::string name,
+      std::string description,
+      std::string type_str,
       FormalParameterOption param_option = Single);
   OpSchema& Output(
-      const int n,
-      const std::string& name,
-      const std::string& description,
-      const std::string& type_str,
+      int n,
+      std::string name,
+      std::string description,
+      std::string type_str,
       FormalParameterOption param_option = Single);
   OpSchema& TypeConstraint(
-      const std::string& type_str,
-      const std::vector<std::string>& constraints,
-      const std::string& description);
+      std::string type_str,
+      std::vector<std::string> constraints,
+      std::string description);
+
+  // Convenience members for types
+
+  // All high-precision numeric types.
+  static const std::vector<std::string>& high_precision_numeric_types() {
+    static const std::vector<std::string> high_precision_numeric_types = {
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float)",
+        "tensor(double)"};
+    return high_precision_numeric_types;
+  }
+
+  static const std::vector<std::string>& all_numeric_types() {
+      static const std::vector<std::string> all_numeric_types = {
+          +"tensor(uint8)",
+          +"tensor(uint16)",
+          +"tensor(uint32)",
+          +"tensor(uint64)",
+          +"tensor(int8)",
+          +"tensor(int16)",
+          +"tensor(int32)",
+          +"tensor(int64)",
+          +"tensor(float16)",
+          +"tensor(float)",
+          +"tensor(double)" };
+      return all_numeric_types;
+  }
+
+  static const std::vector<std::string>& all_tensor_types() {
+    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
+                                                              "tensor(uint16)",
+                                                              "tensor(uint32)",
+                                                              "tensor(uint64)",
+                                                              "tensor(int8)",
+                                                              "tensor(int16)",
+                                                              "tensor(int32)",
+                                                              "tensor(int64)",
+                                                              "tensor(float16)",
+                                                              "tensor(float)",
+                                                              "tensor(double)",
+                                                              "tensor(string)",
+                                                              "tensor(bool)"};
+    return all_tensor_types;
+  }
 
   // Calls the passed function with `this` as an argument. Useful for
   // adding docs for temlated/macro ops.
-  OpSchema& FillUsing(std::function<void(OpSchema&)> populator);
+  OpSchema& FillUsing(const std::function<void(OpSchema&)>& populator);
 
   friend std::ostream& operator<<(std::ostream& out, const OpSchema& schema);
 
@@ -392,9 +433,6 @@ class OpSchema {
   int max_output() const {
     return max_output_;
   }
-  std::pair<UseType, int> consumed(int i) const {
-    return consumed_(i);
-  }
 
  private:
   friend class OpSchemaRegistry;
@@ -429,36 +467,45 @@ class OpSchema {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  // Is input i allowed/required to be marked consumed_
-  // If so, which output idx shares the same buffer with i
-  std::function<std::pair<UseType, int>(int)> consumed_ = [](int) {
-    return std::make_pair(UseType::DEFAULT, 0);
-  };
+  InferenceFunction tensor_inference_function_ = [](InferenceContext&) {};
 };
 
 // Map type to store operator schemas. The format is,
 // <OpName, <Domain, <OperatorSetVersion, OpSchema>>>.
-typedef std::unordered_map<
+using OpName_Domain_Version_Schema_Map = std::unordered_map<
     std::string,
-    std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>
-    OpName_Domain_Version_Schema_Map;
+    std::unordered_map<std::string, std::map<OperatorSetVersion, OpSchema>>>;
 
 /**
  * @brief A registry to hold all the operator schemas.
  */
-class OpSchemaRegistry {
+class OpSchemaRegistry final {
  public:
-  class DomainToVersionRange {
+  // A singleton class to store domain to min/max op_set version map.
+  class DomainToVersionRange final {
    public:
     DomainToVersionRange() {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 2);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
+      map_["ai.onnx.ml"] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
       return map_;
+    }
+
+    // Add customized domain to min/max version.
+    // Onnx partners are able to use onnx operator schema api to
+    // register customized op in their own domain.
+    void AddDomainToVersion(
+        const std::string& domain,
+        int min_version,
+        int max_version) {
+      std::lock_guard<std::mutex> lock(mutex_);
+      assert(map_.end() == map_.find(domain));
+      map_[domain] = std::make_pair(min_version, max_version);
     }
 
     static DomainToVersionRange& Instance() {
@@ -469,9 +516,11 @@ class OpSchemaRegistry {
    private:
     // Key: domain. Value: <lowest version, highest version> pair.
     std::unordered_map<std::string, std::pair<int, int>> map_;
+
+    std::mutex mutex_;
   };
 
-  class OpSchemaRegisterOnce {
+  class OpSchemaRegisterOnce final {
    public:
     OpSchemaRegisterOnce(OpSchema& op_schema) {
       // TODO: when we fix all issues - we can add abort() here
@@ -492,7 +541,33 @@ class OpSchemaRegistry {
                   << ") from file " << op_schema.file() << " line "
                   << op_schema.line()
                   << ", but it is already registered from file "
-                  << schema.file() << " line " << schema.line();
+                  << schema.file() << " line " << schema.line() << std::endl;
+        abort();
+      }
+
+      auto ver_range_map = DomainToVersionRange::Instance().Map();
+      auto ver_range_it = ver_range_map.find(op_domain);
+      if (ver_range_it == ver_range_map.end()) {
+        std::cerr << "Trying to register schema with name " << op_name
+                  << " (domain: " << op_domain << " version: " << ver
+                  << ") from file " << op_schema.file() << " line "
+                  << op_schema.line() << ", but it its domain is not"
+                  << "known by the checker." << std::endl;
+        abort();
+      }
+      auto lower_bound_incl = ver_range_it->second.first;
+      auto upper_bound_incl = ver_range_it->second.second;
+      if (!(lower_bound_incl <= ver && upper_bound_incl >= ver)) {
+        std::cerr
+            << "Trying to register schema with name " << op_name
+            << " (domain: " << op_domain << " version: " << ver
+            << ") from file " << op_schema.file() << " line "
+            << op_schema.line() << ", but it its version is not"
+            << "in the inclusive range [" << lower_bound_incl << ", "
+            << upper_bound_incl << "] (usually, this means you "
+            << "bumped the operator version but "
+            << "forgot to update the version range in DomainToVersionRange "
+            << "in onnx/defs/schema.h)." << std::endl;
         abort();
       }
       m[op_name][op_domain].emplace(std::make_pair(ver, op_schema));
@@ -513,7 +588,8 @@ class OpSchemaRegistry {
   }
 
   // Return the schema with biggest version, which is not greater than specified
-  // <maxInclusiveVersion> in specified domain. Domain with default value ONNX_DOMAIN means ONNX.
+  // <maxInclusiveVersion> in specified domain. Domain with default value
+  // ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
       const int maxInclusiveVersion,
@@ -546,7 +622,7 @@ class OpSchemaRegistry {
    * @brief Returns the underlying string to OpSchema map.
    *
    * You should not manually manipulate the map object returned. Instead, use
-   * the macros defined such as OPERATOR_SCHEMA to register your operator
+   * the macros defined such as ONNX_OPERATOR_SCHEMA to register your operator
    * schema.
    *
    * We wrap it inside a function to avoid the statia initialization order
@@ -579,12 +655,16 @@ class OpSchemaRegistry {
   }
 };
 
-#define OPERATOR_SCHEMA(name)   OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
-#define OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) OPERATOR_SCHEMA_UNIQ(Counter, name)
-#define OPERATOR_SCHEMA_UNIQ(Counter, name)                                         \
-  static onnx::OpSchemaRegistry::OpSchemaRegisterOnce(                              \
-      op_schema_register_once##name##Counter) = OpSchema(#name, __FILE__, __LINE__)
+#define ONNX_OPERATOR_SCHEMA(name) \
+  ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
+#define ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(Counter, name) \
+  ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
+#define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                 \
+  static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
+      op_schema_register_once##name##Counter) =                  \
+      OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
-} // namespace onnx
+
+} // namespace ONNX_NAMESPACE

@@ -3,10 +3,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
-from .base import Base, expect
+from ..base import Base
+from . import expect
 
 
 class Relu(Base):
