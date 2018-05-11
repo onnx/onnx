@@ -6486,8 +6486,7 @@ node = onnx.helper.make_node(
     'ReduceMax',
     inputs=['data'],
     outputs=['reduced'],
-    keepdims=keepdims
-    )
+    keepdims=keepdims)
 
 data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
     dtype=np.float32)
@@ -6520,8 +6519,7 @@ node = onnx.helper.make_node(
     inputs=['data'],
     outputs=['reduced'],
     axes=axes,
-    keepdims=keepdims
-    )
+    keepdims=keepdims)
 
 data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
     dtype=np.float32)
@@ -6556,8 +6554,7 @@ node = onnx.helper.make_node(
     inputs=['data'],
     outputs=['reduced'],
     axes=axes,
-    keepdims=keepdims
-    )
+    keepdims=keepdims)
 
 data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
     dtype=np.float32)
@@ -6634,14 +6631,12 @@ axes = None
 keepdims = 1
 
 node = onnx.helper.make_node(
-   'ReduceMean',
-   inputs=['data'],
-   outputs=['reduced'],
-   keepdims=keepdims
-)
+    'ReduceMean',
+    inputs=['data'],
+    outputs=['reduced'],
+    keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                dtype=np.float32)
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
 reduced = np.mean(data, axis=axes, keepdims=keepdims == 1)
 #print(reduced)
 #[[[18.25]]]
@@ -6667,15 +6662,13 @@ axes = [1]
 keepdims = 0
 
 node = onnx.helper.make_node(
-   'ReduceMean',
-   inputs=['data'],
-   outputs=['reduced'],
-   axes=axes,
-   keepdims=keepdims
-)
+    'ReduceMean',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                dtype=np.float32)
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
 reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 #print(reduced)
 #[[12.5  1.5]
@@ -6703,15 +6696,13 @@ axes = [1]
 keepdims = 1
 
 node = onnx.helper.make_node(
-   'ReduceMean',
-   inputs=['data'],
-   outputs=['reduced'],
-   axes=axes,
-   keepdims=keepdims
-)
+    'ReduceMean',
+    inputs=['data'],
+    outputs=['reduced'],
+    axes=axes,
+    keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                dtype=np.float32)
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
 reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 #print(reduced)
 #[[[12.5  1.5]]
@@ -6790,8 +6781,7 @@ node = onnx.helper.make_node(
     outputs=['reduced'],
     keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                dtype=np.float32)
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
 reduced = np.minimum.reduce(data, axis=axes, keepdims=keepdims == 1)
 #print(reduced)
 #[[[1.]]]
@@ -6821,11 +6811,9 @@ node = onnx.helper.make_node(
     inputs=['data'],
     outputs=['reduced'],
     axes=axes,
-    keepdims=keepdims
-    )
+    keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                dtype=np.float32)
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
 reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 #print(reduced)
 #[[ 5.  1.]
@@ -6858,8 +6846,7 @@ node = onnx.helper.make_node(
     axes=axes,
     keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                dtype=np.float32)
+data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
 reduced = np.minimum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
 #print(reduced)
 #[[[ 5.  1.]]

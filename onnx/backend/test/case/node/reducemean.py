@@ -19,15 +19,13 @@ class ReduceMean(Base):
         keepdims = 0
 
         node = onnx.helper.make_node(
-           'ReduceMean',
-           inputs=['data'],
-           outputs=['reduced'],
-           axes=axes,
-           keepdims=keepdims
-        )
+            'ReduceMean',
+            inputs=['data'],
+            outputs=['reduced'],
+            axes=axes,
+            keepdims=keepdims)
 
-        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                        dtype=np.float32)
+        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
         #[[12.5  1.5]
@@ -49,15 +47,13 @@ class ReduceMean(Base):
         keepdims = 1
 
         node = onnx.helper.make_node(
-           'ReduceMean',
-           inputs=['data'],
-           outputs=['reduced'],
-           axes=axes,
-           keepdims=keepdims
-        )
+            'ReduceMean',
+            inputs=['data'],
+            outputs=['reduced'],
+            axes=axes,
+            keepdims=keepdims)
 
-        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                        dtype=np.float32)
+        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
         #[[[12.5  1.5]]
@@ -79,14 +75,12 @@ class ReduceMean(Base):
         keepdims = 1
 
         node = onnx.helper.make_node(
-           'ReduceMean',
-           inputs=['data'],
-           outputs=['reduced'],
-           keepdims=keepdims
-        )
+            'ReduceMean',
+            inputs=['data'],
+            outputs=['reduced'],
+            keepdims=keepdims)
 
-        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-                        dtype=np.float32)
+        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.mean(data, axis=axes, keepdims=keepdims == 1)
         #print(reduced)
         #[[[18.25]]]

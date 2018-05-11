@@ -23,8 +23,7 @@ class ReduceMax(Base):
             inputs=['data'],
             outputs=['reduced'],
             axes=axes,
-            keepdims=keepdims
-            )
+            keepdims=keepdims)
 
         data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
             dtype=np.float32)
@@ -33,7 +32,7 @@ class ReduceMax(Base):
         #[[20.  2.]
         # [40.  2.]
         # [60.  2.]]
-        
+
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_do_not_keepdims1')
 
         np.random.seed(0)
@@ -53,8 +52,7 @@ class ReduceMax(Base):
             inputs=['data'],
             outputs=['reduced'],
             axes=axes,
-            keepdims=keepdims
-            )
+            keepdims=keepdims)
 
         data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
             dtype=np.float32)
@@ -81,8 +79,7 @@ class ReduceMax(Base):
             'ReduceMax',
             inputs=['data'],
             outputs=['reduced'],
-            keepdims=keepdims
-            )
+            keepdims=keepdims)
 
         data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
             dtype=np.float32)
