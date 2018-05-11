@@ -30,11 +30,10 @@ void RNNShapeInference(InferenceContext& ctx) {
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
     updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
     
-    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    propagateElemTypeFromInputToOutput(ctx, 0, 1);
     updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
 
-    // Only LSTM has next output. The following are no-ops when the corresponding
-    // output is absent.
+    // Only LSTM has next output.
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
     updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
 }

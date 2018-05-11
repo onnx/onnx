@@ -90,6 +90,9 @@ inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
     size_t outputIndex) {
+  
+  if (inputIndex >= ctx.getNumInputs() || outputIndex >= ctx.getNumOutputs()) return;
+
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
       input_type->value_case() != TypeProto::kTensorType) {
@@ -204,6 +207,7 @@ inline void propagateElemTypeFromAttributeToOutput(
 }
 
 inline TensorShapeProto* getOutputShape(InferenceContext& ctx, size_t n) {
+  if (n >= ctx.getNumOutputs()) return nullptr;
   auto output_type = ctx.getOutputType(n);
   if ((output_type != nullptr) &&
       (output_type->value_case() == TypeProto::kTensorType ||
