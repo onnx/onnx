@@ -30,14 +30,14 @@ void convPoolTypeAndShapeInference(
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-  if (require_kernel_shape) {
-    if (ctx.getNumInputs() > 1) {
-      return;
-    }
-  } else {
-    if (!hasNInputShapes(ctx, 2)) {
-      return;
-    }
+  // we need at least one input to have a shape for this inference.
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  // if no kernel shape is required, then we need two inputs.
+  if (!require_kernel_shape && !hasNInputShapes(ctx, 2)) {
+    return;
   }
 
   // don't bother with legacy auto_pad for now
@@ -46,6 +46,9 @@ void convPoolTypeAndShapeInference(
   }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 2) {
+    return; // The input shape is not properly set.
+  }
 
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
@@ -54,12 +57,19 @@ void convPoolTypeAndShapeInference(
   // simplicity of the code, we just treat them as having all-1s
   // dilation.
   std::vector<int64_t> dilations;
+  bool nodilations = false;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
       return;
     }
   } else {
+    nodilations = true;
     dilations.assign(n_input_dims, 1);
+  }
+
+  int64_t groups = getAttribute(ctx, "group", 1);
+  if (groups != 1) {
+    return; // we don't handle the group case.
   }
 
   std::vector<int64_t> pads;
@@ -85,7 +95,6 @@ void convPoolTypeAndShapeInference(
     if (kernel_shape.size() != n_input_dims) {
       return;
     }
-
   } else if (require_kernel_shape) {
     return;
   } else {
@@ -122,9 +131,11 @@ void convPoolTypeAndShapeInference(
     effective_input_size += pads[i];
     effective_input_size += pads[i + kernel_shape_size];
 
-    // how big is the kernel in this dimension
     int64_t effective_kernel_size = kernel_shape[i];
-    effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
+    if (!nodilations) {
+      // how big is the kernel in this dimension
+      effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
+    }
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
@@ -214,7 +225,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
       convPoolTypeAndShapeInference(ctx, false, true);
     });
   };
-}
+} // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(AveragePool)
     .FillUsing(PoolOpSchemaGenerator(
@@ -794,8 +805,8 @@ where mean and variance are computed per instance per channel.
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateShapeAndTypeFromFirstInput(ctx);
-      });
+      propagateShapeAndTypeFromFirstInput(ctx);
+    });
 
 ONNX_OPERATOR_SCHEMA(LpNormalization)
     .Input(0, "input", "Input matrix", "T")
@@ -818,8 +829,8 @@ Given a matrix, apply Lp-normalization along the provided axis.
         AttributeProto::INT,
         static_cast<int64_t>(2))
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateShapeAndTypeFromFirstInput(ctx);
-      });
+      propagateShapeAndTypeFromFirstInput(ctx);
+    });
 
 ONNX_OPERATOR_SCHEMA(Dropout)
     .SinceVersion(6)
