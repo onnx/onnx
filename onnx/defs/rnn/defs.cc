@@ -34,7 +34,7 @@ void RNNShapeInference(InferenceContext& ctx) {
     updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
 
     // Only LSTM has next output.
-    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    propagateElemTypeFromInputToOutput(ctx, 0, 2);
     updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
 }
 
