@@ -7,6 +7,38 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
+void RNNShapeInference(InferenceContext& ctx) {
+    TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
+
+    auto direction = getAttribute(ctx, "direction", "forward");
+    if ((direction == "forward") || (direction == "reverse"))
+        num_directions.set_dim_value(1);
+    else if (direction == "bidirectional") 
+        num_directions.set_dim_value(2);
+    // else leave num_directions unknown in case of incorrect attribute value
+
+    auto hidden_size_value = getAttribute(ctx, "hidden_size", -1);
+    if (hidden_size_value > 0)
+        hidden_size.set_dim_value(hidden_size_value);
+
+    if (hasInputShape(ctx,0)) {
+        auto& first_input_shape = getInputShape(ctx,0);
+        seq_length = first_input_shape.dim(0);
+        batch_size = first_input_shape.dim(1);
+    }
+
+    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
+    
+    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
+
+    // Only LSTM has next output. The following are no-ops when the corresponding
+    // output is absent.
+    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
+}
+
 // Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
     return [=](OpSchema& schema) {
@@ -57,8 +89,11 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                               "Constrain input and output types to float tensors.");
         schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
+        schema.TypeAndShapeInferenceFunction(RNNShapeInference);
     };
 }
+
+
 
 ONNX_OPERATOR_SCHEMA(RNN)
     .SetDoc(R"DOC(
