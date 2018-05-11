@@ -39,8 +39,8 @@ class ReduceLogSumExp(Base):
               name='test_reduce_log_sum_exp_do_not_keepdims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
-        reduced = np.sqrt(np.sum(
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
+        reduced = np.log(np.sum(
             np.exp(data), axis=tuple(axes), keepdims=keepdims == 1))
 
         expect(node, inputs=[data], outputs=[reduced],
@@ -74,7 +74,7 @@ class ReduceLogSumExp(Base):
               name='test_reduce_log_sum_exp_keepdims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.log(np.sum(np.exp(data),
                                 axis=tuple(axes),
                                 keepdims=keepdims == 1))
@@ -108,7 +108,7 @@ class ReduceLogSumExp(Base):
               name='test_reduce_log_sum_exp_default_axes_keepdims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.log(np.sum(np.exp(data),
                                 axis=axes,
                                 keepdims=keepdims == 1))

@@ -26,9 +26,9 @@ class ReduceL2(Base):
             keepdims=keepdims
         )
 
-        data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         #print(data)
-        #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+        #[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
@@ -41,7 +41,7 @@ class ReduceL2(Base):
             name='test_reduce_l2_do_not_keepdims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
 
@@ -62,9 +62,9 @@ class ReduceL2(Base):
             keepdims=keepdims
         )
 
-        data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         #print(data)
-        #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+        #[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
@@ -77,7 +77,7 @@ class ReduceL2(Base):
             name='test_reduce_l2_keep_dims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
 
@@ -96,9 +96,9 @@ class ReduceL2(Base):
             keepdims=keepdims
         )
 
-        data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         #print(data)
-        #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+        #[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=axes, keepdims=keepdims == 1))
@@ -109,7 +109,7 @@ class ReduceL2(Base):
             name='test_reduce_l2_default_axes_keepdims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=axes, keepdims=keepdims == 1))
 

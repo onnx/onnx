@@ -26,19 +26,19 @@ class ReduceL1(Base):
             keepdims=keepdims
         )
 
-        data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         #print(data)
-        #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+        #[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
         reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
-        #[[3, 7], [11, 15], [19, 23]]
+        #[[3., 7.], [11., 15.], [19., 23.]]
 
         expect(node, inputs=[data], outputs=[reduced],
             name='test_reduce_l1_do_not_keepdims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced],
@@ -58,19 +58,19 @@ class ReduceL1(Base):
             keepdims=keepdims
         )
 
-        data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         #print(data)
-        #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+        #[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
         reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
-        #[[[3], [7]], [[11], [15]], [[19], [23]]]
+        #[[[3.], [7.]], [[11.], [15.]], [[19.], [23.]]]
 
         expect(node, inputs=[data], outputs=[reduced],
             name='test_reduce_l1_keep_dims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sum(a=np.abs(data), axis=tuple(axes), keepdims=keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced],
@@ -89,19 +89,19 @@ class ReduceL1(Base):
             keepdims=keepdims
         )
 
-        data = np.reshape(np.arange(1, np.prod(shape) + 1), shape)
+        data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         #print(data)
-        #[[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[9, 10], [11, 12]]]
+        #[[[1., 2.], [3., 4.]], [[5., 6.], [7., 8.]], [[9., 10.], [11., 12.]]]
 
         reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)
         #print(reduced)
-        #[[[78]]]
+        #[[[78.]]]
 
         expect(node, inputs=[data], outputs=[reduced],
             name='test_reduce_l1_default_axes_keepdims1')
 
         np.random.seed(0)
-        data = np.random.uniform(-10, 10, shape)
+        data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sum(a=np.abs(data), axis=axes, keepdims=keepdims == 1)
 
         expect(node, inputs=[data], outputs=[reduced],

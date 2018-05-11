@@ -1,13 +1,0 @@
-backend-test:~
-8
-datareduced"	ReduceMax*
-axes@ *
-keepdims test_reduce_maxZ
-data
-
-
-b
-reduced
-
-
-B
