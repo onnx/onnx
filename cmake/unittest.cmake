@@ -20,9 +20,7 @@ set(${UT_NAME}_libs
 )
 
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
-
-add_whole_archive_flag(onnx_proto tmp)
-list(APPEND ${UT_NAME}_libs ${tmp})
+list(APPEND ${UT_NAME}_libs onnx_proto)
 add_whole_archive_flag(onnx tmp)
 list(APPEND ${UT_NAME}_libs ${tmp})
 
@@ -43,6 +41,8 @@ function(AddTest)
   target_link_libraries(${_UT_TARGET} ${_UT_LIBS} ${CMAKE_THREAD_LIBS_INIT})
   if(TARGET protobuf::libprotobuf)
     target_link_libraries(${_UT_TARGET} protobuf::libprotobuf)
+  else()
+    target_link_libraries(${_UT_TARGET} ${PROTOBUF_LIBRARIES})
   endif()
 
   if (WIN32)
