@@ -391,7 +391,7 @@ Example 2:
                   .has_dim_value() &&
               starts[j] >= 0 && ends[j] >= 0) {
             auto newval = std::min(
-                              ctx.getInputType(0)
+                              (int64_t)ctx.getInputType(0)
                                   ->tensor_type()
                                   .shape()
                                   .dim((int)i)
