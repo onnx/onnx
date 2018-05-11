@@ -25,8 +25,7 @@ class ReduceMax(Base):
             axes=axes,
             keepdims=keepdims)
 
-        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-            dtype=np.float32)
+        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
         #[[20.  2.]
@@ -54,8 +53,7 @@ class ReduceMax(Base):
             axes=axes,
             keepdims=keepdims)
 
-        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-            dtype=np.float32)
+        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.maximum.reduce(data, axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
         #[[[20.  2.]]
@@ -81,8 +79,7 @@ class ReduceMax(Base):
             outputs=['reduced'],
             keepdims=keepdims)
 
-        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]],
-            dtype=np.float32)
+        data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.maximum.reduce(data, axis=axes, keepdims=keepdims == 1)
         #print(reduced)
         [[[60.]]]
