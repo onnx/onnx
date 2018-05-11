@@ -4,19 +4,26 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import checker, helper, TensorProto
-from onnx.helper import make_node, make_tensor_value_info
+from onnx.helper import make_node, make_tensor_value_info, make_empty_tensor_value_info
 
 import onnx.shape_inference
 import unittest
+
+import numpy as np
 
 
 class TestShapeInference(unittest.TestCase):
     def _make_graph(self, seed_values, nodes, value_info):
         input_value_infos = []
-        for name, dtype, shape in seed_values:
-            # introduce the starting values as the output of reshape,
-            # so that the sizes are guaranteed to be unknown
-            value_info.append(make_tensor_value_info(name, dtype, shape))
+        # introduce the starting values as the output of reshape,
+        # so that the sizes are guaranteed to be unknown
+        for seed_value in seed_values:
+            if isinstance(seed_value, tuple):
+                name = seed_value[0]
+                value_info.append(make_tensor_value_info(*seed_value))
+            else:
+                name = seed_value
+                value_info.append(make_empty_tensor_value_info(seed_value))
             input_value_infos.append(make_tensor_value_info('SEED_' + name, TensorProto.UNDEFINED, ()))
             input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + name, TensorProto.UNDEFINED, ()))
             nodes[:0] = [make_node("Reshape", ['SEED_' + name, 'UNKNOWN_SHAPE_' + name], [name])]
@@ -45,6 +52,12 @@ class TestShapeInference(unittest.TestCase):
         for vi, inferred_vi in zip(vis, inferred_vis):
             assert vi == inferred_vi, '\n%s\n%s\n' % (vi, inferred_vi)
         assert False
+
+    def test_empty_graph(self):
+        graph = self._make_graph(
+            ['y'],
+            [], [])
+        self._assert_inferred(graph, [])
 
     def _identity_prop(self, op, **kwargs):
         graph = self._make_graph(
@@ -88,6 +101,48 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info("Y", TensorProto.STRING, (3, 2, 4))])
         self.assertRaises(RuntimeError, self._inferred, graph)
 
+    def _make_matmul_test_all_dims_known(self, shape1, shape2):
+        expected_out_shape = np.matmul(np.arange(np.product(shape1)).reshape(shape1),
+                                       np.arange(np.product(shape2)).reshape(shape2)).shape
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, shape1),
+             ('y', TensorProto.FLOAT, shape2)],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, expected_out_shape)])
+
+    def test_matmul_all_dims_known(self):
+        self._make_matmul_test_all_dims_known((2,), (2,))
+
+        self._make_matmul_test_all_dims_known((4, 2), (2, 4))
+        self._make_matmul_test_all_dims_known((5, 2), (2, 4))
+        self._make_matmul_test_all_dims_known((5, 2), (2, 1))
+        self._make_matmul_test_all_dims_known((1, 2), (2, 3))
+        self._make_matmul_test_all_dims_known((2,), (2, 3))
+        self._make_matmul_test_all_dims_known((4, 2), (2,))
+        self._make_matmul_test_all_dims_known((1, 4, 2), (3, 2, 3))
+        self._make_matmul_test_all_dims_known((3, 4, 2), (3, 2, 3))
+        self._make_matmul_test_all_dims_known((5, 1, 4, 2), (1, 3, 2, 3))
+        self._make_matmul_test_all_dims_known((4, 2), (3, 2, 3))
+
+    def _make_matmul_test_allow_unknown(self, shape1, shape2, expected_out_shape):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, shape1),
+             ('y', TensorProto.FLOAT, shape2)],
+            [make_node('MatMul', ['x', 'y'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, expected_out_shape)])
+
+    def test_matmul_allow_unknown(self):
+        self._make_matmul_test_allow_unknown((None,), (None,), ())
+        self._make_matmul_test_allow_unknown((3,), (None,), ())
+        self._make_matmul_test_allow_unknown((2,), (2, "a"), ("a",))
+        self._make_matmul_test_allow_unknown((4, 2), (2, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown((4, None), (2, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown((4, None), (None, "a"), (4, "a"))
+        self._make_matmul_test_allow_unknown((1, 4, 2), ("a", 2, 5), ("a", 4, 5))
+        self._make_matmul_test_allow_unknown((1, 3, 4, 2), ("a", 2, 5), (1, 3, 4, 5))
+
     def test_cast(self):
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3))],
@@ -102,6 +157,15 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Concat", ['x', 'y'], ['z'], axis=0)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (9, 4, 3))])
+
+    def test_concat_missing_shape(self):
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, (2, 4, 3)),
+             "y",
+             ("z", TensorProto.FLOAT, (None, None, None))],
+            [make_node("Concat", ['x', 'y', 'z'], ['out'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, None)])
 
     def test_concat_3d_axis_2(self):
         graph = self._make_graph(
@@ -306,6 +370,133 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (30, 4, 5))])
 
+    def test_random_normal(self):
+        graph = self._make_graph(
+            [],
+            [make_node('RandomNormal', [], ['out'], dtype=TensorProto.DOUBLE, shape=(3, 4, 5))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (3, 4, 5))])
+
+    def test_random_normal_like(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('RandomNormalLike', ['X'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (2, 3, 4))])
+
+    def test_random_normal_like_with_dtype(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('RandomNormalLike', ['X'], ['out'], dtype=TensorProto.DOUBLE,)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.DOUBLE, (2, 3, 4))])
+
+    def test_constant_fill(self):
+        graph = self._make_graph(
+            [],
+            [make_node('ConstantFill', [], ['out'], dtype=TensorProto.INT32, shape=(3, 4, 5))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (3, 4, 5))])
+
+    def test_constant_fill_with_input(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4))])
+
+    def test_constant_fill_with_extra_shape(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (2, 3, 4))],
+            [make_node('ConstantFill', ['X'], ['out'], dtype=TensorProto.INT32, extra_shape=(5, 6))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4, 5, 6))])
+
+    def _logical_binary_op(self, op, input_type):
+        graph = self._make_graph(
+            [('x', input_type, (30, 4, 5)),
+             ('y', input_type, (30, 4, 5))],
+            [make_node(op, ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
+
+    def test_logical_and(self):
+        self._logical_binary_op('And', TensorProto.BOOL)
+
+    def test_logical_or(self):
+        self._logical_binary_op('Or', TensorProto.BOOL)
+
+    def test_logical_xor(self):
+        self._logical_binary_op('Xor', TensorProto.BOOL)
+
+    def test_greater(self):
+        self._logical_binary_op('Greater', TensorProto.FLOAT)
+
+    def test_less(self):
+        self._logical_binary_op('Less', TensorProto.FLOAT)
+
+    def test_equal(self):
+        self._logical_binary_op('Equal', TensorProto.FLOAT)
+
+    def test_logical_not(self):
+        graph = self._make_graph(
+            [('x', TensorProto.BOOL, (30, 4, 5))],
+            [make_node('Not', ['x'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
+
+    def test_flatten(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('Flatten', ['x'], ['z'], axis=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (6, 20))])
+
+    def test_flatten_default_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('Flatten', ['x'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 60))])
+
+    def test_flatten_zero_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('Flatten', ['x'], ['z'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (1, 120))])
+
+    def test_flatten_unknown_dim(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 'N', 4, 5))],
+            [make_node('Flatten', ['x'], ['z'], axis=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None, 20))])
+
+    def test_space_to_depth(self):
+        b = 10
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 100, 100))],
+            [make_node('SpaceToDepth', ['x'], ['z'], blocksize=b)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 300, 10, 10))])
+
+    def test_space_to_depth_unknown_dim(self):
+        b = 10
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 'N', 100, 100))],
+            [make_node('SpaceToDepth', ['x'], ['z'], blocksize=b)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, None, 10, 10))])
+
+    def test_depth_to_space(self):
+        b = 10
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 300, 10, 10))],
+            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
+
     def test_gemm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
@@ -360,6 +551,62 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])
 
+    def test_reduce_op_shape_2_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceL1', 'x', 'y', axes=(1, 2), keepdims=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24,))])
+
+    def test_reduce_op_shape_keep_dims(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceL1', 'x', 'y', axes=(1, 2), keepdims=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24, 1, 1))])
+
+    def test_reduce_op_shape_default_value(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceL1', 'x', 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (1, 1, 1))])
+
+    def test_reduce_op_shape_negative_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ReduceL1', 'x', 'y', axes=(-1, -2))],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (24, 1, 1))])
+
+    def test_argmax_shape(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ArgMax', 'x', 'y', axis=1, keepdims=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (24, 1, 11))])
+
+    def test_argmax_shape_keepdims(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ArgMax', 'x', 'y', axis=0, keepdims=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (4, 11))])
+
+    def test_argmax_shape_default_value(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ArgMax', 'x', 'y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (1, 4, 11))])
+
+    def test_argmax_shape_negative_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (24, 4, 11))],
+            [make_node('ArgMax', 'x', 'y', axis=-2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (24, 1, 11))])
+
     def test_dropout(self):
         self._identity_prop('Dropout')
 
@@ -388,12 +635,58 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 
+    def test_split_from_GLU(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 6, 7))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7))])
+
+    def test_GLU_partial(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 6, 7))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1),
+             make_node('Sigmoid', ['z'], ['a'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('a', TensorProto.FLOAT, (5, 3, 7))])
+
+    def test_GLU(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (5, 6, 7))],
+            [make_node('Split', ['x'], ['y', 'z'], axis=1),
+             make_node('Sigmoid', ['z'], ['a']),
+             make_node('Mul', ['y', 'a'], ['b'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('a', TensorProto.FLOAT, (5, 3, 7)),
+                                      make_tensor_value_info('b', TensorProto.FLOAT, (5, 3, 7))])
+
     def test_softmax(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (4, 5))],
             [make_node('Softmax', ['x'], 'z')],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5))])
+
+    def test_lp_norm(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7))],
+            [make_node('LpNormalization', ['x'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
+
+    def test_instance_norm(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
+             ('scale', TensorProto.FLOAT, (4,)),
+             ('b', TensorProto.FLOAT, (4,))],
+            [make_node('InstanceNormalization', ['x', 'scale', 'b'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 
 
 if __name__ == '__main__':

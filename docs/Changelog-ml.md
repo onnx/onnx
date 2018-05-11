@@ -16,7 +16,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : T1</dt>
+<dt><tt>X</tt> : T</dt>
 <dd>Data to be selected</dd>
 <dt><tt>Y</tt> : tensor(int64)</dt>
 <dd>The index values to select as a int64 tensor</dd>
@@ -25,14 +25,14 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Outputs
 
 <dl>
-<dt><tt>Z</tt> : T1</dt>
+<dt><tt>Z</tt> : T</dt>
 <dd>Selected output data as an array</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
+<dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
 <dd>allowed types.</dd>
 </dl>
 
@@ -495,8 +495,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   
       This operator assumes every input in X is of the same category set
       (meaning there is only one category count).
-  	
-  	If the input is a tensor of float, int32, or double, the data will be cast
+  
+      If the input is a tensor of float, int32, or double, the data will be cast
       to int64s and the cats_int64s category list will be used for the lookups.
 
 #### Version
