@@ -893,7 +893,21 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
         "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1))
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+	    if (hasInputShape(ctx, 0)) {
+		  auto& input_shape = getInputShape(ctx,0);
+		  int rank = static_cast<int> (input_shape.dim_size());
+		  int axis = static_cast<int> (getAttribute(ctx, "axis", 1));
+		  if (axis > rank) axis = rank;
+		  // TODO: is the operation defined for input-rank < 2?
+		  updateOutputShape(ctx, 0, {
+			  multiplyDims(input_shape, 0, axis),
+			  multiplyDims(input_shape, axis, rank)
+		  });
+	    }
+    });
 
 ONNX_OPERATOR_SCHEMA(LRN)
     .Attr("size", "The number of channels to sum over", AttributeProto::INT)
