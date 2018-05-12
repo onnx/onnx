@@ -13,7 +13,7 @@ from . import expect
 class Concat(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         test_cases = {
             '1d': ([1, 2],
                    [3, 4]),
@@ -23,8 +23,8 @@ class Concat(Base):
                    [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
         }
 
-        for test_case, values in test_cases.items():
-            values = [np.asarray(v, dtype=np.float32) for v in values]
+        for test_case, values_ in test_cases.items():
+            values = [np.asarray(v, dtype=np.float32) for v in values_]
             for i in range(len(values[0].shape)):
                 in_args = ['value' + str(k) for k in range(len(values))]
                 node = onnx.helper.make_node(
