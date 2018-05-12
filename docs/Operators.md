@@ -95,6 +95,7 @@
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
+  * <a href="#Upsample">Upsample</a>
   * <a href="#Xor">Xor</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
@@ -564,18 +565,22 @@ This version of the operator has been available since version 1 of the default O
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
-   The output of each pooling window is divided by the number of elements exclude pad.
+   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
    
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>count_include_pad</tt> : int</dt>
+<dd>Whether include pad pixels when calculating values for the edges.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -1066,6 +1071,7 @@ for from_type, to_type in test_cases:
         to=getattr(TensorProto, to_type),
     )
     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+
     expect(node, inputs=[input], outputs=[output],
            name='test_cast_' + from_type + '_to_' + to_type)
 ```
@@ -1288,8 +1294,8 @@ test_cases = {
            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
 }
 
-for test_case, values in test_cases.items():
-    values = [np.asarray(v, dtype=np.float32) for v in values]
+for test_case, values_ in test_cases.items():
+    values = [np.asarray(v, dtype=np.float32) for v in values_]
     for i in range(len(values[0].shape)):
         in_args = ['value' + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
@@ -3076,7 +3082,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>hardmax_axis</summary>
 
 ```python
-def hardmax_2d(x):
+def hardmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -3939,7 +3945,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>logsoftmax_axis</summary>
 
 ```python
-def logsoftmax_2d(x):
+def logsoftmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
@@ -7102,7 +7108,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>softmax_axis</summary>
 
 ```python
-def softmax_2d(x):
+def softmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
@@ -8144,6 +8150,80 @@ y = np.expand_dims(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_unsqueeze')
+```
+
+</details>
+
+
+### <a name="Upsample"></a><a name="upsample">**Upsample**</a>
+
+  Upsample the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string</dt>
+<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
+<dt><tt>scales</tt> : list of floats (required)</dt>
+<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>N-D tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input/output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Upsample',
+    inputs=['x'],
+    outputs=['y'],
+    scales=[1.0, 1.0, 2.0, 3.0],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[output],
+       name='test_upsample_nearest')
 ```
 
 </details>
@@ -9205,11 +9285,9 @@ expect(node, inputs=[x], outputs=[y],
   The width and height of the output tensor are:
     output_width = floor(input_width * width_scale),
     output_height = floor(input_height * height_scale).
-  
   Example:
     Given `data` tensor, width_scale, height_scale, mode,
     Upsample the input 4-D tensor in nearest mode:
-  
     data = [[[
         [1, 2],
         [3, 4]
@@ -9217,7 +9295,6 @@ expect(node, inputs=[x], outputs=[y],
     width_scale = 2
     height_scale = 2
     mode = "nearest"
-  
     output = [[[
         [1, 1, 2, 2],
         [1, 1, 2, 2],
@@ -9272,8 +9349,7 @@ node = onnx.helper.make_node(
     'Upsample',
     inputs=['x'],
     outputs=['y'],
-    height_scale=2.0,
-    width_scale=3.0,
+    scales=[1.0, 1.0, 2.0, 3.0],
     mode='nearest',
 )
 

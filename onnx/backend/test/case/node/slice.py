@@ -13,7 +13,7 @@ from . import expect
 class Slice(Base):
 
     @staticmethod
-    def export_slice():
+    def export_slice():  # type: () -> None
         node = onnx.helper.make_node(
             'Slice',
             inputs=['x'],
@@ -30,7 +30,7 @@ class Slice(Base):
                name='test_slice')
 
     @staticmethod
-    def export_slice_neg():
+    def export_slice_neg():  # type: () -> None
         node = onnx.helper.make_node(
             'Slice',
             inputs=['x'],
@@ -47,7 +47,7 @@ class Slice(Base):
                name='test_slice_neg')
 
     @staticmethod
-    def export_slice_start_out_of_bounds():
+    def export_slice_start_out_of_bounds():  # type: () -> None
         node = onnx.helper.make_node(
             'Slice',
             inputs=['x'],
@@ -64,7 +64,7 @@ class Slice(Base):
                name='test_slice_start_out_of_bounds')
 
     @staticmethod
-    def export_slice_end_out_of_bounds():
+    def export_slice_end_out_of_bounds():  # type: () -> None
         node = onnx.helper.make_node(
             'Slice',
             inputs=['x'],
@@ -81,7 +81,7 @@ class Slice(Base):
                name='test_slice_end_out_of_bounds')
 
     @staticmethod
-    def export_slice_default_axes():
+    def export_slice_default_axes():  # type: () -> None
         node = onnx.helper.make_node(
             'Slice',
             inputs=['x'],
