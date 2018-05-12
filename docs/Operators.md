@@ -1067,6 +1067,7 @@ for from_type, to_type in test_cases:
         to=getattr(TensorProto, to_type),
     )
     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+
     expect(node, inputs=[input], outputs=[output],
            name='test_cast_' + from_type + '_to_' + to_type)
 ```
@@ -1289,8 +1290,8 @@ test_cases = {
            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
 }
 
-for test_case, values in test_cases.items():
-    values = [np.asarray(v, dtype=np.float32) for v in values]
+for test_case, values_ in test_cases.items():
+    values = [np.asarray(v, dtype=np.float32) for v in values_]
     for i in range(len(values[0].shape)):
         in_args = ['value' + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
@@ -3077,7 +3078,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>hardmax_axis</summary>
 
 ```python
-def hardmax_2d(x):
+def hardmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -3839,7 +3840,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>logsoftmax_axis</summary>
 
 ```python
-def logsoftmax_2d(x):
+def logsoftmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
@@ -7002,7 +7003,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>softmax_axis</summary>
 
 ```python
-def softmax_2d(x):
+def softmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
