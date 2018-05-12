@@ -10,16 +10,17 @@ from tabulate import tabulate  # type: ignore
 
 import onnx
 from onnx import defs, helper
+from typing import Optional, Text, Set, Dict, IO
 
 _all_schemas = defs.get_all_schemas()
 
 
 class AttrCoverage(object):
-    def __init__(self):
-        self.name = None
-        self.values = set()
+    def __init__(self):  # type: () -> None
+        self.name = None  # type: Optional[Text]
+        self.values = set()  # type: Set[Text]
 
-    def add(self, attr):
+    def add(self, attr):  # type: (onnx.AttributeProto) -> None
         assert self.name in [None, attr.name]
         self.name = attr.name
         value = helper.get_attribute_value(attr)
@@ -32,11 +33,11 @@ class AttrCoverage(object):
 
 
 class NodeCoverage(object):
-    def __init__(self):
-        self.op_type = None
-        self.attr_coverages = defaultdict(AttrCoverage)
+    def __init__(self):  # type: () -> None
+        self.op_type = None  # type: Optional[Text]
+        self.attr_coverages = defaultdict(AttrCoverage)  # type: Dict[Text, AttrCoverage]
 
-    def add(self, node):
+    def add(self, node):  # type: (onnx.NodeProto) -> None
         assert self.op_type in [None, node.op_type]
 
         if self.op_type is None:
@@ -48,27 +49,27 @@ class NodeCoverage(object):
 
 
 class Coverage(object):
-    def __init__(self):
+    def __init__(self):  # type: () -> None
         self.buckets = {
             'loaded': defaultdict(NodeCoverage),
             'passed': defaultdict(NodeCoverage),
-        }
+        }  # type: Dict[Text, Dict[Text, NodeCoverage]]
 
-    def add_node(self, node, bucket):
+    def add_node(self, node, bucket):  # type: (onnx.NodeProto, Text) -> None
         self.buckets[bucket][node.op_type].add(node)
 
-    def add_graph(self, graph, bucket):
+    def add_graph(self, graph, bucket):  # type: (onnx.GraphProto, Text) -> None
         for node in graph.node:
             self.add_node(node, bucket)
 
-    def add_model(self, model, bucket):
+    def add_model(self, model, bucket):  # type: (onnx.ModelProto, Text) -> None
         self.add_graph(model.graph, bucket)
 
-    def add_proto(self, proto, bucket):
+    def add_proto(self, proto, bucket):  # type: (onnx.ModelProto, Text) -> None
         assert isinstance(proto, onnx.ModelProto)
         self.add_model(proto, bucket)
 
-    def report_text(self, writer):
+    def report_text(self, writer):  # type: (IO[Text]) -> None
         writer.write('---------- onnx coverage: ----------\n')
         writer.write('Operators (passed/loaded/total): {}/{}/{}\n'.format(
             len(self.buckets['passed']),

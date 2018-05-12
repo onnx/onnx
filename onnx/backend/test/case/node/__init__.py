@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 
 import sys
 
+from typing import Any, List
+
 import onnx
 import onnx.mapping
 
@@ -44,7 +46,7 @@ def expect(node, inputs, outputs, name):
     ))
 
 
-def collect_testcases():
+def collect_testcases():  # type: () -> List[TestCase]
     '''Collect node test cases defined in python/numpy code.
     '''
     import_recursive(sys.modules[__name__])
