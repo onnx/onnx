@@ -13,7 +13,7 @@ from . import expect
 class Clip(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Clip',
             inputs=['x'],
@@ -33,7 +33,7 @@ class Clip(Base):
                name='test_clip')
 
     @staticmethod
-    def export_clip_default():
+    def export_clip_default():  # type: () -> None
         node = onnx.helper.make_node(
             'Clip',
             inputs=['x'],
