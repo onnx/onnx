@@ -1,13 +1,13 @@
-backend-test:Ê
+backend-test:¼
 (
 X
 W
 R
 BY"RNN*
-hidden_size !test_simple_rnn_with_initial_biasZ
+hidden_size test_rnn_seq_lengthZ
 X
 
-
+
 
 Z
 W
@@ -27,7 +27,7 @@
 b
 Y
 
-
+
 
 
 B
