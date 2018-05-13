@@ -57,13 +57,11 @@ void convPoolTypeAndShapeInference(
   // simplicity of the code, we just treat them as having all-1s
   // dilation.
   std::vector<int64_t> dilations;
-  bool nodilations = false;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
       return;
     }
   } else {
-    nodilations = true;
     dilations.assign(n_input_dims, 1);
   }
 
@@ -132,10 +130,8 @@ void convPoolTypeAndShapeInference(
     effective_input_size += pads[i + kernel_shape_size];
 
     int64_t effective_kernel_size = kernel_shape[i];
-    if (!nodilations) {
-      // how big is the kernel in this dimension
-      effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
-    }
+    // accounting for dilation, how big is the kernel in this dimension
+    effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
 
     // how many times we can move the kernel from it's initial position, based
     // on the stride
@@ -243,7 +239,7 @@ ONNX_OPERATOR_SCHEMA(AveragePool)
         "count_include_pad",
         "Whether include pad pixels when calculating values for the edges.",
         AttributeProto::INT,
-        static_cast<int64_t>(0));;
+        static_cast<int64_t>(0));
 
 ONNX_OPERATOR_SCHEMA(MaxPool).FillUsing(PoolOpSchemaGenerator(
     "MaxPool",
@@ -584,6 +580,34 @@ ONNX_OPERATOR_SCHEMA(ConvTranspose)
 
 } // namespace ONNX_NAMESPACE
 
+// For GlobalPool operations.
+void gloablPoolTypeShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // needs at least one input with shape.
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 2) {
+    return;
+  }
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+
+  // (N, C, 1, 1, ..., 1)
+  auto output_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  *output_shape->add_dim() = input_shape.dim(0);
+  *output_shape->add_dim() = input_shape.dim(1);
+
+  for (size_t i = 0; i < n_input_dims; ++i) {
+    output_shape->add_dim()->set_dim_value(1);
+  }
+}
+
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
     const char* op_type,
@@ -618,6 +642,8 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.SetDoc(doc);
+    schema.TypeAndShapeInferenceFunction(
+        [](InferenceContext& ctx) { gloablPoolTypeShapeInference(ctx); });
   };
 }
 ONNX_OPERATOR_SCHEMA(GlobalAveragePool)
@@ -666,6 +692,8 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.SetDoc(doc);
+    schema.TypeAndShapeInferenceFunction(
+        [](InferenceContext& ctx) { gloablPoolTypeShapeInference(ctx); });
   };
 }
 
@@ -906,19 +934,21 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
         AttributeProto::INT,
         static_cast<int64_t>(1))
-	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
-	    if (hasInputShape(ctx, 0)) {
-		  auto& input_shape = getInputShape(ctx,0);
-		  int rank = static_cast<int> (input_shape.dim_size());
-		  int axis = static_cast<int> (getAttribute(ctx, "axis", 1));
-		  if (axis > rank) axis = rank;
-		  // TODO: is the operation defined for input-rank < 2?
-		  updateOutputShape(ctx, 0, {
-			  multiplyDims(input_shape, 0, axis),
-			  multiplyDims(input_shape, axis, rank)
-		  });
-	    }
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasInputShape(ctx, 0)) {
+        auto& input_shape = getInputShape(ctx, 0);
+        int rank = static_cast<int>(input_shape.dim_size());
+        int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+        if (axis > rank)
+          axis = rank;
+        // TODO: is the operation defined for input-rank < 2?
+        updateOutputShape(
+            ctx,
+            0,
+            {multiplyDims(input_shape, 0, axis),
+             multiplyDims(input_shape, axis, rank)});
+      }
     });
 
 ONNX_OPERATOR_SCHEMA(LRN)
