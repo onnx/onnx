@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Pow(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],
@@ -33,7 +33,7 @@ class Pow(Base):
                name='test_pow')
 
     @staticmethod
-    def export_pow_broadcast():
+    def export_pow_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],
@@ -42,7 +42,7 @@ class Pow(Base):
         )
 
         x = np.array([1, 2, 3]).astype(np.float32)
-        y = np.array([2]).astype(np.float32)
+        y = np.array(2).astype(np.float32)
         z = np.power(x, y)  # expected output [1., 4., 9.]
         expect(node, inputs=[x, y], outputs=[z],
                name='test_pow_bcast')

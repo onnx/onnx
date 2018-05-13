@@ -7,7 +7,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import onnx
 import onnx.onnx_cpp2py_export.shape_inference as C
+from onnx import ModelProto
 
 """Apply shape inference to the provided ModelProto.
 
@@ -18,6 +20,18 @@ graph, that means that the provided values are invalid (or there is a
 bug in shape inference), and the result is unspecified.
 
 Arguments:
-    input (string): serialized ModelProto
+    input (ModelProto): ModelProto
+
+Return:
+    return (ModelProto) model with inferred shape information
 """
-infer_shapes = C.infer_shapes
+
+
+def infer_shapes(model):
+    if not isinstance(model, ModelProto):
+        raise ValueError('Shape inference only accepts ModelProto, '
+                         'incorrect type: {}'.format(type(model)))
+
+    model_str = model.SerializeToString()
+    inferred_model_str = C.infer_shapes(model_str)
+    return onnx.load_from_string(inferred_model_str)

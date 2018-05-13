@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/defs/shape_inference.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -32,19 +33,6 @@ using DataTypeSet = std::unordered_set<DataType>;
 // description.
 using TypeConstraintMap =
     std::unordered_map<std::string, std::pair<DataTypeSet, std::string>>;
-
-typedef TensorShapeProto_Dimension InferenceDimension;
-
-struct InferenceContext {
-  virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
-  virtual size_t getNumInputTypes() const = 0;
-  virtual const TypeProto_Tensor* getInputType(size_t index) const = 0;
-  virtual size_t getNumOutputTypes() const = 0;
-  virtual TypeProto_Tensor* getOutputType(size_t index) = 0;
-  virtual ~InferenceContext() {}
-};
-
-typedef void (*InferenceFunction)(InferenceContext&);
 
 /**
  * @brief A class to record the schema of an op.
@@ -212,8 +200,8 @@ class OpSchema final {
   //
   // Note that signatures are defined to allow for forward-declaring
   // any structs used from ir.h
-  OpSchema& ShapeInferenceFunction(InferenceFunction inferenceFunction);
-  InferenceFunction GetShapeInferenceFunction() const {
+  OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
+  InferenceFunction GetTypeAndShapeInferenceFunction() const {
     return tensor_inference_function_;
   }
 
@@ -348,33 +336,49 @@ class OpSchema final {
       std::string description);
 
   // Convenience members for types
-  static const std::vector<std::string>& all_integral_types() {
-    static const std::vector<std::string> all_integral_types = {"float",
-                                                                "int32",
-                                                                "string",
-                                                                "bool",
-                                                                "uint8",
-                                                                "int8",
-                                                                "uint16",
-                                                                "int16",
-                                                                "int64",
-                                                                "float16",
-                                                                "double"};
-    return all_integral_types;
+
+  // All high-precision numeric types.
+  static const std::vector<std::string>& high_precision_numeric_types() {
+    static const std::vector<std::string> high_precision_numeric_types = {
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float)",
+        "tensor(double)"};
+    return high_precision_numeric_types;
+  }
+
+  static const std::vector<std::string>& all_numeric_types() {
+      static const std::vector<std::string> all_numeric_types = {
+          +"tensor(uint8)",
+          +"tensor(uint16)",
+          +"tensor(uint32)",
+          +"tensor(uint64)",
+          +"tensor(int8)",
+          +"tensor(int16)",
+          +"tensor(int32)",
+          +"tensor(int64)",
+          +"tensor(float16)",
+          +"tensor(float)",
+          +"tensor(double)" };
+      return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types = {"tensor(float)",
-                                                              "tensor(int32)",
-                                                              "tensor(string)",
-                                                              "tensor(bool)",
-                                                              "tensor(uint8)",
-                                                              "tensor(int8)",
+    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
                                                               "tensor(uint16)",
+                                                              "tensor(uint32)",
+                                                              "tensor(uint64)",
+                                                              "tensor(int8)",
                                                               "tensor(int16)",
+                                                              "tensor(int32)",
                                                               "tensor(int64)",
                                                               "tensor(float16)",
-                                                              "tensor(double)"};
+                                                              "tensor(float)",
+                                                              "tensor(double)",
+                                                              "tensor(string)",
+                                                              "tensor(bool)"};
     return all_tensor_types;
   }
 
@@ -484,7 +488,7 @@ class OpSchemaRegistry final {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 6);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
       map_["ai.onnx.ml"] = std::make_pair(1, 1);
     }
 
@@ -662,4 +666,5 @@ class OpSchemaRegistry final {
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
+
 } // namespace ONNX_NAMESPACE

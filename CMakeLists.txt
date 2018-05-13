@@ -1,11 +1,18 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.1)
 
+# Set default build type
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Build type not set - defaulting to Release")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
+endif()
+
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
-option(BUILD_PYTHON "Build Python binaries" ON)
+option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
+option(ONNX_WERROR "Build with Werror" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -14,12 +21,6 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
-
-# Set default build type
-if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Build type not set - defaulting to Release")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
-endif()
 
 if(TARGET protobuf::libprotobuf)
   # Sometimes we need to use protoc compiled for host architecture while
@@ -90,7 +91,7 @@ endif()
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 # from https://github.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tensorflow/contrib/cmake/tf_core_framework.cmake
 # to solve the problem that customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
-function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
+function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
   if(NOT ARGN)
     message(SEND_ERROR "Error: RELATIVE_PROTOBUF_GENERATE_CPP() called without any proto files")
     return()
@@ -141,30 +142,41 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
       file(MAKE_DIRECTORY "${OUTPUT_PROTO_DIR}")
     endif()
 
-    set(GEN_PROTO_ARGS "${ONNX_NAMESPACE}" -o "${OUTPUT_PROTO_DIR}" "${FILE_WE}")
+    if ("${PYTHON_EXECUTABLE}" STREQUAL "")
+      set(_python_exe "python")
+    else()
+      set(_python_exe "${PYTHON_EXECUTABLE}")
+    endif()
+    set(GEN_PROTO_ARGS -p "${ONNX_NAMESPACE}" -o "${OUTPUT_PROTO_DIR}" "${FILE_WE}")
     if(ONNX_ML)
       list(APPEND GEN_PROTO_ARGS -m)
     endif()
     add_custom_command(
       OUTPUT "${GENERATED_PROTO}"
-      COMMAND "${PYTHON_EXECUTABLE}" "${GEN_PROTO_PY}"
-      ARGS -p ${GEN_PROTO_ARGS}
+      COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
+      ARGS ${GEN_PROTO_ARGS}
       DEPENDS ${INFILE}
       COMMENT "Running gen_proto.py on ${INFILE}"
       VERBATIM )
 
     set(PROTOC_ARGS ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR} --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
-    if(BUILD_PYTHON)
+    if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+      if(NOT WIN32)
+        # Haven't figured out how to generate mypy stubs on Windows yet
+        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${ROOT_DIR}/tools/protoc-gen-mypy.py --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+      endif()
     endif()
     add_custom_command (
       OUTPUT "${OUTPUT_PB_SRC}"
              "${OUTPUT_PB_HEADER}"
       COMMAND ${ONNX_PROTOC_EXECUTABLE}
       ARGS ${PROTOC_ARGS}
-      DEPENDS ${GENERATED_PROTO}
+      DEPENDS ${GENERATED_PROTO} ${DEPEND}
       COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
       VERBATIM )
+  add_custom_target(${NAME}
+      DEPENDS ${OUTPUT_PB_SRC} ${OUTPUT_PB_HEADER})
   endforeach()
 
   set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
@@ -172,9 +184,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
   set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
 
-RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_proto PROTO_SRCS PROTO_HDRS ${ONNX_ROOT} ""
     onnx/onnx.in.proto
 )
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 ${ONNX_ROOT} gen_onnx_proto 
+    onnx/onnx-operators.in.proto
+)
+list(APPEND PROTO_SRCS ${PROTO_SRCS2})
+list(APPEND PROTO_HDRS ${PROTO_HDRS2})
 
 file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
@@ -199,7 +216,7 @@ add_library(onnx ${onnx_src})
 target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
 
-if(BUILD_PYTHON)
+if(BUILD_ONNX_PYTHON)
   if("${PY_EXT_SUFFIX}" STREQUAL "")
     if (MSVC)
       set(PY_EXT_SUFFIX ".pyd")
@@ -236,13 +253,16 @@ if(BUILD_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
+    find_package(PythonInterp ${PY_VERSION} REQUIRED)
+    find_package(PythonLibs ${PY_VERSION} REQUIRED)
+    target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
-        /MP
-        /MX
-        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
-        /wd4503 # identifier' : decorated name length exceeded, name was truncated
-        )
-      target_compile_options(onnx_cpp2py_export PRIVATE /MT)
+      /MP
+      /MX
+      /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+      /wd4503 # identifier' : decorated name length exceeded, name was truncated
+      )
+    target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
 endif()
 
@@ -261,12 +281,12 @@ endif()
 
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
-set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+endif()
 
 if (MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
-    find_package(PythonLibs ${PY_VERSION} REQUIRED)
-    target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_proto PRIVATE
         /MP
         /MX
@@ -274,8 +294,10 @@ if (MSVC)
     target_compile_options(onnx PRIVATE
         /MP
         /MX
+        /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -299,8 +321,27 @@ if (MSVC)
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
+elseif(APPLE)
+else()
+  if (${ONNX_WERROR})
+    target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
+  endif()
 endif()
 
 if(APPLE)
     set_target_properties(onnx PROPERTIES LINK_FLAGS "-undefined dynamic_lookup")
 endif()
+
+# ---[ ONNX Interface for Framework Integratin (ONNXIFI)
+add_library(onnxifi INTERFACE)
+target_include_directories(onnxifi INTERFACE onnx)
+
+
+install(TARGETS onnx onnx_proto
+    DESTINATION lib)
+install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")

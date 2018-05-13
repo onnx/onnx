@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Pad(Base):
 
     @staticmethod
-    def export_constant_pad():
+    def export_constant_pad():  # type: () -> None
         node = onnx.helper.make_node(
             'Pad',
             inputs=['x'],
@@ -34,7 +34,7 @@ class Pad(Base):
                name='test_constant_pad')
 
     @staticmethod
-    def export_reflection_and_edge_pad():
+    def export_reflection_and_edge_pad():  # type: () -> None
         for mode in ['edge', 'reflect']:
             node = onnx.helper.make_node(
                 'Pad',

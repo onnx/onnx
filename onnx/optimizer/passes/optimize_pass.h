@@ -23,9 +23,23 @@ struct OptimizePass {
     : name(std::move(name)), type(type) {
   }
 
-  virtual void optimize(ONNX_NAMESPACE::ModelProto& mp) {}
+  virtual void optimize(ONNX_NAMESPACE::ModelProto& /*mp*/) {}
 
-  virtual void optimize(Graph& graph) {}
+  virtual void optimize(Graph& /*graph*/) {}
+
+  void DescendOnGraphAttributes(Node * n, std::function<void(Graph&)> fn) {
+    for (auto name : n->attributeNames()) {
+      auto kind = n->kindOf(name);
+      if (kind == AttributeKind::g) {
+        fn(*n->g(name));
+      }
+      if (kind == AttributeKind::gs) {
+        for (auto & g  : n->gs(name)) {
+          fn(*g);
+        }
+      }
+    }
+  }
 
 };
 

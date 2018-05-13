@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Hardmax(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Hardmax',
             inputs=['x'],
@@ -32,8 +32,8 @@ class Hardmax(Base):
                name='test_hardmax_one_hot')
 
     @staticmethod
-    def export_hardmax_axis():
-        def hardmax_2d(x):
+    def export_hardmax_axis():  # type: () -> None
+        def hardmax_2d(x):  # type: (np.ndarray) -> np.ndarray
             return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
 
         x = np.random.randn(3, 4, 5).astype(np.float32)

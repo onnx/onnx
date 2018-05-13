@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Or(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Or',
             inputs=['x', 'y'],
@@ -42,7 +42,7 @@ class Or(Base):
                name='test_or4d')
 
     @staticmethod
-    def export_or_broadcast():
+    def export_or_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Or',
             inputs=['x', 'y'],
@@ -79,7 +79,7 @@ class Or(Base):
                name='test_or_bcast4v3d')
 
     @staticmethod
-    def export_or_axis():
+    def export_or_axis():  # type: () -> None
         x = (np.random.randn(5, 5, 5, 5) > 0).astype(np.bool)
         y = (np.random.randn(5) > 0).astype(np.bool)
 

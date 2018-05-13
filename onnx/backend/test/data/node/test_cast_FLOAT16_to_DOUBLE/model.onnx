@@ -1,7 +1,7 @@
-backend-test:x
-&
-inputoutput"Cast*
-to"DOUBLE test_cast_FLOAT16_to_DOUBLEZ
+backend-test:r
+ 
+inputoutput"Cast*	
+to test_cast_FLOAT16_to_DOUBLEZ
 input
 
 
@@ -10,4 +10,4 @@
 output
 
 
-B
+B

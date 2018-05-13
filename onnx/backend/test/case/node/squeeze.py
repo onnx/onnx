@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Squeeze(Base):
 
     @staticmethod
-    def export_squeeze():
+    def export_squeeze():  # type: () -> None
         node = onnx.helper.make_node(
             'Squeeze',
             inputs=['x'],

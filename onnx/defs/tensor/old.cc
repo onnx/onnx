@@ -110,11 +110,65 @@ could also be 0, in which case the actual dimension value is unchanged (i.e. tak
 from the input tensor).)DOC")
     .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     // This attribute was added via AllowConsumed API in OpSchema.
-    // After removing the API, we're now using the Attr API to simulate the old definition.
-    .Attr("consumed_inputs", "legacy optimization attribute.", AttributeProto::INTS, OPTIONAL)
+    // After removing the API, we're now using the Attr API to simulate the old
+    // definition.
+    .Attr(
+        "consumed_inputs",
+        "legacy optimization attribute.",
+        AttributeProto::INTS,
+        OPTIONAL)
     .Input(0, "data", "An input tensor.", "T")
     .Output(0, "reshaped", "Reshaped data.", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
+
+ONNX_OPERATOR_SCHEMA(Upsample)
+    .SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL)
+    .Attr(
+        "width_scale",
+        "The scale along width dimension. It takes value greater than or equal to 1.",
+        AttributeProto::FLOAT)
+    .Attr(
+        "height_scale",
+        "The scale along height dimension. It takes value greater than or equal to 1.",
+        AttributeProto::FLOAT)
+    .Attr(
+        "mode",
+        "Two interpolation modes: nearest(default), bilinear",
+        AttributeProto::STRING,
+        std::string("nearest"))
+    .Input(0, "X", "4-D tensor, [N,C,H,W]", "T")
+    .Output(0, "Y", "4-D tensor after resizing, [N,C,H,W]", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(bool)",
+         "tensor(int32)",
+         "tensor(int64)",
+         "tensor(float16)",
+         "tensor(float)",
+         "tensor(double)"},
+        "Constrain output types to bool, int32, int64, float16, float, double tensors.")
+    .SetDoc(R"DOC(
+Upsample the input tensor.
+The width and height of the output tensor are:
+  output_width = floor(input_width * width_scale),
+  output_height = floor(input_height * height_scale).
+Example:
+  Given `data` tensor, width_scale, height_scale, mode,
+  Upsample the input 4-D tensor in nearest mode:
+  data = [[[
+      [1, 2],
+      [3, 4]
+  ]]]
+  width_scale = 2
+  height_scale = 2
+  mode = "nearest"
+  output = [[[
+      [1, 1, 2, 2],
+      [1, 1, 2, 2],
+      [3, 3, 4, 4],
+      [3, 3, 4, 4]
+  ]]]
+)DOC");

@@ -7,13 +7,17 @@ import json
 import os
 
 from ..case.test_case import TestCase
+from typing import List, Text, Optional
 
 DATA_DIR = os.path.join(
     os.path.dirname(os.path.realpath(os.path.dirname(__file__))),
     'data')
 
 
-def load_model_tests(data_dir=DATA_DIR, kind=None):
+def load_model_tests(
+    data_dir=DATA_DIR,  # type: Text
+    kind=None,  # type: Optional[Text]
+):  # type: (...) -> List[TestCase]
     '''Load model test cases from on-disk data files.
     '''
 
@@ -32,7 +36,7 @@ def load_model_tests(data_dir=DATA_DIR, kind=None):
         if os.path.exists(os.path.join(case_dir, 'model.onnx')):
             url = None
             model_name = test_name[len('test_')]
-            model_dir = case_dir
+            model_dir = case_dir  # type: Optional[Text]
         else:
             with open(os.path.join(case_dir, 'data.json')) as f:
                 data = json.load(f)

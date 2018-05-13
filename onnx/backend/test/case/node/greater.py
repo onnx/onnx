@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Greater(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Greater',
             inputs=['x', 'y'],
@@ -27,7 +27,7 @@ class Greater(Base):
                name='test_greater')
 
     @staticmethod
-    def export_greater_broadcast():
+    def export_greater_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Greater',
             inputs=['x', 'y'],

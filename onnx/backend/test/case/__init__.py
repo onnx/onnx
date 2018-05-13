@@ -7,8 +7,9 @@ import sys
 
 from .base import Snippets
 from .utils import import_recursive
+from typing import Dict, Text, List, Tuple
 
 
-def collect_snippets():
+def collect_snippets():  # type: () -> Dict[Text, List[Tuple[Text, Text]]]
     import_recursive(sys.modules[__name__])
     return Snippets

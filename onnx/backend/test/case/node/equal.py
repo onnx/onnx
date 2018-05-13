@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Equal(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Equal',
             inputs=['x', 'y'],
@@ -27,7 +27,7 @@ class Equal(Base):
                name='test_equal')
 
     @staticmethod
-    def export_equal_broadcast():
+    def export_equal_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Equal',
             inputs=['x', 'y'],
