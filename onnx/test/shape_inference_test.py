@@ -445,6 +445,58 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
 
+    def test_flatten(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('Flatten', ['x'], ['z'], axis=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (6, 20))])
+
+    def test_flatten_default_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('Flatten', ['x'], ['z'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 60))])
+
+    def test_flatten_zero_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 4, 5))],
+            [make_node('Flatten', ['x'], ['z'], axis=0)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (1, 120))])
+
+    def test_flatten_unknown_dim(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 'N', 4, 5))],
+            [make_node('Flatten', ['x'], ['z'], axis=2)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (None, 20))])
+
+    def test_space_to_depth(self):
+        b = 10
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 3, 100, 100))],
+            [make_node('SpaceToDepth', ['x'], ['z'], blocksize=b)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 300, 10, 10))])
+
+    def test_space_to_depth_unknown_dim(self):
+        b = 10
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 'N', 100, 100))],
+            [make_node('SpaceToDepth', ['x'], ['z'], blocksize=b)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, None, 10, 10))])
+
+    def test_depth_to_space(self):
+        b = 10
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (2, 300, 10, 10))],
+            [make_node('DepthToSpace', ['x'], ['z'], blocksize=b)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
+
     def test_gemm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
@@ -620,6 +672,98 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (4, 5))])
 
+    def test_maxpool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))])
+
+    def test_maxpool_3D(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))])
+
+    def test_maxpool_with_padding(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2], pads=[1, 1, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))])
+
+    def test_maxpool_with_padding_and_stride(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("MaxPool", ["X"], ["Y"], kernel_shape=[2, 2], pads=[1, 1, 2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))])
+
+    def test_averagepool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))])
+
+    def test_averagepool_3D(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4, 4))],
+            [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[2, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))])
+
+    def test_averagepool_with_padding(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[2, 2], pads=[1, 1, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))])
+
+    def test_averagepool_with_padding_and_stride(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("AveragePool", ["X"], ["Y"], kernel_shape=[2, 2], pads=[1, 1, 2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))])
+
+    def test_lppool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))])
+
+    def test_lppool_3D(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4, 4))],
+            [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3, 3))])
+
+    def test_lppool_with_padding(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2], pads=[1, 1, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 6, 6))])
+
+    def test_lppool_with_padding_and_stride(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("LpPool", ["X"], ["Y"], kernel_shape=[2, 2], pads=[1, 1, 2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 3, 3))])
+
+    def test_roipool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4)),
+            ("rois", TensorProto.INT64, (2, 5))],
+            [make_node("MaxRoiPool", ["X", "rois"], ["Y"], pooled_shape=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 2, 2))])
+
     def test_lp_norm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7))],
@@ -635,6 +779,27 @@ class TestShapeInference(unittest.TestCase):
             [make_node('InstanceNormalization', ['x', 'scale', 'b'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
+
+    def test_global_maxpool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("GlobalMaxPool", ["X"], ["Y"])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))])
+
+    def test_global_averagepool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("GlobalAveragePool", ["X"], ["Y"])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))])
+
+    def test_global_lppool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("GlobalLpPool", ["X"], ["Y"])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))])
 
 
 if __name__ == '__main__':
