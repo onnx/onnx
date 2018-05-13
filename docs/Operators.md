@@ -84,6 +84,7 @@
   * <a href="#Softmax">Softmax</a>
   * <a href="#Softplus">Softplus</a>
   * <a href="#Softsign">Softsign</a>
+  * <a href="#Sort">Sort</a>
   * <a href="#SpaceToDepth">SpaceToDepth</a>
   * <a href="#Split">Split</a>
   * <a href="#Sqrt">Sqrt</a>
@@ -94,6 +95,7 @@
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
+  * <a href="#Unique">Unique</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Upsample">Upsample</a>
   * <a href="#Xor">Xor</a>
@@ -7183,6 +7185,92 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Sort"></a><a name="sort">**Sort**</a>
+
+  Return a sorted copy of a tensor along the specified axis.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>Axis along which to sort. Default -1, to sort along the last axis.</dd>
+<dt><tt>descending</tt> : int</dt>
+<dd>(bool) If true, sort with descending order. Otherwise sort ascending.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor to sort</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Sorted result tensor. Same shape as X</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>All Tensor types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sort</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sort',
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.sort(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_sort')
+```
+
+</details>
+
+
+<details>
+<summary>sort_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sort',
+    inputs=['x'],
+    outputs=['y', 'inverse'],
+    axis=2,
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.sort(x, axis=2)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_sort_axis')
+```
+
+</details>
+
+
 ### <a name="SpaceToDepth"></a><a name="spacetodepth">**SpaceToDepth**</a>
 
   SpaceToDepth rearranges blocks of spatial data into depth. More specifically,
@@ -7986,6 +8074,93 @@ node = onnx.helper.make_node(
 transposed = np.transpose(data)
 expect(node, inputs=[data], outputs=[transposed],
        name='test_transpose_default')
+```
+
+</details>
+
+
+### <a name="Unique"></a><a name="unique">**Unique**</a>
+
+  Returns the unique scalar elements of the input tensor as a 1-D tensor. The
+  order of the elements in the output tensor is unspecified.
+
+#### Versioning
+
+This operator is used if you are using version 1 of the default ONNX operator set until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:
+
+~~~~
+opset_import {
+  version = 1
+}
+~~~~
+
+#### Attributes
+
+<dl>
+<dt><tt>return_inverse</tt> : int</dt>
+<dd>(bool) Whether to also return the indices for where elements in the original input ended up in the returned unique list.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Tensor to find unique elements of</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>1-D tensor containing unique elements of the input tensor.</dd>
+<dt><tt>inverse_indices</tt> : T</dt>
+<dd>(optional) if `return_inverse` is True, there will be a 2nd output tensor (same shape as input) representing the indices for where elements in the original input map to in the output; otherwise, this op will only return a single tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(string), tensor(bool), tensor(uint8), tensor(int8), tensor(uint16), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>All Tensor types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>unique</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Unique',
+    inputs=['x'],
+    outputs=['y', ''],
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y = np.unique(x)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_unique')
+```
+
+</details>
+
+
+<details>
+<summary>unique_return_inverse</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Unique',
+    inputs=['x'],
+    outputs=['y', 'inverse'],
+    return_inverse=True,
+)
+x = np.random.randn(1, 3, 4, 5).astype(np.float32)
+y, inverse = np.unique(x, return_inverse=True)
+
+expect(node, inputs=[x], outputs=[y, inverse],
+       name='test_unique_return_inverse')
 ```
 
 </details>
