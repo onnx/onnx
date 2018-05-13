@@ -240,7 +240,6 @@ ONNX_OPERATOR_SCHEMA(AveragePool)
         "Whether include pad pixels when calculating values for the edges.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
-;
 
 ONNX_OPERATOR_SCHEMA(MaxPool).FillUsing(PoolOpSchemaGenerator(
     "MaxPool",
