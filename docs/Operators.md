@@ -2399,7 +2399,7 @@ R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).asty
 
 gru = GRU_Helper(X=input, W=W, R=R)
 output = gru.step().astype(np.float32)
-
+output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
 ```
 
@@ -2435,8 +2435,43 @@ B = np.concatenate((W_B, R_B), axis=1)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
 output = gru.step().astype(np.float32)
-
+output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
+```
+
+</details>
+
+
+<details>
+<summary>seq_length</summary>
+
+```python
+input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
+                  [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
+
+input_size = 3
+hidden_size = 5
+number_of_gates = 3
+
+node = onnx.helper.make_node(
+    'GRU',
+    inputs=['X', 'W', 'R', 'B'],
+    outputs=['Y'],
+    hidden_size=hidden_size
+)
+
+W = np.random.randn(1, number_of_gates * hidden_size, input_size).astype(np.float32)
+R = np.random.randn(1, number_of_gates * hidden_size, hidden_size).astype(np.float32)
+
+# Adding custom bias
+W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
+R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
+B = np.concatenate((W_B, R_B), axis=1)
+
+rnn = GRU_Helper(X=input, W=W, R=R, B=B)
+output = rnn.step().astype(np.float32)
+output = np.expand_dims(output, 1)
+expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_seq_length')
 ```
 
 </details>

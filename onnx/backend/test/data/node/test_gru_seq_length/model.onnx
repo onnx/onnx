@@ -1,32 +1,32 @@
-backend-test:Ã
+backend-test:¼
 (
 X
 W
 R
 BY"GRU*
-hidden_size test_gru_with_initial_biasZ
+hidden_size test_gru_seq_lengthZ
 X
 
-
+
 
 Z
 W
 
 
-	
+
 Z
 R
 
 
-	
-Z
+
+Z
 B
 
 
-b
+b
 Y
 
-
+
 
 
-B
+B
