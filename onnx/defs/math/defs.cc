@@ -786,7 +786,28 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "Dimension on which to do the sort. Default -1, which indicates the last"
         " axis",
         AttributeProto::INT,
-        static_cast<int64_t>(-1));
+        static_cast<int64_t>(-1))
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+		// Type inference:
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		updateOutputElemType(ctx, 1, TensorProto::INT64);
+
+		// Shape inference:
+		if (!hasInputShape(ctx, 0))
+			return;
+		auto& input_shape = getInputShape(ctx, 0);
+		int64_t rank = input_shape.dim_size();
+		int64_t axis = getAttribute(ctx, "axis", -1);
+		if (axis < 0) axis += rank;
+		if (axis < 0 || axis >= rank) return; // erroneous attribute value
+		int64_t k = getAttribute(ctx, "k", -1);
+		if (k <= 0) return; // erroneous attribute value
+		// TODO: unclear what results should be if axis has less than k elements.
+		TensorShapeProto result_shape = input_shape;
+		result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
+		updateOutputShape(ctx, 0, result_shape);
+		updateOutputShape(ctx, 1, result_shape);
+	});
 
 ONNX_OPERATOR_SCHEMA(Sin)
     .SinceVersion(7)
@@ -803,7 +824,8 @@ Calculates the sine of the given input tensor, element-wise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Cos)
     .SinceVersion(7)
@@ -820,7 +842,8 @@ Calculates the cosine of the given input tensor, element-wise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 
 ONNX_OPERATOR_SCHEMA(Tan)
@@ -838,7 +861,8 @@ Calculates the tangent of the given input tensor, element-wise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Asin)
     .SinceVersion(7)
@@ -855,7 +879,8 @@ Calculates the arcsine (inverse of sine) of the given input tensor, element-wise
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Acos)
     .SinceVersion(7)
@@ -872,7 +897,8 @@ Calculates the arccosine (inverse of cosine) of the given input tensor, element-
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 
 ONNX_OPERATOR_SCHEMA(Atan)
@@ -890,4 +916,5 @@ Calculates the arctangent (inverse of tangent) of the given input tensor, elemen
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
