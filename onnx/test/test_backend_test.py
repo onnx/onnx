@@ -11,6 +11,9 @@ import onnx.backend.test
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
+from typing import Optional, Text, Any, Tuple, Sequence
+from onnx import NodeProto, ModelProto
+import numpy  # type: ignore
 
 # The following just executes the fake backend through the backend test
 # infrastructure. Since we don't have full reference implementation of all ops
@@ -26,7 +29,11 @@ import onnx.shape_inference
 
 class DummyBackend(onnx.backend.base.Backend):
     @classmethod
-    def prepare(cls, model, device='CPU', **kwargs):
+    def prepare(cls,
+                model,  # type: ModelProto
+                device='CPU',  # type: Text
+                **kwargs  # type: Any
+                ):  # type: (...) -> Optional[onnx.backend.base.BackendRep]
         super(DummyBackend, cls).prepare(model, device, **kwargs)
 
         # test shape inference
@@ -36,7 +43,13 @@ class DummyBackend(onnx.backend.base.Backend):
             "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def run_node(cls, node, inputs, device='CPU', outputs_info=None):
+    def run_node(cls,
+                 node,  # type: NodeProto
+                 inputs,  # type: Any
+                 device='CPU',  # type: Text
+                 outputs_info=None,  # type: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]]
+                 **kwargs  # type: Any
+                 ):  # type: (...) -> Optional[Tuple[Any, ...]]
         super(DummyBackend, cls).run_node(node, inputs, device=device, outputs_info=outputs_info)
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
@@ -49,7 +62,7 @@ class DummyBackend(onnx.backend.base.Backend):
         return False
 
 
-backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
+backend_test = onnx.backend.test.BackendTest(DummyBackend(), __name__)
 if os.getenv('APPVEYOR'):
     backend_test.exclude(r'(test_vgg19|test_zfnet)')
 
