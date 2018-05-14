@@ -116,7 +116,7 @@ class TestOptimizer(unittest.TestCase):
             assert node.op_type != "Identity"
         assert len(optimized_model.graph.node) == 2
 
-    def test_nop_transpose(self):# type: () -> None
+    def test_nop_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[0, 1])]
         nodes.extend(self._make_fake_loop_op(
             [helper.make_node("Transpose", ["_Y"], ["_Y2"], perm=[0, 1])],
