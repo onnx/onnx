@@ -1,15 +1,0 @@
-backend-test:
->
-datareduced"ReduceSumSquare*
-axes@ *
-keepdims  test_reduce_sum_square_keepdims1Z
-data
-
-
-
-b
-reduced
-
-
-
-B

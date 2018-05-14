@@ -38,7 +38,7 @@ class ReduceL2(Base):
         # [13.45362405, 16.2788206]]
 
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_reduce_l2_do_not_keepdims1')
+            name='test_reduce_l2_do_not_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
@@ -46,7 +46,7 @@ class ReduceL2(Base):
             a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
 
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_reduce_l2_do_not_keepdims2')
+            name='test_reduce_l2_do_not_keepdims_random')
 
     @staticmethod
     def export_keepdims():
@@ -69,19 +69,19 @@ class ReduceL2(Base):
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
         #print(reduced)
-        #[[2.23606777, 5.],
-        # [7.81024933, 10.63014507],
-        # [13.45362377, 16.27882004]]
-
+        #[[[2.23606798], [5.]]
+        # [[7.81024968], [10.63014581]] 
+        # [[13.45362405], [16.2788206 ]]]
+        
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_reduce_l2_keep_dims1')
+            name='test_reduce_l2_keep_dims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.sqrt(np.sum(
             a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims2')
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_random')
 
     @staticmethod
     def export_default_axes_keepdims():
@@ -106,7 +106,7 @@ class ReduceL2(Base):
         #[[[25.49509757]]]
 
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_reduce_l2_default_axes_keepdims1')
+            name='test_reduce_l2_default_axes_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
@@ -114,4 +114,4 @@ class ReduceL2(Base):
             a=np.square(data), axis=axes, keepdims=keepdims == 1))
 
         expect(node, inputs=[data], outputs=[reduced],
-            name='test_reduce_l2_default_axes_keepdims2')
+            name='test_reduce_l2_default_axes_keepdims_random')

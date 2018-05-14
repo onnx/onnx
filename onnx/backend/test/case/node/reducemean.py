@@ -28,17 +28,17 @@ class ReduceMean(Base):
         data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
-        #[[12.5  1.5]
-        # [35.   1.5]
-        # [57.5  1.5]]
+        #[[12.5, 1.5]
+        # [35., 1.5]
+        # [57.5, 1.5]]
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_do_not_keepdims1')
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_do_not_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_do_not_keepdims2')
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_do_not_keepdims_random')
 
     @staticmethod
     def export_keepdims():
@@ -56,17 +56,17 @@ class ReduceMean(Base):
         data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
         reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
         #print(reduced)
-        #[[[12.5  1.5]]
-        # [[35.   1.5]]
-        # [[57.5  1.5]]]
+        #[[[12.5, 1.5]]
+        # [[35., 1.5]]
+        # [[57.5, 1.5]]]
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims1')
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.mean(data, axis=tuple(axes), keepdims=keepdims == 1)
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims2')
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_random')
 
     @staticmethod
     def export_default_axes_keepdims():
@@ -85,10 +85,10 @@ class ReduceMean(Base):
         #print(reduced)
         #[[[18.25]]]
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_default_axes_keepdims1')
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_default_axes_keepdims_example')
 
         np.random.seed(0)
         data = np.random.uniform(-10, 10, shape).astype(np.float32)
         reduced = np.mean(data, axis=axes, keepdims=keepdims == 1)
 
-        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_default_axes_keepdims2')
+        expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_default_axes_keepdims_random')

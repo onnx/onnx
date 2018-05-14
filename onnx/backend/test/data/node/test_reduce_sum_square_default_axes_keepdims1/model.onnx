@@ -1,14 +1,0 @@
-backend-test:
-1
-datareduced"ReduceSumSquare*
-keepdims -test_reduce_sum_square_default_axes_keepdims1Z
-data
-
-
-
-b
-reduced
-
-
-
-B
