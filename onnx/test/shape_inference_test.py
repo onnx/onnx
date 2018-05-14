@@ -497,6 +497,24 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
 
+    def test_topk_default_axis(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node('TopK', ['x'], ['y', 'z'], k=2)],
+            [])
+        self._assert_inferred(graph,
+                              [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 5, 2)),
+                               make_tensor_value_info('z', TensorProto.INT64, (3, 4, 5, 2))])
+
+    def test_topk(self):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (3, 4, 5, 10))],
+            [make_node('TopK', ['x'], ['y', 'z'], k=2, axis=2)],
+            [])
+        self._assert_inferred(graph,
+                              [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 2, 10)),
+                               make_tensor_value_info('z', TensorProto.INT64, (3, 4, 2, 10))])
+
     def test_gemm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
@@ -779,6 +797,27 @@ class TestShapeInference(unittest.TestCase):
             [make_node('InstanceNormalization', ['x', 'scale', 'b'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
+
+    def test_global_maxpool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("GlobalMaxPool", ["X"], ["Y"])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))])
+
+    def test_global_averagepool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("GlobalAveragePool", ["X"], ["Y"])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))])
+
+    def test_global_lppool(self):
+        graph = self._make_graph(
+            [("X", TensorProto.FLOAT, (5, 3, 4, 4))],
+            [make_node("GlobalLpPool", ["X"], ["Y"])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))])
 
 
 if __name__ == '__main__':
