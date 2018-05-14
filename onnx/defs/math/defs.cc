@@ -655,7 +655,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
         auto shape1 = ctx.getInputType(1)->tensor_type().shape();
 
         if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-		  return Status(OPTIMIZER, INVALID_PROTOBUF, "dim_size of input 'A' and 'B' should be greater than 0.");
+		  return Status(INFERENCE, INVALID_PROTOBUF, "dim_size of input 'A' and 'B' should be greater than 0.");
         }
 
         TensorShapeProto paddedShapeL;
@@ -689,7 +689,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
         auto dimSize = paddedShapeL.dim_size();
 
         if (paddedShapeR.dim_size() != dimSize) {
-			return Status(OPTIMIZER, INVALID_PROTOBUF, "paddedShapeR.dim_size() != dimSize");
+			return Status(INFERENCE, INVALID_PROTOBUF, "paddedShapeR.dim_size() != dimSize");
         }
 
         {
@@ -698,7 +698,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
           auto dimR = paddedShapeR.dim(dimSize - 2);
           if (dimL.has_dim_value() && dimR.has_dim_value() &&
               dimL.dim_value() != dimR.dim_value()) {
-			  return Status(OPTIMIZER, INVALID_PROTOBUF, "Incompatible matrix dimensions.");
+			  return Status(INFERENCE, INVALID_PROTOBUF, "Incompatible matrix dimensions.");
           }
         }
 
@@ -716,7 +716,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
             } else if (dimR == 1) {
               newdim->set_dim_value(dimL);
             } else {
-			  return Status(OPTIMIZER, INVALID_PROTOBUF, "Incompatible matrix dimensions.");
+			  return Status(INFERENCE, INVALID_PROTOBUF, "Incompatible matrix dimensions.");
             }
           } else if (paddedShapeL.dim(i).has_dim_value()) {
             auto dimL = paddedShapeL.dim(i).dim_value();

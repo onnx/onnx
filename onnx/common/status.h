@@ -19,6 +19,7 @@ enum StatusCategory {
   NONE = 0,
   CHECKER = 1,
   OPTIMIZER = 2,
+  INFERENCE = 3,
 };
 
 enum StatusCode {

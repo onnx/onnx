@@ -180,13 +180,13 @@ ONNX_OPERATOR_SCHEMA(Concat)
 		  return Status::OK();
 	  }
       if (ctx.getNumInputs() < 1) {
-        return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Number of inputs: ", ctx.getNumInputs(), " should be greater than 1."));
+        return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Number of inputs: ", ctx.getNumInputs(), " should be greater than 1."));
       }
 
       auto axisAttr = ctx.getAttribute("axis");
       int axis = static_cast<int>(axisAttr->i());
       if (axis < 0) {
-		  Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Attribute axis: ", axis, " should not be negative."));
+		  Status(INFERENCE, INVALID_PROTOBUF, MakeString("Attribute axis: ", axis, " should not be negative."));
       }
 
       bool all_lengths_known = true;
@@ -214,7 +214,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
             if (output_shape->dim(j).has_dim_value()) {
               if (shape.dim(j).dim_value() !=
                   output_shape->dim(j).dim_value()) {
-                return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("The inputs to be concated do not have same dim value along axis: ", j));
+                return Status(INFERENCE, INVALID_PROTOBUF, MakeString("The inputs to be concated do not have same dim value along axis: ", j));
               }
             } else {
               *output_shape->mutable_dim(j) = shape.dim(j);
@@ -264,7 +264,7 @@ Otherwise, the tensor is split to equal sized parts.
       auto axisAttr = ctx.getAttribute("axis");
       int axis = axisAttr ? static_cast<int>(axisAttr->i()) : 0;
       if (axis < 0) {
-		  Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Attribute axis: ", axis, " should not be negative."));
+		  Status(INFERENCE, INVALID_PROTOBUF, MakeString("Attribute axis: ", axis, " should not be negative."));
       }
       std::vector<int64_t> split;
       if (!getRepeatedAttribute(ctx, "split", split)) {
@@ -362,7 +362,7 @@ Example 2:
       if (!getRepeatedAttribute(ctx, "starts", starts) ||
           !getRepeatedAttribute(ctx, "ends", ends) ||
           starts.size() != ends.size()) {
-        return Status(OPTIMIZER, INVALID_PROTOBUF, "Attribute 'starts' and 'ends' have to be specified with same size.");
+        return Status(INFERENCE, INVALID_PROTOBUF, "Attribute 'starts' and 'ends' have to be specified with same size.");
       }
       std::vector<int64_t> axes;
       if (!getRepeatedAttribute(ctx, "axes", axes)) {
@@ -370,7 +370,7 @@ Example 2:
           axes.push_back(i);
         }
       } else if (axes.size() != starts.size()) {
-        return Status(OPTIMIZER, INVALID_PROTOBUF, "Attribute 'axes' specified should have same size as 'starts'");
+        return Status(INFERENCE, INVALID_PROTOBUF, "Attribute 'axes' specified should have same size as 'starts'");
       } else if (!std::is_sorted(axes.begin(), axes.end())) {
         // TODO support shape inference for unsorted axes
 		return Status::OK();
@@ -701,7 +701,7 @@ Example:
       if (pads.size() !=
               static_cast<size_t>(
                   ctx.getInputType(0)->tensor_type().shape().dim_size() * 2)) {
-        return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Size of attribute 'pads' is not equal to ", ctx.getInputType(0)->tensor_type().shape().dim_size() * 2));
+        return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Size of attribute 'pads' is not equal to ", ctx.getInputType(0)->tensor_type().shape().dim_size() * 2));
       }
 
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
@@ -767,7 +767,7 @@ are moved to the depth dimension.
 		ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
 		auto blocksize = getAttribute(ctx, "blocksize", 0);
 		if (blocksize <= 0) {
-		  return Status(OPTIMIZER, INVALID_PROTOBUF, "Attribute 'blocksize' should not be negative.");
+		  return Status(INFERENCE, INVALID_PROTOBUF, "Attribute 'blocksize' should not be negative.");
 		}
 		if (hasInputShape(ctx, 0)) {
 			auto& input_shape = getInputShape(ctx, 0);
@@ -780,7 +780,7 @@ are moved to the depth dimension.
 					input_shape.dim(3) / blocksize
 				});
 			}
-			return Status(OPTIMIZER, INVALID_PROTOBUF, "Input 'input' is not 4-D tensor.");
+			return Status(INFERENCE, INVALID_PROTOBUF, "Input 'input' is not 4-D tensor.");
 		}
 		return Status::OK();
     });
@@ -815,7 +815,7 @@ and width dimensions.
 		ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
 		auto blocksize = getAttribute(ctx, "blocksize", 0);
 		if (blocksize <= 0) {
-			return Status(OPTIMIZER, INVALID_PROTOBUF, "Attribute 'blocksize' should not be negative.");
+			return Status(INFERENCE, INVALID_PROTOBUF, "Attribute 'blocksize' should not be negative.");
 		}
 		if (hasInputShape(ctx, 0)) {
 			auto& input_shape = getInputShape(ctx, 0);
@@ -828,7 +828,7 @@ and width dimensions.
 					input_shape.dim(3) * blocksize
 				});
 			}
-			return Status(OPTIMIZER, INVALID_PROTOBUF, "Input 'input' is not 4-D tensor.");
+			return Status(INFERENCE, INVALID_PROTOBUF, "Input 'input' is not 4-D tensor.");
 		}
 		return Status::OK();
 	});

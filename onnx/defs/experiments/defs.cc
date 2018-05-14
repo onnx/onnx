@@ -161,7 +161,7 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
         for (auto extra_dim_val : extra_shape) {
 			if (extra_dim_val < 0) {
-				return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("extra_shape specified: ", extra_dim_val, " should not be negtive."));
+				return Status(INFERENCE, INVALID_PROTOBUF, MakeString("extra_shape specified: ", extra_dim_val, " should not be negtive."));
 			}
             shape.add_dim()->set_dim_value(extra_dim_val);
         }
@@ -201,7 +201,7 @@ ONNX_OPERATOR_SCHEMA(GivenTensorFill)
 		TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
 		for (auto extra_dim_val : extra_shape) {
 			if (extra_dim_val < 0) {
-				return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("extra_shape specified: ", extra_dim_val, " should not be negtive."));
+				return Status(INFERENCE, INVALID_PROTOBUF, MakeString("extra_shape specified: ", extra_dim_val, " should not be negtive."));
 			}
 			shape.add_dim()->set_dim_value(extra_dim_val);
 		}

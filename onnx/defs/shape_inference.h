@@ -90,13 +90,13 @@ inline Status propagateElemTypeFromInputToOutput(
   if (nullptr == input_type
 	  || input_type->value_case() != TypeProto::kTensorType
 	  || input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Type propagation failed, input type should be tensor-type."));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Type propagation failed, input type should be tensor-type."));
   }
 
   auto output_type = ctx.getOutputType(outputIndex);
   if (output_type->value_case() != TypeProto::kTensorType &&
       output_type->value_case() != TypeProto::VALUE_NOT_SET) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Type propagation failed, output type should be tensor-type."));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Type propagation failed, output type should be tensor-type."));
   }
 
   output_type->mutable_tensor_type()->set_elem_type(
@@ -133,7 +133,7 @@ inline Status appendSingleDimCopiedFromInputTypeToOutputType(
   auto input_type = ctx.getInputType(inputIndex);
   if (TypeProto::kTensorType != output_type->value_case() ||
       TypeProto::kTensorType != input_type->value_case()) {
-    return Status(OPTIMIZER, INVALID_PROTOBUF, "input and output should be tensor-type.");
+    return Status(INFERENCE, INVALID_PROTOBUF, "input and output should be tensor-type.");
   }
   auto* dim = ctx.getOutputType(outputIndex)
                   ->mutable_tensor_type()
@@ -151,7 +151,7 @@ inline Status propagateShapeFromInputToOutput(
   auto input_type = ctx.getInputType(inputIndex);
   if (TypeProto::kTensorType != input_type->value_case() ||
       TypeProto::kTensorType != output_type->value_case()) {
-	return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Shape inference failed. Both input and output should be tensor-type."));
+	return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Shape inference failed. Both input and output should be tensor-type."));
   }
 
   *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
@@ -178,7 +178,7 @@ inline Status updateOutputElemType(
     output_type->mutable_tensor_type()->set_elem_type(elemType);
 	return Status::OK();
   }
-  return Status(OPTIMIZER, INVALID_PROTOBUF, "Update output elem type failed. output_type should be a tensor-type.");
+  return Status(INFERENCE, INVALID_PROTOBUF, "Update output elem type failed. output_type should be a tensor-type.");
 }
 
 // Infer type of an output from the value of a specified attribute, which is expected
@@ -193,16 +193,16 @@ inline Status propagateElemTypeFromAttributeToOutput(
     if (default_value != TensorProto::UNDEFINED) {
       return updateOutputElemType(ctx, outputIndex, default_value);
 	}
-    return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Attribute: ", attributeName, " does not exist."));
+    return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Attribute: ", attributeName, " does not exist."));
   }
   if (!attr_proto->has_i()) {
 	  // attribute not of right type
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Attribute: ", attributeName, " should be integer type."));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Attribute: ", attributeName, " should be integer type."));
   }
   auto attr_value = attr_proto->i();
   auto elem_type = static_cast<TensorProto_DataType>(attr_value);
   if (!TensorProto_DataType_IsValid(elem_type)) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Attribute: ", attributeName, " is not specifying a valid tensor element type."));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Attribute: ", attributeName, " is not specifying a valid tensor element type."));
   }
   return updateOutputElemType(ctx, outputIndex, elem_type);
 }
@@ -225,7 +225,7 @@ inline Status updateOutputShape(
     const TensorShapeProto& shape) {
   auto* output_shape = getOutputShape(ctx, outputIndex);
   if (output_shape == nullptr) {
-	return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Output: ", outputIndex, " should be tensor-type or no-set."));
+	return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Output: ", outputIndex, " should be tensor-type or no-set."));
   }
   *output_shape = shape;
   return Status::OK();  
@@ -237,7 +237,7 @@ inline Status updateOutputShape(
     const TensorProto& tensorProto) {
   auto* output_shape = getOutputShape(ctx, outputIndex);
   if (output_shape == nullptr) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Output: ", outputIndex, " should be tensor-type or no-set."));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Output: ", outputIndex, " should be tensor-type or no-set."));
   }
   for (auto d : tensorProto.dims()) {
     auto* dim = output_shape->add_dim();
@@ -252,7 +252,7 @@ inline Status updateOutputShape(
 	std::initializer_list<TensorShapeProto::Dimension> dims) {
   auto* output_shape = getOutputShape(ctx, outputIndex);
   if (output_shape == nullptr) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Output: ", outputIndex, " should be tensor-type or no-set."));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Output: ", outputIndex, " should be tensor-type or no-set."));
   }
   for (auto& d : dims) {
     auto* dim = output_shape->add_dim();
@@ -272,7 +272,7 @@ inline Status propagateShapeFromAttributeToOutput(
   TensorShapeProto shape;
   for (auto dim_size : int_list) {
 	if (dim_size < 0) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("dim_size specified by attribute: ", attributeName, " is negative (", dim_size, ")."));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("dim_size specified by attribute: ", attributeName, " is negative (", dim_size, ")."));
 	}
     shape.add_dim()->set_dim_value(dim_size);
   }

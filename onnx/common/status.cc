@@ -40,6 +40,8 @@ std::string Status::ToString() const {
     result += "[CheckerError]";
   } else if (StatusCategory::OPTIMIZER == state_->category) {
     result += "[OptimizerError]";
+  } else if (StatusCategory::INFERENCE == state_->category) {
+	result += "[InferenceError]";
   }
 
   result += " : ";

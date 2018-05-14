@@ -142,7 +142,7 @@ The type of the output tensor is integer.)DOC";
             TensorProto_DataType_INT64);
       }
 	  else {
-		  return Status(OPTIMIZER, INVALID_PROTOBUF, "The output 'reduced' should be tensor-type.");
+		  return Status(INFERENCE, INVALID_PROTOBUF, "The output 'reduced' should be tensor-type.");
 	  }
 	  if (!hasNInputShapes(ctx, 1)) {
 		return Status::OK();

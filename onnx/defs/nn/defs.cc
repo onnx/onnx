@@ -48,7 +48,7 @@ Status convPoolTypeAndShapeInference(
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
 	// The input shape is not properly set.
-    return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("The input shape with dim_size: ", input_shape.dim_size(), " is not properly set."));
+    return Status(INFERENCE, INVALID_PROTOBUF, MakeString("The input shape with dim_size: ", input_shape.dim_size(), " is not properly set."));
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -60,7 +60,7 @@ Status convPoolTypeAndShapeInference(
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Size of dilations should be equal to ", n_input_dims));
+      return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Size of dilations should be equal to ", n_input_dims));
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -75,7 +75,7 @@ Status convPoolTypeAndShapeInference(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Size of pads should be equal to ", 2 * n_input_dims));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Size of pads should be equal to ", 2 * n_input_dims));
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -84,7 +84,7 @@ Status convPoolTypeAndShapeInference(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Size of strides should be equal to ", n_input_dims));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Size of strides should be equal to ", n_input_dims));
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -93,10 +93,10 @@ Status convPoolTypeAndShapeInference(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("Size of kernel_shape should be equal to ", n_input_dims));
+	  return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Size of kernel_shape should be equal to ", n_input_dims));
     }
   } else if (require_kernel_shape) {
-	  return Status(OPTIMIZER, INVALID_PROTOBUF, "no kernel_shape specified while require_kernel_shape is true.");
+	  return Status(INFERENCE, INVALID_PROTOBUF, "no kernel_shape specified while require_kernel_shape is true.");
   } else {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
@@ -334,7 +334,7 @@ Status roiPoolTypeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> pooled_shape;
   getRepeatedAttribute(ctx, "pooled_shape", pooled_shape);
   if (pooled_shape.size() != n_input_dims) {
-    return Status(OPTIMIZER, INVALID_PROTOBUF, MakeString("The pooled_shape size (", pooled_shape.size(), ") is not equal to ", n_input_dims));
+    return Status(INFERENCE, INVALID_PROTOBUF, MakeString("The pooled_shape size (", pooled_shape.size(), ") is not equal to ", n_input_dims));
   }
 
   // (num_rois, channels, pooled_shape[0], pooled_shape[1])
@@ -592,7 +592,7 @@ Status gloablPoolTypeShapeInference(InferenceContext& ctx) {
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    return Status(OPTIMIZER, INVALID_PROTOBUF, "The number of dimension of first input is less than 2.");
+    return Status(INFERENCE, INVALID_PROTOBUF, "The number of dimension of first input is less than 2.");
   }
 
   // first dim is the batch axis and the next is the number of channels.
