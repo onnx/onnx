@@ -860,7 +860,7 @@ For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4,
         {"tensor(int64)"},
         "Constrain repeat's type to int64 tensors.")
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+	    return propagateElemTypeFromInputToOutput(ctx, 0, 0);
 		// Only rank of output can be inferred. We can do better if second input is
 		// a constant, but this requires extending InferenceContext interface to
 		// get values of constant inputs.
