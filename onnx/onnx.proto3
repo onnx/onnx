@@ -450,18 +450,18 @@ message TypeProto {
   // An optional denotation can be used to denote the whole 
   // type with a standard semantic description as to what is 
   // stored inside
-  string denotation = 6;    
+  string denotation = 6;
 }
 
 // A set of pre-defined constants to be used as values for
 // the standard denotation field in Tensor for semantic 
 // description of the tensor.
 message TypeDenotationConstProto {
-  // An image is stored inside this tensor
+  // An image is stored inside this type
   string IMAGE = 1 [default = "IMAGE"];
-  // Audio is stored inside this tensor
+  // Audio is stored inside this type
   string AUDIO = 2 [default = "AUDIO"];
-  // Text is stored inside this tensor
+  // Text is stored inside this type
   string TEXT = 3 [default = "TEXT"];
 }
 

@@ -440,6 +440,7 @@ message TypeProto {
     optional TensorShapeProto shape = 2;
   }
 
+
   oneof value {
     // The type of a tensor.
     Tensor tensor_type = 1;
@@ -449,7 +450,7 @@ message TypeProto {
   // An optional denotation can be used to denote the whole 
   // type with a standard semantic description as to what is 
   // stored inside
-  optional string denotation = 6;  
+  optional string denotation = 6;
 }
 
 // A set of pre-defined constants to be used as values for
