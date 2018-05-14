@@ -18,11 +18,9 @@ ONNX_OPERATOR_SCHEMA(Constant)
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         auto attr_proto = ctx.getAttribute("value");
-        if (nullptr == attr_proto) return; // attribute not present
-        if (!attr_proto->has_t()) return; // attribute has no tensor value
         const TensorProto& tensor_proto = attr_proto->t();
-        updateOutputElemType(ctx, 0, tensor_proto.data_type());
-        updateOutputShape(ctx, 0, tensor_proto);
+        ONNX_RETURN_IF_ERROR(updateOutputElemType(ctx, 0, tensor_proto.data_type()));
+        return updateOutputShape(ctx, 0, tensor_proto);
     });
 
 ONNX_OPERATOR_SCHEMA(RandomUniform)
@@ -65,8 +63,11 @@ TensorProto message.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-        propagateShapeFromAttributeToOutput(ctx, "shape", 0);
+        ONNX_RETURN_IF_ERROR(propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0));
+		if (ctx.getAttribute("shape") != nullptr) {
+			ONNX_RETURN_IF_ERROR(propagateShapeFromAttributeToOutput(ctx, "shape", 0));
+		}
+		return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(RandomNormal)
@@ -110,8 +111,11 @@ TensorProto message.
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-        propagateShapeFromAttributeToOutput(ctx, "shape", 0);
+        ONNX_RETURN_IF_ERROR(propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0));
+		if (ctx.getAttribute("shape") != nullptr) {
+			ONNX_RETURN_IF_ERROR(propagateShapeFromAttributeToOutput(ctx, "shape", 0));
+		}
+		return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(RandomUniformLike)
@@ -160,14 +164,17 @@ TensorProto message and be valid as an output type.
     .TypeConstraint("T2", { "tensor(float16)", "tensor(float)", "tensor(double)" },
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        if (ctx.getAttribute("dtype") != nullptr) 
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-        else
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        if (!hasNInputShapes(ctx, 1)) {
-          return;
-        }
-        propagateShapeFromInputToOutput(ctx, 0, 0);
+        if (ctx.getAttribute("dtype") != nullptr) {
+          ONNX_RETURN_IF_ERROR(propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0));
+		}
+        else {
+			ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
+		}
+
+		if (hasNInputShapes(ctx, 1)) {
+			return propagateShapeFromInputToOutput(ctx, 0, 0);
+		}
+		return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(RandomNormalLike)
@@ -217,11 +224,11 @@ TensorProto message, and be valid as an output type.
         "Constrain output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         if (ctx.getAttribute("dtype") != nullptr) 
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+		  ONNX_RETURN_IF_ERROR(propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0));
         else
-          propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        if (!hasNInputShapes(ctx, 1)) {
-          return;
-        }
-        propagateShapeFromInputToOutput(ctx, 0, 0);
+		  ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
+		if (hasNInputShapes(ctx, 1)) {
+          return propagateShapeFromInputToOutput(ctx, 0, 0);
+		}
+		return Status::OK();
     });

@@ -7,11 +7,12 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-inline void logicalOpInference(InferenceContext& ctx) {
-	updateOutputElemType(ctx, 0, TensorProto::BOOL);
+inline Status logicalOpInference(InferenceContext& ctx) {
+	ONNX_RETURN_IF_ERROR(updateOutputElemType(ctx, 0, TensorProto::BOOL));
 	if (hasInputShape(ctx, 0)) {
-		propagateShapeFromInputToOutput(ctx, 0, 0);
+		return propagateShapeFromInputToOutput(ctx, 0, 0);
 	}
+	return Status::OK();
 }
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {

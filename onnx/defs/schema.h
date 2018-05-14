@@ -467,7 +467,7 @@ class OpSchema final {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  InferenceFunction tensor_inference_function_ = [](InferenceContext&) {};
+  InferenceFunction tensor_inference_function_ = [](InferenceContext&) {return Status::OK(); };
 };
 
 // Map type to store operator schemas. The format is,

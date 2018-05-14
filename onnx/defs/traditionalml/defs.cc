@@ -80,7 +80,7 @@ ONNX_OPERATOR_SCHEMA(CastMap)
       auto output_type = ctx.getOutputType(0)->mutable_tensor_type();
       if (nullptr == cast_to_attr) {
         output_type->set_elem_type(TensorProto::FLOAT);
-        return;
+        return Status::OK();
       }
       auto& cast_to = cast_to_attr->s();
       if (0 == cast_to.compare("TO_FLOAT")) {
@@ -90,6 +90,7 @@ ONNX_OPERATOR_SCHEMA(CastMap)
       } else if (0 == cast_to.compare("TO_STRING")) {
         output_type->set_elem_type(TensorProto::STRING);
       }
+	  return Status::OK();
     });
 
 
@@ -147,6 +148,7 @@ ONNX_OPERATOR_SCHEMA(CategoryMapper)
       } else if (TensorProto::INT64 == input_elem_type) {
         output_elem_type->set_elem_type(TensorProto::STRING);
       }
+	  return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(DictVectorizer)
@@ -195,6 +197,7 @@ ONNX_OPERATOR_SCHEMA(DictVectorizer)
                                  .elem_type();
       auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
       output_elem_type->set_elem_type(input_elem_type);
+	  return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(Imputer)
@@ -273,6 +276,7 @@ ONNX_OPERATOR_SCHEMA(LabelEncoder)
       } else if (TensorProto::INT64 == input_elem_type) {
         output_elem_type->set_elem_type(TensorProto::STRING);
       }
+	  return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(LinearClassifier)
@@ -332,6 +336,7 @@ ONNX_OPERATOR_SCHEMA(LinearClassifier)
       } else {
         output_elem_type->set_elem_type(TensorProto::INT64);
       }
+	  return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(LinearRegressor)
@@ -529,6 +534,7 @@ ONNX_OPERATOR_SCHEMA(SVMClassifier)
       } else {
         output_elem_type->set_elem_type(TensorProto::INT64);
       }
+	  return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(SVMRegressor)
@@ -705,6 +711,7 @@ ONNX_OPERATOR_SCHEMA(TreeEnsembleClassifier)
       } else {
         output_elem_type->set_elem_type(TensorProto::INT64);
       }
+	  return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(TreeEnsembleRegressor)
@@ -855,6 +862,7 @@ ONNX_OPERATOR_SCHEMA(ZipMap)
       if (result && !classlabels_int64s.empty()) {
         output_map_type->set_key_type(TensorProto::INT64);
       }
+	  return Status::OK();
     });
 
 ONNX_OPERATOR_SCHEMA(FeatureVectorizer)
