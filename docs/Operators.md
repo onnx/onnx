@@ -6151,7 +6151,7 @@ reduced = np.sqrt(np.sum(
     a=np.square(data), axis=tuple(axes), keepdims=keepdims == 1))
 #print(reduced)
 #[[[2.23606798], [5.]]
-# [[7.81024968], [10.63014581]] 
+# [[7.81024968], [10.63014581]]
 # [[13.45362405], [16.2788206 ]]]
 
 expect(node, inputs=[data], outputs=[reduced],
