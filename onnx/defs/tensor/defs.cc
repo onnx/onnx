@@ -170,8 +170,8 @@ ONNX_OPERATOR_SCHEMA(Concat)
     .Output(0, "concat_result", "Concatenated tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain output types to any tensor type.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (ctx.getNumInputs() < 1 || !hasNInputShapes(ctx, static_cast<int>(ctx.getNumInputs()))) {
@@ -507,8 +507,8 @@ Example 2:
     .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain input and output types to any tensor type.")
     .TypeConstraint(
         "Tind",
         {"tensor(int32)", "tensor(int64)"},
@@ -545,8 +545,8 @@ Takes a  parameter `axes` with a list of axes to squeeze.
     .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain input and output types to any tensor type.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -594,8 +594,8 @@ Dimension indices in `axes` are as seen in the output tensor. For example:
     .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain input and output types to any tensor type.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
