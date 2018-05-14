@@ -101,7 +101,7 @@ endif()
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 # from https://github.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tensorflow/contrib/cmake/tf_core_framework.cmake
 # to solve the problem that customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
-function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
+function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
   if(NOT ARGN)
     message(SEND_ERROR "Error: RELATIVE_PROTOBUF_GENERATE_CPP() called without any proto files")
     return()
@@ -182,9 +182,11 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
              "${OUTPUT_PB_HEADER}"
       COMMAND ${ONNX_PROTOC_EXECUTABLE}
       ARGS ${PROTOC_ARGS}
-      DEPENDS ${GENERATED_PROTO}
+      DEPENDS ${GENERATED_PROTO} ${DEPEND}
       COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
       VERBATIM )
+  add_custom_target(${NAME}
+      DEPENDS ${OUTPUT_PB_SRC} ${OUTPUT_PB_HEADER})
   endforeach()
 
   set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
@@ -192,10 +194,14 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
   set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
 
-RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_proto PROTO_SRCS PROTO_HDRS ${ONNX_ROOT} ""
     onnx/onnx.in.proto
+)
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 ${ONNX_ROOT} gen_onnx_proto 
     onnx/onnx-operators.in.proto
 )
+list(APPEND PROTO_SRCS ${PROTO_SRCS2})
+list(APPEND PROTO_HDRS ${PROTO_HDRS2})
 
 file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
