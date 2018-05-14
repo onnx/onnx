@@ -149,7 +149,7 @@ class TestHelperAttributeFunctions(unittest.TestCase):
         SET_ATTR = [
             (lambda attr: _set(attr, AttributeProto.FLOAT, "f", 1.0)),
             (lambda attr: _set(attr, AttributeProto.INT, "i", 1)),
-            (lambda attr: _set(attr, AttributeProto.STRING, "b", b"str")),
+            (lambda attr: _set(attr, AttributeProto.STRING, "s", b"str")),
             (lambda attr: _extend(attr, AttributeProto.FLOATS, attr.floats, [1.0, 2.0])),
             (lambda attr: _extend(attr, AttributeProto.INTS, attr.ints, [1, 2])),
             (lambda attr: _extend(attr, AttributeProto.STRINGS, attr.strings, [b"a", b"b"])),
