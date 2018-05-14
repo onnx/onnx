@@ -786,16 +786,16 @@ Given two equivalent values, this operator uses the indices along the axis  as
         AttributeProto::INT,
         static_cast<int64_t>(-1))
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-	    // Type inference:
-	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		// Type inference:
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
 		updateOutputElemType(ctx, 1, TensorProto::INT64);
 
 		// Shape inference:
-		if (!hasInputShape(ctx,0))
+		if (!hasInputShape(ctx, 0))
 			return;
-		auto& input_shape = getInputShape(ctx,0);
+		auto& input_shape = getInputShape(ctx, 0);
 		int64_t rank = input_shape.dim_size();
-	    int64_t axis = getAttribute(ctx, "axis", -1);
+		int64_t axis = getAttribute(ctx, "axis", -1);
 		if (axis < 0) axis += rank;
 		if (axis < 0 || axis >= rank) return; // erroneous attribute value
 		int64_t k = getAttribute(ctx, "k", -1);
@@ -805,7 +805,7 @@ Given two equivalent values, this operator uses the indices along the axis  as
 		result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
 		updateOutputShape(ctx, 0, result_shape);
 		updateOutputShape(ctx, 1, result_shape);
-    });
+});
 
 ONNX_OPERATOR_SCHEMA(Sin)
     .SinceVersion(7)
