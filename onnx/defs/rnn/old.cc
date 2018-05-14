@@ -171,13 +171,6 @@ Equations (Default: f=Sigmoid, g=Tanh):
         "for default if not specified.",
         AttributeProto::STRINGS,
         OPTIONAL)
-    .Attr(
-        "linear_before_reset",
-        "When computing the output of the hidden gate, "
-        "apply the linear transformation before multiplying by the output of the "
-        "reset gate.",
-        AttributeProto::INT,
-        OPTIONAL)
     .Input(
         1,
         "W",

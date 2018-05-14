@@ -13,7 +13,7 @@ from . import expect
 class Min(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         data_0 = np.array([3, 2, 1]).astype(np.float32)
         data_1 = np.array([1, 4, 4]).astype(np.float32)
         data_2 = np.array([2, 5, 0]).astype(np.float32)
