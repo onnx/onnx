@@ -7720,6 +7720,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
+  If an axis is selected with shape entry not equal to one, an error is raised.
 
 #### Version
 
