@@ -1,4 +1,5 @@
 # Metadata
+# Metadata
 
 In addition to the core metadata recommendations listed in the [extensibility documentation](IR.md#metadata) there is additional experimental metadata to help provide information for model inputs and outputs.  
 
@@ -16,7 +17,7 @@ or retrive an output and know what its format is.
 
 ## Image Category Definition
 
-For every tensor in this model that uses [Tensor Denotation](TensorDenotation.md) to declare itself an `IMAGE`, you can provide more information to the model consumer.  Note that any metadata provided using this mechanism is global to ALL tensors
+For every tensor in this model that uses [Type Denotation](TypeDenotation.md) to declare itself an `IMAGE`, you SHOULD provide metadata to assist the model consumer.  Note that any metadata provided using this mechanism is global to ALL types
 with the accompanying denotation.
 
 Keys and values are case insenstive.
