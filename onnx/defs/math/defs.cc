@@ -805,7 +805,7 @@ Given two equivalent values, this operator uses the indices along the axis  as
 		result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
 		updateOutputShape(ctx, 0, result_shape);
 		updateOutputShape(ctx, 1, result_shape);
-});
+	});
 
 ONNX_OPERATOR_SCHEMA(Sin)
     .SinceVersion(7)
