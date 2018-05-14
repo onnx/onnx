@@ -5,10 +5,13 @@
 
 * ai.onnx (default)
   * <a href="#Abs">Abs</a>
+  * <a href="#Acos">Acos</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
   * <a href="#ArgMin">ArgMin</a>
+  * <a href="#Asin">Asin</a>
+  * <a href="#Atan">Atan</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
   * <a href="#Cast">Cast</a>
@@ -18,6 +21,7 @@
   * <a href="#Constant">Constant</a>
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
+  * <a href="#Cos">Cos</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
@@ -80,6 +84,7 @@
   * <a href="#Selu">Selu</a>
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
+  * <a href="#Sin">Sin</a>
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
@@ -91,6 +96,7 @@
   * <a href="#Squeeze">Squeeze</a>
   * <a href="#Sub">Sub</a>
   * <a href="#Sum">Sum</a>
+  * <a href="#Tan">Tan</a>
   * <a href="#Tanh">Tanh</a>
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
@@ -167,6 +173,62 @@ y = np.abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
+```
+
+</details>
+
+
+### <a name="Acos"></a><a name="acos">**Acos**</a>
+
+  Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arccosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>acos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acos',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arccos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acos_example')
+
+x = np.random.rand(3, 4, 5).astype(np.float32)
+y = np.arccos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acos')
 ```
 
 </details>
@@ -544,6 +606,118 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+### <a name="Asin"></a><a name="asin">**Asin**</a>
+
+  Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arcsine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>asin</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asin',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arcsin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asin_example')
+
+x = np.random.rand(3, 4, 5).astype(np.float32)
+y = np.arcsin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asin')
+```
+
+</details>
+
+
+### <a name="Atan"></a><a name="atan">**Atan**</a>
+
+  Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arctangent of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>atan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atan',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arctan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atan_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arctan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atan')
+```
+
+</details>
+
+
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across the
@@ -566,18 +740,22 @@ This version of the operator has been available since version 1 of the default O
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
-   The output of each pooling window is divided by the number of elements exclude pad.
+   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
    
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>count_include_pad</tt> : int</dt>
+<dd>Whether include pad pixels when calculating values for the edges.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -1593,6 +1771,62 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+### <a name="Cos"></a><a name="cos">**Cos**</a>
+
+  Calculates the cosine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The cosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cos',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cos_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cos')
+```
+
+</details>
 
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
@@ -6720,6 +6954,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Sin"></a><a name="sin">**Sin**</a>
+
+  Calculates the sine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The sine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sin</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sin',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sin_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sin')
+```
+
+</details>
+
+
 ### <a name="Size"></a><a name="size">**Size**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
@@ -7699,6 +7989,62 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_sum_two_inputs')
+```
+
+</details>
+
+
+### <a name="Tan"></a><a name="tan">**Tan**</a>
+
+  Calculates the tangent of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The tangent of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tan',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.tan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_tan_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.tan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_tan')
 ```
 
 </details>
