@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 
 from onnx import defs
 
-def main():
+
+def main():  # type: () -> None
     # domain -> support level -> name -> [schema]
     with_inference = []
     without_inference = []
@@ -19,6 +20,7 @@ def main():
     print(len(without_inference), 'do not. These are:')
     for domain, name in sorted(without_inference):
         print(domain, name)
+
 
 if __name__ == '__main__':
     main()
