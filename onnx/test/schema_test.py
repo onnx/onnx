@@ -5,10 +5,10 @@ from onnx import defs, AttributeProto
 
 class TestSchema(unittest.TestCase):
 
-    def test_get_schema(self):
+    def test_get_schema(self):  # type: () -> None
         defs.get_schema("Relu")
 
-    def test_typecheck(self):
+    def test_typecheck(self):  # type: () -> None
         defs.get_schema("Conv")
 
     def test_attr_default_value(self):
