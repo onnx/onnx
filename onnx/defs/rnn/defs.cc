@@ -27,15 +27,21 @@ void RNNShapeInference(InferenceContext& ctx) {
         batch_size = first_input_shape.dim(1);
     }
 
-    propagateElemTypeFromInputToOutput(ctx, 0, 0);
-    updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
-    
-    propagateElemTypeFromInputToOutput(ctx, 0, 1);
-    updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
+	if (ctx.getNumOutputs() >= 1) {
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		updateOutputShape(ctx, 0, { seq_length, num_directions, batch_size, hidden_size });
+	}
 
-    // Only LSTM has next output.
-    propagateElemTypeFromInputToOutput(ctx, 0, 2);
-    updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
+	if (ctx.getNumOutputs() >= 2) {
+		propagateElemTypeFromInputToOutput(ctx, 0, 1);
+		updateOutputShape(ctx, 1, { num_directions, batch_size, hidden_size });
+	}
+
+	if (ctx.getNumOutputs() >= 3) {
+		// Only LSTM has next output.
+		propagateElemTypeFromInputToOutput(ctx, 0, 2);
+		updateOutputShape(ctx, 2, { num_directions, batch_size, hidden_size });
+	}
 }
 
 // Warning: This function may be shared with old versions in old.cc.
