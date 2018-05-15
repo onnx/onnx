@@ -20,6 +20,10 @@ struct InferenceContext {
 
 typedef Common::Status (*InferenceFunction)(InferenceContext&);
 
+// This no-op inference function is used for operators without an
+// inference implementation.
+inline void dummyInferenceFunction(InferenceContext&) { };
+
 template <typename T>
 inline bool getRepeatedAttribute(
     InferenceContext& ctx,

@@ -38,6 +38,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("attributes", &OpSchema::attributes)
       .def_property_readonly("inputs", &OpSchema::inputs)
       .def_property_readonly("outputs", &OpSchema::outputs)
+      .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly(
           "type_constraints", &OpSchema::typeConstraintParams)
       .def_static(
