@@ -257,7 +257,7 @@ Otherwise, the tensor is split to equal sized parts.
         ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, i));
       }
 
-	  if (hasNInputShapes(ctx, 1)) {
+	  if (!hasNInputShapes(ctx, 1)) {
 		return Status::OK();
 	  }
 
