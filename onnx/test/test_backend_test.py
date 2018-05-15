@@ -62,7 +62,7 @@ class DummyBackend(onnx.backend.base.Backend):
         return False
 
 
-backend_test = onnx.backend.test.BackendTest(DummyBackend(), __name__)
+backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
 if os.getenv('APPVEYOR'):
     backend_test.exclude(r'(test_vgg19|test_zfnet)')
 
