@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import numpy as np  # type: ignore
 
 from onnx import numpy_helper
-from typing import Text
 
 import unittest
 
