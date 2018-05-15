@@ -78,14 +78,14 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input is a file name
         try:
-            file = tempfile.NamedTemporaryFile(delete=False)
-            onnx.save_tensor(proto, file)
-            file.close()
+            tfile = tempfile.NamedTemporaryFile(delete=False)
+            onnx.save_tensor(proto, tfile)
+            tfile.close()
 
-            loaded_proto = onnx.load_tensor(file.name, cls)
+            loaded_proto = onnx.load_tensor(tfile.name, cls)
             self.assertTrue(proto == loaded_proto)
         finally:
-            os.remove(file.name)
+            os.remove(tfile.name)
 
     def test_existence(self):  # type: () -> None
         try:
