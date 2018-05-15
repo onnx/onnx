@@ -159,7 +159,7 @@ class LSTM(Base):
         W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
         B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
-        seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.float32)
+        seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
         init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
         init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
         P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
