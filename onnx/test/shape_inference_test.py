@@ -559,7 +559,7 @@ class TestShapeInference(unittest.TestCase):
                               [make_tensor_value_info('y', TensorProto.FLOAT, (3, 4, 2, 10)),
                                make_tensor_value_info('z', TensorProto.INT64, (3, 4, 2, 10))])
 
-        def test_gemm(self):
+    def test_gemm(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (7, 5)),
              ('y', TensorProto.FLOAT, (5, 11)),
