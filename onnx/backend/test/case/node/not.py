@@ -13,7 +13,7 @@ from . import expect
 class Not(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Not',
             inputs=['x'],
