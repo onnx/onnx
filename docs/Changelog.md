@@ -311,8 +311,10 @@ This version of the operator has been available since version 1 of the default O
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
    * pad_shape[i] is sum of pads along axis i
    ```
+  
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -2709,8 +2711,10 @@ This version of the operator has been available since version 1 of the default O
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
    * pad_shape[i] is sum of pads along axis i
    ```
+  
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -6757,8 +6761,10 @@ This version of the operator has been available since version 7 of the default O
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
    * pad_shape[i] is sum of pads along axis i
    ```
+  
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])

@@ -726,8 +726,10 @@ expect(node, inputs=[x], outputs=[y],
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
    * pad_shape[i] is sum of pads along axis i
    ```
+  
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -4374,8 +4376,10 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
    data into the output tensor Y for further processing. The output spatial shape will be following:
    ```
    output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
    * pad_shape[i] is sum of pads along axis i
    ```
+  
    `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
    ```
    VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
