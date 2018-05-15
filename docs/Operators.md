@@ -5428,7 +5428,7 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>List of integers indicate the padding element count at the beginning and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>
