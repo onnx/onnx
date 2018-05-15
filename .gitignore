@@ -90,6 +90,9 @@ onnx/examples/.coverage.nbval
 # autocomplete
 .ycm_extra_conf.py
 
+# test coverage data files
+*.gcov
+
 .mypy_cache
 virtualenv
 venv
