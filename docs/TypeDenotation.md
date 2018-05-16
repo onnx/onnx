@@ -42,7 +42,7 @@ Let's use the same SqueezeNet example from above and show everything to properly
 * Because it's an image, the model consumer now knows to go look for image metadata on the model
 * Then include 3 metadata strings on ModelProto.metadata_props
 	* `Image.BitmapPixelFormat` = `Bgr8`
-	* `Image.ColorSpaceGamma` = `Gamma`
+	* `Image.ColorSpaceGamma` = `SRGB`
 	* `Image.NominalPixelRange` = `NominalRange_0_255`
 * For that same ValueInfoProto, make sure to also use Dimension Denotations to denote NCHW
 	* TensorShapeProto.Dimension[0].denotation = `DATA_BATCH`
