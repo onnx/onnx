@@ -5,10 +5,13 @@
 
 * ai.onnx (default)
   * <a href="#Abs">Abs</a>
+  * <a href="#Acos">Acos</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
   * <a href="#ArgMin">ArgMin</a>
+  * <a href="#Asin">Asin</a>
+  * <a href="#Atan">Atan</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
   * <a href="#Cast">Cast</a>
@@ -18,6 +21,7 @@
   * <a href="#Constant">Constant</a>
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
+  * <a href="#Cos">Cos</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
@@ -35,6 +39,7 @@
   * <a href="#Greater">Greater</a>
   * <a href="#HardSigmoid">HardSigmoid</a>
   * <a href="#Hardmax">Hardmax</a>
+  * <a href="#Identity">Identity</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
   * <a href="#LRN">LRN</a>
   * <a href="#LSTM">LSTM</a>
@@ -78,6 +83,7 @@
   * <a href="#Selu">Selu</a>
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
+  * <a href="#Sin">Sin</a>
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
@@ -89,11 +95,13 @@
   * <a href="#Squeeze">Squeeze</a>
   * <a href="#Sub">Sub</a>
   * <a href="#Sum">Sum</a>
+  * <a href="#Tan">Tan</a>
   * <a href="#Tanh">Tanh</a>
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
   * <a href="#Unsqueeze">Unsqueeze</a>
+  * <a href="#Upsample">Upsample</a>
   * <a href="#Xor">Xor</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
@@ -102,7 +110,6 @@
   * <sub>experimental</sub> <a href="#FC">FC</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
-  * <sub>experimental</sub> <a href="#Identity">Identity</a>
   * <sub>experimental</sub> <a href="#If">If</a>
   * <sub>experimental</sub> <a href="#ImageScaler">ImageScaler</a>
   * <sub>experimental</sub> <a href="#Loop">Loop</a>
@@ -165,6 +172,62 @@ y = np.abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
+```
+
+</details>
+
+
+### <a name="Acos"></a><a name="acos">**Acos**</a>
+
+  Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arccosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>acos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acos',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arccos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acos_example')
+
+x = np.random.rand(3, 4, 5).astype(np.float32)
+y = np.arccos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acos')
 ```
 
 </details>
@@ -542,6 +605,118 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+### <a name="Asin"></a><a name="asin">**Asin**</a>
+
+  Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arcsine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>asin</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asin',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arcsin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asin_example')
+
+x = np.random.rand(3, 4, 5).astype(np.float32)
+y = np.arcsin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asin')
+```
+
+</details>
+
+
+### <a name="Atan"></a><a name="atan">**Atan**</a>
+
+  Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arctangent of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>atan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atan',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arctan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atan_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arctan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atan')
+```
+
+</details>
+
+
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across the
@@ -564,18 +739,22 @@ This version of the operator has been available since version 1 of the default O
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
-   The output of each pooling window is divided by the number of elements exclude pad.
+   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
    
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>count_include_pad</tt> : int</dt>
+<dd>Whether include pad pixels when calculating values for the edges.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -1066,6 +1245,7 @@ for from_type, to_type in test_cases:
         to=getattr(TensorProto, to_type),
     )
     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+
     expect(node, inputs=[input], outputs=[output],
            name='test_cast_' + from_type + '_to_' + to_type)
 ```
@@ -1268,8 +1448,8 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain output types to any tensor type.</dd>
 </dl>
 
 
@@ -1288,8 +1468,8 @@ test_cases = {
            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
 }
 
-for test_case, values in test_cases.items():
-    values = [np.asarray(v, dtype=np.float32) for v in values]
+for test_case, values_ in test_cases.items():
+    values = [np.asarray(v, dtype=np.float32) for v in values_]
     for i in range(len(values[0].shape)):
         in_args = ['value' + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
@@ -1893,6 +2073,62 @@ y = np.array([[[[1., 1., 3.],  # (1, 2, 7, 3)
                 [13., 7., 15.]]]]).astype(np.float32)
 
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
+```
+
+</details>
+
+
+### <a name="Cos"></a><a name="cos">**Cos**</a>
+
+  Calculates the cosine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The cosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cos',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cos_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cos')
 ```
 
 </details>
@@ -2815,8 +3051,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
@@ -3382,7 +3618,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>hardmax_axis</summary>
 
 ```python
-def hardmax_2d(x):
+def hardmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -3424,6 +3660,60 @@ node = onnx.helper.make_node(
 y = hardmax_2d(x.reshape(12, 5)).reshape(3, 4, 5)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardmax_axis_2')
+```
+
+</details>
+
+
+### <a name="Identity"></a><a name="identity">**Identity**</a>
+
+  Identity operator
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor to copy input into.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>identity</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Identity',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[data],
+       name='test_identity')
 ```
 
 </details>
@@ -3763,7 +4053,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
-seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.float32)
+seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
 init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
@@ -4090,7 +4380,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>logsoftmax_axis</summary>
 
 ```python
-def logsoftmax_2d(x):
+def logsoftmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
@@ -6223,6 +6513,58 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>keepdims</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReduceLogSum',
+    inputs=['data'],
+    outputs=["reduced"]
+)
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, keepdims=True))
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_log_sum_default')
+```
+
+</details>
+
+
+<details>
+<summary>nokeepdims</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ReduceLogSum',
+    inputs=['data'],
+    outputs=["reduced"],
+    axes=[2, 1],
+    keepdims=0
+)
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, axis=(2, 1), keepdims=False))
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_log_sum_desc_axes')
+
+node = onnx.helper.make_node(
+    'ReduceLogSum',
+    inputs=['data'],
+    outputs=["reduced"],
+    axes=[0, 1],
+    keepdims=0
+)
+data = np.random.ranf([3, 4, 5]).astype(np.float32)
+reduced = np.log(np.sum(data, axis=(0, 1), keepdims=False))
+expect(node, inputs=[data], outputs=[reduced],
+       name='test_reduce_log_sum_asc_axes')
+```
+
+</details>
+
+
 ### <a name="ReduceLogSumExp"></a><a name="reducelogsumexp">**ReduceLogSumExp**</a>
 
   Computes the log sum exponent of the input tensor's element along the provided axes. The resulted
@@ -6875,6 +7217,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Sin"></a><a name="sin">**Sin**</a>
+
+  Calculates the sine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The sine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sin</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sin',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sin_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sin')
+```
+
+</details>
+
+
 ### <a name="Size"></a><a name="size">**Size**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
@@ -7201,7 +7599,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>softmax_axis</summary>
 
 ```python
-def softmax_2d(x):
+def softmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
@@ -7333,7 +7731,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>1-D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
@@ -7651,8 +8049,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
 
@@ -7859,6 +8257,62 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
+### <a name="Tan"></a><a name="tan">**Tan**</a>
+
+  Calculates the tangent of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The tangent of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tan',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.tan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_tan_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.tan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_tan')
+```
+
+</details>
+
+
 ### <a name="Tanh"></a><a name="tanh">**Tanh**</a>
 
   Calculates the hyperbolic tangent of the given input tensor element-wise.
@@ -7873,7 +8327,7 @@ Other versions of this operator: <a href="Changelog.md#Tanh-1">Tanh-1</a>
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>1-D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
@@ -8221,8 +8675,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
 
@@ -8243,6 +8697,80 @@ y = np.expand_dims(x, axis=0)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_unsqueeze')
+```
+
+</details>
+
+
+### <a name="Upsample"></a><a name="upsample">**Upsample**</a>
+
+  Upsample the input tensor.
+  Each dimension value of the output tensor is:
+    output_dimension = floor(input_dimension * scale).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>mode</tt> : string</dt>
+<dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
+<dt><tt>scales</tt> : list of floats (required)</dt>
+<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>N-D tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>N-D tensor after resizing</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input/output types to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nearest</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Upsample',
+    inputs=['x'],
+    outputs=['y'],
+    scales=[1.0, 1.0, 2.0, 3.0],
+    mode='nearest',
+)
+
+data = np.array([[[
+    [1, 2],
+    [3, 4],
+]]], dtype=np.float32)
+
+output = np.array([[[
+    [1, 1, 1, 2, 2, 2],
+    [1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4],
+    [3, 3, 3, 4, 4, 4],
+]]], dtype=np.float32)
+
+expect(node, inputs=[data], outputs=[output],
+       name='test_upsample_nearest')
 ```
 
 </details>
@@ -8761,36 +9289,6 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
-### <sub>experimental</sub> <a name="Identity"></a><a name="identity">**Identity**</a>
-
-  Identity operator
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Tensor to copy input into.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
 ### <sub>experimental</sub> <a name="If"></a><a name="if">**If**</a>
 
   If conditional
@@ -9218,7 +9716,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>input</tt> : T</dt>
-<dd>1-D input tensor</dd>
+<dd>Input tensor</dd>
 </dl>
 
 #### Outputs
@@ -9334,11 +9832,9 @@ expect(node, inputs=[x], outputs=[y],
   The width and height of the output tensor are:
     output_width = floor(input_width * width_scale),
     output_height = floor(input_height * height_scale).
-  
   Example:
     Given `data` tensor, width_scale, height_scale, mode,
     Upsample the input 4-D tensor in nearest mode:
-  
     data = [[[
         [1, 2],
         [3, 4]
@@ -9346,7 +9842,6 @@ expect(node, inputs=[x], outputs=[y],
     width_scale = 2
     height_scale = 2
     mode = "nearest"
-  
     output = [[[
         [1, 1, 2, 2],
         [1, 1, 2, 2],
@@ -9401,8 +9896,7 @@ node = onnx.helper.make_node(
     'Upsample',
     inputs=['x'],
     outputs=['y'],
-    height_scale=2.0,
-    width_scale=3.0,
+    scales=[1.0, 1.0, 2.0, 3.0],
     mode='nearest',
 )
 

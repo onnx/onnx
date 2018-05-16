@@ -13,7 +13,7 @@ from . import expect
 class ThresholdedRelu(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         alpha = 2.0
         node = onnx.helper.make_node(
             'ThresholdedRelu',
@@ -37,7 +37,7 @@ class ThresholdedRelu(Base):
                name='test_thresholdedrelu')
 
     @staticmethod
-    def export_default():
+    def export_default():  # type: () -> None
         default_alpha = 1.0
         node = onnx.helper.make_node(
             'ThresholdedRelu',

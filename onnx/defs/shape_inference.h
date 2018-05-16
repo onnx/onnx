@@ -17,6 +17,10 @@ struct InferenceContext {
 
 typedef void (*InferenceFunction)(InferenceContext&);
 
+// This no-op inference function is used for operators without an
+// inference implementation.
+inline void dummyInferenceFunction(InferenceContext&) { };
+
 template <typename T>
 inline bool getRepeatedAttribute(
     InferenceContext& ctx,
@@ -31,6 +35,54 @@ inline bool getRepeatedAttribute(
   }
 }
 
+inline int64_t getAttribute(InferenceContext& ctx, const std::string& attributeName, int64_t defaultValue) {
+  auto attr_proto = ctx.getAttribute(attributeName);
+  if ((nullptr != attr_proto) && attr_proto->has_i())
+    return attr_proto->i();
+  return defaultValue;
+}
+
+inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, TensorShapeProto::Dimension dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value() && dim2.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() * dim2.dim_value());
+  }	else if (dim1.has_dim_value() && (dim1.dim_value() == 1)) {
+    return dim2;
+  }	else if (dim2.has_dim_value() && (dim2.dim_value() == 1)) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+	  result.set_dim_value(dim1.dim_value() * dim2);
+  }	else if (dim2 == 1) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension operator/(TensorShapeProto::Dimension dim1, int64_t dim2) {
+  TensorShapeProto::Dimension result;
+  if (dim1.has_dim_value()) {
+    result.set_dim_value(dim1.dim_value() / dim2);
+  }	else if (dim2 == 1) {
+    return dim1;
+  }
+  return result;
+}
+
+inline TensorShapeProto::Dimension multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive) {
+  TensorShapeProto::Dimension dim;
+  dim.set_dim_value(1);
+  for (int i = from; i < upto_exclusive; ++i) {
+    dim = dim * shape.dim(i);
+  }
+  return dim;
+}
+
 inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
@@ -38,6 +90,9 @@ inline void propagateElemTypeFromInputToOutput(
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
       input_type->value_case() != TypeProto::kTensorType) {
+    return;
+  }
+  if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
     return;
   }
   auto output_type = ctx.getOutputType(outputIndex);
@@ -62,6 +117,10 @@ inline bool hasNInputShapes(InferenceContext& ctx, int n) {
     }
   }
   return true;
+}
+
+inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
+  return ctx.getInputType(n)->tensor_type().shape();
 }
 
 inline void appendSingleDimCopiedFromInputTypeToOutputType(
@@ -125,9 +184,14 @@ inline void updateOutputElemType(
 inline void propagateElemTypeFromAttributeToOutput(
     InferenceContext& ctx,
     const std::string& attributeName,
-    size_t outputIndex) {
+    size_t outputIndex,
+    TensorProto_DataType default_value = TensorProto::UNDEFINED) {
   auto attr_proto = ctx.getAttribute(attributeName);
-  if (nullptr == attr_proto) return; // attribute not present
+  if (nullptr == attr_proto) { // attribute not present
+    if (default_value != TensorProto::UNDEFINED)
+      updateOutputElemType(ctx, outputIndex, default_value);
+    return;
+  }
   if (!attr_proto->has_i()) return; // attribute not of right type
   auto attr_value = attr_proto->i();
   auto elem_type = static_cast<TensorProto_DataType>(attr_value);
@@ -135,15 +199,23 @@ inline void propagateElemTypeFromAttributeToOutput(
   updateOutputElemType(ctx, outputIndex, elem_type);
 }
 
+inline TensorShapeProto* getOutputShape(InferenceContext& ctx, size_t n) {
+  auto output_type = ctx.getOutputType(n);
+  if ((output_type != nullptr) &&
+      (output_type->value_case() == TypeProto::kTensorType ||
+       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
+         return output_type->mutable_tensor_type()->mutable_shape();
+	} else
+      return nullptr;
+}
+
 inline void updateOutputShape(
     InferenceContext& ctx,
     size_t outputIndex,
     const TensorShapeProto& shape) {
-  auto output_type = ctx.getOutputType(outputIndex);
-  if ((output_type != nullptr) &&
-      (output_type->value_case() == TypeProto::kTensorType ||
-       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
-    *output_type->mutable_tensor_type()->mutable_shape() = shape;
+  auto* output_shape = getOutputShape(ctx, outputIndex);
+  if (output_shape != nullptr) {
+    *output_shape = shape;
   }
 }
 
@@ -151,14 +223,24 @@ inline void updateOutputShape(
     InferenceContext& ctx,
     size_t outputIndex,
     const TensorProto& tensorProto) {
-  auto output_type = ctx.getOutputType(outputIndex);
-  if ((output_type != nullptr) &&
-      (output_type->value_case() == TypeProto::kTensorType ||
-       output_type->value_case() == TypeProto::VALUE_NOT_SET)) {
-    auto* output_shape = output_type->mutable_tensor_type()->mutable_shape();
+  auto* output_shape = getOutputShape(ctx, outputIndex);
+  if (output_shape != nullptr) {
     for (auto d : tensorProto.dims()) {
       auto* dim = output_shape->add_dim();
       dim->set_dim_value(d);
+    }
+  }
+}
+
+inline void updateOutputShape(
+	InferenceContext& ctx,
+	size_t outputIndex,
+	std::initializer_list<TensorShapeProto::Dimension> dims) {
+  auto* output_shape = getOutputShape(ctx, outputIndex);
+  if (output_shape != nullptr) {
+    for (auto& d : dims) {
+      auto* dim = output_shape->add_dim();
+      *dim = d;
     }
   }
 }
