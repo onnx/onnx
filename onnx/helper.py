@@ -217,7 +217,7 @@ def make_attribute(
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
         elif all(byte_array):
-            attr.strings.extend(byte_array)
+            attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
