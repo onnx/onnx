@@ -2939,6 +2939,8 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.</dd>
 <dt><tt>sample_size</tt> : int</dt>
 <dd>Number of times to sample.</dd>
 <dt><tt>seed</tt> : float</dt>
@@ -2949,14 +2951,14 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>input</tt> : T1</dt>
-<dd>Input tensor with shape [batch_size, class_size], where class_size is the number of all possible outcomes.</dd>
+<dd>Input tensor with shape [batch_size, class_size], where class_size is the number of all possible outcomes. Each value along the axis zero represents the unnormalized log-probability of each corresponding outcome in a batch.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T2</dt>
-<dd>Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. </dd>
+<dd>Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.</dd>
 </dl>
 
 #### Type Constraints
