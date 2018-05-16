@@ -553,7 +553,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> output_shape;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
-    if (output_shape.size() != input_shape.dim_size() - 2) {
+    if (output_shape.size() != n_input_dims) {
       return;
     }
   }
