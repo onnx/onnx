@@ -275,6 +275,16 @@ of each of the possible outcomes.
             sample_size->type() != AttributeProto_AttributeType_INT) { // invalid attribute type
             return;
         }
+        auto dtype = ctx.getAttribute("dtype");
+        auto dataType = TensorProto_DataType::TensorProto_DataType_INT32;
+        if (dtype != nullptr) {
+            dataType = static_cast<TensorProto_DataType>(dtype->i());
+        }
+        if (dataType != TensorProto_DataType::TensorProto_DataType_INT32 &&
+            dataType != TensorProto_DataType::TensorProto_DataType_INT64) {
+            return;
+        }
+        output_type->mutable_tensor_type()->set_elem_type(dataType);
         auto shape = output_type->mutable_tensor_type()->mutable_shape();
         auto dim = shape->add_dim();
         *dim = input_type->tensor_type().shape().dim(0);
