@@ -80,7 +80,7 @@ You can then install ONNX from PyPi (Note: Set environment variable `ONNX_ML=1` 
 pip install onnx
 ```
 
-You can also build and install ONNX from source code:
+You can also build and install ONNX locally from source code (git clone https://github.com/onnx/onnx.git):
 
 ```
 python setup.py install
