@@ -41,21 +41,21 @@ Nothing in this specification should be construed as advocating one implementati
 
 Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Futhermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
-Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number.
+Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
 
-The valid IR versions is defined by an enumeration, which currently has the following values:
+The IR specification uses simple monotonically increasing numbers for its versions. The valid IR versions is defined by an enumeration, which currently has the following values:
 ```
-  //  version we published on Oct 10, 2017.
+  //  Version 1, published on Oct 10, 2017.
   IR_VERSION_2017_10_10 = 0x0000000000000001;
 
-  // IR_VERSION 0.0.2 published on Oct 30, 2017
+  // Version 2, published on Oct 30, 2017
   IR_VERSION_2017_10_30 = 0x0000000000000002;
 
-  // IR VERSION 0.0.3 published on Nov 3, 2017
+  // Version 3 published on Nov 3, 2017
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple number as the version number. Each operator set version represents the combination of the most recent version of each operator.
+Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
