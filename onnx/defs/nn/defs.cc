@@ -502,7 +502,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    return; // The input shape is not properly set.
+    return; // Input tensor should have at least two dimensions.
   }
 
   // first dim is the batch axis and the next is the number of channels.
