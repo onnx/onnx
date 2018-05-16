@@ -20,9 +20,9 @@ from collections import defaultdict
 from contextlib import contextmanager
 
 try:
-    import google.protobuf.descriptor_pb2 as d_typed  # type: ignore
+    import google.protobuf.descriptor_pb2 as d_typed
     import six
-    from google.protobuf.compiler import plugin_pb2 as plugin  # type: ignore
+    from google.protobuf.compiler import plugin_pb2 as plugin
 except ImportError as e:
     sys.stderr.write('Failed to generate mypy stubs: {}\n'.format(e))
     sys.exit(0)
@@ -36,6 +36,7 @@ if MYPY:
         List,
         Set,
         Text,
+        cast,
     )
 
 
@@ -83,7 +84,8 @@ class PkgWriter(object):
             split = type_name.split('.')
             for i, segment in enumerate(split):
                 if segment and segment[0].isupper():
-                    return ".".join(split[i:])  # type: ignore
+                    result = ".".join(split[i:])  # type: Text
+                    return result
 
         # Not in package. Must import
         split = type_name.split(".")
@@ -266,7 +268,7 @@ def is_scalar(fd):
 
 
 def generate_mypy_stubs(descriptors, response):
-    # type: (Descriptors, plugin.CodeGeneratorResponse) -> plugin.CodeGeneratorResponse
+    # type: (Descriptors, plugin.CodeGeneratorResponse) -> None
     for name, fd in six.iteritems(descriptors.to_generate):
         pkg_writer = PkgWriter(fd, descriptors)
         pkg_writer.write_enums(fd.enum_type)
@@ -293,12 +295,12 @@ class Descriptors(object):
         self.message_to_fd = {}  # type: Dict[Text, d.FileDescriptorProto]
 
         def _add_enums(enums, prefix, fd):
-            # type: (d.EnumDescriptorProto, Text) -> None
+            # type: (d.EnumDescriptorProto, d.FileDescriptorProto) -> None
             for enum in enums:
                 self.message_to_fd[prefix + enum.name] = fd
 
         def _add_messages(messages, prefix, fd):
-            # type: (d.DescriptorProto, Text) -> None
+            # type: (d.DescriptorProto, d.FileDescriptorProto) -> None
             for message in messages:
                 self.message_to_fd[prefix + message.name] = fd
                 sub_prefix = prefix + message.name + "."
