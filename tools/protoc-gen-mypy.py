@@ -3,10 +3,18 @@
 # Taken from https://github.com/dropbox/mypy-protobuf/blob/b72d8d15651460d400dd9c4e91e6c5f17999213e/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
-# - appease mypy type checker
+# - appease flake8
+#   https://github.com/dropbox/mypy-protobuf/pull/19
+# - fix type hints in this file
+#   https://github.com/dropbox/mypy-protobuf/pull/20
 # - fix output file names that have dashes
+#   https://github.com/dropbox/mypy-protobuf/pull/15
 # - fix local imports of other generated files (they need to have a dot prefixed)
+#   https://github.com/dropbox/mypy-protobuf/pull/18
 # - make types Optional[T] instead of T if there's a default value of None
+#   https://github.com/dropbox/mypy-protobuf/pull/16
+# - fix composite containers
+#   https://github.com/dropbox/mypy-protobuf/pull/17
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
 from __future__ import (
@@ -31,6 +39,7 @@ MYPY = False
 if MYPY:
     from typing import (
         Any,
+        Callable,
         Dict,
         Generator,
         List,
@@ -73,22 +82,21 @@ class PkgWriter(object):
     def _import_message(self, type_name):
         # type: (d.FieldDescriptorProto) -> Text
         """Import a referenced message and return a handle"""
-        name = type_name
+        name = cast(Text, type_name)
         if name[0] == '.' and name[1].isupper():
             # Message defined in this file
-            return name[1:]  # type: ignore
+            return name[1:]
 
         message_fd = self.descriptors.message_to_fd[name]
         if message_fd.name == self.fd.name:
             # message defined in this package
-            split = type_name.split('.')
+            split = name.split('.')
             for i, segment in enumerate(split):
                 if segment and segment[0].isupper():
-                    result = ".".join(split[i:])  # type: Text
-                    return result
+                    return ".".join(split[i:])
 
         # Not in package. Must import
-        split = type_name.split(".")
+        split = name.split(".")
         for i, segment in enumerate(split):
             if segment and segment[0].isupper():
                 assert message_fd.name.endswith('.proto')
@@ -242,7 +250,7 @@ class PkgWriter(object):
             d.FieldDescriptorProto.TYPE_ENUM: lambda: self._import_message(field.type_name),
             d.FieldDescriptorProto.TYPE_MESSAGE: lambda: self._import_message(field.type_name),
             d.FieldDescriptorProto.TYPE_GROUP: lambda: self._import_message(field.type_name),
-        }
+        }  # type: Dict[int, Callable[[], Text]]
 
         assert field.type in mapping, "Unrecognized type: " + field.type
         return mapping[field.type]()
