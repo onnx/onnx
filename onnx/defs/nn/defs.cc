@@ -953,19 +953,40 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SCHEMA(LRN)
     .Attr("size", "The number of channels to sum over", AttributeProto::INT)
-    .Attr("alpha", "Scaling parameter", AttributeProto::FLOAT)
-    .Attr("beta", "The exponent", AttributeProto::FLOAT)
-    .Attr("bias", "Default to 1.f", AttributeProto::FLOAT, 1.0f)
-    .Input(0, "X", "Input tensor", "T")
-    .Output(0, "Y", "Output tensor", "T")
+    .Attr("alpha", "Scaling parameter, default is 1e-4f.", AttributeProto::FLOAT, 0.0001f)
+    .Attr("beta", "The exponent, default is 0.75f", AttributeProto::FLOAT, 0.75f)
+    .Attr("bias", "Default to 1.0f", AttributeProto::FLOAT, 1.0f)
+    .Input(
+        0,
+        "X",
+        "Input data tensor from the previous operator; "
+        "dimensions for image case are (N x C x H x W), "
+        "where N is the batch size, C is the number of "
+        "channels, and H and W are the height and the "
+        "width of the data. For non image case, the "
+        "dimensions are in the form of "
+        "(N x C x D1 x D2 ... Dn), where N is the batch "
+        "size. Optionally, if dimension denotation is "
+        "in effect, the operation expects the input "
+        "data tensor to arrive with the dimension denotation "
+        "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+        "T")
+    .Output(0, "Y", "Output tensor, which has the shape and type as input tensor", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output "
         " types to float tensors.")
     .SetDoc(R"DOC(
-Local Response Normalization. It normalizes over local input regions.
-Each input value is divided by
-(bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+It normalizes over local input regions.
+The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
+of shape (N x C x D1 x D2, ..., Dk), its region is
+{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+
+square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
+where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+
+Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 )DOC")
     .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
