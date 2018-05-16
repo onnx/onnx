@@ -412,7 +412,7 @@ def printable_dim(dim):  # type: (TensorShapeProto.Dimension) -> Text
 
 def printable_type(t):  # type: (TypeProto) -> Text
     if t.WhichOneof('value') == "tensor_type":
-        s = TensorProto.DataType.Name(t.tensor_type.elem_type)
+        s = cast(Text, TensorProto.DataType.Name(t.tensor_type.elem_type))
         if t.tensor_type.HasField('shape'):
             if len(t.tensor_type.shape.dim):
                 s += str(', ' + 'x'.join(map(printable_dim, t.tensor_type.shape.dim)))
