@@ -27,7 +27,8 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   # Some of our folders don't have a __init__.py (e.g. onnx/test)
   # This causes mypy above to ignore it, because it works on full modules.
   # To also catch them, run mypy on individual files
-  time find onnx -name "*.py" -print | xargs mypy
+  time find onnx \( -name "*.py" -o -name "*.pyi" \) -print | xargs mypy
+  time find onnx \( -name "*.py" -o -name "*.pyi" \) -print | xargs mypy --py2
 
   pip uninstall -y onnx
   rm -rf .setuptools-cmake-build
