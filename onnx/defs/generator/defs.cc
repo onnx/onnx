@@ -235,7 +235,7 @@ of each of the possible outcomes.
         "sample_size",
         "Number of times to sample.",
         AttributeProto::INT,
-        static_cast<int64_t>(0))
+        static_cast<int64_t>(1))
     .Attr(
         "seed",
         "(Optional) Seed to the random generator, if not specified we will auto generate one.",
