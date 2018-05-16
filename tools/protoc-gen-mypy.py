@@ -48,6 +48,11 @@ if MYPY:
         Text,
         cast,
     )
+else:
+    # Provide minimal mypy identifiers to make code run without typing module present
+    Text = None
+    def cast(type, value):
+        return value
 
 
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
