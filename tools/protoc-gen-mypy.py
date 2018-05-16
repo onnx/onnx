@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Taken from https://github.com/dropbox/mypy-protobuf/blob/6abe67773910a920f943599bea9430dcb0a2cfc5/python/protoc-gen-mypy
+# Taken from https://github.com/dropbox/mypy-protobuf/blob/b72d8d15651460d400dd9c4e91e6c5f17999213e/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
 # - appease mypy type checker
@@ -88,7 +88,7 @@ class PkgWriter(object):
         for i, segment in enumerate(split):
             if segment and segment[0].isupper():
                 assert message_fd.name.endswith('.proto')
-                import_name = self._import(message_fd.name[:-6] + "_pb2", segment)
+                import_name = self._import("." + message_fd.name[:-6] + "_pb2", segment)
                 remains = ".".join(split[i + 1:])
                 if not remains:
                     return import_name
@@ -150,7 +150,7 @@ class PkgWriter(object):
                 # Scalar fields
                 for field in [f for f in desc.field if is_scalar(f)]:
                     if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                        container = self._import("mypy", "RepeatedScalarFieldContainer")
+                        container = self._import("google.protobuf.internal.containers", "RepeatedScalarFieldContainer")
                         line("{} = ... # type: {}[{}]", field.name, container, self.python_type(field))
                     else:
                         line("{} = ... # type: {}", field.name, self.python_type(field))
@@ -160,7 +160,7 @@ class PkgWriter(object):
                 for field in [f for f in desc.field if not is_scalar(f)]:
                     line("@property")
                     if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                        container = self._import("mypy", "RepeatedScalarFieldContainer")
+                        container = self._import("google.protobuf.internal.containers", "RepeatedCompositeFieldContainer")
                         line("def {}(self) -> {}[{}]: ...", field.name, container, self.python_type(field))
                     else:
                         line("def {}(self) -> {}: ...", field.name, self.python_type(field))
@@ -173,11 +173,12 @@ class PkgWriter(object):
                     for field in [f for f in desc.field if f.label == d.FieldDescriptorProto.LABEL_REQUIRED]:
                         line("{} : {},", field.name, self.python_type(field))
                     for field in [f for f in desc.field if f.label != d.FieldDescriptorProto.LABEL_REQUIRED]:
+                        self._import("typing", "Optional")
                         if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                            line("{} : {}[{}] = None,", field.name,
+                            line("{} : Optional[{}[{}]] = None,", field.name,
                               self._import("typing", "Iterable"), self.python_type(field))
                         else:
-                            line("{} : {} = None,", field.name, self.python_type(field))
+                            line("{} : Optional[{}] = None,", field.name, self.python_type(field))
                     line(") -> None: ...")
 
                 # Standard message methods
