@@ -16,7 +16,7 @@ from onnx import helper
 
 class TestBasicFunctions(unittest.TestCase):
 
-    def _simple_model(self):
+    def _simple_model(self):  # type: () -> ModelProto
         # Create a ModelProto.
         model = ModelProto()
         model.ir_version = IR_VERSION
@@ -59,7 +59,7 @@ class TestBasicFunctions(unittest.TestCase):
         finally:
             os.remove(f.name)
 
-    def test_save_and_load_tensor(self):
+    def test_save_and_load_tensor(self):  # type: () -> None
         proto = self._simple_tensor()
         cls = TensorProto
         proto_string = onnx._serialize(proto)
@@ -70,23 +70,23 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input has a read function
         f = io.BytesIO()
-        onnx.save_tensor(proto_string, f)
+        onnx.save_tensor(loaded_proto, f)
         f = io.BytesIO(f.getvalue())
         loaded_proto = onnx.load_tensor(f, cls)
         self.assertTrue(proto == loaded_proto)
 
         # Test if input is a file name
         try:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            onnx.save_tensor(proto, f)
-            f.close()
+            tfile = tempfile.NamedTemporaryFile(delete=False)
+            onnx.save_tensor(proto, tfile)
+            tfile.close()
 
-            loaded_proto = onnx.load_tensor(f.name, cls)
+            loaded_proto = onnx.load_tensor(tfile.name, cls)
             self.assertTrue(proto == loaded_proto)
         finally:
-            os.remove(f.name)
+            os.remove(tfile.name)
 
-    def test_existence(self):
+    def test_existence(self):  # type: () -> None
         try:
             AttributeProto
             NodeProto
@@ -97,7 +97,7 @@ class TestBasicFunctions(unittest.TestCase):
                 'Did not find proper onnx protobufs. Error is: {}'
                 .format(e))
 
-    def test_version_exists(self):
+    def test_version_exists(self):  # type: () -> None
         model = ModelProto()
         # When we create it, graph should not have a version string.
         self.assertFalse(model.HasField('ir_version'))
