@@ -22,7 +22,7 @@ try:
     import six
     from google.protobuf.compiler import plugin_pb2 as plugin  # type: ignore
 except ImportError as e:
-    print('Failed to generate mypy stubs: {}'.format(e))
+    sys.stderr.write('Failed to generate mypy stubs: {}\n'.format(e))
     sys.exit(0)
 
 MYPY = False
