@@ -17,9 +17,13 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 
-import google.protobuf.descriptor_pb2 as d_typed  # type: ignore
-import six
-from google.protobuf.compiler import plugin_pb2 as plugin  # type: ignore
+try:
+    import google.protobuf.descriptor_pb2 as d_typed  # type: ignore
+    import six
+    from google.protobuf.compiler import plugin_pb2 as plugin  # type: ignore
+except ImportError as e:
+    print('Failed to generate mypy stubs: {}'.format(e))
+    sys.exit(0)
 
 MYPY = False
 if MYPY:
