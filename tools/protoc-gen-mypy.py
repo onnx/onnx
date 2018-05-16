@@ -15,6 +15,7 @@
 #   https://github.com/dropbox/mypy-protobuf/pull/16
 # - fix composite containers
 #   https://github.com/dropbox/mypy-protobuf/pull/17
+# - exit without error when protobuf isn't installed
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
 from __future__ import (
