@@ -13,7 +13,7 @@ from . import expect
 class TopK(Base):
 
     @staticmethod
-    def export_top_k():
+    def export_top_k():  # type: () -> None
         node = onnx.helper.make_node(
             'TopK',
             inputs=['x'],

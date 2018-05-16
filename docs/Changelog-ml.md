@@ -495,8 +495,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   
       This operator assumes every input in X is of the same category set
       (meaning there is only one category count).
-  	
-  	If the input is a tensor of float, int32, or double, the data will be cast
+  
+      If the input is a tensor of float, int32, or double, the data will be cast
       to int64s and the cats_int64s category list will be used for the lookups.
 
 #### Version

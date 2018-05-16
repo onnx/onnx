@@ -24,10 +24,19 @@ static std::string auto_pad_doc =
 
 namespace ONNX_NAMESPACE {
 
-void convPoolTypeAndShapeInference(InferenceContext& ctx, bool use_dilation, bool require_kernel_shape) {
+void convPoolTypeAndShapeInference(
+    InferenceContext& ctx,
+    bool use_dilation,
+    bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-  if (!hasNInputShapes(ctx, 2)) {
+  // we need at least one input to have a shape for this inference.
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  // if no kernel shape is required, then we need two inputs.
+  if (!require_kernel_shape && !hasNInputShapes(ctx, 2)) {
     return;
   }
 
@@ -36,7 +45,13 @@ void convPoolTypeAndShapeInference(InferenceContext& ctx, bool use_dilation, boo
     return;
   }
 
-  size_t n_input_dims = (size_t) (ctx.getInputType(0)->tensor_type().shape().dim_size() - 2);
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 2) {
+    return; // The input shape is not properly set.
+  }
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
   // Pooling operations don't support dilation, only Conv. For
   // simplicity of the code, we just treat them as having all-1s
@@ -50,20 +65,9 @@ void convPoolTypeAndShapeInference(InferenceContext& ctx, bool use_dilation, boo
     dilations.assign(n_input_dims, 1);
   }
 
-  std::vector<int64_t> kernel_shape;
-  if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
-    if (kernel_shape.size() != static_cast<size_t>(ctx.getInputType(0)->tensor_type().shape().dim_size() - 2)) {
-      return;
-    }
-  } else if (require_kernel_shape) {
-    return;
-  } else {
-    for (int i = 2; i < ctx.getInputType(1)->tensor_type().shape().dim_size(); ++i) {
-      if (!ctx.getInputType(1)->tensor_type().shape().dim(i).has_dim_value()) {
-        return;
-      }
-      kernel_shape.push_back(ctx.getInputType(1)->tensor_type().shape().dim(i).dim_value());
-    }
+  int64_t groups = getAttribute(ctx, "group", 1);
+  if (groups != 1) {
+    return; // we don't handle the group case.
   }
 
   std::vector<int64_t> pads;
@@ -84,32 +88,58 @@ void convPoolTypeAndShapeInference(InferenceContext& ctx, bool use_dilation, boo
     strides.assign(n_input_dims, 1);
   }
 
-  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-    ctx.getInputType(0)->tensor_type().shape().dim(0);
-  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
-    ctx.getInputType(1)->tensor_type().shape().dim(0);
+  std::vector<int64_t> kernel_shape;
+  if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
+    if (kernel_shape.size() != n_input_dims) {
+      return;
+    }
+  } else if (require_kernel_shape) {
+    return;
+  } else {
+    auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
+    for (int i = 2; i < second_input_shape.dim_size(); ++i) {
+      if (!second_input_shape.dim(i).has_dim_value()) {
+        return;
+      }
+      kernel_shape.push_back(second_input_shape.dim(i).dim_value());
+    }
+  }
 
-  for (int i = 0; i < static_cast<int>(kernel_shape.size()); ++i) {
-    auto newdim = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim();
-    if (!ctx.getInputType(0)->tensor_type().shape().dim(2 + i).has_dim_value()) {
+  auto output_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  if (require_kernel_shape) {
+    // add the first two dimensions from the input.
+    *output_shape->add_dim() = input_shape.dim(0);
+    *output_shape->add_dim() = input_shape.dim(1);
+  } else {
+    *output_shape->add_dim() = input_shape.dim(0);
+    *output_shape->add_dim() =
+        ctx.getInputType(1)->tensor_type().shape().dim(0);
+  }
+
+  int kernel_shape_size = static_cast<int>(kernel_shape.size());
+  for (int i = 0; i < kernel_shape_size; ++i) {
+    auto newdim = output_shape->add_dim();
+    if (!input_shape.dim(2 + i).has_dim_value()) {
       continue;
     }
     // how big is the input, including padding
-    int64_t effective_input_size = ctx.getInputType(0)->tensor_type().shape().dim(2 + i).dim_value();
+    int64_t effective_input_size = input_shape.dim(2 + i).dim_value();
     effective_input_size += pads[i];
-    effective_input_size += pads[i + static_cast<int>(kernel_shape.size())];
+    effective_input_size += pads[i + kernel_shape_size];
 
-    // accounting for dilation, how big is the kernel in this dimension
     int64_t effective_kernel_size = kernel_shape[i];
+    // accounting for dilation, how big is the kernel in this dimension
     effective_kernel_size = (effective_kernel_size - 1) * dilations[i] + 1;
 
-    // how many times we can move the kernel from it's initial position, based on the stride
-    int64_t strided_kernel_positions = (effective_input_size - effective_kernel_size) / strides[i];
+    // how many times we can move the kernel from it's initial position, based
+    // on the stride
+    int64_t strided_kernel_positions =
+        (effective_input_size - effective_kernel_size) / strides[i];
 
     // add in the initial position
-    int64_t total_kernel_positions = 1 + strided_kernel_positions;
-
-    newdim->set_dim_value(total_kernel_positions);
+    newdim->set_dim_value(1 + strided_kernel_positions);
   }
 }
 
@@ -187,15 +217,29 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { convPoolTypeAndShapeInference(ctx, false, true); });
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      convPoolTypeAndShapeInference(ctx, false, true);
+    });
   };
-}
+} // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(AveragePool)
     .FillUsing(PoolOpSchemaGenerator(
         "AveragePool",
         "average",
         "The output of each pooling window is divided by the number of elements exclude pad."));
+
+ONNX_OPERATOR_SCHEMA(AveragePool)
+    .SinceVersion(7)
+    .FillUsing(PoolOpSchemaGenerator(
+        "AveragePool",
+        "average",
+        "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
+    .Attr(
+        "count_include_pad",
+        "Whether include pad pixels when calculating values for the edges.",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
 
 ONNX_OPERATOR_SCHEMA(MaxPool).FillUsing(PoolOpSchemaGenerator(
     "MaxPool",
@@ -259,12 +303,49 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      convPoolTypeAndShapeInference(ctx, false, true);
+    });
   };
 }
 
 ONNX_OPERATOR_SCHEMA(LpPool).FillUsing(LpPoolOpSchemaGenerator("LpPool"));
 
 } // namespace ONNX_NAMESPACE
+
+// For ROI pool operations.
+void roiPoolTypeShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // rois is the second input.
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+
+  std::vector<int64_t> pooled_shape;
+  if (getRepeatedAttribute(ctx, "pooled_shape", pooled_shape)) {
+    if (pooled_shape.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    return; // cannot produce output shape.
+  }
+
+  // (num_rois, channels, pooled_shape[0], pooled_shape[1])
+  auto output_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  *output_shape->add_dim() = rios_shape.dim(0);
+  *output_shape->add_dim() = input_shape.dim(1);
+  output_shape->add_dim()->set_dim_value(pooled_shape[0]);
+  output_shape->add_dim()->set_dim_value(pooled_shape[1]);
+}
 
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
@@ -309,6 +390,8 @@ std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction(
+        [](InferenceContext& ctx) { roiPoolTypeShapeInference(ctx); });
   };
 }
 
@@ -394,7 +477,9 @@ computes the output.)DOC";
         "number of groups input channels and output channels are divided into, default is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
-    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) { convPoolTypeAndShapeInference(ctx, true, false); });
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      convPoolTypeAndShapeInference(ctx, true, false);
+    });
   };
 }
 
@@ -495,6 +580,34 @@ ONNX_OPERATOR_SCHEMA(ConvTranspose)
 
 } // namespace ONNX_NAMESPACE
 
+// For GlobalPool operations.
+void gloablPoolTypeShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // needs at least one input with shape.
+  if (!hasNInputShapes(ctx, 1)) {
+    return;
+  }
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 2) {
+    return;
+  }
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+
+  // (N, C, 1, 1, ..., 1)
+  auto output_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+  *output_shape->add_dim() = input_shape.dim(0);
+  *output_shape->add_dim() = input_shape.dim(1);
+
+  for (size_t i = 0; i < n_input_dims; ++i) {
+    output_shape->add_dim()->set_dim_value(1);
+  }
+}
+
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
     const char* op_type,
@@ -529,6 +642,8 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.SetDoc(doc);
+    schema.TypeAndShapeInferenceFunction(
+        [](InferenceContext& ctx) { gloablPoolTypeShapeInference(ctx); });
   };
 }
 ONNX_OPERATOR_SCHEMA(GlobalAveragePool)
@@ -577,6 +692,8 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.SetDoc(doc);
+    schema.TypeAndShapeInferenceFunction(
+        [](InferenceContext& ctx) { gloablPoolTypeShapeInference(ctx); });
   };
 }
 
@@ -654,11 +771,7 @@ Output case #2: Y (test mode)
         "The running variance (training) or the estimated "
         "variance (testing) as a 1-dimensional tensor of size C.",
         "T")
-    .Output(
-        0,
-        "Y",
-        "The output tensor of the same shape as X.",
-        "T")
+    .Output(0, "Y", "The output tensor of the same shape as X.", "T")
     .Output(
         1,
         "mean",
@@ -692,11 +805,10 @@ Output case #2: Y (test mode)
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateShapeAndTypeFromFirstInput(ctx);
-        // TODO in training mode, it may be possible to infer some of
-        // the other outputs as well.
-      });
-
+      propagateShapeAndTypeFromFirstInput(ctx);
+      // TODO in training mode, it may be possible to infer some of
+      // the other outputs as well.
+    });
 
 ONNX_OPERATOR_SCHEMA(InstanceNormalization)
     .SinceVersion(6)
@@ -727,15 +839,14 @@ where mean and variance are computed per instance per channel.
         "T")
     .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
     .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
-    .Output(
-        0,
-        "output",
-        "The output tensor of the same shape as input.",
-        "T")
+    .Output(0, "output", "The output tensor of the same shape as input.", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateShapeAndTypeFromFirstInput(ctx);
+    });
 
 ONNX_OPERATOR_SCHEMA(LpNormalization)
     .Input(0, "input", "Input matrix", "T")
@@ -756,7 +867,10 @@ Given a matrix, apply Lp-normalization along the provided axis.
         "p",
         "(int64, default 2) the order of the normalization, only 1 or 2 are supported.",
         AttributeProto::INT,
-        static_cast<int64_t>(2));
+        static_cast<int64_t>(2))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateShapeAndTypeFromFirstInput(ctx);
+    });
 
 ONNX_OPERATOR_SCHEMA(Dropout)
     .SinceVersion(6)
@@ -819,23 +933,60 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
         "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
         "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
         AttributeProto::INT,
-        static_cast<int64_t>(1));
+        static_cast<int64_t>(1))
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasInputShape(ctx, 0)) {
+        auto& input_shape = getInputShape(ctx, 0);
+        int rank = static_cast<int>(input_shape.dim_size());
+        int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+        if (axis > rank)
+          axis = rank;
+        // TODO: is the operation defined for input-rank < 2?
+        updateOutputShape(
+            ctx,
+            0,
+            {multiplyDims(input_shape, 0, axis),
+             multiplyDims(input_shape, axis, rank)});
+      }
+    });
 
 ONNX_OPERATOR_SCHEMA(LRN)
     .Attr("size", "The number of channels to sum over", AttributeProto::INT)
-    .Attr("alpha", "Scaling parameter", AttributeProto::FLOAT)
-    .Attr("beta", "The exponent", AttributeProto::FLOAT)
-    .Attr("bias", "Default to 1.f", AttributeProto::FLOAT, 1.0f)
-    .Input(0, "X", "Input tensor", "T")
-    .Output(0, "Y", "Output tensor", "T")
+    .Attr("alpha", "Scaling parameter, default is 1e-4f.", AttributeProto::FLOAT, 0.0001f)
+    .Attr("beta", "The exponent, default is 0.75f", AttributeProto::FLOAT, 0.75f)
+    .Attr("bias", "Default to 1.0f", AttributeProto::FLOAT, 1.0f)
+    .Input(
+        0,
+        "X",
+        "Input data tensor from the previous operator; "
+        "dimensions for image case are (N x C x H x W), "
+        "where N is the batch size, C is the number of "
+        "channels, and H and W are the height and the "
+        "width of the data. For non image case, the "
+        "dimensions are in the form of "
+        "(N x C x D1 x D2 ... Dn), where N is the batch "
+        "size. Optionally, if dimension denotation is "
+        "in effect, the operation expects the input "
+        "data tensor to arrive with the dimension denotation "
+        "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+        "T")
+    .Output(0, "Y", "Output tensor, which has the shape and type as input tensor", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output "
         " types to float tensors.")
     .SetDoc(R"DOC(
-Local Response Normalization. It normalizes over local input regions.
-Each input value is divided by
-(bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+It normalizes over local input regions.
+The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
+of shape (N x C x D1 x D2, ..., Dk), its region is
+{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+
+square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
+where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+
+Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 )DOC")
     .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);

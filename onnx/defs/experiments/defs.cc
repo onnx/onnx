@@ -48,7 +48,7 @@ by providing the same input and output blobs.
     )DOC")
     .Attr("alpha", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
     .Attr("beta", "Scaling value", AttributeProto::FLOAT, OPTIONAL)
-    .Input(0, "input", "1-D input tensor", "T")
+    .Input(0, "input", "Input tensor", "T")
     .Output(0, "output", "The scaled hyperbolic tangent values of the input tensor "
         "computed element-wise", "T")
     .TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
@@ -197,60 +197,6 @@ ONNX_OPERATOR_SCHEMA(GivenTensorFill)
     });
 
 
-ONNX_OPERATOR_SCHEMA(FC)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .SetDoc(R"DOC(
-Computes the result of passing an input vector X into a fully
-connected layer with 2D weight matrix W and 1D bias vector b. That is,
-the layer computes Y = X * W^T + b, where X has size (M x K),
-W has size (N x K), b has size (N), and Y has size (M x N),
-where M is often the batch size.
-NOTE: X does not need to explicitly be a 2D vector; rather, it will be
-coerced into one. For an arbitrary n-dimensional tensor
-X \in [a_0, a_1, ...,a_{k-1}, a_k, ..., a_{n-1}] where a_i \in N+ and k is
-the axis provided, then X will be coerced into a 2-dimensional tensor with
-dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-case where axis=1, this means the X tensor will be coerced into a 2D tensor
-of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-In this situation, we must have a_0 = M and a_1 * ... * a_{n-1} = K.
-Lastly, even though b is a 1D vector of size N, it is copied/resized to
-be size (M x N) implicitly and added to each vector in the batch.
-Each of these dimensions must be matched correctly, or else the operator
-will throw errors.
-)DOC")
-    .Attr(
-        "axis",
-        "(int32_t) default to 1; describes the axis of the inputs; "
-        "defaults to one because the 0th axis most likely describes "
-        "the batch_size",
-        AttributeProto::INT,
-        OPTIONAL)
-    .Attr(
-        "axis_w",
-        "(int32_t) default to 1; describes the axis of the weights; "
-        "defaults to one because the 0th axis most likely describes "
-        "the batch_size",
-        AttributeProto::INT,
-        OPTIONAL)
-    .Input(
-        0,
-        "X",
-        "input tensor that's coerced into a 2D matrix of size (MxK) "
-        "as described above",
-        "T")
-    .Input(
-        1,
-        "W",
-        "2D blob of size (KxN) containing fully connected weight "
-        "matrix",
-        "T")
-    .Input(2, "B", "1D blob containing bias vector", "T")
-    .Output(0, "Y", "2D output tensor", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
-
 ONNX_OPERATOR_SCHEMA(Scale)
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .Input(0, "input", "Input data to be scaled", "T")
@@ -356,57 +302,3 @@ If scale is not provided, crop the borders as provided.)DOC")
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-
-ONNX_OPERATOR_SCHEMA(Upsample)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .Attr(
-        "width_scale",
-        "The scale along width dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT)
-    .Attr(
-        "height_scale",
-        "The scale along height dimension. It takes value greater than or equal to 1.",
-        AttributeProto::FLOAT)
-    .Attr(
-        "mode",
-        "Two interpolation modes: nearest(default), bilinear",
-        AttributeProto::STRING,
-        std::string("nearest"))
-    .Input(
-        0,
-        "X",
-        "4-D tensor, [N,C,H,W]", "T")
-    .Output(
-        0,
-        "Y",
-        "4-D tensor after resizing, [N,C,H,W]", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(bool)", "tensor(int32)", "tensor(int64)",
-        "tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain output types to bool, int32, int64, float16, float, double tensors.")
-    .SetDoc(R"DOC(
-Upsample the input tensor.
-The width and height of the output tensor are:
-  output_width = floor(input_width * width_scale),
-  output_height = floor(input_height * height_scale).
-
-Example:
-  Given `data` tensor, width_scale, height_scale, mode,
-  Upsample the input 4-D tensor in nearest mode:
-
-  data = [[[
-      [1, 2],
-      [3, 4]
-  ]]]
-  width_scale = 2
-  height_scale = 2
-  mode = "nearest"
-
-  output = [[[
-      [1, 1, 2, 2],
-      [1, 1, 2, 2],
-      [3, 3, 4, 4],
-      [3, 3, 4, 4]
-  ]]]
-)DOC");
