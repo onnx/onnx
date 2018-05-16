@@ -5,6 +5,8 @@
 # with own fixes to
 # - appease mypy type checker
 # - fix output file names that have dashes
+# - fix local imports of other generated files (they need to have a dot prefixed)
+# - make types Optional[T] instead of T if there's a default value of None
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
 from __future__ import (
