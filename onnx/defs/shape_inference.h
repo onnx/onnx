@@ -234,6 +234,7 @@ inline void propagateElemTypeFromAttributeToOutput(
   if (nullptr == attr_proto) { // attribute not present
     if (default_value != TensorProto::UNDEFINED) {
       updateOutputElemType(ctx, outputIndex, default_value);
+	  return;
 	} else
 	  fail_type_inference("Value of attribute ", attributeName, " not specified");
   }
