@@ -51,6 +51,7 @@ if MYPY:
 else:
     # Provide minimal mypy identifiers to make code run without typing module present
     Text = None
+
     def cast(type, value):
         return value
 
