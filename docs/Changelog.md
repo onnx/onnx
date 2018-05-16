@@ -1924,9 +1924,16 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="LRN-1"></a>**LRN-1**</a>
 
-  Local Response Normalization. It normalizes over local input regions.
-  Each input value is divided by
-  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+  Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+  It normalizes over local input regions.
+  The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
+  of shape (N x C x D1 x D2, ..., Dk), its region is
+  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+  
+  square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
+  where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+  
+  Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 
 #### Version
 
@@ -1935,12 +1942,12 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (required)</dt>
-<dd>Scaling parameter</dd>
-<dt><tt>beta</tt> : float (required)</dt>
-<dd>The exponent</dd>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Scaling parameter, default is 1e-4f.</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>The exponent, default is 0.75f</dd>
 <dt><tt>bias</tt> : float</dt>
-<dd>Default to 1.f</dd>
+<dd>Default to 1.0f</dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
 </dl>
@@ -1949,14 +1956,14 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
+<dd>Output tensor, which has the shape and type as input tensor</dd>
 </dl>
 
 #### Type Constraints
