@@ -20,7 +20,7 @@ In order to run this model the user needs a lot of information.    In this case 
 This proposal consists of three key components to provide all of this information: 
 * Type Denotation, 
 * [Dimension Denotation](DimensionDenotation.md), 
-* and [model metadata](MetadataProps.md).
+* [Model Metadata](MetadataProps.md).
 
 ## Type Denotation Definition
 
@@ -41,13 +41,13 @@ Let's use the same SqueezeNet example from above and show everything to properly
 * First set the TypeProto.denotation =`IMAGE` for the ValueInfoProto `data_0`
 * Because it's an image, the model consumer now knows to go look for image metadata on the model
 * Then include 3 metadata strings on ModelProto.metadata_props
-** `Image.BitmapPixelFormat` = `Bgr8`
-** `Image.ColorSpaceGamma` = `Gamma`
-** `Image.NominalPixelRange` = `NominalRange_0_255`
+ * `Image.BitmapPixelFormat` = `Bgr8`
+ * `Image.ColorSpaceGamma` = `Gamma`
+ * `Image.NominalPixelRange` = `NominalRange_0_255`
 * For that same ValueInfoProto, make sure to also use Dimension Denotations to denote NCHW
-** TensorShapeProto.Dimension[0].denotation = `DATA_BATCH`
-** TensorShapeProto.Dimension[1].denotation = `DATA_CHANNEL`
-** TensorShapeProto.Dimension[2].denotation = `DATA_FEATURE`
-** TensorShapeProto.Dimension[3].denotation = `DATA_FEATURE`
+ * TensorShapeProto.Dimension[0].denotation = `DATA_BATCH`
+ * TensorShapeProto.Dimension[1].denotation = `DATA_CHANNEL`
+ * TensorShapeProto.Dimension[2].denotation = `DATA_FEATURE`
+ * TensorShapeProto.Dimension[3].denotation = `DATA_FEATURE`
 
 Now there is enough information in the model to know everything about how to pass a correct image into the model.
