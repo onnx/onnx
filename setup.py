@@ -156,6 +156,12 @@ class cmake_build(setuptools.Command):
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
                 '-DPY_EXT_SUFFIX={}'.format(sysconfig.get_config_var('EXT_SUFFIX') or ''),
             ]
+
+            try:
+                import google.protobuf
+            except ImportError:
+                cmake_args.append('-DONNX_GEN_PB_TYPE_STUBS=OFF')
+
             if COVERAGE:
                 cmake_args.append('-DONNX_COVERAGE=ON')
             if COVERAGE or DEBUG:
