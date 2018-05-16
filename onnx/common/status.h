@@ -9,10 +9,17 @@
 namespace ONNX_NAMESPACE {
 namespace Common {
 
+#define ONNX_RETURN_IF_ERROR(expr)              \
+  do {                                     \
+    auto _status = (expr);                 \
+    if ((!_status.IsOK())) return _status; \
+  } while (0)
+
 enum StatusCategory {
   NONE = 0,
   CHECKER = 1,
   OPTIMIZER = 2,
+  INFERENCE = 3,
 };
 
 enum StatusCode {

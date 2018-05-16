@@ -143,23 +143,29 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         {"tensor(float)", "tensor(int32)", "tensor(int64)", "tensor(bool)"},
         "Constrain output types to float, int32, int64, bool tensors.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT);
+        ONNX_RETURN_IF_ERROR(propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0, TensorProto::FLOAT));
         if (ctx.getAttribute("shape") != nullptr) {
-            propagateShapeFromAttributeToOutput(ctx, "shape", 0);
-            return;
+            return propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }
-        if (getAttribute(ctx, "input_as_shape", 0) != 0) // dynamic shape
-            return;
-        std::vector<int64_t> extra_shape;
-        getRepeatedAttribute(ctx, "extra_shape", extra_shape);
-        if (hasInputShape(ctx, 0)) {
-            TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
-            for (auto extra_dim_val : extra_shape) {
-                if (extra_dim_val < 0) return;
-                shape.add_dim()->set_dim_value(extra_dim_val);
-            }
-            updateOutputShape(ctx, 0, shape);
+		if (getAttribute(ctx, "input_as_shape", 0) != 0) {
+			// dynamic shape.
+			return Status::OK();
+		}
+
+		if (!hasInputShape(ctx, 0)) {
+			return Status::OK();
+		}
+
+		std::vector<int64_t> extra_shape;
+		getRepeatedAttribute(ctx, "extra_shape", extra_shape);
+        TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
+        for (auto extra_dim_val : extra_shape) {
+			if (extra_dim_val < 0) {
+				return Status(INFERENCE, INVALID_PROTOBUF, MakeString("extra_shape specified: ", extra_dim_val, " should not be negtive."));
+			}
+            shape.add_dim()->set_dim_value(extra_dim_val);
         }
+        return updateOutputShape(ctx, 0, shape);
     });
 
 ONNX_OPERATOR_SCHEMA(GivenTensorFill)
@@ -175,25 +181,31 @@ ONNX_OPERATOR_SCHEMA(GivenTensorFill)
     .Attr("input_as_shape", "", AttributeProto::INT, OPTIONAL)
     .Attr("extra_shape", "", AttributeProto::INTS, OPTIONAL)
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
         if (ctx.getAttribute("shape") != nullptr) {
-            propagateShapeFromAttributeToOutput(ctx, "shape", 0);
-            return;
+			return propagateShapeFromAttributeToOutput(ctx, "shape", 0);
         }
         // The type constraints above do not allow for input_as_shape
         // and may need to be fixed.
-        if (getAttribute(ctx, "input_as_shape", 0) != 0) // dynamic shape
-            return;
-        std::vector<int64_t> extra_shape;
-        getRepeatedAttribute(ctx, "extra_shape", extra_shape);
-        if (hasInputShape(ctx, 0)) {
-            TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
-            for (auto extra_dim_val : extra_shape) {
-                if (extra_dim_val < 0) return;
-                shape.add_dim()->set_dim_value(extra_dim_val);
-            }
-            updateOutputShape(ctx, 0, shape);
-        }
+        if (getAttribute(ctx, "input_as_shape", 0) != 0) {
+			// dynamic shape.
+			return Status::OK();
+		}
+
+		if (!hasInputShape(ctx, 0)) {
+			return Status::OK();
+		}
+
+		std::vector<int64_t> extra_shape;
+		getRepeatedAttribute(ctx, "extra_shape", extra_shape);
+		TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
+		for (auto extra_dim_val : extra_shape) {
+			if (extra_dim_val < 0) {
+				return Status(INFERENCE, INVALID_PROTOBUF, MakeString("extra_shape specified: ", extra_dim_val, " should not be negtive."));
+			}
+			shape.add_dim()->set_dim_value(extra_dim_val);
+		}
+		return updateOutputShape(ctx, 0, shape);
     });
 
 

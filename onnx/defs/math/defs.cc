@@ -614,7 +614,7 @@ if attribute transA is non-zero, same for B and transB.
         AttributeProto::FLOAT,
         1.0f)
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
         if (hasNInputShapes(ctx, 2)) {
           auto transAAttr = ctx.getAttribute("transA");
           bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
@@ -631,6 +631,7 @@ if attribute transA is non-zero, same for B and transB.
           *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
             ctx.getInputType(2)->tensor_type().shape();
         }
+		return Status::OK();
       });
 
 ONNX_OPERATOR_SCHEMA(MatMul)
@@ -645,16 +646,16 @@ ONNX_OPERATOR_SCHEMA(MatMul)
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        if (!hasNInputShapes(ctx, 2)) {
-          return;
-        }
+	    ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
+		if (!hasNInputShapes(ctx, 2)) {
+			return Status::OK();
+		}
 
         auto shape0 = ctx.getInputType(0)->tensor_type().shape();
         auto shape1 = ctx.getInputType(1)->tensor_type().shape();
 
         if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-          return;
+		  return Status(INFERENCE, INVALID_PROTOBUF, "dim_size of input 'A' and 'B' should be greater than 0.");
         }
 
         TensorShapeProto paddedShapeL;
@@ -688,7 +689,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
         auto dimSize = paddedShapeL.dim_size();
 
         if (paddedShapeR.dim_size() != dimSize) {
-          return;
+			return Status(INFERENCE, INVALID_PROTOBUF, "paddedShapeR.dim_size() != dimSize");
         }
 
         {
@@ -697,7 +698,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
           auto dimR = paddedShapeR.dim(dimSize - 2);
           if (dimL.has_dim_value() && dimR.has_dim_value() &&
               dimL.dim_value() != dimR.dim_value()) {
-            return;
+			  return Status(INFERENCE, INVALID_PROTOBUF, "Incompatible matrix dimensions.");
           }
         }
 
@@ -715,7 +716,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
             } else if (dimR == 1) {
               newdim->set_dim_value(dimL);
             } else {
-              return;
+			  return Status(INFERENCE, INVALID_PROTOBUF, "Incompatible matrix dimensions.");
             }
           } else if (paddedShapeL.dim(i).has_dim_value()) {
             auto dimL = paddedShapeL.dim(i).dim_value();
@@ -741,6 +742,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
         }
 
         *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+		return Status::OK();
       });
 
 ONNX_OPERATOR_SCHEMA(TopK)
@@ -787,24 +789,31 @@ Given two equivalent values, this operator uses the indices along the axis  as
         static_cast<int64_t>(-1))
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 		// Type inference:
-		propagateElemTypeFromInputToOutput(ctx, 0, 0);
-		updateOutputElemType(ctx, 1, TensorProto::INT64);
+		ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
+		ONNX_RETURN_IF_ERROR(updateOutputElemType(ctx, 1, TensorProto::INT64));
 
 		// Shape inference:
-		if (!hasInputShape(ctx, 0))
-			return;
+		if (!hasInputShape(ctx, 0)) {
+			return Status::OK();
+		}
 		auto& input_shape = getInputShape(ctx, 0);
 		int64_t rank = input_shape.dim_size();
 		int64_t axis = getAttribute(ctx, "axis", -1);
 		if (axis < 0) axis += rank;
-		if (axis < 0 || axis >= rank) return; // erroneous attribute value
+		if (axis < 0 || axis >= rank) {
+			// erroneous attribute value
+			return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Attribute 'axis': ", axis, "should not be less than 0 and be less than ", rank)); 
+		}
 		int64_t k = getAttribute(ctx, "k", -1);
-		if (k <= 0) return; // erroneous attribute value
+		if (k <= 0) {
+			// erroneous attribute value
+			return Status(INFERENCE, INVALID_PROTOBUF, MakeString("Attribute 'k': ", k, "should be greater than 0"));
+		}
 		// TODO: unclear what results should be if axis has less than k elements.
 		TensorShapeProto result_shape = input_shape;
 		result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
-		updateOutputShape(ctx, 0, result_shape);
-		updateOutputShape(ctx, 1, result_shape);
+		ONNX_RETURN_IF_ERROR(updateOutputShape(ctx, 0, result_shape));
+		return updateOutputShape(ctx, 1, result_shape);
 	});
 
 ONNX_OPERATOR_SCHEMA(Sin)

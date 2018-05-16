@@ -36,10 +36,10 @@ False instead of True.)DOC";
         OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (!hasNInputShapes(ctx, 1)) {
-        return;
-      }
+      ONNX_RETURN_IF_ERROR(propagateElemTypeFromInputToOutput(ctx, 0, 0));
+	  if (!hasNInputShapes(ctx, 1)) {
+		return Status::OK();
+	  }
 
       int64_t keep_dims = 1;
       auto attr_proto = ctx.getAttribute("keepdims");
@@ -73,6 +73,7 @@ False instead of True.)DOC";
           }
         }
       }
+	  return Status::OK();
     });
   };
 }
@@ -140,9 +141,12 @@ The type of the output tensor is integer.)DOC";
         output_type->mutable_tensor_type()->set_elem_type(
             TensorProto_DataType_INT64);
       }
-      if (!hasNInputShapes(ctx, 1)) {
-        return;
-      }
+	  else {
+		  return Status(INFERENCE, INVALID_PROTOBUF, "The output 'reduced' should be tensor-type.");
+	  }
+	  if (!hasNInputShapes(ctx, 1)) {
+		return Status::OK();
+	  }
 
       auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
       auto output_shape =
@@ -173,6 +177,7 @@ The type of the output tensor is integer.)DOC";
           }
         }
       }
+	  return Status::OK();
     });
   };
 } // namespace ONNX_NAMESPACE
