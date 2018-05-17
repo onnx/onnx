@@ -227,6 +227,7 @@ TensorProto message, and be valid as an output type.
     });
 
 ONNX_OPERATOR_SCHEMA(Multinomial)
+	.SinceVersion(7)
     .SetDoc(R"DOC(
 Generate a tensor of samples from a multinomial distribution according to the probabilities
 of each of the possible outcomes.
@@ -245,7 +246,7 @@ of each of the possible outcomes.
         "dtype",
         "(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.",
         AttributeProto::INT,
-        OPTIONAL)
+        static_cast<int64_t>(TensorProto::INT32))
     .Input(
         0,
         "input",
@@ -271,7 +272,7 @@ of each of the possible outcomes.
             return;
         }
         auto sample_size = ctx.getAttribute("sample_size");
-        if (!sample_size->has_type() || // invalid attribute : has no type
+        if (nullptr == sample_size || !sample_size->has_type() || // invalid attribute : has no type
             sample_size->type() != AttributeProto_AttributeType_INT) { // invalid attribute type
             return;
         }
