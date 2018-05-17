@@ -5,10 +5,13 @@
 
 * ai.onnx (default)
   * <a href="#Abs">Abs</a>
+  * <a href="#Acos">Acos</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
   * <a href="#ArgMin">ArgMin</a>
+  * <a href="#Asin">Asin</a>
+  * <a href="#Atan">Atan</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
   * <a href="#Cast">Cast</a>
@@ -18,6 +21,7 @@
   * <a href="#Constant">Constant</a>
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
+  * <a href="#Cos">Cos</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
@@ -79,6 +83,7 @@
   * <a href="#Selu">Selu</a>
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
+  * <a href="#Sin">Sin</a>
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
@@ -90,6 +95,7 @@
   * <a href="#Squeeze">Squeeze</a>
   * <a href="#Sub">Sub</a>
   * <a href="#Sum">Sum</a>
+  * <a href="#Tan">Tan</a>
   * <a href="#Tanh">Tanh</a>
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
@@ -101,7 +107,6 @@
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
   * <sub>experimental</sub> <a href="#ConstantFill">ConstantFill</a>
   * <sub>experimental</sub> <a href="#Crop">Crop</a>
-  * <sub>experimental</sub> <a href="#FC">FC</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
   * <sub>experimental</sub> <a href="#If">If</a>
@@ -166,6 +171,62 @@ y = np.abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
+```
+
+</details>
+
+
+### <a name="Acos"></a><a name="acos">**Acos**</a>
+
+  Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arccosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>acos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acos',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arccos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acos_example')
+
+x = np.random.rand(3, 4, 5).astype(np.float32)
+y = np.arccos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acos')
 ```
 
 </details>
@@ -545,6 +606,118 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+### <a name="Asin"></a><a name="asin">**Asin**</a>
+
+  Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arcsine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>asin</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asin',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arcsin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asin_example')
+
+x = np.random.rand(3, 4, 5).astype(np.float32)
+y = np.arcsin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asin')
+```
+
+</details>
+
+
+### <a name="Atan"></a><a name="atan">**Atan**</a>
+
+  Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arctangent of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>atan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atan',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arctan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atan_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arctan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atan')
+```
+
+</details>
+
+
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across the
@@ -567,18 +740,22 @@ This version of the operator has been available since version 1 of the default O
    ```
    pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
    ```
-   The output of each pooling window is divided by the number of elements exclude pad.
+   The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero).
    
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePool-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>count_include_pad</tt> : int</dt>
+<dd>Whether include pad pixels when calculating values for the edges.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -1069,6 +1246,7 @@ for from_type, to_type in test_cases:
         to=getattr(TensorProto, to_type),
     )
     output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+
     expect(node, inputs=[input], outputs=[output],
            name='test_cast_' + from_type + '_to_' + to_type)
 ```
@@ -1271,8 +1449,8 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain output types to any tensor type.</dd>
 </dl>
 
 
@@ -1289,10 +1467,10 @@ test_cases = {
            [[5, 6], [7, 8]]),
     '3d': ([[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
            [[[9, 10], [11, 12]], [[13, 14], [15, 16]]])
-}
+}  # type: Dict[Text, Sequence[Any]]
 
-for test_case, values in test_cases.items():
-    values = [np.asarray(v, dtype=np.float32) for v in values]
+for test_case, values_ in test_cases.items():
+    values = [np.asarray(v, dtype=np.float32) for v in values_]
     for i in range(len(values[0].shape)):
         in_args = ['value' + str(k) for k in range(len(values))]
         node = onnx.helper.make_node(
@@ -1593,6 +1771,62 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+### <a name="Cos"></a><a name="cos">**Cos**</a>
+
+  Calculates the cosine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The cosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cos</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cos',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cos_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cos(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cos')
+```
+
+</details>
 
 
 ### <a name="DepthToSpace"></a><a name="depthtospace">**DepthToSpace**</a>
@@ -2514,8 +2748,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
@@ -3081,7 +3315,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>hardmax_axis</summary>
 
 ```python
-def hardmax_2d(x):
+def hardmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     return np.eye(x.shape[1], dtype=x.dtype)[np.argmax(x, axis=1)]
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -3232,9 +3466,16 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
-  Local Response Normalization. It normalizes over local input regions.
-  Each input value is divided by
-  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+  Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+  It normalizes over local input regions.
+  The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
+  of shape (N x C x D1 x D2, ..., Dk), its region is
+  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+  
+  square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
+  where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+  
+  Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 
 #### Version
 
@@ -3243,12 +3484,12 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (required)</dt>
-<dd>Scaling parameter</dd>
-<dt><tt>beta</tt> : float (required)</dt>
-<dd>The exponent</dd>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Scaling parameter, default is 1e-4f.</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>The exponent, default is 0.75f</dd>
 <dt><tt>bias</tt> : float</dt>
-<dd>Default to 1.f</dd>
+<dd>Default to 1.0f</dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
 </dl>
@@ -3257,14 +3498,14 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
+<dd>Output tensor, which has the shape and type as input tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -3516,7 +3757,7 @@ node = onnx.helper.make_node(
 W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
-seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.float32)
+seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
 init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
@@ -3843,7 +4084,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>logsoftmax_axis</summary>
 
 ```python
-def logsoftmax_2d(x):
+def logsoftmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return x - max_x - np.log(np.sum(exp_x, axis=1).reshape((-1, 1)))
@@ -6684,6 +6925,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Sin"></a><a name="sin">**Sin**</a>
+
+  Calculates the sine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The sine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sin</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sin',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sin_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sin(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sin')
+```
+
+</details>
+
+
 ### <a name="Size"></a><a name="size">**Size**</a>
 
   Takes a tensor as input and outputs a int64 scalar that equals to the total number of elements of the input tensor.
@@ -7010,7 +7307,7 @@ expect(node, inputs=[x], outputs=[y],
 <summary>softmax_axis</summary>
 
 ```python
-def softmax_2d(x):
+def softmax_2d(x):  # type: (np.ndarray) -> np.ndarray
     max_x = np.max(x, axis=1).reshape((-1, 1))
     exp_x = np.exp(x - max_x)
     return exp_x / np.sum(exp_x, axis=1).reshape((-1, 1))
@@ -7460,8 +7757,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
 
@@ -7665,6 +7962,62 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_sum_two_inputs')
+```
+
+</details>
+
+
+### <a name="Tan"></a><a name="tan">**Tan**</a>
+
+  Calculates the tangent of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The tangent of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Tan',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.tan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_tan_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.tan(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_tan')
 ```
 
 </details>
@@ -8032,8 +8385,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
 
@@ -8488,65 +8841,6 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>Result, has same type as input, with H and W dimensions reduced.</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="FC"></a><a name="fc">**FC**</a>
-
-  Computes the result of passing an input vector X into a fully
-  connected layer with 2D weight matrix W and 1D bias vector b. That is,
-  the layer computes Y = X * W^T + b, where X has size (M x K),
-  W has size (N x K), b has size (N), and Y has size (M x N),
-  where M is often the batch size.
-  NOTE: X does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ...,a_{k-1}, a_k, ..., a_{n-1}] where a_i \in N+ and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = M and a_1 * ... * a_{n-1} = K.
-  Lastly, even though b is a 1D vector of size N, it is copied/resized to
-  be size (M x N) implicitly and added to each vector in the batch.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int32_t) default to 1; describes the axis of the inputs; defaults to one because the 0th axis most likely describes the batch_size</dd>
-<dt><tt>axis_w</tt> : int</dt>
-<dd>(int32_t) default to 1; describes the axis of the weights; defaults to one because the 0th axis most likely describes the batch_size</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
-<dt><tt>W</tt> : T</dt>
-<dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>1D blob containing bias vector</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>2D output tensor</dd>
 </dl>
 
 #### Type Constraints

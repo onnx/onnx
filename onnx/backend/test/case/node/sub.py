@@ -13,7 +13,7 @@ from . import expect
 class Sub(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Sub',
             inputs=['x', 'y'],
@@ -33,7 +33,7 @@ class Sub(Base):
                name='test_sub')
 
     @staticmethod
-    def export_sub_broadcast():
+    def export_sub_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Sub',
             inputs=['x', 'y'],

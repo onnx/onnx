@@ -13,7 +13,7 @@ from . import expect
 class Xor(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Xor',
             inputs=['x', 'y'],
@@ -42,7 +42,7 @@ class Xor(Base):
                name='test_xor4d')
 
     @staticmethod
-    def export_xor_broadcast():
+    def export_xor_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Xor',
             inputs=['x', 'y'],
@@ -79,7 +79,7 @@ class Xor(Base):
                name='test_xor_bcast4v3d')
 
     @staticmethod
-    def export_xor_axis():
+    def export_xor_axis():  # type: () -> None
         x = (np.random.randn(5, 5, 5, 5) > 0).astype(np.bool)
         y = (np.random.randn(5) > 0).astype(np.bool)
 

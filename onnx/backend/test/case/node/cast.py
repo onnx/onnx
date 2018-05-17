@@ -16,7 +16,7 @@ from . import expect
 class Cast(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         shape = (3, 4)
         test_cases = [
             ('FLOAT', 'FLOAT16'),
@@ -37,5 +37,6 @@ class Cast(Base):
                 to=getattr(TensorProto, to_type),
             )
             output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+
             expect(node, inputs=[input], outputs=[output],
                    name='test_cast_' + from_type + '_to_' + to_type)

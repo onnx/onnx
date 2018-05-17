@@ -27,10 +27,6 @@ SRC_DIR = os.path.join(TOP_DIR, 'onnx')
 TP_DIR = os.path.join(TOP_DIR, 'third_party')
 CMAKE_BUILD_DIR = os.path.join(TOP_DIR, '.setuptools-cmake-build')
 
-DEFAULT_ONNX_NAMESPACE = 'onnx'
-ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
-ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', DEFAULT_ONNX_NAMESPACE)
-
 WINDOWS = (os.name == 'nt')
 
 CMAKE = find_executable('cmake3') or find_executable('cmake')
@@ -40,6 +36,16 @@ install_requires = []
 setup_requires = []
 tests_require = []
 extras_require = {}
+
+################################################################################
+# Global variables for controlling the build variant
+################################################################################
+
+ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
+
+DEBUG = bool(os.getenv('DEBUG'))
+COVERAGE = bool(os.getenv('COVERAGE'))
 
 ################################################################################
 # Version
@@ -150,6 +156,12 @@ class cmake_build(setuptools.Command):
                 '-DONNX_NAMESPACE={}'.format(ONNX_NAMESPACE),
                 '-DPY_EXT_SUFFIX={}'.format(sysconfig.get_config_var('EXT_SUFFIX') or ''),
             ]
+            if COVERAGE:
+                cmake_args.append('-DONNX_COVERAGE=ON')
+            if COVERAGE or DEBUG:
+                # in order to get accurate coverage information, the
+                # build needs to turn off optimizations
+                cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
             if WINDOWS:
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
@@ -273,7 +285,7 @@ tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2
-    extras_require['mypy'] = ['mypy==0.570']
+    extras_require['mypy'] = ['mypy==0.600']
 
 ################################################################################
 # Final

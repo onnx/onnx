@@ -13,7 +13,7 @@ from . import expect
 class Pow(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],
@@ -33,7 +33,7 @@ class Pow(Base):
                name='test_pow')
 
     @staticmethod
-    def export_pow_broadcast():
+    def export_pow_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],

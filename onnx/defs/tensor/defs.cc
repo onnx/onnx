@@ -170,8 +170,8 @@ ONNX_OPERATOR_SCHEMA(Concat)
     .Output(0, "concat_result", "Concatenated tensor", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain output types to any tensor type.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (ctx.getNumInputs() < 1 || !hasNInputShapes(ctx, static_cast<int>(ctx.getNumInputs()))) {
@@ -391,7 +391,7 @@ Example 2:
                   .has_dim_value() &&
               starts[j] >= 0 && ends[j] >= 0) {
             auto newval = std::min(
-                              ctx.getInputType(0)
+                              (int64_t)ctx.getInputType(0)
                                   ->tensor_type()
                                   .shape()
                                   .dim((int)i)
@@ -507,8 +507,8 @@ Example 2:
     .Output(0, "output", "Tensor of rank q + (r - 1).", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain input and output types to any tensor type.")
     .TypeConstraint(
         "Tind",
         {"tensor(int32)", "tensor(int64)"},
@@ -545,8 +545,8 @@ Takes a  parameter `axes` with a list of axes to squeeze.
     .Output(0, "squeezed", "Reshaped tensor with same data as input.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain input and output types to any tensor type.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -594,8 +594,8 @@ Dimension indices in `axes` are as seen in the output tensor. For example:
     .Output(0, "expanded", "Reshaped tensor with same data as input.", "T")
     .TypeConstraint(
         "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
+        OpSchema::all_tensor_types(),
+        "Constrain input and output types to any tensor type.")
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       if (!hasNInputShapes(ctx, 1)) {
@@ -760,7 +760,24 @@ are moved to the depth dimension.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        "Constrain input types to float tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		auto blocksize = getAttribute(ctx, "blocksize", 0);
+		if (blocksize <= 0) return;
+		if (hasInputShape(ctx, 0)) {
+			auto& input_shape = getInputShape(ctx, 0);
+			if (input_shape.dim_size() == 4) {
+				// TODO: Clarify what behavior should be if H or W is not a multiple of blocksize.
+				updateOutputShape(ctx, 0, {
+					input_shape.dim(0),
+					input_shape.dim(1) * (blocksize * blocksize),
+					input_shape.dim(2) / blocksize,
+					input_shape.dim(3) / blocksize
+				});
+			}
+		}
+    });
 
 ONNX_OPERATOR_SCHEMA(DepthToSpace)
     .Attr(
@@ -787,7 +804,24 @@ and width dimensions.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input types to float tensors.");
+        "Constrain input types to float tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		auto blocksize = getAttribute(ctx, "blocksize", 0);
+		if (blocksize <= 0) return;
+		if (hasInputShape(ctx, 0)) {
+			auto& input_shape = getInputShape(ctx, 0);
+			if (input_shape.dim_size() == 4) {
+				// TODO: Clarify what behavior should be if C is not a multiple of blocksize*blocksize.
+				updateOutputShape(ctx, 0, {
+					input_shape.dim(0),
+					input_shape.dim(1) / (blocksize * blocksize),
+					input_shape.dim(2) * blocksize,
+					input_shape.dim(3) * blocksize
+				});
+			}
+		}
+	});
 
 ONNX_OPERATOR_SCHEMA(Tile)
     .SetDoc(R"DOC(Constructs a tensor by tiling a given tensor.
@@ -814,7 +848,13 @@ For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4,
     .TypeConstraint(
         "T1",
         {"tensor(int64)"},
-        "Constrain repeat's type to int64 tensors.");
+        "Constrain repeat's type to int64 tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		// Only rank of output can be inferred. We can do better if second input is
+		// a constant, but this requires extending InferenceContext interface to
+		// get values of constant inputs.
+     });
 
 ONNX_OPERATOR_SCHEMA(Upsample)
 	.SinceVersion(7)

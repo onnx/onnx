@@ -11,7 +11,7 @@ import onnx.helper  # noqa
 import onnx.checker  # noqa
 import onnx.defs  # noqa
 
-import google.protobuf.message  # type: ignore
+import google.protobuf.message
 
 from typing import Union, Text, IO, Optional, cast, TypeVar, Any
 
@@ -49,7 +49,7 @@ def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) 
     if isinstance(proto, bytes):
         return proto
     elif hasattr(proto, 'SerializeToString') and callable(proto.SerializeToString):
-        result = proto.SerializeToString()  # type: bytes
+        result = proto.SerializeToString()
         return result
     else:
         raise ValueError('No SerializeToString method is detected. '
@@ -77,7 +77,7 @@ def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
         raise ValueError('No ParseFromString method is detected. '
                          '\ntype is {}'.format(type(proto)))
 
-    decoded = proto.ParseFromString(s)  # type: ignore
+    decoded = cast(Optional[int], proto.ParseFromString(s))
     if decoded is not None and decoded != len(s):
         raise google.protobuf.message.DecodeError(
             "Protobuf decoding consumed too few bytes: {} out of {}".format(
