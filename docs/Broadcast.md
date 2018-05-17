@@ -12,4 +12,6 @@ For example, the following tensor shapes are supported by Numpy-style broadcasti
   shape(A) = (1, 4, 5), shape(B) = (2, 3, 1, 1), ==> shape(result) = (2, 3, 4, 5)
   shape(A) = (3, 4, 5), shape(B) = (2, 1, 1, 1), ==> shape(result) = (2, 3, 4, 5)
 
-
+TODO:
+1) unidirectional broadcast vs bidirectional broadcast
+2) shape is smaller smaller

@@ -9,8 +9,8 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 
 const char* kBroadcastDoc = R"DOC(
-This operator supports Numpy-style broadcasting; for more details
-please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+This operator supports bidirectional Numpy-style broadcasting; for more details
+please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
 )DOC";
 
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
@@ -21,33 +21,22 @@ Performs element-wise binary {name} (with limited broadcast support).
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc);
     schema.SetDoc(doc);
-    schema.Attr(
-        "broadcast",
-        "Pass 1 to enable broadcasting",
-        AttributeProto::INT,
-        static_cast<int64_t>(0));
-    schema.Attr(
-        "axis",
-        "If set, defines the broadcast dimensions. See doc for details.",
-        AttributeProto::INT,
-        OPTIONAL);
     schema.Input(
         0,
         "A",
-        "First operand, should share the type with the second operand.",
+        "First operand.",
         "T");
     schema.Input(
         1,
         "B",
-        "Second operand. With broadcasting can be of smaller size than A. "
+        "Second operand, which has the same element type as first input."
         "If broadcasting is disabled it should be of the same size.",
         "T");
-    schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
+    schema.Output(0, "C", "Result, has same element type as two inputs", "T");
     schema.TypeConstraint(
         "T",
         OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to high-precision numeric tensors.");
-    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
 }
 
@@ -355,29 +344,17 @@ Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC" + std::string(kBroadcastDoc))
-    .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
+    .Input(0, "X", "First operand, base of the exponent.", "T")
     .Input(
         1,
         "Y",
-        "Input tensor of any shape broadcastable to X shape, "
-        "the exponent component.",
+        "Second operand, power of the exponent.",
         "T")
-    .Attr(
-        "broadcast",
-        "Pass 1 to enable broadcasting",
-        AttributeProto::INT,
-        static_cast<int64_t>(0))
-    .Attr(
-        "axis",
-        "If set, defines the broadcast dimensions. See doc for details.",
-        AttributeProto::INT,
-        OPTIONAL)
     .Output(0, "Z", "Output tensor (same size as X)", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
-    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+        "Constrain input and output types to float tensors.");
 
 ONNX_OPERATOR_SCHEMA(PRelu)
     .SinceVersion(6)
@@ -387,13 +364,17 @@ PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 
+This operator supports unidirectional broadcasting (expand slope tensor to
+the first input's shape; for more details please check
+[here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
+
 )DOC")
     .Input(0, "X", "Input tensor", "T")
     .Input(
         1,
         "slope",
-        "Slope tensor. If `Slope` is of size 1, the value is shared"
-        "across different channels",
+        "Slope tensor. The shape of slope can be smaller then first input X; "
+        "if so, its shape must be broadcastable to X",
         "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(

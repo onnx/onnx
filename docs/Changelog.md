@@ -3186,29 +3186,20 @@ This version of the operator has been available since version 1 of the default O
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
   
-  This operator supports Numpy-style broadcasting; for more details
-  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+  This operator supports bidirectional Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
 
 #### Version
 
 This version of the operator has been available since version 1 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor of any shape, base of the exponent.</dd>
+<dd>First operand, base of the exponent.</dd>
 <dt><tt>Y</tt> : T</dt>
-<dd>Input tensor of any shape broadcastable to X shape, the exponent component.</dd>
+<dd>Second operand, power of the exponent.</dd>
 </dl>
 
 #### Outputs
@@ -6338,6 +6329,10 @@ This version of the operator has been available since version 6 of the default O
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
+  This operator supports unidirectional broadcasting (expand slope tensor to
+  the first input's shape; for more details please check
+  [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
+  
 
 #### Version
 
@@ -6349,7 +6344,7 @@ This version of the operator has been available since version 6 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -6718,36 +6713,27 @@ This version of the operator has been available since version 7 of the default O
 
   Performs element-wise binary addition (with limited broadcast support).
   
-  This operator supports Numpy-style broadcasting; for more details
-  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+  This operator supports bidirectional Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
 
 #### Version
 
 This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
@@ -7018,36 +7004,27 @@ This version of the operator has been available since version 7 of the default O
 
   Performs element-wise binary division (with limited broadcast support).
   
-  This operator supports Numpy-style broadcasting; for more details
-  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+  This operator supports bidirectional Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
 
 #### Version
 
 This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
@@ -7345,36 +7322,27 @@ This version of the operator has been available since version 7 of the default O
 
   Performs element-wise binary multiplication (with limited broadcast support).
   
-  This operator supports Numpy-style broadcasting; for more details
-  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+  This operator supports bidirectional Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
 
 #### Version
 
 This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
@@ -7581,36 +7549,27 @@ This version of the operator has been available since version 7 of the default O
 
   Performs element-wise binary subtraction (with limited broadcast support).
   
-  This operator supports Numpy-style broadcasting; for more details
-  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md
+  This operator supports bidirectional Numpy-style broadcasting; for more details
+  please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md)
 
 #### Version
 
 This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
