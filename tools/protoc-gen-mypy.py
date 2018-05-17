@@ -16,6 +16,10 @@
 # - fix composite containers
 #   https://github.com/dropbox/mypy-protobuf/pull/17
 # - exit without error when protobuf isn't installed
+# - fix recognition of whether an identifier is defined locally
+#   (unfortunately, we use a python package name ONNX_NAMESPACE_FOO_BAR_FOR_CI
+#    on CI, which by the original protoc-gen-mypy script was recognized to be
+#    camel case and therefore handled as an entry in the local package)
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
 from __future__ import (
@@ -90,7 +94,8 @@ class PkgWriter(object):
         # type: (d.FieldDescriptorProto) -> Text
         """Import a referenced message and return a handle"""
         name = cast(Text, type_name)
-        if name[0] == '.' and name[1].isupper():
+
+        if name[0] == '.' and name[1].isupper() and name[2].islower():
             # Message defined in this file
             return name[1:]
 
@@ -99,13 +104,13 @@ class PkgWriter(object):
             # message defined in this package
             split = name.split('.')
             for i, segment in enumerate(split):
-                if segment and segment[0].isupper():
+                if segment and segment[0].isupper() and segment[1].islower():
                     return ".".join(split[i:])
 
         # Not in package. Must import
         split = name.split(".")
         for i, segment in enumerate(split):
-            if segment and segment[0].isupper():
+            if segment and segment[0].isupper() and segment[1].islower():
                 assert message_fd.name.endswith('.proto')
                 import_name = self._import("." + message_fd.name[:-6] + "_pb2", segment)
                 remains = ".".join(split[i + 1:])
