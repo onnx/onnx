@@ -2628,7 +2628,6 @@ R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).asty
 
 gru = GRU_Helper(X=input, W=W, R=R)
 output = gru.step().astype(np.float32)
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
 ```
 
@@ -2664,7 +2663,6 @@ B = np.concatenate((W_B, R_B), axis=1)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
 output = gru.step().astype(np.float32)
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
 ```
 
@@ -2699,7 +2697,6 @@ B = np.concatenate((W_B, R_B), axis=1)
 
 rnn = GRU_Helper(X=input, W=W, R=R, B=B)
 output = rnn.step().astype(np.float32)
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_seq_length')
 ```
 
@@ -3722,7 +3719,6 @@ R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).asty
 
 lstm = LSTM_Helper(X=input, W=W, R=R)
 output = lstm.step()
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R], outputs=[output], name='test_lstm_defaults')
 ```
 
@@ -3758,7 +3754,6 @@ B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
 output = lstm.step()
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R, B], outputs=[output], name='test_lstm_with_initial_bias')
 ```
 
@@ -3795,7 +3790,6 @@ P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.flo
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
 output = lstm.step()
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[output],
        name='test_lstm_with_peepholes')
 ```
@@ -3877,26 +3871,25 @@ b = np.concatenate((b_w, b_r), axis=1)
 lstm = LSTM_Helper(X=x, W=w, R=r, B=b)
 output = lstm.step()
 
-output_precomputed = np.array([[[-0.09183919, -0.20181324, 0.04475278, -0.12022446,
-                                 0.05694127],
-                                [-0.02611334, -0.09452314, 0.04121872, -0.18716583,
-                                 -0.02087192],
-                                [-0.08711052, -0.23869304, 0.05338074, -0.19986068,
-                                 0.06211524],
-                                [-0.04351437, 0.08689842, -0.01133228, 0.00968763,
-                                 -0.04177252]],
+output_precomputed = np.array([[[[-0.09183919, -0.20181324, 0.04475278, -0.12022446,
+                                  0.05694127],
+                                 [-0.02611334, -0.09452314, 0.04121872, -0.18716583,
+                                  -0.02087192],
+                                 [-0.08711052, -0.23869304, 0.05338074, -0.19986068,
+                                  0.06211524],
+                                 [-0.04351437, 0.08689842, -0.01133228, 0.00968763,
+                                  -0.04177252]]],
 
-                               [[-0.1343966, -0.28931525, 0.05130501, -0.13485222,
-                                 0.063078],
-                                [-0.0660032, -0.20069027, 0.06826789, -0.31976634,
-                                 0.06613372],
-                                [-0.06817593, -0.23132755, 0.07001564, -0.23856725,
-                                 0.06021666],
-                                [-0.1600846, -0.15111914, 0.01314638, 0.01177528,
-                                 0.03054012]]]).astype(np.float32)
+                               [[[-0.1343966, -0.28931525, 0.05130501, -0.13485222,
+                                  0.063078],
+                                 [-0.0660032, -0.20069027, 0.06826789, -0.31976634,
+                                  0.06613372],
+                                 [-0.06817593, -0.23132755, 0.07001564, -0.23856725,
+                                  0.06021666],
+                                 [-0.1600846, -0.15111914, 0.01314638, 0.01177528,
+                                  0.03054012]]]]).astype(np.float32)
 assert np.allclose(output, output_precomputed)
 
-output = np.expand_dims(output, 1)
 expect(node, inputs=[x, w, r, b], outputs=[output], name='test_lstm_precomputed')
 ```
 
@@ -5920,7 +5913,6 @@ R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
 rnn = RNN_Helper(X=input, W=W, R=R)
 output = rnn.step().astype(np.float32)
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
 ```
 
@@ -5955,7 +5947,6 @@ B = np.concatenate((W_B, R_B), axis=1)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
 output = rnn.step().astype(np.float32)
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
 ```
 
@@ -5989,7 +5980,6 @@ B = np.concatenate((W_B, R_B), axis=1)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
 output = rnn.step().astype(np.float32)
-output = np.expand_dims(output, 1)
 expect(node, inputs=[input, W, R, B], outputs=[output], name='test_rnn_seq_length')
 ```
 
