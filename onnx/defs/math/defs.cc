@@ -9,14 +9,14 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 
 const char* kBroadcastDoc = R"DOC(
-This operator supports **bidirectional Numpy-style broadcasting**; for more details
-please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md).
+This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
+please check [the doc](Broadcasting.md).
 )DOC";
 
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
-Performs element-wise binary {name} (with limited broadcast support).
+Performs element-wise binary {name} (with Numpy-style broadcasting support).
 {broadcast_doc})DOC";
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc);
@@ -364,9 +364,9 @@ PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 
-This operator supports **unidirectional Numpy-style broadcasting**
-(expand slope tensor to the first input's shape; for more details please check
-[here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md).
+This operator supports **unidirectional broadcasting** (tensor slope should be
+unidirectional broadcastable to input tensor X); for more details please check
+[the doc](Broadcasting.md).
 
 )DOC")
     .Input(0, "X", "Input tensor", "T")

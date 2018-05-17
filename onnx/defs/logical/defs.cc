@@ -20,8 +20,8 @@ std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B`.
 
-This operator supports **bidirectional Numpy-style broadcasting**; for more details
-please check [here](https://github.com/onnx/onnx/blob/master/docs/Broadcast.md).
+This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
+please check [the doc](Broadcasting.md).
 )DOC";
         ReplaceAll(doc, "{name}", name);
         schema.SetDoc(doc);
