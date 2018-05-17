@@ -23,9 +23,9 @@ class RNN_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        num_directions = params[W].shape[0]
+        self.num_directions = params[W].shape[0]
 
-        if num_directions == 1:
+        if self.num_directions == 1:
             for k in params.keys():
                 if k != X:
                     params[k] = np.squeeze(params[k], axis=0)
@@ -55,7 +55,10 @@ class RNN_Helper():
                 *np.split(self.B, 2)))
             h_list.append(H)
             H_t = H
-        return np.concatenate(h_list)
+        concatenated = np.concatenate(h_list)
+        if self.num_directions == 1:
+            output = np.expand_dims(concatenated, 1)
+        return output
 
 
 class RNN(Base):
@@ -80,7 +83,6 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R)
         output = rnn.step().astype(np.float32)
-        output = np.expand_dims(output, 1)
         expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
 
     @staticmethod
@@ -109,7 +111,6 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         output = rnn.step().astype(np.float32)
-        output = np.expand_dims(output, 1)
         expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
 
     @staticmethod
@@ -137,5 +138,4 @@ class RNN(Base):
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         output = rnn.step().astype(np.float32)
-        output = np.expand_dims(output, 1)
         expect(node, inputs=[input, W, R, B], outputs=[output], name='test_rnn_seq_length')
