@@ -285,7 +285,7 @@ tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2
-    extras_require['mypy'] = ['mypy==0.570']
+    extras_require['mypy'] = ['mypy==0.600']
 
 ################################################################################
 # Final
