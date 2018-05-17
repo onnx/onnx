@@ -20,15 +20,7 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   pip uninstall -y onnx
   time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
 
-  time mypy .
-  # Also test in python2 mode (but this is still in the python 3 CI
-  # instance, because mypy itself needs python 3)
-  time mypy --py2 .
-  # Some of our folders don't have a __init__.py (e.g. onnx/test)
-  # This causes mypy above to ignore it, because it works on full modules.
-  # To also catch them, run mypy on individual files
-  find onnx \( -name "*.py" -o -name "*.pyi" \) -print | xargs time mypy
-  find onnx \( -name "*.py" -o -name "*.pyi" \) -print | xargs time mypy --py2
+  time python setup.py typecheck
 
   pip uninstall -y onnx
   rm -rf .setuptools-cmake-build

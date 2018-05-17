@@ -242,12 +242,30 @@ class build_ext(setuptools.command.build_ext.build_ext):
             self.copy_file(src, dst)
 
 
+class mypy_type_check(setuptools.Command):
+  description = 'Run MyPy type checker'
+  user_options = []
+
+  def initialize_options(self):
+    pass
+
+  def finalize_options(self):
+    pass
+
+  def run(self):
+    """Run command."""
+    returncode = subprocess.call(["python", "./tools/mypy-onnx.py"])
+    sys.exit(returncode)
+
+
+
 cmdclass = {
     'create_version': create_version,
     'cmake_build': cmake_build,
     'build_py': build_py,
     'develop': develop,
     'build_ext': build_ext,
+    'typecheck': mypy_type_check,
 }
 
 ################################################################################
