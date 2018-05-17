@@ -648,8 +648,8 @@ ONNX_OPERATOR_SCHEMA(Pad)
     .SinceVersion(2)
     .Attr(
         "pads",
-        "List of integers indicate the padding element count at the "
-        "beginning and end of each axis, for 2D it is the number of pixel. "
+        "List of integers indicating the number of padding elements to add or remove (if negative) "
+        "at the beginning and end of each axis. For 2D it is the number of pixels. "
         "`pads` rank should be double of the input's rank. `pads` format should be as follow "
         "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
         "added at the beginning of axis `i` and xi_end, the number of pixels added at "
