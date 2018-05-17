@@ -445,8 +445,6 @@ class OpSchema final {
   void Finalize();
 
  private:
-  friend class OpSchemaRegistry;
-
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
 
