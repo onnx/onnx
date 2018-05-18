@@ -181,7 +181,7 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.output):
-        os.mkdirs(args.output)
+        os.makedirs(args.output)
 
     for stem in args.stems:
         convert(stem,
