@@ -43,6 +43,7 @@ extras_require = {}
 
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 ONNX_NAMESPACE = os.getenv('ONNX_NAMESPACE', 'onnx')
+ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 
 DEBUG = bool(os.getenv('DEBUG'))
 COVERAGE = bool(os.getenv('COVERAGE'))
@@ -176,6 +177,8 @@ class cmake_build(setuptools.Command):
                     cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
+            if ONNX_BUILD_TESTS:
+                cmake_args.append('-DONNX_BUILD_TESTS=ON')
             if 'CMAKE_ARGS' in os.environ:
                 extra_cmake_args = shlex.split(os.environ['CMAKE_ARGS'])
                 # prevent crossfire with downstream scripts
@@ -285,7 +288,7 @@ tests_require.append('typing-extensions')
 
 if sys.version_info[0] == 3:
     # Mypy doesn't work with Python 2
-    extras_require['mypy'] = ['mypy==0.570']
+    extras_require['mypy'] = ['mypy==0.600']
 
 ################################################################################
 # Final

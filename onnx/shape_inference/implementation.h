@@ -180,7 +180,12 @@ void InferShapes(ModelProto& m) {
     }
 
     InferenceContextImpl ctx(n, valueTypesByName);
-    schema->GetTypeAndShapeInferenceFunction()(ctx);
+	try {
+      schema->GetTypeAndShapeInferenceFunction()(ctx);
+	} catch (ONNX_NAMESPACE::InferenceError& ex) {
+	  // Continue with inference for remaining nodes
+	  continue;
+	}
 
     for (int i = 0; i < n.output_size(); ++i) {
       if (!ctx.getOutputType(i)->has_tensor_type()) {

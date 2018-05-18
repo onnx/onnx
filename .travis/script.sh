@@ -3,7 +3,10 @@
 script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[1]))" "${BASH_SOURCE[0]}")
 source "${script_path%/*}/setup.sh"
 
-# onnx tests
+# onnx c++ API tests
+find .setuptools-cmake-build/ -name "onnx_gtests" -ls -exec {} \;
+
+# onnx python API tests
 pip install pytest-cov nbval
 pytest
 
