@@ -127,7 +127,7 @@ class Runner(object):
         '''
         suite = unittest.TestSuite()
         for case in sorted(self.test_cases.values()):
-            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))  # type: ignore
+            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))
         return suite
 
     # For backward compatibility (we used to expose `.tests`)

@@ -77,7 +77,7 @@ def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
         raise ValueError('No ParseFromString method is detected. '
                          '\ntype is {}'.format(type(proto)))
 
-    decoded = proto.ParseFromString(s)  # type: ignore
+    decoded = cast(Optional[int], proto.ParseFromString(s))
     if decoded is not None and decoded != len(s):
         raise google.protobuf.message.DecodeError(
             "Protobuf decoding consumed too few bytes: {} out of {}".format(
