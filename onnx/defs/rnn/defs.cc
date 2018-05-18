@@ -45,8 +45,10 @@ void RNNShapeInference(InferenceContext& ctx) {
         if (num_outputs > 2) updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size}); // Y_c
     } else {
         // Documentation suggests that the output Y is absent in this case
-        updateOutputShape(ctx, 0, {num_directions, batch_size, hidden_size}); // Y_h
-        if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_c
+        // Different tests seem to disagree on whether Y_h and Y_c, if present, should be
+        // in positions 0 & 1 or 1 & 2.
+        // updateOutputShape(ctx, 0, {num_directions, batch_size, hidden_size}); // Y_h
+        // if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_c
     }
 }
 
