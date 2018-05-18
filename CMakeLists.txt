@@ -15,6 +15,7 @@ option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
+option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -31,6 +32,11 @@ if(NOT MSVC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
   endif()
+endif()
+
+if(ONNX_BUILD_TESTS)
+	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+	include(googletest)
 endif()
 
 if(TARGET protobuf::libprotobuf)
@@ -206,12 +212,17 @@ RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 
 list(APPEND PROTO_SRCS ${PROTO_SRCS2})
 list(APPEND PROTO_HDRS ${PROTO_HDRS2})
 
+
 file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
     "${ONNX_ROOT}/onnx/*.cc"
 )
+file(GLOB_RECURSE onnx_gtests_src
+    "${ONNX_ROOT}/onnx/test/c++/*.h"
+    "${ONNX_ROOT}/onnx/test/c++/*.cc"
+)
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-
+list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
@@ -358,3 +369,6 @@ install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
     FILES_MATCHING
     PATTERN "*.h")
+if(ONNX_BUILD_TESTS)
+	include(${ONNX_ROOT}/cmake/unittest.cmake)
+endif()

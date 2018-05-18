@@ -155,7 +155,8 @@ NOTE: Currently, it supports data type of float, int32, int64, and bool.
         if (hasInputShape(ctx, 0)) {
             TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
             for (auto extra_dim_val : extra_shape) {
-                if (extra_dim_val < 0) return;
+                if (extra_dim_val < 0)
+                    fail_shape_inference("Negative values are not allowed in a shape specification");
                 shape.add_dim()->set_dim_value(extra_dim_val);
             }
             updateOutputShape(ctx, 0, shape);
@@ -189,7 +190,8 @@ ONNX_OPERATOR_SCHEMA(GivenTensorFill)
         if (hasInputShape(ctx, 0)) {
             TensorShapeProto shape = ctx.getInputType(0)->tensor_type().shape();
             for (auto extra_dim_val : extra_shape) {
-                if (extra_dim_val < 0) return;
+                if (extra_dim_val < 0)
+                    fail_shape_inference("Negative values are not allowed in a shape specification");
                 shape.add_dim()->set_dim_value(extra_dim_val);
             }
             updateOutputShape(ctx, 0, shape);
