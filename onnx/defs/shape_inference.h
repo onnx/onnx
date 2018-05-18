@@ -130,8 +130,6 @@ inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
     size_t outputIndex) {
-  
-  if (inputIndex >= ctx.getNumInputs() || outputIndex >= ctx.getNumOutputs()) return;
 
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
@@ -142,7 +140,6 @@ inline void propagateElemTypeFromInputToOutput(
 	fail_type_inference("Element type of input ", inputIndex, " unknown");
   }
   auto output_type = ctx.getOutputType(outputIndex);
-  if (nullptr == output_type) return;
   if (output_type->value_case() == TypeProto::kTensorType ||
       output_type->value_case() == TypeProto::VALUE_NOT_SET) {
     output_type->mutable_tensor_type()->set_elem_type(
@@ -261,7 +258,6 @@ inline void propagateElemTypeFromAttributeToOutput(
 }
 
 inline TensorShapeProto* getOutputShape(InferenceContext& ctx, size_t n) {
-  if (n >= ctx.getNumOutputs()) return nullptr;
   auto output_type = ctx.getOutputType(n);
   if ((output_type != nullptr) &&
       (output_type->value_case() == TypeProto::kTensorType ||
