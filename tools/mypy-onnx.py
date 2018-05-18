@@ -6,15 +6,15 @@ import os
 
 def main():
     try:
+        root_folder = os.path.realpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        source_folder = os.path.join(root_folder, "onnx/test")
+        os.chdir(root_folder)
+
         subprocess.check_call(["mypy", "."])
         subprocess.check_call(["mypy", "--py2", "."])
 
         # Since test cases aren't a python package (missing __init__.py),
         # mypy ignores them. Explicitly call mypy with these files.
-
-        root_folder = os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))
-        source_folder = os.path.join(root_folder, "onnx/test")
-        os.chdir(root_folder)
 
         # Enumerate py and pyi files, they're listed without file extension
         py_files = [os.path.relpath(os.path.join(dirpath, f), root_folder)
@@ -26,6 +26,7 @@ def main():
 
         exit(0)
     except subprocess.CalledProcessError:
+        # Catch this exception because we don't want it to output a backtrace that would clutter the mypy output
         exit(1)
 
 
