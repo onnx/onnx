@@ -243,20 +243,19 @@ class build_ext(setuptools.command.build_ext.build_ext):
 
 
 class mypy_type_check(setuptools.Command):
-  description = 'Run MyPy type checker'
-  user_options = []
+    description = 'Run MyPy type checker'
+    user_options = []
 
-  def initialize_options(self):
-    pass
+    def initialize_options(self):
+        pass
 
-  def finalize_options(self):
-    pass
+    def finalize_options(self):
+        pass
 
-  def run(self):
-    """Run command."""
-    returncode = subprocess.call(["python", "./tools/mypy-onnx.py"])
-    sys.exit(returncode)
-
+    def run(self):
+        """Run command."""
+        returncode = subprocess.call(["python", "./tools/mypy-onnx.py"])
+        sys.exit(returncode)
 
 
 cmdclass = {
