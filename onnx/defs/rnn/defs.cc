@@ -27,15 +27,27 @@ void RNNShapeInference(InferenceContext& ctx) {
         batch_size = first_input_shape.dim(1);
     }
 
-    propagateElemTypeFromInputToOutput(ctx, 0, 0);
-    updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
-    
-    propagateElemTypeFromInputToOutput(ctx, 0, 1);
-    updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
+    // The treatment of outputs is a bit complicated because of the combination of
+    // optional outputs and the output_sequence attribute.
+    bool output_sequence = (getAttribute(ctx, "output_sequence", 0) != 0);
+    auto num_outputs = ctx.getNumOutputs();
 
-    // Only LSTM has next output.
-    propagateElemTypeFromInputToOutput(ctx, 0, 2);
-    updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
+    if (num_outputs == 0) return; // Unlikely, but seems legal.
+
+    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    if (num_outputs > 1) propagateElemTypeFromInputToOutput(ctx, 0, 1);
+    if (num_outputs > 2) propagateElemTypeFromInputToOutput(ctx, 0, 2);
+
+    if (output_sequence) {
+        // No ambiguity in spec
+        updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size}); // Y
+        if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_h
+        if (num_outputs > 2) updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size}); // Y_c
+    } else {
+        // Documentation suggests that the output Y is absent in this case
+        updateOutputShape(ctx, 0, {num_directions, batch_size, hidden_size}); // Y_h
+        if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_c
+    }
 }
 
 // Warning: This function may be shared with old versions in old.cc.
