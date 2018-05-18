@@ -537,20 +537,35 @@ the tensor elementwise.
     .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Gemm)
-    .SinceVersion(6)
+    .SinceVersion(7)
     .SetDoc(R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
-, input tensor B has dimension (K X N), input tensor C and output tensor Y have
-dimension (M X N).
-If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-the dimension requirement. A will be transposed before doing the computation
-if attribute transA is non-zero, same for B and transB.
+
+A' = transpose(A) if transA else A
+
+B' = transpose(B) if transB else B
+
+Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
+input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
+and output tensor Y has shape (M, N). A will be transposed before doing the
+computation if attribute transA is non-zero, same for B and transB.
+
+This operator supports **unidirectional broadcasting** (tensor C should be
+unidirectional broadcastable to tensor A * B); for more details please check
+[the doc](Broadcasting.md).
 )DOC")
-    .Input(0, "A", "Input tensor A", "T")
-    .Input(1, "B", "Input tensor B", "T")
-    .Input(2, "C", "Input tensor C", "T")
-    .Output(0, "Y", "Output tensor.", "T")
+    .Input(0, "A",
+           "Input tensor A. "
+           "The shape of A should be (M, K) if transA is 0, "
+           "or (K, M) if transA is non-zero.", "T")
+    .Input(1, "B",
+           "Input tensor B. "
+           "The shape of B should be (K, N) if transB is 0, "
+           "or (N, K) if transB is non-zero.", "T")
+    .Input(2, "C",
+           "Input tensor C. "
+           "The shape of C should be unidirectional broadcastable to (M, N).", "T")
+    .Output(0, "Y", "Output tensor of shape (M, N).", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
@@ -563,11 +578,6 @@ if attribute transA is non-zero, same for B and transB.
     .Attr(
         "transB",
         "Whether B should be transposed",
-        AttributeProto::INT,
-        static_cast<int64_t>(0))
-    .Attr(
-        "broadcast",
-        "Whether C should be broadcasted",
         AttributeProto::INT,
         static_cast<int64_t>(0))
     .Attr(

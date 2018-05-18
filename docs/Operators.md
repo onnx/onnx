@@ -2737,18 +2737,25 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
-  , input tensor B has dimension (K X N), input tensor C and output tensor Y have
-  dimension (M X N).
-  If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-  the dimension requirement. A will be transposed before doing the computation
-  if attribute transA is non-zero, same for B and transB.
+  
+  A' = transpose(A) if transA else A
+  
+  B' = transpose(B) if transB else B
+  
+  Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
+  input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
+  and output tensor Y has shape (M, N). A will be transposed before doing the
+  computation if attribute transA is non-zero, same for B and transB.
+  
+  This operator supports **unidirectional broadcasting** (tensor C should be
+  unidirectional broadcastable to tensor A * B); for more details please check
+  [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>
 
 #### Attributes
 
@@ -2757,8 +2764,6 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 <dd>Scalar multiplier for the product of input tensors A * B</dd>
 <dt><tt>beta</tt> : float</dt>
 <dd>Scalar multiplier for input tensor C</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Whether C should be broadcasted</dd>
 <dt><tt>transA</tt> : int</dt>
 <dd>Whether A should be transposed</dd>
 <dt><tt>transB</tt> : int</dt>
@@ -2769,18 +2774,18 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Input tensor A</dd>
+<dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Input tensor B</dd>
+<dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
 <dt><tt>C</tt> : T</dt>
-<dd>Input tensor C</dd>
+<dd>Input tensor C. The shape of C should be unidirectional broadcastable to (M, N).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor.</dd>
+<dd>Output tensor of shape (M, N).</dd>
 </dl>
 
 #### Type Constraints

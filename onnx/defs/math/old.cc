@@ -686,3 +686,67 @@ if attribute transA is non-zero, same for B and transB.
         "Scalar multiplier for input tensor C",
         AttributeProto::FLOAT,
         1.0f);
+
+ONNX_OPERATOR_SCHEMA(Gemm)
+    .SinceVersion(6)
+    .SetDoc(R"DOC(General Matrix multiplication:
+https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
+, input tensor B has dimension (K X N), input tensor C and output tensor Y have
+dimension (M X N).
+If attribute broadcast is non-zero, input tensor C will be broadcasted to match
+the dimension requirement. A will be transposed before doing the computation
+if attribute transA is non-zero, same for B and transB.
+)DOC")
+    .Input(0, "A", "Input tensor A", "T")
+    .Input(1, "B", "Input tensor B", "T")
+    .Input(2, "C", "Input tensor C", "T")
+    .Output(0, "Y", "Output tensor.", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .Attr(
+        "transA",
+        "Whether A should be transposed",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "transB",
+        "Whether B should be transposed",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "broadcast",
+        "Whether C should be broadcasted",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "alpha",
+        "Scalar multiplier for the product of input tensors A * B",
+        AttributeProto::FLOAT,
+        1.0f)
+    .Attr(
+        "beta",
+        "Scalar multiplier for input tensor C",
+        AttributeProto::FLOAT,
+        1.0f)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (hasNInputShapes(ctx, 2)) {
+          auto transAAttr = ctx.getAttribute("transA");
+          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+          auto transBAttr = ctx.getAttribute("transB");
+          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
+        } else if (hasInputShape(ctx, 2) &&
+                   (!ctx.getAttribute("broadcast") ||
+                    static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
+            ctx.getInputType(2)->tensor_type().shape();
+        }
+      });
