@@ -7,7 +7,7 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-inline void logicalOpInference(InferenceContext& ctx) {
+inline void unaryLogicalOpInference(InferenceContext& ctx) {
 	updateOutputElemType(ctx, 0, TensorProto::BOOL);
 	if (hasInputShape(ctx, 0)) {
 		propagateShapeFromInputToOutput(ctx, 0, 0);
@@ -29,7 +29,6 @@ please check [the doc](Broadcasting.md).
         schema.Input(1, "B", "Second input operand for the logical operator.", "T");
 		schema.Output(0, "C", "Result tensor.", "T1");
         schema.SinceVersion(7);
-		schema.TypeAndShapeInferenceFunction(logicalOpInference);
     };
 }
 
@@ -83,6 +82,6 @@ Returns the negation of the input tensor element-wise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(bool)" },
                     "Constrains input/output to boolean tensors.")
-	.TypeAndShapeInferenceFunction(logicalOpInference);
+	.TypeAndShapeInferenceFunction(unaryLogicalOpInference);
 
 }  // namespace ONNX_NAMESPACE

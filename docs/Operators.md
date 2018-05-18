@@ -299,7 +299,6 @@ node = onnx.helper.make_node(
     'Add',
     inputs=['x', 'y'],
     outputs=['sum'],
-    broadcast=1,
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -389,65 +388,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
-<summary>and_axis</summary>
-
-```python
-x = (np.random.randn(5, 5, 5, 5) > 0).astype(np.bool)
-y = (np.random.randn(5) > 0).astype(np.bool)
-
-node = onnx.helper.make_node(
-    'And',
-    inputs=['x', 'y'],
-    outputs=['and'],
-    broadcast=1,
-    axis=0,
-)
-
-z = np.logical_and(x, y[:, np.newaxis, np.newaxis, np.newaxis])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_and_axis0')
-
-node = onnx.helper.make_node(
-    'And',
-    inputs=['x', 'y'],
-    outputs=['and'],
-    broadcast=1,
-    axis=1,
-)
-
-z = np.logical_and(x, y[:, np.newaxis, np.newaxis])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_and_axis1')
-
-node = onnx.helper.make_node(
-    'And',
-    inputs=['x', 'y'],
-    outputs=['and'],
-    broadcast=1,
-    axis=2,
-)
-
-z = np.logical_and(x, y[:, np.newaxis])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_and_axis2')
-
-node = onnx.helper.make_node(
-    'And',
-    inputs=['x', 'y'],
-    outputs=['and'],
-    broadcast=1,
-    axis=3,
-)
-
-z = np.logical_and(x, y)
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_and_axis3')
-```
-
-</details>
-
-
-<details>
 <summary>and_broadcast</summary>
 
 ```python
@@ -455,7 +395,6 @@ node = onnx.helper.make_node(
     'And',
     inputs=['x', 'y'],
     outputs=['and'],
-    broadcast=1,
 )
 
 # 3d vs 1d
@@ -485,6 +424,13 @@ y = (np.random.randn(4, 5, 6) > 0).astype(np.bool)
 z = np.logical_and(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast4v3d')
+
+# 4d vs 4d
+x = (np.random.randn(1, 4, 1, 6) > 0).astype(np.bool)
+y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
+z = np.logical_and(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_or_bcast4v4d')
 ```
 
 </details>
@@ -1968,7 +1914,6 @@ node = onnx.helper.make_node(
     'Div',
     inputs=['x', 'y'],
     outputs=['z'],
-    broadcast=1,
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -2186,7 +2131,6 @@ node = onnx.helper.make_node(
     'Equal',
     inputs=['x', 'y'],
     outputs=['z'],
-    broadcast=1,
 )
 
 x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)
@@ -3109,7 +3053,6 @@ node = onnx.helper.make_node(
     'Greater',
     inputs=['x', 'y'],
     outputs=['greater'],
-    broadcast=1,
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -3911,7 +3854,6 @@ node = onnx.helper.make_node(
     'Less',
     inputs=['x', 'y'],
     outputs=['less'],
-    broadcast=1,
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -5000,7 +4942,6 @@ node = onnx.helper.make_node(
     'Mul',
     inputs=['x', 'y'],
     outputs=['z'],
-    broadcast=1,
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -5256,65 +5197,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
-<summary>or_axis</summary>
-
-```python
-x = (np.random.randn(5, 5, 5, 5) > 0).astype(np.bool)
-y = (np.random.randn(5) > 0).astype(np.bool)
-
-node = onnx.helper.make_node(
-    'Or',
-    inputs=['x', 'y'],
-    outputs=['or'],
-    broadcast=1,
-    axis=0,
-)
-
-z = np.logical_or(x, y[:, np.newaxis, np.newaxis, np.newaxis])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_or_axis0')
-
-node = onnx.helper.make_node(
-    'Or',
-    inputs=['x', 'y'],
-    outputs=['or'],
-    broadcast=1,
-    axis=1,
-)
-
-z = np.logical_or(x, y[:, np.newaxis, np.newaxis])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_or_axis1')
-
-node = onnx.helper.make_node(
-    'Or',
-    inputs=['x', 'y'],
-    outputs=['or'],
-    broadcast=1,
-    axis=2,
-)
-
-z = np.logical_or(x, y[:, np.newaxis])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_or_axis2')
-
-node = onnx.helper.make_node(
-    'Or',
-    inputs=['x', 'y'],
-    outputs=['or'],
-    broadcast=1,
-    axis=3,
-)
-
-z = np.logical_or(x, y)
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_or_axis3')
-```
-
-</details>
-
-
-<details>
 <summary>or_broadcast</summary>
 
 ```python
@@ -5322,7 +5204,6 @@ node = onnx.helper.make_node(
     'Or',
     inputs=['x', 'y'],
     outputs=['or'],
-    broadcast=1,
 )
 
 # 3d vs 1d
@@ -5352,6 +5233,13 @@ y = (np.random.randn(4, 5, 6) > 0).astype(np.bool)
 z = np.logical_or(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_or_bcast4v3d')
+
+# 4d vs 4d
+x = (np.random.randn(1, 4, 1, 6) > 0).astype(np.bool)
+y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
+z = np.logical_or(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_or_bcast4v4d')
 ```
 
 </details>
@@ -5584,27 +5472,25 @@ node = onnx.helper.make_node(
     'Pow',
     inputs=['x', 'y'],
     outputs=['z'],
-    broadcast=1,
 )
 
 x = np.array([1, 2, 3]).astype(np.float32)
 y = np.array(2).astype(np.float32)
 z = np.power(x, y)  # expected output [1., 4., 9.]
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_bcast')
+       name='test_pow_bcast_scalar')
 
 node = onnx.helper.make_node(
     'Pow',
     inputs=['x', 'y'],
     outputs=['z'],
-    broadcast=1,
-    axis=0,
 )
 x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
-y = np.array([2, 3]).astype(np.float32)
-z = np.array([[1, 4, 9], [64, 125, 216]]).astype(np.float32)
+y = np.array([1, 2, 3]).astype(np.float32)
+# expected output [[1, 4, 27], [4, 25, 216]]
+z = np.power(x, y).astype(np.float32)
 expect(node, inputs=[x, y], outputs=[z],
-       name='test_pow_bcast_axis0')
+       name='test_pow_bcast_array')
 ```
 
 </details>
@@ -8786,7 +8672,6 @@ node = onnx.helper.make_node(
     'Sub',
     inputs=['x', 'y'],
     outputs=['z'],
-    broadcast=1,
 )
 
 x = np.random.randn(3, 4, 5).astype(np.float32)
@@ -9470,65 +9355,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 <details>
-<summary>xor_axis</summary>
-
-```python
-x = (np.random.randn(5, 5, 5, 5) > 0).astype(np.bool)
-y = (np.random.randn(5) > 0).astype(np.bool)
-
-node = onnx.helper.make_node(
-    'Xor',
-    inputs=['x', 'y'],
-    outputs=['xor'],
-    broadcast=1,
-    axis=0,
-)
-
-z = np.logical_xor(x, y[:, np.newaxis, np.newaxis, np.newaxis])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_xor_axis0')
-
-node = onnx.helper.make_node(
-    'Xor',
-    inputs=['x', 'y'],
-    outputs=['xor'],
-    broadcast=1,
-    axis=1,
-)
-
-z = np.logical_xor(x, y[:, np.newaxis, np.newaxis, ])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_xor_axis1')
-
-node = onnx.helper.make_node(
-    'Xor',
-    inputs=['x', 'y'],
-    outputs=['xor'],
-    broadcast=1,
-    axis=2,
-)
-
-z = np.logical_xor(x, y[:, np.newaxis, ])
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_xor_axis2')
-
-node = onnx.helper.make_node(
-    'Xor',
-    inputs=['x', 'y'],
-    outputs=['xor'],
-    broadcast=1,
-    axis=3,
-)
-
-z = np.logical_xor(x, y)
-expect(node, inputs=[x, y], outputs=[z],
-       name='test_xor_axis3')
-```
-
-</details>
-
-
-<details>
 <summary>xor_broadcast</summary>
 
 ```python
@@ -9536,7 +9362,6 @@ node = onnx.helper.make_node(
     'Xor',
     inputs=['x', 'y'],
     outputs=['xor'],
-    broadcast=1,
 )
 
 # 3d vs 1d
@@ -9566,6 +9391,13 @@ y = (np.random.randn(4, 5, 6) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast4v3d')
+
+# 4d vs 4d
+x = (np.random.randn(1, 4, 1, 6) > 0).astype(np.bool)
+y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
+z = np.logical_xor(x, y)
+expect(node, inputs=[x, y], outputs=[z],
+       name='test_xor_bcast4v4d')
 ```
 
 </details>

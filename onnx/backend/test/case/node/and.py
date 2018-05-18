@@ -47,7 +47,6 @@ class And(Base):
             'And',
             inputs=['x', 'y'],
             outputs=['and'],
-            broadcast=1,
         )
 
         # 3d vs 1d
@@ -78,55 +77,9 @@ class And(Base):
         expect(node, inputs=[x, y], outputs=[z],
                name='test_or_bcast4v3d')
 
-    @staticmethod
-    def export_and_axis():  # type: () -> None
-        x = (np.random.randn(5, 5, 5, 5) > 0).astype(np.bool)
-        y = (np.random.randn(5) > 0).astype(np.bool)
-
-        node = onnx.helper.make_node(
-            'And',
-            inputs=['x', 'y'],
-            outputs=['and'],
-            broadcast=1,
-            axis=0,
-        )
-
-        z = np.logical_and(x, y[:, np.newaxis, np.newaxis, np.newaxis])
-        expect(node, inputs=[x, y], outputs=[z],
-               name='test_and_axis0')
-
-        node = onnx.helper.make_node(
-            'And',
-            inputs=['x', 'y'],
-            outputs=['and'],
-            broadcast=1,
-            axis=1,
-        )
-
-        z = np.logical_and(x, y[:, np.newaxis, np.newaxis])
-        expect(node, inputs=[x, y], outputs=[z],
-               name='test_and_axis1')
-
-        node = onnx.helper.make_node(
-            'And',
-            inputs=['x', 'y'],
-            outputs=['and'],
-            broadcast=1,
-            axis=2,
-        )
-
-        z = np.logical_and(x, y[:, np.newaxis])
-        expect(node, inputs=[x, y], outputs=[z],
-               name='test_and_axis2')
-
-        node = onnx.helper.make_node(
-            'And',
-            inputs=['x', 'y'],
-            outputs=['and'],
-            broadcast=1,
-            axis=3,
-        )
-
+        # 4d vs 4d
+        x = (np.random.randn(1, 4, 1, 6) > 0).astype(np.bool)
+        y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
         z = np.logical_and(x, y)
         expect(node, inputs=[x, y], outputs=[z],
-               name='test_and_axis3')
+               name='test_or_bcast4v4d')
