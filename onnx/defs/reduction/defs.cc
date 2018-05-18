@@ -134,12 +134,8 @@ The type of the output tensor is integer.)DOC";
         "Constrain input and output types to all numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       // set output element type to int64
-      auto output_type = ctx.getOutputType(0);
-      if (output_type->value_case() == TypeProto::kTensorType ||
-          output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-        output_type->mutable_tensor_type()->set_elem_type(
-            TensorProto_DataType_INT64);
-      }
+      updateOutputElemType(ctx, 0, TensorProto_DataType_INT64);
+
       if (!hasNInputShapes(ctx, 1)) {
         return;
       }
