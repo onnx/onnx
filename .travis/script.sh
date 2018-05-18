@@ -20,10 +20,7 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   pip uninstall -y onnx
   time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
 
-  time mypy .
-  # Also test in python2 mode (but this is still in the python 3 CI
-  # instance, because mypy itself needs python 3)
-  time mypy --py2 .
+  time python setup.py typecheck
 
   pip uninstall -y onnx
   rm -rf .setuptools-cmake-build
