@@ -225,3 +225,69 @@ TensorProto message, and be valid as an output type.
         }
         propagateShapeFromInputToOutput(ctx, 0, 0);
     });
+
+ONNX_OPERATOR_SCHEMA(Multinomial)
+	.SinceVersion(7)
+    .SetDoc(R"DOC(
+Generate a tensor of samples from a multinomial distribution according to the probabilities
+of each of the possible outcomes.
+)DOC")
+    .Attr(
+        "sample_size",
+        "Number of times to sample.",
+        AttributeProto::INT,
+        static_cast<int64_t>(1))
+    .Attr(
+        "seed",
+        "(Optional) Seed to the random generator, if not specified we will auto generate one.",
+        AttributeProto::FLOAT,
+        OPTIONAL)
+    .Attr(
+        "dtype",
+        "(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.",
+        AttributeProto::INT,
+        static_cast<int64_t>(TensorProto::INT32))
+    .Input(
+        0,
+        "input",
+        "Input tensor with shape [batch_size, class_size], where class_size is the number of all possible outcomes. Each value along the axis zero represents the unnormalized log-probability of each corresponding outcome in a batch.", "T1")
+    .Output(
+        0,
+        "output",
+        "Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.", "T2")
+    .TypeConstraint(
+        "T1",
+        { "tensor(float16)", "tensor(float)", "tensor(double)" },
+        "Constrain input types to float tensors.")
+    .TypeConstraint(
+        "T2",
+        { "tensor(int32)", "tensor(int64)" },
+        "Constrain output types to integral tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        auto output_type = ctx.getOutputType(0);
+        auto input_type = ctx.getInputType(0);
+        if (input_type == nullptr || output_type == nullptr ||
+            TypeProto::kTensorType != output_type->value_case() ||
+            TypeProto::kTensorType != input_type->value_case()) {
+            return;
+        }
+        auto sample_size = ctx.getAttribute("sample_size");
+        if (nullptr == sample_size || !sample_size->has_type() || // invalid attribute : has no type
+            sample_size->type() != AttributeProto_AttributeType_INT) { // invalid attribute type
+            return;
+        }
+        auto dtype = ctx.getAttribute("dtype");
+        auto dataType = TensorProto_DataType::TensorProto_DataType_INT32;
+        if (dtype != nullptr) {
+            dataType = static_cast<TensorProto_DataType>(dtype->i());
+        }
+        if (dataType != TensorProto_DataType::TensorProto_DataType_INT32 &&
+            dataType != TensorProto_DataType::TensorProto_DataType_INT64) {
+            return;
+        }
+        output_type->mutable_tensor_type()->set_elem_type(dataType);
+        auto shape = output_type->mutable_tensor_type()->mutable_shape();
+        auto dim = shape->add_dim();
+        *dim = input_type->tensor_type().shape().dim(0);
+        shape->add_dim()->set_dim_value(sample_size->i());
+    });
