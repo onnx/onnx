@@ -180,11 +180,11 @@ ONNX_OPERATOR_SCHEMA(Concat)
 
       auto axisAttr = ctx.getAttribute("axis");
       if (!axisAttr) {
-        return;
+        fail_shape_inference("Required attribute axis is missing");;
       }
       int axis = static_cast<int>(axisAttr->i());
       if (axis < 0) {
-        return;
+        return; // TODO: check if negative axis must be supported
       }
 
       bool all_lengths_known = true;
@@ -212,7 +212,7 @@ ONNX_OPERATOR_SCHEMA(Concat)
             if (output_shape->dim(j).has_dim_value()) {
               if (shape.dim(j).dim_value() !=
                   output_shape->dim(j).dim_value()) {
-                return;
+                fail_shape_inference("Dimension mismatch");;
               }
             } else {
               *output_shape->mutable_dim(j) = shape.dim(j);
@@ -358,7 +358,7 @@ Example 2:
       if (!getRepeatedAttribute(ctx, "starts", starts) ||
           !getRepeatedAttribute(ctx, "ends", ends) ||
           starts.size() != ends.size()) {
-        return;
+        fail_shape_inference("Incorrect or missing attribute value for starts and ends");;
       }
       std::vector<int64_t> axes;
       if (!getRepeatedAttribute(ctx, "axes", axes)) {
@@ -366,7 +366,7 @@ Example 2:
           axes.push_back(i);
         }
       } else if (axes.size() != starts.size()) {
-        return;
+        fail_shape_inference("Attribute axes has incorrect length");;
       } else if (!std::is_sorted(axes.begin(), axes.end())) {
         // TODO support shape inference for unsorted axes
         return;
@@ -649,8 +649,8 @@ ONNX_OPERATOR_SCHEMA(Pad)
     .SinceVersion(2)
     .Attr(
         "pads",
-        "List of integers indicate the padding element count at the "
-        "beginning and end of each axis, for 2D it is the number of pixel. "
+        "List of integers indicating the number of padding elements to add or remove (if negative) "
+        "at the beginning and end of each axis. For 2D it is the number of pixels. "
         "`pads` rank should be double of the input's rank. `pads` format should be as follow "
         "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
         "added at the beginning of axis `i` and xi_end, the number of pixels added at "
@@ -696,18 +696,20 @@ Example:
         return;
       }
 
+      auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
+
       std::vector<int64_t> pads;
-      if (!getRepeatedAttribute(ctx, "pads", pads) ||
-          pads.size() !=
-              static_cast<size_t>(
-                  ctx.getInputType(0)->tensor_type().shape().dim_size() * 2)) {
-        return;
+      if (!getRepeatedAttribute(ctx, "pads", pads))
+        fail_shape_inference("Attribute value for pads is required");
+      if (pads.size() !=
+              static_cast<size_t>(input_shape.dim_size() * 2)) {
+        fail_shape_inference("Attribute pads has incorrect length");;
       }
 
       ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
       for (size_t i = 0;
-           (int64_t)i < ctx.getInputType(0)->tensor_type().shape().dim_size();
+           (int64_t)i < input_shape.dim_size();
            ++i) {
         auto* newdim = ctx.getOutputType(0)
                            ->mutable_tensor_type()
@@ -724,15 +726,9 @@ Example:
                   .shape()
                   .dim((int)i)
                   .dim_value() +
-              pads[i] +
-              pads[ctx.getInputType(0)->tensor_type().shape().dim_size() + i]);
-        } else if (
-            pads[i] +
-                pads
-                    [ctx.getInputType(0)->tensor_type().shape().dim_size() +
-                     i] ==
-            0) {
-          *newdim = ctx.getInputType(0)->tensor_type().shape().dim((int)i);
+              pads[i] + pads[input_shape.dim_size() + i]);
+        } else if (pads[i] + pads[input_shape.dim_size() + i] == 0) {
+          *newdim = input_shape.dim((int)i);
         }
       }
     });
@@ -765,7 +761,8 @@ are moved to the depth dimension.
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 		propagateElemTypeFromInputToOutput(ctx, 0, 0);
 		auto blocksize = getAttribute(ctx, "blocksize", 0);
-		if (blocksize <= 0) return;
+		if (blocksize <= 0)
+            fail_shape_inference("Blocksize must be positive");
 		if (hasInputShape(ctx, 0)) {
 			auto& input_shape = getInputShape(ctx, 0);
 			if (input_shape.dim_size() == 4) {
@@ -776,7 +773,8 @@ are moved to the depth dimension.
 					input_shape.dim(2) / blocksize,
 					input_shape.dim(3) / blocksize
 				});
-			}
+			} else
+                fail_shape_inference("Input tensor must be 4-dimensional");
 		}
     });
 
@@ -809,7 +807,8 @@ and width dimensions.
 	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
 		propagateElemTypeFromInputToOutput(ctx, 0, 0);
 		auto blocksize = getAttribute(ctx, "blocksize", 0);
-		if (blocksize <= 0) return;
+		if (blocksize <= 0)
+            fail_shape_inference("Blocksize must be positive");
 		if (hasInputShape(ctx, 0)) {
 			auto& input_shape = getInputShape(ctx, 0);
 			if (input_shape.dim_size() == 4) {
@@ -820,7 +819,8 @@ and width dimensions.
 					input_shape.dim(2) * blocksize,
 					input_shape.dim(3) * blocksize
 				});
-			}
+			} else
+                fail_shape_inference("Input tensor must be 4-dimensional");
 		}
 	});
 
