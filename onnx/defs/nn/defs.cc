@@ -47,7 +47,7 @@ void convPoolTypeAndShapeInference(
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    return; // The input shape is not properly set.
+    fail_shape_inference("Input tensor must have atleast 2 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -59,7 +59,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute dilations has incorrect size");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -73,7 +73,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      return;
+      fail_shape_inference("Attribute pads has incorrect size");;
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -82,7 +82,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute strides has incorrect size");;
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -91,10 +91,10 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");;
     }
   } else if (require_kernel_shape) {
-    return;
+    fail_shape_inference("Attribute kernel_shape must be specified");;
   } else {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
@@ -331,10 +331,10 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> pooled_shape;
   if (getRepeatedAttribute(ctx, "pooled_shape", pooled_shape)) {
     if (pooled_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute pooled_shape has incorrect length");
     }
   } else {
-    return; // cannot produce output shape.
+    fail_shape_inference("Attribute pooled_shape must be specified");
   }
 
   // (num_rois, channels, pooled_shape[0], pooled_shape[1])
@@ -579,6 +579,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   if (size_of_output > 0) {
     for (int i = 0; i < size_of_output; ++i) {
       if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
+        // TODO: throw exception?
         return; // output shape value cannot be smaller than the input shape
                 // value
       }
