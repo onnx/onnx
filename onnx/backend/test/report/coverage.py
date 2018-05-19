@@ -42,6 +42,7 @@ class NodeCoverage(object):
 
         if self.op_type is None:
             self.op_type = node.op_type
+            assert self.op_type is not None
             self.schema = defs.get_schema(self.op_type)
 
         for attr in node.attribute:

@@ -59,22 +59,21 @@ enum Version {
   _START_VERSION = 0;
   // The version field is always serialized and we will use it to store the
   // version that the  graph is generated from. This helps us set up version
-  // control. We should use version as
-  //     xx(major) - xx(minor) - xxxx(bugfix)
-  // and we are starting with 0x00000001 (0.0.1), which was the
-  //  version we published on Oct 10, 2017.
-  IR_VERSION_2017_10_10 = 0x00000001;
+  // control. 
+  // For the IR, we are using simple numbers starting with with 0x00000001, 
+  // which was the version we published on Oct 10, 2017.
+  IR_VERSION_2017_10_10 = 0x0000000000000001;
 
-  // IR_VERSION 0.0.2 published on Oct 30, 2017
+  // IR_VERSION 2 published on Oct 30, 2017
   // - Added type discriminator to AttributeProto to support proto3 users
-  IR_VERSION_2017_10_30 = 0x00000002;
+  IR_VERSION_2017_10_30 = 0x0000000000000002;
 
-  // IR VERSION 0.0.3 published on Nov 3, 2017
+  // IR VERSION 3 published on Nov 3, 2017
   // - For operator versioning:
   //    - Added new message OperatorSetIdProto
   //    - Added opset_import in ModelProto
   // - For vendor extensions, added domain in NodeProto
-  IR_VERSION = 0x00000003;
+  IR_VERSION = 0x0000000000000003;
 }
 
 // Attributes
