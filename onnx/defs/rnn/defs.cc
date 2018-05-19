@@ -7,6 +7,51 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
+void RNNShapeInference(InferenceContext& ctx) {
+    TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
+
+    auto direction = getAttribute(ctx, "direction", "forward");
+    if ((direction == "forward") || (direction == "reverse"))
+        num_directions.set_dim_value(1);
+    else if (direction == "bidirectional") 
+        num_directions.set_dim_value(2);
+    // else leave num_directions unknown in case of incorrect attribute value
+
+    auto hidden_size_value = getAttribute(ctx, "hidden_size", -1);
+    if (hidden_size_value > 0)
+        hidden_size.set_dim_value(hidden_size_value);
+
+    if (hasInputShape(ctx,0)) {
+        auto& first_input_shape = getInputShape(ctx,0);
+        seq_length = first_input_shape.dim(0);
+        batch_size = first_input_shape.dim(1);
+    }
+
+    // The treatment of outputs is a bit complicated because of the combination of
+    // optional outputs and the output_sequence attribute.
+    bool output_sequence = (getAttribute(ctx, "output_sequence", 0) != 0);
+    auto num_outputs = ctx.getNumOutputs();
+
+    if (num_outputs == 0) return; // Unlikely, but seems legal.
+
+    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+    if (num_outputs > 1) propagateElemTypeFromInputToOutput(ctx, 0, 1);
+    if (num_outputs > 2) propagateElemTypeFromInputToOutput(ctx, 0, 2);
+
+    if (output_sequence) {
+        // No ambiguity in spec
+        updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size}); // Y
+        if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_h
+        if (num_outputs > 2) updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size}); // Y_c
+    } else {
+        // Documentation suggests that the output Y is absent in this case
+        // Different tests seem to disagree on whether Y_h and Y_c, if present, should be
+        // in positions 0 & 1 or 1 & 2.
+        // updateOutputShape(ctx, 0, {num_directions, batch_size, hidden_size}); // Y_h
+        // if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_c
+    }
+}
+
 // Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
     return [=](OpSchema& schema) {
@@ -57,8 +102,11 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
         schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
                               "Constrain input and output types to float tensors.");
         schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
+        schema.TypeAndShapeInferenceFunction(RNNShapeInference);
     };
 }
+
+
 
 ONNX_OPERATOR_SCHEMA(RNN)
     .SetDoc(R"DOC(
