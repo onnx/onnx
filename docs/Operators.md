@@ -788,6 +788,114 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 #### Examples
 
 <details>
+<summary>2d_semi_automated_tests</summary>
+
+```python
+#2D Test
+#Try different paddings
+for strides in [[1, 1], [2, 2], [3, 1]]:
+    #Try different kernels
+    for kernel_shape in [[1, 1], [2, 2], [1, 3]]:
+        #Try different paddings
+        if kernel_shape[1] == 1:
+            paddings = [[0, 0, 0, 0]]
+        elif kernel_shape[1] == 2:
+            paddings = [[1, 1, 1, 1], [1, 0, 1, 0]]
+        else:
+            paddings = [[0, 1, 0, 1]]
+        for pads in paddings:
+            # Define a random input tensor
+            x = np.random.randn(4, 3, 11, 11).astype(np.float32)
+            # Add padding to the input tensor
+            padded = np.pad(x, ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])), mode='constant',
+                            constant_values=np.nan)
+            # make onnx mean_pool node
+            node = onnx.helper.make_node(
+                'AveragePool',
+                inputs=['x'],
+                outputs=['y'],
+                kernel_shape=kernel_shape,
+                strides=strides,
+                pads=pads
+            )
+            pad_shape = [pads[0] + pads[2], pads[1] + pads[3]]
+            wSize = int(np.floor((padded.shape[2] - (kernel_shape[0] - 1) - 1) / strides[0] + 1))
+            hSize = int(np.floor((padded.shape[3] - (kernel_shape[1] - 1) - 1) / strides[1] + 1))
+            y = pool(padded, np.shape(x), kernel_shape, strides, [wSize, hSize], pad_shape, 'AVG')
+            padStr = 'asym_pad'
+            if pads[0] == pads[2] and pads[1] == pads[3]:
+                padStr = 'sym_pad'
+            elif np.all(pads == 0):
+                padStr = 'no_pad'
+            # Check result:
+            expect(
+                node, inputs=[x], outputs=[y],
+                name='test_avgpool_2D_%s_kernel_%d_%d_stride_%d_%d' % (
+                    padStr, kernel_shape[0],
+                    kernel_shape[1], strides[0], strides[1]
+                )
+            )
+```
+
+</details>
+
+
+<details>
+<summary>3d_semi_automated_tests</summary>
+
+```python
+#3D Test
+#Try different strides
+for strides in [[1, 1, 1], [2, 2, 2], [3, 1, 3]]:
+    #Try different kernels
+    for kernel_shape in [[1, 1, 1], [2, 2, 2], [1, 3, 1]]:
+        #Try different paddings
+        if kernel_shape[1] == 1:
+            paddings = [[0, 0, 0, 0, 0, 0]]
+        elif kernel_shape[1] == 2:
+            paddings = [[1, 1, 1, 1, 1, 1], [1, 1, 1, 0, 0, 0]]
+        else:
+            paddings = [[0, 2, 0, 0, 2, 0]]
+        for pads in paddings:
+            # Define a random input tensor
+            x = np.random.randn(4, 3, 11, 11, 11).astype(np.float32)
+            # Add padding to the input tensor
+            padded = np.pad(x, ((0, 0), (0, 0), (pads[0], pads[3]), (pads[1], pads[4]), (pads[2], pads[5])), mode='constant',
+                            constant_values=np.nan)
+            # make onnx max_pool node
+            node = onnx.helper.make_node(
+                'AveragePool',
+                inputs=['x'],
+                outputs=['y'],
+                kernel_shape=kernel_shape,
+                strides=strides,
+                pads=pads
+            )
+            pad_shape = [pads[0] + pads[3], pads[1] + pads[4], pads[2] + pads[5]]
+            # Define output tensor of the right size:
+            wSize = int(np.floor((padded.shape[2] - (kernel_shape[0] - 1) - 1) / strides[0] + 1))
+            hSize = int(np.floor((padded.shape[3] - (kernel_shape[1] - 1) - 1) / strides[1] + 1))
+            dSize = int(np.floor((padded.shape[4] - (kernel_shape[2] - 1) - 1) / strides[2] + 1))
+            y = pool(padded, np.shape(x), kernel_shape, strides, [wSize, hSize, dSize], pad_shape, 'AVG')
+            # Check result:
+            padStr = 'asym_pad'
+            if pads[0] == pads[3] and pads[1] == pads[4] and pads[2] == pads[5]:
+                padStr = 'sym_pad'
+            elif np.all(pads == 0):
+                padStr = 'no_pad'
+            expect(
+                node, inputs=[x], outputs=[y],
+                name='test_avgpool_3D_%s_kernel_%d_%d_%d_stride_%d_%d_%d' % (
+                    padStr, kernel_shape[0], kernel_shape[1], kernel_shape[2],
+                    strides[0], strides[1], strides[2]
+                )
+            )
+```
+
+</details>
+
+
+<details>
 <summary>averagepool_1d_default</summary>
 
 ```python
@@ -4439,6 +4547,114 @@ This version of the operator has been available since version 1 of the default O
 
 
 #### Examples
+
+<details>
+<summary>2d_semi_automated_tests</summary>
+
+```python
+#2D Test
+#Try different paddings
+for strides in [[1, 1], [2, 2], [3, 1]]:
+    #Try different kernels
+    for kernel_shape in [[1, 1], [2, 2], [1, 3]]:
+        #Try different paddings
+        if kernel_shape[1] == 1:
+            paddings = [[0, 0, 0, 0]]
+        elif kernel_shape[1] == 2:
+            paddings = [[1, 1, 1, 1], [1, 0, 1, 0]]
+        else:
+            paddings = [[0, 1, 0, 1]]
+        for pads in paddings:
+            # Define a random input tensor
+            x = np.random.randn(4, 3, 11, 11).astype(np.float32)
+            # Add padding to the input tensor
+            padded = np.pad(x, ((0, 0), (0, 0), (pads[0], pads[2]), (pads[1], pads[3])), mode='constant',
+                            constant_values=np.nan)
+            # make onnx mean_pool node
+            node = onnx.helper.make_node(
+                'MaxPool',
+                inputs=['x'],
+                outputs=['y'],
+                kernel_shape=kernel_shape,
+                strides=strides,
+                pads=pads
+            )
+            pad_shape = [pads[0] + pads[2], pads[1] + pads[3]]
+            wSize = int(np.floor((padded.shape[2] - (kernel_shape[0] - 1) - 1) / strides[0] + 1))
+            hSize = int(np.floor((padded.shape[3] - (kernel_shape[1] - 1) - 1) / strides[1] + 1))
+            y = pool(padded, np.shape(x), kernel_shape, strides, [wSize, hSize], pad_shape, 'MAX')
+            padStr = 'asym_pad'
+            if pads[0] == pads[2] and pads[1] == pads[3]:
+                padStr = 'sym_pad'
+            elif np.all(pads == 0):
+                padStr = 'no_pad'
+            # Check result:
+            expect(
+                node, inputs=[x], outputs=[y],
+                name='test_maxpool_2D_%s_kernel_%d_%d_stride_%d_%d' % (
+                    padStr, kernel_shape[0],
+                    kernel_shape[1], strides[0], strides[1]
+                )
+            )
+```
+
+</details>
+
+
+<details>
+<summary>3d_semi_automated_tests</summary>
+
+```python
+#3D Test
+#Try different strides
+for strides in [[1, 1, 1], [2, 2, 2], [3, 1, 3]]:
+    #Try different kernels
+    for kernel_shape in [[1, 1, 1], [2, 2, 2], [1, 3, 1]]:
+        #Try different paddings
+        if kernel_shape[1] == 1:
+            paddings = [[0, 0, 0, 0, 0, 0]]
+        elif kernel_shape[1] == 2:
+            paddings = [[1, 1, 1, 1, 1, 1], [1, 1, 1, 0, 0, 0]]
+        else:
+            paddings = [[0, 2, 0, 0, 2, 0]]
+        for pads in paddings:
+            # Define a random input tensor
+            x = np.random.randn(4, 3, 11, 11, 11).astype(np.float32)
+            # Add padding to the input tensor
+            padded = np.pad(x, ((0, 0), (0, 0), (pads[0], pads[3]), (pads[1], pads[4]), (pads[2], pads[5])), mode='constant',
+                            constant_values=np.nan)
+            # make onnx max_pool node
+            node = onnx.helper.make_node(
+                'MaxPool',
+                inputs=['x'],
+                outputs=['y'],
+                kernel_shape=kernel_shape,
+                strides=strides,
+                pads=pads
+            )
+            pad_shape = [pads[0] + pads[3], pads[1] + pads[4], pads[2] + pads[5]]
+            # Define output tensor of the right size:
+            wSize = int(np.floor((padded.shape[2] - (kernel_shape[0] - 1) - 1) / strides[0] + 1))
+            hSize = int(np.floor((padded.shape[3] - (kernel_shape[1] - 1) - 1) / strides[1] + 1))
+            dSize = int(np.floor((padded.shape[4] - (kernel_shape[2] - 1) - 1) / strides[2] + 1))
+            y = pool(padded, np.shape(x), kernel_shape, strides, [wSize, hSize, dSize], pad_shape, 'MAX')
+            # Check result:
+            padStr = 'asym_pad'
+            if pads[0] == pads[3] and pads[1] == pads[4] and pads[2] == pads[5]:
+                padStr = 'sym_pad'
+            elif np.all(pads == 0):
+                padStr = 'no_pad'
+            expect(
+                node, inputs=[x], outputs=[y],
+                name='test_maxpool_3D_%s_kernel_%d_%d_%d_stride_%d_%d_%d' % (
+                    padStr, kernel_shape[0], kernel_shape[1], kernel_shape[2],
+                    strides[0], strides[1], strides[2]
+                )
+            )
+```
+
+</details>
+
 
 <details>
 <summary>maxpool_1d_default</summary>
