@@ -72,7 +72,7 @@ class LSTM_Helper():
         C = f * self.C_0 + i * c
         o = self.f(np.dot(self.X, np.transpose(w_o)) + np.dot(self.H_0, r_o) + w_bo + r_bo + p_o * C)
         H = o * self.h(C)
-        return np.reshape(H, (self.num_directions, self.batch_size, self.hidden_size))
+        return np.reshape(H, (self.num_directions, self.batch_size, self.hidden_size)).astype(np.float32)
 
 
 class LSTM(Base):
