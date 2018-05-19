@@ -438,15 +438,13 @@ class OpSchema final {
     return tensor_inference_function_;
   }
 
- private:
-  friend class OpSchemaRegistry;
-
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
   // TypeProto and create global unique string pointer as the DataType for
   // efficiency.
   void Finalize();
 
+ private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
 

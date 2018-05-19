@@ -9,7 +9,7 @@ from onnx.helper import make_node, make_tensor_value_info, make_empty_tensor_val
 import onnx.shape_inference
 import unittest
 
-import numpy as np
+import numpy as np  # type: ignore
 
 
 class TestShapeInference(unittest.TestCase):
@@ -497,6 +497,50 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
 
+    def _rnn_forward(self, seqlen, batchsize, inpsize, hiddensize):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
+             ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
+            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize, output_sequence=1)],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (1, batchsize, hiddensize))])
+
+    def test_rnn_forward(self):
+        self._rnn_forward(64, 32, 10, 4)
+
+    def _rnn_bidirectional(self, seqlen, batchsize, inpsize, hiddensize):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
+             ('w', TensorProto.FLOAT, (2, hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (2, hiddensize, hiddensize))],
+            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize, output_sequence=1,
+                direction="bidirectional")],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 2, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (2, batchsize, hiddensize))])
+
+    def test_rnn_bidirectional(self):
+        self._rnn_bidirectional(64, 32, 10, 4)
+
+    def _lstm_forward(self, seqlen, batchsize, inpsize, hiddensize):
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
+             ('w', TensorProto.FLOAT, (1, 4 * hiddensize, inpsize)),
+             ('r', TensorProto.FLOAT, (1, 4 * hiddensize, hiddensize))],
+            [make_node('LSTM', ['x', 'w', 'r'], ['all', 'hidden', 'last'], hidden_size=hiddensize, output_sequence=1)],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
+            make_tensor_value_info('hidden', TensorProto.FLOAT, (1, batchsize, hiddensize)),
+            make_tensor_value_info('last', TensorProto.FLOAT, (1, batchsize, hiddensize))])
+
+    def test_lstm_forward(self):
+        self._lstm_forward(64, 32, 10, 4)
+
     def test_topk_default_axis(self):
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (3, 4, 5, 10))],
@@ -818,6 +862,38 @@ class TestShapeInference(unittest.TestCase):
             [make_node("GlobalLpPool", ["X"], ["Y"])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (5, 3, 1, 1))])
+
+    def test_conv_transpose(self):
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, 3, 3))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 33, 33))])
+
+    def test_conv_transpose_with_pads(self):
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, 3, 3))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', strides=[2, 2], pads=[1, 1, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 30, 30))])
+
+    def test_conv_transpose_with_output_shape(self):
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, 3, 3))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', strides=[2, 2], pads=[1, 1, 2, 2], output_shape=[36, 36])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 36, 36))])
+
+    def test_conv_transpose_with_kernal_shape(self):
+        graph = self._make_graph(
+            [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
+             ('W', TensorProto.FLOAT, (48, 32, None, None))],
+            [make_node('ConvTranspose', ['X', 'W'], 'Y', kernel_shape=[3, 3], strides=[2, 2], pads=[1, 1, 2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 30, 30))])
 
 
 if __name__ == '__main__':
