@@ -47,7 +47,7 @@ void convPoolTypeAndShapeInference(
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-    return; // The input shape is not properly set.
+    fail_shape_inference("Input tensor must have atleast 2 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -59,7 +59,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> dilations;
   if (use_dilation && getRepeatedAttribute(ctx, "dilations", dilations)) {
     if (dilations.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute dilations has incorrect size");
     }
   } else {
     dilations.assign(n_input_dims, 1);
@@ -73,7 +73,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      return;
+      fail_shape_inference("Attribute pads has incorrect size");;
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -82,7 +82,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute strides has incorrect size");;
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -91,10 +91,10 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");;
     }
   } else if (require_kernel_shape) {
-    return;
+    fail_shape_inference("Attribute kernel_shape must be specified");;
   } else {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
@@ -331,10 +331,10 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> pooled_shape;
   if (getRepeatedAttribute(ctx, "pooled_shape", pooled_shape)) {
     if (pooled_shape.size() != n_input_dims) {
-      return;
+      fail_shape_inference("Attribute pooled_shape has incorrect length");
     }
   } else {
-    return; // cannot produce output shape.
+    fail_shape_inference("Attribute pooled_shape must be specified");
   }
 
   // (num_rois, channels, pooled_shape[0], pooled_shape[1])
@@ -487,6 +487,126 @@ ONNX_OPERATOR_SCHEMA(Conv).FillUsing(ConvOpSchemaGenerator("a filter"));
 
 } // namespace ONNX_NAMESPACE
 
+void convTransposeShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // we need at least two inputs to have a shape for this inference.
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  // don't bother with legacy auto_pad for now
+  if (ctx.getAttribute("auto_pad")) {
+    return;
+  }
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 2) {
+    return; // Input tensor should have at least two dimensions.
+  }
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+
+  int64_t groups = getAttribute(ctx, "group", 1);
+  if (groups != 1) {
+    return; // we don't handle the group case.
+  }
+
+  std::vector<int64_t> dilations;
+  if (getRepeatedAttribute(ctx, "dilations", dilations)) {
+    return; // we don't handle the dialations.
+  }
+
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      return;
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+  }
+
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    strides.assign(n_input_dims, 1);
+  }
+
+  std::vector<int64_t> kernel_shape;
+  if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
+    if (kernel_shape.size() != n_input_dims) {
+      return;
+    }
+  } else {
+    auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
+    for (int i = 2; i < second_input_shape.dim_size(); ++i) {
+      if (!second_input_shape.dim(i).has_dim_value()) {
+        return;
+      }
+      kernel_shape.push_back(second_input_shape.dim(i).dim_value());
+    }
+  }
+
+  std::vector<int64_t> output_shape;
+  if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
+    if (output_shape.size() != n_input_dims) {
+      return;
+    }
+  }
+
+  std::vector<int64_t> output_padding;
+  if (getRepeatedAttribute(ctx, "output_padding", output_padding)) {
+    if (output_padding.size() != n_input_dims) { // Added only to one side.
+      return;
+    }
+  } else {
+    output_padding.assign(n_input_dims, 0);
+  }
+
+  auto final_output_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  *final_output_shape->add_dim() = input_shape.dim(0);
+  *final_output_shape->add_dim() =
+      ctx.getInputType(1)->tensor_type().shape().dim(
+          1); // channels should be the second dim of second input.
+
+  int size_of_output = static_cast<int>(output_shape.size());
+  if (size_of_output > 0) {
+    for (int i = 0; i < size_of_output; ++i) {
+      if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
+        // TODO: throw exception?
+        return; // output shape value cannot be smaller than the input shape
+                // value
+      }
+
+      final_output_shape->add_dim()->set_dim_value(output_shape[i]);
+    }
+    return; // assume no need to proceed further when the output shape is given.
+  }
+
+  int kernel_shape_size = static_cast<int>(kernel_shape.size());
+  for (int i = 0; i < kernel_shape_size; ++i) {
+    auto newdim = final_output_shape->add_dim();
+    if (!input_shape.dim(2 + i).has_dim_value()) {
+      continue;
+    }
+
+    int64_t newdim_value =
+        strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
+    newdim_value += (output_padding[i] + kernel_shape[i]);
+    newdim_value -= pads[i];
+    newdim_value -= pads[i + kernel_shape_size];
+
+    // add in the initial position
+    newdim->set_dim_value(newdim_value);
+  }
+}
+
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
     const char* filter_desc) {
@@ -572,6 +692,8 @@ and computes the output.)DOC";
         "number of groups input channels and output channels are divided into, default is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
+    schema.TypeAndShapeInferenceFunction(
+        [](InferenceContext& ctx) { convTransposeShapeInference(ctx); });
   };
 }
 
