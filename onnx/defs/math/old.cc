@@ -573,9 +573,9 @@ numeric_limits::lowest() and numeric_limits::max() respectively.
 ONNX_OPERATOR_SCHEMA(Gemm)
     .SetDoc(R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
-, input tensor B has dimension (K X N), input tensor C and output tensor Y have
-dimension (M X N).
+Compute Y = alpha * A * B + beta * C, where input tensor A has
+dimension (M X K), input tensor B has dimension (K X N), input tensor C and
+output tensor Y have dimension (M X N).
 If attribute broadcast is non-zero, input tensor C will be broadcasted to match
 the dimension requirement. A will be transposed before doing the computation
 if attribute transA is non-zero, same for B and transB.
