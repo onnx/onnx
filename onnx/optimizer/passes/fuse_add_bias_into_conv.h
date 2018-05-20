@@ -112,14 +112,15 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           orig_conv->node()->addInput(conv_3rd_input);
         } else if (rank > static_cast<int64_t>(bias_shape.size()) + 1) {
           continue;
-        } else if (num_el == M && bias_shape[1 + bias_shape.size() - rank].dim == M) {
+        } else if (num_el == M && 
+            bias_shape[1 + bias_shape.size() - static_cast<unsigned>(rank)].dim == M) {
           ONNX_ASSERT(bias_shape.size() > 1);
           if (orig_bias->node()->kind() != kParam && orig_conv->node()->isBefore(orig_bias->node())) {
             orig_bias->node()->moveBefore(orig_conv->node());
           }
           Node* squeeze = graph.create(kSqueeze, 1);
           std::vector<int64_t> axes(bias_shape.size());
-          std::iota(axes.begin(), axes.end(), 0);
+          std::iota(axes.begin(), axes.end(), static_cast<int64_t>(0));
           axes.erase(axes.begin() + 1 + bias_shape.size() - rank);
           squeeze->is_(kaxes, std::move(axes));
           squeeze->addInput(orig_bias);

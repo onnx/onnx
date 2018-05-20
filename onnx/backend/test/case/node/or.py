@@ -83,4 +83,3 @@ class Or(Base):
         z = np.logical_or(x, y)
         expect(node, inputs=[x, y], outputs=[z],
                name='test_or_bcast4v4d')
-
