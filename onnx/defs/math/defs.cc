@@ -8,18 +8,15 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-const char* kBroadcastDoc = R"DOC(
-This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-please check [the doc](Broadcasting.md).
-)DOC";
-
 std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
-{broadcast_doc})DOC";
+
+{broadcast_doc}
+)DOC";
     ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc);
+    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
     schema.SetDoc(doc);
     schema.Input(
         0,
@@ -29,8 +26,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
     schema.Input(
         1,
         "B",
-        "Second operand, which has the same element type as first input."
-        "If broadcasting is disabled it should be of the same size.",
+        "Second operand.",
         "T");
     schema.Output(0, "C", "Result, has same element type as two inputs", "T");
     schema.TypeConstraint(
@@ -339,11 +335,13 @@ Calculates the hyperbolic tangent of the given input tensor element-wise.
     .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Pow)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
-)DOC" + std::string(kBroadcastDoc))
+
+)DOC" + GenerateBroadcastingDocMul())
     .Input(0, "X", "First operand, base of the exponent.", "T")
     .Input(
         1,
@@ -364,11 +362,7 @@ PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
 
-This operator supports **unidirectional broadcasting** (tensor slope should be
-unidirectional broadcastable to input tensor X); for more details please check
-[the doc](Broadcasting.md).
-
-)DOC")
+)DOC" + GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
     .Input(0, "X", "Input tensor", "T")
     .Input(
         1,
@@ -550,10 +544,7 @@ input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to sh
 and output tensor Y has shape (M, N). A will be transposed before doing the
 computation if attribute transA is non-zero, same for B and transB.
 
-This operator supports **unidirectional broadcasting** (tensor C should be
-unidirectional broadcastable to tensor A * B); for more details please check
-[the doc](Broadcasting.md).
-)DOC")
+)DOC" + GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
     .Input(0, "A",
            "Input tensor A. "
            "The shape of A should be (M, K) if transA is 0, "
@@ -602,11 +593,6 @@ unidirectional broadcastable to tensor A * B); for more details please check
             ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
           *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
             ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
-        } else if (hasInputShape(ctx, 2) &&
-                   (!ctx.getAttribute("broadcast") ||
-                    static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
-            ctx.getInputType(2)->tensor_type().shape();
         }
       });
 

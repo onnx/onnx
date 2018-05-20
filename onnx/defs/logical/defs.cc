@@ -18,12 +18,12 @@ std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         std::string doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
-elementwise on the input tensors `A` and `B`.
+elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
 
-This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-please check [the doc](Broadcasting.md).
+{broadcast_doc}
 )DOC";
         ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
         schema.SetDoc(doc);
         schema.Input(0, "A", "First input operand for the logical operator.", "T");
         schema.Input(1, "B", "Second input operand for the logical operator.", "T");

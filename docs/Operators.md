@@ -237,8 +237,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Performs element-wise binary addition (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -252,7 +251,7 @@ Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>, <a href
 <dt><tt>A</tt> : T</dt>
 <dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
@@ -313,10 +312,9 @@ expect(node, inputs=[x, y], outputs=[x + y],
 ### <a name="And"></a><a name="and">**And**</a>
 
   Returns the tensor resulted from performing the `and` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -1845,8 +1843,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Performs element-wise binary division (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -1860,7 +1857,7 @@ Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>, <a href
 <dt><tt>A</tt> : T</dt>
 <dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
@@ -2064,10 +2061,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Equal"></a><a name="equal">**Equal**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -2691,9 +2687,7 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   and output tensor Y has shape (M, N). A will be transposed before doing the
   computation if attribute transA is non-zero, same for B and transB.
   
-  This operator supports **unidirectional broadcasting** (tensor C should be
-  unidirectional broadcastable to tensor A * B); for more details please check
-  [the doc](Broadcasting.md).
+  This operator supports **multidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -2986,10 +2980,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 ### <a name="Greater"></a><a name="greater">**Greater**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -3787,10 +3780,9 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Less"></a><a name="less">**Less**</a>
 
   Returns the tensor resulted from performing the `less` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -4873,8 +4865,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
   Performs element-wise binary multiplication (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -4888,7 +4879,7 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>, <a href
 <dt><tt>A</tt> : T</dt>
 <dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
@@ -5122,10 +5113,9 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 ### <a name="Or"></a><a name="or">**Or**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -5251,10 +5241,7 @@ expect(node, inputs=[x, y], outputs=[z],
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
-  This operator supports **unidirectional broadcasting** (tensor slope should be
-  unidirectional broadcastable to input tensor X); for more details please check
-  [the doc](Broadcasting.md).
-  
+  This operator supports **multidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -5405,12 +5392,13 @@ for mode in ['edge', 'reflect']:
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>
 
 #### Inputs
 
@@ -8603,8 +8591,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Performs element-wise binary subtraction (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -8618,7 +8605,7 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>, <a href
 <dt><tt>A</tt> : T</dt>
 <dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand, which has the same element type as first input.If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
@@ -9280,10 +9267,9 @@ expect(node, inputs=[data], outputs=[output],
 ### <a name="Xor"></a><a name="xor">**Xor**</a>
 
   Returns the tensor resulted from performing the `xor` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details
-  please check [the doc](Broadcasting.md).
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 

@@ -11,25 +11,6 @@ namespace ONNX_NAMESPACE {
 const char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
-tensor can either be of size 1 (a scalar value), or having its shape as a
-contiguous subset of the first tensor's shape. The starting of the mutually
-equal shape is specified by the argument "axis", and if it is not set, suffix
-matching is assumed. 1-dim expansion doesn't work yet.
-
-For example, the following tensor shapes are supported (with broadcast=1):
-
-  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
-  shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-  shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-  shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-  shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-
-Attribute `broadcast=1` needs to be passed to enable broadcasting.
-)DOC";
-
-const char* kBroadcastDoc_old_opset6 = R"DOC(
-If necessary the right-hand-side argument will be broadcasted to match the
-shape of left-hand-side argument. When broadcasting is specified, the second
 tensor can either be of element size 1 (including a scalar tensor and any
 tensor with rank equal to or smaller than the first tensor), or having its
 shape as a contiguous subset of the first tensor's shape. The starting of the
@@ -100,7 +81,7 @@ std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
 Performs element-wise binary {name} (with limited broadcast support).
 {broadcast_doc})DOC";
     ReplaceAll(doc, "{name}", name);
-    ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old_opset6);
+    ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old);
     schema.SetDoc(doc);
     schema.Attr(
         "broadcast",
@@ -151,6 +132,36 @@ ONNX_OPERATOR_SCHEMA(Mul).FillUsing(MathDocGenerator_old_opset6("multiplication"
 ONNX_OPERATOR_SCHEMA(Div).FillUsing(MathDocGenerator_old_opset6("division"));
 
 } // namespace ONNX_NAMESPACE
+
+ONNX_OPERATOR_SCHEMA(Pow)
+    .SetDoc(R"DOC(
+Pow takes input data (Tensor<T>) and exponent Tensor, and
+produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
+is applied to the data tensor elementwise.
+)DOC" + std::string(kBroadcastDoc_old))
+    .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
+    .Input(
+        1,
+        "Y",
+        "Input tensor of any shape broadcastable to X shape, "
+        "the exponent component.",
+        "T")
+    .Attr(
+        "broadcast",
+        "Pass 1 to enable broadcasting",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "axis",
+        "If set, defines the broadcast dimensions. See doc for details.",
+        AttributeProto::INT,
+        OPTIONAL)
+    .Output(0, "Z", "Output tensor (same size as X)", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Neg)
     .SetDoc(R"DOC(
