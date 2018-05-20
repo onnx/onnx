@@ -57,11 +57,11 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
         if (weight_shape.size() > 0 && weight_shape[0].is_int) {
           ONNX_ASSERT(M == -1 || M == weight_shape[0].dim);
           M = weight_shape[0].dim;
-          ONNX_ASSERT(rank == -1 || rank == weight_shape.size());
+          ONNX_ASSERT(rank == -1 || rank == static_cast<int64_t>(weight_shape.size()));
           rank = weight_shape.size();
         }
         int64_t num_el = 1;
-        for (int i = 0; i < bias_shape.size(); ++ i) {
+        for (int i = 0; i < static_cast<int64_t>(bias_shape.size()); ++ i) {
           if (bias_shape[i].is_int) {
             num_el *= bias_shape[i].dim;
           } else {
@@ -74,7 +74,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           size_lack_count += 1;
           continue;
         }
-        if (rank < bias_shape.size()) {
+        if (rank < static_cast<int64_t>(bias_shape.size())) {
           continue;
         }
         if (num_el == 1) {
@@ -110,7 +110,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             tile->insertBefore(orig_conv->node());
           }
           orig_conv->node()->addInput(conv_3rd_input);
-        } else if (rank > bias_shape.size() + 1) {
+        } else if (rank > static_cast<int64_t>(bias_shape.size()) + 1) {
           continue;
         } else if (num_el == M && bias_shape[1 + bias_shape.size() - rank].dim == M) {
           ONNX_ASSERT(bias_shape.size() > 1);
