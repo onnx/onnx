@@ -92,20 +92,20 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
             squeeze->insertBefore(orig_conv->node());
           }
           if (M > 1) {
-            Node* constant1 = graph.create(kConstant, 1);
-            Tensor t1;
-            t1.sizes().push_back(static_cast<int64_t>(1));
-            t1.int64s().push_back(M);
-            t1.elem_type() = TensorProto_DataType_INT64;
+            Node* constant = graph.create(kConstant, 1);
+            Tensor t;
+            t.sizes().push_back(static_cast<int64_t>(1));
+            t.int64s().push_back(M);
+            t.elem_type() = TensorProto_DataType_INT64;
             Symbol sym = Symbol("value");
-            constant1->t_(sym, t1);
-            std::vector<Dimension> s1 = {1};
-            constant1->output()->setSizes(s1);
-            constant1->output()->setElemType(TensorProto_DataType_INT64);
-            constant1->insertBefore(orig_conv->node());
+            constant->t_(sym, t);
+            std::vector<Dimension> s = {1};
+            constant->output()->setSizes(s);
+            constant->output()->setElemType(TensorProto_DataType_INT64);
+            constant->insertBefore(orig_conv->node());
             Node* tile = graph.create(kTile, 1);
             tile->addInput(conv_3rd_input);
-            tile->addInput(constant1->output());
+            tile->addInput(constant->output());
             conv_3rd_input = tile->output();
             tile->insertBefore(orig_conv->node());
           }
@@ -121,7 +121,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           Node* squeeze = graph.create(kSqueeze, 1);
           std::vector<int64_t> axes(bias_shape.size());
           std::iota(axes.begin(), axes.end(), static_cast<int64_t>(0));
-          axes.erase(axes.begin() + 1 + bias_shape.size() - rank);
+          axes.erase(axes.begin() + 1 + bias_shape.size() - static_cast<unsigned>(rank));
           squeeze->is_(kaxes, std::move(axes));
           squeeze->addInput(orig_bias);
           squeeze->insertBefore(orig_conv->node());
