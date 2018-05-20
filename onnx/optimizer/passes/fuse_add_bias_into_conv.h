@@ -13,7 +13,7 @@
 //   case 1: A is 1D tensor and A.dim[0] == Z.dim[1]
 //   case 2: A is 1-element 1D tensor
 
-
+#include <numeric>
 
 #include "onnx/optimizer/passes/optimize_pass.h"
 
@@ -47,62 +47,95 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
         auto bias_shape = orig_bias->sizes();
         auto weight_shape = orig_conv->node()->inputs()[1]->sizes();
         int64_t M = -1;
-        // try to get feature M from conv_shape
+        int64_t rank = -1;
+        // try to get feature M and rank from conv_shape
         if (conv_shape.size() > 1 && conv_shape[1].is_int) {
           M = conv_shape[1].dim;
+          rank = conv_shape.size();
         }
-        // try to get feature M from weight_shape
+        // try to get feature M and rank from weight_shape
         if (weight_shape.size() > 0 && weight_shape[0].is_int) {
           ONNX_ASSERT(M == -1 || M == weight_shape[0].dim);
           M = weight_shape[0].dim;
+          ONNX_ASSERT(rank == -1 || rank == weight_shape.size());
+          rank = weight_shape.size();
         }
-        if (M == -1 || bias_shape.size() == 0 || !bias_shape[0].is_int) {
+        int64_t num_el = 1;
+        for (int i = 0; i < bias_shape.size(); ++ i) {
+          if (bias_shape[i].is_int) {
+            num_el *= bias_shape[i].dim;
+          } else {
+            num_el = -1;
+            break;
+          }
+        }
+        if (M == -1 || num_el == -1) {
           // No enough information, bail out
           size_lack_count += 1;
           continue;
         }
-        if (bias_shape.size() == 1) {
-          ONNX_ASSERT(n->hasAttribute(kbroadcast) && n->i(kbroadcast) == static_cast<int64_t>(1));
-          bool able_to_optimize = bias_shape[0].dim == 1 ||
-            (bias_shape[0].dim == M && (!n->hasAttribute(kaxis) || n->i(kaxis) == 1));
-          if (!able_to_optimize) {
-            continue;
-          }
-          // move the bias before Conv.
-          // if necessary, insert tile before Conv (after bias)
+        if (rank < bias_shape.size()) {
+          continue;
+        }
+        if (num_el == 1) {
           if (orig_bias->node()->kind() != kParam && orig_conv->node()->isBefore(orig_bias->node())) {
             orig_bias->node()->moveBefore(orig_conv->node());
           }
-          if (bias_shape[0].dim == 1) {
-            Symbol sym = Symbol("value");
+          Value* conv_3rd_input = orig_bias;
+          if (bias_shape.size() > 1) {
+            Node* squeeze = graph.create(kSqueeze, 1);
+            std::vector<int64_t> axes(bias_shape.size() - 1);
+            std::iota(axes.begin(), axes.end(), 0);
+            squeeze->is_(kaxes, std::move(axes));
+            squeeze->addInput(conv_3rd_input);
+            conv_3rd_input = squeeze->output();
+            squeeze->insertBefore(orig_conv->node());
+          }
+          if (M > 1) {
             Node* constant1 = graph.create(kConstant, 1);
             Tensor t1;
             t1.sizes().push_back(static_cast<int64_t>(1));
             t1.int64s().push_back(M);
             t1.elem_type() = TensorProto_DataType_INT64;
+            Symbol sym = Symbol("value");
             constant1->t_(sym, t1);
             std::vector<Dimension> s1 = {1};
             constant1->output()->setSizes(s1);
             constant1->output()->setElemType(TensorProto_DataType_INT64);
             constant1->insertBefore(orig_conv->node());
             Node* tile = graph.create(kTile, 1);
-            tile->addInput(orig_bias);
+            tile->addInput(conv_3rd_input);
             tile->addInput(constant1->output());
+            conv_3rd_input = tile->output();
             tile->insertBefore(orig_conv->node());
-            orig_conv->node()->addInput(tile->output());
-          } else if (bias_shape[0].dim == M &&
-              (!n->hasAttribute(kaxis) || n->i(kaxis) == 1)) { // default axis is 1
-            orig_conv->node()->addInput(orig_bias);
           }
-          if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
-            orig_conv->setSizes(n->output()->sizes());
+          orig_conv->node()->addInput(conv_3rd_input);
+        } else if (rank > bias_shape.size() + 1) {
+          continue;
+        } else if (num_el == M && bias_shape[1 + bias_shape.size() - rank].dim == M) {
+          ONNX_ASSERT(bias_shape.size() > 1);
+          if (orig_bias->node()->kind() != kParam && orig_conv->node()->isBefore(orig_bias->node())) {
+            orig_bias->node()->moveBefore(orig_conv->node());
           }
-          if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
-            orig_conv->setElemType(n->output()->elemType());
-          }
-          n->replaceAllUsesWith(orig_conv->node());
-          it.destroyCurrent();
+          Node* squeeze = graph.create(kSqueeze, 1);
+          std::vector<int64_t> axes(bias_shape.size());
+          std::iota(axes.begin(), axes.end(), 0);
+          axes.erase(axes.begin() + 1 + bias_shape.size() - rank);
+          squeeze->is_(kaxes, std::move(axes));
+          squeeze->addInput(orig_bias);
+          squeeze->insertBefore(orig_conv->node());
+          orig_conv->node()->addInput(squeeze->output());
+        } else {
+          continue;
         }
+        if (orig_conv->sizes().size() == 0 && n->output()->sizes().size() > 0) {
+          orig_conv->setSizes(n->output()->sizes());
+        }
+        if (n->output()->elemType() != TensorProto_DataType_UNDEFINED) {
+          orig_conv->setElemType(n->output()->elemType());
+        }
+        n->replaceAllUsesWith(orig_conv->node());
+        it.destroyCurrent();
       }
     }
     if (size_lack_count != 0) {
