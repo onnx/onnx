@@ -13,7 +13,7 @@ from . import expect
 class Log(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Log',
             inputs=['x'],

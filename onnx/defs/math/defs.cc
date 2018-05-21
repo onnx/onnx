@@ -11,14 +11,16 @@ namespace ONNX_NAMESPACE {
 const char* kBroadcastDoc = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
-tensor can either be of size 1 (a scalar value), or having its shape as a
-contiguous subset of the first tensor's shape. The starting of the mutually
-equal shape is specified by the argument "axis", and if it is not set, suffix
-matching is assumed. 1-dim expansion doesn't work yet.
+tensor can either be of element size 1 (including a scalar tensor and any
+tensor with rank equal to or smaller than the first tensor), or having its
+shape as a contiguous subset of the first tensor's shape. The starting of the
+mutually equal shape is specified by the argument "axis", and if it is not set,
+suffix matching is assumed. 1-dim expansion doesn't work yet.
 
 For example, the following tensor shapes are supported (with broadcast=1):
 
-  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
+  shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
   shape(A) = (2, 3, 4, 5), shape(B) = (5,)
   shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
   shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
@@ -654,7 +656,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
         auto shape1 = ctx.getInputType(1)->tensor_type().shape();
 
         if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-          return;
+          fail_shape_inference("Input tensors of wrong rank (0).");;
         }
 
         TensorShapeProto paddedShapeL;
@@ -688,7 +690,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
         auto dimSize = paddedShapeL.dim_size();
 
         if (paddedShapeR.dim_size() != dimSize) {
-          return;
+          fail_shape_inference("Padded shapes do not have same rank");;
         }
 
         {
@@ -697,7 +699,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
           auto dimR = paddedShapeR.dim(dimSize - 2);
           if (dimL.has_dim_value() && dimR.has_dim_value() &&
               dimL.dim_value() != dimR.dim_value()) {
-            return;
+            fail_shape_inference("Incompatible dimensions for matrix multiplication");;
           }
         }
 
@@ -715,7 +717,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
             } else if (dimR == 1) {
               newdim->set_dim_value(dimL);
             } else {
-              return;
+              fail_shape_inference("Incompatible dimensions");;
             }
           } else if (paddedShapeL.dim(i).has_dim_value()) {
             auto dimL = paddedShapeL.dim(i).dim_value();
@@ -784,4 +786,137 @@ Given two equivalent values, this operator uses the indices along the axis  as
         "Dimension on which to do the sort. Default -1, which indicates the last"
         " axis",
         AttributeProto::INT,
-        static_cast<int64_t>(-1));
+        static_cast<int64_t>(-1))
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+		// Type inference:
+		propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		updateOutputElemType(ctx, 1, TensorProto::INT64);
+
+		// Shape inference:
+		if (!hasInputShape(ctx, 0))
+			return;
+		auto& input_shape = getInputShape(ctx, 0);
+		int64_t rank = input_shape.dim_size();
+		int64_t axis = getAttribute(ctx, "axis", -1);
+		if (axis < 0) axis += rank;
+		if (axis < 0 || axis >= rank)
+            fail_shape_inference("Invalid value for attribute axis");
+		int64_t k = getAttribute(ctx, "k", -1);
+		if (k <= 0)
+            fail_shape_inference("Invalid value for attribute k");
+		// TODO: unclear what results should be if axis has less than k elements.
+		TensorShapeProto result_shape = input_shape;
+		result_shape.mutable_dim(static_cast<int>(axis))->set_dim_value(k);
+		updateOutputShape(ctx, 0, result_shape);
+		updateOutputShape(ctx, 1, result_shape);
+	});
+
+ONNX_OPERATOR_SCHEMA(Sin)
+    .SinceVersion(7)
+    .SetDoc(R"DOC(
+Calculates the sine of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The sine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+
+ONNX_OPERATOR_SCHEMA(Cos)
+    .SinceVersion(7)
+    .SetDoc(R"DOC(
+Calculates the cosine of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The cosine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+
+
+ONNX_OPERATOR_SCHEMA(Tan)
+    .SinceVersion(7)
+    .SetDoc(R"DOC(
+Calculates the tangent of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The tangent of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+
+ONNX_OPERATOR_SCHEMA(Asin)
+    .SinceVersion(7)
+    .SetDoc(R"DOC(
+Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The arcsine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+
+ONNX_OPERATOR_SCHEMA(Acos)
+    .SinceVersion(7)
+    .SetDoc(R"DOC(
+Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The arccosine of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+
+
+ONNX_OPERATOR_SCHEMA(Atan)
+    .SinceVersion(7)
+    .SetDoc(R"DOC(
+Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
+)DOC")
+    .Input(0, "input", "Input tensor", "T")
+    .Output(
+        0,
+        "output",
+        "The arctangent of the input tensor computed "
+        "element-wise",
+        "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);

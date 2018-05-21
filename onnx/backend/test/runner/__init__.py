@@ -17,10 +17,13 @@ import unittest
 import numpy as np  # type: ignore
 
 import onnx
-from onnx import numpy_helper
+from onnx import helper, numpy_helper, NodeProto, ModelProto
+from onnx.backend.base import Backend
 from six.moves.urllib.request import urlretrieve
 from ..loader import load_model_tests
+from ..case.test_case import TestCase
 from .item import TestItem
+from typing import Optional, Pattern, Set, Dict, Text, Type, Sequence, Any, Callable, Union, Iterable, List
 
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
@@ -29,17 +32,17 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
 
 class Runner(object):
 
-    def __init__(self, backend, parent_module=None):
+    def __init__(self, backend, parent_module=None):  # type: (Type[Backend], Optional[str]) -> None
         self.backend = backend
         self._parent_module = parent_module
-        self._include_patterns = set()
-        self._exclude_patterns = set()
+        self._include_patterns = set()  # type: Set[Pattern[Text]]
+        self._exclude_patterns = set()  # type: Set[Pattern[Text]]
 
         # This is the source of the truth of all test functions.
         # Properties `test_cases`, `test_suite` and `tests` will be
         # derived from it.
         # {category: {name: func}}
-        self._test_items = defaultdict(dict)
+        self._test_items = defaultdict(dict)  # type: Dict[Text, Dict[Text, TestItem]]
 
         for rt in load_model_tests(kind='node'):
             self._add_model_test(rt, 'Node')
@@ -56,21 +59,21 @@ class Runner(object):
         for ot in load_model_tests(kind='pytorch-operator'):
             self._add_model_test(ot, 'PyTorchOperator')
 
-    def _get_test_case(self, name):
+    def _get_test_case(self, name):  # type: (Text) -> Type[unittest.TestCase]
         test_case = type(str(name), (unittest.TestCase,), {})
         if self._parent_module:
             test_case.__module__ = self._parent_module
         return test_case
 
-    def include(self, pattern):
+    def include(self, pattern):  # type: (Text) -> Runner
         self._include_patterns.add(re.compile(pattern))
         return self
 
-    def exclude(self, pattern):
+    def exclude(self, pattern):  # type: (Text) -> Runner
         self._exclude_patterns.add(re.compile(pattern))
         return self
 
-    def enable_report(self):
+    def enable_report(self):  # type: () -> Runner
         import pytest  # type: ignore
 
         for category, items_map in self._test_items.items():
@@ -79,8 +82,8 @@ class Runner(object):
         return self
 
     @property
-    def _filtered_test_items(self):
-        filtered = {}
+    def _filtered_test_items(self):  # type: () -> Dict[Text, Dict[Text, TestItem]]
+        filtered = {}  # type: Dict[Text, Dict[Text, TestItem]]
         for category, items_map in self._test_items.items():
             filtered[category] = {}
             for name, item in items_map.items():
@@ -100,7 +103,7 @@ class Runner(object):
         return filtered
 
     @property
-    def test_cases(self):
+    def test_cases(self):  # type: () -> Dict[str, Type[unittest.TestCase]]
         '''
         List of test cases to be applied on the parent scope
         Example usage:
@@ -108,7 +111,7 @@ class Runner(object):
         '''
         test_cases = {}
         for category, items_map in self._filtered_test_items.items():
-            test_case_name = 'OnnxBackend{}Test'.format(category)
+            test_case_name = str('OnnxBackend{}Test').format(category)
             test_case = self._get_test_case(test_case_name)
             for name, item in sorted(items_map.items()):
                 setattr(test_case, name, item.func)
@@ -116,7 +119,7 @@ class Runner(object):
         return test_cases
 
     @property
-    def test_suite(self):
+    def test_suite(self):  # type: () -> unittest.TestSuite
         '''
         TestSuite that can be run by TestRunner
         Example usage:
@@ -124,26 +127,25 @@ class Runner(object):
         '''
         suite = unittest.TestSuite()
         for case in sorted(self.test_cases.values()):
-            suite.addTests(
-                unittest.defaultTestLoader.loadTestsFromTestCase(case))
+            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))
         return suite
 
     # For backward compatibility (we used to expose `.tests`)
     @property
-    def tests(self):
+    def tests(self):  # type: () -> Type[unittest.TestCase]
         '''
         One single unittest.TestCase that hosts all the test functions
         Example usage:
             onnx_backend_tests = BackendTest(backend).tests
         '''
         tests = self._get_test_case('OnnxBackendTest')
-        for _, items_map in sorted(self._filtered_test_items.values()):
+        for items_map in sorted(self._filtered_test_items.values()):
             for name, item in sorted(items_map.items()):
                 setattr(tests, name, item.func)
         return tests
 
     @staticmethod
-    def _assert_similar_outputs(ref_outputs, outputs):
+    def _assert_similar_outputs(ref_outputs, outputs):  # type: (Sequence[Any], Sequence[Any]) -> None
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
             np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
@@ -153,11 +155,11 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-    def _prepare_model_data(self, model_test):
+    def _prepare_model_data(self, model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
-        model_dir = os.path.join(models_dir, model_test.model_name)
+        model_dir = os.path.join(models_dir, model_test.model_name)  # type: Text
         if not os.path.exists(os.path.join(model_dir, 'model.onnx')):
             if os.path.exists(model_dir):
                 bi = 0
@@ -189,13 +191,19 @@ class Runner(object):
                 os.remove(download_file.name)
         return model_dir
 
-    def _add_test(self, category, test_name, test_func, report_item, devices=('CPU', 'CUDA')):
+    def _add_test(self,
+                  category,  # type: Text
+                  test_name,  # type: Text
+                  test_func,  # type: Callable[..., Any]
+                  report_item,  # type: List[Optional[Union[ModelProto, NodeProto]]]
+                  devices=('CPU', 'CUDA'),  # type: Iterable[Text]
+                  ):  # type: (...) -> None
         # We don't prepend the 'test_' prefix to improve greppability
         if not test_name.startswith('test_'):
             raise ValueError(
                 'Test name must start with test_: {}'.format(test_name))
 
-        def add_device_test(device):
+        def add_device_test(device):  # type: (Text) -> None
             device_test_name = '{}_{}'.format(test_name, device.lower())
             if device_test_name in self._test_items[category]:
                 raise ValueError(
@@ -221,12 +229,12 @@ class Runner(object):
         for device in devices:
             add_device_test(device)
 
-    def _add_model_test(self, model_test, kind):
+    def _add_model_test(self, model_test, kind):  # type: (TestCase, Text) -> None
         # model is loaded at runtime, note sometimes it could even
         # never loaded if the test skipped
-        model_marker = [None]
+        model_marker = [None]  # type: List[Optional[Union[ModelProto, NodeProto]]]
 
-        def run(test_self, device):
+        def run(test_self, device):  # type: (Any, Text) -> None
             if model_test.model_dir is None:
                 model_dir = self._prepare_model_data(model_test)
             else:
@@ -235,6 +243,7 @@ class Runner(object):
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             prepared_model = self.backend.prepare(model, device)
+            assert prepared_model is not None
 
             # TODO after converting all npz files to protobuf, we can delete this.
             for test_data_npz in glob.glob(
