@@ -4,7 +4,7 @@ import subprocess
 import os
 
 
-def main():
+def main():  # type: () -> None
     try:
         root_folder = os.path.realpath(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         source_folder = os.path.join(root_folder, "onnx/test")

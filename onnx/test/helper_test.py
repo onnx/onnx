@@ -261,7 +261,7 @@ class TestHelperNodeFunctions(unittest.TestCase):
         dupe.value = 'Other'
         self.assertRaises(checker.ValidationError, checker.check_model, model_def)
 
-    def test_shape_denotation(self):
+    def test_shape_denotation(self):  # type: () -> None
         shape_denotation = [DenotationConstProto().DATA_BATCH,
                             DenotationConstProto().DATA_CHANNEL,
                             DenotationConstProto().DATA_FEATURE,
