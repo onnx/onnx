@@ -186,6 +186,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         endif()
       endif()
     endif()
+    if (NOT ONNX_PROTOC_EXECUTABLE)
+        message(FATAL_ERROR "Protobuf compiler not found")
+    endif()
     add_custom_command (
       OUTPUT "${OUTPUT_PB_SRC}"
              "${OUTPUT_PB_HEADER}"
