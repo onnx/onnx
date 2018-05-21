@@ -68,7 +68,7 @@ class DummyBackend(onnx.backend.base.Backend):
             "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def supports_device(cls, device):
+    def supports_device(cls, device):  # type: (Text) -> bool
         d = Device(device)
         if d.type == DeviceType.CPU:
             return True
