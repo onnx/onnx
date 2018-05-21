@@ -27,19 +27,19 @@ class LSTM_Helper():
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        num_directions = params[W].shape[0]
+        self.num_directions = params[W].shape[0]
 
-        if(num_directions == 1):
+        if(self.num_directions == 1):
             for k in params.keys():
                 params[k] = np.squeeze(params[k], axis=0)
 
-            hidden_size = params[R].shape[-1]
-            batch_size = params[X].shape[0]
+            self.hidden_size = params[R].shape[-1]
+            self.batch_size = params[X].shape[0]
 
-            b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
-            p = params[P] if P in params else np.zeros(number_of_peepholes * hidden_size)
-            h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
-            c_0 = params[C_0] if C_0 in params else np.zeros((batch_size, hidden_size))
+            b = params[B] if B in params else np.zeros(2 * number_of_gates * self.hidden_size)
+            p = params[P] if P in params else np.zeros(number_of_peepholes * self.hidden_size)
+            h_0 = params[H_0] if H_0 in params else np.zeros((self.batch_size, self.hidden_size))
+            c_0 = params[C_0] if C_0 in params else np.zeros((self.batch_size, self.hidden_size))
 
             self.X = params[X]
             self.W = params[W]
@@ -72,7 +72,7 @@ class LSTM_Helper():
         C = f * self.C_0 + i * c
         o = self.f(np.dot(self.X, np.transpose(w_o)) + np.dot(self.H_0, r_o) + w_bo + r_bo + p_o * C)
         H = o * self.h(C)
-        return H
+        return np.reshape(H, (self.num_directions, self.batch_size, self.hidden_size)).astype(np.float32)
 
 
 class LSTM(Base):
