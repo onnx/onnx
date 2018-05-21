@@ -13,7 +13,7 @@ from . import expect
 class Upsample(Base):
 
     @staticmethod
-    def export_nearest():
+    def export_nearest():  # type: () -> None
         node = onnx.helper.make_node(
             'Upsample',
             inputs=['x'],
