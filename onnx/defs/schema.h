@@ -202,7 +202,7 @@ class OpSchema final {
   // any structs used from ir.h
   OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
   InferenceFunction GetTypeAndShapeInferenceFunction() const {
-    return tensor_inference_function_;
+    return tensor_inference_function_ ? tensor_inference_function_ : dummyInferenceFunction;
   }
 
   // Set the support level for the op schema.
@@ -434,8 +434,9 @@ class OpSchema final {
     return max_output_;
   }
 
- private:
-  friend class OpSchemaRegistry;
+  bool has_type_and_shape_inference_function() const {
+    return tensor_inference_function_;
+  }
 
   // Verifies that the schema is valid and all specifications are compatible.
   // It will also parse all type strings specified for inputs/outputs into valid
@@ -443,6 +444,7 @@ class OpSchema final {
   // efficiency.
   void Finalize();
 
+ private:
   void ParseAndSetTypes(
       /*out*/ std::vector<OpSchema::FormalParameter>* formalParameters);
 
@@ -467,7 +469,7 @@ class OpSchema final {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  InferenceFunction tensor_inference_function_ = [](InferenceContext&) {};
+  InferenceFunction tensor_inference_function_ = nullptr;
 };
 
 // Map type to store operator schemas. The format is,

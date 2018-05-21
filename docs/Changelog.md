@@ -1098,64 +1098,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="FC-1"></a>**FC-1**</a>
-
-  Computes the result of passing an input vector X into a fully
-  connected layer with 2D weight matrix W and 1D bias vector b. That is,
-  the layer computes Y = X * W^T + b, where X has size (M x K),
-  W has size (N x K), b has size (N), and Y has size (M x N),
-  where M is often the batch size.
-  NOTE: X does not need to explicitly be a 2D vector; rather, it will be
-  coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ...,a_{k-1}, a_k, ..., a_{n-1}] where a_i \in N+ and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
-  dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
-  of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
-  In this situation, we must have a_0 = M and a_1 * ... * a_{n-1} = K.
-  Lastly, even though b is a 1D vector of size N, it is copied/resized to
-  be size (M x N) implicitly and added to each vector in the batch.
-  Each of these dimensions must be matched correctly, or else the operator
-  will throw errors.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int32_t) default to 1; describes the axis of the inputs; defaults to one because the 0th axis most likely describes the batch_size</dd>
-<dt><tt>axis_w</tt> : int</dt>
-<dd>(int32_t) default to 1; describes the axis of the weights; defaults to one because the 0th axis most likely describes the batch_size</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>input tensor that's coerced into a 2D matrix of size (MxK) as described above</dd>
-<dt><tt>W</tt> : T</dt>
-<dd>2D blob of size (KxN) containing fully connected weight matrix</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>1D blob containing bias vector</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>2D output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Flatten-1"></a>**Flatten-1**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -1326,8 +1268,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>linear_before_reset</tt> : int</dt>
-<dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
 <dt><tt>output_sequence</tt> : int</dt>
 <dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
@@ -1487,8 +1427,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
 </dl>
@@ -1984,9 +1924,16 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="LRN-1"></a>**LRN-1**</a>
 
-  Local Response Normalization. It normalizes over local input regions.
-  Each input value is divided by
-  (bias+(alpha/size)*sum(xi^2 for every xi in the local region))^beta.
+  Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
+  It normalizes over local input regions.
+  The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
+  of shape (N x C x D1 x D2, ..., Dk), its region is
+  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+  
+  square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
+  where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+  
+  Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 
 #### Version
 
@@ -1995,12 +1942,12 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (required)</dt>
-<dd>Scaling parameter</dd>
-<dt><tt>beta</tt> : float (required)</dt>
-<dd>The exponent</dd>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Scaling parameter, default is 1e-4f.</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>The exponent, default is 0.75f</dd>
 <dt><tt>bias</tt> : float</dt>
-<dd>Default to 1.f</dd>
+<dd>Default to 1.0f</dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
 </dl>
@@ -2009,14 +1956,14 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor</dd>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
+<dd>Output tensor, which has the shape and type as input tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -4706,8 +4653,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
 ### <a name="Sub-1"></a>**Sub-1**</a>
@@ -5040,8 +4987,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain input and output types to any tensor type.</dd>
 </dl>
 
 ### <a name="Upsample-1"></a>**Upsample-1**</a>
@@ -5266,7 +5213,7 @@ This version of the operator has been available since version 2 of the default O
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>List of integers indicate the padding element count at the beginning and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>
@@ -5501,8 +5448,8 @@ This version of the operator has been available since version 4 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dd>Constrain output types to any tensor type.</dd>
 </dl>
 
 ## Version 5 of the default ONNX operator set
@@ -6692,6 +6639,93 @@ This version of the operator has been available since version 6 of the default O
 </dl>
 
 ## Version 7 of the default ONNX operator set
+### <a name="Acos-7"></a>**Acos-7**</a>
+
+  Calculates the arccosine (inverse of cosine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arccosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Asin-7"></a>**Asin-7**</a>
+
+  Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arcsine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Atan-7"></a>**Atan-7**</a>
+
+  Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The arctangent of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="AveragePool-7"></a>**AveragePool-7**</a>
 
   AveragePool consumes an input tensor X and applies average pooling across the
@@ -6748,6 +6782,136 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Cos-7"></a>**Cos-7**</a>
+
+  Calculates the cosine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The cosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Multinomial-7"></a>**Multinomial-7**</a>
+
+  Generate a tensor of samples from a multinomial distribution according to the probabilities
+  of each of the possible outcomes.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.</dd>
+<dt><tt>sample_size</tt> : int</dt>
+<dd>Number of times to sample.</dd>
+<dt><tt>seed</tt> : float</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor with shape [batch_size, class_size], where class_size is the number of all possible outcomes. Each value along the axis zero represents the unnormalized log-probability of each corresponding outcome in a batch.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain output types to integral tensors.</dd>
+</dl>
+
+### <a name="Sin-7"></a>**Sin-7**</a>
+
+  Calculates the sine of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The sine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Tan-7"></a>**Tan-7**</a>
+
+  Calculates the tangent of the given input tensor, element-wise.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The tangent of the input tensor computed element-wise</dd>
 </dl>
 
 #### Type Constraints

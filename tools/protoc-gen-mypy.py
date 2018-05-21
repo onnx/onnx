@@ -1,10 +1,25 @@
 #!/usr/bin/env python
 
-# Taken from https://github.com/dropbox/mypy-protobuf/blob/6abe67773910a920f943599bea9430dcb0a2cfc5/python/protoc-gen-mypy
+# Taken from https://github.com/dropbox/mypy-protobuf/blob/b72d8d15651460d400dd9c4e91e6c5f17999213e/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
-# - appease mypy type checker
+# - appease flake8
+#   https://github.com/dropbox/mypy-protobuf/pull/19
+# - fix type hints in this file
+#   https://github.com/dropbox/mypy-protobuf/pull/20
 # - fix output file names that have dashes
+#   https://github.com/dropbox/mypy-protobuf/pull/15
+# - fix local imports of other generated files (they need to have a dot prefixed)
+#   https://github.com/dropbox/mypy-protobuf/pull/18
+# - make types Optional[T] instead of T if there's a default value of None
+#   https://github.com/dropbox/mypy-protobuf/pull/16
+# - fix composite containers
+#   https://github.com/dropbox/mypy-protobuf/pull/17
+# - exit without error when protobuf isn't installed
+# - fix recognition of whether an identifier is defined locally
+#   (unfortunately, we use a python package name ONNX_NAMESPACE_FOO_BAR_FOR_CI
+#    on CI, which by the original protoc-gen-mypy script was recognized to be
+#    camel case and therefore handled as an entry in the local package)
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
 from __future__ import (
@@ -17,20 +32,32 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 
-import google.protobuf.descriptor_pb2 as d_typed  # type: ignore
-import six
-from google.protobuf.compiler import plugin_pb2 as plugin  # type: ignore
+try:
+    import google.protobuf.descriptor_pb2 as d_typed
+    import six
+    from google.protobuf.compiler import plugin_pb2 as plugin
+except ImportError as e:
+    sys.stderr.write('Failed to generate mypy stubs: {}\n'.format(e))
+    sys.exit(0)
 
 MYPY = False
 if MYPY:
     from typing import (
         Any,
+        Callable,
         Dict,
         Generator,
         List,
         Set,
         Text,
+        cast,
     )
+else:
+    # Provide minimal mypy identifiers to make code run without typing module present
+    Text = None
+
+    def cast(type, value):
+        return value
 
 
 # Hax to get around fact that google protobuf libraries aren't in typeshed yet
@@ -66,25 +93,26 @@ class PkgWriter(object):
     def _import_message(self, type_name):
         # type: (d.FieldDescriptorProto) -> Text
         """Import a referenced message and return a handle"""
-        name = type_name
-        if name[0] == '.' and name[1].isupper():
+        name = cast(Text, type_name)
+
+        if name[0] == '.' and name[1].isupper() and name[2].islower():
             # Message defined in this file
-            return name[1:]  # type: ignore
+            return name[1:]
 
         message_fd = self.descriptors.message_to_fd[name]
         if message_fd.name == self.fd.name:
             # message defined in this package
-            split = type_name.split('.')
+            split = name.split('.')
             for i, segment in enumerate(split):
-                if segment and segment[0].isupper():
-                    return ".".join(split[i:])  # type: ignore
+                if segment and segment[0].isupper() and segment[1].islower():
+                    return ".".join(split[i:])
 
         # Not in package. Must import
-        split = type_name.split(".")
+        split = name.split(".")
         for i, segment in enumerate(split):
-            if segment and segment[0].isupper():
+            if segment and segment[0].isupper() and segment[1].islower():
                 assert message_fd.name.endswith('.proto')
-                import_name = self._import(message_fd.name[:-6] + "_pb2", segment)
+                import_name = self._import("." + message_fd.name[:-6].replace('-', '_') + "_pb2", segment)
                 remains = ".".join(split[i + 1:])
                 if not remains:
                     return import_name
@@ -146,7 +174,7 @@ class PkgWriter(object):
                 # Scalar fields
                 for field in [f for f in desc.field if is_scalar(f)]:
                     if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                        container = self._import("mypy", "RepeatedScalarFieldContainer")
+                        container = self._import("google.protobuf.internal.containers", "RepeatedScalarFieldContainer")
                         line("{} = ... # type: {}[{}]", field.name, container, self.python_type(field))
                     else:
                         line("{} = ... # type: {}", field.name, self.python_type(field))
@@ -156,7 +184,7 @@ class PkgWriter(object):
                 for field in [f for f in desc.field if not is_scalar(f)]:
                     line("@property")
                     if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                        container = self._import("mypy", "RepeatedScalarFieldContainer")
+                        container = self._import("google.protobuf.internal.containers", "RepeatedCompositeFieldContainer")
                         line("def {}(self) -> {}[{}]: ...", field.name, container, self.python_type(field))
                     else:
                         line("def {}(self) -> {}: ...", field.name, self.python_type(field))
@@ -169,11 +197,12 @@ class PkgWriter(object):
                     for field in [f for f in desc.field if f.label == d.FieldDescriptorProto.LABEL_REQUIRED]:
                         line("{} : {},", field.name, self.python_type(field))
                     for field in [f for f in desc.field if f.label != d.FieldDescriptorProto.LABEL_REQUIRED]:
+                        self._import("typing", "Optional")
                         if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                            line("{} : {}[{}] = None,", field.name,
+                            line("{} : Optional[{}[{}]] = None,", field.name,
                               self._import("typing", "Iterable"), self.python_type(field))
                         else:
-                            line("{} : {} = None,", field.name, self.python_type(field))
+                            line("{} : Optional[{}] = None,", field.name, self.python_type(field))
                     line(") -> None: ...")
 
                 # Standard message methods
@@ -233,7 +262,7 @@ class PkgWriter(object):
             d.FieldDescriptorProto.TYPE_ENUM: lambda: self._import_message(field.type_name),
             d.FieldDescriptorProto.TYPE_MESSAGE: lambda: self._import_message(field.type_name),
             d.FieldDescriptorProto.TYPE_GROUP: lambda: self._import_message(field.type_name),
-        }
+        }  # type: Dict[int, Callable[[], Text]]
 
         assert field.type in mapping, "Unrecognized type: " + field.type
         return mapping[field.type]()
@@ -259,7 +288,7 @@ def is_scalar(fd):
 
 
 def generate_mypy_stubs(descriptors, response):
-    # type: (Descriptors, plugin.CodeGeneratorResponse) -> plugin.CodeGeneratorResponse
+    # type: (Descriptors, plugin.CodeGeneratorResponse) -> None
     for name, fd in six.iteritems(descriptors.to_generate):
         pkg_writer = PkgWriter(fd, descriptors)
         pkg_writer.write_enums(fd.enum_type)
@@ -286,12 +315,12 @@ class Descriptors(object):
         self.message_to_fd = {}  # type: Dict[Text, d.FileDescriptorProto]
 
         def _add_enums(enums, prefix, fd):
-            # type: (d.EnumDescriptorProto, Text) -> None
+            # type: (d.EnumDescriptorProto, d.FileDescriptorProto) -> None
             for enum in enums:
                 self.message_to_fd[prefix + enum.name] = fd
 
         def _add_messages(messages, prefix, fd):
-            # type: (d.DescriptorProto, Text) -> None
+            # type: (d.DescriptorProto, d.FileDescriptorProto) -> None
             for message in messages:
                 self.message_to_fd[prefix + message.name] = fd
                 sub_prefix = prefix + message.name + "."
