@@ -30,9 +30,9 @@ def expect(node,  # type: onnx.NodeProto
            name,  # type: Text
            ):  # type: (...) -> None
     inputs_vi = [_extract_value_info(arr, arr_name)
-                 for arr, arr_name in zip(inputs, node.input) if (arr_name != "")]
+                 for arr, arr_name in zip(inputs, node.input) if (arr_name != '')]
     outputs_vi = [_extract_value_info(arr, arr_name)
-                  for arr, arr_name in zip(outputs, node.output) if (arr_name != "")]
+                  for arr, arr_name in zip(outputs, node.output) if (arr_name != '')]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,
