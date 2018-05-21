@@ -25,14 +25,14 @@ def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInf
 
 
 def expect(node,  # type: onnx.NodeProto
-           inputs,  # type: Sequence[np.ndarray]
-           outputs,  # type: Sequence[np.ndarray]
+           inputs,  # type: Sequence[Optional[np.ndarray]]
+           outputs,  # type: Sequence[Optional[np.ndarray]]
            name,  # type: Text
            ):  # type: (...) -> None
     inputs_vi = [_extract_value_info(arr, arr_name)
-                 for arr, arr_name in zip(inputs, node.input)]
+                 for arr, arr_name in zip(inputs, node.input) if (arr_name != "")]
     outputs_vi = [_extract_value_info(arr, arr_name)
-                  for arr, arr_name in zip(outputs, node.output)]
+                  for arr, arr_name in zip(outputs, node.output) if (arr_name != "")]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,

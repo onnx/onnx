@@ -67,7 +67,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R'],
-            outputs=['Y'],
+            outputs=['', 'Y'],
             hidden_size=hidden_size
         )
 
@@ -77,7 +77,7 @@ class RNN(Base):
         rnn = RNN_Helper(X=input, W=W, R=R)
         output = rnn.step().astype(np.float32)
 
-        expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
+        expect(node, inputs=[input, W, R], outputs=[None, output], name='test_simple_rnn_defaults')
 
     @staticmethod
     def export_initial_bias():  # type: () -> None
@@ -91,7 +91,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['Y'],
+            outputs=['', 'Y'],
             hidden_size=hidden_size
         )
 
@@ -106,4 +106,4 @@ class RNN(Base):
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
         output = rnn.step().astype(np.float32)
 
-        expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
+        expect(node, inputs=[input, W, R, B], outputs=[None, output], name='test_simple_rnn_with_initial_bias')
