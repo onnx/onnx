@@ -40,7 +40,7 @@ def namedtupledict(typename, field_names, *args, **kwargs):  # type: (Text, Sequ
     kwargs.setdefault(str('rename'), True)
     data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore
 
-    def getitem(self, key):
+    def getitem(self, key):  # type: (Any, Any) -> Any
         if isinstance(key, six.string_types):
             key = field_names_map[key]
         return super(type(self), self).__getitem__(key)  # type: ignore
