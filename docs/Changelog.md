@@ -4831,9 +4831,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Tile-1"></a>**Tile-1**</a>
 
-  Constructs a tensor by tiling a given tensor.
-  This is the same as function `tile` in Numpy, but no broadcast.
-  For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
+  Repeat the elements of a tensor along an axis.
 
 #### Version
 
@@ -4844,24 +4842,26 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor of any shape.</dd>
-<dt><tt>repeats</tt> : T1</dt>
-<dd>1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.</dd>
+<dt><tt>tiles</tt> : T</dt>
+<dd>Number of repeated copies to make of the input tensor.</dd>
+<dt><tt>axis</tt> : T</dt>
+<dd>Axis along which to repeat.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
+<dd>Output tensor of same shape and type as input.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output's types to float tensors.</dd>
+<dd>Constrain input types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrain repeat's type to int64 tensors.</dd>
+<dd>Constrain tiles and axis's type to int64 tensors.</dd>
 </dl>
 
 ### <a name="TopK-1"></a>**TopK-1**</a>
@@ -6621,6 +6621,41 @@ This version of the operator has been available since version 6 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Tile-6"></a>**Tile-6**</a>
+
+  Constructs a tensor by tiling a given tensor.
+  This is the same as function `tile` in Numpy, but no broadcast.
+  For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]
+
+#### Version
+
+This version of the operator has been available since version 6 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor of any shape.</dd>
+<dt><tt>repeats</tt> : T1</dt>
+<dd>1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output's types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
 
 ## Version 7 of the default ONNX operator set
