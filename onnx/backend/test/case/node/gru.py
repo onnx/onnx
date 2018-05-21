@@ -93,7 +93,7 @@ class GRU(Base):
             gru = GRU_Helper(X=input, W=W, R=R)
             output = gru.step().astype(np.float32)
 
-            expect(node, inputs=[input, W, R], outputs=[None, output], name='test_gru_defaults')
+            expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
 
     @staticmethod
     def export_initial_bias():  # type: () -> None
@@ -123,4 +123,4 @@ class GRU(Base):
             gru = GRU_Helper(X=input, W=W, R=R, B=B)
             output = gru.step().astype(np.float32)
 
-            expect(node, inputs=[input, W, R, B], outputs=[None, output], name='test_gru_with_initial_bias')
+            expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
