@@ -8,51 +8,48 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 
 void RNNShapeInference(InferenceContext& ctx) {
-    TensorShapeProto::Dimension num_directions, seq_length, batch_size, hidden_size;
+  TensorShapeProto::Dimension num_directions, seq_length, batch_size,
+      hidden_size;
 
-    auto direction = getAttribute(ctx, "direction", "forward");
-    if ((direction == "forward") || (direction == "reverse"))
-        num_directions.set_dim_value(1);
-    else if (direction == "bidirectional") 
-        num_directions.set_dim_value(2);
-    // else leave num_directions unknown in case of incorrect attribute value
+  auto direction = getAttribute(ctx, "direction", "forward");
+  if ((direction == "forward") || (direction == "reverse"))
+    num_directions.set_dim_value(1);
+  else if (direction == "bidirectional")
+    num_directions.set_dim_value(2);
+  // else leave num_directions unknown in case of incorrect attribute value
 
-    auto hidden_size_value = getAttribute(ctx, "hidden_size", -1);
-    if (hidden_size_value > 0)
-        hidden_size.set_dim_value(hidden_size_value);
+  auto hidden_size_value = getAttribute(ctx, "hidden_size", -1);
+  if (hidden_size_value > 0)
+    hidden_size.set_dim_value(hidden_size_value);
 
-    if (hasInputShape(ctx,0)) {
-        auto& first_input_shape = getInputShape(ctx,0);
-        seq_length = first_input_shape.dim(0);
-        batch_size = first_input_shape.dim(1);
-    }
+  if (hasInputShape(ctx, 0)) {
+    auto& first_input_shape = getInputShape(ctx, 0);
+    seq_length = first_input_shape.dim(0);
+    batch_size = first_input_shape.dim(1);
+  }
 
-    // The treatment of outputs is a bit complicated because of the combination of
-    // optional outputs and the output_sequence attribute.
-    bool output_sequence = (getAttribute(ctx, "output_sequence", 0) != 0);
-    auto num_outputs = ctx.getNumOutputs();
+  auto num_outputs = ctx.getNumOutputs();
 
-    if (num_outputs == 0) return; // Unlikely, but seems legal.
-
+  if (num_outputs > 0) {
+    // Y
     propagateElemTypeFromInputToOutput(ctx, 0, 0);
-    if (num_outputs > 1) propagateElemTypeFromInputToOutput(ctx, 0, 1);
-    if (num_outputs > 2) propagateElemTypeFromInputToOutput(ctx, 0, 2);
+    updateOutputShape(
+        ctx, 0, {seq_length, num_directions, batch_size, hidden_size});
+  }
 
-    if (output_sequence) {
-        // No ambiguity in spec
-        updateOutputShape(ctx, 0, {seq_length, num_directions, batch_size, hidden_size}); // Y
-        if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_h
-        if (num_outputs > 2) updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size}); // Y_c
-    } else {
-        // Documentation suggests that the output Y is absent in this case
-        // Different tests seem to disagree on whether Y_h and Y_c, if present, should be
-        // in positions 0 & 1 or 1 & 2.
-        // updateOutputShape(ctx, 0, {num_directions, batch_size, hidden_size}); // Y_h
-        // if (num_outputs > 1) updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size}); // Y_c
-    }
+  if (num_outputs > 1) {
+    // Y_h
+    propagateElemTypeFromInputToOutput(ctx, 0, 1);
+    updateOutputShape(ctx, 1, {num_directions, batch_size, hidden_size});
+  }
+
+  if (num_outputs > 2) {
+    // Y_c : only in the case of LSTM
+    propagateElemTypeFromInputToOutput(ctx, 0, 2);
+    updateOutputShape(ctx, 2, {num_directions, batch_size, hidden_size});
+  }
 }
 
-// Warning: This function may be shared with old versions in old.cc.
 std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
@@ -73,10 +70,6 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
                     "in LSTM. Default values are the same as of corresponding ONNX operators.",
                     AttributeProto::FLOATS,
                     OPTIONAL);
-        schema.Attr("output_sequence",
-                    "The sequence output for the hidden is optional if 0. Default 0.",
-                    AttributeProto::INT,
-                    static_cast<int64_t>(0));
         schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
                     "in the range of [-threshold, +threshold] and is applied to the input "
                     "of activations. No clip if not specified.", AttributeProto::FLOAT, OPTIONAL);
@@ -94,8 +87,8 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
                      "T", OpSchema::Optional);
         schema.Output(0, "Y",
                       "A tensor that concats all the intermediate output values of the hidden. "
-                      "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. "
-                      "It is optional if `output_sequence` is 0.", "T", OpSchema::Optional);
+                      "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
+                      "T", OpSchema::Optional);
         schema.Output(1, "Y_h",
                       "The last output value of the hidden. It has shape "
                       "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
