@@ -102,6 +102,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
 
 
 ONNX_OPERATOR_SCHEMA(RNN)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
@@ -187,6 +188,7 @@ Equations (Default: f=Tanh):
 
 
 ONNX_OPERATOR_SCHEMA(GRU)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
@@ -267,7 +269,6 @@ Equations (Default: f=Sigmoid, g=Tanh):
           "for default if not specified.",
           AttributeProto::STRINGS,
           OPTIONAL)
-    .SinceVersion(3)
     .Attr("linear_before_reset", "When computing the output of the hidden gate, "
           "apply the linear transformation before multiplying by the output of the "
           "reset gate.",
@@ -291,6 +292,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
 
 ONNX_OPERATOR_SCHEMA(LSTM)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
