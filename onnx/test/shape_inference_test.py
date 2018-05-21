@@ -129,7 +129,7 @@ class TestShapeInference(unittest.TestCase):
         self._make_matmul_test_all_dims_known((5, 1, 4, 2), (1, 3, 2, 3))
         self._make_matmul_test_all_dims_known((4, 2), (3, 2, 3))
 
-    def _make_matmul_test_allow_unknown(self, shape1, shape2, expected_out_shape):
+    def _make_matmul_test_allow_unknown(self, shape1, shape2, expected_out_shape):  # type: (Any, Any, Any) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, shape1),
              ('y', TensorProto.FLOAT, shape2)],
@@ -416,7 +416,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.INT32, (2, 3, 4, 5, 6))])
 
-    def _logical_binary_op(self, op, input_type):
+    def _logical_binary_op(self, op, input_type):  # type: (Text, TensorProto.DataType) -> None
         graph = self._make_graph(
             [('x', input_type, (30, 4, 5)),
              ('y', input_type, (30, 4, 5))],
