@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class PRelu(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'PRelu',
             inputs=['x', 'slope'],
@@ -28,7 +28,7 @@ class PRelu(Base):
                name='test_prelu_example')
 
     @staticmethod
-    def export_prelu_broadcast():
+    def export_prelu_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'PRelu',
             inputs=['x', 'slope'],
@@ -44,7 +44,7 @@ class PRelu(Base):
                name='test_prelu_broadcast')
 
     @staticmethod
-    def export_prelu_axis():
+    def export_prelu_axis():  # type: () -> None
         node = onnx.helper.make_node(
             'PRelu',
             inputs=['x', 'slope'],
