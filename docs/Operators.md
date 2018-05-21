@@ -56,6 +56,7 @@
   * <a href="#Mean">Mean</a>
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
+  * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
   * <a href="#Not">Not</a>
   * <a href="#Or">Or</a>
@@ -5064,6 +5065,50 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### <a name="Multinomial"></a><a name="multinomial">**Multinomial**</a>
+
+  Generate a tensor of samples from a multinomial distribution according to the probabilities
+  of each of the possible outcomes.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified, we will use int32.</dd>
+<dt><tt>sample_size</tt> : int</dt>
+<dd>Number of times to sample.</dd>
+<dt><tt>seed</tt> : float</dt>
+<dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor with shape [batch_size, class_size], where class_size is the number of all possible outcomes. Each value along the axis zero represents the unnormalized log-probability of each corresponding outcome in a batch.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor with shape [batch_size, sample_size], where sample_size is the number of times to sample. Each value along the axis zero represents the outcome of the corresponding sample in a batch.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain output types to integral tensors.</dd>
+</dl>
+
+
 ### <a name="Neg"></a><a name="neg">**Neg**</a>
 
   Neg takes one input data (Tensor<T>) and produces one output data
@@ -5440,7 +5485,7 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 <dt><tt>mode</tt> : string</dt>
 <dd>Three modes: constant(default), reflect, edge</dd>
 <dt><tt>pads</tt> : list of ints (required)</dt>
-<dd>List of integers indicate the padding element count at the beginning and end of each axis, for 2D it is the number of pixel. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
+<dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float</dt>
 <dd>One float, indicates the value to be filled, default is 0</dd>
 </dl>
