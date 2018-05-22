@@ -684,7 +684,7 @@ inline std::string GenerateBroadcastingDocMul() {
 }
 
 inline std::string GenerateBroadcastingDocUni(const char* from, const char* to) {
-  std::string ret = "This operator supports **multidirectional broadcasting** (";
+  std::string ret = "This operator supports **unidirectional broadcasting** (";
   ret = ret + from + " should be unidirectional broadcastable to " + to + ");"
         " for more details please check [the doc](Broadcasting.md).";
   return ret;

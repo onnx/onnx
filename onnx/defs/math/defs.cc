@@ -368,7 +368,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
         1,
         "slope",
         "Slope tensor. The shape of slope can be smaller then first input X; "
-        "if so, its shape must be broadcastable to X",
+        "if so, its shape must be unidirectional broadcastable to X",
         "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint(

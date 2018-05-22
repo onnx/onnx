@@ -6362,7 +6362,7 @@ This version of the operator has been available since version 6 of the default O
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
-  This operator supports **multidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
+  This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -6374,7 +6374,7 @@ This version of the operator has been available since version 6 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be broadcastable to X</dd>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -7283,7 +7283,7 @@ This version of the operator has been available since version 7 of the default O
   and output tensor Y has shape (M, N). A will be transposed before doing the
   computation if attribute transA is non-zero, same for B and transB.
   
-  This operator supports **multidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
+  This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
