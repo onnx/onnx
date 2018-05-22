@@ -7,6 +7,13 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
+inline void logicalOpInference(InferenceContext& ctx) {
+	updateOutputElemType(ctx, 0, TensorProto::BOOL);
+	if (hasInputShape(ctx, 0)) {
+		propagateShapeFromInputToOutput(ctx, 0, 0);
+	}
+}
+
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
     return [=](OpSchema& schema) {
         std::string doc = R"DOC(
@@ -25,7 +32,8 @@ detailed description of the broadcasting rules.
                     OPTIONAL);
         schema.Input(0, "A", "Left input tensor for the logical operator.", "T");
         schema.Input(1, "B", "Right input tensor for the logical operator.", "T");
-        schema.Output(0, "C", "Result tensor.", "T1");
+		schema.Output(0, "C", "Result tensor.", "T1");
+		schema.TypeAndShapeInferenceFunction(logicalOpInference);
     };
 }
 
@@ -78,6 +86,7 @@ Returns the negation of the input tensor element-wise.
     .Input(0, "X", "Input tensor", "T")
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(bool)" },
-                    "Constrains input/output to boolean tensors.");
+                    "Constrains input/output to boolean tensors.")
+	.TypeAndShapeInferenceFunction(logicalOpInference);
 
 }  // namespace ONNX_NAMESPACE

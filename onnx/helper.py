@@ -5,20 +5,26 @@ from __future__ import unicode_literals
 
 import collections
 import numbers
-
 from six import text_type, integer_types, binary_type
 
-import google.protobuf.message  # type: ignore
-from onnx import TensorProto, AttributeProto, ValueInfoProto, \
-    NodeProto, ModelProto, GraphProto, OperatorSetIdProto, IR_VERSION
+import google.protobuf.message
+from onnx import TensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
+    NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
 from onnx import mapping
 from onnx.mapping import STORAGE_TENSOR_TYPE_TO_FIELD
+from typing import Text, Sequence, Any, Optional, Dict, Union, TypeVar, Callable, Tuple, List, cast
+import numpy as np  # type: ignore
 
 
 def make_node(
-        op_type, inputs, outputs,
-        name=None, doc_string=None, **kwargs):
+        op_type,  # type: Text
+        inputs,  # type: Sequence[Text]
+        outputs,  # type: Sequence[Text]
+        name=None,  # type: Optional[Text]
+        doc_string=None,  # type: Optional[Text]
+        **kwargs  # type: Any
+):  # type: (...) -> NodeProto
     """Construct a NodeProto.
 
     Arguments:
@@ -46,7 +52,15 @@ def make_node(
     return node
 
 
-def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None, value_info=None):
+def make_graph(
+    nodes,  # type: Sequence[NodeProto]
+    name,  # type: Text
+    inputs,  # type: Sequence[ValueInfoProto]
+    outputs,  # type: Sequence[ValueInfoProto]
+    initializer=None,  # type: Optional[Sequence[TensorProto]]
+    doc_string=None,  # type: Optional[Text]
+    value_info=[],  # type: Sequence[ValueInfoProto]
+):  # type: (...) -> GraphProto
     if initializer is None:
         initializer = []
     if value_info is None:
@@ -63,21 +77,22 @@ def make_graph(nodes, name, inputs, outputs, initializer=None, doc_string=None, 
     return graph
 
 
-def make_opsetid(domain, version):
+def make_opsetid(domain, version):  # type: (Text, int) -> OperatorSetIdProto
     opsetid = OperatorSetIdProto()
     opsetid.domain = domain
     opsetid.version = version
     return opsetid
 
 
-def make_model(graph, **kwargs):
+def make_model(graph, **kwargs):  # type: (GraphProto, **Any) -> ModelProto
     model = ModelProto()
     # Touch model.ir_version so it is stored as the version from which it is
     # generated.
     model.ir_version = IR_VERSION
     model.graph.CopyFrom(graph)
 
-    opset_imports = kwargs.pop('opset_imports', None)
+    opset_imports = None  # type: Optional[Sequence[OperatorSetIdProto]]
+    opset_imports = kwargs.pop('opset_imports', None)  # type: ignore
     if opset_imports is not None:
         model.opset_import.extend(opset_imports)
     else:
@@ -91,7 +106,7 @@ def make_model(graph, **kwargs):
     return model
 
 
-def set_model_props(model, dict_value):
+def set_model_props(model, dict_value):  # type: (ModelProto, Dict[Text, Text]) -> None
     del model.metadata_props[:]
     for (k, v) in dict_value.items():
         entry = model.metadata_props.add()
@@ -100,12 +115,18 @@ def set_model_props(model, dict_value):
         # model.metadata_properties.append(entry)
 
 
-def split_complex_to_pairs(ca):
+def split_complex_to_pairs(ca):  # type: (Sequence[np.complex64]) -> Sequence[int]
     return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
             for i in range(len(ca) * 2)]
 
 
-def make_tensor(name, data_type, dims, vals, raw=False):
+def make_tensor(
+        name,  # type: Text
+        data_type,  # type: TensorProto.DataType
+        dims,  # type: Sequence[int]
+        vals,  # type: Any
+        raw=False  # type: bool
+):  # type: (...) -> TensorProto
     '''
     Make a TensorProto with specified arguments.  If raw is False, this
     function will choose the corresponding proto field to store the
@@ -134,7 +155,7 @@ def make_tensor(name, data_type, dims, vals, raw=False):
     return tensor
 
 
-def _to_bytes_or_false(val):
+def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     """An internal graph to convert the input to a bytes or to False.
 
     The criteria for conversion is as follows and should be python 2 and 3
@@ -152,7 +173,11 @@ def _to_bytes_or_false(val):
             return False
 
 
-def make_attribute(key, value, doc_string=None):
+def make_attribute(
+        key,  # type: Text
+        value,  # type: Any
+        doc_string=None  # type: Optional[Text]
+):  # type: (...) -> AttributeProto
     """Makes an AttributeProto based on the value type."""
     attr = AttributeProto()
     attr.name = key
@@ -168,10 +193,11 @@ def make_attribute(key, value, doc_string=None):
         attr.type = AttributeProto.FLOAT
     # integer
     elif isinstance(value, numbers.Integral):
-        attr.i = value
+        attr.i = cast(int, value)
         attr.type = AttributeProto.INT
     # string
     elif bytes_or_false:
+        assert isinstance(bytes_or_false, bytes)
         attr.s = bytes_or_false
         attr.type = AttributeProto.STRING
     elif isinstance(value, TensorProto):
@@ -191,7 +217,7 @@ def make_attribute(key, value, doc_string=None):
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
         elif all(byte_array):
-            attr.strings.extend(byte_array)
+            attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
@@ -209,7 +235,7 @@ def make_attribute(key, value, doc_string=None):
     return attr
 
 
-def get_attribute_value(attr):
+def get_attribute_value(attr):  # type: (AttributeProto) -> Any
     if attr.HasField('f'):
         return attr.f
     elif attr.HasField('i'):
@@ -234,8 +260,20 @@ def get_attribute_value(attr):
         raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
-def make_tensor_value_info(name, elem_type, shape, doc_string="", shape_denotation=None):
-    """Makes a TypeProto based on the data type and shape."""
+def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
+    value_info_proto = ValueInfoProto()
+    value_info_proto.name = name
+    return value_info_proto
+
+
+def make_tensor_value_info(
+        name,  # type: Text
+        elem_type,  # type: TensorProto.DataType
+        shape,  # type: Optional[Sequence[int]]
+        doc_string="",  # type: Text
+        shape_denotation=None,  # type: Optional[List[Text]]
+):  # type: (...) -> ValueInfoProto
+    """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
     if doc_string:
@@ -281,7 +319,7 @@ def make_tensor_value_info(name, elem_type, shape, doc_string="", shape_denotati
     return value_info_proto
 
 
-def _sanitize_str(s):
+def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
     if isinstance(s, text_type):
         sanitized = s
     elif isinstance(s, binary_type):
@@ -294,26 +332,28 @@ def _sanitize_str(s):
         return sanitized[:64] + '...<+len=%d>' % (len(sanitized) - 64)
 
 
-def printable_attribute(attr, subgraphs=False):
+def printable_attribute(attr, subgraphs=False):  # type: (AttributeProto, bool) -> Union[Text, Tuple[Text, List[GraphProto]]]
     content = []
     content.append(attr.name)
     content.append("=")
 
-    def str_float(f):
+    def str_float(f):  # type: (float) -> Text
         # NB: Different Python versions print different numbers of trailing
         # decimals, specifying this explicitly keeps it consistent for all
         # versions
         return '{:.15g}'.format(f)
 
-    def str_int(i):
+    def str_int(i):  # type: (int) -> Text
         # NB: In Python 2, longs will repr() as '2L', which is ugly and
         # unnecessary.  Explicitly format it to keep it consistent.
         return '{:d}'.format(i)
 
-    def str_str(s):
+    def str_str(s):  # type: (Text) -> Text
         return repr(s)
 
-    def str_list(str_elem, xs):
+    _T = TypeVar('_T')  # noqa
+
+    def str_list(str_elem, xs):  # type: (Callable[[_T], Text], Sequence[_T]) -> Text
         return '[' + ', '.join(map(str_elem, xs)) + ']'
 
     # for now, this logic should continue to work as long as we are running on a proto3
@@ -364,47 +404,52 @@ def printable_attribute(attr, subgraphs=False):
         return ' '.join(content)
 
 
-def printable_dim(dim):
-    return str(getattr(dim, dim.WhichOneof('value')))
+def printable_dim(dim):  # type: (TensorShapeProto.Dimension) -> Text
+    which = dim.WhichOneof('value')
+    assert which is not None
+    return str(getattr(dim, which))
 
 
-def printable_type(t):
+def printable_type(t):  # type: (TypeProto) -> Text
     if t.WhichOneof('value') == "tensor_type":
         s = TensorProto.DataType.Name(t.tensor_type.elem_type)
         if t.tensor_type.HasField('shape'):
             if len(t.tensor_type.shape.dim):
-                s += ', ' + 'x'.join(map(printable_dim, t.tensor_type.shape.dim))
+                s += str(', ' + 'x'.join(map(printable_dim, t.tensor_type.shape.dim)))
             else:
-                s += ', scalar'
+                s += str(', scalar')
         return s
     if t.WhichOneof('value') is None:
         return ""
     return 'Unknown type {}'.format(t.WhichOneof('value'))
 
 
-def printable_value_info(v):
+def printable_value_info(v):  # type: (ValueInfoProto) -> Text
     s = '%{}'.format(v.name)
     if v.type:
         s = '{}[{}]'.format(s, printable_type(v.type))
     return s
 
 
-def printable_node(node, prefix='', subgraphs=False):
+def printable_node(node, prefix='', subgraphs=False):  # type: (NodeProto, Text, bool) -> Union[Text, Tuple[Text, List[GraphProto]]]
     content = []
     if len(node.output):
         content.append(
             ', '.join(['%{}'.format(name) for name in node.output]))
         content.append('=')
     # To deal with nested graphs
-    graphs = []
+    graphs = []  # type: List[GraphProto]
     printed_attrs = []
     for attr in node.attribute:
         if subgraphs:
             printed_attr, gs = printable_attribute(attr, subgraphs)
+            assert isinstance(gs, list)
             graphs.extend(gs)
             printed_attrs.append(printed_attr)
         else:
-            printed_attrs.append(printable_attribute(attr))
+            printed = printable_attribute(attr)
+            assert isinstance(printed, Text)
+            printed_attrs.append(printed)
     printed_attributes = ', '.join(sorted(printed_attrs))
     printed_inputs = ', '.join(['%{}'.format(name) for name in node.input])
     if node.attribute:
@@ -417,7 +462,7 @@ def printable_node(node, prefix='', subgraphs=False):
         return prefix + ' '.join(content)
 
 
-def printable_graph(graph, prefix=''):
+def printable_graph(graph, prefix=''):  # type: (GraphProto, Text) -> Text
     content = []
     indent = prefix + '  '
     # header
@@ -449,10 +494,11 @@ def printable_graph(graph, prefix=''):
 
     header.append('{')
     content.append(prefix + ' '.join(header))
-    graphs = []
+    graphs = []  # type: List[GraphProto]
     # body
     for node in graph.node:
         pn, gs = printable_node(node, indent, subgraphs=True)
+        assert isinstance(gs, list)
         content.append(pn)
         graphs.extend(gs)
     # tail
@@ -468,7 +514,7 @@ def printable_graph(graph, prefix=''):
     return '\n'.join(content)
 
 
-def strip_doc_string(proto):
+def strip_doc_string(proto):  # type: (google.protobuf.message.Message) -> None
     """
     Empties `doc_string` field on any nested protobuf messages
     """

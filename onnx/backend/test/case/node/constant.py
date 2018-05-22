@@ -13,7 +13,7 @@ from . import expect
 class Constant(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         values = np.random.randn(5, 5).astype(np.float32)
         node = onnx.helper.make_node(
             'Constant',
