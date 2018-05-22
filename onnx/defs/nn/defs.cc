@@ -892,15 +892,13 @@ Output case #2: Y (test mode)
     .Output(
         1,
         "mean",
-        "The running mean after the BatchNormalization operator. Must be in-place "
-        "with the input mean.",
+        "The running mean after the BatchNormalization operator.",
         "T",
         OpSchema::Optional)
     .Output(
         2,
         "var",
-        "The running variance after the BatchNormalization operator. Must be "
-        "in-place with the input var.",
+        "The running variance after the BatchNormalization operator.",
         "T",
         OpSchema::Optional)
     .Output(

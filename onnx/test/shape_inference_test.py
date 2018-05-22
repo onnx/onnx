@@ -686,18 +686,7 @@ class TestShapeInference(unittest.TestCase):
              ('b', TensorProto.FLOAT, (4,)),
              ('mean', TensorProto.FLOAT, (4,)),
              ('var', TensorProto.FLOAT, (4,))],
-            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'], is_test=1)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
-
-    def test_batch_norm_train(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
-             ('scale', TensorProto.FLOAT, (4,)),
-             ('b', TensorProto.FLOAT, (4,)),
-             ('mean', TensorProto.FLOAT, (4,)),
-             ('var', TensorProto.FLOAT, (4,))],
-            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'], is_test=0)],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 

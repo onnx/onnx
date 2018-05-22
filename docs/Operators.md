@@ -1159,9 +1159,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X.</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean.</dd>
+<dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance after the BatchNormalization operator. Must be in-place with the input var.</dd>
+<dd>The running variance after the BatchNormalization operator.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
 <dd>Saved mean used during training to speed up gradient computation.</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
