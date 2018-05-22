@@ -50,6 +50,15 @@ void RNNShapeInference(InferenceContext& ctx) {
   }
 }
 
+inline std::string GenerateOptionalArgumentsDoc() {
+	return "This operator has **optional** inputs/outputs. "
+		   "See [the doc](IR.md) for more details about the representation of "
+		   "optional arguments. An empty string may be used in the place of "
+		   "an actual argument's name to indicate a missing argument. "
+		   "Trailing optional arguments (those not followed by an argument "
+		   "that is present) may also be simply omitted.";
+}
+
 std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
     return [=](OpSchema& schema) {
         schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
@@ -164,6 +173,8 @@ Activation functions:
 Equations (Default: f=Tanh):
 
   - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+
+" + GenerateOptionalArgumentsDoc() + "
 )DOC")
     .Attr("activations", "One (or two if bidirectional) activation function for "
           "input gate. The activation function must be one of the activation "
@@ -262,6 +273,8 @@ Equations (Default: f=Sigmoid, g=Tanh):
   - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+
+" + GenerateOptionalArgumentsDoc() + "
 )DOC")
     .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
           "for update, reset, and hidden gates. The activation functions must be one "
@@ -374,6 +387,8 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
 
   - Ht = ot (.) h(Ct)
+
+" + GenerateOptionalArgumentsDoc() + "
 )DOC")
     .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
           "for input, output, forget, cell, and hidden. The activation functions must "

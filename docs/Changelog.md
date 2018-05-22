@@ -6879,6 +6879,8 @@ This version of the operator has been available since version 7 of the default O
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+  
+  " + GenerateOptionalArgumentsDoc() + "
 
 #### Version
 
@@ -7020,6 +7022,8 @@ This version of the operator has been available since version 7 of the default O
     - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
   
     - Ht = ot (.) h(Ct)
+  
+  " + GenerateOptionalArgumentsDoc() + "
 
 #### Version
 
@@ -7190,6 +7194,8 @@ This version of the operator has been available since version 7 of the default O
   Equations (Default: f=Tanh):
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+  
+  " + GenerateOptionalArgumentsDoc() + "
 
 #### Version
 

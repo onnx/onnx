@@ -2544,6 +2544,8 @@ expect(node, inputs=[x], outputs=[y],
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+  
+  " + GenerateOptionalArgumentsDoc() + "
 
 #### Version
 
@@ -2622,7 +2624,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -2653,7 +2655,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -3646,6 +3648,8 @@ This version of the operator has been available since version 1 of the default O
     - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
   
     - Ht = ot (.) h(Ct)
+  
+  " + GenerateOptionalArgumentsDoc() + "
 
 #### Version
 
@@ -3730,7 +3734,7 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -3761,7 +3765,7 @@ number_of_gates = 4
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -3797,7 +3801,7 @@ number_of_peepholes = 3
 node = onnx.helper.make_node(
     'LSTM',
     inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -5800,6 +5804,8 @@ expect(node, inputs=[x, y], outputs=[z],
   Equations (Default: f=Tanh):
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+  
+  " + GenerateOptionalArgumentsDoc() + "
 
 #### Version
 
@@ -5875,7 +5881,7 @@ weight_scale = 0.1
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -5905,7 +5911,7 @@ weight_scale = 0.1
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
