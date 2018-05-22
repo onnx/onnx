@@ -13,7 +13,7 @@ from . import expect
 class Tile(Base):
 
     @staticmethod
-    def export_tile():
+    def export_tile():  # type: () -> None
         node = onnx.helper.make_node(
             'Tile',
             inputs=['x', 'y'],
@@ -32,7 +32,7 @@ class Tile(Base):
                name='test_tile')
 
     @staticmethod
-    def export_tile_precomputed():
+    def export_tile_precomputed():  # type: () -> None
         node = onnx.helper.make_node(
             'Tile',
             inputs=['x', 'y'],

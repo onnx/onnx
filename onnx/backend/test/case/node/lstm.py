@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
+from typing import Any
 
 import onnx
 from ..base import Base
@@ -11,15 +12,15 @@ from . import expect
 
 
 class LSTM_Helper():
-    def __init__(self, **params):
+    def __init__(self, **params):  # type: (*Any) -> None
         #LSTM Input Names
-        X = 'X'
-        W = 'W'
-        R = 'R'
-        B = 'B'
-        H_0 = 'initial_h'
-        C_0 = 'initial_c'
-        P = 'P'
+        X = str('X')
+        W = str('W')
+        R = str('R')
+        B = str('B')
+        H_0 = str('initial_h')
+        C_0 = str('initial_c')
+        P = str('P')
         number_of_gates = 4
         number_of_peepholes = 3
 
@@ -51,16 +52,16 @@ class LSTM_Helper():
         else:
             raise NotImplementedError()
 
-    def f(self, x):
+    def f(self, x):  # type: (np.ndarray) -> np.ndarray
         return 1 / (1 + np.exp(-x))
 
-    def g(self, x):
+    def g(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def h(self, x):
+    def h(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):
+    def step(self):  # type: () -> np.ndarray
         [w_i, w_o, w_f, w_c] = np.split(self.W, 4)
         [r_i, r_o, r_f, r_c] = np.split(self.R, 4)
         [p_i, p_o, p_f] = np.split(self.P, 3)
@@ -78,7 +79,7 @@ class LSTM_Helper():
 class LSTM(Base):
 
     @staticmethod
-    def export_defaults():
+    def export_defaults():  # type: () -> None
         input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 
         input_size = 2
@@ -102,7 +103,7 @@ class LSTM(Base):
         expect(node, inputs=[input, W, R], outputs=[output], name='test_lstm_defaults')
 
     @staticmethod
-    def export_initial_bias():
+    def export_initial_bias():  # type: () -> None
         input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
 
         input_size = 3
@@ -132,7 +133,7 @@ class LSTM(Base):
         expect(node, inputs=[input, W, R, B], outputs=[output], name='test_lstm_with_initial_bias')
 
     @staticmethod
-    def export_peepholes():
+    def export_peepholes():  # type: () -> None
             input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
 
             input_size = 4
