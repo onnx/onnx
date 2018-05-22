@@ -6,8 +6,8 @@ using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
 
-// Input: box, delta Output: box
 ONNX_OPERATOR_SCHEMA(BBoxTransform)
+// Input: box, delta Output: box
     .NumInputs({3})
     .NumOutputs({1, 2})
     .SetDoc(R"DOC(
@@ -175,4 +175,81 @@ returned boxes.
         "TINT",
         {"tensor(int32)", "tensor(int64)"},
         "Constrain input and output to float tensors.");
+
+ONNX_OPERATOR_SCHEMA(GenerateProposals)
+    .NumInputs({4})
+    .NumOutputs({2})
+    .SetDoc(R"DOC(
+Generate bounding box proposals for Faster RCNN. The propoasls are generated for
+a list of images based on image score 'score', bounding box regression result
+'deltas' as well as predefined bounding box shapes 'anchors'. Greedy
+non-maximum suppression is applied to generate the final bounding boxes.
+)DOC")
+    .Attr(
+        "spatial_scale",
+        "(float) spatial scale",
+        AttributeProto::FLOAT,
+        0.0625f)
+    .Attr(
+        "pre_nms_topN",
+        "(int) RPN_PRE_NMS_TOP_N",
+        AttributeProto::INT,
+        static_cast<int64_t>(6000))
+    .Attr(
+        "post_nms_topN",
+        "(int) RPN_POST_NMS_TOP_N",
+        AttributeProto::INT,
+        static_cast<int64_t>(300))
+    .Attr(
+        "nms_thresh",
+        "(float) RPN_NMS_THRESH",
+        AttributeProto::FLOAT,
+        0.7f)
+    .Attr(
+        "min_size",
+        "(float) RPN_MIN_SIZE",
+        AttributeProto::FLOAT,
+        16.f)
+    .Input(
+        0,
+        "scores",
+        "Scores from conv layer, size (img_count, A, H, W)",
+        "TFLOAT")
+    .Input(
+        1,
+        "bbox_deltas",
+        "Bounding box deltas from conv layer, "
+        "size (img_count, 4 * A, H, W)",
+        "TFLOAT")
+    .Input(
+        2,
+        "im_info",
+        "Image info, size (img_count, 3), "
+        "format (height, width, scale)",
+        "TFLOAT")
+    .Input(
+        3,
+        "anchors",
+        "Bounding box anchors, size (A, 4)",
+        "TINT")
+    .Output(
+        0,
+        "rois",
+        "Proposals, size (n x 5), "
+        "format (image_index, x1, y1, x2, y2)",
+        "TINT")
+    .Output(
+        1,
+        "rois_probs",
+        "scores of proposals, size (n)",
+        "TFLOAT")
+    .TypeConstraint(
+        "TFLOAT",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain score types to float tensors.")
+    .TypeConstraint(
+        "TINT",
+        {"tensor(int32)", "tensor(int64)"},
+        "Constrain input and output to float tensors.");
+
 } // namespace ONNX_NAMESPACE

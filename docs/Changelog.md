@@ -1602,6 +1602,63 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="GenerateProposals-1"></a>**GenerateProposals-1**</a>
+
+  Generate bounding box proposals for Faster RCNN. The propoasls are generated for
+  a list of images based on image score 'score', bounding box regression result
+  'deltas' as well as predefined bounding box shapes 'anchors'. Greedy
+  non-maximum suppression is applied to generate the final bounding boxes.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>min_size</tt> : float</dt>
+<dd>(float) RPN_MIN_SIZE</dd>
+<dt><tt>nms_thresh</tt> : float</dt>
+<dd>(float) RPN_NMS_THRESH</dd>
+<dt><tt>post_nms_topN</tt> : int</dt>
+<dd>(int) RPN_POST_NMS_TOP_N</dd>
+<dt><tt>pre_nms_topN</tt> : int</dt>
+<dd>(int) RPN_PRE_NMS_TOP_N</dd>
+<dt><tt>spatial_scale</tt> : float</dt>
+<dd>(float) spatial scale</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>scores</tt> : TFLOAT</dt>
+<dd>Scores from conv layer, size (img_count, A, H, W)</dd>
+<dt><tt>bbox_deltas</tt> : TFLOAT</dt>
+<dd>Bounding box deltas from conv layer, size (img_count, 4 * A, H, W)</dd>
+<dt><tt>im_info</tt> : TFLOAT</dt>
+<dd>Image info, size (img_count, 3), format (height, width, scale)</dd>
+<dt><tt>anchors</tt> : TINT</dt>
+<dd>Bounding box anchors, size (A, 4)</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>rois</tt> : TINT</dt>
+<dd>Proposals, size (n x 5), format (image_index, x1, y1, x2, y2)</dd>
+<dt><tt>rois_probs</tt> : TFLOAT</dt>
+<dd>scores of proposals, size (n)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>TFLOAT</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain score types to float tensors.</dd>
+<dt><tt>TINT</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output to float tensors.</dd>
+</dl>
+
 ### <a name="GivenTensorFill-1"></a>**GivenTensorFill-1**</a>
 
 #### Version
