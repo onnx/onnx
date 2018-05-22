@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
+from typing import Any
 
 import onnx
 from ..base import Base
@@ -11,19 +12,19 @@ from . import expect
 
 
 class RNN_Helper():
-    def __init__(self, **params):
+    def __init__(self, **params):  # type: (**Any) -> None
         # RNN Input Names
-        X = 'X'
-        W = 'W'
-        R = 'R'
-        B = 'B'
-        H_0 = 'initial_h'
+        X = str('X')
+        W = str('W')
+        R = str('R')
+        B = str('B')
+        H_0 = str('initial_h')
 
         required_inputs = [X, W, R]
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        self.num_directions = params[W].shape[0]
+        self.num_directions = params[str(W)].shape[0]
 
         if self.num_directions == 1:
             for k in params.keys():
@@ -44,10 +45,10 @@ class RNN_Helper():
         else:
             raise NotImplementedError()
 
-    def f(self, x):
+    def f(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):
+    def step(self):  # type: () -> np.ndarray
         h_list = []
         H_t = self.H_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
@@ -64,7 +65,7 @@ class RNN_Helper():
 class RNN(Base):
 
     @staticmethod
-    def export_defaults():
+    def export_defaults():  # type: () -> None
         input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 
         input_size = 2
@@ -86,7 +87,7 @@ class RNN(Base):
         expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
 
     @staticmethod
-    def export_initial_bias():
+    def export_initial_bias():  # type: () -> None
         input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
 
         input_size = 3
@@ -114,7 +115,7 @@ class RNN(Base):
         expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
 
     @staticmethod
-    def export_seq_length():
+    def export_seq_length():  # type: () -> None
         input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]],
                           [[10., 11., 12.], [13., 14., 15.], [16., 17., 18.]]]).astype(np.float32)
 

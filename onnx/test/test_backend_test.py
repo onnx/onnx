@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import itertools
 import os
 import unittest
 import onnx.backend.base
@@ -12,7 +13,7 @@ from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
 from typing import Optional, Text, Any, Tuple, Sequence
-from onnx import NodeProto, ModelProto
+from onnx import NodeProto, ModelProto, TensorProto
 import numpy  # type: ignore
 
 # The following just executes the fake backend through the backend test
@@ -37,7 +38,19 @@ class DummyBackend(onnx.backend.base.Backend):
         super(DummyBackend, cls).prepare(model, device, **kwargs)
 
         # test shape inference
-        onnx.shape_inference.infer_shapes(model)
+        model = onnx.shape_inference.infer_shapes(model)
+        value_infos = {vi.name: vi for vi in itertools.chain(model.graph.value_info, model.graph.output)}
+
+        if do_enforce_shape_inference_coverage(model):
+            for node in model.graph.node:
+                for i, output in enumerate(node.output):
+                    if node.op_type == 'Dropout' and i != 0:
+                        continue
+                    assert output in value_infos
+                    tt = value_infos[output].type.tensor_type
+                    assert tt.elem_type != TensorProto.UNDEFINED
+                    for dim in tt.shape.dim:
+                        assert dim.WhichOneof('value') == 'dim_value'
 
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
@@ -55,11 +68,25 @@ class DummyBackend(onnx.backend.base.Backend):
             "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def supports_device(cls, device):
+    def supports_device(cls, device):  # type: (Text) -> bool
         d = Device(device)
         if d.type == DeviceType.CPU:
             return True
         return False
+
+
+shape_coverage_whitelist = set(
+    ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
+     'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
+
+
+def do_enforce_shape_inference_coverage(model):
+    if model.graph.name not in shape_coverage_whitelist:
+        return False
+    for node in model.graph.node:
+        if node.op_type in set(['RNN', 'LSTM', 'GRU']):
+            return False
+    return True
 
 
 backend_test = onnx.backend.test.BackendTest(DummyBackend, __name__)
