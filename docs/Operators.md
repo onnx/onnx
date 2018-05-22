@@ -1188,7 +1188,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 6 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
 
 #### Attributes
 
