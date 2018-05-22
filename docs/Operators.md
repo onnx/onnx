@@ -1723,7 +1723,7 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
   The convolution transpose operator consumes an input tensor and a filter,
   and computes the output. 
   
-  The shape of the output can be calculated via the following equation:
+  If the pads parameter is provided the shape of the output is calculated via the following equation:
   
     output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
   

@@ -615,7 +615,7 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output. 
 
-The shape of the output can be calculated via the following equation:
+If the pads parameter is provided the shape of the output is calculated via the following equation:
 
   output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
 
