@@ -365,6 +365,55 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="BBoxTransform-1"></a>**BBoxTransform-1**</a>
+
+  Transform proposal bounding boxes to target bounding box using bounding box
+      regression deltas.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>apply_scale</tt> : int</dt>
+<dd>bool (default true), transform the boxes to the scaled image space after applying the bbox deltas.Set to false to match the detectron code, set to true for keypoint models and for backward compatibility</dd>
+<dt><tt>correct_transform_coords</tt> : int</dt>
+<dd>bool (default false), Correct bounding box transform coordates, see bbox_transform() in boxes.py Set to true to match the detectron code, set to false for backward compatibility</dd>
+<dt><tt>weights</tt> : list of floats</dt>
+<dd>vector<float> weights [wx, wy, ww, wh] for the deltas</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>rois</tt> : TINT</dt>
+<dd>Bounding box proposals in pixel coordinates, Size (M, 4), format [x1, y1, x2, y2], orSize (M, 5), format [batch_index, x1, y1, x2, y2]. If proposals from multiple images in a batch are present, they should be grouped sequentially and in incremental order.</dd>
+<dt><tt>deltas</tt> : TFLOAT</dt>
+<dd>bounding box translations and scales,size (M, 4*K), format [dx, dy, dw, dh], K = # classes</dd>
+<dt><tt>im_info</tt> : TFLOAT</dt>
+<dd>Image dimensions, size (batch_size, 3), format [img_height, img_width, img_scale]</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>box_out</tt> : TINT</dt>
+<dd>Pixel coordinates of the transformed bounding boxes,Size (M, 4*K), format [x1, y1, x2, y2]</dd>
+<dt><tt>roi_batch_splits</tt> : TINT</dt>
+<dd>Tensor of shape (batch_size) with each element denoting the number of RoIs belonging to the corresponding image in batch</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>TFLOAT</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain score types to float tensors.</dd>
+<dt><tt>TINT</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output to float tensors.</dd>
+</dl>
+
 ### <a name="BatchNormalization-1"></a>**BatchNormalization-1**</a>
 
   Carries out batch normalization as described in the paper
@@ -462,37 +511,37 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>scores</tt> : T1</dt>
+<dt><tt>scores</tt> : TFLOAT</dt>
 <dd>Scores, size (count, num_classes)</dd>
-<dt><tt>boxes</tt> : T2</dt>
+<dt><tt>boxes</tt> : TINT</dt>
 <dd>Bounding box for each class, size (count, num_classes * 4)</dd>
-<dt><tt>batch_splits</tt> : T2</dt>
+<dt><tt>batch_splits</tt> : TINT</dt>
 <dd>Tensor of shape (batch_size) with each element denoting the number of RoIs/boxes belonging to the corresponding image in batch. Sum should add up to total count of scores/boxes.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>scores</tt> : T1</dt>
+<dt><tt>scores</tt> : TFLOAT</dt>
 <dd>Filtered scores, size (n)</dd>
-<dt><tt>boxes</tt> : T2</dt>
+<dt><tt>boxes</tt> : TINT</dt>
 <dd>Filtered boxes, size (n, 4)</dd>
-<dt><tt>classes</tt> : T2</dt>
+<dt><tt>classes</tt> : TINT</dt>
 <dd>Class id for each filtered score/box, size (n)</dd>
-<dt><tt>batch_splits</tt> : T2</dt>
+<dt><tt>batch_splits</tt> : TINT</dt>
 <dd>Output batch splits for scores/boxes after applying NMS</dd>
-<dt><tt>keeps</tt> : T2</dt>
+<dt><tt>keeps</tt> : TINT</dt>
 <dd>Optional filtered indices, size (n)</dd>
-<dt><tt>keeps_size</tt> : T2</dt>
+<dt><tt>keeps_size</tt> : TINT</dt>
 <dd>Optional number of filtered indices per class, size (num_classes)</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>TFLOAT</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain score types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dt><tt>TINT</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain input and output to float tensors.</dd>
 </dl>
 
