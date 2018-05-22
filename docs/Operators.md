@@ -7943,7 +7943,17 @@ for test_name, shape in test_cases.items():
 
 ### <a name="RoIAlign"></a><a name="roialign">**RoIAlign**</a>
 
-  Region of Interest (RoI) align operation.
+  Region of Interest (RoI) align operation described in the
+  [Mask R-CNN paper](https://arxiv.org/abs/1703.06870).
+  RoIAlign consumes an input tensor X and region of interests (rois)
+  to apply pooling across each RoI; it produces a 4-D tensor of shape
+  (num_rois, C, pooled_h, pooled_w).
+  
+  RoIAlign is proposed to avoid the misalignment by removing
+  quantizations while converting from original image into feature
+  map and from feature map into RoI feature; in each ROI bin,
+  the value of the sampled locations are computed directly
+  through bilinear interpolation.
 
 #### Version
 
@@ -7952,39 +7962,39 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
+<dt><tt>mode</tt> : string</dt>
+<dd>The pooling method. Two modes are supported: 'avg' and 'max'. Default is 'avg'.</dd>
 <dt><tt>pooled_h</tt> : int</dt>
-<dd>(int) default 1; Pooled output Y's height.</dd>
+<dd>default 1; Pooled output Y's height.</dd>
 <dt><tt>pooled_w</tt> : int</dt>
-<dd>(int) default 1; Pooled output Y's width.</dd>
+<dd>default 1; Pooled output Y's width.</dd>
 <dt><tt>sampling_ratio</tt> : int</dt>
-<dd>(int) default -1; number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If <= 0, then an adaptive number of grid points are used (computed as ceil(roi_width / pooled_w), and likewise for height).</dd>
+<dd>Number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If == 0, then an adaptive number of grid points are used (computed as ceil(roi_width / pooled_w), and likewise for height). Default is 0.</dd>
 <dt><tt>spatial_scale</tt> : float</dt>
-<dd>(float) default 1.0; Spatial scale of the input feature map X relative to the input image. E.g., 0.0625 if X has a stride of 16 w.r.t. the input image.</dd>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input spatial scale to the scale used when pooling, i.e., spatial scale of the input feature map X relative to the input image. E.g.; default is 1.0f. </dd>
 </dl>
 
 #### Inputs
 
 <dl>
-<dt><tt>X</tt> : TFLOAT</dt>
-<dd>4D feature map input of shape (N, C, H, W).</dd>
-<dt><tt>RoIs</tt> : TINT</dt>
-<dd>2D input of shape (R, 4 or 5) specifying R RoIs representing: batch index in [0, N - 1], x1, y1, x2, y2. The RoI coordinates are in the coordinate system of the input image. For inputs corresponding to a single image, batch index can be excluded to have just 4 columns.</dd>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; 4-D feature map of shape (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data.</dd>
+<dt><tt>rois</tt> : T</dt>
+<dd>RoIs (Regions of Interest2) to pool over; rois is 2-D input of shape (num_rois, 5) given as [[batch_id, x1, y1, x2, y2], ...]. The RoIs' coordinates are in the coordinate system of the input image.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : TFLOAT</dt>
-<dd>4D output of shape (R, C, pooled_h, pooled_w). The r-th batch element is a pooled feature map cooresponding to the r-th RoI.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>RoI pooled output, 4-D tesnor of shape (num_rois, C, pooled_h, pooled_w). The r-th batch element Y[r-1] is a pooled feature map corresponding to the r-th RoI X[r-1].</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>TFLOAT</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain score types to float tensors.</dd>
-<dt><tt>TINT</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain input and output to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain types to float tensors.</dd>
 </dl>
 
 
