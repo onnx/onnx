@@ -8,6 +8,7 @@
 using namespace ONNX_NAMESPACE;
 
 ONNX_OPERATOR_SCHEMA(Cast)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in

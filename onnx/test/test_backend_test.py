@@ -80,7 +80,7 @@ shape_coverage_whitelist = set(
      'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
 
 
-def do_enforce_shape_inference_coverage(model):
+def do_enforce_shape_inference_coverage(model):  # type: (ModelProto) -> bool
     if model.graph.name not in shape_coverage_whitelist:
         return False
     for node in model.graph.node:

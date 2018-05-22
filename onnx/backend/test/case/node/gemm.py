@@ -13,7 +13,7 @@ from . import expect
 class Gemm(Base):
 
     @staticmethod
-    def export_transpose():
+    def export_transpose():  # type: () -> None
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
@@ -32,7 +32,7 @@ class Gemm(Base):
                name='test_gemm_broadcast')
 
     @staticmethod
-    def export_notranspose():
+    def export_notranspose():  # type: () -> None
         node = onnx.helper.make_node(
             'Gemm',
             inputs=['a', 'b', 'c'],
