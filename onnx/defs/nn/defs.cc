@@ -613,7 +613,19 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
-and computes the output.)DOC";
+and computes the output. 
+
+The shape of the output can be calculated via the following equation:
+
+  output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
+
+output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
+
+  total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - output_shape[i]
+  If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+  Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
+
+    )DOC";
     ReplaceAll(doc, "{filter_desc}", filter_desc);
     schema.SetDoc(doc);
     schema.Input(
@@ -659,16 +671,14 @@ and computes the output.)DOC";
         OPTIONAL);
     schema.Attr(
         "output_shape",
-        "The shape of the output."
-        " output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] +"
-        " kernel_shape[i] - pads[start_i] - pads[end_i]",
+        "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
+        "pads values are ignored. See doc for details for equations to generate pads",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
         "output_padding",
         "The zero-padding added to one side of the output."
-        " This is also called adjs/adjustment in some frameworks."
-        " If output_shape is set, this attribute will be ignored.",
+        " This is also called adjs/adjustment in some frameworks.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
