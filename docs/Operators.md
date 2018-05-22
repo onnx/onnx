@@ -84,6 +84,7 @@
   * <a href="#ReduceSumSquare">ReduceSumSquare</a>
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
+  * <a href="#RoIAlign">RoIAlign</a>
   * <a href="#Selu">Selu</a>
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
@@ -7938,6 +7939,53 @@ for test_name, shape in test_cases.items():
 ```
 
 </details>
+
+
+### <a name="RoIAlign"></a><a name="roialign">**RoIAlign**</a>
+
+  Region of Interest (RoI) align operation.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>pooled_h</tt> : int</dt>
+<dd>(int) default 1; Pooled output Y's height.</dd>
+<dt><tt>pooled_w</tt> : int</dt>
+<dd>(int) default 1; Pooled output Y's width.</dd>
+<dt><tt>sampling_ratio</tt> : int</dt>
+<dd>(int) default -1; number of sampling points in the interpolation grid used to compute the output value of each pooled output bin. If > 0, then exactly sampling_ratio x sampling_ratio grid points are used. If <= 0, then an adaptive number of grid points are used (computed as ceil(roi_width / pooled_w), and likewise for height).</dd>
+<dt><tt>spatial_scale</tt> : float</dt>
+<dd>(float) default 1.0; Spatial scale of the input feature map X relative to the input image. E.g., 0.0625 if X has a stride of 16 w.r.t. the input image.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : TFLOAT</dt>
+<dd>4D feature map input of shape (N, C, H, W).</dd>
+<dt><tt>RoIs</tt> : TINT</dt>
+<dd>2D input of shape (R, 4 or 5) specifying R RoIs representing: batch index in [0, N - 1], x1, y1, x2, y2. The RoI coordinates are in the coordinate system of the input image. For inputs corresponding to a single image, batch index can be excluded to have just 4 columns.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : TFLOAT</dt>
+<dd>4D output of shape (R, C, pooled_h, pooled_w). The r-th batch element is a pooled feature map cooresponding to the r-th RoI.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>TFLOAT</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain score types to float tensors.</dd>
+<dt><tt>TINT</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output to float tensors.</dd>
+</dl>
 
 
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
