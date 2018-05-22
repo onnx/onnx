@@ -2545,7 +2545,7 @@ expect(node, inputs=[x], outputs=[y],
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   
-  " + GenerateOptionalArgumentsDoc() + "
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
@@ -3649,7 +3649,7 @@ This version of the operator has been available since version 1 of the default O
   
     - Ht = ot (.) h(Ct)
   
-  " + GenerateOptionalArgumentsDoc() + "
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
@@ -5805,7 +5805,7 @@ expect(node, inputs=[x, y], outputs=[z],
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
   
-  " + GenerateOptionalArgumentsDoc() + "
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 

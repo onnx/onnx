@@ -56,7 +56,7 @@ inline std::string GenerateOptionalArgumentsDoc() {
 		   "optional arguments. An empty string may be used in the place of "
 		   "an actual argument's name to indicate a missing argument. "
 		   "Trailing optional arguments (those not followed by an argument "
-		   "that is present) may also be simply omitted.";
+		   "that is present) may also be simply omitted.\n";
 }
 
 std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
@@ -174,8 +174,7 @@ Equations (Default: f=Tanh):
 
   - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 
-" + GenerateOptionalArgumentsDoc() + "
-)DOC")
+)DOC" + GenerateOptionalArgumentsDoc())
     .Attr("activations", "One (or two if bidirectional) activation function for "
           "input gate. The activation function must be one of the activation "
           "functions specified above. Optional: Default `Tanh` if not specified.",
@@ -274,8 +273,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 
-" + GenerateOptionalArgumentsDoc() + "
-)DOC")
+)DOC" + GenerateOptionalArgumentsDoc())
     .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
           "for update, reset, and hidden gates. The activation functions must be one "
           "of the activation functions specified above. Optional: See the equations "
@@ -388,8 +386,7 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
   - Ht = ot (.) h(Ct)
 
-" + GenerateOptionalArgumentsDoc() + "
-)DOC")
+)DOC" + GenerateOptionalArgumentsDoc())
     .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
           "for input, output, forget, cell, and hidden. The activation functions must "
           "be one of the activation functions specified above. Optional: See the equations "
