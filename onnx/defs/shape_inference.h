@@ -47,7 +47,7 @@ struct InferenceContext {
   virtual ~InferenceContext() {}
 };
 
-typedef void (*InferenceFunction)(InferenceContext&);
+using InferenceFunction = std::function<void(InferenceContext&)>;
 
 // This no-op inference function is used for operators without an
 // inference implementation.

@@ -435,7 +435,7 @@ class OpSchema final {
   }
 
   bool has_type_and_shape_inference_function() const {
-    return tensor_inference_function_;
+    return tensor_inference_function_ ? true : false;
   }
 
   // Verifies that the schema is valid and all specifications are compatible.
@@ -469,7 +469,7 @@ class OpSchema final {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  InferenceFunction tensor_inference_function_ = nullptr;
+  InferenceFunction tensor_inference_function_;
 };
 
 // Map type to store operator schemas. The format is,
