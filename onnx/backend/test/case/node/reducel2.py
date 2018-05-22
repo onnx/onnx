@@ -13,7 +13,7 @@ from . import expect
 class ReduceL2(Base):
 
     @staticmethod
-    def export_do_not_keepdims():
+    def export_do_not_keepdims():  # type: () -> None
         shape = [3, 2, 2]
         axes = [2]
         keepdims = 0
@@ -49,7 +49,7 @@ class ReduceL2(Base):
             name='test_reduce_l2_do_not_keepdims_random')
 
     @staticmethod
-    def export_keepdims():
+    def export_keepdims():  # type: () -> None
         shape = [3, 2, 2]
         axes = [2]
         keepdims = 1
@@ -84,7 +84,7 @@ class ReduceL2(Base):
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_random')
 
     @staticmethod
-    def export_default_axes_keepdims():
+    def export_default_axes_keepdims():  # type: () -> None
         shape = [3, 2, 2]
         axes = None
         keepdims = 1

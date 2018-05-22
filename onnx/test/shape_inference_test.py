@@ -501,7 +501,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 3, 100, 100))])
 
-    def _rnn_forward(self, seqlen, batchsize, inpsize, hiddensize):
+    def _rnn_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
@@ -515,7 +515,7 @@ class TestShapeInference(unittest.TestCase):
     def test_rnn_forward(self):  # type: () -> None
         self._rnn_forward(64, 32, 10, 4)
 
-    def _rnn_bidirectional(self, seqlen, batchsize, inpsize, hiddensize):
+    def _rnn_bidirectional(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (2, hiddensize, inpsize)),
@@ -530,7 +530,7 @@ class TestShapeInference(unittest.TestCase):
     def test_rnn_bidirectional(self):  # type: () -> None
         self._rnn_bidirectional(64, 32, 10, 4)
 
-    def _lstm_forward(self, seqlen, batchsize, inpsize, hiddensize):
+    def _lstm_forward(self, seqlen, batchsize, inpsize, hiddensize):  # type: (int, int, int, int) -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, 4 * hiddensize, inpsize)),

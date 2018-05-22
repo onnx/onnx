@@ -13,7 +13,7 @@ from . import expect
 class ReduceSum(Base):
 
     @staticmethod
-    def export_do_not_keepdims():
+    def export_do_not_keepdims():  # type: () -> None
         shape = [3, 2, 2]
         axes = [1]
         keepdims = 0
@@ -41,7 +41,7 @@ class ReduceSum(Base):
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_do_not_keepdims_random')
 
     @staticmethod
-    def export_keepdims():
+    def export_keepdims():  # type: () -> None
         shape = [3, 2, 2]
         axes = [1]
         keepdims = 1
@@ -69,7 +69,7 @@ class ReduceSum(Base):
         expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_random')
 
     @staticmethod
-    def export_default_axes_keepdims():
+    def export_default_axes_keepdims():  # type: () -> None
         shape = [3, 2, 2]
         axes = None
         keepdims = 1
