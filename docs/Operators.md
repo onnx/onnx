@@ -14,6 +14,7 @@
   * <a href="#Atan">Atan</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
+  * <a href="#BoxWithNMSLimit">BoxWithNMSLimit</a>
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
@@ -1175,6 +1176,72 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+### <a name="BoxWithNMSLimit"></a><a name="boxwithnmslimit">**BoxWithNMSLimit**</a>
+
+  Apply NMS to each class (except background) and limit the number of
+  returned boxes.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>detections_per_im</tt> : int</dt>
+<dd>(int) TEST.DEECTIONS_PER_IM</dd>
+<dt><tt>nms</tt> : float</dt>
+<dd>(float) TEST.NMS</dd>
+<dt><tt>score_thresh</tt> : float</dt>
+<dd>(float) TEST.SCORE_THRESH</dd>
+<dt><tt>soft_nms_enabled</tt> : int</dt>
+<dd>(bool) TEST.SOFT_NMS.ENABLED</dd>
+<dt><tt>soft_nms_method</tt> : string</dt>
+<dd>(string) TEST.SOFT_NMS.METHOD</dd>
+<dt><tt>soft_nms_min_score_thres</tt> : float</dt>
+<dd>(float) Lower bound on updated scores to discard boxes</dd>
+<dt><tt>soft_nms_sigma</tt> : float</dt>
+<dd>(float) TEST.SOFT_NMS.SIGMA</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>scores</tt> : T1</dt>
+<dd>Scores, size (count, num_classes)</dd>
+<dt><tt>boxes</tt> : T2</dt>
+<dd>Bounding box for each class, size (count, num_classes * 4)</dd>
+<dt><tt>batch_splits</tt> : T2</dt>
+<dd>Tensor of shape (batch_size) with each element denoting the number of RoIs/boxes belonging to the corresponding image in batch. Sum should add up to total count of scores/boxes.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>scores</tt> : T1</dt>
+<dd>Filtered scores, size (n)</dd>
+<dt><tt>boxes</tt> : T2</dt>
+<dd>Filtered boxes, size (n, 4)</dd>
+<dt><tt>classes</tt> : T2</dt>
+<dd>Class id for each filtered score/box, size (n)</dd>
+<dt><tt>batch_splits</tt> : T2</dt>
+<dd>Output batch splits for scores/boxes after applying NMS</dd>
+<dt><tt>keeps</tt> : T2</dt>
+<dd>Optional filtered indices, size (n)</dd>
+<dt><tt>keeps_size</tt> : T2</dt>
+<dd>Optional number of filtered indices per class, size (num_classes)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain score types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output to float tensors.</dd>
 </dl>
 
 
