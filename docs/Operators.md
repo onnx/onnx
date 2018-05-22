@@ -1123,17 +1123,15 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>epsilon</tt> : float</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
-<dt><tt>is_test</tt> : int</dt>
-<dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
 <dt><tt>momentum</tt> : float</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int</dt>
@@ -1161,13 +1159,13 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X.</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
+<dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance after the BatchNormalization operator. Must be in-place with the input var. Should not be used for testing.</dd>
+<dd>The running variance after the BatchNormalization operator. Must be in-place with the input var.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
+<dd>Saved mean used during training to speed up gradient computation.</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
+<dd>Saved variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints
@@ -2051,15 +2049,13 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>is_test</tt> : int</dt>
-<dd>(int, default 0) if nonzero, run dropout in test mode where the output is simply Y = X.</dd>
 <dt><tt>ratio</tt> : float</dt>
 <dd>(float, default 0.5) the ratio of random dropout</dd>
 </dl>
@@ -2077,7 +2073,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
 <dt><tt>mask</tt> (optional) : T</dt>
-<dd>The output mask. If is_test is nonzero, this output is not filled.</dd>
+<dd>The output mask.</dd>
 </dl>
 
 #### Type Constraints

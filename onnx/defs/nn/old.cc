@@ -283,3 +283,146 @@ the training phase, so during testing nothing needs to be done.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
+
+ONNX_OPERATOR_SCHEMA(Dropout)
+.SinceVersion(6)
+.SetDoc(R"DOC(
+Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
+output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
+test mode or not, the output Y will either be a random dropout, or a simple
+copy of the input. Note that our implementation of Dropout does scaling in
+the training phase, so during testing nothing needs to be done.
+)DOC")
+.Attr(
+	"ratio",
+	"(float, default 0.5) the ratio of random dropout",
+	AttributeProto::FLOAT,
+	0.5f)
+	.Attr(
+		"is_test",
+		"(int, default 0) if nonzero, run dropout in test mode where "
+		"the output is simply Y = X.",
+		AttributeProto::INT,
+		static_cast<int64_t>(0))
+	.Input(0, "data", "The input data as Tensor.", "T")
+	.Output(0, "output", "The output.", "T")
+	.Output(
+		1,
+		"mask",
+		"The output mask. If is_test is nonzero, this output is not filled.",
+		"T",
+		OpSchema::Optional)
+	.TypeConstraint(
+		"T",
+		{ "tensor(float16)", "tensor(float)", "tensor(double)" },
+		"Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+
+ONNX_OPERATOR_SCHEMA(BatchNormalization)
+.SinceVersion(6)
+.NumOutputs({ 1, 5 })
+.SetDoc(R"DOC(
+Carries out batch normalization as described in the paper
+https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+there are multiple cases for the number of outputs, which we list below:
+
+Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+Output case #2: Y (test mode)
+    )DOC")
+	.Attr(
+		"spatial",
+		"If true, compute the mean and variance across all spatial elements "
+		"If false, compute the mean and variance across per feature."
+		"Default is 1.",
+		AttributeProto::INT,
+		static_cast<int64_t>(1))
+	.Attr(
+		"is_test",
+		"If set to nonzero, run spatial batch normalization in test mode, default is 0.",
+		AttributeProto::INT,
+		static_cast<int64_t>(0))
+	.Attr(
+		"epsilon",
+		"The epsilon value to use to avoid division by zero, default is 1e-5f.",
+		AttributeProto::FLOAT,
+		1e-5f)
+	.Attr(
+		"momentum",
+		"Factor used in computing the running mean and variance."
+		"e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.",
+		AttributeProto::FLOAT,
+		0.9f)
+	.Input(
+		0,
+		"X",
+		"Input data tensor from the previous operator; "
+		"dimensions for image case are (N x C x H x W), "
+		"where N is the batch size, C is the number of "
+		"channels, and H and W are the height and the "
+		"width of the data. For non image case, the "
+		"dimensions are in the form of "
+		"(N x C x D1 x D2 ... Dn), where N is the batch "
+		"size.",
+		"T")
+	.Input(
+		1,
+		"scale",
+		"The scale as a 1-dimensional tensor of size C to be applied to the "
+		"output.",
+		"T")
+	.Input(
+		2,
+		"B",
+		"The bias as a 1-dimensional tensor of size C to be applied to the "
+		"output.",
+		"T")
+	.Input(
+		3,
+		"mean",
+		"The running mean (training) or the estimated mean (testing) "
+		"as a 1-dimensional tensor of size C.",
+		"T")
+	.Input(
+		4,
+		"var",
+		"The running variance (training) or the estimated "
+		"variance (testing) as a 1-dimensional tensor of size C.",
+		"T")
+	.Output(0, "Y", "The output tensor of the same shape as X.", "T")
+	.Output(
+		1,
+		"mean",
+		"The running mean after the BatchNormalization operator. Must be in-place "
+		"with the input mean. Should not be used for testing.",
+		"T",
+		OpSchema::Optional)
+	.Output(
+		2,
+		"var",
+		"The running variance after the BatchNormalization operator. Must be "
+		"in-place with the input var. Should not be used for testing.",
+		"T",
+		OpSchema::Optional)
+	.Output(
+		3,
+		"saved_mean",
+		"Saved mean used during training to speed up gradient "
+		"computation. Should not be used for testing.",
+		"T",
+		OpSchema::Optional)
+	.Output(
+		4,
+		"saved_var",
+		"Saved variance used during training to speed up "
+		"gradient computation. Should not be used for testing.",
+		"T",
+		OpSchema::Optional)
+	.TypeConstraint(
+		"T",
+		{ "tensor(float16)", "tensor(float)", "tensor(double)" },
+		"Constrain input and output types to float tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	propagateShapeAndTypeFromFirstInput(ctx);
+	// TODO in training mode, it may be possible to infer some of
+	// the other outputs as well.
+});

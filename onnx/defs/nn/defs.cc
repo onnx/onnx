@@ -824,7 +824,7 @@ ONNX_OPERATOR_SCHEMA(GlobalLpPool)
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(BatchNormalization)
-    .SinceVersion(6)
+    .SinceVersion(7)
     .NumOutputs({1, 5})
     .SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
@@ -841,11 +841,6 @@ Output case #2: Y (test mode)
         "Default is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1))
-    .Attr(
-        "is_test",
-        "If set to nonzero, run spatial batch normalization in test mode, default is 0.",
-        AttributeProto::INT,
-        static_cast<int64_t>(0))
     .Attr(
         "epsilon",
         "The epsilon value to use to avoid division by zero, default is 1e-5f.",
@@ -898,28 +893,28 @@ Output case #2: Y (test mode)
         1,
         "mean",
         "The running mean after the BatchNormalization operator. Must be in-place "
-        "with the input mean. Should not be used for testing.",
+        "with the input mean.",
         "T",
         OpSchema::Optional)
     .Output(
         2,
         "var",
         "The running variance after the BatchNormalization operator. Must be "
-        "in-place with the input var. Should not be used for testing.",
+        "in-place with the input var.",
         "T",
         OpSchema::Optional)
     .Output(
         3,
         "saved_mean",
         "Saved mean used during training to speed up gradient "
-        "computation. Should not be used for testing.",
+        "computation.",
         "T",
         OpSchema::Optional)
     .Output(
         4,
         "saved_var",
         "Saved variance used during training to speed up "
-        "gradient computation. Should not be used for testing.",
+        "gradient computation.",
         "T",
         OpSchema::Optional)
     .TypeConstraint(
@@ -995,7 +990,7 @@ Given a matrix, apply Lp-normalization along the provided axis.
     });
 
 ONNX_OPERATOR_SCHEMA(Dropout)
-    .SinceVersion(6)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
@@ -1008,18 +1003,12 @@ the training phase, so during testing nothing needs to be done.
         "(float, default 0.5) the ratio of random dropout",
         AttributeProto::FLOAT,
         0.5f)
-    .Attr(
-        "is_test",
-        "(int, default 0) if nonzero, run dropout in test mode where "
-        "the output is simply Y = X.",
-        AttributeProto::INT,
-        static_cast<int64_t>(0))
     .Input(0, "data", "The input data as Tensor.", "T")
     .Output(0, "output", "The output.", "T")
     .Output(
         1,
         "mask",
-        "The output mask. If is_test is nonzero, this output is not filled.",
+        "The output mask.",
         "T",
         OpSchema::Optional)
     .TypeConstraint(
