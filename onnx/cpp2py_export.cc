@@ -9,6 +9,7 @@
 #include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
+#include "onnx/defs/function.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -142,6 +143,26 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def("get_all_schemas_with_history", []() -> const std::vector<OpSchema> {
     return OpSchemaRegistry::get_all_schemas_with_history();
   });
+
+  defs.def("get_all_functions", [](
+    const std::string& domain
+  )->std::multimap<std::string, std::unique_ptr<FunctionProto>> {
+    std::multimap<std::string, std::unique_ptr<FunctionProto>> *temp_map = 
+      new std::multimap<std::string, std::unique_ptr<FunctionProto>>();
+    FunctionBuilderRegistry& function_registry = FunctionBuilderRegistry::OnnxInstance();
+    Common::Status status = function_registry.GetFunctions(domain, temp_map);
+    return *temp_map;
+  });
+
+  defs.def("register_function", [](
+      const std::string& domain,
+      FunctionProto function
+    )->Common::Status{
+      std::unique_ptr<FunctionProto> *func_ptr = new std::unique_ptr<FunctionProto>();
+      func_ptr->reset(&function);
+      ONNX_FUNCTION(FunctionBuilder().SetDomain(domain).SetBuildFunction(BuildFunction(func_ptr)));
+    }
+  );
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");

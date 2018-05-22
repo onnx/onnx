@@ -31,3 +31,6 @@ def _Attribute_default_value(self):
 
 
 OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
+
+def get_functions(domain=ONNX_DOMAIN):
+    return C.get_all_functions(domain)
