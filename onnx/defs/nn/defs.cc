@@ -833,7 +833,7 @@ there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
-    )DOC")
+    )DOC" + GenerateOptionalArgumentsDoc())
     .Attr(
         "spatial",
         "If true, compute the mean and variance across all spatial elements "
@@ -995,7 +995,7 @@ output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
 test mode or not, the output Y will either be a random dropout, or a simple
 copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
-)DOC")
+)DOC" + GenerateOptionalArgumentsDoc())
     .Attr(
         "ratio",
         "(float, default 0.5) the ratio of random dropout",

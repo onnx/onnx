@@ -669,4 +669,13 @@ class OpSchemaRegistry final {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
+inline std::string GenerateOptionalArgumentsDoc() {
+	return "This operator has **optional** inputs/outputs. "
+		"See [the doc](IR.md) for more details about the representation of "
+		"optional arguments. An empty string may be used in the place of "
+		"an actual argument's name to indicate a missing argument. "
+		"Trailing optional arguments (those not followed by an argument "
+		"that is present) may also be simply omitted.\n";
+}
+
 } // namespace ONNX_NAMESPACE
