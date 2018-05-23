@@ -32,7 +32,6 @@ class Equal(Base):
             'Equal',
             inputs=['x', 'y'],
             outputs=['z'],
-            broadcast=1,
         )
 
         x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)

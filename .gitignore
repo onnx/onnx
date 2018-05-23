@@ -19,10 +19,10 @@
 # Compiled protocol buffers
 *.pb.h
 *.pb.cc
-*_pb2.py
-*_pb.py
-*_pb2.pyi
-*_pb.pyi
+onnx/*_pb2.py
+onnx/*_pb.py
+onnx/*_pb2.pyi
+onnx/*_pb.pyi
 
 # Compiled python
 *.pyc
