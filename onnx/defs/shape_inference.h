@@ -322,4 +322,50 @@ inline void propagateShapeFromAttributeToOutput(
   updateOutputShape(ctx, outputIndex, shape);
 }
 
+inline void bidirectionalBroadcastShapeInference(
+    const TensorShapeProto& shapeL,
+    const TensorShapeProto& shapeR,
+    TensorShapeProto& resultShape) {
+  int il = 0, ir = 0;
+  // copy prefix of shapeL, if shapeL is higher-rank
+  for (; il < shapeL.dim_size() - shapeR.dim_size(); ++il) {
+    *resultShape.add_dim() = shapeL.dim(il);
+  }
+  // copy prefix of shapeR, if shapeR is higher-rank
+  for (; ir < shapeR.dim_size() - shapeL.dim_size(); ++ir) {
+    *resultShape.add_dim() = shapeR.dim(ir);
+  }
+
+  for (; il < shapeL.dim_size(); ++il, ++ir) {
+    auto newdim = resultShape.add_dim();
+    if (shapeL.dim(il).has_dim_value() && shapeR.dim(ir).has_dim_value()) {
+      auto dimL = shapeL.dim(il).dim_value();
+      auto dimR = shapeR.dim(ir).dim_value();
+      if (dimL == dimR) {
+        newdim->set_dim_value(dimL);
+      } else if (dimL == 1) {
+        newdim->set_dim_value(dimR);
+      } else if (dimR == 1) {
+        newdim->set_dim_value(dimL);
+      } else {
+        fail_shape_inference("Incompatible dimensions");;
+      }
+    } else if (shapeL.dim(il).has_dim_value()) {
+      auto dimL = shapeL.dim(il).dim_value();
+      if (dimL == 1) {
+        *newdim = shapeR.dim(ir);
+      } else {
+        newdim->set_dim_value(dimL);
+      }
+    } else if (shapeR.dim(ir).has_dim_value()) {
+      auto dimR = shapeR.dim(ir).dim_value();
+      if (dimR == 1) {
+        *newdim = shapeL.dim(il);
+      } else {
+        newdim->set_dim_value(dimR);
+      }
+    }
+  }
+}
+
 } // namespace ONNX_NAMESPACE

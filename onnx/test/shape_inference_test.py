@@ -354,7 +354,6 @@ class TestShapeInference(unittest.TestCase):
     def test_relu(self):  # type: () -> None
         self._identity_prop('Relu')
 
-    @unittest.skip("Waiting for the shape inference of Add")
     def test_add(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (30, 4, 5)),
@@ -425,27 +424,21 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.BOOL, (30, 4, 5))])
 
-    @unittest.skip("Waiting for the shape inference of And")
     def test_logical_and(self):  # type: () -> None
         self._logical_binary_op('And', TensorProto.BOOL)
 
-    @unittest.skip("Waiting for the shape inference of Or")
     def test_logical_or(self):  # type: () -> None
         self._logical_binary_op('Or', TensorProto.BOOL)
 
-    @unittest.skip("Waiting for the shape inference of Xor")
     def test_logical_xor(self):  # type: () -> None
         self._logical_binary_op('Xor', TensorProto.BOOL)
 
-    @unittest.skip("Waiting for the shape inference of Greater")
     def test_greater(self):  # type: () -> None
         self._logical_binary_op('Greater', TensorProto.FLOAT)
 
-    @unittest.skip("Waiting for the shape inference of Less")
     def test_less(self):  # type: () -> None
         self._logical_binary_op('Less', TensorProto.FLOAT)
 
-    @unittest.skip("Waiting for the shape inference of Equal")
     def test_equal(self):  # type: () -> None
         self._logical_binary_op('Equal', TensorProto.FLOAT)
 
@@ -697,7 +690,6 @@ class TestShapeInference(unittest.TestCase):
                                       make_tensor_value_info('z', TensorProto.FLOAT, (5, 3, 7)),
                                       make_tensor_value_info('a', TensorProto.FLOAT, (5, 3, 7))])
 
-    @unittest.skip("Waiting for the shape inference of Mul")
     def test_GLU(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (5, 6, 7))],

@@ -8,10 +8,10 @@ using namespace ONNX_NAMESPACE;
 namespace ONNX_NAMESPACE {
 
 inline void unaryLogicalOpInference(InferenceContext& ctx) {
-	updateOutputElemType(ctx, 0, TensorProto::BOOL);
-	if (hasInputShape(ctx, 0)) {
-		propagateShapeFromInputToOutput(ctx, 0, 0);
-	}
+    updateOutputElemType(ctx, 0, TensorProto::BOOL);
+    if (hasInputShape(ctx, 0)) {
+        propagateShapeFromInputToOutput(ctx, 0, 0);
+    }
 }
 
 std::function<void(OpSchema&)> BinaryLogicDocGenerator(const char* name) {
@@ -27,8 +27,15 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         schema.SetDoc(doc);
         schema.Input(0, "A", "First input operand for the logical operator.", "T");
         schema.Input(1, "B", "Second input operand for the logical operator.", "T");
-		schema.Output(0, "C", "Result tensor.", "T1");
+        schema.Output(0, "C", "Result tensor.", "T1");
         schema.SinceVersion(7);
+        schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            updateOutputElemType(ctx, 0, TensorProto::BOOL);
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        });
     };
 }
 
@@ -82,6 +89,6 @@ Returns the negation of the input tensor element-wise.
     .Output(0, "Y", "Output tensor", "T")
     .TypeConstraint("T", { "tensor(bool)" },
                     "Constrains input/output to boolean tensors.")
-	.TypeAndShapeInferenceFunction(unaryLogicalOpInference);
+    .TypeAndShapeInferenceFunction(unaryLogicalOpInference);
 
 }  // namespace ONNX_NAMESPACE
