@@ -80,14 +80,16 @@ This version of the operator has been available since version 1 of the default O
   
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of size 1 (a scalar value), or having its shape as a
-  contiguous subset of the first tensor's shape. The starting of the mutually
-  equal shape is specified by the argument "axis", and if it is not set, suffix
-  matching is assumed. 1-dim expansion doesn't work yet.
+  tensor can either be of element size 1 (including a scalar tensor and any
+  tensor with rank equal to or smaller than the first tensor), or having its
+  shape as a contiguous subset of the first tensor's shape. The starting of the
+  mutually equal shape is specified by the argument "axis", and if it is not set,
+  suffix matching is assumed. 1-dim expansion doesn't work yet.
   
   For example, the following tensor shapes are supported (with broadcast=1):
   
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
+    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
@@ -875,14 +877,16 @@ This version of the operator has been available since version 1 of the default O
   
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of size 1 (a scalar value), or having its shape as a
-  contiguous subset of the first tensor's shape. The starting of the mutually
-  equal shape is specified by the argument "axis", and if it is not set, suffix
-  matching is assumed. 1-dim expansion doesn't work yet.
+  tensor can either be of element size 1 (including a scalar tensor and any
+  tensor with rank equal to or smaller than the first tensor), or having its
+  shape as a contiguous subset of the first tensor's shape. The starting of the
+  mutually equal shape is specified by the argument "axis", and if it is not set,
+  suffix matching is assumed. 1-dim expansion doesn't work yet.
   
   For example, the following tensor shapes are supported (with broadcast=1):
   
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
+    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
@@ -2874,14 +2878,16 @@ This version of the operator has been available since version 1 of the default O
   
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of size 1 (a scalar value), or having its shape as a
-  contiguous subset of the first tensor's shape. The starting of the mutually
-  equal shape is specified by the argument "axis", and if it is not set, suffix
-  matching is assumed. 1-dim expansion doesn't work yet.
+  tensor can either be of element size 1 (including a scalar tensor and any
+  tensor with rank equal to or smaller than the first tensor), or having its
+  shape as a contiguous subset of the first tensor's shape. The starting of the
+  mutually equal shape is specified by the argument "axis", and if it is not set,
+  suffix matching is assumed. 1-dim expansion doesn't work yet.
   
   For example, the following tensor shapes are supported (with broadcast=1):
   
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
+    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
@@ -4665,14 +4671,16 @@ This version of the operator has been available since version 1 of the default O
   
   If necessary the right-hand-side argument will be broadcasted to match the
   shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of size 1 (a scalar value), or having its shape as a
-  contiguous subset of the first tensor's shape. The starting of the mutually
-  equal shape is specified by the argument "axis", and if it is not set, suffix
-  matching is assumed. 1-dim expansion doesn't work yet.
+  tensor can either be of element size 1 (including a scalar tensor and any
+  tensor with rank equal to or smaller than the first tensor), or having its
+  shape as a contiguous subset of the first tensor's shape. The starting of the
+  mutually equal shape is specified by the argument "axis", and if it is not set,
+  suffix matching is assumed. 1-dim expansion doesn't work yet.
   
   For example, the following tensor shapes are supported (with broadcast=1):
   
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
+    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
     shape(A) = (2, 3, 4, 5), shape(B) = (5,)
     shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
     shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
@@ -6354,6 +6362,7 @@ This version of the operator has been available since version 6 of the default O
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
+  This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -6365,7 +6374,7 @@ This version of the operator has been available since version 6 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -6730,6 +6739,75 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Add-7"></a>**Add-7**</a>
+
+  Performs element-wise binary addition (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same element type as two inputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
+### <a name="And-7"></a>**And-7**</a>
+
+  Returns the tensor resulted from performing the `and` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
 ### <a name="Asin-7"></a>**Asin-7**</a>
 
   Calculates the arcsine (inverse of sine) of the given input tensor, element-wise.
@@ -6944,6 +7022,39 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Div-7"></a>**Div-7**</a>
+
+  Performs element-wise binary division (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same element type as two inputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
 ### <a name="Dropout-7"></a>**Dropout-7**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -6985,6 +7096,42 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Equal-7"></a>**Equal-7**</a>
+
+  Returns the tensor resulted from performing the `equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 ### <a name="GRU-7"></a>**GRU-7**</a>
@@ -7120,6 +7267,100 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(int32)</dt>
 <dd>Constrain seq_lens to integer tensor.</dd>
+</dl>
+
+### <a name="Gemm-7"></a>**Gemm-7**</a>
+
+  General Matrix multiplication:
+  https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+  
+  A' = transpose(A) if transA else A
+  
+  B' = transpose(B) if transB else B
+  
+  Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
+  input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
+  and output tensor Y has shape (M, N). A will be transposed before doing the
+  computation if attribute transA is non-zero, same for B and transB.
+  
+  This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float</dt>
+<dd>Scalar multiplier for the product of input tensors A * B</dd>
+<dt><tt>beta</tt> : float</dt>
+<dd>Scalar multiplier for input tensor C</dd>
+<dt><tt>transA</tt> : int</dt>
+<dd>Whether A should be transposed</dd>
+<dt><tt>transB</tt> : int</dt>
+<dd>Whether B should be transposed</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
+<dt><tt>C</tt> : T</dt>
+<dd>Input tensor C. The shape of C should be unidirectional broadcastable to (M, N).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor of shape (M, N).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Greater-7"></a>**Greater-7**</a>
+
+  Returns the tensor resulted from performing the `greater` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 ### <a name="LSTM-7"></a>**LSTM-7**</a>
@@ -7271,6 +7512,75 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain seq_lens to integer tensor.</dd>
 </dl>
 
+### <a name="Less-7"></a>**Less-7**</a>
+
+  Returns the tensor resulted from performing the `less` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+### <a name="Mul-7"></a>**Mul-7**</a>
+
+  Performs element-wise binary multiplication (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same element type as two inputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
 ### <a name="Multinomial-7"></a>**Multinomial-7**</a>
 
   Generate a tensor of samples from a multinomial distribution according to the probabilities
@@ -7312,6 +7622,77 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain output types to integral tensors.</dd>
+</dl>
+
+### <a name="Or-7"></a>**Or-7**</a>
+
+  Returns the tensor resulted from performing the `or` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+### <a name="Pow-7"></a>**Pow-7**</a>
+
+  Pow takes input data (Tensor<T>) and exponent Tensor, and
+  produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
+  is applied to the data tensor elementwise.
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>First operand, base of the exponent.</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>Second operand, power of the exponent.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Z</tt> : T</dt>
+<dd>Output tensor (same size as X)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="RNN-7"></a>**RNN-7**</a>
@@ -7464,6 +7845,39 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Sub-7"></a>**Sub-7**</a>
+
+  Performs element-wise binary subtraction (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same element type as two inputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
 ### <a name="Tan-7"></a>**Tan-7**</a>
 
   Calculates the tangent of the given input tensor, element-wise.
@@ -7531,5 +7945,41 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>Constrain input/output types to all tensor types.</dd>
+</dl>
+
+### <a name="Xor-7"></a>**Xor-7**</a>
+
+  Returns the tensor resulted from performing the `xor` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool)</dt>
+<dd>Constrains input to boolean tensor.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
