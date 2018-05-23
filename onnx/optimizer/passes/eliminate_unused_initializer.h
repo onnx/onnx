@@ -13,7 +13,6 @@
 //   condition 1: A is not used as any node's input
 //   condition 2: A is not an output
 
-
 #include "onnx/optimizer/passes/optimize_pass.h"
 
 namespace ONNX_NAMESPACE {
@@ -25,17 +24,15 @@ struct EliminateUnusedInitializer final : public OptimizePass {
 
   void erase_used_initializers(
       Graph& g,
-      std::unordered_set<std::string> * initializer_names) {
+      std::unordered_set<std::string>* initializer_names) {
     for (auto output : g.outputs()) {
       initializer_names->erase(output->uniqueName());
     }
     for (auto it = g.begin(); it != g.end(); ++it) {
       auto* n = *it;
-      DescendOnGraphAttributes(
-          n,
-          [this, initializer_names](Graph& g) {
-            erase_used_initializers(g, initializer_names);
-          });
+      DescendOnGraphAttributes(n, [this, initializer_names](Graph& g) {
+        erase_used_initializers(g, initializer_names);
+      });
       for (auto* input : n->inputs()) {
         initializer_names->erase(input->uniqueName());
       }
