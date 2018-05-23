@@ -362,6 +362,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
 
+    def test_pow(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Pow', ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
+
     def test_sum_single(self):  # type: () -> None
         self._identity_prop('Sum')
 
@@ -506,7 +514,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, hiddensize, inpsize)),
              ('r', TensorProto.FLOAT, (1, hiddensize, hiddensize))],
-            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize, output_sequence=1)],
+            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize)],
             [])
         self._assert_inferred(graph, [
             make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
@@ -520,7 +528,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (2, hiddensize, inpsize)),
              ('r', TensorProto.FLOAT, (2, hiddensize, hiddensize))],
-            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize, output_sequence=1,
+            [make_node('RNN', ['x', 'w', 'r'], ['all', 'last'], hidden_size=hiddensize,
                 direction="bidirectional")],
             [])
         self._assert_inferred(graph, [
@@ -535,7 +543,7 @@ class TestShapeInference(unittest.TestCase):
             [('x', TensorProto.FLOAT, (seqlen, batchsize, inpsize)),
              ('w', TensorProto.FLOAT, (1, 4 * hiddensize, inpsize)),
              ('r', TensorProto.FLOAT, (1, 4 * hiddensize, hiddensize))],
-            [make_node('LSTM', ['x', 'w', 'r'], ['all', 'hidden', 'last'], hidden_size=hiddensize, output_sequence=1)],
+            [make_node('LSTM', ['x', 'w', 'r'], ['all', 'hidden', 'last'], hidden_size=hiddensize)],
             [])
         self._assert_inferred(graph, [
             make_tensor_value_info('all', TensorProto.FLOAT, (seqlen, 1, batchsize, hiddensize)),
@@ -598,24 +606,6 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
-
-    def test_gemm_shape_from_C(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, None),
-             ('y', TensorProto.FLOAT, (11, 5)),
-             ('z', TensorProto.FLOAT, (7, None))],
-            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])  # type: ignore
-
-    def test_gemm_shape_from_C_broadcast_false(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, None),
-             ('y', TensorProto.FLOAT, (11, 5)),
-             ('z', TensorProto.FLOAT, (7, None))],
-            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1, broadcast=0)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])  # type: ignore
 
     def test_reduce_op_shape_2_axis(self):  # type: () -> None
         graph = self._make_graph(
@@ -686,18 +676,7 @@ class TestShapeInference(unittest.TestCase):
              ('b', TensorProto.FLOAT, (4,)),
              ('mean', TensorProto.FLOAT, (4,)),
              ('var', TensorProto.FLOAT, (4,))],
-            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'], is_test=1)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
-
-    def test_batch_norm_train(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 4, 5, 6, 7)),
-             ('scale', TensorProto.FLOAT, (4,)),
-             ('b', TensorProto.FLOAT, (4,)),
-             ('mean', TensorProto.FLOAT, (4,)),
-             ('var', TensorProto.FLOAT, (4,))],
-            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'], is_test=0)],
+            [make_node('BatchNormalization', ['x', 'scale', 'b', 'mean', 'var'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (3, 4, 5, 6, 7))])
 

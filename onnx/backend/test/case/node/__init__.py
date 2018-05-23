@@ -29,10 +29,12 @@ def expect(node,  # type: onnx.NodeProto
            outputs,  # type: Sequence[np.ndarray]
            name,  # type: Text
            ):  # type: (...) -> None
+    present_inputs = [x for x in node.input if (x != '')]
+    present_outputs = [x for x in node.output if (x != '')]
     inputs_vi = [_extract_value_info(arr, arr_name)
-                 for arr, arr_name in zip(inputs, node.input)]
+                 for arr, arr_name in zip(inputs, present_inputs)]
     outputs_vi = [_extract_value_info(arr, arr_name)
-                  for arr, arr_name in zip(outputs, node.output)]
+                  for arr, arr_name in zip(outputs, present_outputs)]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,
