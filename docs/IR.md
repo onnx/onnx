@@ -357,6 +357,8 @@ The type system used for attributes is a superset of that used for of inputs and
 
 The ONNX specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining standard operator semantics and the IR syntax. The latter is specified as Protobuf v2 and v3 schema files.
 
+See the [metadata category documentation](MetadataProps.md) for more details.
+
 ### Operators
 
 [Neural Network Operators](Operators.md)
