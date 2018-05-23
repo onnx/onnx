@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
+from typing import Any
 
 import onnx
 from ..base import Base
@@ -11,31 +12,31 @@ from . import expect
 
 
 class GRU_Helper():
-    def __init__(self, **params):
+    def __init__(self, **params):  # type: (*Any) -> None
         #GRU Input Names
-        X = 'X'
-        W = 'W'
-        R = 'R'
-        B = 'B'
-        H_0 = 'initial_h'
-        LBR = 'linear_before_reset'
+        X = str('X')
+        W = str('W')
+        R = str('R')
+        B = str('B')
+        H_0 = str('initial_h')
+        LBR = str('linear_before_reset')
         number_of_gates = 3
 
         required_inputs = [X, W, R]
         for i in required_inputs:
             assert i in params, "Missing Required Input: {0}".format(i)
 
-        num_directions = params[W].shape[0]
+        self.num_directions = params[W].shape[0]
 
-        if(num_directions == 1):
+        if(self.num_directions == 1):
             for k in params.keys():
                 params[k] = np.squeeze(params[k], axis=0)
 
-            hidden_size = params[R].shape[-1]
-            batch_size = params[X].shape[0]
+            self.hidden_size = params[R].shape[-1]
+            self.batch_size = params[X].shape[0]
 
-            b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size)
-            h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size))
+            b = params[B] if B in params else np.zeros(2 * number_of_gates * self.hidden_size)
+            h_0 = params[H_0] if H_0 in params else np.zeros((self.batch_size, self.hidden_size))
             lbr = params[LBR] if LBR in params else 0
 
             self.X = params[X]
@@ -48,13 +49,13 @@ class GRU_Helper():
         else:
             raise NotImplementedError()
 
-    def f(self, x):
+    def f(self, x):  # type: (np.ndarray) -> np.ndarray
         return 1 / (1 + np.exp(-x))
 
-    def g(self, x):
+    def g(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):
+    def step(self):  # type: () -> np.ndarray
         [w_z, w_r, w_h] = np.split(self.W, 3)
         [r_z, r_r, r_h] = np.split(self.R, 3)
         [w_bz, w_br, w_bh, r_bz, r_br, r_bh] = np.split(self.B, 6)
@@ -65,13 +66,13 @@ class GRU_Helper():
         h_linear = self.g(np.dot(self.X, np.transpose(w_h)) + r * (np.dot(self.H_0, r_h) + r_bh) + w_bh)
         h = h_linear if self.LBR else h_default
         H = (1 - z) * h + z * self.H_0
-        return H
+        return np.reshape(H, (self.num_directions, self.batch_size, self.hidden_size))
 
 
 class GRU(Base):
 
     @staticmethod
-    def export_defaults():
+    def export_defaults():  # type: () -> None
             input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
 
             input_size = 2
@@ -95,7 +96,7 @@ class GRU(Base):
             expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
 
     @staticmethod
-    def export_initial_bias():
+    def export_initial_bias():  # type: () -> None
             input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
 
             input_size = 3
