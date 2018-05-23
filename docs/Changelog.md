@@ -6853,6 +6853,68 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="BatchNormalization-7"></a>**BatchNormalization-7**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  there are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+  Output case #2: Y (test mode)
+      This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float</dt>
+<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
+<dt><tt>momentum</tt> : float</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
+<dt><tt>spatial</tt> : int</dt>
+<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dt><tt>mean</tt> : T</dt>
+<dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
+<dt><tt>var</tt> : T</dt>
+<dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
+</dl>
+
+#### Outputs (1 - 5)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>The output tensor of the same shape as X.</dd>
+<dt><tt>mean</tt> (optional) : T</dt>
+<dd>The running mean after the BatchNormalization operator.</dd>
+<dt><tt>var</tt> (optional) : T</dt>
+<dd>The running variance after the BatchNormalization operator.</dd>
+<dt><tt>saved_mean</tt> (optional) : T</dt>
+<dd>Saved mean used during training to speed up gradient computation.</dd>
+<dt><tt>saved_var</tt> (optional) : T</dt>
+<dd>Saved variance used during training to speed up gradient computation.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Cos-7"></a>**Cos-7**</a>
 
   Calculates the cosine of the given input tensor, element-wise.
@@ -6873,6 +6935,49 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>output</tt> : T</dt>
 <dd>The cosine of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Dropout-7"></a>**Dropout-7**</a>
+
+  Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
+  output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
+  test mode or not, the output Y will either be a random dropout, or a simple
+  copy of the input. Note that our implementation of Dropout does scaling in
+  the training phase, so during testing nothing needs to be done.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>ratio</tt> : float</dt>
+<dd>(float, default 0.5) the ratio of random dropout</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+<dt><tt>mask</tt> (optional) : T</dt>
+<dd>The output mask.</dd>
 </dl>
 
 #### Type Constraints
