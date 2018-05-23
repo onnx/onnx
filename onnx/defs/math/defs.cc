@@ -627,51 +627,36 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
           return;
         }
 
-        auto shape0 = ctx.getInputType(0)->tensor_type().shape();
-        auto shape1 = ctx.getInputType(1)->tensor_type().shape();
+        const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
+        const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
 
         if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
           fail_shape_inference("Input tensors of wrong rank (0).");;
         }
 
-        TensorShapeProto paddedShapeL;
-        TensorShapeProto paddedShapeR;
+        TensorShapeProto shapeL, shapeR;
 
-        for (int i = 0; i < shape1.dim_size() - std::max(2, shape0.dim_size()); ++i) {
-          paddedShapeL.add_dim()->set_dim_value(1);
-        }
-        for (int i = 0; i < shape0.dim_size() - std::max(2, shape1.dim_size()); ++i) {
-          paddedShapeR.add_dim()->set_dim_value(1);
-        }
-
-        if (shape0.dim_size() == 1) {
-          paddedShapeL.add_dim()->set_dim_value(1);
-          *paddedShapeL.add_dim() = shape0.dim(0);
-        } else {
-          for (int i = 0; i < shape0.dim_size(); ++i) {
-            *paddedShapeL.add_dim() = shape0.dim(i);
-          }
-        }
-
-        if (shape1.dim_size() == 1) {
-          *paddedShapeR.add_dim() = shape1.dim(0);
-          paddedShapeR.add_dim()->set_dim_value(1);
-        } else {
-          for (int i = 0; i < shape1.dim_size(); ++i) {
-            *paddedShapeR.add_dim() = shape1.dim(i);
-          }
-        }
-
-        auto dimSize = paddedShapeL.dim_size();
-
-        if (paddedShapeR.dim_size() != dimSize) {
-          fail_shape_inference("Padded shapes do not have same rank");;
-        }
-
+        // First promote each shape to at least rank-2. This logic is
+        // specific to matmul, not generic broadcasting.
         {
-          // check for compatible matrix dimensions
-          auto dimL = paddedShapeL.dim(dimSize - 1);
-          auto dimR = paddedShapeR.dim(dimSize - 2);
+          if (shape0.dim_size() == 1) {
+            shapeL.add_dim()->set_dim_value(1);
+            *shapeL.add_dim() = shape0.dim(0);
+          } else {
+            *shapeL.mutable_dim() = shape0.dim();
+          }
+          if (shape1.dim_size() == 1) {
+            *shapeR.add_dim() = shape1.dim(0);
+            shapeR.add_dim()->set_dim_value(1);
+          } else {
+            *shapeR.mutable_dim() = shape1.dim();
+          }
+        }
+
+        // Check for compatible matrix multiply dimensions
+        {
+          auto dimL = shapeL.dim(shapeL.dim_size() - 1);
+          auto dimR = shapeR.dim(shapeR.dim_size() - 2);
           if (dimL.has_dim_value() && dimR.has_dim_value() &&
               dimL.dim_value() != dimR.dim_value()) {
             fail_shape_inference("Incompatible dimensions for matrix multiplication");;
@@ -680,41 +665,27 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
 
         TensorShapeProto resultShape;
 
-        for (int i = 0; i < dimSize - 2; ++i) {
-          auto newdim = resultShape.add_dim();
-          if (paddedShapeL.dim(i).has_dim_value() && paddedShapeR.dim(i).has_dim_value()) {
-            auto dimL = paddedShapeL.dim(i).dim_value();
-            auto dimR = paddedShapeR.dim(i).dim_value();
-            if (dimL == dimR) {
-              newdim->set_dim_value(dimL);
-            } else if (dimL == 1) {
-              newdim->set_dim_value(dimR);
-            } else if (dimR == 1) {
-              newdim->set_dim_value(dimL);
-            } else {
-              fail_shape_inference("Incompatible dimensions");;
-            }
-          } else if (paddedShapeL.dim(i).has_dim_value()) {
-            auto dimL = paddedShapeL.dim(i).dim_value();
-            if (dimL == 1) {
-              *newdim = paddedShapeR.dim(i);
-            } else {
-              newdim->set_dim_value(dimL);
-            }
-          } else if (paddedShapeR.dim(i).has_dim_value()) {
-            auto dimR = paddedShapeR.dim(i).dim_value();
-            if (dimR == 1) {
-              *newdim = paddedShapeL.dim(i);
-            } else {
-              newdim->set_dim_value(dimR);
-            }
+        // Now call out to generic multidimensional broadcasting for
+        // the broadcastable prefixes.
+        {
+          TensorShapeProto prefixShapeL, prefixShapeR;
+          for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
+            *prefixShapeL.add_dim() = shapeL.dim(i);
           }
+          for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
+            *prefixShapeR.add_dim() = shapeR.dim(i);
+          }
+          bidirectionalBroadcastShapeInference(prefixShapeL, prefixShapeR, resultShape);
         }
-        if (shape0.dim_size() != 1) {
-          *resultShape.add_dim() = paddedShapeL.dim(dimSize - 2);
-        }
-        if (shape1.dim_size() != 1) {
-          *resultShape.add_dim() = paddedShapeR.dim(dimSize - 1);
+
+        // Back to matmul-specific. Add the trailing dimensions back in.
+        {
+          if (shape0.dim_size() != 1) {
+            *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
+          }
+          if (shape1.dim_size() != 1) {
+            *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
+          }
         }
 
         *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
