@@ -28,7 +28,7 @@ To begin with, we define a set of semantic types that define what models general
 
 Specifically, in our first proposal we define the following set of standard denotations:
 
-0. `TENSOR` describes that a type holds an generic tensor using the standard TypeProto message.
+0. `TENSOR` describes that a type holds a generic tensor using the standard TypeProto message.
 1. `IMAGE` describes that a type holds an image.  You can use dimension denotation to learn more about the layout of the image, and also the optional model metadata_props.
 2. `AUDIO` describes that a type holds an audio clip.   
 3. `TEXT` describes that a type holds a block of text.
