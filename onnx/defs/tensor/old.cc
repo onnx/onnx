@@ -175,6 +175,31 @@ from the input tensor).)DOC")
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
 
+ONNX_OPERATOR_SCHEMA(Tile)
+    .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
+    .Input(0, "input", "Input tensor of any shape.", "T")
+    .Input(
+        1,
+        "tiles",
+        "Number of repeated copies to make of the input tensor.",
+        "T")
+    .Input(2, "axis", "Axis along which to repeat.", "T")
+    .Output(0, "output", "Output tensor of same shape and type as input.", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input types to float tensors.")
+    .TypeConstraint(
+        "T1",
+        {"tensor(int64)"},
+        "Constrain tiles and axis's type to int64 tensors.")
+	.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+	    propagateElemTypeFromInputToOutput(ctx, 0, 0);
+		// Only rank of output can be inferred. We can do better if second input is
+		// a constant, but this requires extending InferenceContext interface to
+		// get values of constant inputs.
+     });
+
 ONNX_OPERATOR_SCHEMA(Upsample)
     .SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL)
     .Attr(
