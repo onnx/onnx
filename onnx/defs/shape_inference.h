@@ -74,6 +74,13 @@ inline int64_t getAttribute(InferenceContext& ctx, const std::string& attributeN
   return defaultValue;
 }
 
+inline std::string getAttribute(InferenceContext& ctx, const std::string& attributeName, const std::string& defaultValue) {
+  auto attr_proto = ctx.getAttribute(attributeName);
+  if ((nullptr != attr_proto) && attr_proto->has_s())
+    return attr_proto->s();
+  return defaultValue;
+}
+
 inline TensorShapeProto::Dimension operator*(TensorShapeProto::Dimension dim1, TensorShapeProto::Dimension dim2) {
   TensorShapeProto::Dimension result;
   if (dim1.has_dim_value() && dim2.has_dim_value()) {
@@ -123,6 +130,7 @@ inline void propagateElemTypeFromInputToOutput(
     InferenceContext& ctx,
     size_t inputIndex,
     size_t outputIndex) {
+
   auto input_type = ctx.getInputType(inputIndex);
   if (nullptr == input_type ||
       input_type->value_case() != TypeProto::kTensorType) {

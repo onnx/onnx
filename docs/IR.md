@@ -267,7 +267,7 @@ For each variadic operator input, one or more node inputs must be specified. For
 
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
-Some operators have outputs that are optional, which means that an operator, depending on its input parameters and/or attributes, MAY forgo computing values for such outputs. 
+Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs. 
 
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
