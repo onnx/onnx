@@ -2505,8 +2505,8 @@ W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astyp
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 gru = GRU_Helper(X=input, W=W, R=R)
-output = gru.step().astype(np.float32)
-expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
+_, Y_h = gru.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_defaults')
 ```
 
 </details>
@@ -2527,7 +2527,7 @@ number_of_gates = 3
 node = onnx.helper.make_node(
     'GRU',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -2540,8 +2540,8 @@ R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
 gru = GRU_Helper(X=input, W=W, R=R, B=B)
-output = gru.step().astype(np.float32)
-expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
+_, Y_h = gru.step()
+expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_with_initial_bias')
 ```
 
 </details>
@@ -2573,9 +2573,9 @@ W_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
-rnn = GRU_Helper(X=input, W=W, R=R, B=B)
-output = rnn.step().astype(np.float32)
-expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_seq_length')
+gru = GRU_Helper(X=input, W=W, R=R, B=B)
+_, Y_h = gru.step()
+expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_seq_length')
 ```
 
 </details>
@@ -3639,8 +3639,8 @@ W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astyp
 R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R)
-output = lstm.step()
-expect(node, inputs=[input, W, R], outputs=[output], name='test_lstm_defaults')
+_, Y_h = lstm.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_lstm_defaults')
 ```
 
 </details>
@@ -3674,8 +3674,8 @@ R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
-output = lstm.step()
-expect(node, inputs=[input, W, R, B], outputs=[output], name='test_lstm_with_initial_bias')
+_, Y_h = lstm.step()
+expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_lstm_with_initial_bias')
 ```
 
 </details>
@@ -3710,8 +3710,8 @@ init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
-output = lstm.step()
-expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[output],
+_, Y_h = lstm.step()
+expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.astype(np.float32)],
        name='test_lstm_with_peepholes')
 ```
 
@@ -5660,8 +5660,8 @@ W = weight_scale * np.ones((1, hidden_size, input_size)).astype(np.float32)
 R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
 rnn = RNN_Helper(X=input, W=W, R=R)
-output = rnn.step().astype(np.float32)
-expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_defaults')
 ```
 
 </details>
@@ -5694,8 +5694,9 @@ R_B = np.zeros((1, hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
-output = rnn.step().astype(np.float32)
-expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)],
+       name='test_simple_rnn_with_initial_bias')
 ```
 
 </details>
@@ -5714,7 +5715,7 @@ hidden_size = 5
 node = onnx.helper.make_node(
     'RNN',
     inputs=['X', 'W', 'R', 'B'],
-    outputs=['Y'],
+    outputs=['', 'Y'],
     hidden_size=hidden_size
 )
 
@@ -5727,8 +5728,8 @@ R_B = np.random.randn(1, hidden_size).astype(np.float32)
 B = np.concatenate((W_B, R_B), axis=1)
 
 rnn = RNN_Helper(X=input, W=W, R=R, B=B)
-output = rnn.step().astype(np.float32)
-expect(node, inputs=[input, W, R, B], outputs=[output], name='test_rnn_seq_length')
+_, Y_h = rnn.step()
+expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')
 ```
 
 </details>

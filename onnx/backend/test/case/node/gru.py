@@ -121,7 +121,7 @@ class GRU(Base):
         node = onnx.helper.make_node(
             'GRU',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['Y'],
+            outputs=['', 'Y'],
             hidden_size=hidden_size
         )
 
