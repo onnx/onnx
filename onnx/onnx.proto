@@ -457,6 +457,8 @@ message TypeProto {
 // the standard denotation field in Tensor for semantic 
 // description of the tensor.
 message TypeDenotationConstProto {
+  // A generic tensor
+  optional string TENSOR = 0 [default = "TENSOR"];
   // An image is stored inside this type
   optional string IMAGE = 1 [default = "IMAGE"];
   // Audio is stored inside this type

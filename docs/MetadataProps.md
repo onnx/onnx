@@ -12,8 +12,7 @@ The motivation of such a mechanism is to allow model authors to convey to model 
 In the case of images there are many option for providing valid image data.  However a model which consumes images was trained with a particular set of these options which must 
 be used during inferencing.
 
-The goal is this proposal is to provide enough metadata that the model consumer can perform their own featurization prior to running the model and provide a compatible input 
-or retrive an output and know what its format is.
+The goal is this proposal is to provide enough metadata that the model consumer can perform their own featurization prior to running the model and provide a compatible input or retrive an output and know what its format is.
 
 ## Image Category Definition
 
