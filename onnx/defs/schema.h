@@ -678,4 +678,16 @@ inline std::string GenerateOptionalArgumentsDoc() {
 		"that is present) may also be simply omitted.\n";
 }
 
+inline std::string GenerateBroadcastingDocMul() {
+  return "This operator supports **multidirectional (i.e., Numpy-style) broadcasting**;"
+         " for more details please check [the doc](Broadcasting.md).";
+}
+
+inline std::string GenerateBroadcastingDocUni(const char* from, const char* to) {
+  std::string ret = "This operator supports **unidirectional broadcasting** (";
+  ret = ret + from + " should be unidirectional broadcastable to " + to + ");"
+        " for more details please check [the doc](Broadcasting.md).";
+  return ret;
+}
+
 } // namespace ONNX_NAMESPACE

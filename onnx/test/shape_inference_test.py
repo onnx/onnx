@@ -362,6 +362,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
 
+    def test_pow(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Pow', ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
+
     def test_sum_single(self):  # type: () -> None
         self._identity_prop('Sum')
 
@@ -598,24 +606,6 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, 11))])
-
-    def test_gemm_shape_from_C(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, None),
-             ('y', TensorProto.FLOAT, (11, 5)),
-             ('z', TensorProto.FLOAT, (7, None))],
-            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])  # type: ignore
-
-    def test_gemm_shape_from_C_broadcast_false(self):  # type: () -> None
-        graph = self._make_graph(
-            [('x', TensorProto.FLOAT, None),
-             ('y', TensorProto.FLOAT, (11, 5)),
-             ('z', TensorProto.FLOAT, (7, None))],
-            [make_node('Gemm', ['x', 'y', 'z'], ['out'], transA=1, transB=1, broadcast=0)],
-            [])
-        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (7, None))])  # type: ignore
 
     def test_reduce_op_shape_2_axis(self):  # type: () -> None
         graph = self._make_graph(
