@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
-from typing import Any
+from typing import Any, Tuple
 
 import onnx
 from ..base import Base
@@ -56,7 +56,7 @@ class GRU_Helper():
     def g(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):  # type: () -> (np.ndarray, np.ndarray)
+    def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
         h_list = []
         [w_z, w_r, w_h] = np.split(self.W, 3)
         [r_z, r_r, r_h] = np.split(self.R, 3)

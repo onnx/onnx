@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
-from typing import Any
+from typing import Any, Tuple
 
 import onnx
 from ..base import Base
@@ -62,7 +62,7 @@ class LSTM_Helper():
     def h(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):  # type: () -> (np.ndarray, np.ndarray)
+    def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
         [p_i, p_o, p_f] = np.split(self.P, 3)
         h_list = []
         H_t = self.H_0

@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
-from typing import Any
+from typing import Any, Tuple
 
 import onnx
 from ..base import Base
@@ -48,7 +48,7 @@ class RNN_Helper():
     def f(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):  # type: () -> (np.ndarray, np.ndarray)
+    def step(self):  # type: () -> Tuple[np.ndarray, np.ndarray]
         h_list = []
         H_t = self.H_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
