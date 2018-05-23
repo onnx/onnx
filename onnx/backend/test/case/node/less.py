@@ -32,7 +32,6 @@ class Less(Base):
             'Less',
             inputs=['x', 'y'],
             outputs=['less'],
-            broadcast=1,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)

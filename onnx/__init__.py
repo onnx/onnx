@@ -143,7 +143,7 @@ def load_tensor_from_string(s, format=None):  # type: (bytes, Optional[Any]) -> 
     return _deserialize(s, TensorProto())
 
 
-def save_model(proto, f, format=None):  # type: (ModelProto, Union[IO[bytes], Text], Optional[Any]) -> None
+def save_model(proto, f, format=None):  # type: (Union[ModelProto, bytes], Union[IO[bytes], Text], Optional[Any]) -> None
     '''
     Saves the ModelProto to the specified path.
 

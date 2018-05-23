@@ -31,7 +31,6 @@ class Add(Base):
             'Add',
             inputs=['x', 'y'],
             outputs=['sum'],
-            broadcast=1,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)

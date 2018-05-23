@@ -11,14 +11,16 @@ namespace ONNX_NAMESPACE {
 const char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
-tensor can either be of size 1 (a scalar value), or having its shape as a
-contiguous subset of the first tensor's shape. The starting of the mutually
-equal shape is specified by the argument "axis", and if it is not set, suffix
-matching is assumed. 1-dim expansion doesn't work yet.
+tensor can either be of element size 1 (including a scalar tensor and any
+tensor with rank equal to or smaller than the first tensor), or having its
+shape as a contiguous subset of the first tensor's shape. The starting of the
+mutually equal shape is specified by the argument "axis", and if it is not set,
+suffix matching is assumed. 1-dim expansion doesn't work yet.
 
 For example, the following tensor shapes are supported (with broadcast=1):
 
-  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar
+  shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
+  shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
   shape(A) = (2, 3, 4, 5), shape(B) = (5,)
   shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
   shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
@@ -73,6 +75,46 @@ Performs element-wise binary {name} (with limited broadcast support).
   };
 }
 
+std::function<void(OpSchema&)> MathDocGenerator_old_opset6(const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+Performs element-wise binary {name} (with limited broadcast support).
+{broadcast_doc})DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{broadcast_doc}", kBroadcastDoc_old);
+    schema.SetDoc(doc);
+    schema.Attr(
+        "broadcast",
+        "Pass 1 to enable broadcasting",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
+    schema.Attr(
+        "axis",
+        "If set, defines the broadcast dimensions. See doc for details.",
+        AttributeProto::INT,
+        OPTIONAL);
+    schema.Input(
+        0,
+        "A",
+        "First operand, should share the type with the second operand.",
+        "T");
+    schema.Input(
+        1,
+        "B",
+        "Second operand. With broadcasting can be of smaller size than A. "
+        "If broadcasting is disabled it should be of the same size.",
+        "T");
+    schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
+    schema.TypeConstraint(
+        "T",
+        OpSchema::high_precision_numeric_types(),
+        "Constrain input and output types to high-precision numeric tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+    schema.SinceVersion(6);
+  };
+}
+
+
 ONNX_OPERATOR_SCHEMA(Add).FillUsing(MathDocGenerator_old("addition"));
 
 ONNX_OPERATOR_SCHEMA(Sub).FillUsing(MathDocGenerator_old("subtraction"));
@@ -80,7 +122,46 @@ ONNX_OPERATOR_SCHEMA(Sub).FillUsing(MathDocGenerator_old("subtraction"));
 ONNX_OPERATOR_SCHEMA(Mul).FillUsing(MathDocGenerator_old("multiplication"));
 
 ONNX_OPERATOR_SCHEMA(Div).FillUsing(MathDocGenerator_old("division"));
+
+ONNX_OPERATOR_SCHEMA(Add).FillUsing(MathDocGenerator_old_opset6("addition"));
+
+ONNX_OPERATOR_SCHEMA(Sub).FillUsing(MathDocGenerator_old_opset6("subtraction"));
+
+ONNX_OPERATOR_SCHEMA(Mul).FillUsing(MathDocGenerator_old_opset6("multiplication"));
+
+ONNX_OPERATOR_SCHEMA(Div).FillUsing(MathDocGenerator_old_opset6("division"));
+
 } // namespace ONNX_NAMESPACE
+
+ONNX_OPERATOR_SCHEMA(Pow)
+    .SetDoc(R"DOC(
+Pow takes input data (Tensor<T>) and exponent Tensor, and
+produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
+is applied to the data tensor elementwise.
+)DOC" + std::string(kBroadcastDoc_old))
+    .Input(0, "X", "Input tensor of any shape, base of the exponent.", "T")
+    .Input(
+        1,
+        "Y",
+        "Input tensor of any shape broadcastable to X shape, "
+        "the exponent component.",
+        "T")
+    .Attr(
+        "broadcast",
+        "Pass 1 to enable broadcasting",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "axis",
+        "If set, defines the broadcast dimensions. See doc for details.",
+        AttributeProto::INT,
+        OPTIONAL)
+    .Output(0, "Z", "Output tensor (same size as X)", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
 
 ONNX_OPERATOR_SCHEMA(Neg)
     .SetDoc(R"DOC(
@@ -616,3 +697,67 @@ if attribute transA is non-zero, same for B and transB.
         "Scalar multiplier for input tensor C",
         AttributeProto::FLOAT,
         1.0f);
+
+ONNX_OPERATOR_SCHEMA(Gemm)
+    .SinceVersion(6)
+    .SetDoc(R"DOC(General Matrix multiplication:
+https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
+, input tensor B has dimension (K X N), input tensor C and output tensor Y have
+dimension (M X N).
+If attribute broadcast is non-zero, input tensor C will be broadcasted to match
+the dimension requirement. A will be transposed before doing the computation
+if attribute transA is non-zero, same for B and transB.
+)DOC")
+    .Input(0, "A", "Input tensor A", "T")
+    .Input(1, "B", "Input tensor B", "T")
+    .Input(2, "C", "Input tensor C", "T")
+    .Output(0, "Y", "Output tensor.", "T")
+    .TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.")
+    .Attr(
+        "transA",
+        "Whether A should be transposed",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "transB",
+        "Whether B should be transposed",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "broadcast",
+        "Whether C should be broadcasted",
+        AttributeProto::INT,
+        static_cast<int64_t>(0))
+    .Attr(
+        "alpha",
+        "Scalar multiplier for the product of input tensors A * B",
+        AttributeProto::FLOAT,
+        1.0f)
+    .Attr(
+        "beta",
+        "Scalar multiplier for input tensor C",
+        AttributeProto::FLOAT,
+        1.0f)
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        if (hasNInputShapes(ctx, 2)) {
+          auto transAAttr = ctx.getAttribute("transA");
+          bool transA = transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+          auto transBAttr = ctx.getAttribute("transB");
+          bool transB = transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape()->add_dim() =
+            ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
+        } else if (hasInputShape(ctx, 2) &&
+                   (!ctx.getAttribute("broadcast") ||
+                    static_cast<int>(ctx.getAttribute("broadcast")->i()) == 0)) {
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
+            ctx.getInputType(2)->tensor_type().shape();
+        }
+      });
