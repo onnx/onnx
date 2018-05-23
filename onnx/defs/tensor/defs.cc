@@ -8,6 +8,7 @@
 using namespace ONNX_NAMESPACE;
 
 ONNX_OPERATOR_SCHEMA(Cast)
+    .SinceVersion(6)
     .SetDoc(R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
@@ -825,6 +826,7 @@ and width dimensions.
 	});
 
 ONNX_OPERATOR_SCHEMA(Tile)
+	.SinceVersion(6)
     .SetDoc(R"DOC(Constructs a tensor by tiling a given tensor.
 This is the same as function `tile` in Numpy, but no broadcast.
 For example A = [[1, 2], [3, 4]], B = [1, 2], tile(A, B) = [[1, 2, 1, 2], [3, 4, 3, 4]]

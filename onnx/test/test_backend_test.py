@@ -68,7 +68,7 @@ class DummyBackend(onnx.backend.base.Backend):
             "This is the dummy backend test that doesn't verify the results but does run the checker")
 
     @classmethod
-    def supports_device(cls, device):
+    def supports_device(cls, device):  # type: (Text) -> bool
         d = Device(device)
         if d.type == DeviceType.CPU:
             return True
@@ -80,7 +80,7 @@ shape_coverage_whitelist = set(
      'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
 
 
-def do_enforce_shape_inference_coverage(model):
+def do_enforce_shape_inference_coverage(model):  # type: (ModelProto) -> bool
     if model.graph.name not in shape_coverage_whitelist:
         return False
     for node in model.graph.node:

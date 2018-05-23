@@ -1,8 +1,7 @@
-backend-test:y
-"
+backend-test:g
+
 x
-ysum"Add*
-	broadcast test_add_bcastZ
+ysum"Addtest_add_bcastZ
 x
 
 
