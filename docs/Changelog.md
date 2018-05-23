@@ -6381,20 +6381,11 @@ This version of the operator has been available since version 6 of the default O
 
 This version of the operator has been available since version 6 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting.</dd>
-</dl>
-
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor of any shape.</dd>
+<dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
 <dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
