@@ -4,22 +4,6 @@ matrix:
   include:
     - os: linux
       sudo: required
-      env: PYTHON_VERSION=python2
-      language: python
-      python: "2.7"
-    - os: linux
-      sudo: required
-      env: PYTHON_VERSION=python3
-      language: python
-      python: "3.6"
-    - os: osx
-      osx_image: xcode9.3beta
-      env: PYTHON_VERSION=python2
-    - os: osx
-      osx_image: xcode9.3beta
-      env: PYTHON_VERSION=python3
-    - os: linux
-      sudo: required
       env: PYTHON_VERSION=python2 ONNX_ML=1
       language: python
       python: "2.7"
