@@ -488,13 +488,13 @@ message TypeProto {
 // description of the tensor.
 message TypeDenotationConstProto {
   // A generic tensor
-  string TENSOR = 0 [default = "TENSOR"];
+  string TENSOR = 1 [default = "TENSOR"];
   // An image is stored inside this tensor
-  string IMAGE = 1 [default = "IMAGE"];
+  string IMAGE = 2 [default = "IMAGE"];
   // Audio is stored inside this tensor
-  string AUDIO = 2 [default = "AUDIO"];
+  string AUDIO = 3 [default = "AUDIO"];
   // Text is stored inside this tensor
-  string TEXT = 3 [default = "TEXT"];
+  string TEXT = 4 [default = "TEXT"];
 }
 
 // Operator Sets
