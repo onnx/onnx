@@ -67,7 +67,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R'],
-            outputs=['Y'],
+            outputs=['', 'Y'],
             hidden_size=hidden_size
         )
 
@@ -91,7 +91,7 @@ class RNN(Base):
         node = onnx.helper.make_node(
             'RNN',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['Y'],
+            outputs=['', 'Y'],
             hidden_size=hidden_size
         )
 

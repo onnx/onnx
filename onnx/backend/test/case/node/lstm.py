@@ -90,7 +90,7 @@ class LSTM(Base):
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R'],
-            outputs=['Y'],
+            outputs=['', 'Y'],
             hidden_size=hidden_size
         )
 
@@ -115,7 +115,7 @@ class LSTM(Base):
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R', 'B'],
-            outputs=['Y'],
+            outputs=['', 'Y'],
             hidden_size=hidden_size
         )
 
@@ -145,7 +145,7 @@ class LSTM(Base):
             node = onnx.helper.make_node(
                 'LSTM',
                 inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
-                outputs=['Y'],
+                outputs=['', 'Y'],
                 hidden_size=hidden_size
             )
 
