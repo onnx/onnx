@@ -36,9 +36,9 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         propagateElemTypeFromInputToOutput(ctx, 0, 0);
         bidirectionalBroadcastShapeInference(
-          ctx.getInputType(0)->tensor_type().shape(),
-          ctx.getInputType(1)->tensor_type().shape(),
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
     });
   };
 }
@@ -359,7 +359,14 @@ is applied to the data tensor elementwise.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+        bidirectionalBroadcastShapeInference(
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
 
 ONNX_OPERATOR_SCHEMA(PRelu)
     .SinceVersion(6)

@@ -7022,6 +7022,39 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Div-7"></a>**Div-7**</a>
+
+  Performs element-wise binary division (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First operand.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second operand.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T</dt>
+<dd>Result, has same element type as two inputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to high-precision numeric tensors.</dd>
+</dl>
+
 ### <a name="Dropout-7"></a>**Dropout-7**</a>
 
   Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
@@ -7063,39 +7096,6 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-### <a name="Div-7"></a>**Div-7**</a>
-
-  Performs element-wise binary division (with Numpy-style broadcasting support).
-  
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
-
-#### Version
-
-This version of the operator has been available since version 7 of the default ONNX operator set.
-
-#### Inputs
-
-<dl>
-<dt><tt>A</tt> : T</dt>
-<dd>First operand.</dd>
-<dt><tt>B</tt> : T</dt>
-<dd>Second operand.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>C</tt> : T</dt>
-<dd>Result, has same element type as two inputs</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
 ### <a name="Equal-7"></a>**Equal-7**</a>

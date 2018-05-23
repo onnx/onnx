@@ -362,6 +362,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
 
+    def test_pow(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5)),
+             ('y', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Pow', ['x', 'y'], 'z')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 5))])
+
     def test_sum_single(self):  # type: () -> None
         self._identity_prop('Sum')
 
