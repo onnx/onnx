@@ -3,6 +3,17 @@
 
 #pragma once
 
+// Before:
+//   A = Const
+//   D = Add(B, C)
+// After:
+//   D = Add(B, C)
+//
+// this pass can handle the case satisfy all following conditions:
+//   condition 1: A is not used as any node's input
+//   condition 2: A is not an output
+
+
 #include "onnx/optimizer/passes/optimize_pass.h"
 
 namespace ONNX_NAMESPACE {

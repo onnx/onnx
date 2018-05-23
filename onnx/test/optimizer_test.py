@@ -195,7 +195,7 @@ class TestOptimizer(unittest.TestCase):
 
         assert len(list(optimized_model.graph.initializer)) == 0
 
-    def test_eliminate_unused_initializer_no_eliminate_used(self):  # type: () -> None
+    def test_eliminate_unused_initializer_no_eliminate_used_default(self):  # type: () -> None
         add = helper.make_node("Add", ["X", "A"], ["Z"])
         graph = helper.make_graph(
             [add],
@@ -208,6 +208,36 @@ class TestOptimizer(unittest.TestCase):
                                 vals=np.random.randn(1, 2).astype(np.float32).tobytes(),
                                 raw=True)])
         optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
+
+        assert len(list(optimized_model.graph.initializer)) == 1
+
+    def test_eliminate_unused_initializer_no_eliminate_used(self):  # type: () -> None
+        nodes = [helper.make_node("Add", ["X", "A"], ["Z"])]
+        nodes.extend(self._make_fake_loop_op(
+            [helper.make_node("Add", ["_X", "_A"], ["_Z2"])],
+            [(TensorProto.FLOAT, (1, 2), "X"),
+             (TensorProto.FLOAT, (1, 2), "A")],
+            [(TensorProto.FLOAT, (1, 2), "Z2")]))
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor("A", TensorProto.FLOAT,
+                                dims=(1, 2),
+                                vals=np.random.randn(1, 2).astype(np.float32).tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
+
+        # Add, Constant (trip count), Constant (cond), Loop
+        assert len(list(optimized_model.graph.node)) == 4
+        assert optimized_model.graph.node[0].op_type == "Add"
+        assert optimized_model.graph.output[0].name == "Z"
+        # Add
+        assert len(optimized_model.graph.node[3].attribute[0].g.node) == 1
+        assert optimized_model.graph.node[3].attribute[0].g.node[0].op_type == 'Add'
+        assert optimized_model.graph.node[3].attribute[0].g.output[1].name == '_Z2'
 
         assert len(list(optimized_model.graph.initializer)) == 1
 

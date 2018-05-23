@@ -842,7 +842,7 @@ public:
         std::remove_if(
             initializers_.begin(),
             initializers_.end(),
-            [&name](Tensor initializer) {
+            [&name](Tensor& initializer) {
               return initializer.name() == name;
             }),
         initializers_.end());
