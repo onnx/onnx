@@ -435,7 +435,7 @@ class OpSchema final {
   }
 
   bool has_type_and_shape_inference_function() const {
-    return tensor_inference_function_;
+    return tensor_inference_function_ ? true : false;
   }
 
   // Verifies that the schema is valid and all specifications are compatible.
@@ -469,7 +469,7 @@ class OpSchema final {
   OperatorSetVersion since_version_ = 1;
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
-  InferenceFunction tensor_inference_function_ = nullptr;
+  InferenceFunction tensor_inference_function_;
 };
 
 // Map type to store operator schemas. The format is,
@@ -668,5 +668,26 @@ class OpSchemaRegistry final {
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
+
+inline std::string GenerateOptionalArgumentsDoc() {
+	return "This operator has **optional** inputs/outputs. "
+		"See [the doc](IR.md) for more details about the representation of "
+		"optional arguments. An empty string may be used in the place of "
+		"an actual argument's name to indicate a missing argument. "
+		"Trailing optional arguments (those not followed by an argument "
+		"that is present) may also be simply omitted.\n";
+}
+
+inline std::string GenerateBroadcastingDocMul() {
+  return "This operator supports **multidirectional (i.e., Numpy-style) broadcasting**;"
+         " for more details please check [the doc](Broadcasting.md).";
+}
+
+inline std::string GenerateBroadcastingDocUni(const char* from, const char* to) {
+  std::string ret = "This operator supports **unidirectional broadcasting** (";
+  ret = ret + from + " should be unidirectional broadcastable to " + to + ");"
+        " for more details please check [the doc](Broadcasting.md).";
+  return ret;
+}
 
 } // namespace ONNX_NAMESPACE

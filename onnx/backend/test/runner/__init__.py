@@ -210,11 +210,11 @@ class Runner(object):
                     'Duplicated test name "{}" in category "{}"'.format(
                         device_test_name, category))
 
-            @unittest.skipIf(
+            @unittest.skipIf(  # type: ignore
                 not self.backend.supports_device(device),
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
-            def device_test_func(*args, **kwargs):
+            def device_test_func(*args, **kwargs):  # type: (*Any, **Any) -> Any
                 try:
                     return test_func(*args, device=device, **kwargs)
                 except BackendIsNotSupposedToImplementIt as e:

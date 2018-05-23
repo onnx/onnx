@@ -1,8 +1,7 @@
-backend-test:u
- 
+backend-test:c
+
 x
-yz"Mul*
-	broadcast test_mul_bcastZ
+yz"Multest_mul_bcastZ
 x
 
 

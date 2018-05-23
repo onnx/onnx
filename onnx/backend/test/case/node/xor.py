@@ -47,7 +47,6 @@ class Xor(Base):
             'Xor',
             inputs=['x', 'y'],
             outputs=['xor'],
-            broadcast=1,
         )
 
         # 3d vs 1d
@@ -78,55 +77,9 @@ class Xor(Base):
         expect(node, inputs=[x, y], outputs=[z],
                name='test_xor_bcast4v3d')
 
-    @staticmethod
-    def export_xor_axis():  # type: () -> None
-        x = (np.random.randn(5, 5, 5, 5) > 0).astype(np.bool)
-        y = (np.random.randn(5) > 0).astype(np.bool)
-
-        node = onnx.helper.make_node(
-            'Xor',
-            inputs=['x', 'y'],
-            outputs=['xor'],
-            broadcast=1,
-            axis=0,
-        )
-
-        z = np.logical_xor(x, y[:, np.newaxis, np.newaxis, np.newaxis])
-        expect(node, inputs=[x, y], outputs=[z],
-               name='test_xor_axis0')
-
-        node = onnx.helper.make_node(
-            'Xor',
-            inputs=['x', 'y'],
-            outputs=['xor'],
-            broadcast=1,
-            axis=1,
-        )
-
-        z = np.logical_xor(x, y[:, np.newaxis, np.newaxis, ])
-        expect(node, inputs=[x, y], outputs=[z],
-               name='test_xor_axis1')
-
-        node = onnx.helper.make_node(
-            'Xor',
-            inputs=['x', 'y'],
-            outputs=['xor'],
-            broadcast=1,
-            axis=2,
-        )
-
-        z = np.logical_xor(x, y[:, np.newaxis, ])
-        expect(node, inputs=[x, y], outputs=[z],
-               name='test_xor_axis2')
-
-        node = onnx.helper.make_node(
-            'Xor',
-            inputs=['x', 'y'],
-            outputs=['xor'],
-            broadcast=1,
-            axis=3,
-        )
-
+        # 4d vs 4d
+        x = (np.random.randn(1, 4, 1, 6) > 0).astype(np.bool)
+        y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
         z = np.logical_xor(x, y)
         expect(node, inputs=[x, y], outputs=[z],
-               name='test_xor_axis3')
+               name='test_xor_bcast4v4d')
