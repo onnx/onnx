@@ -48,7 +48,7 @@ class RNN_Helper():
     def f(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):  # type: () -> np.ndarray
+    def step(self):  # type: () -> (np.ndarray, np.ndarray)
         h_list = []
         H_t = self.H_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
@@ -59,7 +59,7 @@ class RNN_Helper():
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
             output = np.expand_dims(concatenated, 1)
-        return output
+        return output, h_list[-1]
 
 
 class RNN(Base):
@@ -83,8 +83,8 @@ class RNN(Base):
         R = weight_scale * np.ones((1, hidden_size, hidden_size)).astype(np.float32)
 
         rnn = RNN_Helper(X=input, W=W, R=R)
-        output = rnn.step().astype(np.float32)
-        expect(node, inputs=[input, W, R], outputs=[output], name='test_simple_rnn_defaults')
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_simple_rnn_defaults')
 
     @staticmethod
     def export_initial_bias():  # type: () -> None
@@ -111,8 +111,9 @@ class RNN(Base):
         B = np.concatenate((W_B, R_B), axis=1)
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
-        output = rnn.step().astype(np.float32)
-        expect(node, inputs=[input, W, R, B], outputs=[output], name='test_simple_rnn_with_initial_bias')
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)],
+               name='test_simple_rnn_with_initial_bias')
 
     @staticmethod
     def export_seq_length():  # type: () -> None
@@ -138,5 +139,5 @@ class RNN(Base):
         B = np.concatenate((W_B, R_B), axis=1)
 
         rnn = RNN_Helper(X=input, W=W, R=R, B=B)
-        output = rnn.step().astype(np.float32)
-        expect(node, inputs=[input, W, R, B], outputs=[output], name='test_rnn_seq_length')
+        _, Y_h = rnn.step()
+        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_rnn_seq_length')

@@ -235,56 +235,30 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Add"></a><a name="add">**Add**</a>
 
-  Performs element-wise binary addition (with limited broadcast support).
+  Performs element-wise binary addition (with Numpy-style broadcasting support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>, <a href="Changelog.md#Add-6">Add-6</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
@@ -338,32 +312,23 @@ expect(node, inputs=[x, y], outputs=[x + y],
 ### <a name="And"></a><a name="and">**And**</a>
 
   Returns the tensor resulted from performing the `and` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  If broadcasting is enabled, the right-hand-side argument will be broadcasted
-  to match the shape of left-hand-side argument. See the doc of `Add` for a
-  detailed description of the broadcasting rules.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#And-1">And-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Left input tensor for the logical operator.</dd>
+<dd>First input operand for the logical operator.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Right input tensor for the logical operator.</dd>
+<dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
@@ -1065,21 +1030,19 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-      
+      This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>epsilon</tt> : float</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
-<dt><tt>is_test</tt> : int</dt>
-<dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
 <dt><tt>momentum</tt> : float</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int</dt>
@@ -1107,13 +1070,13 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>Y</tt> : T</dt>
 <dd>The output tensor of the same shape as X.</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
-<dd>The running mean after the BatchNormalization operator. Must be in-place with the input mean. Should not be used for testing.</dd>
+<dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
-<dd>The running variance after the BatchNormalization operator. Must be in-place with the input var. Should not be used for testing.</dd>
+<dd>The running variance after the BatchNormalization operator.</dd>
 <dt><tt>saved_mean</tt> (optional) : T</dt>
-<dd>Saved mean used during training to speed up gradient computation. Should not be used for testing.</dd>
+<dd>Saved mean used during training to speed up gradient computation.</dd>
 <dt><tt>saved_var</tt> (optional) : T</dt>
-<dd>Saved variance used during training to speed up gradient computation. Should not be used for testing.</dd>
+<dd>Saved variance used during training to speed up gradient computation.</dd>
 </dl>
 
 #### Type Constraints
@@ -1134,7 +1097,9 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 6 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
 
 #### Attributes
 
@@ -1876,56 +1841,30 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Div"></a><a name="div">**Div**</a>
 
-  Performs element-wise binary division (with limited broadcast support).
+  Performs element-wise binary division (with Numpy-style broadcasting support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>, <a href="Changelog.md#Div-6">Div-6</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
@@ -1991,18 +1930,17 @@ expect(node, inputs=[x, y], outputs=[z],
   test mode or not, the output Y will either be a random dropout, or a simple
   copy of the input. Note that our implementation of Dropout does scaling in
   the training phase, so during testing nothing needs to be done.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
+Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>, <a href="Changelog.md#Dropout-6">Dropout-6</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>is_test</tt> : int</dt>
-<dd>(int, default 0) if nonzero, run dropout in test mode where the output is simply Y = X.</dd>
 <dt><tt>ratio</tt> : float</dt>
 <dd>(float, default 0.5) the ratio of random dropout</dd>
 </dl>
@@ -2020,7 +1958,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>
 <dt><tt>output</tt> : T</dt>
 <dd>The output.</dd>
 <dt><tt>mask</tt> (optional) : T</dt>
-<dd>The output mask. If is_test is nonzero, this output is not filled.</dd>
+<dd>The output mask.</dd>
 </dl>
 
 #### Type Constraints
@@ -2123,32 +2061,23 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Equal"></a><a name="equal">**Equal**</a>
 
   Returns the tensor resulted from performing the `equal` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  If broadcasting is enabled, the right-hand-side argument will be broadcasted
-  to match the shape of left-hand-side argument. See the doc of `Add` for a
-  detailed description of the broadcasting rules.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Equal-1">Equal-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Left input tensor for the logical operator.</dd>
+<dd>First input operand for the logical operator.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Right input tensor for the logical operator.</dd>
+<dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
@@ -2488,12 +2417,14 @@ expect(node, inputs=[x], outputs=[y],
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+  
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 3 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
+Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>, <a href="Changelog.md#GRU-3">GRU-3</a>
 
 #### Attributes
 
@@ -2512,8 +2443,6 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>linear_before_reset</tt> : int</dt>
 <dd>When computing the output of the hidden gate, apply the linear transformation before multiplying by the output of the reset gate.</dd>
-<dt><tt>output_sequence</tt> : int</dt>
-<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -2537,7 +2466,7 @@ Other versions of this operator: <a href="Changelog.md#GRU-1">GRU-1</a>
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -2780,18 +2709,23 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 
   General Matrix multiplication:
   https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-  Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
-  , input tensor B has dimension (K X N), input tensor C and output tensor Y have
-  dimension (M X N).
-  If attribute broadcast is non-zero, input tensor C will be broadcasted to match
-  the dimension requirement. A will be transposed before doing the computation
-  if attribute transA is non-zero, same for B and transB.
+  
+  A' = transpose(A) if transA else A
+  
+  B' = transpose(B) if transB else B
+  
+  Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
+  input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
+  and output tensor Y has shape (M, N). A will be transposed before doing the
+  computation if attribute transA is non-zero, same for B and transB.
+  
+  This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
+Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a href="Changelog.md#Gemm-6">Gemm-6</a>
 
 #### Attributes
 
@@ -2800,8 +2734,6 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 <dd>Scalar multiplier for the product of input tensors A * B</dd>
 <dt><tt>beta</tt> : float</dt>
 <dd>Scalar multiplier for input tensor C</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Whether C should be broadcasted</dd>
 <dt><tt>transA</tt> : int</dt>
 <dd>Whether A should be transposed</dd>
 <dt><tt>transB</tt> : int</dt>
@@ -2812,18 +2744,18 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Input tensor A</dd>
+<dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Input tensor B</dd>
+<dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
 <dt><tt>C</tt> : T</dt>
-<dd>Input tensor C</dd>
+<dd>Input tensor C. The shape of C should be unidirectional broadcastable to (M, N).</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor.</dd>
+<dd>Output tensor of shape (M, N).</dd>
 </dl>
 
 #### Type Constraints
@@ -3079,32 +3011,23 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 ### <a name="Greater"></a><a name="greater">**Greater**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  If broadcasting is enabled, the right-hand-side argument will be broadcasted
-  to match the shape of left-hand-side argument. See the doc of `Add` for a
-  detailed description of the broadcasting rules.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Left input tensor for the logical operator.</dd>
+<dd>First input operand for the logical operator.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Right input tensor for the logical operator.</dd>
+<dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
@@ -3622,10 +3545,14 @@ This version of the operator has been available since version 1 of the default O
     - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
   
     - Ht = ot (.) h(Ct)
+  
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 
 #### Attributes
 
@@ -3644,8 +3571,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int</dt>
 <dd>Couple the input and forget gates if 1, default 0.</dd>
-<dt><tt>output_sequence</tt> : int</dt>
-<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -3673,7 +3598,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 <dt><tt>Y_c</tt> (optional) : T</dt>
@@ -3884,32 +3809,23 @@ expect(node, inputs=[x], outputs=[y],
 ### <a name="Less"></a><a name="less">**Less**</a>
 
   Returns the tensor resulted from performing the `less` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  If broadcasting is enabled, the right-hand-side argument will be broadcasted
-  to match the shape of left-hand-side argument. See the doc of `Add` for a
-  detailed description of the broadcasting rules.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Left input tensor for the logical operator.</dd>
+<dd>First input operand for the logical operator.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Right input tensor for the logical operator.</dd>
+<dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
@@ -4976,56 +4892,30 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 ### <a name="Mul"></a><a name="mul">**Mul**</a>
 
-  Performs element-wise binary multiplication (with limited broadcast support).
+  Performs element-wise binary multiplication (with Numpy-style broadcasting support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>, <a href="Changelog.md#Mul-6">Mul-6</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
@@ -5252,32 +5142,23 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 ### <a name="Or"></a><a name="or">**Or**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  If broadcasting is enabled, the right-hand-side argument will be broadcasted
-  to match the shape of left-hand-side argument. See the doc of `Add` for a
-  detailed description of the broadcasting rules.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Or-1">Or-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Left input tensor for the logical operator.</dd>
+<dd>First input operand for the logical operator.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Right input tensor for the logical operator.</dd>
+<dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs
@@ -5389,6 +5270,7 @@ expect(node, inputs=[x, y], outputs=[z],
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
   
+  This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
@@ -5402,7 +5284,7 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
 </dl>
 
 #### Outputs
@@ -5539,45 +5421,21 @@ for mode in ['edge', 'reflect']:
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Pow-1">Pow-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input tensor of any shape, base of the exponent.</dd>
+<dd>First operand, base of the exponent.</dd>
 <dt><tt>Y</tt> : T</dt>
-<dd>Input tensor of any shape broadcastable to X shape, the exponent component.</dd>
+<dd>Second operand, power of the exponent.</dd>
 </dl>
 
 #### Outputs
@@ -5717,10 +5575,14 @@ expect(node, inputs=[x, y], outputs=[z],
   Equations (Default: f=Tanh):
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+  
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#RNN-1">RNN-1</a>
 
 #### Attributes
 
@@ -5737,8 +5599,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Specify if the RNN is forward, reverse, or bidirectional. Must be one of forward (default), reverse, or bidirectional.</dd>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
-<dt><tt>output_sequence</tt> : int</dt>
-<dd>The sequence output for the hidden is optional if 0. Default 0.</dd>
 </dl>
 
 #### Inputs (3 - 6)
@@ -5762,7 +5622,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>Y</tt> (optional) : T</dt>
-<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. It is optional if `output_sequence` is 0.</dd>
+<dd>A tensor that concats all the intermediate output values of the hidden. It has shape `[seq_length, num_directions, batch_size, hidden_size]`. </dd>
 <dt><tt>Y_h</tt> (optional) : T</dt>
 <dd>The last output value of the hidden. It has shape `[num_directions, batch_size, hidden_size]`.</dd>
 </dl>
@@ -8789,56 +8649,30 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Sub"></a><a name="sub">**Sub**</a>
 
-  Performs element-wise binary subtraction (with limited broadcast support).
+  Performs element-wise binary subtraction (with Numpy-style broadcasting support).
   
-  If necessary the right-hand-side argument will be broadcasted to match the
-  shape of left-hand-side argument. When broadcasting is specified, the second
-  tensor can either be of element size 1 (including a scalar tensor and any
-  tensor with rank equal to or smaller than the first tensor), or having its
-  shape as a contiguous subset of the first tensor's shape. The starting of the
-  mutually equal shape is specified by the argument "axis", and if it is not set,
-  suffix matching is assumed. 1-dim expansion doesn't work yet.
-  
-  For example, the following tensor shapes are supported (with broadcast=1):
-  
-    shape(A) = (2, 3, 4, 5), shape(B) = (,), i.e. B is a scalar tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (1, 1), i.e. B is an 1-element tensor
-    shape(A) = (2, 3, 4, 5), shape(B) = (5,)
-    shape(A) = (2, 3, 4, 5), shape(B) = (4, 5)
-    shape(A) = (2, 3, 4, 5), shape(B) = (3, 4), with axis=1
-    shape(A) = (2, 3, 4, 5), shape(B) = (2), with axis=0
-  
-  Attribute `broadcast=1` needs to be passed to enable broadcasting.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions. See doc for details.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Pass 1 to enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>, <a href="Changelog.md#Sub-6">Sub-6</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>First operand, should share the type with the second operand.</dd>
+<dd>First operand.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Second operand. With broadcasting can be of smaller size than A. If broadcasting is disabled it should be of the same size.</dd>
+<dd>Second operand.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>C</tt> : T</dt>
-<dd>Result, has same dimensions and type as A</dd>
+<dd>Result, has same element type as two inputs</dd>
 </dl>
 
 #### Type Constraints
@@ -9091,7 +8925,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 6 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Tile-1">Tile-1</a>
 
 #### Inputs
 
@@ -9491,32 +9327,23 @@ expect(node, inputs=[data], outputs=[output],
 ### <a name="Xor"></a><a name="xor">**Xor**</a>
 
   Returns the tensor resulted from performing the `xor` logical operation
-  elementwise on the input tensors `A` and `B`.
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
   
-  If broadcasting is enabled, the right-hand-side argument will be broadcasted
-  to match the shape of left-hand-side argument. See the doc of `Add` for a
-  detailed description of the broadcasting rules.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>If set, defines the broadcast dimensions.</dd>
-<dt><tt>broadcast</tt> : int</dt>
-<dd>Enable broadcasting</dd>
-</dl>
+Other versions of this operator: <a href="Changelog.md#Xor-1">Xor-1</a>
 
 #### Inputs
 
 <dl>
 <dt><tt>A</tt> : T</dt>
-<dd>Left input tensor for the logical operator.</dd>
+<dd>First input operand for the logical operator.</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>Right input tensor for the logical operator.</dd>
+<dd>Second input operand for the logical operator.</dd>
 </dl>
 
 #### Outputs

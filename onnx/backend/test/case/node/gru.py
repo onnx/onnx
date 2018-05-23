@@ -56,7 +56,7 @@ class GRU_Helper():
     def g(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):  # type: () -> np.ndarray
+    def step(self):  # type: () -> (np.ndarray, np.ndarray)
         h_list = []
         [w_z, w_r, w_h] = np.split(self.W, 3)
         [r_z, r_r, r_h] = np.split(self.R, 3)
@@ -80,7 +80,7 @@ class GRU_Helper():
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
             output = np.expand_dims(concatenated, 1)
-        return output
+        return output, h_list[-1]
 
 
 class GRU(Base):
@@ -105,8 +105,8 @@ class GRU(Base):
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
         gru = GRU_Helper(X=input, W=W, R=R)
-        output = gru.step().astype(np.float32)
-        expect(node, inputs=[input, W, R], outputs=[output], name='test_gru_defaults')
+        _, Y_h = gru.step()
+        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_gru_defaults')
 
     @staticmethod
     def export_initial_bias():  # type: () -> None
@@ -134,8 +134,8 @@ class GRU(Base):
         B = np.concatenate((W_B, R_B), axis=1)
 
         gru = GRU_Helper(X=input, W=W, R=R, B=B)
-        output = gru.step().astype(np.float32)
-        expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_with_initial_bias')
+        _, Y_h = gru.step()
+        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_with_initial_bias')
 
     @staticmethod
     def export_seq_length():  # type: () -> None
@@ -161,6 +161,6 @@ class GRU(Base):
         R_B = np.random.randn(1, number_of_gates * hidden_size).astype(np.float32)
         B = np.concatenate((W_B, R_B), axis=1)
 
-        rnn = GRU_Helper(X=input, W=W, R=R, B=B)
-        output = rnn.step().astype(np.float32)
-        expect(node, inputs=[input, W, R, B], outputs=[output], name='test_gru_seq_length')
+        gru = GRU_Helper(X=input, W=W, R=R, B=B)
+        _, Y_h = gru.step()
+        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_gru_seq_length')

@@ -62,7 +62,7 @@ class LSTM_Helper():
     def h(self, x):  # type: (np.ndarray) -> np.ndarray
         return np.tanh(x)
 
-    def step(self):  # type: () -> np.ndarray
+    def step(self):  # type: () -> (np.ndarray, np.ndarray)
         [p_i, p_o, p_f] = np.split(self.P, 3)
         h_list = []
         H_t = self.H_0
@@ -83,7 +83,7 @@ class LSTM_Helper():
         concatenated = np.concatenate(h_list)
         if self.num_directions == 1:
             output = np.expand_dims(concatenated, 1)
-        return output
+        return output, h_list[-1]
 
 
 class LSTM(Base):
@@ -108,8 +108,8 @@ class LSTM(Base):
         R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
 
         lstm = LSTM_Helper(X=input, W=W, R=R)
-        output = lstm.step()
-        expect(node, inputs=[input, W, R], outputs=[output], name='test_lstm_defaults')
+        _, Y_h = lstm.step()
+        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_lstm_defaults')
 
     @staticmethod
     def export_initial_bias():  # type: () -> None
@@ -137,8 +137,8 @@ class LSTM(Base):
         B = np.concatenate((W_B, R_B), 1)
 
         lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
-        output = lstm.step()
-        expect(node, inputs=[input, W, R, B], outputs=[output], name='test_lstm_with_initial_bias')
+        _, Y_h = lstm.step()
+        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_lstm_with_initial_bias')
 
     @staticmethod
     def export_peepholes():  # type: () -> None
@@ -167,6 +167,6 @@ class LSTM(Base):
         P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
 
         lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
-        output = lstm.step()
-        expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[output],
+        _, Y_h = lstm.step()
+        expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.astype(np.float32)],
                name='test_lstm_with_peepholes')
