@@ -15,8 +15,7 @@
 
 namespace ONNX_NAMESPACE {
 
-void RegisterSchema(OpSchema&& schema)
-{
+void RegisterSchema(OpSchema&& schema) {
   OpSchemaRegistry::OpSchemaRegisterOnce(registration) = schema;
 }
 
@@ -350,47 +349,51 @@ OpSchema& OpSchema::Attr(
   return Attr(std::string(name), std::string(description), type, required);
 }
 
-#define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                  \
-  OpSchema& OpSchema::Attr(                                                   \
-      std::string name,                                                       \
-      std::string description,                                                \
-      AttributeProto::AttributeType attr_type,                                \
-      const type& default_value) {                                            \
-    if (attrtype != attr_type) {                                              \
-      fail_schema("Attribute specification type mismatch.");                  \
-    }                                                                         \
-    AttributeProto a;                                                         \
-    a.set_name(name);                                                         \
-    a.set_##field(default_value);                                             \
-    a.set_type(attr_type);                                                    \
-    Attr(Attribute(std::move(name), std::move(description), std::move(a)));   \
-    return *this;                                                             \
-  }                                                                           \
-  OpSchema& OpSchema::Attr(                                                   \
-      const char* name,                                                       \
-      const char* description,                                                \
-      AttributeProto::AttributeType attr_type,                                \
-      const type& default_value) {                                            \
-    return Attr(std::string(name), std::string(description), attr_type, default_value); \
+#define ATTR_SETTER_WITH_SINGLE_VALUE(type, field, attrtype)                \
+  OpSchema& OpSchema::Attr(                                                 \
+      std::string name,                                                     \
+      std::string description,                                              \
+      AttributeProto::AttributeType attr_type,                              \
+      const type& default_value) {                                          \
+    if (attrtype != attr_type) {                                            \
+      fail_schema("Attribute specification type mismatch.");                \
+    }                                                                       \
+    AttributeProto a;                                                       \
+    a.set_name(name);                                                       \
+    a.set_##field(default_value);                                           \
+    a.set_type(attr_type);                                                  \
+    Attr(Attribute(std::move(name), std::move(description), std::move(a))); \
+    return *this;                                                           \
+  }                                                                         \
+  OpSchema& OpSchema::Attr(                                                 \
+      const char* name,                                                     \
+      const char* description,                                              \
+      AttributeProto::AttributeType attr_type,                              \
+      const type& default_value) {                                          \
+    return Attr(                                                            \
+        std::string(name),                                                  \
+        std::string(description),                                           \
+        attr_type,                                                          \
+        default_value);                                                     \
   }
 
-#define ATTR_SETTER_WITH_LIST_VALUE(type, field, attrtype)                    \
-  OpSchema& OpSchema::Attr(                                                   \
-      std::string name,                                                       \
-      std::string description,                                                \
-      AttributeProto::AttributeType attr_type,                                \
-      const std::vector<type>& default_value) {                               \
-    if (attrtype != attr_type) {                                              \
-      fail_schema("Attribute specification type mismatch.");                  \
-    }                                                                         \
-    AttributeProto a;                                                         \
-    a.set_name(name);                                                         \
-    a.set_type(attr_type);                                                    \
-    for (const auto& v : default_value) {                                     \
-      a.add_##field(v);                                                       \
-    }                                                                         \
-    Attr(Attribute(std::move(name), std::move(description), std::move(a)));   \
-    return *this;                                                             \
+#define ATTR_SETTER_WITH_LIST_VALUE(type, field, attrtype)                  \
+  OpSchema& OpSchema::Attr(                                                 \
+      std::string name,                                                     \
+      std::string description,                                              \
+      AttributeProto::AttributeType attr_type,                              \
+      const std::vector<type>& default_value) {                             \
+    if (attrtype != attr_type) {                                            \
+      fail_schema("Attribute specification type mismatch.");                \
+    }                                                                       \
+    AttributeProto a;                                                       \
+    a.set_name(name);                                                       \
+    a.set_type(attr_type);                                                  \
+    for (const auto& v : default_value) {                                   \
+      a.add_##field(v);                                                     \
+    }                                                                       \
+    Attr(Attribute(std::move(name), std::move(description), std::move(a))); \
+    return *this;                                                           \
   }
 
 #define ATTR_SETTER_WITH_SINGLE_COMPLEXVALUE(type, field, attrtype) \
@@ -410,23 +413,23 @@ OpSchema& OpSchema::Attr(
     return *this;                                                   \
   }
 
-#define ATTR_SETTER_WITH_LIST_COMPLEXVALUE(type, field, attrtype) \
-  OpSchema& OpSchema::Attr(                                       \
-      std::string name,                                           \
-      std::string description,                                    \
-      AttributeProto::AttributeType attr_type,                    \
-      const std::vector<type>& default_value) {                   \
-    if (attrtype != attr_type) {                                  \
-      fail_schema("Attribute specification type mismatch.");      \
-    }                                                             \
-    AttributeProto a;                                             \
-    a.set_name(name);                                             \
-    a.set_type(attr_type);                                        \
-    for (const auto& v : default_value) {                         \
-      *(a.add_##field()) = v;                                     \
-    }                                                             \
+#define ATTR_SETTER_WITH_LIST_COMPLEXVALUE(type, field, attrtype)           \
+  OpSchema& OpSchema::Attr(                                                 \
+      std::string name,                                                     \
+      std::string description,                                              \
+      AttributeProto::AttributeType attr_type,                              \
+      const std::vector<type>& default_value) {                             \
+    if (attrtype != attr_type) {                                            \
+      fail_schema("Attribute specification type mismatch.");                \
+    }                                                                       \
+    AttributeProto a;                                                       \
+    a.set_name(name);                                                       \
+    a.set_type(attr_type);                                                  \
+    for (const auto& v : default_value) {                                   \
+      *(a.add_##field()) = v;                                               \
+    }                                                                       \
     Attr(Attribute(std::move(name), std::move(description), std::move(a))); \
-    return *this;                                                 \
+    return *this;                                                           \
   }
 
 ATTR_SETTER_WITH_SINGLE_VALUE(int64_t, i, AttributeProto::INT)
@@ -470,7 +473,12 @@ OpSchema& OpSchema::Input(
     const char* description,
     const char* type_str,
     FormalParameterOption param_option) {
-  return Input(n, std::string(name), std::string(description), std::string(type_str), param_option);
+  return Input(
+      n,
+      std::string(name),
+      std::string(description),
+      std::string(type_str),
+      param_option);
 }
 
 OpSchema& OpSchema::Output(
@@ -492,7 +500,12 @@ OpSchema& OpSchema::Output(
     const char* description,
     const char* type_str,
     FormalParameterOption param_option) {
-  return Output(n, std::string(name), std::string(description), std::string(type_str), param_option);
+  return Output(
+      n,
+      std::string(name),
+      std::string(description),
+      std::string(type_str),
+      param_option);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -521,7 +534,8 @@ OpSchema& OpSchema::TypeConstraint(
     constraints_vector.push_back(*iter);
   }
 
-  return TypeConstraint(std::string(type_str), constraints_vector, std::string(description));
+  return TypeConstraint(
+      std::string(type_str), constraints_vector, std::string(description));
 }
 
 void OpSchema::ParseAndSetTypes(
@@ -666,14 +680,15 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
 }
 
 // Private method used by OpSchemaRegisterOnce and OpSchemaRegistry::map()
-OpName_Domain_Version_Schema_Map& OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
+OpName_Domain_Version_Schema_Map&
+OpSchemaRegistry::GetMapWithoutEnsuringRegistration() {
   static OpName_Domain_Version_Schema_Map map;
   return map;
 }
 
-OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {  
+OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
   auto& map = GetMapWithoutEnsuringRegistration();
-  
+
   // The following class is used to register operators the
   // first time this method is called, in a thread-safe fashion.
   class SchemasRegisterer {
@@ -698,7 +713,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
           dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
           "%u schema were exposed from operator sets and automatically placed into the static registry.  "
           "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",
-          dbg_registered_schema_count, ONNX_DBG_GET_COUNT_IN_OPSETS());
+          dbg_registered_schema_count,
+          ONNX_DBG_GET_COUNT_IN_OPSETS());
 #endif
     }
 

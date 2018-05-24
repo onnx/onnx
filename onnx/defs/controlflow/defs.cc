@@ -2,38 +2,40 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-namespace ONNX_NAMESPACE
-{
-  using SupportType = OpSchema::SupportType;
+namespace ONNX_NAMESPACE {
+using SupportType = OpSchema::SupportType;
 
-ONNX_OPERATOR_SET_SCHEMA(If, 1, OpSchema()
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .SetDoc("If conditional")
-    .Input(0, "cond", "Condition for the if", "B")
-    .Output(
-        0,
-        "outputs",
-        "Values that are live-out to the enclosing scope.",
-        "V",
-        OpSchema::Variadic)
-    .Attr(
-        "then_branch",
-        "Graph to run if condition is true. Has N outputs: values you wish to "
-        "be live-out to the enclosing scope. The number of outputs must match"
-        " the number of outputs in the else_branch.",
-        AttributeProto::GRAPH,
-        true)
-    .Attr(
-        "else_branch",
-        "Graph to run if condition is false. Has N outputs: values you wish to"
-        " be live-out to the enclosing scope. The number of outputs must match"
-        " the number of outputs in the then_branch.",
-        AttributeProto::GRAPH,
-        true)
-    .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-    .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
+ONNX_OPERATOR_SET_SCHEMA(
+    If,
+    1,
+    OpSchema()
+        .SetSupportLevel(SupportType::EXPERIMENTAL)
+        .SetDoc("If conditional")
+        .Input(0, "cond", "Condition for the if", "B")
+        .Output(
+            0,
+            "outputs",
+            "Values that are live-out to the enclosing scope.",
+            "V",
+            OpSchema::Variadic)
+        .Attr(
+            "then_branch",
+            "Graph to run if condition is true. Has N outputs: values you wish to "
+            "be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the else_branch.",
+            AttributeProto::GRAPH,
+            true)
+        .Attr(
+            "else_branch",
+            "Graph to run if condition is false. Has N outputs: values you wish to"
+            " be live-out to the enclosing scope. The number of outputs must match"
+            " the number of outputs in the then_branch.",
+            AttributeProto::GRAPH,
+            true)
+        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
 
-static const char * Loop_ver1_doc = R"DOC(
+static const char* Loop_ver1_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -155,64 +157,74 @@ pipelined/"wavefront" fashion.
 
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(Loop, 1, OpSchema()
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .SetDoc(Loop_ver1_doc)
-    .Input(
-        0,
-        "M",
-        "A maximum trip-count for the loop specified at runtime. Optional."
-        " pass empty string to skip.",
-        "I")
-    .Input(
-        1,
-        "cond",
-        "A boolean termination condition. Pass empty string to skip.",
-        "B")
-    .Input(
-        2,
-        "v_initial",
-        "The initial values of any loop-carried dependencies (values that "
-        "change across loop iterations)",
-        "V",
-        OpSchema::Variadic)
-    .Output(
-        0,
-        "v_final_and_scan_outputs",
-        "Final N loop carried dependency values then K scan_outputs",
-        "V",
-        OpSchema::Variadic)
-    .Attr(
-        "body",
-        "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-        "condition, loop carried dependencies...). It has 1+N+K outputs: "
-        "(condition, loop carried dependencies..., scan_outputs...). Each "
-        "scan_output is created by concatenating the value of the specified "
-        "output value at the end of each iteration of the loop. It is an error"
-        " if the dimensions of these values change across loop iterations.",
-        AttributeProto::GRAPH,
-        true)
-    .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-    .TypeConstraint("I", {"int64"}, "Only int64")
-    .TypeConstraint("B", {"bool"}, "Only bool"));
+ONNX_OPERATOR_SET_SCHEMA(
+    Loop,
+    1,
+    OpSchema()
+        .SetSupportLevel(SupportType::EXPERIMENTAL)
+        .SetDoc(Loop_ver1_doc)
+        .Input(
+            0,
+            "M",
+            "A maximum trip-count for the loop specified at runtime. Optional."
+            " pass empty string to skip.",
+            "I")
+        .Input(
+            1,
+            "cond",
+            "A boolean termination condition. Pass empty string to skip.",
+            "B")
+        .Input(
+            2,
+            "v_initial",
+            "The initial values of any loop-carried dependencies (values that "
+            "change across loop iterations)",
+            "V",
+            OpSchema::Variadic)
+        .Output(
+            0,
+            "v_final_and_scan_outputs",
+            "Final N loop carried dependency values then K scan_outputs",
+            "V",
+            OpSchema::Variadic)
+        .Attr(
+            "body",
+            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
+            "condition, loop carried dependencies...). It has 1+N+K outputs: "
+            "(condition, loop carried dependencies..., scan_outputs...). Each "
+            "scan_output is created by concatenating the value of the specified "
+            "output value at the end of each iteration of the loop. It is an error"
+            " if the dimensions of these values change across loop iterations.",
+            AttributeProto::GRAPH,
+            true)
+        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeConstraint("I", {"int64"}, "Only int64")
+        .TypeConstraint("B", {"bool"}, "Only bool"));
 
-ONNX_OPERATOR_SET_SCHEMA(LoopIndexTensor, 1, OpSchema()
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .SetDoc(
-        "This is a special operator only valid inside the loop that supports "
-        "the common case behavior of accessing the correct element of the input"
-        " sequence in an RNN. This operator MUST be directly given the passed-"
-        "in iteration number to the body of a Loop graph. This signals to back-"
-        "ends that this is a direct indexing operation, with no transforms "
-        "applied to the index.")
-    .Input(0, "T", "Tensor to be indexed (has N dimensions)", "T")
-    .Input(1, "loop_idx", "Loop index provided as input to the body graph", "I")
-    .Attr(
-        "axis",
-        "Axis on which to index",
-        AttributeProto::INT,
-        static_cast<int64_t>(0))
-    .Output(0, "O", "Tensor of N - 1 dims that is a sub tensor of T", "T")
-    .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types")
-    .TypeConstraint("I", {"int32"}, "Indices"));
-}
+ONNX_OPERATOR_SET_SCHEMA(
+    LoopIndexTensor,
+    1,
+    OpSchema()
+        .SetSupportLevel(SupportType::EXPERIMENTAL)
+        .SetDoc(
+            "This is a special operator only valid inside the loop that supports "
+            "the common case behavior of accessing the correct element of the input"
+            " sequence in an RNN. This operator MUST be directly given the passed-"
+            "in iteration number to the body of a Loop graph. This signals to back-"
+            "ends that this is a direct indexing operation, with no transforms "
+            "applied to the index.")
+        .Input(0, "T", "Tensor to be indexed (has N dimensions)", "T")
+        .Input(
+            1,
+            "loop_idx",
+            "Loop index provided as input to the body graph",
+            "I")
+        .Attr(
+            "axis",
+            "Axis on which to index",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Output(0, "O", "Tensor of N - 1 dims that is a sub tensor of T", "T")
+        .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeConstraint("I", {"int32"}, "Indices"));
+} // namespace ONNX_NAMESPACE

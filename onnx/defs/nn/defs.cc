@@ -5,7 +5,7 @@
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
-const char * pads_doc =
+const char* pads_doc =
     "Padding for the beginning and ending along each axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -13,7 +13,7 @@ const char * pads_doc =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.";
-const char * auto_pad_doc =
+const char* auto_pad_doc =
     "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
@@ -223,27 +223,35 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
   };
 } // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SET_SCHEMA(AveragePool, 1, OpSchema()
-    .FillUsing(PoolOpSchemaGenerator(
+ONNX_OPERATOR_SET_SCHEMA(
+    AveragePool,
+    1,
+    OpSchema().FillUsing(PoolOpSchemaGenerator(
         "AveragePool",
         "average",
         "The output of each pooling window is divided by the number of elements exclude pad.")));
 
-ONNX_OPERATOR_SET_SCHEMA(AveragePool, 7, OpSchema()
-    .FillUsing(PoolOpSchemaGenerator(
-        "AveragePool",
-        "average",
-        "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
-    .Attr(
-        "count_include_pad",
-        "Whether include pad pixels when calculating values for the edges.",
-        AttributeProto::INT,
-        static_cast<int64_t>(0)));
+ONNX_OPERATOR_SET_SCHEMA(
+    AveragePool,
+    7,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator(
+            "AveragePool",
+            "average",
+            "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
+        .Attr(
+            "count_include_pad",
+            "Whether include pad pixels when calculating values for the edges.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0)));
 
-ONNX_OPERATOR_SET_SCHEMA(MaxPool, 1, OpSchema().FillUsing(PoolOpSchemaGenerator(
-    "MaxPool",
-    "max",
-    "The output of each pooling window is maximum number of elements exclude pad.")));
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    1,
+    OpSchema().FillUsing(PoolOpSchemaGenerator(
+        "MaxPool",
+        "max",
+        "The output of each pooling window is maximum number of elements exclude pad.")));
 
 } // namespace ONNX_NAMESPACE
 
@@ -307,7 +315,10 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(LpPool, 2, OpSchema().FillUsing(LpPoolOpSchemaGenerator("LpPool")));
+ONNX_OPERATOR_SET_SCHEMA(
+    LpPool,
+    2,
+    OpSchema().FillUsing(LpPoolOpSchemaGenerator("LpPool")));
 
 } // namespace ONNX_NAMESPACE
 
@@ -393,7 +404,10 @@ std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(MaxRoiPool, 1, OpSchema().FillUsing(RoiPoolOpSchemaGenerator("max")));
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxRoiPool,
+    1,
+    OpSchema().FillUsing(RoiPoolOpSchemaGenerator("max")));
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
@@ -481,7 +495,10 @@ computes the output.)DOC";
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(Conv, 1, OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
+ONNX_OPERATOR_SET_SCHEMA(
+    Conv,
+    1,
+    OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
 
 } // namespace ONNX_NAMESPACE
 
@@ -705,8 +722,10 @@ output_shape can also be explicitly specified in which case pads values are auto
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(ConvTranspose, 1, OpSchema()
-    .FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ConvTranspose,
+    1,
+    OpSchema().FillUsing(ConvTransposeOpSchemaGenerator("a filter")));
 
 } // namespace ONNX_NAMESPACE
 
@@ -775,10 +794,15 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
         [](InferenceContext& ctx) { gloablPoolTypeShapeInference(ctx); });
   };
 }
-ONNX_OPERATOR_SET_SCHEMA(GlobalAveragePool, 1, OpSchema()
-    .FillUsing(GlobalPoolingOpSchemaGenerator("AveragePool", "average")));
-ONNX_OPERATOR_SET_SCHEMA(GlobalMaxPool, 1, OpSchema()
-    .FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max")));
+ONNX_OPERATOR_SET_SCHEMA(
+    GlobalAveragePool,
+    1,
+    OpSchema().FillUsing(
+        GlobalPoolingOpSchemaGenerator("AveragePool", "average")));
+ONNX_OPERATOR_SET_SCHEMA(
+    GlobalMaxPool,
+    1,
+    OpSchema().FillUsing(GlobalPoolingOpSchemaGenerator("MaxPool", "max")));
 
 std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
     const char* op_type,
@@ -823,10 +847,13 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 2, OpSchema()
-    .FillUsing(GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
+ONNX_OPERATOR_SET_SCHEMA(
+    GlobalLpPool,
+    2,
+    OpSchema().FillUsing(
+        GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char * BatchNormalization_ver7_doc = R"DOC(
+static const char* BatchNormalization_ver7_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
@@ -835,102 +862,104 @@ Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
     )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(BatchNormalization, 7, OpSchema()
-    .NumOutputs({1, 5})
-    .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
-    .Attr(
-        "spatial",
-        "If true, compute the mean and variance across all spatial elements "
-        "If false, compute the mean and variance across per feature."
-        "Default is 1.",
-        AttributeProto::INT,
-        static_cast<int64_t>(1))
-    .Attr(
-        "epsilon",
-        "The epsilon value to use to avoid division by zero, default is 1e-5f.",
-        AttributeProto::FLOAT,
-        1e-5f)
-    .Attr(
-        "momentum",
-        "Factor used in computing the running mean and variance."
-        "e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.",
-        AttributeProto::FLOAT,
-        0.9f)
-    .Input(
-        0,
-        "X",
-        "Input data tensor from the previous operator; "
-        "dimensions for image case are (N x C x H x W), "
-        "where N is the batch size, C is the number of "
-        "channels, and H and W are the height and the "
-        "width of the data. For non image case, the "
-        "dimensions are in the form of "
-        "(N x C x D1 x D2 ... Dn), where N is the batch "
-        "size.",
-        "T")
-    .Input(
-        1,
-        "scale",
-        "The scale as a 1-dimensional tensor of size C to be applied to the "
-        "output.",
-        "T")
-    .Input(
-        2,
-        "B",
-        "The bias as a 1-dimensional tensor of size C to be applied to the "
-        "output.",
-        "T")
-    .Input(
-        3,
-        "mean",
-        "The running mean (training) or the estimated mean (testing) "
-        "as a 1-dimensional tensor of size C.",
-        "T")
-    .Input(
-        4,
-        "var",
-        "The running variance (training) or the estimated "
-        "variance (testing) as a 1-dimensional tensor of size C.",
-        "T")
-    .Output(0, "Y", "The output tensor of the same shape as X.", "T")
-    .Output(
-        1,
-        "mean",
-        "The running mean after the BatchNormalization operator.",
-        "T",
-        OpSchema::Optional)
-    .Output(
-        2,
-        "var",
-        "The running variance after the BatchNormalization operator.",
-        "T",
-        OpSchema::Optional)
-    .Output(
-        3,
-        "saved_mean",
-        "Saved mean used during training to speed up gradient "
-        "computation.",
-        "T",
-        OpSchema::Optional)
-    .Output(
-        4,
-        "saved_var",
-        "Saved variance used during training to speed up "
-        "gradient computation.",
-        "T",
-        OpSchema::Optional)
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
-    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateShapeAndTypeFromFirstInput(ctx);
-      // TODO in training mode, it may be possible to infer some of
-      // the other outputs as well.
-    }));
+ONNX_OPERATOR_SET_SCHEMA(
+    BatchNormalization,
+    7,
+    OpSchema()
+        .NumOutputs({1, 5})
+        .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
+        .Attr(
+            "spatial",
+            "If true, compute the mean and variance across all spatial elements "
+            "If false, compute the mean and variance across per feature."
+            "Default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "epsilon",
+            "The epsilon value to use to avoid division by zero, default is 1e-5f.",
+            AttributeProto::FLOAT,
+            1e-5f)
+        .Attr(
+            "momentum",
+            "Factor used in computing the running mean and variance."
+            "e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.",
+            AttributeProto::FLOAT,
+            0.9f)
+        .Input(
+            0,
+            "X",
+            "Input data tensor from the previous operator; "
+            "dimensions for image case are (N x C x H x W), "
+            "where N is the batch size, C is the number of "
+            "channels, and H and W are the height and the "
+            "width of the data. For non image case, the "
+            "dimensions are in the form of "
+            "(N x C x D1 x D2 ... Dn), where N is the batch "
+            "size.",
+            "T")
+        .Input(
+            1,
+            "scale",
+            "The scale as a 1-dimensional tensor of size C to be applied to the "
+            "output.",
+            "T")
+        .Input(
+            2,
+            "B",
+            "The bias as a 1-dimensional tensor of size C to be applied to the "
+            "output.",
+            "T")
+        .Input(
+            3,
+            "mean",
+            "The running mean (training) or the estimated mean (testing) "
+            "as a 1-dimensional tensor of size C.",
+            "T")
+        .Input(
+            4,
+            "var",
+            "The running variance (training) or the estimated "
+            "variance (testing) as a 1-dimensional tensor of size C.",
+            "T")
+        .Output(0, "Y", "The output tensor of the same shape as X.", "T")
+        .Output(
+            1,
+            "mean",
+            "The running mean after the BatchNormalization operator.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            2,
+            "var",
+            "The running variance after the BatchNormalization operator.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            3,
+            "saved_mean",
+            "Saved mean used during training to speed up gradient "
+            "computation.",
+            "T",
+            OpSchema::Optional)
+        .Output(
+            4,
+            "saved_var",
+            "Saved variance used during training to speed up "
+            "gradient computation.",
+            "T",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+          // TODO in training mode, it may be possible to infer some of
+          // the other outputs as well.
+        }));
 
-
-static const char * InstanceNormalization_ver6_doc = R"DOC(
+static const char* InstanceNormalization_ver6_doc = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
 
@@ -939,63 +968,77 @@ where mean and variance are computed per instance per channel.
 
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(InstanceNormalization, 6, OpSchema()
-    .SetDoc(InstanceNormalization_ver6_doc)
-    .Attr(
-        "epsilon",
-        "The epsilon value to use to avoid division by zero, default is 1e-5f.",
-        AttributeProto::FLOAT,
-        1e-5f)
-    .Input(
-        0,
-        "input",
-        "Input data tensor from the previous operator; "
-        "dimensions for image case are (N x C x H x W), "
-        "where N is the batch size, C is the number of "
-        "channels, and H and W are the height and the "
-        "width of the data. For non image case, the "
-        "dimensions are in the form of "
-        "(N x C x D1 x D2 ... Dn), where N is the batch "
-        "size.",
-        "T")
-    .Input(1, "scale", "The input 1-dimensional scale tensor of size C.", "T")
-    .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
-    .Output(0, "output", "The output tensor of the same shape as input.", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
-    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateShapeAndTypeFromFirstInput(ctx);
-    }));
+ONNX_OPERATOR_SET_SCHEMA(
+    InstanceNormalization,
+    6,
+    OpSchema()
+        .SetDoc(InstanceNormalization_ver6_doc)
+        .Attr(
+            "epsilon",
+            "The epsilon value to use to avoid division by zero, default is 1e-5f.",
+            AttributeProto::FLOAT,
+            1e-5f)
+        .Input(
+            0,
+            "input",
+            "Input data tensor from the previous operator; "
+            "dimensions for image case are (N x C x H x W), "
+            "where N is the batch size, C is the number of "
+            "channels, and H and W are the height and the "
+            "width of the data. For non image case, the "
+            "dimensions are in the form of "
+            "(N x C x D1 x D2 ... Dn), where N is the batch "
+            "size.",
+            "T")
+        .Input(
+            1,
+            "scale",
+            "The input 1-dimensional scale tensor of size C.",
+            "T")
+        .Input(2, "B", "The input 1-dimensional bias tensor of size C.", "T")
+        .Output(
+            0,
+            "output",
+            "The output tensor of the same shape as input.",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+        }));
 
-static const char * LpNormalization_ver1_doc = R"DOC(
+static const char* LpNormalization_ver1_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(LpNormalization, 1, OpSchema()
-    .Input(0, "input", "Input matrix", "T")
-    .Output(0, "output", "Matrix after normalization", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
-    .SetDoc(LpNormalization_ver1_doc)
-    .Attr(
-        "axis",
-        "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.",
-        AttributeProto::INT,
-        static_cast<int64_t>(-1))
-    .Attr(
-        "p",
-        "(int64, default 2) the order of the normalization, only 1 or 2 are supported.",
-        AttributeProto::INT,
-        static_cast<int64_t>(2))
-    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateShapeAndTypeFromFirstInput(ctx);
-    }));
+ONNX_OPERATOR_SET_SCHEMA(
+    LpNormalization,
+    1,
+    OpSchema()
+        .Input(0, "input", "Input matrix", "T")
+        .Output(0, "output", "Matrix after normalization", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .SetDoc(LpNormalization_ver1_doc)
+        .Attr(
+            "axis",
+            "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr(
+            "p",
+            "(int64, default 2) the order of the normalization, only 1 or 2 are supported.",
+            AttributeProto::INT,
+            static_cast<int64_t>(2))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateShapeAndTypeFromFirstInput(ctx);
+        }));
 
-static const char * Dropout_ver7_doc = R"DOC(
+static const char* Dropout_ver7_doc = R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
 test mode or not, the output Y will either be a random dropout, or a simple
@@ -1003,75 +1046,76 @@ copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(Dropout, 7, OpSchema()
-    .SetDoc(Dropout_ver7_doc + GenerateOptionalArgumentsDoc())
-    .Attr(
-        "ratio",
-        "(float, default 0.5) the ratio of random dropout",
-        AttributeProto::FLOAT,
-        0.5f)
-    .Input(0, "data", "The input data as Tensor.", "T")
-    .Output(0, "output", "The output.", "T")
-    .Output(
-        1,
-        "mask",
-        "The output mask.",
-        "T",
-        OpSchema::Optional)
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
-    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+ONNX_OPERATOR_SET_SCHEMA(
+    Dropout,
+    7,
+    OpSchema()
+        .SetDoc(Dropout_ver7_doc + GenerateOptionalArgumentsDoc())
+        .Attr(
+            "ratio",
+            "(float, default 0.5) the ratio of random dropout",
+            AttributeProto::FLOAT,
+            0.5f)
+        .Input(0, "data", "The input data as Tensor.", "T")
+        .Output(0, "output", "The output.", "T")
+        .Output(1, "mask", "The output mask.", "T", OpSchema::Optional)
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char * Flatten_ver1_doc = R"DOC(
+static const char* Flatten_ver1_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(Flatten, 1, OpSchema()
-    .SetDoc(Flatten_ver1_doc)
-    .Input(0, "input", "A tensor of rank >= axis.", "T")
-    .Output(
-        0,
-        "output",
-        "A 2D tensor with the contents of the input tensor, "
-        "with input dimensions up to axis flattened to the outer dimension "
-        "of the output and remaining input dimensions flattened into the inner "
-        "dimension of the output.",
-        "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.")
-    .Attr(
-        "axis",
-        "(Default to 1) Indicate up to which input dimensions "
-        "(exclusive) should be flattened to the outer dimension of the output. "
-        "The value for axis must be in the range [0, R], where R is the rank of the input tensor. "
-        "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
-        "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
-        AttributeProto::INT,
-        static_cast<int64_t>(1))
-    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      propagateElemTypeFromInputToOutput(ctx, 0, 0);
-      if (hasInputShape(ctx, 0)) {
-        auto& input_shape = getInputShape(ctx, 0);
-        int rank = static_cast<int>(input_shape.dim_size());
-        int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
-        if (axis > rank)
-          axis = rank;
-        // TODO: is the operation defined for input-rank < 2?
-        updateOutputShape(
-            ctx,
+ONNX_OPERATOR_SET_SCHEMA(
+    Flatten,
+    1,
+    OpSchema()
+        .SetDoc(Flatten_ver1_doc)
+        .Input(0, "input", "A tensor of rank >= axis.", "T")
+        .Output(
             0,
-            {multiplyDims(input_shape, 0, axis),
-             multiplyDims(input_shape, axis, rank)});
-      }
-    }));
+            "output",
+            "A 2D tensor with the contents of the input tensor, "
+            "with input dimensions up to axis flattened to the outer dimension "
+            "of the output and remaining input dimensions flattened into the inner "
+            "dimension of the output.",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .Attr(
+            "axis",
+            "(Default to 1) Indicate up to which input dimensions "
+            "(exclusive) should be flattened to the outer dimension of the output. "
+            "The value for axis must be in the range [0, R], where R is the rank of the input tensor. "
+            "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
+            "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            int rank = static_cast<int>(input_shape.dim_size());
+            int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+            if (axis > rank)
+              axis = rank;
+            // TODO: is the operation defined for input-rank < 2?
+            updateOutputShape(
+                ctx,
+                0,
+                {multiplyDims(input_shape, 0, axis),
+                 multiplyDims(input_shape, axis, rank)});
+          }
+        }));
 
-static const char * LRN_ver1_doc = R"DOC(
+static const char* LRN_ver1_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
@@ -1084,33 +1128,48 @@ where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) /
 Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(LRN, 1, OpSchema()
-    .Attr("size", "The number of channels to sum over", AttributeProto::INT)
-    .Attr("alpha", "Scaling parameter, default is 1e-4f.", AttributeProto::FLOAT, 0.0001f)
-    .Attr("beta", "The exponent, default is 0.75f", AttributeProto::FLOAT, 0.75f)
-    .Attr("bias", "Default to 1.0f", AttributeProto::FLOAT, 1.0f)
-    .Input(
-        0,
-        "X",
-        "Input data tensor from the previous operator; "
-        "dimensions for image case are (N x C x H x W), "
-        "where N is the batch size, C is the number of "
-        "channels, and H and W are the height and the "
-        "width of the data. For non image case, the "
-        "dimensions are in the form of "
-        "(N x C x D1 x D2 ... Dn), where N is the batch "
-        "size. Optionally, if dimension denotation is "
-        "in effect, the operation expects the input "
-        "data tensor to arrive with the dimension denotation "
-        "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-        "T")
-    .Output(0, "Y", "Output tensor, which has the shape and type as input tensor", "T")
-    .TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output "
-        " types to float tensors.")
-    .SetDoc(LRN_ver1_doc)
-    .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+ONNX_OPERATOR_SET_SCHEMA(
+    LRN,
+    1,
+    OpSchema()
+        .Attr("size", "The number of channels to sum over", AttributeProto::INT)
+        .Attr(
+            "alpha",
+            "Scaling parameter, default is 1e-4f.",
+            AttributeProto::FLOAT,
+            0.0001f)
+        .Attr(
+            "beta",
+            "The exponent, default is 0.75f",
+            AttributeProto::FLOAT,
+            0.75f)
+        .Attr("bias", "Default to 1.0f", AttributeProto::FLOAT, 1.0f)
+        .Input(
+            0,
+            "X",
+            "Input data tensor from the previous operator; "
+            "dimensions for image case are (N x C x H x W), "
+            "where N is the batch size, C is the number of "
+            "channels, and H and W are the height and the "
+            "width of the data. For non image case, the "
+            "dimensions are in the form of "
+            "(N x C x D1 x D2 ... Dn), where N is the batch "
+            "size. Optionally, if dimension denotation is "
+            "in effect, the operation expects the input "
+            "data tensor to arrive with the dimension denotation "
+            "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+            "T")
+        .Output(
+            0,
+            "Y",
+            "Output tensor, which has the shape and type as input tensor",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output "
+            " types to float tensors.")
+        .SetDoc(LRN_ver1_doc)
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 } // namespace ONNX_NAMESPACE

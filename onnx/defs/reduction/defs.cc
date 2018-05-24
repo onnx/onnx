@@ -77,35 +77,55 @@ False instead of True.)DOC";
   };
 }
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("max")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMax,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("max")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("min")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMin,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("min")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("sum")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceSum,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("sum")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("sum square")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceSumSquare,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("sum square")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("mean")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceMean,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("mean")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("product")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceProd,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("product")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("log sum")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSum,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("log sum")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("log sum exponent")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceLogSumExp,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("log sum exponent")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("L1 norm")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceL1,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("L1 norm")));
 
-ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 1, OpSchema()
-    .FillUsing(ReduceDocGenerator("L2 norm")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ReduceL2,
+    1,
+    OpSchema().FillUsing(ReduceDocGenerator("L2 norm")));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
@@ -177,8 +197,14 @@ The type of the output tensor is integer.)DOC";
   };
 } // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SET_SCHEMA(ArgMax, 1, OpSchema().FillUsing(ArgReduceDocGenerator("max")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ArgMax,
+    1,
+    OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 
-ONNX_OPERATOR_SET_SCHEMA(ArgMin, 1, OpSchema().FillUsing(ArgReduceDocGenerator("min")));
+ONNX_OPERATOR_SET_SCHEMA(
+    ArgMin,
+    1,
+    OpSchema().FillUsing(ArgReduceDocGenerator("min")));
 
 } // namespace ONNX_NAMESPACE

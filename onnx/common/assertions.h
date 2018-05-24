@@ -32,8 +32,8 @@ void barf(const char *fmt, ...);
     ::ONNX_NAMESPACE::barf("%s:%u: %s: Assertion `%s` failed.", __FILE__, __LINE__, __func__, #cond); \
   }
 
-// The following is used to prevent MSVC from passing the whole __VA_ARGS__ list as the first
-// parameter value to a macro call.
+// The following is used to prevent MSVC from passing the whole __VA_ARGS__ list
+// as the first parameter value to a macro call.
 #define ONNX_EXPAND(x) x
 
 // The trailing ' ' argument is a hack to deal with the extra comma when ... is empty.

@@ -3,10 +3,10 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-#include "onnx/onnx_pb.h"
-#include "onnx/onnx-operators_pb.h"
-#include "onnx/string_utils.h"
 #include "onnx/defs/schema.h"
+#include "onnx/onnx-operators_pb.h"
+#include "onnx/onnx_pb.h"
+#include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace checker {
@@ -53,11 +53,11 @@ class CheckerContext final {
     is_main_graph_ = is_main_graph;
   }
 
-  void set_schema_registry(const ISchemaRegistry *schema_registry) {
+  void set_schema_registry(const ISchemaRegistry* schema_registry) {
     schema_registry_ = schema_registry;
   }
 
-  const ISchemaRegistry * get_schema_registry() const {
+  const ISchemaRegistry* get_schema_registry() const {
     return schema_registry_;
   }
 
@@ -67,7 +67,7 @@ class CheckerContext final {
   int ir_version_;
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
-  const ISchemaRegistry *schema_registry_ = OpSchemaRegistry::Instance();
+  const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
 };
 
 struct LexicalScopeContext final {

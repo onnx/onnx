@@ -86,8 +86,7 @@ std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
   };
 }
 
-
-static const char * GRU_ver1_doc = R"DOC(
+static const char* GRU_ver1_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -162,40 +161,43 @@ Equations (Default: f=Sigmoid, g=Tanh):
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(GRU, 1, OpSchema()
-    .SetDoc(GRU_ver1_doc)
-    .Attr(
-        "activations",
-        "A list of 2 (or 4 if bidirectional) activation functions "
-        "for update, reset, and hidden gates. The activation functions must be one "
-        "of the activation functions specified above. Optional: See the equations "
-        "for default if not specified.",
-        AttributeProto::STRINGS,
-        OPTIONAL)
-    .Input(
-        1,
-        "W",
-        "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
-        "(if bidirectional) along dimension 0. This tensor has shape "
-        "`[num_directions, 3*hidden_size, input_size]`.",
-        "T")
-    .Input(
-        2,
-        "R",
-        "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
-        "(if bidirectional) along dimension 0. This tensor has shape "
-        "`[num_directions, 3*hidden_size, hidden_size]`.",
-        "T")
-    .Input(
-        3,
-        "B",
-        "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
-        "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
-        "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
-        "- assumed to be 0",
-        "T",
-        OpSchema::Optional)
-    .FillUsing(RNNDocGeneratorOld("GRU")));
+ONNX_OPERATOR_SET_SCHEMA(
+    GRU,
+    1,
+    OpSchema()
+        .SetDoc(GRU_ver1_doc)
+        .Attr(
+            "activations",
+            "A list of 2 (or 4 if bidirectional) activation functions "
+            "for update, reset, and hidden gates. The activation functions must be one "
+            "of the activation functions specified above. Optional: See the equations "
+            "for default if not specified.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Input(
+            1,
+            "W",
+            "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
+            "(if bidirectional) along dimension 0. This tensor has shape "
+            "`[num_directions, 3*hidden_size, input_size]`.",
+            "T")
+        .Input(
+            2,
+            "R",
+            "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
+            "(if bidirectional) along dimension 0. This tensor has shape "
+            "`[num_directions, 3*hidden_size, hidden_size]`.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
+            "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
+            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
+            "- assumed to be 0",
+            "T",
+            OpSchema::Optional)
+        .FillUsing(RNNDocGeneratorOld("GRU")));
 
 // Versions 1 to 6 of RNN/LSTM and versions 3 to 6 of GRU:
 
@@ -307,7 +309,7 @@ std::function<void(OpSchema&)> RNNDocGenerator1(const char* /*name*/) {
     };
 }
 
-static const char * RNN_ver1_doc = R"DOC(
+static const char* RNN_ver1_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -370,30 +372,44 @@ Equations (Default: f=Tanh):
   - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(RNN, 1, OpSchema()
-    .SetDoc(RNN_ver1_doc)
-    .Attr("activations", "One (or two if bidirectional) activation function for "
-          "input gate. The activation function must be one of the activation "
-          "functions specified above. Optional: Default `Tanh` if not specified.",
-          AttributeProto::STRINGS,
-          std::vector<std::string>{"Tanh", "Tanh"})
-    .Input(1, "W",
-	   "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
-           "(if bidirectional). The tensor has shape "
-           "`[num_directions, hidden_size, input_size]`.", "T")
-    .Input(2, "R",
-	   "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
-           "(if bidirectional). The tensor has shape "
-	   "`[num_directions, hidden_size, hidden_size]`.", "T")
-    .Input(3, "B",
-	   "The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` "
-           "and `[WBbi, RBbi]` (if bidirectional). The tensor has shape "
-           "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
-           "to be 0.", "T",
-        OpSchema::Optional)
-    .FillUsing(RNNDocGenerator1("RNN")));
+ONNX_OPERATOR_SET_SCHEMA(
+    RNN,
+    1,
+    OpSchema()
+        .SetDoc(RNN_ver1_doc)
+        .Attr(
+            "activations",
+            "One (or two if bidirectional) activation function for "
+            "input gate. The activation function must be one of the activation "
+            "functions specified above. Optional: Default `Tanh` if not specified.",
+            AttributeProto::STRINGS,
+            std::vector<std::string>{"Tanh", "Tanh"})
+        .Input(
+            1,
+            "W",
+            "The weight tensor for input gate. Concatenation of `Wi` and `WBi` "
+            "(if bidirectional). The tensor has shape "
+            "`[num_directions, hidden_size, input_size]`.",
+            "T")
+        .Input(
+            2,
+            "R",
+            "The recurrence weight tensor. Concatenation of `Ri` and `RBi` "
+            "(if bidirectional). The tensor has shape "
+            "`[num_directions, hidden_size, hidden_size]`.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "The bias tensor for input gate. Concatenation of `[Wbi, Rbi]` "
+            "and `[WBbi, RBbi]` (if bidirectional). The tensor has shape "
+            "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
+            "to be 0.",
+            "T",
+            OpSchema::Optional)
+        .FillUsing(RNNDocGenerator1("RNN")));
 
-static const char * GRU_ver3_doc = R"DOC(
+static const char* GRU_ver3_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -468,36 +484,52 @@ Equations (Default: f=Sigmoid, g=Tanh):
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(GRU, 3, OpSchema()
-    .SetDoc(GRU_ver3_doc)
-    .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
-          "for update, reset, and hidden gates. The activation functions must be one "
-          "of the activation functions specified above. Optional: See the equations "
-          "for default if not specified.",
-          AttributeProto::STRINGS,
-          OPTIONAL)
-    .Attr("linear_before_reset", "When computing the output of the hidden gate, "
-          "apply the linear transformation before multiplying by the output of the "
-          "reset gate.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-    .Input(1, "W",
-	   "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
-	   "(if bidirectional) along dimension 0. This tensor has shape "
-	   "`[num_directions, 3*hidden_size, input_size]`.", "T")
-    .Input(2, "R",
-	   "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
-	   "(if bidirectional) along dimension 0. This tensor has shape "
-	   "`[num_directions, 3*hidden_size, hidden_size]`.", "T")
-    .Input(3, "B",
-	   "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
-           "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
-           "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
-           "- assumed to be 0", "T",
-        OpSchema::Optional)
-    .FillUsing(RNNDocGenerator1("GRU")));
+ONNX_OPERATOR_SET_SCHEMA(
+    GRU,
+    3,
+    OpSchema()
+        .SetDoc(GRU_ver3_doc)
+        .Attr(
+            "activations",
+            "A list of 2 (or 4 if bidirectional) activation functions "
+            "for update, reset, and hidden gates. The activation functions must be one "
+            "of the activation functions specified above. Optional: See the equations "
+            "for default if not specified.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Attr(
+            "linear_before_reset",
+            "When computing the output of the hidden gate, "
+            "apply the linear transformation before multiplying by the output of the "
+            "reset gate.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            1,
+            "W",
+            "The weight tensor for the gates. Concatenation of `W[zrh]` and `WB[zrh]` "
+            "(if bidirectional) along dimension 0. This tensor has shape "
+            "`[num_directions, 3*hidden_size, input_size]`.",
+            "T")
+        .Input(
+            2,
+            "R",
+            "The recurrence weight tensor. Concatenation of `R[zrh]` and `RB[zrh]` "
+            "(if bidirectional) along dimension 0. This tensor has shape "
+            "`[num_directions, 3*hidden_size, hidden_size]`.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "The bias tensor for the gates. Concatenation of `[Wb[zrh], Rb[zrh]]` and "
+            "`[WBb[zrh], RBb[zrh]]` (if bidirectional) along dimension 0. This tensor "
+            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
+            "- assumed to be 0",
+            "T",
+            OpSchema::Optional)
+        .FillUsing(RNNDocGenerator1("GRU")));
 
-static const char * LSTM_ver1_doc = R"DOC(
+static const char* LSTM_ver1_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -580,44 +612,70 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   - Ht = ot (.) h(Ct)
 )DOC";
 
-ONNX_OPERATOR_SET_SCHEMA(LSTM, 1, OpSchema()
-    .SetDoc(LSTM_ver1_doc)
-    .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
-          "for input, output, forget, cell, and hidden. The activation functions must "
-          "be one of the activation functions specified above. Optional: See the equations "
-          "for default if not specified.",
-          AttributeProto::STRINGS,
-          OPTIONAL)
-    .Attr("input_forget", "Couple the input and forget gates if 1, default 0.",
-          AttributeProto::INT,
-          static_cast<int64_t>(0))
-    .Input(1, "W",
-	   "The weight tensor for the gates. Concatenation of `W[iofc]` and "
-           "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
-	   "`[num_directions, 4*hidden_size, input_size]`.", "T")
-    .Input(2, "R",
-	   "The recurrence weight tensor. Concatenation of `R[iofc]` and "
-	   "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
-           "`[num_directions, 4*hidden_size, hidden_size]`.", "T")
-    .Input(3, "B",
-	   "The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, "
-	   "and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This "
-           "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
-	   "specified - assumed to be 0.", "T",
-       OpSchema::Optional)
-    .Input(6, "initial_c",
-           "Optional initial value of the cell. If not specified - assumed "
-	   "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-	   "T", OpSchema::Optional)
-    .Input(7, "P",
-	   "The weight tensor for peepholes. Concatenation of `P[iof]` and "
-	   "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
-	   "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
-	   "assumed to be 0.", "T",
-       OpSchema::Optional)
-    .FillUsing(RNNDocGenerator1("LSTM"))
-    .Output(2, "Y_c",
+ONNX_OPERATOR_SET_SCHEMA(
+    LSTM,
+    1,
+    OpSchema()
+        .SetDoc(LSTM_ver1_doc)
+        .Attr(
+            "activations",
+            "A list of 3 (or 6 if bidirectional) activation functions "
+            "for input, output, forget, cell, and hidden. The activation functions must "
+            "be one of the activation functions specified above. Optional: See the equations "
+            "for default if not specified.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Attr(
+            "input_forget",
+            "Couple the input and forget gates if 1, default 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(
+            1,
+            "W",
+            "The weight tensor for the gates. Concatenation of `W[iofc]` and "
+            "`WB[iofc]` (if bidirectional) along dimension 0. The tensor has shape "
+            "`[num_directions, 4*hidden_size, input_size]`.",
+            "T")
+        .Input(
+            2,
+            "R",
+            "The recurrence weight tensor. Concatenation of `R[iofc]` and "
+            "`RB[iofc]` (if bidirectional) along dimension 0. This tensor has shape "
+            "`[num_directions, 4*hidden_size, hidden_size]`.",
+            "T")
+        .Input(
+            3,
+            "B",
+            "The bias tensor for input gate. Concatenation of `[Wb[iofc], Rb[iofc]]`, "
+            "and `[WBb[iofc], RBb[iofc]]` (if bidirectional) along dimension 0. This "
+            "tensor has shape `[num_directions, 8*hidden_size]`. Optional: If not "
+            "specified - assumed to be 0.",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            6,
+            "initial_c",
+            "Optional initial value of the cell. If not specified - assumed "
+            "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
+            "T",
+            OpSchema::Optional)
+        .Input(
+            7,
+            "P",
+            "The weight tensor for peepholes. Concatenation of `P[iof]` and "
+            "`PB[iof]` (if bidirectional) along dimension 0. It has shape "
+            "`[num_directions, 3*hidde_size]`. Optional: If not specified - "
+            "assumed to be 0.",
+            "T",
+            OpSchema::Optional)
+        .FillUsing(RNNDocGenerator1("LSTM"))
+        .Output(
+            2,
+            "Y_c",
             "The last output value of the cell. It has shape "
-            "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional));
+            "`[num_directions, batch_size, hidden_size]`.",
+            "T",
+            OpSchema::Optional));
 
 } // namespace ONNX_NAMESPACE
