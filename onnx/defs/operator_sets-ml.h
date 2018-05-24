@@ -1,6 +1,8 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
+#pragma once
+
 #ifdef ONNX_ML
 
 #include "onnx/defs/schema.h"
