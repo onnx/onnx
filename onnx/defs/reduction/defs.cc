@@ -17,7 +17,7 @@ the resulted tensor have the reduced dimension pruned.
 The above behavior is similar to numpy, with the exception that numpy default keepdims to
 False instead of True.)DOC";
     ReplaceAll(doc, "{name}", name);
-    schema.SetDoc(doc);
+    schema.SetDoc(doc.c_str());
     schema.Attr(
         "axes",
         "A list of integers, along which to reduce. The default is to reduce over "
@@ -77,31 +77,35 @@ False instead of True.)DOC";
   };
 }
 
-ONNX_OPERATOR_SCHEMA(ReduceMax).FillUsing(ReduceDocGenerator("max"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMax, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("max")));
 
-ONNX_OPERATOR_SCHEMA(ReduceMin).FillUsing(ReduceDocGenerator("min"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMin, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("min")));
 
-ONNX_OPERATOR_SCHEMA(ReduceSum).FillUsing(ReduceDocGenerator("sum"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSum, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("sum")));
 
-ONNX_OPERATOR_SCHEMA(ReduceSumSquare)
-    .FillUsing(ReduceDocGenerator("sum square"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceSumSquare, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("sum square")));
 
-ONNX_OPERATOR_SCHEMA(ReduceMean).FillUsing(ReduceDocGenerator("mean"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceMean, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("mean")));
 
-ONNX_OPERATOR_SCHEMA(ReduceProd).FillUsing(ReduceDocGenerator("product"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceProd, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("product")));
 
-ONNX_OPERATOR_SCHEMA(ReduceLogSum).FillUsing(ReduceDocGenerator("log sum"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceLogSum, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("log sum")));
 
-ONNX_OPERATOR_SCHEMA(ReduceLogSumExp)
-    .FillUsing(ReduceDocGenerator("log sum exponent"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceLogSumExp, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("log sum exponent")));
 
-ONNX_OPERATOR_SCHEMA(ReduceL1).FillUsing(ReduceDocGenerator("L1 norm"));
+ONNX_OPERATOR_SET_SCHEMA(ReduceL1, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("L1 norm")));
 
-ONNX_OPERATOR_SCHEMA(ReduceL2).FillUsing(ReduceDocGenerator("L2 norm"));
-
-} // namespace ONNX_NAMESPACE
-
-namespace ONNX_NAMESPACE {
+ONNX_OPERATOR_SET_SCHEMA(ReduceL2, 1, OpSchema()
+    .FillUsing(ReduceDocGenerator("L2 norm")));
 
 std::function<void(OpSchema&)> ArgReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
@@ -111,7 +115,7 @@ provided axis. The resulted tensor has the same rank as the input if keepdims eq
 If keepdims equal 0, then the resulted tensor have the reduced dimension pruned. 
 The type of the output tensor is integer.)DOC";
     ReplaceAll(doc, "{name}", name);
-    schema.SetDoc(doc);
+    schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
         "The axis in which to compute the arg indices. Default is 0.",
@@ -173,8 +177,8 @@ The type of the output tensor is integer.)DOC";
   };
 } // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SCHEMA(ArgMax).FillUsing(ArgReduceDocGenerator("max"));
+ONNX_OPERATOR_SET_SCHEMA(ArgMax, 1, OpSchema().FillUsing(ArgReduceDocGenerator("max")));
 
-ONNX_OPERATOR_SCHEMA(ArgMin).FillUsing(ArgReduceDocGenerator("min"));
+ONNX_OPERATOR_SET_SCHEMA(ArgMin, 1, OpSchema().FillUsing(ArgReduceDocGenerator("min")));
 
 } // namespace ONNX_NAMESPACE

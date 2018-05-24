@@ -3,16 +3,19 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace ONNX_NAMESPACE;
-
-ONNX_OPERATOR_SCHEMA(Cast)
-    .SetDoc(R"DOC(
+namespace ONNX_NAMESPACE
+{
+  static const char * Cast_ver1_doc =R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
 in the 'DataType' enum field in the TensorProto message.
 NOTE: Casting to and from strings is not supported yet.
-)DOC")
+)DOC";
+  
+
+ONNX_OPERATOR_SET_SCHEMA(Cast, 1, OpSchema()
+    .SetDoc(Cast_ver1_doc)
     .Attr(
         "to",
         "The data type to which the elements of the input tensor are cast."
@@ -54,15 +57,17 @@ NOTE: Casting to and from strings is not supported yet.
          "tensor(uint32)",
          "tensor(uint64)",
          "tensor(bool)"},
-        "Constrain output types. Casting to strings and complex are not supported.");
+        "Constrain output types. Casting to strings and complex are not supported."));
 
-ONNX_OPERATOR_SCHEMA(Concat)
+static const char * Concat_ver1_doc = R"DOC(Concatenate a list of tensors into a single tensor)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Concat, 1, OpSchema()
     .Attr(
         "axis",
         "Which axis to concat on.  Default value is 1.",
         AttributeProto::INT,
         OPTIONAL)
-    .SetDoc("Concatenate a list of tensors into a single tensor")
+    .SetDoc(Concat_ver1_doc)
     .Input(
         0,
         "inputs",
@@ -73,10 +78,15 @@ ONNX_OPERATOR_SCHEMA(Concat)
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain output types to float tensors.");
+        "Constrain output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(Split)
-    .SinceVersion(1)
+static const char * Split_ver1_doc = R"DOC(Split a tensor into a list of tensors, along the specified
+'axis'. The lengths of the split can be specified using argument 'axis' or
+optional second input blob to the operator. Otherwise, the tensor is split
+to equal sized parts.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Split, 1, OpSchema()
     .Input(0, "input", "The tensor to split", "T")
     .Input(
         1,
@@ -96,34 +106,9 @@ ONNX_OPERATOR_SCHEMA(Split)
         "Constrain input types to float tensors.")
     .Attr("axis", "Which axis to split on", AttributeProto::INT, OPTIONAL)
     .Attr("split", "length of each output", AttributeProto::INTS, OPTIONAL)
-    .SetDoc(R"DOC(Split a tensor into a list of tensors, along the specified
-'axis'. The lengths of the split can be specified using argument 'axis' or
-optional second input blob to the operator. Otherwise, the tensor is split
-to equal sized parts.
-)DOC");
+    .SetDoc(Split_ver1_doc));
 
-ONNX_OPERATOR_SCHEMA(Pad)
-    .SinceVersion(1)
-    .Attr(
-        "paddings",
-        "List of integers indicate the padding element count at the "
-        "beginning and end of each axis, for 2D it is the number of pixel. "
-        "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
-        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
-        "added at the beginning of axis `i` and xi_end, the number of pixels added at "
-        "the end of axis `i`.",
-        AttributeProto::INTS)
-    .Attr(
-        "mode",
-        "Three modes: constant(default), reflect, edge",
-        AttributeProto::STRING,
-        std::string("constant"))
-    .Attr(
-        "value",
-        "One float, indicates the value to be filled, default is 0",
-        AttributeProto::FLOAT,
-        0.0f)
-    .SetDoc(R"DOC(
+static const char * Pad_ver1_doc = R"DOC(
 Given `data` tensor, paddings, mode, and value.
 
 Example:
@@ -143,22 +128,46 @@ Example:
           [0.0, 0.0, 4.5, 5.7],
       ],
   ]
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Pad, 1, OpSchema()
+    .Attr(
+        "paddings",
+        "List of integers indicate the padding element count at the "
+        "beginning and end of each axis, for 2D it is the number of pixel. "
+        "`paddings` rank should be double of the input's rank. `paddings` format should be as follow "
+        "[x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels "
+        "added at the beginning of axis `i` and xi_end, the number of pixels added at "
+        "the end of axis `i`.",
+        AttributeProto::INTS)
+    .Attr(
+        "mode",
+        "Three modes: constant(default), reflect, edge",
+        AttributeProto::STRING,
+        std::string("constant"))
+    .Attr(
+        "value",
+        "One float, indicates the value to be filled, default is 0",
+        AttributeProto::FLOAT,
+        0.0f)
+    .SetDoc(Pad_ver1_doc)
     .Input(0, "data", "Input tensor.", "T")
     .Output(0, "output", "Tensor after padding.", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(Reshape)
-    .SetDoc(R"DOC(
+static const char * Reshape_ver1_doc = R"DOC(
 Reshape the input tensor similar to numpy.reshape.
 It takes a tensor as input and an argument `shape`. It outputs the reshaped tensor.
 At most one dimension of the new shape can be -1. In this case, the value is
 inferred from the size of the tensor and the remaining dimensions. A dimension
 could also be 0, in which case the actual dimension value is unchanged (i.e. taken
-from the input tensor).)DOC")
+from the input tensor).)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Reshape, 1, OpSchema()
+    .SetDoc(Reshape_ver1_doc)
     .Attr("shape", "New shape", AttributeProto::INTS, OPTIONAL)
     // This attribute was added via AllowConsumed API in OpSchema.
     // After removing the API, we're now using the Attr API to simulate the old
@@ -173,10 +182,33 @@ from the input tensor).)DOC")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(Tile)
-    .SetDoc(R"DOC(Repeat the elements of a tensor along an axis.)DOC")
+static const char * Upsample_ver1_doc = R"DOC(
+Upsample the input tensor.
+The width and height of the output tensor are:
+  output_width = floor(input_width * width_scale),
+  output_height = floor(input_height * height_scale).
+Example:
+  Given `data` tensor, width_scale, height_scale, mode,
+  Upsample the input 4-D tensor in nearest mode:
+  data = [[[
+      [1, 2],
+      [3, 4]
+  ]]]
+  width_scale = 2
+  height_scale = 2
+  mode = "nearest"
+  output = [[[
+      [1, 1, 2, 2],
+      [1, 1, 2, 2],
+      [3, 3, 4, 4],
+      [3, 3, 4, 4]
+  ]]]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Tile, 1, OpSchema()
+    .SetDoc("Repeat the elements of a tensor along an axis.")
     .Input(0, "input", "Input tensor of any shape.", "T")
     .Input(
         1,
@@ -198,9 +230,9 @@ ONNX_OPERATOR_SCHEMA(Tile)
 		// Only rank of output can be inferred. We can do better if second input is
 		// a constant, but this requires extending InferenceContext interface to
 		// get values of constant inputs.
-     });
+     }));
 
-ONNX_OPERATOR_SCHEMA(Upsample)
+ONNX_OPERATOR_SET_SCHEMA(Upsample, 1, OpSchema()
     .SetSupportLevel(OpSchema::SupportType::EXPERIMENTAL)
     .Attr(
         "width_scale",
@@ -226,25 +258,5 @@ ONNX_OPERATOR_SCHEMA(Upsample)
          "tensor(float)",
          "tensor(double)"},
         "Constrain output types to bool, int32, int64, float16, float, double tensors.")
-    .SetDoc(R"DOC(
-Upsample the input tensor.
-The width and height of the output tensor are:
-  output_width = floor(input_width * width_scale),
-  output_height = floor(input_height * height_scale).
-Example:
-  Given `data` tensor, width_scale, height_scale, mode,
-  Upsample the input 4-D tensor in nearest mode:
-  data = [[[
-      [1, 2],
-      [3, 4]
-  ]]]
-  width_scale = 2
-  height_scale = 2
-  mode = "nearest"
-  output = [[[
-      [1, 1, 2, 2],
-      [1, 1, 2, 2],
-      [3, 3, 4, 4],
-      [3, 3, 4, 4]
-  ]]]
-)DOC");
+    .SetDoc(Upsample_ver1_doc));
+}

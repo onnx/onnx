@@ -2,10 +2,13 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace ONNX_NAMESPACE;
+namespace ONNX_NAMESPACE
+{
 
-ONNX_OPERATOR_SCHEMA(Constant)
-    .SetDoc(R"DOC(A constant tensor.)DOC")
+static const char * Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Constant, 1, OpSchema()
+    .SetDoc(Constant_ver1_doc)
     .Attr(
           "value",
           "The value for the elements of the output tensor.",
@@ -23,17 +26,19 @@ ONNX_OPERATOR_SCHEMA(Constant)
         const TensorProto& tensor_proto = attr_proto->t();
         updateOutputElemType(ctx, 0, tensor_proto.data_type());
         updateOutputShape(ctx, 0, tensor_proto);
-    });
+    }));
 
-ONNX_OPERATOR_SCHEMA(RandomUniform)
-    .SetDoc(R"DOC(
+static const char * RandomUniform_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
 
 The data type is specified by the 'dtype' argument. The 'dtype' argument must
 be one of the data types specified in the 'DataType' enum field in the
 TensorProto message.
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(RandomUniform, 1, OpSchema()
+    .SetDoc(RandomUniform_ver1_doc)
     .Attr(
           "low",
           "Lower boundary of the output values. If not specified, default is 0.",
@@ -67,10 +72,9 @@ TensorProto message.
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
         propagateShapeFromAttributeToOutput(ctx, "shape", 0);
-    });
+    }));
 
-ONNX_OPERATOR_SCHEMA(RandomNormal)
-    .SetDoc(R"DOC(
+static const char * RandomNormal_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution. The shape
 of the tensor is specified by the `shape` argument and the parameter of the normal distribution
 specified by `mean` and `scale`.
@@ -78,7 +82,10 @@ specified by `mean` and `scale`.
 The data type is specified by the 'dtype' argument. The 'dtype' argument must
 be one of the data types specified in the 'DataType' enum field in the
 TensorProto message.
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(RandomNormal, 1, OpSchema()
+    .SetDoc(RandomNormal_ver1_doc)
     .Attr(
           "mean",
           "The mean of the normal distribution. If not specified, default is 0.",
@@ -112,10 +119,9 @@ TensorProto message.
     .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
         propagateShapeFromAttributeToOutput(ctx, "shape", 0);
-    });
+    }));
 
-ONNX_OPERATOR_SCHEMA(RandomUniformLike)
-    .SetDoc(R"DOC(
+static const char * RandomUniformLike_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. 
 The shape of the output tensor is copied from the shape of the input tensor, 
 and the parameters of the uniform distribution are specified by `low` and `high`.
@@ -123,7 +129,10 @@ and the parameters of the uniform distribution are specified by `low` and `high`
 The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message and be valid as an output type.
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(RandomUniformLike, 1, OpSchema()
+    .SetDoc(RandomUniformLike_ver1_doc)
     .Attr(
           "low",
           "Lower boundary of the output values. If not specified, default is 0.",
@@ -168,10 +177,9 @@ TensorProto message and be valid as an output type.
           return;
         }
         propagateShapeFromInputToOutput(ctx, 0, 0);
-    });
+    }));
 
-ONNX_OPERATOR_SCHEMA(RandomNormalLike)
-    .SetDoc(R"DOC(
+static const char * RandomNormalLike_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a normal distribution. 
 The shape of the output tensor is copied from the shape of the input tensor, 
 and the parameters of the normal distribution are specified by `mean` and `scale`.
@@ -179,7 +187,10 @@ and the parameters of the normal distribution are specified by `mean` and `scale
 The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message, and be valid as an output type.
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(RandomNormalLike, 1, OpSchema()
+    .SetDoc(RandomNormalLike_ver1_doc)
     .Attr(
           "mean",
           "The mean of the normal distribution. If not specified, default is 0.",
@@ -224,14 +235,15 @@ TensorProto message, and be valid as an output type.
           return;
         }
         propagateShapeFromInputToOutput(ctx, 0, 0);
-    });
+    }));
 
-ONNX_OPERATOR_SCHEMA(Multinomial)
-	.SinceVersion(7)
-    .SetDoc(R"DOC(
+static const char * Multinomial_ver7_doc = R"DOC(
 Generate a tensor of samples from a multinomial distribution according to the probabilities
 of each of the possible outcomes.
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Multinomial, 7, OpSchema()
+    .SetDoc(Multinomial_ver7_doc)
     .Attr(
         "sample_size",
         "Number of times to sample.",
@@ -290,4 +302,6 @@ of each of the possible outcomes.
         auto dim = shape->add_dim();
         *dim = input_type->tensor_type().shape().dim(0);
         shape->add_dim()->set_dim_value(sample_size->i());
-    });
+    }));
+
+}  // namespace ONNX_NAMESPACE

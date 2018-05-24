@@ -2,11 +2,11 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
-using namespace ONNX_NAMESPACE;
+namespace ONNX_NAMESPACE
+{
+  using SupportType = OpSchema::SupportType;
 
-using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
-
-ONNX_OPERATOR_SCHEMA(If)
+ONNX_OPERATOR_SET_SCHEMA(If, 1, OpSchema()
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc("If conditional")
     .Input(0, "cond", "Condition for the if", "B")
@@ -31,11 +31,9 @@ ONNX_OPERATOR_SCHEMA(If)
         AttributeProto::GRAPH,
         true)
     .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-    .TypeConstraint("B", {"tensor(bool)"}, "Only bool");
+    .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
 
-ONNX_OPERATOR_SCHEMA(Loop)
-    .SetSupportLevel(SupportType::EXPERIMENTAL)
-    .SetDoc(R"DOC(
+static const char * Loop_ver1_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
 
 1) Trip count. Iteration count specified at runtime. Set by
@@ -155,7 +153,11 @@ necessarily a loop-carried dependency. Backends can recognize this pattern and
 are permitted to schedule the execution of the multi-layer network in a
 pipelined/"wavefront" fashion.
 
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Loop, 1, OpSchema()
+    .SetSupportLevel(SupportType::EXPERIMENTAL)
+    .SetDoc(Loop_ver1_doc)
     .Input(
         0,
         "M",
@@ -192,9 +194,9 @@ pipelined/"wavefront" fashion.
         true)
     .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
     .TypeConstraint("I", {"int64"}, "Only int64")
-    .TypeConstraint("B", {"bool"}, "Only bool");
+    .TypeConstraint("B", {"bool"}, "Only bool"));
 
-ONNX_OPERATOR_SCHEMA(LoopIndexTensor)
+ONNX_OPERATOR_SET_SCHEMA(LoopIndexTensor, 1, OpSchema()
     .SetSupportLevel(SupportType::EXPERIMENTAL)
     .SetDoc(
         "This is a special operator only valid inside the loop that supports "
@@ -212,4 +214,5 @@ ONNX_OPERATOR_SCHEMA(LoopIndexTensor)
         static_cast<int64_t>(0))
     .Output(0, "O", "Tensor of N - 1 dims that is a sub tensor of T", "T")
     .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types")
-    .TypeConstraint("I", {"int32"}, "Indices");
+    .TypeConstraint("I", {"int32"}, "Indices"));
+}

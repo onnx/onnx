@@ -3,10 +3,9 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace ONNX_NAMESPACE;
-
-namespace ONNX_NAMESPACE {
-static std::string pads_doc =
+namespace ONNX_NAMESPACE
+{
+const char * pads_doc_old =
     "Padding for the beginning and ending along each axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
     "and end part of the corresponding axis. `pads` format should be as follow "
@@ -14,23 +13,23 @@ static std::string pads_doc =
     "added at the beginning of axis `i` and xi_end, the number of pixels added at "
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute.";
-static std::string auto_pad_doc =
+const char * auto_pad_doc_old =
     "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
     "only intended to support legacy uses, and for framework authors, one is explicitly "
     "encouraged to use explicit padding specified in the pads attribute.";
-} // namespace ONNX_NAMESPACE
 
-ONNX_OPERATOR_SCHEMA(LpPool)
-    .SinceVersion(1)
-    .SetDoc(R"DOC(
+static const char * LpPool_ver1_doc = R"DOC(
  LpPool consumes an input tensor X and applies Lp pooling across the
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
- data into the output tensor Y for further processing.)DOC")
+ data into the output tensor Y for further processing.)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(LpPool, 1, OpSchema()
+    .SetDoc(LpPool_ver1_doc)
     .Attr(
         "kernel_shape",
         "The size of the kernel along each axis.",
@@ -39,10 +38,10 @@ ONNX_OPERATOR_SCHEMA(LpPool)
     .Attr("strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL)
     .Attr(
         "auto_pad",
-        auto_pad_doc.c_str(),
+        auto_pad_doc_old,
         AttributeProto::STRING,
         std::string("NOTSET"))
-    .Attr("pads", pads_doc.c_str(), AttributeProto::INTS, OPTIONAL)
+    .Attr("pads", pads_doc_old, AttributeProto::INTS, OPTIONAL)
     .Attr(
         "p",
         "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -70,14 +69,15 @@ ONNX_OPERATOR_SCHEMA(LpPool)
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(GlobalLpPool)
-    .SinceVersion(1)
-    .SetDoc(R"DOC(
+static const char * GlobalLpPool_ver1_doc = R"DOC(
  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
  the values in the same channel. This is equivalent to LpPool with kernel size
- equal to the spatial dimension of input tensor.)DOC")
+ equal to the spatial dimension of input tensor.)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(GlobalLpPool, 1, OpSchema()
+    .SetDoc(GlobalLpPool_ver1_doc)
     .Attr(
         "p",
         "p value of the Lp norm used to pool over the input data, default is 2.0.",
@@ -103,19 +103,20 @@ ONNX_OPERATOR_SCHEMA(GlobalLpPool)
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(BatchNormalization)
-    .SinceVersion(1)
-    .NumOutputs({1, 5})
-    .SetDoc(R"DOC(
+static const char * BatchNormalization_ver1_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
-    )DOC")
+    )DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(BatchNormalization, 1, OpSchema()
+    .NumOutputs({1, 5})
+    .SetDoc(BatchNormalization_ver1_doc)
     .Attr(
         "spatial",
         "If true, compute the mean and variance across all spatial elements "
@@ -207,17 +208,19 @@ Output case #2: Y (test mode)
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(InstanceNormalization)
-    .SetDoc(R"DOC(
+static const char * InstanceNormalization_ver1_doc = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
 
 y = scale * (x - mean) / sqrt(variance + epsilon) + B,
 where mean and variance are computed per instance per channel.
 
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(InstanceNormalization, 1, OpSchema()
+    .SetDoc(InstanceNormalization_ver1_doc)
     // This attribute was added via AllowConsumed API in OpSchema.
     // After removing the API, we're now using the Attr API to simulate the old
     // definition.
@@ -242,16 +245,18 @@ where mean and variance are computed per instance per channel.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(Dropout)
-    .SetDoc(R"DOC(
+static const char * Dropout_old_doc = R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
 test mode or not, the output Y will either be a random dropout, or a simple
 copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
-)DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(Dropout, 1, OpSchema()
+    .SetDoc(Dropout_old_doc)
     .Attr(
         "ratio",
         "(float, default 0.5) the ratio of random dropout",
@@ -282,17 +287,10 @@ the training phase, so during testing nothing needs to be done.
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+        "Constrain input and output types to float tensors."));
 
-ONNX_OPERATOR_SCHEMA(Dropout)
-.SinceVersion(6)
-.SetDoc(R"DOC(
-Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
-output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
-test mode or not, the output Y will either be a random dropout, or a simple
-copy of the input. Note that our implementation of Dropout does scaling in
-the training phase, so during testing nothing needs to be done.
-)DOC")
+ONNX_OPERATOR_SET_SCHEMA(Dropout, 6, OpSchema()
+.SetDoc(Dropout_old_doc)
 .Attr(
 	"ratio",
 	"(float, default 0.5) the ratio of random dropout",
@@ -316,10 +314,9 @@ the training phase, so during testing nothing needs to be done.
 		"T",
 		{ "tensor(float16)", "tensor(float)", "tensor(double)" },
 		"Constrain input and output types to float tensors.")
-	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-ONNX_OPERATOR_SCHEMA(BatchNormalization)
-.SinceVersion(6)
+ONNX_OPERATOR_SET_SCHEMA(BatchNormalization, 6, OpSchema()
 .NumOutputs({ 1, 5 })
 .SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
@@ -425,4 +422,6 @@ Output case #2: Y (test mode)
 	propagateShapeAndTypeFromFirstInput(ctx);
 	// TODO in training mode, it may be possible to infer some of
 	// the other outputs as well.
-});
+}));
+
+} // namespace ONNX_NAMESPACE

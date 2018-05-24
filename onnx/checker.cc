@@ -1,5 +1,5 @@
-#include "onnx/checker.h"
 #include "onnx/defs/schema.h"
+#include "onnx/checker.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
@@ -271,8 +271,7 @@ void check_node(
     check_attribute(attr, ctx, lex_ctx);
   }
 
-  const auto* schema =
-      OpSchemaRegistry::Schema(node.op_type(), domain_version, node.domain());
+  const auto* schema = ctx.get_schema_registry()->GetSchema(node.op_type(), domain_version, node.domain());
   if (!schema) {
     fail_check(
         "No Schema registered for " + node.op_type() +

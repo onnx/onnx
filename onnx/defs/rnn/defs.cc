@@ -3,8 +3,6 @@
 
 #include "onnx/defs/schema.h"
 
-using namespace ONNX_NAMESPACE;
-
 namespace ONNX_NAMESPACE {
 
 void RNNShapeInference(InferenceContext& ctx) {
@@ -99,11 +97,7 @@ std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
     };
 }
 
-
-
-ONNX_OPERATOR_SCHEMA(RNN)
-    .SinceVersion(7)
-    .SetDoc(R"DOC(
+static const char * RNN_ver7_doc = R"DOC(
 Computes an one-layer simple RNN. This operator is usually supported
 via some custom implementation such as CuDNN.
 
@@ -164,8 +158,10 @@ Activation functions:
 Equations (Default: f=Tanh):
 
   - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+)DOC";
 
-)DOC" + GenerateOptionalArgumentsDoc())
+ONNX_OPERATOR_SET_SCHEMA(RNN, 7, OpSchema()
+    .SetDoc(RNN_ver7_doc + GenerateOptionalArgumentsDoc())
     .Attr("activations", "One (or two if bidirectional) activation function for "
           "input gate. The activation function must be one of the activation "
           "functions specified above. Optional: Default `Tanh` if not specified.",
@@ -185,12 +181,10 @@ Equations (Default: f=Tanh):
            "`[num_directions, 2*hidden_size]`. Optional: If not specified - assumed "
            "to be 0.", "T",
         OpSchema::Optional)
-    .FillUsing(RNNDocGenerator("RNN"));
+    .FillUsing(RNNDocGenerator("RNN")));
 
 
-ONNX_OPERATOR_SCHEMA(GRU)
-    .SinceVersion(7)
-    .SetDoc(R"DOC(
+static const char * GRU_ver7_doc = R"DOC(
 Computes an one-layer GRU. This operator is usually supported via some custom
 implementation such as CuDNN.
 
@@ -263,8 +257,10 @@ Equations (Default: f=Sigmoid, g=Tanh):
   - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
+)DOC";
 
-)DOC" + GenerateOptionalArgumentsDoc())
+ONNX_OPERATOR_SET_SCHEMA(GRU, 7, OpSchema()
+    .SetDoc(GRU_ver7_doc + GenerateOptionalArgumentsDoc())
     .Attr("activations", "A list of 2 (or 4 if bidirectional) activation functions "
           "for update, reset, and hidden gates. The activation functions must be one "
           "of the activation functions specified above. Optional: See the equations "
@@ -290,12 +286,10 @@ Equations (Default: f=Sigmoid, g=Tanh):
            "has shape `[num_directions, 6*hidden_size]`. Optional: If not specified "
            "- assumed to be 0", "T",
         OpSchema::Optional)
-    .FillUsing(RNNDocGenerator("GRU"));
+    .FillUsing(RNNDocGenerator("GRU")));
 
 
-ONNX_OPERATOR_SCHEMA(LSTM)
-    .SinceVersion(7)
-    .SetDoc(R"DOC(
+static const char * LSTM_ver7_doc = R"DOC(
 Computes an one-layer LSTM. This operator is usually supported via some
 custom implementation such as CuDNN.
 
@@ -376,8 +370,10 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
 
   - Ht = ot (.) h(Ct)
+)DOC";
 
-)DOC" + GenerateOptionalArgumentsDoc())
+ONNX_OPERATOR_SET_SCHEMA(LSTM, 7, OpSchema()
+    .SetDoc(LSTM_ver7_doc + GenerateOptionalArgumentsDoc())
     .Attr("activations", "A list of 3 (or 6 if bidirectional) activation functions "
           "for input, output, forget, cell, and hidden. The activation functions must "
           "be one of the activation functions specified above. Optional: See the equations "
@@ -414,5 +410,5 @@ Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
     .FillUsing(RNNDocGenerator("LSTM"))
     .Output(2, "Y_c",
             "The last output value of the cell. It has shape "
-            "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
+            "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional));
 }  // namespace ONNX_NAMESPACE

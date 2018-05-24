@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/function.h"
+#include "onnx/defs/schema.h"
 #include "onnx/checker.h"
 #include "onnx/string_utils.h"
 
