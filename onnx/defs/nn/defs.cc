@@ -969,7 +969,7 @@ ONNX_OPERATOR_SET_SCHEMA(InstanceNormalization, 6, OpSchema()
       propagateShapeAndTypeFromFirstInput(ctx);
     }));
 
-static const char * LpNormalization_ver6_doc = R"DOC(
+static const char * LpNormalization_ver1_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
 )DOC";
 
@@ -980,7 +980,7 @@ ONNX_OPERATOR_SET_SCHEMA(LpNormalization, 1, OpSchema()
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.")
-    .SetDoc(LpNormalization_ver6_doc)
+    .SetDoc(LpNormalization_ver1_doc)
     .Attr(
         "axis",
         "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.",
@@ -1071,7 +1071,7 @@ ONNX_OPERATOR_SET_SCHEMA(Flatten, 1, OpSchema()
       }
     }));
 
-static const char * LRN_ver6_doc = R"DOC(
+static const char * LRN_ver1_doc = R"DOC(
 Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
 It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
@@ -1110,7 +1110,7 @@ ONNX_OPERATOR_SET_SCHEMA(LRN, 1, OpSchema()
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output "
         " types to float tensors.")
-    .SetDoc(LRN_ver6_doc)
+    .SetDoc(LRN_ver1_doc)
     .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 } // namespace ONNX_NAMESPACE
