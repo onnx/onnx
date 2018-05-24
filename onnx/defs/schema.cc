@@ -12,6 +12,7 @@
 #endif
 
 #include "onnx/common/stl_backports.h"
+#include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
 
