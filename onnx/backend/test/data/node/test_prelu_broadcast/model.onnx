@@ -1,8 +1,7 @@
-backend-test:…
-&
+backend-test:s
+
 x
-slopey"PRelu*
-	broadcast test_prelu_broadcastZ
+slopey"PRelutest_prelu_broadcastZ
 x
 
 

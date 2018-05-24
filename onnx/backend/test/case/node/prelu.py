@@ -33,7 +33,6 @@ class PRelu(Base):
             'PRelu',
             inputs=['x', 'slope'],
             outputs=['y'],
-            broadcast=1,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
