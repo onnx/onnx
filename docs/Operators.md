@@ -119,7 +119,6 @@
   * <sub>experimental</sub> <a href="#Scale">Scale</a>
   * <sub>experimental</sub> <a href="#ScaledTanh">ScaledTanh</a>
   * <sub>experimental</sub> <a href="#ThresholdedRelu">ThresholdedRelu</a>
-  * <sub>experimental</sub> <a href="#Upsample">Upsample</a>
 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
