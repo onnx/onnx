@@ -22,7 +22,7 @@ class TestBasicFunctions(unittest.TestCase):
         model.ir_version = IR_VERSION
         return model
 
-    def _simple_tensor(self):
+    def _simple_tensor(self):  # type: () -> TensorProto
         # Create a TensorProto.
         tensor = helper.make_tensor(
             name='test-tensor',
@@ -32,7 +32,7 @@ class TestBasicFunctions(unittest.TestCase):
         )
         return tensor
 
-    def test_save_and_load_model(self):
+    def test_save_and_load_model(self):  # type: () -> None
         proto = self._simple_model()
         cls = ModelProto
         proto_string = onnx._serialize(proto)
@@ -50,14 +50,14 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input is a file name
         try:
-            f = tempfile.NamedTemporaryFile(delete=False)
-            onnx.save_model(proto, f)
-            f.close()
+            fi = tempfile.NamedTemporaryFile(delete=False)
+            onnx.save_model(proto, fi)
+            fi.close()
 
-            loaded_proto = onnx.load_model(f.name, cls)
+            loaded_proto = onnx.load_model(fi.name, cls)
             self.assertTrue(proto == loaded_proto)
         finally:
-            os.remove(f.name)
+            os.remove(fi.name)
 
     def test_save_and_load_tensor(self):  # type: () -> None
         proto = self._simple_tensor()
