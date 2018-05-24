@@ -316,16 +316,18 @@ ONNX_OPERATOR_SET_SCHEMA(Dropout, 6, OpSchema()
 		"Constrain input and output types to float tensors.")
 	.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-ONNX_OPERATOR_SET_SCHEMA(BatchNormalization, 6, OpSchema()
-.NumOutputs({ 1, 5 })
-.SetDoc(R"DOC(
+static const char * BatchNorm_ver6_doc =  R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
-    )DOC")
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(BatchNormalization, 6, OpSchema()
+.NumOutputs({ 1, 5 })
+.SetDoc(BatchNorm_ver6_doc)
 	.Attr(
 		"spatial",
 		"If true, compute the mean and variance across all spatial elements "
