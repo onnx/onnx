@@ -4,7 +4,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np  # type: ignore
-from typing import Any
 
 import onnx
 from ..base import Base
@@ -14,7 +13,7 @@ from . import expect
 class ConvTranspose(Base):
 
     @staticmethod
-    def export():  # type: (*Any) -> None
+    def export():  # type: () -> None
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)
@@ -43,7 +42,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose')
 
     @staticmethod
-    def export_convtranspose_1d():  # type: (*Any) -> None
+    def export_convtranspose_1d():  # type: () -> None
         x = np.array([[[0., 1., 2.]]]).astype(np.float32)  # (1, 1, 3)
 
         W = np.array([[[1., 1., 1.],  # (1, 2, 3)
@@ -57,7 +56,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_1d')
 
     @staticmethod
-    def export_convtranspose_3d():  # type: (*Any) -> None
+    def export_convtranspose_3d():  # type: () -> None
         x = np.array([[[[[0., 1., 2., 3., 4.],  # (1, 1, 3, 4, 5)
                          [5., 6., 7., 8., 9.],
                          [10., 11., 12., 13., 14.],
@@ -165,7 +164,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_3d')
 
     @staticmethod
-    def export_convtranspose_output_padding():  # type: (*Any) -> None
+    def export_convtranspose_output_padding():  # type: () -> None
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)
@@ -206,7 +205,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
 
     @staticmethod
-    def export_convtranspose_output_shape():  # type: (*Any) -> None
+    def export_convtranspose_output_shape():  # type: () -> None
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)
@@ -247,7 +246,7 @@ class ConvTranspose(Base):
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
     @staticmethod
-    def export_convtranspose_pads():  # type: (*Any) -> None
+    def export_convtranspose_pads():  # type: () -> None
         x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
                         [3., 4., 5.],
                         [6., 7., 8.]]]]).astype(np.float32)
