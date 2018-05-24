@@ -11,8 +11,8 @@
 #include "onnx/defs/operator_sets-ml.h"
 #endif
 
-#include "onnx/common/stl_backports.h"
 #include "onnx/common/assertions.h"
+#include "onnx/common/stl_backports.h"
 
 namespace ONNX_NAMESPACE {
 
