@@ -2428,7 +2428,6 @@ expect(node, inputs=[x], outputs=[y],
     - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
-  
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -2729,7 +2728,6 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
   input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
   and output tensor Y has shape (M, N). A will be transposed before doing the
   computation if attribute transA is non-zero, same for B and transB.
-  
   This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -3556,7 +3554,6 @@ This version of the operator has been available since version 1 of the default O
     - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
   
     - Ht = ot (.) h(Ct)
-  
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -5280,7 +5277,6 @@ expect(node, inputs=[x, y], outputs=[z],
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-  
   This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -5475,7 +5471,6 @@ for mode in ['edge', 'reflect']:
   Pow takes input data (Tensor<T>) and exponent Tensor, and
   produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
   is applied to the data tensor elementwise.
-  
   This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
@@ -5630,7 +5625,6 @@ expect(node, inputs=[x, y], outputs=[z],
   Equations (Default: f=Tanh):
   
     - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
-  
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
