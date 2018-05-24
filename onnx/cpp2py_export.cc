@@ -4,8 +4,8 @@
 #include <limits>
 #include <unordered_map>
 
-#include "onnx/defs/schema.h"
 #include "onnx/checker.h"
+#include "onnx/defs/schema.h"
 #include "onnx/optimizer/optimize.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
