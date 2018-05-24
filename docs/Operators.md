@@ -5303,7 +5303,7 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
+<dd>Output tensor (same size as X)</dd>
 </dl>
 
 #### Type Constraints
@@ -5312,6 +5312,50 @@ Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>prelu</summary>
+
+```python
+node = onnx.helper.make_node(
+    'PRelu',
+    inputs=['x', 'slope'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+slope = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
+
+expect(node, inputs=[x, slope], outputs=[y],
+       name='test_prelu_example')
+```
+
+</details>
+
+
+<details>
+<summary>prelu_broadcast</summary>
+
+```python
+node = onnx.helper.make_node(
+    'PRelu',
+    inputs=['x', 'slope'],
+    outputs=['y'],
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+slope = np.random.randn(5).astype(np.float32)
+y = np.clip(x, 0, np.inf) + np.clip(x, -np.inf, 0) * slope
+
+expect(node, inputs=[x, slope], outputs=[y],
+       name='test_prelu_broadcast')
+```
+
+</details>
 
 
 ### <a name="Pad"></a><a name="pad">**Pad**</a>

@@ -6394,7 +6394,7 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor</dd>
+<dd>Output tensor (same size as X)</dd>
 </dl>
 
 #### Type Constraints
