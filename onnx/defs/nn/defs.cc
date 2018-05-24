@@ -613,7 +613,19 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
-and computes the output.)DOC";
+and computes the output. 
+
+If the pads parameter is provided the shape of the output is calculated via the following equation:
+
+  output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
+
+output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
+
+  total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - output_shape[i]
+  If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
+  Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
+
+    )DOC";
     ReplaceAll(doc, "{filter_desc}", filter_desc);
     schema.SetDoc(doc);
     schema.Input(
@@ -659,16 +671,14 @@ and computes the output.)DOC";
         OPTIONAL);
     schema.Attr(
         "output_shape",
-        "The shape of the output."
-        " output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] +"
-        " kernel_shape[i] - pads[start_i] - pads[end_i]",
+        "The shape of the output can be explicitly set which will cause pads values to be auto generated. If output_shape is specified "
+        "pads values are ignored. See doc for details for equations to generate pads",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
         "output_padding",
         "The zero-padding added to one side of the output."
-        " This is also called adjs/adjustment in some frameworks."
-        " If output_shape is set, this attribute will be ignored.",
+        " This is also called adjs/adjustment in some frameworks.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
@@ -824,7 +834,7 @@ ONNX_OPERATOR_SCHEMA(GlobalLpPool)
 } // namespace ONNX_NAMESPACE
 
 ONNX_OPERATOR_SCHEMA(BatchNormalization)
-    .SinceVersion(6)
+    .SinceVersion(7)
     .NumOutputs({1, 5})
     .SetDoc(R"DOC(
 Carries out batch normalization as described in the paper
@@ -833,7 +843,7 @@ there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
-    )DOC")
+    )DOC" + GenerateOptionalArgumentsDoc())
     .Attr(
         "spatial",
         "If true, compute the mean and variance across all spatial elements "
@@ -841,11 +851,6 @@ Output case #2: Y (test mode)
         "Default is 1.",
         AttributeProto::INT,
         static_cast<int64_t>(1))
-    .Attr(
-        "is_test",
-        "If set to nonzero, run spatial batch normalization in test mode, default is 0.",
-        AttributeProto::INT,
-        static_cast<int64_t>(0))
     .Attr(
         "epsilon",
         "The epsilon value to use to avoid division by zero, default is 1e-5f.",
@@ -897,29 +902,27 @@ Output case #2: Y (test mode)
     .Output(
         1,
         "mean",
-        "The running mean after the BatchNormalization operator. Must be in-place "
-        "with the input mean. Should not be used for testing.",
+        "The running mean after the BatchNormalization operator.",
         "T",
         OpSchema::Optional)
     .Output(
         2,
         "var",
-        "The running variance after the BatchNormalization operator. Must be "
-        "in-place with the input var. Should not be used for testing.",
+        "The running variance after the BatchNormalization operator.",
         "T",
         OpSchema::Optional)
     .Output(
         3,
         "saved_mean",
         "Saved mean used during training to speed up gradient "
-        "computation. Should not be used for testing.",
+        "computation.",
         "T",
         OpSchema::Optional)
     .Output(
         4,
         "saved_var",
         "Saved variance used during training to speed up "
-        "gradient computation. Should not be used for testing.",
+        "gradient computation.",
         "T",
         OpSchema::Optional)
     .TypeConstraint(
@@ -995,31 +998,25 @@ Given a matrix, apply Lp-normalization along the provided axis.
     });
 
 ONNX_OPERATOR_SCHEMA(Dropout)
-    .SinceVersion(6)
+    .SinceVersion(7)
     .SetDoc(R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
 test mode or not, the output Y will either be a random dropout, or a simple
 copy of the input. Note that our implementation of Dropout does scaling in
 the training phase, so during testing nothing needs to be done.
-)DOC")
+)DOC" + GenerateOptionalArgumentsDoc())
     .Attr(
         "ratio",
         "(float, default 0.5) the ratio of random dropout",
         AttributeProto::FLOAT,
         0.5f)
-    .Attr(
-        "is_test",
-        "(int, default 0) if nonzero, run dropout in test mode where "
-        "the output is simply Y = X.",
-        AttributeProto::INT,
-        static_cast<int64_t>(0))
     .Input(0, "data", "The input data as Tensor.", "T")
     .Output(0, "output", "The output.", "T")
     .Output(
         1,
         "mask",
-        "The output mask. If is_test is nonzero, this output is not filled.",
+        "The output mask.",
         "T",
         OpSchema::Optional)
     .TypeConstraint(
