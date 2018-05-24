@@ -5611,7 +5611,6 @@ This version of the operator has been available since version 6 of the default O
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-      
 
 #### Version
 
