@@ -371,7 +371,6 @@ is applied to the data tensor elementwise.
 ONNX_OPERATOR_SCHEMA(PRelu)
     .SinceVersion(6)
     .SetDoc(R"DOC(
-
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
@@ -384,7 +383,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
         "Slope tensor. The shape of slope can be smaller then first input X; "
         "if so, its shape must be unidirectional broadcastable to X",
         "T")
-    .Output(0, "Y", "Output tensor", "T")
+    .Output(0, "Y", "Output tensor (same size as X)", "T")
     .TypeConstraint(
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
