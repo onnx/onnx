@@ -11,7 +11,7 @@ from collections import defaultdict
 from onnx import defs
 from onnx.defs import OpSchema
 from onnx.backend.test.case import collect_snippets
-from typing import Text, Sequence, Dict, List, Type
+from typing import Text, Sequence, Dict, List, Type, Set
 
 
 SNIPPETS = collect_snippets()
@@ -208,7 +208,7 @@ def main(args):  # type: (Type[Args]) -> None
         fout.write('\n')
 
         # Table of contents
-        exsting_ops = set()
+        exsting_ops = set()  # type: Set[Text]
         for domain, supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
