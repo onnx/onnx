@@ -70,7 +70,7 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto & tp) {
     break;
   }
   case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
-    abort();
+    fail_convert("Unknown tensor data type");
   }
 
   // The only way to know if we should be using raw_data or
@@ -152,7 +152,7 @@ void convertAttribute(const ONNX_NAMESPACE::AttributeProto & ap, Node * n) {
     break;
   }
   case ONNX_NAMESPACE::AttributeProto_AttributeType_UNDEFINED:
-    abort();
+    fail_convert("Unknown tensor data type");
     break;
   }
 }
@@ -371,7 +371,7 @@ void encodeTensor(ONNX_NAMESPACE::TensorProto * p, const Tensor & tensor) {
     break;
   }
   case ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED:
-    abort();
+    fail_convert("Unknown tensor data type");
   }
   if (!tensor.raw().empty()) {
     p->set_raw_data(tensor.raw());
