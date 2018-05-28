@@ -4,9 +4,10 @@
 #pragma once
 
 // Before:
-//   A = Const
+//   A, B, C are in the initializer list
 //   D = Add(B, C)
 // After:
+//   B, C are in the initializer list and A is removed
 //   D = Add(B, C)
 //
 // this pass can handle the case satisfy all following conditions:

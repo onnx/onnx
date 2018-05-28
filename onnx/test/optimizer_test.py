@@ -194,6 +194,7 @@ class TestOptimizer(unittest.TestCase):
         optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
 
         assert len(list(optimized_model.graph.initializer)) == 0
+        assert len(optimized_model.graph.input) == 2
 
     def test_eliminate_unused_initializer_no_eliminate_used_default(self):  # type: () -> None
         add = helper.make_node("Add", ["X", "A"], ["Z"])
