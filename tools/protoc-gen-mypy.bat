@@ -1,2 +1,2 @@
 @echo off
-python -u %0\..\protoc-gen-mypy
+python -u %0\..\protoc-gen-mypy.py
