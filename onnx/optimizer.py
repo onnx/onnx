@@ -28,6 +28,7 @@ Supported pass names:
     -- nop
     -- eliminate_identity
     -- eliminate_nop_transpose
+    -- fuse_arithmetic_into_batch_norm
     -- fuse_consecutive_transposes
     -- fuse_add_bias_into_conv
     -- fuse_transpose_into_gemm

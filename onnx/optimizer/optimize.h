@@ -9,7 +9,7 @@
 #include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
-#include "onnx/optimizer/passes/fuse_scale_bias_into_batch_norm.h"
+#include "onnx/optimizer/passes/fuse_arithmetic_into_batch_norm.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
@@ -28,8 +28,8 @@ struct Optimizer {
     // Register the optimization passes to the optimizer.
     _registerOptimizer<EliminateIdentity>();
     _registerOptimizer<EliminateNopTranspose>();
+    _registerOptimizer<FuseArithmeticIntoBatchNorm>();
     _registerOptimizer<FuseConsecutiveTransposes>();
-    _registerOptimizer<FuseScaleBiasIntoBatchNorm>();
     _registerOptimizer<FuseTransposeIntoGemm>();
     _registerOptimizer<FuseAddBiasIntoConv>();
     _registerOptimizer<Nop>();
