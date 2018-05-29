@@ -124,38 +124,38 @@ class PkgWriter(object):
 
     def write_enums(self, enums):
         # type: (List[d.EnumDescriptorProto]) -> None
-        l = self._write_line
+        line = self._write_line
         for enum in enums:
-            l("class {}(int):", enum.name)
+            line("class {}(int):", enum.name)
             with self._indent():
-                l("@classmethod")
-                l("def Name(cls, number: int) -> str: ...")
-                l("@classmethod")
-                l("def Value(cls, name: str) -> int: ...")
-                l("@classmethod")
-                l("def keys(cls) -> {}[str]: ...",
+                line("@classmethod")
+                line("def Name(cls, number: int) -> str: ...")
+                line("@classmethod")
+                line("def Value(cls, name: str) -> int: ...")
+                line("@classmethod")
+                line("def keys(cls) -> {}[str]: ...",
                     self._import("typing", "List"))
-                l("@classmethod")
-                l("def values(cls) -> {}[int]: ...",
+                line("@classmethod")
+                line("def values(cls) -> {}[int]: ...",
                     self._import("typing", "List"))
-                l("@classmethod")
-                l("def items(cls) -> {}[{}[str, int]]: ...",
+                line("@classmethod")
+                line("def items(cls) -> {}[{}[str, int]]: ...",
                     self._import("typing", "List"),
                     self._import("typing", "Tuple"))
 
             for val in enum.value:
-                l("{} = {}({}, {})", val.name, self._import("typing", "cast"), enum.name, val.number)
-            l("")
+                line("{} = {}({}, {})", val.name, self._import("typing", "cast"), enum.name, val.number)
+            line("")
 
     def write_messages(self, messages, prefix):
         # type: (List[d.DescriptorProto], Text) -> None
-        l = self._write_line
+        line = self._write_line
         message_class = self._import("google.protobuf.message", "Message")
 
         for desc in messages:
             self.locals.add(desc.name)
             qualified_name = prefix + desc.name
-            l("class {}({}):", desc.name, message_class)
+            line("class {}({}):", desc.name, message_class)
             with self._indent():
                 # Nested enums/messages
                 self.write_enums(desc.enum_type)
@@ -165,78 +165,78 @@ class PkgWriter(object):
                 for field in [f for f in desc.field if is_scalar(f)]:
                     if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
                         container = self._import("google.protobuf.internal.containers", "RepeatedScalarFieldContainer")
-                        l("{} = ... # type: {}[{}]", field.name, container, self.python_type(field))
+                        line("{} = ... # type: {}[{}]", field.name, container, self.python_type(field))
                     else:
-                        l("{} = ... # type: {}", field.name, self.python_type(field))
-                l("")
+                        line("{} = ... # type: {}", field.name, self.python_type(field))
+                line("")
 
                 # Getters for non-scalar fields
                 for field in [f for f in desc.field if not is_scalar(f)]:
-                    l("@property")
+                    line("@property")
                     if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
                         msg = self.descriptors.messages[field.type_name]
                         if msg.options.map_entry:
                             # map generates a special Entry wrapper message
                             container = self._import("typing", "MutableMapping")
-                            l("def {}(self) -> {}[{}, {}]: ...", field.name, container, self.python_type(msg.field[0]), self.python_type(msg.field[1]))
+                            line("def {}(self) -> {}[{}, {}]: ...", field.name, container, self.python_type(msg.field[0]), self.python_type(msg.field[1]))
                         else:
                             container = self._import("google.protobuf.internal.containers", "RepeatedCompositeFieldContainer")
-                            l("def {}(self) -> {}[{}]: ...", field.name, container, self.python_type(field))
+                            line("def {}(self) -> {}[{}]: ...", field.name, container, self.python_type(field))
                     else:
-                        l("def {}(self) -> {}: ...", field.name, self.python_type(field))
-                    l("")
+                        line("def {}(self) -> {}: ...", field.name, self.python_type(field))
+                    line("")
 
                 # Constructor
-                l("def __init__(self,")
+                line("def __init__(self,")
                 with self._indent():
                     # Required args
                     for field in [f for f in desc.field if f.label == d.FieldDescriptorProto.LABEL_REQUIRED]:
-                        l("{} : {},", field.name, self.python_type(field))
+                        line("{} : {},", field.name, self.python_type(field))
                     for field in [f for f in desc.field if f.label != d.FieldDescriptorProto.LABEL_REQUIRED]:
                         if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
                             if field.type_name != '' and self.descriptors.messages[field.type_name].options.map_entry:
                                 msg = self.descriptors.messages[field.type_name]
-                                l("{} : {}[{}[{}, {}]] = None,", field.name, self._import("typing", "Optional"),
+                                line("{} : {}[{}[{}, {}]] = None,", field.name, self._import("typing", "Optional"),
                                     self._import("typing", "Mapping"), self.python_type(msg.field[0]), self.python_type(msg.field[1]))
                             else:
-                                l("{} : {}[{}[{}]] = None,", field.name, self._import("typing", "Optional"),
+                                line("{} : {}[{}[{}]] = None,", field.name, self._import("typing", "Optional"),
                                   self._import("typing", "Iterable"), self.python_type(field))
                         else:
-                            l("{} : {}[{}] = None,", field.name, self._import("typing", "Optional"),
+                            line("{} : {}[{}] = None,", field.name, self._import("typing", "Optional"),
                               self.python_type(field))
-                    l(") -> None: ...")
+                    line(") -> None: ...")
 
                 # Standard message methods
-                l("@classmethod")
-                l("def FromString(cls, s: bytes) -> {}: ...", qualified_name)
-                l("def MergeFrom(self, other_msg: {}) -> None: ...", message_class)
-                l("def CopyFrom(self, other_msg: {}) -> None: ...", message_class)
-            l("")
+                line("@classmethod")
+                line("def FromString(cls, s: bytes) -> {}: ...", qualified_name)
+                line("def MergeFrom(self, other_msg: {}) -> None: ...", message_class)
+                line("def CopyFrom(self, other_msg: {}) -> None: ...", message_class)
+            line("")
 
     def write_services(self, services):
         # type: (d.ServiceDescriptorProto) -> None
-        l = self._write_line
+        line = self._write_line
 
         for service in services:
             # The service definition interface
-            l("class {}({}, metaclass={}):", service.name, self._import("google.protobuf.service", "Service"), self._import("abc", "ABCMeta"))
+            line("class {}({}, metaclass={}):", service.name, self._import("google.protobuf.service", "Service"), self._import("abc", "ABCMeta"))
             with self._indent():
                 for method in service.method:
-                    l("@{}", self._import("abc", "abstractmethod"))
-                    l("def {}(self,", method.name)
+                    line("@{}", self._import("abc", "abstractmethod"))
+                    line("def {}(self,", method.name)
                     with self._indent():
-                        l("rpc_controller: {},", self._import("google.protobuf.service", "RpcController"))
-                        l("request: {},", self._import_message(method.input_type))
-                        l("done: {}[{}[[{}], None]],",
+                        line("rpc_controller: {},", self._import("google.protobuf.service", "RpcController"))
+                        line("request: {},", self._import_message(method.input_type))
+                        line("done: {}[{}[[{}], None]],",
                           self._import("typing", "Optional"),
                           self._import("typing", "Callable"),
                           self._import_message(method.output_type))
-                    l(") -> {}[{}]: ...", self._import("concurrent.futures", "Future"), self._import_message(method.output_type))
+                    line(") -> {}[{}]: ...", self._import("concurrent.futures", "Future"), self._import_message(method.output_type))
 
             # The stub client
-            l("class {}({}):", service.name + "_Stub", service.name)
+            line("class {}({}):", service.name + "_Stub", service.name)
             with self._indent():
-                l("def __init__(self, rpc_channel: {}) -> None: ...",
+                line("def __init__(self, rpc_channel: {}) -> None: ...",
                   self._import("google.protobuf.service", "RpcChannel"))
 
     def python_type(self, field):
@@ -312,7 +312,7 @@ class Descriptors(object):
         to_generate = {n: files[n] for n in request.file_to_generate}
         self.files = files  # type: Dict[Text, d.FileDescriptorProto]
         self.to_generate = to_generate  # type: Dict[Text, d.FileDescriptorProto]
-        self.messages = {} # type: Dict[Text, d.DescriptorProto]
+        self.messages = {}  # type: Dict[Text, d.DescriptorProto]
         self.message_to_fd = {}  # type: Dict[Text, d.FileDescriptorProto]
 
         def _add_enums(enums, prefix, fd):
