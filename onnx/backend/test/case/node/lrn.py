@@ -28,7 +28,7 @@ class LRN(Base):
             bias=bias,
             size=nsize
         )
-        x = np.random.rand(5, 5, 5, 5).astype(np.float32) * 1000
+        x = np.random.randn(5, 5, 5, 5).astype(np.float32)
         square_sum = np.zeros((5,5,5,5)).astype(np.float32)
         for n,c,h,w in np.ndindex(x.shape):
             square_sum[n,c,h,w] = sum(x[n,
@@ -52,7 +52,7 @@ class LRN(Base):
             outputs=['y'],
             size=3
         )
-        x = np.random.rand(5, 5, 5, 5).astype(np.float32) * 1000
+        x = np.random.randn(5, 5, 5, 5).astype(np.float32)
         square_sum = np.zeros((5,5,5,5)).astype(np.float32)
         for n,c,h,w in np.ndindex(x.shape):
             square_sum[n,c,h,w] = sum(x[n,
