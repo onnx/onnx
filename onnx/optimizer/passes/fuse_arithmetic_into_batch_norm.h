@@ -80,8 +80,8 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
           continue;
         }
 
-        // check if orig_const is only used by one node
-        if (orig_const->uses().size() > 1) {
+        // check if Arithmetic is only used by one node
+        if (n->output()->uses().size() > 1) {
           continue;
         }
 
