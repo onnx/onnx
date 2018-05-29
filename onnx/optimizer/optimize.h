@@ -8,9 +8,10 @@
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
-#include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
-#include "onnx/optimizer/passes/fuse_arithmetic_into_batch_norm.h"
+#include "onnx/optimizer/passes/eliminate_unused_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
+#include "onnx/optimizer/passes/fuse_arithmetic_into_batch_norm.h"
+#include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
@@ -28,10 +29,11 @@ struct Optimizer {
     // Register the optimization passes to the optimizer.
     _registerOptimizer<EliminateIdentity>();
     _registerOptimizer<EliminateNopTranspose>();
+    _registerOptimizer<EliminateUnusedInitializer>();
+    _registerOptimizer<FuseAddBiasIntoConv>();
     _registerOptimizer<FuseArithmeticIntoBatchNorm>();
     _registerOptimizer<FuseConsecutiveTransposes>();
     _registerOptimizer<FuseTransposeIntoGemm>();
-    _registerOptimizer<FuseAddBiasIntoConv>();
     _registerOptimizer<Nop>();
     _registerOptimizer<SplitInit>();
     _registerOptimizer<SplitPredict>();
