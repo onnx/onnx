@@ -5,6 +5,7 @@
 
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
+using namespace Common;
 static const char* ArrayFeatureExtractor_ver1_doc = R"DOC(
     Select a subset of the data X based on the indices provided Y.
 )DOC";
