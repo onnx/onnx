@@ -1,25 +1,15 @@
 #!/usr/bin/env python
 
-# Taken from https://github.com/dropbox/mypy-protobuf/blob/b72d8d15651460d400dd9c4e91e6c5f17999213e/python/protoc-gen-mypy
+# Taken from https://github.com/dropbox/mypy-protobuf/blob/d984389124eae6dbbb517f766b9266bb32171510/python/protoc-gen-mypy
 # (Apache 2.0 License)
 # with own fixes to
 # - appease flake8
-#   https://github.com/dropbox/mypy-protobuf/pull/19
-# - fix type hints in this file
-#   https://github.com/dropbox/mypy-protobuf/pull/20
-# - fix output file names that have dashes
-#   https://github.com/dropbox/mypy-protobuf/pull/15
-# - fix local imports of other generated files (they need to have a dot prefixed)
-#   https://github.com/dropbox/mypy-protobuf/pull/18
-# - make types Optional[T] instead of T if there's a default value of None
-#   https://github.com/dropbox/mypy-protobuf/pull/16
-# - fix composite containers
-#   https://github.com/dropbox/mypy-protobuf/pull/17
 # - exit without error when protobuf isn't installed
 # - fix recognition of whether an identifier is defined locally
 #   (unfortunately, we use a python package name ONNX_NAMESPACE_FOO_BAR_FOR_CI
 #    on CI, which by the original protoc-gen-mypy script was recognized to be
 #    camel case and therefore handled as an entry in the local package)
+
 
 """Protoc Plugin to generate mypy stubs. Loosely based on @zbarsky's go implementation"""
 from __future__ import (
@@ -184,8 +174,14 @@ class PkgWriter(object):
                 for field in [f for f in desc.field if not is_scalar(f)]:
                     line("@property")
                     if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                        container = self._import("google.protobuf.internal.containers", "RepeatedCompositeFieldContainer")
-                        line("def {}(self) -> {}[{}]: ...", field.name, container, self.python_type(field))
+                        msg = self.descriptors.messages[field.type_name]
+                        if msg.options.map_entry:
+                            # map generates a special Entry wrapper message
+                            container = self._import("typing", "MutableMapping")
+                            line("def {}(self) -> {}[{}, {}]: ...", field.name, container, self.python_type(msg.field[0]), self.python_type(msg.field[1]))
+                        else:
+                            container = self._import("google.protobuf.internal.containers", "RepeatedCompositeFieldContainer")
+                            line("def {}(self) -> {}[{}]: ...", field.name, container, self.python_type(field))
                     else:
                         line("def {}(self) -> {}: ...", field.name, self.python_type(field))
                     line("")
@@ -197,12 +193,17 @@ class PkgWriter(object):
                     for field in [f for f in desc.field if f.label == d.FieldDescriptorProto.LABEL_REQUIRED]:
                         line("{} : {},", field.name, self.python_type(field))
                     for field in [f for f in desc.field if f.label != d.FieldDescriptorProto.LABEL_REQUIRED]:
-                        self._import("typing", "Optional")
                         if field.label == d.FieldDescriptorProto.LABEL_REPEATED:
-                            line("{} : Optional[{}[{}]] = None,", field.name,
-                              self._import("typing", "Iterable"), self.python_type(field))
+                            if field.type_name != '' and self.descriptors.messages[field.type_name].options.map_entry:
+                                msg = self.descriptors.messages[field.type_name]
+                                line("{} : {}[{}[{}, {}]] = None,", field.name, self._import("typing", "Optional"),
+                                    self._import("typing", "Mapping"), self.python_type(msg.field[0]), self.python_type(msg.field[1]))
+                            else:
+                                line("{} : {}[{}[{}]] = None,", field.name, self._import("typing", "Optional"),
+                                  self._import("typing", "Iterable"), self.python_type(field))
                         else:
-                            line("{} : Optional[{}] = None,", field.name, self.python_type(field))
+                            line("{} : {}[{}] = None,", field.name, self._import("typing", "Optional"),
+                              self.python_type(field))
                     line(") -> None: ...")
 
                 # Standard message methods
@@ -272,7 +273,7 @@ class PkgWriter(object):
         imports = []
         for pkg, items in six.iteritems(self.imports):
             imports.append(u"from {} import (".format(pkg))
-            for item in items:
+            for item in sorted(items):
                 imports.append(u"    {},".format(item))
             imports.append(u")\n")
 
@@ -311,7 +312,7 @@ class Descriptors(object):
         to_generate = {n: files[n] for n in request.file_to_generate}
         self.files = files  # type: Dict[Text, d.FileDescriptorProto]
         self.to_generate = to_generate  # type: Dict[Text, d.FileDescriptorProto]
-
+        self.messages = {}  # type: Dict[Text, d.DescriptorProto]
         self.message_to_fd = {}  # type: Dict[Text, d.FileDescriptorProto]
 
         def _add_enums(enums, prefix, fd):
@@ -322,6 +323,7 @@ class Descriptors(object):
         def _add_messages(messages, prefix, fd):
             # type: (d.DescriptorProto, d.FileDescriptorProto) -> None
             for message in messages:
+                self.messages[prefix + message.name] = message
                 self.message_to_fd[prefix + message.name] = fd
                 sub_prefix = prefix + message.name + "."
                 _add_messages(message.nested_type, sub_prefix, fd)
