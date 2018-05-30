@@ -73,7 +73,9 @@ struct Dimension final {
   Dimension(std::string param)
     : is_int(false), dim(-1), param(std::move(param)) {
   }
-
+  Dimension(int64_t dim)
+    : is_int(true), dim(dim) {
+  }
   bool is_int;
   int64_t dim;
   std::string param;
