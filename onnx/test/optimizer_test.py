@@ -286,7 +286,8 @@ class TestOptimizer(unittest.TestCase):
         
         assert len(list(optimized_model.graph.initializer)) == 1
         assert len(list(optimized_model.graph.node)) == 2
-       
+        assert "A" in [i.name for i in optimized_model.graph.initializer]
+
     def test_fuse_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2]),
                  helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1]),

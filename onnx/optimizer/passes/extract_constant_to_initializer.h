@@ -25,12 +25,15 @@ namespace ONNX_NAMESPACE { namespace optimization {
                     Tensor t = n->t(sym);
                     t.setName(name); 
                     graph.addInitializer(t, name);
-                     
+
+                    std::vector<Dimension> tsizes;
+                    for (auto v : t.sizes())
+                        tsizes.push_back(v);
+
                     Node* param = graph.create(kParam, 1);
-                    std::vector<Dimension> s = {1};
                     param->output()->setUniqueName(name);
-                    param->output()->setSizes(s);
-                    param->output()->setElemType(TensorProto_DataType_INT64);
+                    param->output()->setSizes(tsizes);
+                    param->output()->setElemType(t.elem_type());
                     
                     graph.addInput()->copyMetadata(param->output());
                     n->replaceAllUsesWith(param);
