@@ -19,7 +19,7 @@ namespace ONNX_NAMESPACE { namespace optimization {
                 DescendOnGraphAttributes(n, [this](Graph& g){extract_constant_to_initializer(g);});
                 if (n->kind() == kConstant){
                     
-                    auto name = n->output()->uniqueName();
+                    const auto name = n->output()->uniqueName();
                     
                     Symbol sym = Symbol("value");
                     Tensor t = n->t(sym);
