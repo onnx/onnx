@@ -20,21 +20,17 @@ namespace ONNX_NAMESPACE { namespace optimization {
                 if (n->kind() == kConstant){
                     
                     const auto name = n->output()->uniqueName();
-                    
                     Symbol sym = Symbol("value");
                     Tensor t = n->t(sym);
                     t.setName(name); 
                     graph.addInitializer(t, name);
-
                     std::vector<Dimension> tsizes;
                     for (auto v : t.sizes())
                         tsizes.push_back(v);
-
                     Node* param = graph.create(kParam, 1);
                     param->output()->setUniqueName(name);
                     param->output()->setSizes(tsizes);
                     param->output()->setElemType(t.elem_type());
-                    
                     graph.addInput()->copyMetadata(param->output());
                     n->replaceAllUsesWith(param);
                     it.destroyCurrent();

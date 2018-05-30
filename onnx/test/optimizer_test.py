@@ -261,7 +261,7 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.initializer)) == 1
         assert "Z" in [o.name for o in optimized_model.graph.output]
 
-    def test_extract_constant_to_initializer(self):
+    def test_extract_constant_to_initializer(self):  # type: () -> None
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         constant = helper.make_node("Constant", [], ["A"],
                                     value=helper.make_tensor(
