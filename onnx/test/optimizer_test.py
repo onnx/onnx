@@ -80,8 +80,6 @@ class TestOptimizer(unittest.TestCase):
                 if len(attr.graphs):
                     for gr in attr.graphs:
                         self._visit_all_nodes_recursive(gr, fn)
-    
-       
 
     def test_eliminate_identity_single_use(self):  # type: () -> None
         nodes = [helper.make_node("Identity", ["X"], ["Y"])]

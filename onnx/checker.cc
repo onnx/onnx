@@ -482,3 +482,4 @@ void check_model(const ModelProto& model) {
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE
+
