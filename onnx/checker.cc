@@ -465,7 +465,7 @@ void check_model(const ModelProto& model) {
           "model with IR version >= 3 must specify opset_import for ONNX");
   } else {
     if (opset_imports.empty())
-      opset_imports[ONNX_DOMAIN] = 1;
+      opset_imports[Common::ONNX_DOMAIN] = 1;
     else
       fail_check(
           "model with IR version < 3 cannot have opset_import specified");

@@ -3,7 +3,7 @@
 
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
-
+using namespace Common;
 static const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(

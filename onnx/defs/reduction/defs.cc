@@ -6,7 +6,7 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-
+using namespace Common;
 std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(

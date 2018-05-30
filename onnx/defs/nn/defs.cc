@@ -5,6 +5,7 @@
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
+using namespace Common;
 const char* pads_doc =
     "Padding for the beginning and ending along each axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "
@@ -73,7 +74,8 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");;
+      fail_shape_inference("Attribute pads has incorrect size");
+      ;
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -82,7 +84,8 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");;
+      fail_shape_inference("Attribute strides has incorrect size");
+      ;
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -91,10 +94,12 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size");;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");
+      ;
     }
   } else if (require_kernel_shape) {
-    fail_shape_inference("Attribute kernel_shape must be specified");;
+    fail_shape_inference("Attribute kernel_shape must be specified");
+    ;
   } else {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
