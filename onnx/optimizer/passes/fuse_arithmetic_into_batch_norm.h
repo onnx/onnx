@@ -18,13 +18,19 @@
 //     Z = Div(Y, A)
 // After:
 //   case 1:
-//     Y = BatchNorm(X, scale, bias + A, mean, var)
+//     B = Add(bias, A)
+//     Y = BatchNorm(X, scale, B, mean, var)
 //   case 2:
-//     Y = BatchNorm(X, scale, bias - A, mean, var)
+//     B = Sub(bias, A)
+//     Y = BatchNorm(X, scale, B, mean, var)
 //   case 3:
-//     Y = BatchNorm(X, scale * A, bias, mean, var)
+//     S = Mul(scale, A)
+//     B = Mul(bias, A)
+//     Y = BatchNorm(X, S, B, mean, var)
 //   case 4:
-//     Y = BatchNorm(X, scale / A, bias, mean, var)
+//     S = Div(scale, A)
+//     B = Div(bias, A)
+//     Y = BatchNorm(X, S, B, mean, var)
 //   and there is no Z in graph.
 
 #include <numeric>
