@@ -281,7 +281,6 @@ class TestOptimizer(unittest.TestCase):
             ]
         )
         optimized_model = self._optimized(graph, ["extract_constant_to_initializer"])
-        
         assert len(list(optimized_model.graph.initializer)) == 1
         assert len(list(optimized_model.graph.node)) == 2
         assert "A" in [i.name for i in optimized_model.graph.initializer]
