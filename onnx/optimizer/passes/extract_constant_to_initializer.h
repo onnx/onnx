@@ -18,15 +18,14 @@ namespace ONNX_NAMESPACE { namespace optimization {
                 auto* n = *it;
                 DescendOnGraphAttributes(n, [this](Graph& g){extract_constant_to_initializer(g);});
                 if (n->kind() == kConstant){
-                    
                     const auto name = n->output()->uniqueName();
-                    Symbol sym = Symbol("value");
-                    Tensor t = n->t(sym);
+                    Tensor t = n->t(kvalue);
                     t.setName(name); 
-                    graph.addInitializer(t, name);
                     std::vector<Dimension> tsizes;
-                    for (auto v : t.sizes())
+                    for (auto v : t.sizes()){
                         tsizes.push_back(v);
+                    }
+                    graph.addInitializer(std::move(t), name);
                     Node* param = graph.create(kParam, 1);
                     param->output()->setUniqueName(name);
                     param->output()->setSizes(tsizes);
