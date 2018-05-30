@@ -14,7 +14,7 @@ from . import expect
 class LRN(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         alpha = 0.0002
         beta = 0.5
         bias = 2.0
@@ -40,7 +40,7 @@ class LRN(Base):
                name='test_lrn')
 
     @staticmethod
-    def export_default():
+    def export_default():  # type: () -> None
         alpha = 0.0001
         beta = 0.75
         bias = 1.0
