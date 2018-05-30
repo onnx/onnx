@@ -36,7 +36,7 @@ git diff --exit-code
 python onnx/defs/gen_doc.py
 python onnx/gen_proto.py
 python onnx/gen_proto.py --ml
-protoc --csharp_out=. onnx/onnx-ml.proto3 --exit-code
+protoc --csharp_out=. onnx/onnx-ml.proto3
 backend-test-tools generate-data
 git status
 git diff --exit-code
