@@ -4,7 +4,6 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 void RNNShapeInference(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size,
       hidden_size;

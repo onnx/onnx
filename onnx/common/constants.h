@@ -6,7 +6,6 @@
 #include <string>
 
 namespace ONNX_NAMESPACE {
-namespace Common {
 // For ONNX op/function registration.
 
 // ONNX domains.
@@ -29,5 +28,4 @@ constexpr const char* IMAGE = "IMAGE";
 constexpr const char* AUDIO = "AUDIO";
 constexpr const char* TEXT = "TEXT";
 
-} // namespace Common
 } // namespace ONNX_NAMESPACE

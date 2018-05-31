@@ -5,7 +5,6 @@
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 const char* pads_doc =
     "Padding for the beginning and ending along each axis, it can take any value greater "
     "than or equal to 0. The value represent the number of pixels added to the beginning "

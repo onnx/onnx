@@ -537,7 +537,7 @@ class OpSchema final {
   std::string file_;
   std::string doc_;
   // Default domain value ("") means it's ONNX domain.
-  std::string domain_ = Common::ONNX_DOMAIN;
+  std::string domain_ = ONNX_DOMAIN;
   std::map<std::string, Attribute> attributes_{};
   bool allows_unchecked_attributes_ = false;
   std::vector<FormalParameter> inputs_;
@@ -570,7 +570,7 @@ class ISchemaRegistry {
   virtual const OpSchema* GetSchema(
       const std::string& key,
       const int maxInclusiveVersion,
-      const std::string& domain = Common::ONNX_DOMAIN) const = 0;
+      const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
 /**
@@ -585,8 +585,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[Common::ONNX_DOMAIN] = std::make_pair(1, 7);
-      map_[Common::AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -679,7 +679,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   // Domain with default value ONNX_DOMAIN means ONNX.
   static const OpSchema* Schema(
       const std::string& key,
-      const std::string& domain = Common::ONNX_DOMAIN) {
+      const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       return &m[key][domain].rbegin()->second;
@@ -694,7 +694,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   static const OpSchema* Schema(
       const std::string& key,
       const int maxInclusiveVersion,
-      const std::string& domain = Common::ONNX_DOMAIN) {
+      const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
       auto pos = m[key][domain].lower_bound(maxInclusiveVersion);
@@ -720,7 +720,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
   const OpSchema* GetSchema(
       const std::string& key,
       const int maxInclusiveVersion,
-      const std::string& domain = Common::ONNX_DOMAIN) const override {
+      const std::string& domain = ONNX_DOMAIN) const override {
     return Schema(key, maxInclusiveVersion, domain);
   }
 
@@ -782,11 +782,11 @@ template <typename T>
 OpSchema GetOpSchema();
 
 #define ONNX_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(name, Onnx, Common::ONNX_DOMAIN, ver, true, impl)
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, Onnx, ONNX_DOMAIN, ver, true, impl)
 
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
   ONNX_OPERATOR_SET_SCHEMA_EX(                       \
-      name, OnnxML, Common::AI_ONNX_ML_DOMAIN, ver, true, impl)
+      name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are

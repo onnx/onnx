@@ -3,7 +3,6 @@
 
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
-using namespace Common;
 using SupportType = OpSchema::SupportType;
 
 using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;

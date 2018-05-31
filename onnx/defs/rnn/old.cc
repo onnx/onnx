@@ -1,7 +1,6 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 std::function<void(OpSchema&)> RNNDocGeneratorOld(const char* /*name*/) {
   return [=](OpSchema& schema) {
     schema.Attr(

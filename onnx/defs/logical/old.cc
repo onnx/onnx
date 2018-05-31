@@ -6,7 +6,6 @@
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 inline void logicalOpInference_opset1(InferenceContext& ctx) {
   updateOutputElemType(ctx, 0, TensorProto::BOOL);
   if (hasInputShape(ctx, 0)) {
