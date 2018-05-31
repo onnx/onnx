@@ -94,6 +94,37 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
+  py::class_<FunctionProto> function_proto(defs, "FunctionProto");
+  function_proto.def_property_readonly("name", &FunctionProto::name)
+    .def_property_readonly("doc_string", &FunctionProto::doc_string)
+    .def_property_readonly("since_version", &FunctionProto::since_version)
+    .def_property_readonly("inputs", [](FunctionProto* fp)->py::str {
+        std::string s = "";
+        for (auto& ptr = fp->input().begin(); ptr != fp->input().end(); ++ptr) {
+          s += *ptr;
+        }
+        return py::str(s);
+      })
+    .def_property_readonly("outputs", [](FunctionProto* fp)->py::str {
+        std::string s = "";
+        for (auto& ptr = fp->output().begin(); ptr != fp->output().end(); ++ptr) {
+          s += *ptr;
+        }
+        return py::str(s);
+     })
+        .def_property_readonly("attribute", [](FunctionProto* fp)->py::str {
+       std::string s = "";
+       for (auto& ptr = fp->attribute().begin(); ptr != fp->attribute().end(); ++ptr) {
+         s += *ptr;
+       }
+       return py::str(s);
+     });
+
+  
+  //py::class_<NodeProto> node_proto(function_proto, "");
+
+
+
   defs.def(
       "has_schema",
       [](const std::string& op_type, const std::string& domain) -> bool {
@@ -147,11 +178,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def("get_all_functions", [](
     const std::string& domain
   )->std::multimap<std::string, std::unique_ptr<FunctionProto>> {
-    std::multimap<std::string, std::unique_ptr<FunctionProto>> *temp_map = 
-      new std::multimap<std::string, std::unique_ptr<FunctionProto>>();
+    std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_map;
     FunctionBuilderRegistry& function_registry = FunctionBuilderRegistry::OnnxInstance();
-    Common::Status status = function_registry.GetFunctions(domain, temp_map);
-    return *temp_map;
+    Common::Status status = function_registry.GetFunctions(domain, &temp_map);
+    return temp_map;
   });
 
   defs.def("register_function", [](
@@ -161,6 +191,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       std::unique_ptr<FunctionProto> *func_ptr = new std::unique_ptr<FunctionProto>();
       func_ptr->reset(&function);
       ONNX_FUNCTION(FunctionBuilder().SetDomain(domain).SetBuildFunction(BuildFunction(func_ptr)));
+      return Common::Status::OK();
     }
   );
 
