@@ -3,6 +3,14 @@
 
 #pragma once
 
+// Before:
+//	 A = Constant()
+// After:
+//	 A is in the initializer list
+//
+//	 this pass can handle the case satisfy all following conditions:
+//	   condition 1: A is the output of a Constant node
+
 #include "onnx/optimizer/passes/optimize_pass.h"
 
 namespace ONNX_NAMESPACE {

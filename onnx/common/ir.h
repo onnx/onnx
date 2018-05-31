@@ -67,9 +67,6 @@ public:
 
 
 struct Dimension final {
-  Dimension(int dim)
-    : is_int(true), dim(dim) {
-  }
   Dimension(std::string param)
     : is_int(false), dim(-1), param(std::move(param)) {
   }
