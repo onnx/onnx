@@ -4,13 +4,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from collections import namedtuple
-from typing import Text, Sequence, Any, Type, Tuple, NewType, Optional
+from typing import Text, Sequence, Any, Type, Tuple, NewType, Optional, Dict
 
 import six
 import numpy  # type: ignore
 
 import onnx.checker
-from onnx import ModelProto, NodeProto
+import onnx.onnx_cpp2py_export.checker as c_checker
+from onnx import ModelProto, NodeProto, IR_VERSION
 
 
 class DeviceType(object):
@@ -40,10 +41,10 @@ def namedtupledict(typename, field_names, *args, **kwargs):  # type: (Text, Sequ
     kwargs.setdefault(str('rename'), True)
     data = namedtuple(typename, field_names, *args, **kwargs)  # type: ignore
 
-    def getitem(self, key):
+    def getitem(self, key):  # type: (Any, Any) -> Any
         if isinstance(key, six.string_types):
             key = field_names_map[key]
-        return super(type(self), self).__getitem__(key)
+        return super(type(self), self).__getitem__(key)  # type: ignore
     data.__getitem__ = getitem
     return data
 
@@ -81,7 +82,7 @@ class Backend(object):
                  inputs,  # type: Any
                  device='CPU',  # type: Text
                  outputs_info=None,  # type: Optional[Sequence[Tuple[numpy.dtype, Tuple[int, ...]]]]
-                 **kwargs  # type: Any
+                 **kwargs  # type: Dict[Text, Any]
                  ):  # type: (...) -> Optional[Tuple[Any, ...]]
         '''Simple run one operator and return the results.
         Args:
@@ -91,7 +92,13 @@ class Backend(object):
             https://github.com/onnx/onnx/blob/master/onnx/backend/test/runner/__init__.py
         '''
         # TODO Remove Optional from return type
-        onnx.checker.check_node(node)
+        if 'opset_version' in kwargs:
+            special_context = c_checker.CheckerContext()
+            special_context.ir_version = IR_VERSION
+            special_context.opset_imports = {'': kwargs['opset_version']}  # type: ignore
+            onnx.checker.check_node(node, special_context)
+        else:
+            onnx.checker.check_node(node)
         return None
 
     @classmethod

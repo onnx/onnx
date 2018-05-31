@@ -32,7 +32,7 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
 
 class Runner(object):
 
-    def __init__(self, backend, parent_module=None):  # type: (Backend, Optional[str]) -> None
+    def __init__(self, backend, parent_module=None):  # type: (Type[Backend], Optional[str]) -> None
         self.backend = backend
         self._parent_module = parent_module
         self._include_patterns = set()  # type: Set[Pattern[Text]]
@@ -127,7 +127,7 @@ class Runner(object):
         '''
         suite = unittest.TestSuite()
         for case in sorted(self.test_cases.values()):
-            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))  # type: ignore
+            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))
         return suite
 
     # For backward compatibility (we used to expose `.tests`)
@@ -210,11 +210,11 @@ class Runner(object):
                     'Duplicated test name "{}" in category "{}"'.format(
                         device_test_name, category))
 
-            @unittest.skipIf(
+            @unittest.skipIf(  # type: ignore
                 not self.backend.supports_device(device),
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
-            def device_test_func(*args, **kwargs):
+            def device_test_func(*args, **kwargs):  # type: (*Any, **Any) -> Any
                 try:
                     return test_func(*args, device=device, **kwargs)
                 except BackendIsNotSupposedToImplementIt as e:

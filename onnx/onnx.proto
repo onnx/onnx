@@ -333,7 +333,7 @@ message TensorProto {
   // float16 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
   // When this field is present, the data_type field MUST be
-  // INT32, INT16, INT8, UINT16, INT8, BOOL, or FLOAT32
+  // INT32, INT16, INT8, UINT16, INT8, BOOL, or FLOAT16
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.
@@ -445,6 +445,25 @@ message TypeProto {
     Tensor tensor_type = 1;
 
   }
+
+  // An optional denotation can be used to denote the whole 
+  // type with a standard semantic description as to what is 
+  // stored inside
+  optional string denotation = 6;
+}
+
+// A set of pre-defined constants to be used as values for
+// the standard denotation field in Tensor for semantic 
+// description of the tensor.
+message TypeDenotationConstProto {
+  // A generic tensor
+  optional string TENSOR = 1 [default = "TENSOR"];
+  // An image is stored inside this type
+  optional string IMAGE = 2 [default = "IMAGE"];
+  // Audio is stored inside this type
+  optional string AUDIO = 3 [default = "AUDIO"];
+  // Text is stored inside this type
+  optional string TEXT = 4 [default = "TEXT"];
 }
 
 // Operator Sets

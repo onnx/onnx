@@ -15,6 +15,7 @@ option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
+option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -33,6 +34,11 @@ if(NOT MSVC)
   endif()
 endif()
 
+if(ONNX_BUILD_TESTS)
+	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+	include(googletest)
+endif()
+
 if(TARGET protobuf::libprotobuf)
   # Sometimes we need to use protoc compiled for host architecture while
   # linking libprotobuf against target architecture. See
@@ -47,36 +53,36 @@ else()
   # Customized version of find Protobuf. We need to avoid situations mentioned
   # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
   # The following section is stolen from cmake/ProtoBuf.cmake in Caffe2
-  find_program(PROTOBUF_PROTOC_EXECUTABLE
+  find_program(Protobuf_PROTOC_EXECUTABLE
     NAMES protoc
     DOC "The Google Protocol Buffers Compiler")
 
   # Only if protoc was found, seed the include directories and libraries.
   # We assume that protoc is installed at PREFIX/bin.
   # We use get_filename_component to resolve PREFIX.
-  if(PROTOBUF_PROTOC_EXECUTABLE)
-    set(ONNX_PROTOC_EXECUTABLE ${PROTOBUF_PROTOC_EXECUTABLE})
+  if(Protobuf_PROTOC_EXECUTABLE)
+    set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
     get_filename_component(
       _PROTOBUF_INSTALL_PREFIX
-      ${PROTOBUF_PROTOC_EXECUTABLE}
+      ${Protobuf_PROTOC_EXECUTABLE}
       DIRECTORY)
     get_filename_component(
       _PROTOBUF_INSTALL_PREFIX
       ${_PROTOBUF_INSTALL_PREFIX}/..
       REALPATH)
-    find_library(PROTOBUF_LIBRARY
+    find_library(Protobuf_LIBRARY
       NAMES protobuf
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_library(PROTOBUF_PROTOC_LIBRARY
+    find_library(Protobuf_PROTOC_LIBRARY
       NAMES protoc
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_library(PROTOBUF_LITE_LIBRARY
+    find_library(Protobuf_LITE_LIBRARY
       NAMES protobuf-lite
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_path(PROTOBUF_INCLUDE_DIR
+    find_path(Protobuf_INCLUDE_DIR
       google/protobuf/service.h
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
       NO_DEFAULT_PATH)
@@ -174,11 +180,16 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
       if(ONNX_GEN_PB_TYPE_STUBS)
+        # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
-          # Haven't figured out how to generate mypy stubs on Windows yet
+          # If onnx was packaged to pypi from Windows, protoc-gen-mypy.py is missing the +x flag. Add it.
+          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.py)
           list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${ROOT_DIR}/tools/protoc-gen-mypy.py --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
         endif()
       endif()
+    endif()
+    if (NOT ONNX_PROTOC_EXECUTABLE)
+        message(FATAL_ERROR "Protobuf compiler not found")
     endif()
     add_custom_command (
       OUTPUT "${OUTPUT_PB_SRC}"
@@ -206,12 +217,17 @@ RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 
 list(APPEND PROTO_SRCS ${PROTO_SRCS2})
 list(APPEND PROTO_HDRS ${PROTO_HDRS2})
 
+
 file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
     "${ONNX_ROOT}/onnx/*.cc"
 )
+file(GLOB_RECURSE onnx_gtests_src
+    "${ONNX_ROOT}/onnx/test/c++/*.h"
+    "${ONNX_ROOT}/onnx/test/c++/*.cc"
+)
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-
+list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
@@ -358,3 +374,6 @@ install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
     FILES_MATCHING
     PATTERN "*.h")
+if(ONNX_BUILD_TESTS)
+	include(${ONNX_ROOT}/cmake/unittest.cmake)
+endif()
