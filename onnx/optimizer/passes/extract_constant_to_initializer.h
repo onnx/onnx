@@ -33,11 +33,11 @@ struct ExtractConstantToInitializer final : public OptimizePass {
         for (auto v : t.sizes()) {
           tsizes.push_back(v);
         }
-        graph.addInitializer(std::move(t), name);
         Node* param = graph.create(kParam, 1);
         param->output()->setUniqueName(name);
         param->output()->setSizes(tsizes);
         param->output()->setElemType(t.elem_type());
+        graph.addInitializer(std::move(t), name);
         graph.addInput()->copyMetadata(param->output());
         n->replaceAllUsesWith(param);
         it.destroyCurrent();
