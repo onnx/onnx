@@ -113,6 +113,9 @@ inline TensorShapeProto::Dimension operator/(TensorShapeProto::Dimension dim1, i
   return result;
 }
 
+//if from >= upto_exclusive, return 1.
+//Caller must make sure upto_exclusive is less than or equal to shape.size()
+//Caller must make sure from>=0
 inline TensorShapeProto::Dimension multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive) {
   TensorShapeProto::Dimension dim;
   dim.set_dim_value(1);
@@ -170,6 +173,7 @@ inline const TensorShapeProto& getInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getInputType(n)->tensor_type().shape();
 }
 
+//Caller must make sure fromDimIndex is strictly less than shape.dim_size()
 inline void appendSingleDimCopiedFromInputTypeToOutputType(
     InferenceContext& ctx,
     size_t inputIndex,
