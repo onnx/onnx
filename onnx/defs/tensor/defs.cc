@@ -296,8 +296,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (!ctx.getInputType(0)->tensor_type().has_shape()) {
               return;
             }
-            const auto& splitDim =
-                ctx.getInputType(0)->tensor_type().shape().dim(axis);
+            const auto& shape = ctx.getInputType(0)->tensor_type().shape();
+            if (axis >= shape.dim_size()) {
+              fail_type_inference("Invalid value of attribute 'axis'");
+            }
+            const auto& splitDim = shape.dim(axis);
             if (!splitDim.has_dim_value()) {
               return;
             }
@@ -312,7 +315,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
             for (size_t i = 0; i < ctx.getNumOutputs(); i++) {
               *ctx.getOutputType(i)->mutable_tensor_type()->mutable_shape() =
-                  ctx.getInputType(0)->tensor_type().shape();
+                  shape;
               ctx.getOutputType(i)
                   ->mutable_tensor_type()
                   ->mutable_shape()
@@ -474,15 +477,32 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 1)) {
             return;
           }
-
+          auto input_type = ctx.getInputType(0);
+          const TensorShapeProto& shape = input_type->tensor_type().shape();
           std::vector<int64_t> perm;
-          if (!getRepeatedAttribute(ctx, "perm", perm)) {
-            for (int i =
-                     ctx.getInputType(0)->tensor_type().shape().dim_size() - 1;
-                 i >= 0;
-                 --i) {
+          bool has_perm_attr = getRepeatedAttribute(ctx, "perm", perm);
+          if (!has_perm_attr) {
+            for (int i = shape.dim_size() - 1; i >= 0; --i)
               perm.push_back(i);
-            }
+          } else if (!perm.empty()) {
+            // check if every index is valid
+            for (int64_t fromDimIndex : perm)
+              if (!(0 <= fromDimIndex && fromDimIndex < shape.dim_size())) {
+                std::ostringstream oss;
+                oss << "Invalid attribute perm {" << perm[0];
+                for (size_t i = 1; i != perm.size(); ++i) {
+                  oss << ", " << perm[i];
+                }
+                oss << "}, input shape = {";
+                if (shape.dim_size() > 0) {
+                  oss << shape.dim(0).dim_value();
+                  for (int i = 1; i != shape.dim_size(); ++i) {
+                    oss << ", " << shape.dim(i).dim_value();
+                  }
+                  oss << "}";
+                }
+                fail_type_inference(oss.str());
+              }
           }
 
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
