@@ -44,7 +44,7 @@ public:
     return sizes_;
   }
 
-  const ONNX_NAMESPACE::TensorProto_DataType elem_type() const {
+  ONNX_NAMESPACE::TensorProto_DataType elem_type() const {
     return elem_type_;
   }
 
