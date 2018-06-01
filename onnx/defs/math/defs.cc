@@ -24,12 +24,12 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
         OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
-		if (hasNInputShapes(ctx, 2))
-			bidirectionalBroadcastShapeInference(
-				ctx.getInputType(0)->tensor_type().shape(),
-				ctx.getInputType(1)->tensor_type().shape(),
-				*ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasNInputShapes(ctx, 2))
+        bidirectionalBroadcastShapeInference(
+            ctx.getInputType(0)->tensor_type().shape(),
+            ctx.getInputType(1)->tensor_type().shape(),
+            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
     });
   };
 }
@@ -411,11 +411,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-		  if (hasNInputShapes(ctx, 2))
-			  bidirectionalBroadcastShapeInference(
-				  ctx.getInputType(0)->tensor_type().shape(),
-				  ctx.getInputType(1)->tensor_type().shape(),
-				  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
 static const char* PRelu_ver6_doc = R"DOC(
@@ -732,15 +732,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto transBAttr = ctx.getAttribute("transB");
             bool transB =
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-			auto& first_input_shape = getInputShape(ctx, 0);
-			auto& second_input_shape = getInputShape(ctx, 1);
-			if (first_input_shape.dim_size() != 2)
-				fail_shape_inference("First input does not have rank 2");
-			if (second_input_shape.dim_size() != 2)
-				fail_shape_inference("Second input does not have rank 2");
-            updateOutputShape(ctx, 0, {
-                first_input_shape.dim(transA ? 1 : 0),
-				second_input_shape.dim(transB ? 0 : 1)});
+            auto& first_input_shape = getInputShape(ctx, 0);
+            auto& second_input_shape = getInputShape(ctx, 1);
+            if (first_input_shape.dim_size() != 2)
+              fail_shape_inference("First input does not have rank 2");
+            if (second_input_shape.dim_size() != 2)
+              fail_shape_inference("Second input does not have rank 2");
+            updateOutputShape(
+                ctx,
+                0,
+                {first_input_shape.dim(transA ? 1 : 0),
+                 second_input_shape.dim(transB ? 0 : 1)});
           }
         }));
 

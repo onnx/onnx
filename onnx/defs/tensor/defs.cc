@@ -62,10 +62,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)"},
             "Constrain output types. Casting to strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-			propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
-			if (hasNInputShapes(ctx, 1)) {
-				propagateShapeFromInputToOutput(ctx, 0, 0);
-			}
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 
 static const char* Reshape_ver5_doc = R"DOC(
