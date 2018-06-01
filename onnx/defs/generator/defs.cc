@@ -315,20 +315,17 @@ ONNX_OPERATOR_SET_SCHEMA(
                 dataType != TensorProto_DataType::TensorProto_DataType_INT64)
               fail_type_inference("Output type must be int32 or int64");
           }
-		  updateOutputElemType(ctx, 0, dataType);
+          updateOutputElemType(ctx, 0, dataType);
 
-		  TensorShapeProto::Dimension batch_size, sample_size;
-		  if (hasInputShape(ctx, 0)) {
-			  auto& input_shape = getInputShape(ctx, 0);
-			  if (input_shape.dim_size() != 2)
-				  fail_shape_inference("Input tensor must have rank 2");
-			  batch_size = input_shape.dim(0);
-		  } // else statically-unknown batch-size
-		  sample_size.set_dim_value(getAttribute(ctx, "sample_size", 1));
-		  updateOutputShape(ctx, 0, {
-			  batch_size,
-			  sample_size
-		  });
+          TensorShapeProto::Dimension batch_size, sample_size;
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() != 2)
+              fail_shape_inference("Input tensor must have rank 2");
+            batch_size = input_shape.dim(0);
+          } // else statically-unknown batch-size
+          sample_size.set_dim_value(getAttribute(ctx, "sample_size", 1));
+          updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
 } // namespace ONNX_NAMESPACE
