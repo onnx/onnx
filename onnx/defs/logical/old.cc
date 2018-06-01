@@ -6,17 +6,17 @@
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
-
 inline void logicalOpInference_opset1(InferenceContext& ctx) {
-	updateOutputElemType(ctx, 0, TensorProto::BOOL);
-	if (hasInputShape(ctx, 0)) {
-		propagateShapeFromInputToOutput(ctx, 0, 0);
-	}
+  updateOutputElemType(ctx, 0, TensorProto::BOOL);
+  if (hasInputShape(ctx, 0)) {
+    propagateShapeFromInputToOutput(ctx, 0, 0);
+  }
 }
 
-std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset1(const char* name) {
-    return [=](OpSchema& schema) {
-        std::string doc = R"DOC(
+std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset1(
+    const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
 Returns the tensor resulted from performing the `{name}` logical operation
 elementwise on the input tensors `A` and `B`.
 
@@ -24,17 +24,23 @@ If broadcasting is enabled, the right-hand-side argument will be broadcasted
 to match the shape of left-hand-side argument. See the doc of `Add` for a
 detailed description of the broadcasting rules.
 )DOC";
-        ReplaceAll(doc, "{name}", name);
-        schema.SetDoc(doc);
-        schema.Attr("broadcast", "Enable broadcasting", AttributeProto::INT, static_cast<int64_t>(0));
-        schema.Attr("axis", "If set, defines the broadcast dimensions.",
-                    AttributeProto::INT,
-                    OPTIONAL);
-        schema.Input(0, "A", "Left input tensor for the logical operator.", "T");
-        schema.Input(1, "B", "Right input tensor for the logical operator.", "T");
-		schema.Output(0, "C", "Result tensor.", "T1");
-		schema.TypeAndShapeInferenceFunction(logicalOpInference_opset1);
-    };
+    ReplaceAll(doc, "{name}", name);
+    schema.SetDoc(doc);
+    schema.Attr(
+        "broadcast",
+        "Enable broadcasting",
+        AttributeProto::INT,
+        static_cast<int64_t>(0));
+    schema.Attr(
+        "axis",
+        "If set, defines the broadcast dimensions.",
+        AttributeProto::INT,
+        OPTIONAL);
+    schema.Input(0, "A", "Left input tensor for the logical operator.", "T");
+    schema.Input(1, "B", "Right input tensor for the logical operator.", "T");
+    schema.Output(0, "C", "Result tensor.", "T1");
+    schema.TypeAndShapeInferenceFunction(logicalOpInference_opset1);
+  };
 }
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -121,4 +127,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor."));
 
-}  // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE

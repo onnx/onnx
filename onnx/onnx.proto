@@ -397,34 +397,11 @@ message TensorShapeProto {
     // Standard denotation can optionally be used to denote tensor
     // dimensions with standard semantic descriptions to ensure
     // that operations are applied to the correct axis of a tensor.
+    // Refer to https://github.com/onnx/onnx/blob/master/docs/DimensionDenotation.md#denotation-definition
+    // for pre-defined dimension denotations.
     optional string denotation = 3;
   };
   repeated Dimension dim = 1;
-}
-
-// A set of pre-defined constants to be used as values for
-// the standard denotation field in TensorShapeProto.Dimension
-// for semantic description of the tensor dimension.
-message DenotationConstProto {
-  // Describe a batch number dimension.
-  optional string DATA_BATCH = 1 [default = "DATA_BATCH"];
-  // Describe a channel dimension.
-  optional string DATA_CHANNEL = 2 [default = "DATA_CHANNEL"];
-  // Describe a time dimension.
-  optional string DATA_TIME = 3 [default = "DATA_TIME"];
-  // Describe a feature dimension. This is typically a feature
-  // dimension in RNN and/or spatial dimension in CNN.
-  optional string DATA_FEATURE = 4 [default = "DATA_FEATURE"];
-  // Describe a filter in-channel dimension. This is the dimension
-  // that is identical (in size) to the channel dimension of the input
-  // image feature maps.
-  optional string FILTER_IN_CHANNEL = 5 [default = "FILTER_IN_CHANNEL"];
-  // Describe a filter out channel dimension. This is the dimension
-  // that is identical (int size) to the channel dimension of the output
-  // image feature maps.
-  optional string FILTER_OUT_CHANNEL = 6 [default = "FILTER_OUT_CHANNEL"];
-  // Describe a filter spatial dimension.
-  optional string FILTER_SPATIAL = 7 [default = "FILTER_SPATIAL"];
 }
 
 // Types
@@ -448,22 +425,9 @@ message TypeProto {
 
   // An optional denotation can be used to denote the whole 
   // type with a standard semantic description as to what is 
-  // stored inside
+  // stored inside. Refer to https://github.com/onnx/onnx/blob/master/docs/TypeDenotation.md#type-denotation-definition
+  // for pre-defined type denotations.
   optional string denotation = 6;
-}
-
-// A set of pre-defined constants to be used as values for
-// the standard denotation field in Tensor for semantic 
-// description of the tensor.
-message TypeDenotationConstProto {
-  // A generic tensor
-  optional string TENSOR = 1 [default = "TENSOR"];
-  // An image is stored inside this type
-  optional string IMAGE = 2 [default = "IMAGE"];
-  // Audio is stored inside this type
-  optional string AUDIO = 3 [default = "AUDIO"];
-  // Text is stored inside this type
-  optional string TEXT = 4 [default = "TEXT"];
 }
 
 // Operator Sets
