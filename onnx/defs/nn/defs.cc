@@ -1100,18 +1100,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasInputShape(ctx, 0)) {
-            auto& input_shape = getInputShape(ctx, 0);
-            int rank = static_cast<int>(input_shape.dim_size());
-            int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
-            if (axis > rank)
-              axis = rank;
-            // TODO: is the operation defined for input-rank < 2?
-            updateOutputShape(
-                ctx,
-                0,
-                {multiplyDims(input_shape, 0, axis),
-                 multiplyDims(input_shape, axis, rank)});
+          if (!hasInputShape(ctx, 0))
+            return;
+          auto& input_shape = getInputShape(ctx, 0);
+          int rank = static_cast<int>(input_shape.dim_size());
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+          if (axis > rank || axis < 0) {
+            fail_shape_inference(
+                "Invalid value(", axis, ") for attribute 'axis'");
           }
         }));
 

@@ -11,7 +11,6 @@
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
-
 namespace py = pybind11;
 using namespace pybind11::literals;
 
@@ -38,22 +37,26 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("attributes", &OpSchema::attributes)
       .def_property_readonly("inputs", &OpSchema::inputs)
       .def_property_readonly("outputs", &OpSchema::outputs)
-      .def_property_readonly("has_type_and_shape_inference_function", &OpSchema::has_type_and_shape_inference_function)
+      .def_property_readonly(
+          "has_type_and_shape_inference_function",
+          &OpSchema::has_type_and_shape_inference_function)
       .def_property_readonly(
           "type_constraints", &OpSchema::typeConstraintParams)
-      .def_static(
-          "is_infinite",
-          [](int v) { return v == std::numeric_limits<int>::max(); });
+      .def_static("is_infinite", [](int v) {
+        return v == std::numeric_limits<int>::max();
+      });
 
   py::class_<OpSchema::Attribute>(op_schema, "Attribute")
       .def_readonly("name", &OpSchema::Attribute::name)
       .def_readonly("description", &OpSchema::Attribute::description)
       .def_readonly("type", &OpSchema::Attribute::type)
-      .def_property_readonly("_default_value", [](OpSchema::Attribute* attr) -> py::bytes {
-          std::string out;
-          attr->default_value.SerializeToString(&out);
-          return out;
-      })
+      .def_property_readonly(
+          "_default_value",
+          [](OpSchema::Attribute* attr) -> py::bytes {
+            std::string out;
+            attr->default_value.SerializeToString(&out);
+            return out;
+          })
       .def_readonly("required", &OpSchema::Attribute::required);
 
   py::class_<OpSchema::TypeConstraintParam>(op_schema, "TypeConstraintParam")
@@ -110,8 +113,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           [](const std::string& op_type,
              const int max_inclusive_version,
              const std::string& domain) -> OpSchema {
-            const auto* schema =
-                OpSchemaRegistry::Schema(op_type, max_inclusive_version, domain);
+            const auto* schema = OpSchemaRegistry::Schema(
+                op_type, max_inclusive_version, domain);
             if (!schema) {
               throw std::runtime_error(
                   "No schema registered for '" + op_type + "'!");
@@ -228,16 +231,14 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   auto shape_inference = onnx_cpp2py_export.def_submodule("shape_inference");
   shape_inference.doc() = "Shape Inference submodule";
 
-  shape_inference.def(
-    "infer_shapes",
-    [](const py::bytes& bytes) {
-      ModelProto proto{};
-      ParseProtoFromPyBytes(&proto, bytes);
-      shape_inference::InferShapes(proto);
-      std::string out;
-      proto.SerializeToString(&out);
-      return py::bytes(out);
-    });
+  shape_inference.def("infer_shapes", [](const py::bytes& bytes) {
+    ModelProto proto{};
+    ParseProtoFromPyBytes(&proto, bytes);
+    shape_inference::InferShapes(proto);
+    std::string out;
+    proto.SerializeToString(&out);
+    return py::bytes(out);
+  });
 }
 
 } // namespace ONNX_NAMESPACE
