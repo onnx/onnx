@@ -31,8 +31,8 @@ struct EliminateUnusedInitializer final : public OptimizePass {
     }
     for (auto it = g.begin(); it != g.end(); ++it) {
       auto* n = *it;
-      DescendOnGraphAttributes(n, [this, initializer_names](Graph& g) {
-        erase_used_initializers(g, initializer_names);
+      DescendOnGraphAttributes(n, [this, initializer_names](Graph& graph) {
+        erase_used_initializers(graph, initializer_names);
       });
       for (auto* input : n->inputs()) {
         initializer_names->erase(input->uniqueName());
