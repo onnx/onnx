@@ -16,16 +16,8 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
     schema.SetDoc(doc);
-    schema.Input(
-        0,
-        "A",
-        "First operand.",
-        "T");
-    schema.Input(
-        1,
-        "B",
-        "Second operand.",
-        "T");
+    schema.Input(0, "A", "First operand.", "T");
+    schema.Input(1, "B", "Second operand.", "T");
     schema.Output(0, "C", "Result, has same element type as two inputs", "T");
     schema.TypeConstraint(
         "T",
