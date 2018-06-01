@@ -73,7 +73,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");;
+      fail_shape_inference("Attribute pads has incorrect size");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -82,7 +82,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");;
+      fail_shape_inference("Attribute strides has incorrect size");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -91,10 +91,10 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size");;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");
     }
   } else if (require_kernel_shape) {
-    fail_shape_inference("Attribute kernel_shape must be specified");;
+    fail_shape_inference("Attribute kernel_shape must be specified");
   } else {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
@@ -1107,8 +1107,14 @@ ONNX_OPERATOR_SET_SCHEMA(
           int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
           if (axis > rank || axis < 0) {
             fail_shape_inference(
-                "Invalid value(", axis, ") for attribute 'axis'");
+                "Invalid value(" , axis , ") for attribute 'axis'");
           }
+          // TODO: is the operation defined for input-rank < 2?
+          updateOutputShape(
+              ctx,
+              0,
+              {multiplyDims(input_shape, 0, axis),
+               multiplyDims(input_shape, axis, rank)});
         }));
 
 static const char* LRN_ver1_doc = R"DOC(
