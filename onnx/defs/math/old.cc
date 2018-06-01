@@ -5,7 +5,6 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-
 const char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second

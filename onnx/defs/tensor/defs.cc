@@ -6,7 +6,6 @@
 #include <algorithm>
 
 namespace ONNX_NAMESPACE {
-
 static const char* Cast_ver6_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
@@ -63,12 +62,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)"},
             "Constrain output types. Casting to strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-              static_cast<TensorProto_DataType>(ctx.getAttribute("to")->i()));
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
           }
-          propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
 static const char* Reshape_ver5_doc = R"DOC(
