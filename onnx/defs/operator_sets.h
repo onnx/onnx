@@ -409,6 +409,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Tan);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Upsample);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Multinomial);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Xor);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, PRelu);
 
 // Iterate over schema from ai.onnx version 7
 class OpSet_Onnx_ver7 {
@@ -443,6 +444,7 @@ class OpSet_Onnx_ver7 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 7, Multinomial)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, Xor)>());
+	fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, PRelu)>());
   }
 };
 

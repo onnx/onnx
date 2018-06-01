@@ -424,7 +424,7 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
-    6,
+    7,
     OpSchema()
         .SetDoc(
             PRelu_ver6_doc +
