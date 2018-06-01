@@ -16,27 +16,19 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
     schema.SetDoc(doc);
-    schema.Input(
-        0,
-        "A",
-        "First operand.",
-        "T");
-    schema.Input(
-        1,
-        "B",
-        "Second operand.",
-        "T");
+    schema.Input(0, "A", "First operand.", "T");
+    schema.Input(1, "B", "Second operand.", "T");
     schema.Output(0, "C", "Result, has same element type as two inputs", "T");
     schema.TypeConstraint(
         "T",
         OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      bidirectionalBroadcastShapeInference(
+          ctx.getInputType(0)->tensor_type().shape(),
+          ctx.getInputType(1)->tensor_type().shape(),
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
     });
   };
 }

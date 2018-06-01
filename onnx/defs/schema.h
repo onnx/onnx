@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
-
 namespace ONNX_NAMESPACE {
 
 class SchemaError final : public std::runtime_error {
@@ -48,10 +48,6 @@ class SchemaError final : public std::runtime_error {
   throw ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
 using OperatorSetVersion = int;
-
-constexpr const char* AI_ONNX_ML_DOMAIN = "ai.onnx.ml";
-constexpr const char* ONNX_DOMAIN = "";
-constexpr bool OPTIONAL = false;
 
 using DataTypeSet = std::unordered_set<DataType>;
 
@@ -234,7 +230,8 @@ class OpSchema final {
   // any structs used from ir.h
   OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
   InferenceFunction GetTypeAndShapeInferenceFunction() const {
-    return tensor_inference_function_ ? tensor_inference_function_ : dummyInferenceFunction;
+    return tensor_inference_function_ ? tensor_inference_function_
+                                      : dummyInferenceFunction;
   }
 
   // Set the support level for the op schema.
@@ -438,19 +435,19 @@ class OpSchema final {
   }
 
   static const std::vector<std::string>& all_numeric_types() {
-      static const std::vector<std::string> all_numeric_types = {
-          +"tensor(uint8)",
-          +"tensor(uint16)",
-          +"tensor(uint32)",
-          +"tensor(uint64)",
-          +"tensor(int8)",
-          +"tensor(int16)",
-          +"tensor(int32)",
-          +"tensor(int64)",
-          +"tensor(float16)",
-          +"tensor(float)",
-          +"tensor(double)" };
-      return all_numeric_types;
+    static const std::vector<std::string> all_numeric_types = {
+        +"tensor(uint8)",
+        +"tensor(uint16)",
+        +"tensor(uint32)",
+        +"tensor(uint64)",
+        +"tensor(int8)",
+        +"tensor(int16)",
+        +"tensor(int32)",
+        +"tensor(int64)",
+        +"tensor(float16)",
+        +"tensor(float)",
+        +"tensor(double)"};
+    return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
@@ -589,7 +586,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
       map_[ONNX_DOMAIN] = std::make_pair(1, 7);
-      map_["ai.onnx.ml"] = std::make_pair(1, 1);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -788,7 +785,8 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(name, Onnx, ONNX_DOMAIN, ver, true, impl)
 
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
+  ONNX_OPERATOR_SET_SCHEMA_EX(                       \
+      name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
@@ -857,12 +855,12 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
 inline std::string GenerateOptionalArgumentsDoc() {
-	return "This operator has **optional** inputs/outputs. "
-		"See [the doc](IR.md) for more details about the representation of "
-		"optional arguments. An empty string may be used in the place of "
-		"an actual argument's name to indicate a missing argument. "
-		"Trailing optional arguments (those not followed by an argument "
-		"that is present) may also be simply omitted.\n";
+  return "This operator has **optional** inputs/outputs. "
+         "See [the doc](IR.md) for more details about the representation of "
+         "optional arguments. An empty string may be used in the place of "
+         "an actual argument's name to indicate a missing argument. "
+         "Trailing optional arguments (those not followed by an argument "
+         "that is present) may also be simply omitted.\n";
 }
 
 inline std::string GenerateBroadcastingDocMul() {
@@ -870,10 +868,13 @@ inline std::string GenerateBroadcastingDocMul() {
          " for more details please check [the doc](Broadcasting.md).";
 }
 
-inline std::string GenerateBroadcastingDocUni(const char* from, const char* to) {
+inline std::string GenerateBroadcastingDocUni(
+    const char* from,
+    const char* to) {
   std::string ret = "This operator supports **unidirectional broadcasting** (";
-  ret = ret + from + " should be unidirectional broadcastable to " + to + ");"
-        " for more details please check [the doc](Broadcasting.md).";
+  ret = ret + from + " should be unidirectional broadcastable to " + to +
+      ");"
+      " for more details please check [the doc](Broadcasting.md).";
   return ret;
 }
 
