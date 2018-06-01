@@ -33,10 +33,11 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
         propagateElemTypeFromInputToOutput(ctx, 0, 0);
-        bidirectionalBroadcastShapeInference(
-            ctx.getInputType(0)->tensor_type().shape(),
-            ctx.getInputType(1)->tensor_type().shape(),
-            *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+		if (hasNInputShapes(ctx, 2))
+			bidirectionalBroadcastShapeInference(
+				ctx.getInputType(0)->tensor_type().shape(),
+				ctx.getInputType(1)->tensor_type().shape(),
+				*ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
     });
   };
 }
@@ -418,10 +419,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          bidirectionalBroadcastShapeInference(
-              ctx.getInputType(0)->tensor_type().shape(),
-              ctx.getInputType(1)->tensor_type().shape(),
-              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+		  if (hasNInputShapes(ctx, 2))
+			  bidirectionalBroadcastShapeInference(
+				  ctx.getInputType(0)->tensor_type().shape(),
+				  ctx.getInputType(1)->tensor_type().shape(),
+				  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
 static const char* PRelu_ver6_doc = R"DOC(

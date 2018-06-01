@@ -28,10 +28,11 @@ elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting supp
         schema.Output(0, "C", "Result tensor.", "T1");
         schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             updateOutputElemType(ctx, 0, TensorProto::BOOL);
-            bidirectionalBroadcastShapeInference(
-                ctx.getInputType(0)->tensor_type().shape(),
-                ctx.getInputType(1)->tensor_type().shape(),
-                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+			if (hasNInputShapes(ctx, 2))
+				bidirectionalBroadcastShapeInference(
+					ctx.getInputType(0)->tensor_type().shape(),
+					ctx.getInputType(1)->tensor_type().shape(),
+					*ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         });
     };
 }
