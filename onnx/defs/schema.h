@@ -502,7 +502,7 @@ class OpSchema final {
     return name_;
   }
 
-  const OperatorSetVersion SinceVersion() const {
+  OperatorSetVersion SinceVersion() const {
     return since_version_;
   }
 
@@ -841,6 +841,12 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
+#ifdef __GNUC__
+#define ONNX_UNUSED __attribute__((__unused__))
+#else
+#define ONNX_UNUSED
+#endif
+
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) \
   ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
@@ -848,7 +854,7 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
   ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                 \
   static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
-      op_schema_register_once##name##Counter) =                  \
+      op_schema_register_once##name##Counter) ONNX_UNUSED =      \
       OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
