@@ -16,23 +16,16 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
     ReplaceAll(doc, "{name}", name);
     ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
     schema.SetDoc(doc);
-    schema.Input(
-        0,
-        "A",
-        "First operand.",
-        "T");
-    schema.Input(
-        1,
-        "B",
-        "Second operand.",
-        "T");
+    schema.Input(0, "A", "First operand.", "T");
+    schema.Input(1, "B", "Second operand.", "T");
     schema.Output(0, "C", "Result, has same element type as two inputs", "T");
     schema.TypeConstraint(
         "T",
         OpSchema::high_precision_numeric_types(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-        propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      if (hasNInputShapes(ctx, 2))
         bidirectionalBroadcastShapeInference(
             ctx.getInputType(0)->tensor_type().shape(),
             ctx.getInputType(1)->tensor_type().shape(),
@@ -418,10 +411,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          bidirectionalBroadcastShapeInference(
-              ctx.getInputType(0)->tensor_type().shape(),
-              ctx.getInputType(1)->tensor_type().shape(),
-              *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
 static const char* PRelu_ver6_doc = R"DOC(
@@ -738,17 +732,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto transBAttr = ctx.getAttribute("transB");
             bool transB =
                 transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
-
-            *ctx.getOutputType(0)
-                 ->mutable_tensor_type()
-                 ->mutable_shape()
-                 ->add_dim() =
-                ctx.getInputType(0)->tensor_type().shape().dim(transA ? 1 : 0);
-            *ctx.getOutputType(0)
-                 ->mutable_tensor_type()
-                 ->mutable_shape()
-                 ->add_dim() =
-                ctx.getInputType(1)->tensor_type().shape().dim(transB ? 0 : 1);
+            auto& first_input_shape = getInputShape(ctx, 0);
+            auto& second_input_shape = getInputShape(ctx, 1);
+            if (first_input_shape.dim_size() != 2)
+              fail_shape_inference("First input does not have rank 2");
+            if (second_input_shape.dim_size() != 2)
+              fail_shape_inference("Second input does not have rank 2");
+            updateOutputShape(
+                ctx,
+                0,
+                {first_input_shape.dim(transA ? 1 : 0),
+                 second_input_shape.dim(transB ? 0 : 1)});
           }
         }));
 

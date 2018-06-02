@@ -1107,7 +1107,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
           if (axis > rank || axis < 0) {
             fail_shape_inference(
-                "Invalid value(" , axis , ") for attribute 'axis'");
+                "Invalid value(", axis, ") for attribute 'axis'");
           }
           // TODO: is the operation defined for input-rank < 2?
           updateOutputShape(
