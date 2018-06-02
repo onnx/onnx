@@ -30,12 +30,13 @@ void convPoolTypeAndShapeInference(
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-  // we need at least one input to have a shape for this inference.
+  // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
 
-  // if no kernel shape is required, then we need two inputs.
+  // if kernel shape is an input (and not attribute)
+  // we need the shape of the second input.
   if (!require_kernel_shape && !hasNInputShapes(ctx, 2)) {
     return;
   }
@@ -114,8 +115,11 @@ void convPoolTypeAndShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-    *output_shape->add_dim() =
-        ctx.getInputType(1)->tensor_type().shape().dim(0);
+	auto& second_input_shape = getInputShape(ctx, 1);
+	if (second_input_shape.dim_size() < 1) {
+		fail_shape_inference("Second input tensor has wrong dimension");
+	}
+    *output_shape->add_dim() = second_input_shape.dim(0);
   }
 
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
@@ -333,6 +337,13 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
+
+  if (input_shape.dim_size() < 2) {
+	  fail_shape_inference("Input tensor must have atleast 2 dimensions");
+  }
+  if (rios_shape.dim_size() != 2) {
+	  fail_shape_inference("RoIs tensor must have 2 dimensions");
+  }
 
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
