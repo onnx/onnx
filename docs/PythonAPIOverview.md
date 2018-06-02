@@ -176,3 +176,16 @@ print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model
 ```
 Runnable IPython notebooks:
 - [shape_inference.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/shape_inference.ipynb)
+
+## Utility Functions
+### Polishing the Model
+Function `polish_model` runs model checker, optimizer, shape inference engine on the model,
+and also strips the doc_string for you.
+```python
+import onnx
+import onnx.utils
+
+
+model = onnx.load('path/to/the/model.onnx')
+polished_model = onnx.utils.polish_model(model)
+```

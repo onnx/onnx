@@ -142,7 +142,9 @@ void mergeShapesAndTypes(
   }
 }
 
-void InferShapes(ModelProto& m) {
+void InferShapes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] =
@@ -153,13 +155,16 @@ void InferShapes(ModelProto& m) {
 
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   for (auto& vi : *g->mutable_value_info()) {
-    valueTypesByName[vi.name()] = vi.mutable_type();
+    if (vi.has_type())
+      valueTypesByName[vi.name()] = vi.mutable_type();
   }
   for (auto& vi : *g->mutable_input()) {
-    valueTypesByName[vi.name()] = vi.mutable_type();
+    if (vi.has_type())
+      valueTypesByName[vi.name()] = vi.mutable_type();
   }
   for (auto& vi : *g->mutable_output()) {
-    valueTypesByName[vi.name()] = vi.mutable_type();
+    if (vi.has_type())
+      valueTypesByName[vi.name()] = vi.mutable_type();
   }
 
   for (const auto& n : g->node()) {
@@ -171,15 +176,23 @@ void InferShapes(ModelProto& m) {
     auto domain_version = dit->second;
 
     const auto schema =
-        OpSchemaRegistry::Schema(n.op_type(), domain_version, n.domain());
+        schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     if (!schema) {
       continue;
     }
 
     InferenceContextImpl ctx(n, valueTypesByName);
-    schema->GetTypeAndShapeInferenceFunction()(ctx);
+	try {
+      schema->GetTypeAndShapeInferenceFunction()(ctx);
+	} catch (ONNX_NAMESPACE::InferenceError& ex) {
+	  // Continue with inference for remaining nodes
+	  continue;
+	}
 
     for (int i = 0; i < n.output_size(); ++i) {
+      if (!ctx.getOutputType(i)->has_tensor_type()) {
+        continue;
+      }
       const auto& inferredType = ctx.getOutputType(i)->tensor_type();
 
       // Bail out early if shape inference does nothing useful.

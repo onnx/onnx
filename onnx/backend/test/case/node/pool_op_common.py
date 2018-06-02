@@ -1,8 +1,14 @@
 import numpy as np  # type: ignore
 import itertools
+from typing import Text, Sequence
 
 
-def get_pad_shape(auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial, output_spatial_shape):
+def get_pad_shape(auto_pad,  # type: Text
+                  input_spatial_shape,  # type: np.ndarray
+                  kernel_spatial_shape,  # type: np.ndarray
+                  strides_spatial,  # type: Sequence[int]
+                  output_spatial_shape  # type: Sequence[int]
+                  ):  # type: (...) -> Sequence[int]
     pad_shape = [0] * len(input_spatial_shape)
     if auto_pad in ('SAME_UPPER', 'SAME_LOWER'):
         for i in range(len(input_spatial_shape)):
@@ -13,7 +19,11 @@ def get_pad_shape(auto_pad, input_spatial_shape, kernel_spatial_shape, strides_s
     return pad_shape
 
 
-def get_output_shape(auto_pad, input_spatial_shape, kernel_spatial_shape, strides_spatial):
+def get_output_shape(auto_pad,  # type: Text
+                     input_spatial_shape,  # type: np.ndarray
+                     kernel_spatial_shape,  # type: np.ndarray
+                     strides_spatial  # type: Sequence[int]
+                     ):  # type: (...) -> Sequence[int]
     out_shape = [0] * len(input_spatial_shape)
     if auto_pad in ('SAME_UPPER', 'SAME_LOWER'):
         for i in range(len(input_spatial_shape)):
@@ -25,7 +35,14 @@ def get_output_shape(auto_pad, input_spatial_shape, kernel_spatial_shape, stride
     return out_shape
 
 
-def pool(padded, x_shape, kernel_shape, strides_shape, out_shape, pad_shape, pooling_type):
+def pool(padded,  # type: np.ndarray
+         x_shape,  # type: np.ndarray
+         kernel_shape,  # type: Sequence[int]
+         strides_shape,  # type: Sequence[int]
+         out_shape,  # type: Sequence[int]
+         pad_shape,  # type: Sequence[int]
+         pooling_type  # type: Text
+         ):  # type: (...) -> np.ndarray
     spatial_size = len(x_shape) - 2
     y = np.zeros([x_shape[0], x_shape[1]] + list(out_shape))
 

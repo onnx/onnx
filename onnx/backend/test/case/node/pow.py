@@ -13,7 +13,7 @@ from . import expect
 class Pow(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],
@@ -33,29 +33,27 @@ class Pow(Base):
                name='test_pow')
 
     @staticmethod
-    def export_pow_broadcast():
+    def export_pow_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],
             outputs=['z'],
-            broadcast=1,
         )
 
         x = np.array([1, 2, 3]).astype(np.float32)
         y = np.array(2).astype(np.float32)
         z = np.power(x, y)  # expected output [1., 4., 9.]
         expect(node, inputs=[x, y], outputs=[z],
-               name='test_pow_bcast')
+               name='test_pow_bcast_scalar')
 
         node = onnx.helper.make_node(
             'Pow',
             inputs=['x', 'y'],
             outputs=['z'],
-            broadcast=1,
-            axis=0,
         )
         x = np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)
-        y = np.array([2, 3]).astype(np.float32)
-        z = np.array([[1, 4, 9], [64, 125, 216]]).astype(np.float32)
+        y = np.array([1, 2, 3]).astype(np.float32)
+        # expected output [[1, 4, 27], [4, 25, 216]]
+        z = np.power(x, y).astype(np.float32)
         expect(node, inputs=[x, y], outputs=[z],
-               name='test_pow_bcast_axis0')
+               name='test_pow_bcast_array')

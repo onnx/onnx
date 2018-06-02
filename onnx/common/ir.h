@@ -837,6 +837,22 @@ public:
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
   }
+  void eraseInitializer(std::string name) {
+    initializers_.erase(
+        std::remove_if(
+            initializers_.begin(),
+            initializers_.end(),
+            [&name](Tensor& initializer) {
+              return initializer.name() == name;
+            }),
+        initializers_.end());
+    initializer_names_.erase(
+        std::remove(
+            initializer_names_.begin(),
+            initializer_names_.end(),
+            name),
+        initializer_names_.end());
+  }
   void clearInitializers() {
     initializers_.clear();
     initializer_names_.clear();

@@ -13,6 +13,7 @@ from __future__ import unicode_literals
 import onnx
 import onnx.onnx_cpp2py_export.optimizer as C
 from onnx import ModelProto
+from typing import Text, Sequence
 
 """Apply the optimization on the serialized ModelProto.
 
@@ -27,14 +28,15 @@ Supported pass names:
     -- nop
     -- eliminate_identity
     -- eliminate_nop_transpose
+    -- eliminate_unused_initializer
     -- fuse_consecutive_transposes
     -- fuse_add_bias_into_conv
     -- fuse_transpose_into_gemm
 """
 
 
-def optimize(model, passes=None):
-    if passes is None or len(passes) == 0:
+def optimize(model, passes=[]):  # type: (ModelProto, Sequence[Text]) -> ModelProto
+    if len(passes) == 0:
         passes = ['eliminate_nop_transpose',
                   'fuse_consecutive_transposes',
                   'fuse_transpose_into_gemm']
