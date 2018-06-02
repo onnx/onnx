@@ -180,10 +180,15 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
       if(ONNX_GEN_PB_TYPE_STUBS)
+        # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
-          # Haven't figured out how to generate mypy stubs on Windows yet
-          list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${ROOT_DIR}/tools/protoc-gen-mypy.py --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+          # If onnx was packaged to pypi from Windows, protoc-gen-mypy.py is missing the +x flag. Add it.
+          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.py)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.py)
+        else(NOT WIN32)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
+        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE} --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
       endif()
     endif()
     if (NOT ONNX_PROTOC_EXECUTABLE)

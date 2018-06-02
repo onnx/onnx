@@ -162,6 +162,129 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Transpose"
 
+    def test_eliminate_unused_initializer(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor("A", TensorProto.FLOAT,
+                                dims=(2, 3),
+                                vals=np.random.randn(2, 3).astype(np.float32).tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
+
+        assert len(list(optimized_model.graph.initializer)) == 0
+
+    def test_eliminate_unused_initializer_input(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor("A", TensorProto.FLOAT,
+                                dims=(2, 3),
+                                vals=np.random.randn(2, 3).astype(np.float32).tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
+
+        assert len(list(optimized_model.graph.initializer)) == 0
+        assert len(optimized_model.graph.input) == 2
+
+    def test_eliminate_unused_initializer_no_eliminate_used_default(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "A"], ["Z"])
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor("A", TensorProto.FLOAT,
+                                dims=(1, 2),
+                                vals=np.random.randn(1, 2).astype(np.float32).tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
+
+        assert len(list(optimized_model.graph.initializer)) == 1
+
+    def test_eliminate_unused_initializer_no_eliminate_used(self):  # type: () -> None
+        nodes = [helper.make_node("Add", ["X", "A"], ["Z"])]
+        nodes.extend(self._make_fake_loop_op(
+            [helper.make_node("Add", ["_X", "_A"], ["_Z2"])],
+            [(TensorProto.FLOAT, (1, 2), "X"),
+             (TensorProto.FLOAT, (1, 2), "A")],
+            [(TensorProto.FLOAT, (1, 2), "Z2")]))
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 2))],
+            [helper.make_tensor("A", TensorProto.FLOAT,
+                                dims=(1, 2),
+                                vals=np.random.randn(1, 2).astype(np.float32).tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
+
+        # Add, Constant (trip count), Constant (cond), Loop
+        assert len(list(optimized_model.graph.node)) == 4
+        assert optimized_model.graph.node[0].op_type == "Add"
+        assert optimized_model.graph.output[0].name == "Z"
+        # Add
+        assert len(optimized_model.graph.node[3].attribute[0].g.node) == 1
+        assert optimized_model.graph.node[3].attribute[0].g.node[0].op_type == 'Add'
+        assert optimized_model.graph.node[3].attribute[0].g.output[1].name == '_Z2'
+
+        assert len(list(optimized_model.graph.initializer)) == 1
+
+    def test_eliminate_unused_initializer_no_eliminate_output(self):  # type: () -> None
+        add = helper.make_node("Add", ["X", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 2)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor("A", TensorProto.FLOAT,
+                                dims=(2, 3),
+                                vals=np.random.randn(2, 3).astype(np.float32).tobytes(),
+                                raw=True)])
+        optimized_model = self._optimized(graph, ["eliminate_unused_initializer"])
+
+        assert len(list(optimized_model.graph.initializer)) == 1
+        assert "Z" in [o.name for o in optimized_model.graph.output]
+
+    def test_extract_constant_to_initializer(self):  # type: () -> None
+        conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
+        constant = helper.make_node("Constant", [], ["A"],
+                                    value=helper.make_tensor(
+                                        name="bias",
+                                        data_type=TensorProto.FLOAT,
+                                        dims=(16,),
+                                        vals=np.random.randn(16).astype(np.float32).tolist()))
+        add = helper.make_node("Add", ["Z", "A"], ["B"])
+        graph = helper.make_graph(
+            [conv, constant, add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 3, 3)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (1, 16, 3, 3))],
+            value_info=[
+                helper.make_tensor_value_info("A", TensorProto.FLOAT, (16, 1, 1)),
+            ]
+        )
+        optimized_model = self._optimized(graph, ["extract_constant_to_initializer"])
+        assert len(list(optimized_model.graph.initializer)) == 1
+        assert len(list(optimized_model.graph.node)) == 2
+        assert "A" in [i.name for i in optimized_model.graph.initializer]
+
     def test_fuse_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2]),
                  helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1]),

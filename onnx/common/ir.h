@@ -67,12 +67,10 @@ public:
 
 
 struct Dimension final {
-  Dimension(int dim)
-    : is_int(true), dim(dim) {
-  }
   Dimension(std::string param)
     : is_int(false), dim(-1), param(std::move(param)) {
   }
+  Dimension(int64_t dim) : is_int(true), dim(dim) {}
 
   bool is_int;
   int64_t dim;
@@ -836,6 +834,22 @@ public:
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
+  }
+  void eraseInitializer(std::string name) {
+    initializers_.erase(
+        std::remove_if(
+            initializers_.begin(),
+            initializers_.end(),
+            [&name](Tensor& initializer) {
+              return initializer.name() == name;
+            }),
+        initializers_.end());
+    initializer_names_.erase(
+        std::remove(
+            initializer_names_.begin(),
+            initializer_names_.end(),
+            name),
+        initializer_names_.end());
   }
   void clearInitializers() {
     initializers_.clear();
