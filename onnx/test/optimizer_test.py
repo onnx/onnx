@@ -528,6 +528,55 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == 'Conv'
         assert optimized_model.graph.node[1].op_type == 'Add'
 
+    def test_fuse_consecutive_squeezes(self):  # type: () -> None
+        nodes = [helper.make_node("Squeeze", ["X"], ["Y"], axes=[0, 2]),
+                 helper.make_node("Squeeze", ["Y"], ["Z"], axes=[5])]
+        nodes.extend(self._make_fake_loop_op(
+            [helper.make_node("Squeeze", ["_X"], ["_Y"], axes=[0, 2]),
+             helper.make_node("Squeeze", ["_Y"], ["_Z2"], axes=[5])],
+            [(TensorProto.FLOAT, (1, 2, 1, 3, 1, 4, 1), "X")],
+            [(TensorProto.FLOAT, (2, 3, 1, 4), "Z2")]))
+
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 1, 3, 1, 4, 1))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 1, 4))])
+        optimized_model = self._optimized(graph, ["fuse_consecutive_squeezes"])
+
+        # Squeeze, Constant (trip count), Constant (cond), Loop
+        assert len(list(optimized_model.graph.node)) == 4
+
+    def test_fuse_consecutive_squeezes_default(self):  # type: () -> None
+        squeeze1 = helper.make_node("Squeeze", ["X"], ["Y"], axes=[0, 2])
+        squeeze2 = helper.make_node("Squeeze", ["Y"], ["Z"], axes=[5])
+        graph = helper.make_graph(
+            [squeeze1, squeeze2],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 1, 3, 1, 4, 1))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 1, 4))])
+        optimized_model = self._optimized(graph, ["fuse_consecutive_squeezes"])
+
+        assert list(optimized_model.graph.node[0].attribute[0].ints) == [0, 2, 7]
+        assert len(list(optimized_model.graph.node)) == 1
+
+    def test_fuse_consecutive_squeezes_multi_uses(self):  # type: () -> None
+        squeeze1 = helper.make_node("Squeeze", ["X"], ["Y"], axes=[0, 2])
+        add = helper.make_node("Add", ["Y", "A"], ["Z2"])
+        squeeze2 = helper.make_node("Squeeze", ["Y"], ["Z"], axes=[5])
+        graph = helper.make_graph(
+            [squeeze1, add, squeeze2],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 2, 1, 3, 1, 4, 1)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1,))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (2, 3, 1, 4)),
+             helper.make_tensor_value_info("Z2", TensorProto.FLOAT, (2, 3, 1, 4, 1))])
+        optimized_model = self._optimized(graph, ["fuse_consecutive_squeezes"])
+
+        assert list(optimized_model.graph.node[0].attribute[0].ints) == [0, 2]
+        assert list(optimized_model.graph.node[2].attribute[0].ints) == [0, 2, 7]
+        assert len(list(optimized_model.graph.node)) == 3
+
     def test_preserve_value_info(self):  # type: () -> None
         trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
