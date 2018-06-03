@@ -618,6 +618,37 @@ class TestOptimizer(unittest.TestCase):
         assert list(optimized_model.graph.node[1].input) == ["X3", "A"]
         assert list(optimized_model.graph.node[2].input)[1] == "B"
 
+    def test_fuse_arithmetic_into_batch_norm_sub_first(self):  # type: () -> None
+        batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
+        arith = helper.make_node("Sub", ["A", "Y"], ["Z"])
+        graph = self.helper_make_graph_fuse_arithmetic_into_batch_norm([batch_norm, arith])
+        optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
+
+        assert len(list(optimized_model.graph.node)) == 2
+        assert optimized_model.graph.node[0].op_type == "BatchNormalization"
+        assert optimized_model.graph.node[1].op_type == "Sub"
+        assert list(optimized_model.graph.node[1].input) == ["A", "Y"]
+
+    def test_fuse_arithmetic_into_batch_norm_dim_exceed(self):  # type: () -> None
+        batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
+        arith = helper.make_node("Add", ["Y", "A"], ["Z"])
+        graph = helper.make_graph(
+            [batch_norm, arith],
+            "test",
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (1, 5, 3, 3)),
+             helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("X3", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("X4", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("X5", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1, 1, 5, 1, 1))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 1, 5, 3, 3))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
+
+        assert len(list(optimized_model.graph.node)) == 2
+        assert optimized_model.graph.node[0].op_type == "BatchNormalization"
+        assert optimized_model.graph.node[1].op_type == "Add"
+
     def test_preserve_value_info(self):  # type: () -> None
         trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])

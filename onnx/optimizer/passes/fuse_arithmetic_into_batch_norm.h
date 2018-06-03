@@ -33,8 +33,6 @@
 //     Y = BatchNorm(X, S, B, mean, var)
 //   and there is no Z in graph.
 
-#include <numeric>
-
 #include "onnx/optimizer/passes/optimize_pass.h"
 
 namespace ONNX_NAMESPACE {
@@ -80,6 +78,23 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
       // check if inputs are not one Const or initializer
       // and one BatchNormalization
       if (!orig_batch_norm || !orig_const) {
+        continue;
+      }
+
+      // TODO(fumihwh): could remove if infer_shapes first
+      // set size if can get from input
+      auto bn_sizes = orig_batch_norm->sizes();
+      if (bn_sizes.size() == 0) {
+        bn_sizes = orig_batch_norm->node()->inputs()[0]->sizes();
+      }
+      if (bn_sizes.size() == 0) {
+        continue;
+      } else {
+        orig_batch_norm->setSizes(bn_sizes);
+      }
+
+      // arithmetic param dim should not be greater than batch norm dim
+      if (orig_const->sizes().size() > orig_batch_norm->sizes().size()) {
         continue;
       }
 
