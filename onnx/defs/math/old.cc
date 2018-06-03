@@ -588,6 +588,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    PRelu,
+    6,
+    OpSchema()
+        .SetDoc(PRelu_ver1_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Input(
+            1,
+            "slope",
+            "Slope tensor. If `Slope` is of size 1, the value is shared"
+            "across different channels",
+            "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* Sigmoid_ver1_doc = R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
