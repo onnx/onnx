@@ -261,6 +261,30 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.initializer)) == 1
         assert "Z" in [o.name for o in optimized_model.graph.output]
 
+    def test_extract_constant_to_initializer(self):  # type: () -> None
+        conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
+        constant = helper.make_node("Constant", [], ["A"],
+                                    value=helper.make_tensor(
+                                        name="bias",
+                                        data_type=TensorProto.FLOAT,
+                                        dims=(16,),
+                                        vals=np.random.randn(16).astype(np.float32).tolist()))
+        add = helper.make_node("Add", ["Z", "A"], ["B"])
+        graph = helper.make_graph(
+            [conv, constant, add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 3, 3)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (1, 16, 3, 3))],
+            value_info=[
+                helper.make_tensor_value_info("A", TensorProto.FLOAT, (16, 1, 1)),
+            ]
+        )
+        optimized_model = self._optimized(graph, ["extract_constant_to_initializer"])
+        assert len(list(optimized_model.graph.initializer)) == 1
+        assert len(list(optimized_model.graph.node)) == 2
+        assert "A" in [i.name for i in optimized_model.graph.initializer]
+
     def test_fuse_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2]),
                  helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1]),
