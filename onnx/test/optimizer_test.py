@@ -528,11 +528,10 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == 'Conv'
         assert optimized_model.graph.node[1].op_type == 'Add'
 
-    def test_fuse_arithmetic_into_batch_norm_default(self):  # type: () -> None
-        batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
-        arith = helper.make_node("Add", ["Y", "A"], ["Z"])
+    @staticmethod
+    def helper_make_graph_fuse_arithmetic_into_batch_norm(nodes):  # type: (Sequence[NodeProto]) -> GraphProto
         graph = helper.make_graph(
-            [batch_norm, arith],
+            nodes,
             "test",
             [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (1, 5, 3, 3)),
              helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,)),
@@ -542,6 +541,12 @@ class TestOptimizer(unittest.TestCase):
              helper.make_tensor_value_info("A", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 5, 3, 3))]
         )
+        return graph
+
+    def test_fuse_arithmetic_into_batch_norm_default(self):  # type: () -> None
+        batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
+        arith = helper.make_node("Add", ["Y", "A"], ["Z"])
+        graph = self.helper_make_graph_fuse_arithmetic_into_batch_norm([batch_norm, arith])
         optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
 
         assert len(list(optimized_model.graph.node)) == 2
@@ -564,17 +569,7 @@ class TestOptimizer(unittest.TestCase):
              (TensorProto.FLOAT, (5,), "A")],
             [(TensorProto.FLOAT, (1, 5, 3, 3), "Z2")]
         ))
-        graph = helper.make_graph(
-            nodes,
-            "test",
-            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (1, 5, 3, 3)),
-             helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("X3", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("X4", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("X5", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("A", TensorProto.FLOAT, (5,))],
-            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 5, 3, 3))]
-        )
+        graph = self.helper_make_graph_fuse_arithmetic_into_batch_norm(nodes)
         optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
 
         # Add, BatchNormalization, Constant (trip count), Constant (cond), Loop
@@ -586,17 +581,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_arithmetic_into_batch_norm_mul(self):  # type: () -> None
         batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
         arith = helper.make_node("Mul", ["Y", "A"], ["Z"])
-        graph = helper.make_graph(
-            [batch_norm, arith],
-            "test",
-            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (1, 5, 3, 3)),
-             helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("X3", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("X4", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("X5", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("A", TensorProto.FLOAT, (5,))],
-            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 5, 3, 3))]
-        )
+        graph = self.helper_make_graph_fuse_arithmetic_into_batch_norm([batch_norm, arith])
         optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
 
         assert len(list(optimized_model.graph.node)) == 3
