@@ -115,10 +115,10 @@ void convPoolTypeAndShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-	auto& second_input_shape = getInputShape(ctx, 1);
-	if (second_input_shape.dim_size() < 1) {
-		fail_shape_inference("Second input tensor has wrong dimension");
-	}
+    auto& second_input_shape = getInputShape(ctx, 1);
+    if (second_input_shape.dim_size() < 1) {
+      fail_shape_inference("Second input tensor has wrong dimension");
+    }
     *output_shape->add_dim() = second_input_shape.dim(0);
   }
 
@@ -339,10 +339,10 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
   auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
 
   if (input_shape.dim_size() < 2) {
-	  fail_shape_inference("Input tensor must have atleast 2 dimensions");
+    fail_shape_inference("Input tensor must have at least 2 dimensions");
   }
   if (rios_shape.dim_size() != 2) {
-	  fail_shape_inference("RoIs tensor must have 2 dimensions");
+    fail_shape_inference("RoIs tensor must have 2 dimensions");
   }
 
   // first dim is the batch axis and the next is the number of channels.

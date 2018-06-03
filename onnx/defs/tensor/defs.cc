@@ -191,13 +191,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-		  auto numInputs = ctx.getNumInputs();
+          auto numInputs = ctx.getNumInputs();
           if (numInputs < 1 ||
               !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
             return;
           }
 
-		  auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
+          auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
 
           auto axisAttr = ctx.getAttribute("axis");
           if (!axisAttr) {
@@ -220,8 +220,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-			if (shape.dim_size() != rank)
-				fail_shape_inference("All inputs to Concat must have same rank");
+            if (shape.dim_size() != rank)
+              fail_shape_inference("All inputs to Concat must have same rank");
             for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
