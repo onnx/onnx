@@ -593,8 +593,8 @@ class TestOptimizer(unittest.TestCase):
 
     def test_fuse_arithmetic_into_batch_norm_multi_broadcast(self):  # type: () -> None
         batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y1"])
-        div = helper.make_node("Div", ["A", "Y1"], ["Y2"])
-        sub = helper.make_node("Sub", ["B", "Y2"], ["Z"])
+        div = helper.make_node("Div", ["Y1", "A"], ["Y2"])
+        sub = helper.make_node("Sub", ["Y2", "B"], ["Z"])
         graph = helper.make_graph(
             [batch_norm, div, sub],
             "test",

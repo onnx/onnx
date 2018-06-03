@@ -58,6 +58,12 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
         continue;
       }
 
+      // for Sub and Div, first input should be BatchNormalization
+      if ((node_kind == kSub || node_kind == kDiv) &&
+          n->inputs()[0]->node()->kind() != kBatchNormalization) {
+        continue;
+      }
+
       Value* orig_batch_norm;
       Value* orig_const;
 
