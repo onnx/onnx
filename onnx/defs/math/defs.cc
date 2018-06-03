@@ -418,7 +418,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* PRelu_ver6_doc = R"DOC(
+static const char* PRelu_ver7_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
@@ -426,10 +426,10 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
-    6,
+    7,
     OpSchema()
         .SetDoc(
-            PRelu_ver6_doc +
+            PRelu_ver7_doc +
             GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
         .Input(0, "X", "Input tensor", "T")
         .Input(

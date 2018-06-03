@@ -6373,7 +6373,7 @@ This version of the operator has been available since version 6 of the default O
   PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
   output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
   `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
-  This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
+  
 
 #### Version
 
@@ -6385,14 +6385,14 @@ This version of the operator has been available since version 6 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>slope</tt> : T</dt>
-<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+<dd>Slope tensor. If `Slope` is of size 1, the value is sharedacross different channels</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>Output tensor (same size as X)</dd>
+<dd>Output tensor</dd>
 </dl>
 
 #### Type Constraints
@@ -7666,6 +7666,40 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrains input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+### <a name="PRelu-7"></a>**PRelu-7**</a>
+
+  PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
+  output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
+  `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+  This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 7 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>slope</tt> : T</dt>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor (same size as X)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
 ### <a name="Pow-7"></a>**Pow-7**</a>
