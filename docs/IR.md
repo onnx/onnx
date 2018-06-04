@@ -41,21 +41,21 @@ Nothing in this specification should be construed as advocating one implementati
 
 Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Futhermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
-Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number.
+Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
 
-The valid IR versions is defined by an enumeration, which currently has the following values:
+The IR specification uses simple monotonically increasing numbers for its versions. The valid IR versions is defined by an enumeration, which currently has the following values:
 ```
-  //  version we published on Oct 10, 2017.
+  //  Version 1, published on Oct 10, 2017.
   IR_VERSION_2017_10_10 = 0x0000000000000001;
 
-  // IR_VERSION 0.0.2 published on Oct 30, 2017
+  // Version 2, published on Oct 30, 2017
   IR_VERSION_2017_10_30 = 0x0000000000000002;
 
-  // IR VERSION 0.0.3 published on Nov 3, 2017
+  // Version 3 published on Nov 3, 2017
   IR_VERSION = 0x0000000000000003;
 ```
 
-Operator sets use a simple number as the version number. Each operator set version represents the combination of the most recent version of each operator.
+Operator sets use a simple version number. Each operator set version represents the combination of the most recent version of each operator.
 
 This specification does not provide guidance on what versioning scheme model producers should be using.
 
@@ -267,7 +267,7 @@ For each variadic operator input, one or more node inputs must be specified. For
 
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
-Some operators have outputs that are optional, which means that an operator, depending on its input parameters and/or attributes, MAY forgo computing values for such outputs. 
+Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs. 
 
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
@@ -282,7 +282,7 @@ With respect to supported types, the __ONNX__ definition recognizes only tensors
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
-Primitive numeric, string, and Boolean types MUST be used as elements of tensors. Maps and sequences MUST contain tensors as values.
+Primitive numeric, string, and Boolean types MUST be used as elements of tensors.
 
 ### Tensor Element Types
 
@@ -356,6 +356,8 @@ The type system used for attributes is a superset of that used for of inputs and
 ## Other Specification Documents 
 
 The ONNX specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining standard operator semantics and the IR syntax. The latter is specified as Protobuf v2 and v3 schema files.
+
+See the [metadata category documentation](MetadataProps.md) for more details.
 
 ### Operators
 

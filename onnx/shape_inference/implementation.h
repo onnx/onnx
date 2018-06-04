@@ -142,7 +142,9 @@ void mergeShapesAndTypes(
   }
 }
 
-void InferShapes(ModelProto& m) {
+void InferShapes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance()) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] =
@@ -174,13 +176,18 @@ void InferShapes(ModelProto& m) {
     auto domain_version = dit->second;
 
     const auto schema =
-        OpSchemaRegistry::Schema(n.op_type(), domain_version, n.domain());
+        schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     if (!schema) {
       continue;
     }
 
     InferenceContextImpl ctx(n, valueTypesByName);
-    schema->GetTypeAndShapeInferenceFunction()(ctx);
+	try {
+      schema->GetTypeAndShapeInferenceFunction()(ctx);
+	} catch (ONNX_NAMESPACE::InferenceError& ex) {
+	  // Continue with inference for remaining nodes
+	  continue;
+	}
 
     for (int i = 0; i < n.output_size(); ++i) {
       if (!ctx.getOutputType(i)->has_tensor_type()) {
