@@ -33,8 +33,12 @@ git status
 git diff --exit-code
 
 # check auto-gen files up-to-date
+set ONNX_ML=0
+python onnx/defs/gen_doc.py
+set ONNX_ML=1
 python onnx/defs/gen_doc.py
 python onnx/gen_proto.py
+python onnx/gen_proto.py --ml
 backend-test-tools generate-data
 git status
 git diff --exit-code
