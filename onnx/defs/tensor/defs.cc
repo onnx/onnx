@@ -6,7 +6,6 @@
 #include <algorithm>
 
 namespace ONNX_NAMESPACE {
-
 static const char* Cast_ver6_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
@@ -63,12 +62,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)"},
             "Constrain output types. Casting to strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-              static_cast<TensorProto_DataType>(ctx.getAttribute("to")->i()));
-          if (!hasNInputShapes(ctx, 1)) {
-            return;
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
           }
-          propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
 static const char* Reshape_ver5_doc = R"DOC(
@@ -194,15 +191,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (ctx.getNumInputs() < 1 ||
-              !hasNInputShapes(ctx, static_cast<int>(ctx.getNumInputs()))) {
+          auto numInputs = ctx.getNumInputs();
+          if (numInputs < 1 ||
+              !hasNInputShapes(ctx, static_cast<int>(numInputs))) {
             return;
           }
+
+          auto rank = ctx.getInputType(0)->tensor_type().shape().dim_size();
 
           auto axisAttr = ctx.getAttribute("axis");
           if (!axisAttr) {
             fail_shape_inference("Required attribute axis is missing");
-            ;
           }
           int axis = static_cast<int>(axisAttr->i());
           if (axis < 0) {
@@ -215,15 +214,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto* output_shape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
-          for (int64_t i = 0;
-               i < ctx.getInputType(0)->tensor_type().shape().dim_size();
-               ++i) {
+          for (int64_t i = 0; i < rank; ++i) {
             output_shape->add_dim();
           }
 
-          for (size_t i = 0; i < ctx.getNumInputs(); i++) {
+          for (size_t i = 0; i < numInputs; i++) {
             const auto& shape = ctx.getInputType(i)->tensor_type().shape();
-            for (int j = 0; j < shape.dim_size(); j++) {
+            if (shape.dim_size() != rank)
+              fail_shape_inference("All inputs to Concat must have same rank");
+            for (int j = 0; j < rank; j++) {
               if (j == axis) {
                 if (shape.dim(j).has_dim_value()) {
                   total_length += static_cast<int>(shape.dim(j).dim_value());
