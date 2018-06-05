@@ -155,24 +155,22 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-    def _retry_excute(times=3, func, *args, **kwargs):  # type: (int, function(), *args, **kwargs) -> None
-
+    def _retry_excute(func, times=3, *args, **kwargs):  # type: (int, function(), *Any, **Any) -> Any
         for i in range(times):
             try:
-                func(*args)
-                return
+                return func(*args, **kwargs)
             except Exception as e:
-                remain = times-i-1
-                print('{} retry times remain'.format(remain))
-                if remain == 0:
+                print('{} times tried'.format(i))
+                if i == times - 1:
                     raise
 
-    def _download_model(*args):
-        download_file = args[0]
-        model_test = args[1]
-        model_dir = args[2]
+    def _download_model(download_file, model_test, model_dir):  # type: (**Any) -> None
         try:
+            # On Windows, NamedTemporaryFile can not be opened for a
+            # second time
+            download_file = tempfile.NamedTemporaryFile(delete=False)
             download_file.close()
+
             print('Start downloading model {} from {}'.format(
                 model_test.model_name,
                 model_test.url))
@@ -184,6 +182,8 @@ class Runner(object):
             print('Failed to prepare data for model {}: {}'.format(
                 model_test.model_name, e))
             raise
+        finally:
+            os.remove(download_file.name)
 
     def _prepare_model_data(self, model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
@@ -202,21 +202,15 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            # On Windows, NamedTemporaryFile can not be opened for a
-            # second time
-            download_file = tempfile.NamedTemporaryFile(delete=False)
-
             retry_times = 3
             try:
-                _retry_excute(retry_times,
-                              _download_model,
-                              download_file,
-                              model_test,
-                              model_dir)
+                self._retry_excute(self._download_model,
+                                times=retry_times,
+                                download_file=download_file,
+                                model_test=model_test,
+                                model_dir=model_dir)
             except:
                 raise
-            finally:
-                os.remove(download_file.name)
         return model_dir
 
     def _add_test(self,
