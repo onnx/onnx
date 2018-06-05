@@ -38,6 +38,7 @@ struct Optimizer {
     _registerOptimizer<SplitInit>();
     _registerOptimizer<SplitPredict>();
     _registerOptimizer<LiftLexicalReferences>();
+    _registerOptimizer<FuseBNIntoConv>();
   }
 
   virtual ~Optimizer() = default;
