@@ -31,6 +31,25 @@ struct FuseBNIntoConv final : public OptimizePass {
     return true;
   }
 
+  template<typename T>
+  void add_nums(void* x, void* y) {
+    T* x_cast = (T*) x;
+    T* y_cast = (T*) y;
+    *x_cast = *x_cast + *y_cast;
+  }
+
+  template<typename T>
+  void divide_nums(void* x, void* y) {
+    T* x_cast = (T*) x;
+    T* y_cast = (T*) y;
+    *x_cast = *x_cast / *y_cast;
+  }
+  template<typename T>
+  void sqrt_num(void* x) {
+    T* x_cast = (T*) x;
+    *x_cast = (T) sqrt((double) *x_cast);
+  }
+
   void modify_conv(Node* conv, Node* bn)  {
     auto bn_inputs = bn->inputs();
     auto conv_inputs = conv->inputs();
