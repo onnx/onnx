@@ -155,6 +155,36 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
+    def _retry_excute(times=3, func, *args, **kwargs):  # type: (int, function(), *args, **kwargs) -> None
+
+        for i in range(times):
+            try:
+                func(*args)
+                return
+            except Exception as e:
+                remain = times-i-1
+                print('{} retry times remain'.format(remain))
+                if remain == 0:
+                    raise
+
+    def _download_model(*args):
+        download_file = args[0]
+        model_test = args[1]
+        model_dir = args[2]
+        try:
+            download_file.close()
+            print('Start downloading model {} from {}'.format(
+                model_test.model_name,
+                model_test.url))
+            urlretrieve(model_test.url, download_file.name)
+            print('Done')
+            with tarfile.open(download_file.name) as t:
+                t.extractall(models_dir)
+        except Exception as e:
+            print('Failed to prepare data for model {}: {}'.format(
+                model_test.model_name, e))
+            raise
+
     def _prepare_model_data(self, model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
@@ -176,31 +206,17 @@ class Runner(object):
             # second time
             download_file = tempfile.NamedTemporaryFile(delete=False)
 
-            # Remainning retry times
-            # 0  =>  download failed, raise exception
-            # -1 =>  download succeed
             retry_times = 3
-
-            while retry_times > 0:
-                try:
-                    download_file.close()
-                    print('Start downloading model {} from {}'.format(
-                        model_test.model_name, model_test.url))
-                    urlretrieve(model_test.url, download_file.name)
-                    print('Done')
-                    with tarfile.open(download_file.name) as t:
-                        t.extractall(models_dir)
-                except Exception as e:
-                    retry_times -= 1
-                    print('Failed to prepare data for model {}: {}, {} retry times remain'.format(
-                        model_test.model_name, e, retry_times))
-                    if retry_times == 0:
-                        raise
-                else:
-                    retry_times = -1
-                finally:
-                    if retry_times <= 0:
-                        os.remove(download_file.name)
+            try:
+                _retry_excute(retry_times,
+                              _download_model,
+                              download_file,
+                              model_test,
+                              model_dir)
+            except:
+                raise
+            finally:
+                os.remove(download_file.name)
         return model_dir
 
     def _add_test(self,
