@@ -29,7 +29,7 @@ struct FuseConsecutiveSqueezes final : public OptimizePass {
     std::copy(t1.begin(), t1.end(), std::back_inserter(ret));
     for (int64_t i : t2) {
       auto iter =
-          std::find_if(t1.begin(), t1.end(), [i](int x) { return x > i; });
+          std::find_if(t1.begin(), t1.end(), [i](int64_t x) { return x > i; });
       size_t zone = std::distance(t1.begin(), iter);
       ret.push_back(i + zone);
     }
