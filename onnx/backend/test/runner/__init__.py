@@ -164,7 +164,7 @@ class Runner(object):
                 if i == times - 1:
                     raise
 
-    def _download_model(self, model_test, model_dir):  # type: (**Any) -> None
+    def _download_model(self, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
         try:
             # On Windows, NamedTemporaryFile can not be opened for a
             # second time
@@ -207,7 +207,8 @@ class Runner(object):
                 self._retry_excute(self._download_model,
                                 retry_times,
                                 model_test=model_test,
-                                model_dir=model_dir)
+                                model_dir=model_dir,
+                                models_dir=models_dir)
             except:
                 raise
         return model_dir
