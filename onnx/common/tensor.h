@@ -139,6 +139,226 @@ public:
     has_name_ = true;
     name_ = std::move(name);
   }
+
+  bool is_raw_data() const {
+    return is_raw_data_;
+  }
+
+  //Element wise scaling of tensor
+  void scale(float s) {
+    switch(this.elem_type_) {
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
+        float* float_ptr;
+        if (this.is_raw_data_)  {
+          float_ptr = (float*) raw_data_;
+        } else {
+          float_ptr = (float*) &this.float_data_[0];
+        }
+        for (int i = 0; i < this.float_data_.size(); i++) {
+          float_ptr[i] *= s;
+        }
+        break;
+      }
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
+      int32_t* int32_ptr;
+      if (this.is_raw_data_)  {
+        int32_ptr = (int32_t*) raw_data_;
+      } else {
+        int32_ptr = (int32_t*) &this.int32_data_[0];
+      }
+      for (int i = 0; i < this.int32_data_.size(); i++) {
+        int32_ptr[i] *= s;
+      }
+      break;
+    }
+    default:
+      throw("Incompatible data type: FLOAT, COMPLEX64, and FLOAT16 supported");
+    }
+  }
+
+  void scale(double s) {
+    switch(this.elem_type_) {
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
+        double* double_ptr;
+        if (this.is_raw_data_)  {
+          double_ptr = (double*) raw_data_;
+        } else {
+          double_ptr = (double*) &this.double_data_[0];
+        }
+        for (int i = 0; i < this.double_data_.size(); i++) {
+          double_ptr[i] *= s;
+        }
+        break;
+      }
+      default:
+        throw("Incompatible data type: DOUBLE and COMPLEX128 supported");
+      }
+  }
+
+  void scale(int s) {
+    switch(this.elem_type_) {
+
+    case ONNX_NAMESPACE::TensorProto_DataType_INT8:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT16:
+    case ONNX_NAMESPACE::TensorProto_DataType_INT32:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
+      int32_t* int32_ptr;
+      if (this.is_raw_data_)  {
+        int32_ptr = (int32_t*) raw_data_;
+      } else {
+        int32_ptr = (int32_t*) &this.int32_data_[0];
+      }
+      for (int i = 0; i < this.int32_data_.size(); i++) {
+        int32_ptr[i] *= s;
+      }
+      break;
+    }
+    case ONNX_NAMESPACE::TensorProto_DataType_INT64: {
+      int64_t* int64_ptr;
+      if (this.is_raw_data_)  {
+        int64_ptr = (int64_t*) raw_data_;
+      } else {
+        int64_ptr = (int64_t*) &this.int64_data_[0];
+      }
+      for (int i = 0; i < this.int64_data_.size(); i++) {
+        int64_ptr[i] *= s;
+      }
+      break;
+    }
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {
+      uint64_t* uint64_ptr;
+      if (this.is_raw_data_)  {
+        uint64_ptr = (uint64_t*) raw_data_;
+      } else {
+        uint64_ptr = (uint64_t*) &this.uint64_data_[0];
+      }
+      for (int i = 0; i < this.uint64_data_.size(); i++) {
+        uint64_ptr[i] *= s;
+      }
+      break;
+      break;
+    }
+    default:
+      throw("Incompatible data type: INT8, INT16, INT32, UINT8, UINT16, INT64, UINT32, and UINT64 supported");
+    }
+  }
+
+  //updates this to this + a
+  void add(Tensor a)  {
+    if (a.elem_type() != this.elem_type_) {
+      throw("Type of tensors do not match");
+    }
+    if (a.sizes() != this.sizes_) {
+      throw("Tensor shapes are incompatible");
+    }
+
+    switch(this.elem_type_) {
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
+        float* float_ptr;
+        float* a_ptr;
+        if (this.is_raw_data_)  {
+          float_ptr = (float*) raw_data_;
+        } else {
+          float_ptr = (float*) &this.float_data_[0];
+        }
+        if (a.is_raw_data())  {
+          a_ptr = (float*) a.raw();
+        } else {
+          a_ptr = (float*) &a.floats()[0];
+        }
+        for (int i = 0; i < this.float_data_.size(); i++) {
+          float_ptr[i] += a_ptr[i];
+        }
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
+      case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
+      case ONNX_NAMESPACE::TensorProto_DataType_INT8:
+      case ONNX_NAMESPACE::TensorProto_DataType_INT16:
+      case ONNX_NAMESPACE::TensorProto_DataType_INT32:
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
+        int32_t* int32_ptr;
+        int32_t* a_ptr;
+        if (this.is_raw_data_)  {
+          int32_ptr = (int32_t*) raw_data_;
+        } else {
+          int32_ptr = (int32_t*) &this.int32_data_[0];
+        }
+        if (a.is_raw_data())  {
+          a_ptr = (int32_t*) a.raw();
+        } else {
+          a_ptr = (int32_t*) &a.int32s()[0];
+        }
+        for (int i = 0; i < this.int32_data_.size(); i++) {
+          int32_ptr[i] += a_ptr[i];
+        }
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_INT64: {
+        int64_t* int64_ptr;
+        int64_t* a_ptr;
+        if (this.is_raw_data_)  {
+          int64_ptr = (int64_t*) raw_data_;
+        } else {
+          int64_ptr = (int64_t*) &this.int64_data_[0];
+        }
+        if (a.is_raw_data())  {
+          a_ptr = (int64_t*) a.raw();
+        } else {
+          a_ptr = (int64_t*) &a.int64s()[0];
+        }
+        for (int i = 0; i < this.int64_data_.size(); i++) {
+          int64_ptr[i] += a_ptr[i];
+        }
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {
+        uint64_t* uint64_ptr;
+        uint64_t* a_ptr;
+        if (this.is_raw_data_)  {
+          uint64_ptr = (uint64_t*) raw_data_;
+        } else {
+          uint64_ptr = (uint64_t*) &this.uint64_data_[0];
+        }
+        if (a.is_raw_data())  {
+          a_ptr = (uint64_t*) a.raw();
+        } else {
+          a_ptr = (uint64_t*) &a.uint64s()[0];
+        }
+        for (int i = 0; i < this.uint64_data_.size(); i++) {
+          uint64_ptr[i] += a_ptr[i];
+        }
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
+        double* double_ptr;
+        double* a_ptr;
+        if (this.is_raw_data_)  {
+          double_ptr = (double*) raw_data_;
+        } else {
+          double_ptr = (double*) &this.double_data_[0];
+        }
+        if (a.is_raw_data())  {
+          a_ptr = (double*) a.raw();
+        } else {
+          a_ptr = (double*) &a.doubles()[0];
+        }
+        for (int i = 0; i < this.double_data_.size(); i++) {
+          double_ptr[i] += a_ptr[i];
+        }
+        break;
+      }
+      default:
+        throw("Addition not supported for this data type");
+  }
 };
 
 } // namespace ONNX_NAMESPACE
