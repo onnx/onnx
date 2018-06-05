@@ -155,7 +155,7 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-    def _retry_excute(func, times=3, **kwargs):  # type: (int, function(), **Any) -> Any
+    def _retry_excute(self, func, times=3, **kwargs):  # type: (int, function(), **Any) -> Any
         for i in range(times):
             try:
                 return func(**kwargs)
@@ -164,7 +164,7 @@ class Runner(object):
                 if i == times - 1:
                     raise
 
-    def _download_model( model_test, model_dir):  # type: (**Any) -> None
+    def _download_model(self, model_test, model_dir):  # type: (**Any) -> None
         try:
             # On Windows, NamedTemporaryFile can not be opened for a
             # second time
