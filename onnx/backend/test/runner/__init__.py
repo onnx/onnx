@@ -205,7 +205,7 @@ class Runner(object):
             retry_times = 3
             try:
                 self._retry_excute(self._download_model,
-                                times=retry_times,
+                                retry_times,
                                 model_test=model_test,
                                 model_dir=model_dir)
             except:
