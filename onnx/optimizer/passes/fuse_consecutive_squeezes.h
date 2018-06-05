@@ -3,6 +3,13 @@
 
 #pragma once
 
+// Before:
+//   X is a tensor with shape=[1, 1, 2, 3, 1, 5, 1]
+//   Y = Squeeze(X, axes=[1, 4]) -> shape=[1, 2, 3, 5, 1]
+//   Z = Squeeze(Y, axes=[0, 4]) -> shape=[2, 3, 5]
+// After:
+//   Z = Squeeze(X, axes=[0, 1, 4, 6])
+
 #include "onnx/optimizer/passes/optimize_pass.h"
 
 namespace ONNX_NAMESPACE {
@@ -19,12 +26,14 @@ struct FuseConsecutiveSqueezes final : public OptimizePass {
       const std::vector<int64_t>& t2) {
     std::vector<int64_t> ret;
     ret.reserve(t1.size() + t2.size());
-    for (auto i : t1) {
-      ret.push_back(i);
+    std::copy(t1.begin(), t1.end(), std::back_inserter(ret));
+    for (int64_t i : t2) {
+      auto iter =
+          std::find_if(t1.begin(), t1.end(), [i](int x) { return x > i; });
+      size_t zone = std::distance(t1.begin(), iter);
+      ret.push_back(i + zone);
     }
-    for (auto i : t2) {
-      ret.push_back(i + t1.size());
-    }
+    std::sort(ret.begin(), ret.end());
     return ret;
   }
 
