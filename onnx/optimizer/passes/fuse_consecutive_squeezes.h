@@ -20,18 +20,35 @@ struct FuseConsecutiveSqueezes final : public OptimizePass {
       : OptimizePass("fuse_consecutive_squeezes", API_TYPE::IR) {}
 
   // returns a vector `ret` such that squeeze by `ret` is equivalent
-  // to squeeze by `t1` and then by `t2`
+  // to squeeze by `axes_1` and then by `axes_2`
   std::vector<int64_t> compose_squeezes(
-      const std::vector<int64_t>& t1,
-      const std::vector<int64_t>& t2) {
+      const std::vector<int64_t>& axes_1,
+      const std::vector<int64_t>& axes_2) {
     std::vector<int64_t> ret;
-    ret.reserve(t1.size() + t2.size());
-    std::copy(t1.begin(), t1.end(), std::back_inserter(ret));
-    for (int64_t i : t2) {
-      auto iter =
-          std::find_if(t1.begin(), t1.end(), [i](int64_t x) { return x > i; });
-      size_t zone = std::distance(t1.begin(), iter);
-      ret.push_back(i + zone);
+    ret.reserve(axes_1.size() + axes_2.size());
+
+    std::vector<int64_t> sorted_axes_1;
+    std::copy(axes_1.begin(), axes_1.end(), std::back_inserter(sorted_axes_1));
+    std::sort(sorted_axes_1.begin(), sorted_axes_1.end());
+    std::copy(
+        sorted_axes_1.begin(), sorted_axes_1.end(), std::back_inserter(ret));
+
+    for (int64_t i : axes_2) {
+      for (auto iter = sorted_axes_1.begin(); iter != sorted_axes_1.end();
+           ++iter) {
+        // if current axis 1 - prev_num is bigger than axis 2
+        // put axis 2 + prev_num as new axis
+        int64_t prev_num = std::distance(sorted_axes_1.begin(), iter);
+        if (*iter - prev_num > i) {
+          ret.push_back(i + prev_num);
+          break;
+        }
+        // if no current axis 1 - prev_num is bigger than axis 2
+        // put axis 2 + prev_num + 1 as new axis
+        if (std::next(iter) == sorted_axes_1.end()) {
+          ret.push_back(i + prev_num + 1);
+        }
+      }
     }
     std::sort(ret.begin(), ret.end());
     return ret;
