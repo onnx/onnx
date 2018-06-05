@@ -861,6 +861,20 @@ public:
   const std::vector<std::string>& initializer_names() {
     return initializer_names_;
   }
+  const int64_t get_initializer_index(Value* v) {
+    std::string name;
+    if (v.has_unique_name())  {
+      name = v.uniqueName();
+    } else {
+      return -1;
+    }
+    for (int i = 0; i < initializer_names_.size(); i++) {
+      if (strcmp(initializer_names_[i], name) == 0) {
+        return i;
+      }
+    }
+    return -1;
+  }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
   }
