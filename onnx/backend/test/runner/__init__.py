@@ -181,7 +181,7 @@ class Runner(object):
             # -1 =>  download succeed
             retry_times = 3
 
-            while retry_times:
+            while retry_times > 0:
                 try:
                     download_file.close()
                     print('Start downloading model {} from {}'.format(
