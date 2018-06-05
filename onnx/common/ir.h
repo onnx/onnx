@@ -1056,12 +1056,12 @@ inline bool Node::isBefore(Node* n) {
     // Bail out early.
     return false;
   }
-  // return true if node is Param or Constant (in initializers)
-  if (kind_ == kParam || kind_ == kConstant) {
+  // return true if node is Param (in initializers)
+  if (kind_ == kParam) {
     return true;
   }
-  // return false if target node is Param or Constant (in initializers)
-  if (n->kind() == kParam || n->kind() == kConstant) {
+  // return false if target node is Param (in initializers)
+  if (n->kind() == kParam) {
     return false;
   }
   ONNX_ASSERT(n->inGraphList());
