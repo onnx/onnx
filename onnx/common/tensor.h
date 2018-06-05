@@ -145,7 +145,7 @@ public:
   }
 
   //Element wise scaling of tensor
-  void scale(float s) {
+  void scale(float s, int64_t channel) {
     switch(this.elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
@@ -197,58 +197,11 @@ public:
       }
   }
 
-  void scale(int s) {
-    switch(this.elem_type_) {
 
-    case ONNX_NAMESPACE::TensorProto_DataType_INT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT16:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
-      int32_t* int32_ptr;
-      if (this.is_raw_data_)  {
-        int32_ptr = (int32_t*) raw_data_;
-      } else {
-        int32_ptr = (int32_t*) &this.int32_data_[0];
-      }
-      for (int i = 0; i < this.int32_data_.size(); i++) {
-        int32_ptr[i] *= s;
-      }
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_INT64: {
-      int64_t* int64_ptr;
-      if (this.is_raw_data_)  {
-        int64_ptr = (int64_t*) raw_data_;
-      } else {
-        int64_ptr = (int64_t*) &this.int64_data_[0];
-      }
-      for (int i = 0; i < this.int64_data_.size(); i++) {
-        int64_ptr[i] *= s;
-      }
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {
-      uint64_t* uint64_ptr;
-      if (this.is_raw_data_)  {
-        uint64_ptr = (uint64_t*) raw_data_;
-      } else {
-        uint64_ptr = (uint64_t*) &this.uint64_data_[0];
-      }
-      for (int i = 0; i < this.uint64_data_.size(); i++) {
-        uint64_ptr[i] *= s;
-      }
-      break;
-      break;
-    }
-    default:
-      throw("Incompatible data type: INT8, INT16, INT32, UINT8, UINT16, INT64, UINT32, and UINT64 supported");
-    }
-  }
-
-  //updates this to this + a
-  void add(Tensor a)  {
+  //applies function f element-wise to this and a, storing result in this
+  //WARNING: does not type check, so ensure that the tensors have the correct
+  //types before using
+  void apply_binary_function(void (*f)(void*, void*), Tensor a)  {
     if (a.elem_type() != this.elem_type_) {
       throw("Type of tensors do not match");
     }
@@ -272,7 +225,7 @@ public:
           a_ptr = (float*) &a.floats()[0];
         }
         for (int i = 0; i < this.float_data_.size(); i++) {
-          float_ptr[i] += a_ptr[i];
+          f((void*)(float_ptr + i), (void*)(a_ptr + i));
         }
         break;
       }
@@ -296,7 +249,7 @@ public:
           a_ptr = (int32_t*) &a.int32s()[0];
         }
         for (int i = 0; i < this.int32_data_.size(); i++) {
-          int32_ptr[i] += a_ptr[i];
+          f((void*)(int32_ptr + i), (void*)(a_ptr + i));
         }
         break;
       }
@@ -314,7 +267,7 @@ public:
           a_ptr = (int64_t*) &a.int64s()[0];
         }
         for (int i = 0; i < this.int64_data_.size(); i++) {
-          int64_ptr[i] += a_ptr[i];
+          f((void*)(int64_ptr + i), (void*)(a_ptr + i));
         }
         break;
       }
@@ -333,7 +286,7 @@ public:
           a_ptr = (uint64_t*) &a.uint64s()[0];
         }
         for (int i = 0; i < this.uint64_data_.size(); i++) {
-          uint64_ptr[i] += a_ptr[i];
+          f((void*)(uint64_ptr + i), (void*)(a_ptr + i));
         }
         break;
       }
@@ -352,7 +305,7 @@ public:
           a_ptr = (double*) &a.doubles()[0];
         }
         for (int i = 0; i < this.double_data_.size(); i++) {
-          double_ptr[i] += a_ptr[i];
+          f((void*)(double_ptr + i), (void*)(a_ptr + i));
         }
         break;
       }
