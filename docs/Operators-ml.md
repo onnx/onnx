@@ -38,7 +38,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>X</tt> : T</dt>
 <dd>Data to be selected</dd>
 <dt><tt>Y</tt> : tensor(int64)</dt>
-<dd>The indices, which must be at least one and no more than the number of dimensions of 'X.'</dd>
+<dd>The indices, which must be at least one and no more than the number of dimensions of 'X'.</dd>
 </dl>
 
 #### Outputs
@@ -52,13 +52,13 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32), tensor(string)</dt>
-<dd></dd>
+<dd>The input must be a tensor of a numeric type or string. The output will be of the same tensor type.</dd>
 </dl>
 
 
 ### <a name="ai.onnx.ml.Binarizer"></a><a name="ai.onnx.ml.binarizer">**ai.onnx.ml.Binarizer**</a>
 
-  Replaces the values of the input tensor by either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
+  Maps the values of the input tensor by either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
 
 #### Version
 
@@ -68,7 +68,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>threshold</tt> : float</dt>
-<dd>Values greater than this are replaced by 1, others by 0.<br>The default threshold is 0.0.</dd>
+<dd>Values greater than this are mapped to 1, others to 0.<br>The default threshold is 0.0.</dd>
 </dl>
 
 #### Inputs
@@ -89,7 +89,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>.</dd>
+<dd>The input must be a tensor of a numeric type. The output will be of the same tensor type.</dd>
 </dl>
 
 
@@ -132,9 +132,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : map(int64, string), map(int64, float)</dt>
-<dd></dd>
+<dd>The input must be an integer map to either string or float.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(float), tensor(int64)</dt>
-<dd></dd>
+<dd>The output is a tensor of string, float, or integer.</dd>
 </dl>
 
 
@@ -184,9 +184,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
-<dd></dd>
+<dd>The input must be a tensor of strings or integers.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd></dd>
+<dd>The output is a tensor of strings or integers.</dd>
 </dl>
 
 
@@ -237,9 +237,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : map(string, int64), map(int64, string), map(int64, float), map(int64, double), map(string, float), map(string, double)</dt>
-<dd></dd>
+<dd>The input must be a map from strings or integers to either strings or a numeric type. The key and value types cannot be the same.</dd>
 <dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double), tensor(string)</dt>
-<dd></dd>
+<dd>The output will be a tensor of the value type of the input map.</dd>
 </dl>
 
 
@@ -278,7 +278,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
-<dd></dd>
+<dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
 
@@ -328,7 +328,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input type must be a tensor of a numeric type. The output type will be of the same tensor type.</dd>
 </dl>
 
 
@@ -378,9 +378,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
-<dd></dd>
+<dd>The input type must be a tensor of integers or strings.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd></dd>
+<dd>The output type will be a tensor of strings or integers.</dd>
 </dl>
 
 
@@ -429,9 +429,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input must be a tensor of a numeric type.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd></dd>
+<dd>The output will be a tensor of strings or integers.</dd>
 </dl>
 
 
@@ -479,7 +479,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
 
@@ -522,7 +522,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
 
@@ -570,7 +570,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(string), tensor(int64), tensor(int32), tensor(float), tensor(double)</dt>
-<dd></dd>
+<dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
 
@@ -629,9 +629,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input must be a tensor of a numeric type.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd></dd>
+<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.</dd>
 </dl>
 
 
@@ -682,7 +682,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
 
@@ -721,7 +721,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input must be a tensor of a numeric type.</dd>
 </dl>
 
 
@@ -800,9 +800,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input type must be a tensor of a numeric type.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd></dd>
+<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.</dd>
 </dl>
 
 
@@ -839,11 +839,11 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>nodes_hitrates</tt> : list of floats</dt>
 <dd>Popularity of each node, used for performance and may be omitted.</dd>
 <dt><tt>nodes_missing_value_tracks_true</tt> : list of ints</dt>
-<dd>For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.</dd>
+<dd>For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.</dd>
 <dt><tt>nodes_modes</tt> : list of strings</dt>
 <dd>The node kind, that is, the comparison to make at the node. There is no comparison to make at a leaf node.<br>One of 'BRANCH_LEQ', 'BRANCH_LT', 'BRANCH_GTE', 'BRANCH_GT', 'BRANCH_EQ', 'BRANCH_NEQ', 'LEAF'</dd>
 <dt><tt>nodes_nodeids</tt> : list of ints</dt>
-<dd>Node id for each node. Ids ids must restart at zero for each tree and increase sequentially.</dd>
+<dd>Node id for each node. Node ids must restart at zero for each tree and increase sequentially.</dd>
 <dt><tt>nodes_treeids</tt> : list of ints</dt>
 <dd>Tree id for each node.</dd>
 <dt><tt>nodes_truenodeids</tt> : list of ints</dt>
@@ -880,14 +880,14 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd></dd>
+<dd>The input type must be a tensor of a numeric type.</dd>
 </dl>
 
 
 ### <a name="ai.onnx.ml.ZipMap"></a><a name="ai.onnx.ml.zipmap">**ai.onnx.ml.ZipMap**</a>
 
   Creates a map from the input and the attributes.<br>
-      The values are provides by the input tensor, while the keys are specified by the attributes.
+      The values are provided by the input tensor, while the keys are specified by the attributes.
       Must provide keys in either classlabels_strings or classlabels_int64s (but not both).<br>
       The columns of the tensor correspond one-by-one to the keys specified by the attributes. There must be as many columns as keys.<br>
 
@@ -922,7 +922,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : seq(map(string, float)), seq(map(int64, float))</dt>
-<dd></dd>
+<dd>The output will be a sequence of string or integer maps to float.</dd>
 </dl>
 
 

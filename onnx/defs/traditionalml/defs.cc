@@ -18,7 +18,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "Y",
-            "The indices, which must be at least one and no more than the number of dimensions of 'X.'",
+            "The indices, which must be at least one and no more than the number of dimensions of 'X'.",
             "tensor(int64)")
         .Output(0, "Z", "Selected output data as an array", "T")
         .TypeConstraint(
@@ -28,10 +28,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(int64)",
              "tensor(int32)",
              "tensor(string)"},
-            ""));
+            "The input must be a tensor of a numeric type or string. The output will be of the same tensor type."));
 
 static const char* Binarizer_ver1_doc = R"DOC(
-    Replaces the values of the input tensor by either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
+    Maps the values of the input tensor by either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
@@ -47,10 +47,10 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            ".")
+            "The input must be a tensor of a numeric type. The output will be of the same tensor type.")
         .Attr(
             "threshold",
-            "Values greater than this are replaced by 1, others by 0.<br>The default threshold is 0.0.",
+            "Values greater than this are mapped to 1, others to 0.<br>The default threshold is 0.0.",
             AttributeProto::FLOAT,
             0.f));
 
@@ -70,11 +70,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"map(int64, string)", "map(int64, float)"},
-            "")
+            "The input must be an integer map to either string or float.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(float)", "tensor(int64)"},
-            "")
+            "The output is a tensor of string, float, or integer.")
         .Attr(
             "cast_to",
             "A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'; the default is 'TO_FLOAT'",
@@ -132,11 +132,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(string)", "tensor(int64)"},
-            "")
+            "The input must be a tensor of strings or integers.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "")
+            "The output is a tensor of strings or integers.")
         .Attr(
             "cats_strings",
             "The strings of the map. This sequence must be the same length as the 'cats_int64s' sequence",
@@ -197,14 +197,14 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "map(int64, double)",
              "map(string, float)",
              "map(string, double)"},
-            "")
+            "The input must be a map from strings or integers to either strings or a numeric type. The key and value types cannot be the same.")
         .TypeConstraint(
             "T2",
             {"tensor(int64)",
              "tensor(float)",
              "tensor(double)",
              "tensor(string)"},
-            "")
+            "The output will be a tensor of the value type of the input map.")
         .Attr(
             "string_vocabulary",
             "A string vocabulary array.<br>One and only one of the vocabularies must be defined.",
@@ -248,7 +248,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(int64)",
              "tensor(float)",
              "tensor(double)"},
-            "")
+            "The input type must be a tensor of a numeric type.")
         .Attr(
             "inputdimensions",
             "The size of each input in the input list",
@@ -279,7 +279,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input type must be a tensor of a numeric type. The output type will be of the same tensor type.")
         .Attr(
             "imputed_value_floats",
             "Value(s) to change to",
@@ -324,11 +324,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(string)", "tensor(int64)"},
-            "")
+            "The input type must be a tensor of integers or strings.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "")
+            "The output type will be a tensor of strings or integers.")
         .Attr(
             "classes_strings",
             "A list of labels.",
@@ -376,11 +376,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "")
+            "The output will be a tensor of strings or integers.")
         .Attr("coefficients", "A collection of weights of the model(s).", AttributeProto::FLOATS)
         .Attr(
             "intercepts",
@@ -446,7 +446,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input must be a tensor of a numeric type.")
         .Attr(
             "post_transform",
             "Indicates the transform to apply to the regression output vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'",
@@ -491,7 +491,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input must be a tensor of a numeric type.")
         .Attr(
             "norm",
             "One of 'MAX,' 'L1,' 'L2'",
@@ -523,7 +523,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(int32)",
              "tensor(float)",
              "tensor(double)"},
-            "")
+            "The input must be a tensor of a numeric type.")
         .Attr(
             "cats_int64s",
             "List of categories, ints.<br>One and only one of the 'cats_*' attributes must be defined.",
@@ -557,7 +557,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input must be a tensor of a numeric type.")
         .Attr(
             "offset",
             "First, offset by this. Can be length of features or length 1, in which case it applies to all features",
@@ -591,11 +591,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "")
+            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.")
         .Attr(
             "kernel_type",
             "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'",
@@ -669,7 +669,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input type must be a tensor of a numeric type.")
         .Attr(
             "kernel_type",
             "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'",
@@ -737,11 +737,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input type must be a tensor of a numeric type.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "")
+            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.")
         .Attr(
             "nodes_treeids",
             "Tree id for each node.",
@@ -862,7 +862,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "")
+            "The input type must be a tensor of a numeric type.")
         .Attr(
             "nodes_treeids",
             "Tree id for each node.",
@@ -870,7 +870,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "nodes_nodeids",
-            "Node id for each node. Ids ids must restart at zero for each tree and increase sequentially.",
+            "Node id for each node. Node ids must restart at zero for each tree and increase sequentially.",
             AttributeProto::INTS,
             OPTIONAL)
         .Attr(
@@ -905,7 +905,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "nodes_missing_value_tracks_true",
-            "For each node, define what to do in the presence of a missing value: if a value is missing (NaN), use the 'true' or 'false' branch based on the value in this array.<br>This attribute may be left undefined, and the defalt value is false (0) for all nodes.",
+            "For each node, define what to do in the presence of a NaN: use the 'true' (if the attribute value is 1) or 'false' (if the attribute value is 0) branch based on the value in this array.<br>This attribute may be left undefined and the defalt value is false (0) for all nodes.",
             AttributeProto::INTS,
             OPTIONAL)
         .Attr(
@@ -951,7 +951,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
 static const char* ZipMap_ver1_doc = R"DOC(
     Creates a map from the input and the attributes.<br>
-    The values are provides by the input tensor, while the keys are specified by the attributes.
+    The values are provided by the input tensor, while the keys are specified by the attributes.
     Must provide keys in either classlabels_strings or classlabels_int64s (but not both).<br>
     The columns of the tensor correspond one-by-one to the keys specified by the attributes. There must be as many columns as keys.<br>
 )DOC";
@@ -966,7 +966,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             {"seq(map(string, float))", "seq(map(int64, float))"},
-            "")
+            "The output will be a sequence of string or integer maps to float.")
         .Attr(
             "classlabels_strings",
             "The keys when using string keys.<br>One and only one of the 'classlabels_*' attributes must be defined.",
