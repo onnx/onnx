@@ -318,6 +318,7 @@ if(ONNX_BUILD_BENCHMARKS)
   endif()
 
   add_executable(protobuf-bench tools/protobuf-bench.cc)
+  target_include_directories(protobuf-bench PUBLIC "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
