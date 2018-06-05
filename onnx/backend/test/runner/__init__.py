@@ -155,10 +155,10 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-    def _retry_excute(func, times=3, *args, **kwargs):  # type: (int, function(), *Any, **Any) -> Any
+    def _retry_excute(func, times=3, **kwargs):  # type: (int, function(), **Any) -> Any
         for i in range(times):
             try:
-                return func(*args, **kwargs)
+                return func(**kwargs)
             except Exception as e:
                 print('{} times tried'.format(i))
                 if i == times - 1:
