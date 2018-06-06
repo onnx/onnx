@@ -1049,6 +1049,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* Expand_ver8_doc = R"DOC(
 Expand the input tensor following the given shape.
 )DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
 	Expand,
 	8,

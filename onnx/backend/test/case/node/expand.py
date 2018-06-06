@@ -9,10 +9,11 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 class Expand(Base):
 
     @staticmethod
-    def export():  #type: () -> None
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Expand',
             inputs=['data', 'new_shape'],
@@ -26,7 +27,7 @@ class Expand(Base):
         #print(data)
         #[[1.], [2.], [3.]]
 
-        expanded = np.reshape(np.array([map(lambda x: np.concatenate([x,x,x,x]), data)]), new_shape)
+        expanded = np.reshape(np.array([map(lambda x: np.concatenate([x, x, x, x]), data)]), new_shape)
         #print(expanded)
         #[[1., 1., 1., 1.],
         # [2., 2., 2., 2.],
