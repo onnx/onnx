@@ -1046,4 +1046,27 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* Expand_ver8_doc = R"DOC(
+Expand the input tensor following the given shape.
+)DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+	Expand,
+	8,
+	OpSchema()
+		.SetDoc(Expand_ver8_doc)
+		.Input(0, "input", "Input tensor", "T")
+		.Input(1, "shape", "Shape of output tensor", "T")
+		.Output(0, "output", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float)",
+             "tensor(int32)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int64)",
+             "tensor(float16)",
+             "tensor(double)"},
+            "Constrain input and output types to signed numeric tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 } // namespace ONNX_NAMESPACE
