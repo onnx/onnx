@@ -831,6 +831,7 @@ public:
     has_doc_string_ = true;
     doc_string_ = std::move(doc_string);
   }
+
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
@@ -862,18 +863,17 @@ public:
     return initializer_names_;
   }
   const int64_t get_initializer_index(Value* v) {
-    std::string name;
-    if (v.has_unique_name())  {
-      name = v.uniqueName();
-    } else {
-      return -1;
-    }
+    std::string name = v.uniqueName();
     for (int i = 0; i < initializer_names_.size(); i++) {
       if (strcmp(initializer_names_[i], name) == 0) {
         return i;
       }
     }
     return -1;
+  }
+  Tensor get(int64_t index) {
+    ONNX_ASSERT(index >= 0 && index < initializers_.size());
+    return initializers_[i];
   }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
@@ -979,6 +979,31 @@ public:
     ONNX_ASSERT(n->graph_ == this && !n->inGraphList());
     n->insertAfter(output_);
     return n;
+  }
+
+  Value* addInitializerAndInput(Tensor &initializer, std::string name) {
+    std::vector<Dimension> dim_sizes;
+    for (auto v : initializer.sizes()) {
+      dim_sizes.push_back(v);
+    }
+    Value* new_init = addInput()
+    new_init->setUniqueName(name);
+    new_init->setSizes(dim_sizes);
+    new_init->setElemType(initializer.elem_type());
+    addInitializer(initializer, name);
+    return new_init;
+  }
+
+  Value* addInitializerAndInput(Tensor &initializer) {
+    std::vector<Dimension> dim_sizes;
+    for (auto v : initializer.sizes()) {
+      dim_sizes.push_back(v);
+    }
+    Value* new_init = addInput()
+    new_init->setSizes(dim_sizes);
+    new_init->setElemType(initializer.elem_type());
+    addInitializer(initializer, new_init->uniqueName());
+    return new_init;
   }
 
   ~Graph() {
