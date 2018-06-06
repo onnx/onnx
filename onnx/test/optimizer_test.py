@@ -276,14 +276,19 @@ class TestOptimizer(unittest.TestCase):
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 3, 3)),
              helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
             [helper.make_tensor_value_info("B", TensorProto.FLOAT, (1, 16, 3, 3))],
-            value_info=[
-                helper.make_tensor_value_info("A", TensorProto.FLOAT, (16, 1, 1)),
-            ]
         )
         optimized_model = self._optimized(graph, ["extract_constant_to_initializer"])
-        assert len(list(optimized_model.graph.initializer)) == 1
-        assert len(list(optimized_model.graph.node)) == 2
-        assert "A" in [i.name for i in optimized_model.graph.initializer]
+        self.assertEqual(
+            set(vi.name for vi in optimized_model.graph.input),
+            {'X', 'Y', 'A'})
+
+        self.assertEqual(len(optimized_model.graph.initializer), 1)
+        init = optimized_model.graph.initializer[0]
+        self.assertEqual(init.name, 'A')
+        self.assertEqual(init.dims, [16])
+        self.assertEqual(init.data_type, TensorProto.FLOAT)
+
+        self.assertEqual([n.op_type for n in optimized_model.graph.node], ['Conv', 'Add'])
 
     def test_fuse_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2]),
