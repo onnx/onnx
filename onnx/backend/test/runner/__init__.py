@@ -155,7 +155,7 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-    def _retry_excute(self, func, times=3, **kwargs):  # type: (Callable[[...], Any], int, **Any) -> Any
+    def _retry_excute(self, func, times=3, **kwargs):  # type: (Callable[..., Any], int, **Any) -> Any
         for i in range(times):
             try:
                 return func(**kwargs)
