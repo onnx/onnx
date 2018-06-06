@@ -209,9 +209,7 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            retry_times = 3
-            self._download_model(self._download_model,
-                            retry_times,
+            self._download_model(
                             model_test=model_test,
                             model_dir=model_dir,
                             models_dir=models_dir)
