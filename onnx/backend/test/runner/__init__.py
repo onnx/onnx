@@ -155,22 +155,29 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-    def _retry_excute(self, func, times=3, **kwargs):  # type: (Callable[..., Any], int, **Any) -> Any
-        for i in range(times):
-            try:
-                return func(**kwargs)
-            except:
-                print('{} times tried'.format(i))
-                if i == times - 1:
-                    raise
+    @staticmethod
+    def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callable[..., Any]]
+        assert times >= 1
+        def wrapper(func):  #type: (Callable[..., Any]) -> Callable[..., Any]
+            @functools.wraps(func)
+            def wrapped(*args, **kwargs): #type: (*Any, **Any) -> Any
+                for i in range(times):
+                    try:
+                        return func(*args, **kwargs);
+                    except Exception:
+                        print('{} times tried'.format(i))
+                        if i == times - 1:
+                            raise
+            return wrapped
+        return wrapper
 
+    @retry_excute(3)
     def _download_model(self, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
+        # On Windows, NamedTemporaryFile can not be opened for a
+        # second time
+        download_file = tempfile.NamedTemporaryFile(delete=False)
         try:
-            # On Windows, NamedTemporaryFile can not be opened for a
-            # second time
-            download_file = tempfile.NamedTemporaryFile(delete=False)
             download_file.close()
-
             print('Start downloading model {} from {}'.format(
                 model_test.model_name,
                 model_test.url))
@@ -203,14 +210,11 @@ class Runner(object):
             os.makedirs(model_dir)
 
             retry_times = 3
-            try:
-                self._retry_excute(self._download_model,
-                                retry_times,
-                                model_test=model_test,
-                                model_dir=model_dir,
-                                models_dir=models_dir)
-            except:
-                raise
+            self._download_model(self._download_model,
+                            retry_times,
+                            model_test=model_test,
+                            model_dir=model_dir,
+                            models_dir=models_dir)
         return model_dir
 
     def _add_test(self,
