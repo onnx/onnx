@@ -32,4 +32,4 @@ class Expand(Base):
         # [2., 2., 2., 2.],
         # [3., 3., 3., 3.]]
 
-        expect(node, inputs=[data, new_shape], outputs=[expanded], name='test_reduce_ndim_unchanged_example')
+        expect(node, inputs=[data, new_shape], outputs=[expanded], name='test_expand_ndim_unchanged_example')
