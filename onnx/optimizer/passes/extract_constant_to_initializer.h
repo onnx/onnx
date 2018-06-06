@@ -28,18 +28,18 @@ struct ExtractConstantToInitializer final : public OptimizePass {
       if (n->kind() == kConstant) {
         const auto name = n->output()->uniqueName();
         Tensor t = n->t(kvalue);
+
+        // add a new graph input
+        Value* input = graph.addInput();
+        input->setUniqueName(name);
+        input->setSizes({t.sizes().begin(), t.sizes().end()});
+        input->setElemType(t.elem_type());
+        n->output()->replaceAllUsesWith(input);
+
+        // copy the tensor to initializer
         t.setName(name);
-        std::vector<Dimension> tsizes;
-        for (auto v : t.sizes()) {
-          tsizes.push_back(v);
-        }
-        Node* param = graph.create(kParam, 1);
-        param->output()->setUniqueName(name);
-        param->output()->setSizes(tsizes);
-        param->output()->setElemType(t.elem_type());
         graph.addInitializer(std::move(t), name);
-        graph.addInput()->copyMetadata(param->output());
-        n->replaceAllUsesWith(param);
+
         it.destroyCurrent();
       }
     }
