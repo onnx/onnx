@@ -863,9 +863,9 @@ public:
     return initializer_names_;
   }
   const int64_t get_initializer_index(Value* v) {
-    std::string name = v.uniqueName();
+    std::string name = v->uniqueName();
     for (int i = 0; i < initializer_names_.size(); i++) {
-      if (strcmp(initializer_names_[i], name) == 0) {
+      if (initializer_names_[i].compare(name) == 0) {
         return i;
       }
     }
@@ -873,7 +873,7 @@ public:
   }
   Tensor get(int64_t index) {
     ONNX_ASSERT(index >= 0 && index < initializers_.size());
-    return initializers_[i];
+    return initializers_[index];
   }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
@@ -986,7 +986,7 @@ public:
     for (auto v : initializer.sizes()) {
       dim_sizes.push_back(v);
     }
-    Value* new_init = addInput()
+    Value* new_init = addInput();
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializer.elem_type());
@@ -999,12 +999,14 @@ public:
     for (auto v : initializer.sizes()) {
       dim_sizes.push_back(v);
     }
-    Value* new_init = addInput()
+    Value* new_init = addInput();
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializer.elem_type());
     addInitializer(initializer, new_init->uniqueName());
     return new_init;
   }
+
+  void erase_old_initializer(Value* v);
 
   ~Graph() {
     for (const Node * n : all_nodes)
@@ -1111,6 +1113,14 @@ inline void Node::destroy() {
   removeAllInputs();
   removeFromList();
   graph_->freeNode(this);
+}
+
+// Frees value and deletes corresponding initializer if no longer used
+inline void Graph::erase_old_initializer(Value* v) {
+  if (v->uses().size() == 0) {
+    eraseInitializer(v->uniqueName());
+    freeValue(v);
+  }
 }
 
 /************* All nodes not required to be defined before Graph **************/

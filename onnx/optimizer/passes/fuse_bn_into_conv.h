@@ -15,55 +15,48 @@ struct FuseBNIntoConv final : public OptimizePass {
   }
 
   template<typename T>
-  void add_nums(void* x, void* y) {
+  static void add_nums(void* x, const void* y) {
     T* x_cast = (T*) x;
-    T* y_cast = (T*) y;
+    const T* y_cast = (const T*) y;
     *x_cast = *x_cast + *y_cast;
   }
 
   template<typename T>
-  void sub_nums(void* x, void* y) {
+  static void sub_nums(void* x, const void* y) {
     T* x_cast = (T*) x;
-    T* y_cast = (T*) y;
+    const T* y_cast = (const T*) y;
     *x_cast = *x_cast - *y_cast;
   }
 
   template<typename T>
-  void mult_nums(void* x, void* y) {
+  static void mult_nums(void* x, const void* y) {
     T* x_cast = (T*) x;
-    T* y_cast = (T*) y;
+    const T* y_cast = (const T*) y;
     *x_cast = *x_cast * *y_cast;
   }
 
   template<typename T>
-  void divide_nums(void* x, void* y) {
+  static void divide_nums(void* x, const void* y) {
     T* x_cast = (T*) x;
-    T* y_cast = (T*) y;
+    const T* y_cast = (const T*) y;
     *x_cast = *x_cast / *y_cast;
   }
   template<typename T>
-  void sqrt_num(void* x) {
+  static void sqrt_num(void* x) {
     T* x_cast = (T*) x;
     *x_cast = (T) sqrt((double) *x_cast);
-  }
-
-  void handle_old_initializer(Value* v, Graph& graph) {
-    if (v.uses().size() == 0) {
-      graph.eraseInitializer(v->uniqueName());
-      graph.freeValue(v);
-    }
   }
 
   void replace_inputs(Tensor& W, Tensor& b, Node* conv, Graph& graph) {
     Value* new_W_value = graph.addInitializerAndInput(W);
     Value* old_W_value = conv->inputs()[1];
     conv->replaceInput(1, new_W_value);
-    handle_old_initializer(old_W_value, graph);
+    graph.erase_old_initializer(old_W_value);
     Value* new_b_value = graph.addInitializerAndInput(b);
     if (conv->inputs().size() == 3) {
       Value* old_b_value = conv->inputs()[2];
       conv->replaceInput(2, new_b_value);
-      handle_old_initializer(old_b_value, graph);
+      graph.erase_old_initializer(old_b_value);
     } else {
       conv->addInput(new_b_value);
     }
@@ -86,79 +79,77 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto var = graph.get(var_index);
     auto W = graph.get(W_index);
     auto epsilon = bn->f(kepsilon);
+    Tensor eps;
+    Tensor bc;
 
-    switch(s.elemType()) {
+    switch(s.elem_type()) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
-        Tensor eps;
         eps.sizes().push_back(bbn.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
-          eps.floats().push_back(epsilon)
+          eps.floats().push_back(epsilon);
         }
-        Tensor bc;
         bc.sizes().push_back(bbn.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
-          bc.floats().push_back(0f);
+          bc.floats().push_back(0.f);
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = get_initializer_index(conv_inputs[1]);
+          auto bc_index = graph.get_initializer_index(conv_inputs[1]);
           if (bc_index == -1) {
             return false;
           }
           bc = graph.get(bc_index);
         }
 
-        var.apply_binary_function(add_nums<float>, eps);
-        var.apply_unary_function(sqrt_num<float>)
-        s.apply_binary_function(divide_nums<float>, var);
+        var.apply_binary_function(&(add_nums<float>), eps);
+        var.apply_unary_function(&(sqrt_num<float>));
+        s.apply_binary_function(&(divide_nums<float>), var);
         if (!s.is_raw_data()) {
           char const * ptr = reinterpret_cast<char const *>(s.floats().data());
           std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
           s.set_raw_data(string_rep);
         }
         W.scale_by_channel(s);
-        bc.apply_binary_function(sub_nums<float>, m);
-        bc.apply_binary_function(mult_nums<float>, s);
-        bc.apply_binary_function(add_nums<float>)
+        bc.apply_binary_function(&(sub_nums<float>), m);
+        bc.apply_binary_function(&(mult_nums<float>), s);
+        bc.apply_binary_function(&(add_nums<float>), bbn);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       {
-        Tensor eps;
         eps.sizes().push_back(bbn.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
-          eps.doubles().push_back((double)epsilon)
+          eps.doubles().push_back((double)epsilon);
         }
-        Tensor bc;
         bc.sizes().push_back(bbn.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
-          bc.doubles().push_back(0);
+          bc.doubles().push_back(0.);
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = get_initializer_index(conv_inputs[1]);
+          auto bc_index = graph.get_initializer_index(conv_inputs[1]);
           if (bc_index == -1) {
             return false;
           }
           bc = graph.get(bc_index);
         }
 
-        var.apply_binary_function(add_nums<double>, eps);
-        var.apply_unary_function(sqrt_num<double>)
-        s.apply_binary_function(divide_nums<double>, var);
+        var.apply_binary_function(&(add_nums<double>), eps);
+        var.apply_unary_function(&(sqrt_num<double>));
+        s.apply_binary_function(&(divide_nums<double>), var);
         if (!s.is_raw_data()) {
           char const * ptr = reinterpret_cast<char const *>(s.doubles().data());
           std::string string_rep(ptr, ptr + sizeof(double) * s.doubles().size());
           s.set_raw_data(string_rep);
         }
         W.scale_by_channel(s);
-        bc.apply_binary_function(sub_nums<double>, m);
-        bc.apply_binary_function(mult_nums<double>, s);
-        bc.apply_binary_function(add_nums<double>);
+        bc.apply_binary_function(&(sub_nums<double>), m);
+        bc.apply_binary_function(&(mult_nums<double>), s);
+        bc.apply_binary_function(&(add_nums<double>), bbn);
         break;
       }
       default:
@@ -173,17 +164,17 @@ struct FuseBNIntoConv final : public OptimizePass {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
       DescendOnGraphAttributes(n, [this](Graph& g){fuse_bn_into_conv(g);});
-      if (n->kind() == kBatchNormalization && n->input()->node()->kind() == kConv) {
-        auto origInput = n->input();
+      if (n->kind() == kBatchNormalization && n->inputs()[0]->node()->kind() == kConv) {
+        auto origInput = n->inputs()[0];
         if (origInput->uses().size() > 1 ||
             n->outputs().size() > 1 ||
-            !modify_conv(n->input()->node(), n, g)) {
+            !modify_conv(n->input()->node(), n, graph)) {
           continue;
         }
         for (int i = 1; i <=4; i++)  {
-          handle_old_initializer(n->inputs()[i], graph);
+          graph.erase_old_initializer(n->inputs()[i]);
         }
-        n->output().replaceAllUsesWith(origInput);
+        n->output()->replaceAllUsesWith(origInput);
         it.destroyCurrent();
       }
     }
