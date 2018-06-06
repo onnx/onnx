@@ -149,22 +149,23 @@ public:
   //s must have data as raw_data and has data type corresponding to this
   void scale_by_channel(Tensor& s) {
     ONNX_ASSERT(sizes_.size() > 2 && s.sizes().size() == 1 && s.sizes()[0] == sizes_[1]);
-    ONNX_ASSERT(s.is_raw_data() && s.elem_type() == this.elem_type_);
+    ONNX_ASSERT(s.is_raw_data() && s.elem_type() == elem_type_);
     int64_t dim_per_data = 1;
     for (int i = 2; i < sizes_.size(); i++) {
       dim_per_data *= sizes_[i];
     }
     int64_t feature_maps = sizes_[0];
     int64_t num_channels = sizes_[1];
-    switch(this.elem_type_) {
+    switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
         float* float_ptr;
-        float* channel_scales = s.raw();
-        if (this.is_raw_data_)  {
-          float_ptr = (float*) raw_data_;
+        const float* channel_scales = (const float*) s.raw().c_str();
+        if (is_raw_data_)  {
+          float_ptr = (float*) malloc(raw_data_.size());
+          memcpy(float_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          float_ptr = (float*) &this.float_data_[0];
+          float_ptr = (float*) &float_data_[0];
         }
         int counter = 0;
         for (int i = 0; i < feature_maps; i++)  {
@@ -174,15 +175,20 @@ public:
             }
           }
         }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) float_ptr, raw_data_.size());
+          free(float_ptr);
+        }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
         int32_t* int32_ptr;
-        int32_t* channel_scales = s.raw();
-        if (this.is_raw_data_)  {
-          int32_ptr = (int32_t*) raw_data_;
+        const int32_t* channel_scales = (const int32_t*) s.raw().c_str();
+        if (is_raw_data_)  {
+          int32_ptr = (int32_t*) malloc(raw_data_.size());
+          memcpy(int32_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          int32_ptr = (int32_t*) &this.int32_data_[0];
+          int32_ptr = (int32_t*) &int32_data_[0];
         }
         int counter = 0;
         for (int i = 0; i < feature_maps; i++)  {
@@ -192,16 +198,21 @@ public:
             }
           }
         }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) int32_ptr, raw_data_.size());
+          free(int32_ptr);
+        }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
         double* double_ptr;
-        double* channel_scales = s.raw();
-        if (this.is_raw_data_)  {
-          double_ptr = (double*) raw_data_;
+        const double* channel_scales = (const double*) s.raw().c_str();
+        if (is_raw_data_)  {
+          double_ptr = (double*) malloc(raw_data_.size());
+          memcpy(double_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          double_ptr = (double*) &this.double_data_[0];
+          double_ptr = (double*) &double_data_[0];
         }
         int counter = 0;
         for (int i = 0; i < feature_maps; i++)  {
@@ -210,6 +221,10 @@ public:
               double_ptr[counter++] *= channel_scales[j];
             }
           }
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) double_ptr, raw_data_.size());
+          free(double_ptr);
         }
         break;
       }
@@ -223,31 +238,36 @@ public:
   //applies function f element-wise to this and a, storing result in this
   //WARNING: does not type check, so ensure that the tensors have the correct
   //types before using
-  void apply_binary_function(void (*f)(void*, void*), Tensor& a)  {
-    if (a.elem_type() != this.elem_type_) {
+  void apply_binary_function(void (*f)(void*, const void*), Tensor& a)  {
+    if (a.elem_type() != elem_type_) {
       throw("Type of tensors do not match");
     }
-    if (a.sizes() != this.sizes_) {
+    if (a.sizes() != sizes_) {
       throw("Tensor shapes are incompatible");
     }
 
-    switch(this.elem_type_) {
+    switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
         float* float_ptr;
-        float* a_ptr;
-        if (this.is_raw_data_)  {
-          float_ptr = (float*) raw_data_;
+        const float* a_ptr;
+        if (is_raw_data_)  {
+          float_ptr = (float*) malloc(raw_data_.size());
+          memcpy(float_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          float_ptr = (float*) &this.float_data_[0];
+          float_ptr = (float*) &float_data_[0];
         }
         if (a.is_raw_data())  {
-          a_ptr = (float*) a.raw();
+          a_ptr = (const float*) a.raw().c_str();
         } else {
-          a_ptr = (float*) &a.floats()[0];
+          a_ptr = (const float*) &a.floats()[0];
         }
-        for (int i = 0; i < this.float_data_.size(); i++) {
-          f((void*)(float_ptr + i), (void*)(a_ptr + i));
+        for (int i = 0; i < float_data_.size(); i++) {
+          f((void*)(float_ptr + i), (const void*)(a_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) float_ptr, raw_data_.size());
+          free(float_ptr);
         }
         break;
       }
@@ -259,75 +279,95 @@ public:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
         int32_t* int32_ptr;
-        int32_t* a_ptr;
-        if (this.is_raw_data_)  {
-          int32_ptr = (int32_t*) raw_data_;
+        const int32_t* a_ptr;
+        if (is_raw_data_)  {
+          int32_ptr = (int32_t*) malloc(raw_data_.size());
+          memcpy(int32_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          int32_ptr = (int32_t*) &this.int32_data_[0];
+          int32_ptr = (int32_t*) &int32_data_[0];
         }
         if (a.is_raw_data())  {
-          a_ptr = (int32_t*) a.raw();
+          a_ptr = (const int32_t*) a.raw().c_str();
         } else {
-          a_ptr = (int32_t*) &a.int32s()[0];
+          a_ptr = (const int32_t*) &a.int32s()[0];
         }
-        for (int i = 0; i < this.int32_data_.size(); i++) {
-          f((void*)(int32_ptr + i), (void*)(a_ptr + i));
+        for (int i = 0; i < int32_data_.size(); i++) {
+          f((void*)(int32_ptr + i), (const void*)(a_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) int32_ptr, raw_data_.size());
+          free(int32_ptr);
         }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_INT64: {
         int64_t* int64_ptr;
-        int64_t* a_ptr;
-        if (this.is_raw_data_)  {
-          int64_ptr = (int64_t*) raw_data_;
+        const int64_t* a_ptr;
+        if (is_raw_data_)  {
+          int64_ptr = (int64_t*) malloc(raw_data_.size());
+          memcpy(int64_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          int64_ptr = (int64_t*) &this.int64_data_[0];
+          int64_ptr = (int64_t*) &int64_data_[0];
         }
         if (a.is_raw_data())  {
-          a_ptr = (int64_t*) a.raw();
+          a_ptr = (const int64_t*) a.raw().c_str();
         } else {
-          a_ptr = (int64_t*) &a.int64s()[0];
+          a_ptr = (const int64_t*) &a.int64s()[0];
         }
-        for (int i = 0; i < this.int64_data_.size(); i++) {
-          f((void*)(int64_ptr + i), (void*)(a_ptr + i));
+        for (int i = 0; i < int64_data_.size(); i++) {
+          f((void*)(int64_ptr + i), (const void*)(a_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) int64_ptr, raw_data_.size());
+          free(int64_ptr);
         }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {
         uint64_t* uint64_ptr;
-        uint64_t* a_ptr;
-        if (this.is_raw_data_)  {
-          uint64_ptr = (uint64_t*) raw_data_;
+        const uint64_t* a_ptr;
+        if (is_raw_data_)  {
+          uint64_ptr = (uint64_t*) malloc(raw_data_.size());
+          memcpy(uint64_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          uint64_ptr = (uint64_t*) &this.uint64_data_[0];
+          uint64_ptr = (uint64_t*) &uint64_data_[0];
         }
         if (a.is_raw_data())  {
-          a_ptr = (uint64_t*) a.raw();
+          a_ptr = (const uint64_t*) a.raw().c_str();
         } else {
-          a_ptr = (uint64_t*) &a.uint64s()[0];
+          a_ptr = (const uint64_t*) &a.uint64s()[0];
         }
-        for (int i = 0; i < this.uint64_data_.size(); i++) {
-          f((void*)(uint64_ptr + i), (void*)(a_ptr + i));
+        for (int i = 0; i < uint64_data_.size(); i++) {
+          f((void*)(uint64_ptr + i), (const void*)(a_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) uint64_ptr, raw_data_.size());
+          free(uint64_ptr);
         }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
         double* double_ptr;
-        double* a_ptr;
-        if (this.is_raw_data_)  {
-          double_ptr = (double*) raw_data_;
+        const double* a_ptr;
+        if (is_raw_data_)  {
+          double_ptr = (double*) malloc(raw_data_.size());
+          memcpy(double_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          double_ptr = (double*) &this.double_data_[0];
+          double_ptr = (double*) &double_data_[0];
         }
         if (a.is_raw_data())  {
-          a_ptr = (double*) a.raw();
+          a_ptr = (const double*) a.raw().c_str();
         } else {
-          a_ptr = (double*) &a.doubles()[0];
+          a_ptr = (const double*) &a.doubles()[0];
         }
-        for (int i = 0; i < this.double_data_.size(); i++) {
-          f((void*)(double_ptr + i), (void*)(a_ptr + i));
+        for (int i = 0; i < double_data_.size(); i++) {
+          f((void*)(double_ptr + i), (const void*)(a_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) double_ptr, raw_data_.size());
+          free(double_ptr);
         }
         break;
       }
@@ -340,17 +380,22 @@ public:
   //WARNING: does not type check, so ensure that this tensor has the correct
   //type before using
   void apply_unary_function(void (*f)(void*))  {
-    switch(this.elem_type_) {
+    switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
         float* float_ptr;
-        if (this.is_raw_data_)  {
-          float_ptr = (float*) raw_data_;
+        if (is_raw_data_)  {
+          float_ptr = (float*) malloc(raw_data_.size());
+          memcpy(float_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          float_ptr = (float*) &this.float_data_[0];
+          float_ptr = (float*) &float_data_[0];
         }
-        for (int i = 0; i < this.float_data_.size(); i++) {
+        for (int i = 0; i < float_data_.size(); i++) {
           f((void*)(float_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) float_ptr, raw_data_.size());
+          free(float_ptr);
         }
         break;
       }
@@ -362,51 +407,71 @@ public:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
         int32_t* int32_ptr;
-        if (this.is_raw_data_)  {
-          int32_ptr = (int32_t*) raw_data_;
+        if (is_raw_data_)  {
+          int32_ptr = (int32_t*) malloc(raw_data_.size());
+          memcpy(int32_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          int32_ptr = (int32_t*) &this.int32_data_[0];
+          int32_ptr = (int32_t*) &int32_data_[0];
         }
-        for (int i = 0; i < this.int32_data_.size(); i++) {
+        for (int i = 0; i < int32_data_.size(); i++) {
           f((void*)(int32_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) int32_ptr, raw_data_.size());
+          free(int32_ptr);
         }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_INT64: {
         int64_t* int64_ptr;
-        if (this.is_raw_data_)  {
-          int64_ptr = (int64_t*) raw_data_;
+        if (is_raw_data_)  {
+          int64_ptr = (int64_t*) malloc(raw_data_.size());
+          memcpy(int64_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          int64_ptr = (int64_t*) &this.int64_data_[0];
+          int64_ptr = (int64_t*) &int64_data_[0];
         }
-        for (int i = 0; i < this.int64_data_.size(); i++) {
+        for (int i = 0; i < int64_data_.size(); i++) {
           f((void*)(int64_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) int64_ptr, raw_data_.size());
+          free(int64_ptr);
         }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {
         uint64_t* uint64_ptr;
-        if (this.is_raw_data_)  {
-          uint64_ptr = (uint64_t*) raw_data_;
+        if (is_raw_data_)  {
+          uint64_ptr = (uint64_t*) malloc(raw_data_.size());
+          memcpy(uint64_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          uint64_ptr = (uint64_t*) &this.uint64_data_[0];
+          uint64_ptr = (uint64_t*) &uint64_data_[0];
         }
-        for (int i = 0; i < this.uint64_data_.size(); i++) {
+        for (int i = 0; i < uint64_data_.size(); i++) {
           f((void*)(uint64_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) uint64_ptr, raw_data_.size());
+          free(uint64_ptr);
         }
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
         double* double_ptr;
-        if (this.is_raw_data_)  {
-          double_ptr = (double*) raw_data_;
+        if (is_raw_data_)  {
+          double_ptr = (double*) malloc(raw_data_.size());
+          memcpy(double_ptr, raw_data_.c_str(), raw_data_.size());
         } else {
-          double_ptr = (double*) &this.double_data_[0];
+          double_ptr = (double*) &double_data_[0];
         }
-        for (int i = 0; i < this.double_data_.size(); i++) {
+        for (int i = 0; i < double_data_.size(); i++) {
           f((void*)(double_ptr + i));
+        }
+        if (is_raw_data_)  {
+          raw_data_.assign((const char*) double_ptr, raw_data_.size());
+          free(double_ptr);
         }
         break;
       }

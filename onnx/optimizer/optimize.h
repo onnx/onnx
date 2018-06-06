@@ -16,6 +16,7 @@
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
+#include "onnx/optimizer/passes/fuse_bn_into_conv.h"
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE { namespace optimization {
