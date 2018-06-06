@@ -32,18 +32,21 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
 
 def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callable[..., Any]]
     assert times >= 1
-    def wrapper(func):  #type: (Callable[..., Any]) -> Callable[..., Any]
+
+    def wrapper(func):  # type: (Callable[..., Any]) -> Callable[..., Any]
         @functools.wraps(func)
-        def wrapped(*args, **kwargs): #type: (*Any, **Any) -> Any
+
+        def wrapped(*args, **kwargs):  # type: (*Any, **Any) -> Any
             for i in range(times):
                 try:
-                    return func(*args, **kwargs);
+                    return func(*args, **kwargs)
                 except Exception:
                     print('{} times tried'.format(i))
                     if i == times - 1:
                         raise
         return wrapped
     return wrapper
+
 
 class Runner(object):
 
@@ -170,7 +173,6 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-
     @retry_excute(3)
     def _download_model(self, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
         # On Windows, NamedTemporaryFile can not be opened for a
@@ -209,10 +211,7 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            self._download_model(
-                            model_test=model_test,
-                            model_dir=model_dir,
-                            models_dir=models_dir)
+            self._download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
         return model_dir
 
     def _add_test(self,
