@@ -144,49 +144,77 @@ public:
     return is_raw_data_;
   }
 
-  //Element wise scaling of tensor
-  void scale(double s) {
+  //Element wise scaling of tensor by scale_by_channel
+  //s is one dimensional, has size C, where C is number of channels
+  //s must have data as raw_data and has data type corresponding to this
+  void scale_by_channel(Tensor* s) {
+    ONNX_ASSERT(sizes_.size() > 2 && s.sizes().size() == 1 && s.sizes()[0] == sizes_[1]);
+    ONNX_ASSERT(s.is_raw_data() && s.elem_type() == this.elem_type_);
+    int64_t dim_per_data = 1;
+    for (int i = 2; i < sizes_.size(); i++) {
+      dim_per_data *= sizes_[i];
+    }
+    int64_t feature_maps = sizes_[0];
+    int64_t num_channels = sizes_[1];
     switch(this.elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
         float* float_ptr;
+        float* channel_scales = s.raw();
         if (this.is_raw_data_)  {
           float_ptr = (float*) raw_data_;
         } else {
           float_ptr = (float*) &this.float_data_[0];
         }
-        for (int i = 0; i < this.float_data_.size(); i++) {
-          float_ptr[i] *= (float) s;
+        int counter = 0;
+        for (int i = 0; i < feature_maps; i++)  {
+          for(int j = 0; j < num_channels; j++) {
+            for (int k = 0; k < dim_per_data; k++)  {
+              float_ptr[counter++] *= channel_scales[j];
+            }
+          }
         }
         break;
       }
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
-      int32_t* int32_ptr;
-      if (this.is_raw_data_)  {
-        int32_ptr = (int32_t*) raw_data_;
-      } else {
-        int32_ptr = (int32_t*) &this.int32_data_[0];
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
+        int32_t* int32_ptr;
+        int32_t* channel_scales = s.raw();
+        if (this.is_raw_data_)  {
+          int32_ptr = (int32_t*) raw_data_;
+        } else {
+          int32_ptr = (int32_t*) &this.int32_data_[0];
+        }
+        int counter = 0;
+        for (int i = 0; i < feature_maps; i++)  {
+          for(int j = 0; j < num_channels; j++) {
+            for (int k = 0; k < dim_per_data; k++)  {
+              int32_ptr[counter++] *= channel_scales[j];
+            }
+          }
+        }
+        break;
       }
-      for (int i = 0; i < this.int32_data_.size(); i++) {
-        int32_ptr[i] *= (float) s;
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
+        double* double_ptr;
+        double* channel_scales = s.raw();
+        if (this.is_raw_data_)  {
+          double_ptr = (double*) raw_data_;
+        } else {
+          double_ptr = (double*) &this.double_data_[0];
+        }
+        int counter = 0;
+        for (int i = 0; i < feature_maps; i++)  {
+          for(int j = 0; j < num_channels; j++) {
+            for (int k = 0; k < dim_per_data; k++)  {
+              double_ptr[counter++] *= channel_scales[j];
+            }
+          }
+        }
+        break;
       }
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-    case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
-      double* double_ptr;
-      if (this.is_raw_data_)  {
-        double_ptr = (double*) raw_data_;
-      } else {
-        double_ptr = (double*) &this.double_data_[0];
-      }
-      for (int i = 0; i < this.double_data_.size(); i++) {
-        double_ptr[i] *= s;
-      }
-      break;
-    }
-    default:
-      throw("Incompatible data type: FLOAT, COMPLEX64, and FLOAT16 supported");
+      default:
+        throw("Incompatible data type: FLOAT, COMPLEX64, and FLOAT16 supported");
     }
   }
 
