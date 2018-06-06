@@ -604,6 +604,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == "Squeeze"
         assert list(optimized_model.graph.node[0].attribute[0].ints) == [0, 4, 5]
         assert optimized_model.graph.node[2].op_type == "Squeeze"
+        assert optimized_model.graph.node[2].input == ["X"]
         assert list(optimized_model.graph.node[2].attribute[0].ints) == [0, 1, 4, 5, 6]
         assert len(list(optimized_model.graph.node)) == 3
 

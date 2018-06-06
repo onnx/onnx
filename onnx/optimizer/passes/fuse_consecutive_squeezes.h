@@ -27,8 +27,7 @@ struct FuseConsecutiveSqueezes final : public OptimizePass {
     std::vector<int64_t> ret;
     ret.reserve(axes_1.size() + axes_2.size());
 
-    std::vector<int64_t> sorted_axes_1;
-    std::copy(axes_1.begin(), axes_1.end(), std::back_inserter(sorted_axes_1));
+    std::vector<int64_t> sorted_axes_1(axes_1.begin(), axes_1.end());
     std::sort(sorted_axes_1.begin(), sorted_axes_1.end());
     std::copy(
         sorted_axes_1.begin(), sorted_axes_1.end(), std::back_inserter(ret));
