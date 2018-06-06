@@ -14,28 +14,25 @@ struct FuseBNIntoConv final : public OptimizePass {
     : OptimizePass("fuse_consecutive_transposes", API_TYPE::IR) {
   }
 
-  bool check_initializers(Node* conv, Node* bn) {
-    auto bn_inputs = bn->inputs();
-    auto conv_inputs = conv->inputs();
-    for (int i = 1; i <= 4; i++)  {
-      if (get_initializer_index(bn_inputs[i]) == -1)  {
-        return false;
-      }
-    }
-    if (get_initializer_index(conv_inputs[1]) == -1)  {
-      return false;
-    }
-    if (conv_inputs.size() == 3 && get_initializer_index(conv_inputs[1]) == -1) {
-      return false;
-    }
-    return true;
-  }
-
   template<typename T>
   void add_nums(void* x, void* y) {
     T* x_cast = (T*) x;
     T* y_cast = (T*) y;
     *x_cast = *x_cast + *y_cast;
+  }
+
+  template<typename T>
+  void sub_nums(void* x, void* y) {
+    T* x_cast = (T*) x;
+    T* y_cast = (T*) y;
+    *x_cast = *x_cast - *y_cast;
+  }
+
+  template<typename T>
+  void mult_nums(void* x, void* y) {
+    T* x_cast = (T*) x;
+    T* y_cast = (T*) y;
+    *x_cast = *x_cast * *y_cast;
   }
 
   template<typename T>
@@ -50,23 +47,97 @@ struct FuseBNIntoConv final : public OptimizePass {
     *x_cast = (T) sqrt((double) *x_cast);
   }
 
-  void modify_conv(Node* conv, Node* bn)  {
+  void handle_old_initializer(Value* v, Graph& graph) {
+    if (v.uses().size() == 0) {
+      graph.eraseInitializer(v->uniqueName());
+      graph.freeValue(v);
+    }
+  }
+
+  void replace_inputs(Tensor& W, Tensor& b, Node* conv, Graph& graph) {
+    Value* new_W_value = graph.addInitializerAndInput(W);
+    Value* old_W_value = conv->inputs()[1];
+    conv->replaceInput(1, new_W_value);
+    handle_old_initializer(old_W_value, graph);
+    Value* new_b_value = graph.addInitializerAndInput(b);
+    if (conv->inputs().size() == 3) {
+      Value* old_b_value = conv->inputs()[2];
+      conv->replaceInput(2, new_b_value);
+      handle_old_initializer(old_b_value, graph);
+    } else {
+      conv->addInput(new_b_value);
+    }
+  }
+
+  bool modify_conv(Node* conv, Node* bn, Graph& graph)  {
     auto bn_inputs = bn->inputs();
     auto conv_inputs = conv->inputs();
     auto bn_shape = bn->sizes();
     auto conv_shape = conv->sizes();
-    auto s = initializers()[get_initializer_index(bn_inputs[1])];
-    auto bbn = initializers()[get_initializer_index(bn_inputs[2])];
-    auto m = initializers()[get_initializer_index(bn_inputs[3])];
-    auto var = initializers()[get_initializer_index(bn_inputs[4])];
-    auto epsilon = bn->f(kepsilon);
-    auto frac = s / sqrt(var + epsilon);
-    conv_inputs[1].scale(frac);
-    if (conv_inputs.size() == 2)  {
-      Value* bc = new Value(, 2);
-      conv_inputs.addInput(bc);
+    auto s_index = graph.get_initializer_index(bn_inputs[1]);
+    auto bbn_index = graph.get_initializer_index(bn_inputs[2]);
+    auto m_index = graph.get_initializer_index(bn_inputs[3]);
+    auto var_index = graph.get_initializer_index(bn_inputs[4]);
+    auto W_index = graph.get_initializer_index(conv_inputs[1]);
+    if (s_index == -1 || bbn_index == -1 || m_index == -1 || var_index == -1 || W_index == -1) {
+      return false;
     }
-    (conv_inputs[2].add(m.scale(-1))).scale(frac)).add(bbn);
+    auto s = graph.get(s_index);
+    auto bbn = graph.get(bbn_index);
+    auto m = graph.get(m_index);
+    auto var = graph.get(var_index);
+    auto W = graph.get(W_index);
+    auto epsilon = bn->f(kepsilon);
+
+
+    Tensor* bc;
+    if (conv_inputs.size() == 3) {
+      auto bc_index = get_initializer_index(conv_inputs[1]);
+      if (bc_index == -1) {
+        return false;
+      }
+    }
+
+
+
+
+
+
+    switch(s.elemType()) {
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
+        //TODO: Set eps and  bc values
+        Tensor eps;
+        Tensor bc;
+
+        var.apply_binary_function(add_nums<float>, eps);
+        var.apply_unary_function(sqrt_num<float>)
+        s.apply_binary_function(divide_nums<float>, var);
+        // TODO: MAKE SURE s is raw_data
+        W.scale_by_channel(s);
+        bc.apply_binary_function(sub_nums<float>, m);
+        bc.apply_binary_function(mult_nums<float>, s);
+        bc.apply_binary_function(add_nums<float>)
+
+
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
+
+
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
+
+        break;
+      }
+      default:
+        throw("Incompatible data type");
+    }
+
+    replace_inputs(W, bc, conv, graph);
+    return true;
   }
 
   void fuse_bn_into_conv(Graph& graph) {
@@ -77,11 +148,13 @@ struct FuseBNIntoConv final : public OptimizePass {
         auto origInput = n->input();
         if (origInput->uses().size() > 1 ||
             n->outputs().size() > 1 ||
-            !check_initializers(n->input()->node(), n)) {
+            !modify_conv(n->input()->node(), n, g)) {
           continue;
         }
+        for (int i = 1; i <=4; i++)  {
+          handle_old_initializer(n->inputs()[i], graph);
+        }
         n->output().replaceAllUsesWith(origInput);
-        modify_conv(n->input()->node(), n);
         it.destroyCurrent();
       }
     }

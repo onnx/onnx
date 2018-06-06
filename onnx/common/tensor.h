@@ -147,7 +147,7 @@ public:
   //Element wise scaling of tensor by scale_by_channel
   //s is one dimensional, has size C, where C is number of channels
   //s must have data as raw_data and has data type corresponding to this
-  void scale_by_channel(Tensor* s) {
+  void scale_by_channel(Tensor& s) {
     ONNX_ASSERT(sizes_.size() > 2 && s.sizes().size() == 1 && s.sizes()[0] == sizes_[1]);
     ONNX_ASSERT(s.is_raw_data() && s.elem_type() == this.elem_type_);
     int64_t dim_per_data = 1;
@@ -214,7 +214,7 @@ public:
         break;
       }
       default:
-        throw("Incompatible data type: FLOAT, COMPLEX64, and FLOAT16 supported");
+        throw("Incompatible data type: FLOAT, COMPLEX64, FLOAT16, DOUBLE< and COMPLEX128 supported");
     }
   }
 
@@ -223,7 +223,7 @@ public:
   //applies function f element-wise to this and a, storing result in this
   //WARNING: does not type check, so ensure that the tensors have the correct
   //types before using
-  void apply_binary_function(void (*f)(void*, void*), Tensor a)  {
+  void apply_binary_function(void (*f)(void*, void*), Tensor& a)  {
     if (a.elem_type() != this.elem_type_) {
       throw("Type of tensors do not match");
     }
