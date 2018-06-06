@@ -35,7 +35,6 @@ def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callab
 
     def wrapper(func):  # type: (Callable[..., Any]) -> Callable[..., Any]
         @functools.wraps(func)
-
         def wrapped(*args, **kwargs):  # type: (*Any, **Any) -> Any
             for i in range(times):
                 try:
