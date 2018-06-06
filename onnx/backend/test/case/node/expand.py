@@ -33,4 +33,4 @@ class Expand(Base):
         # [2., 2., 2., 2.],
         # [3., 3., 3., 3.]]
 
-        expect(node, inputs=[data, np.shape(new_shape)], outputs=[expanded], name='test_expand_ndim_unchanged_example')
+        expect(node, inputs=[data, np.array(new_shape)], outputs=[expanded], name='test_expand_ndim_unchanged_example')
