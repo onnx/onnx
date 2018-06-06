@@ -8,7 +8,7 @@
 #include <math.h>
 
 namespace ONNX_NAMESPACE { namespace optimization {
-
+//TODO: Currently broken for complex values and float16
 struct FuseBNIntoConv final : public OptimizePass {
   explicit FuseBNIntoConv()
     : OptimizePass("fuse_consecutive_transposes", API_TYPE::IR) {
@@ -72,8 +72,6 @@ struct FuseBNIntoConv final : public OptimizePass {
   bool modify_conv(Node* conv, Node* bn, Graph& graph)  {
     auto bn_inputs = bn->inputs();
     auto conv_inputs = conv->inputs();
-    auto bn_shape = bn->sizes();
-    auto conv_shape = conv->sizes();
     auto s_index = graph.get_initializer_index(bn_inputs[1]);
     auto bbn_index = graph.get_initializer_index(bn_inputs[2]);
     auto m_index = graph.get_initializer_index(bn_inputs[3]);
@@ -89,47 +87,78 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto W = graph.get(W_index);
     auto epsilon = bn->f(kepsilon);
 
-
-    Tensor* bc;
-    if (conv_inputs.size() == 3) {
-      auto bc_index = get_initializer_index(conv_inputs[1]);
-      if (bc_index == -1) {
-        return false;
-      }
-    }
-
-
-
-
-
-
     switch(s.elemType()) {
-      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
-      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
-        //TODO: Set eps and  bc values
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
         Tensor eps;
+        eps.sizes().push_back(bbn.sizes()[0]);
+        eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+        for (int i = 0; i < eps.sizes()[0]; i++)  {
+          eps.floats().push_back(epsilon)
+        }
         Tensor bc;
+        bc.sizes().push_back(bbn.sizes()[0]);
+        bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
+        for (int i = 0; i < eps.sizes()[0]; i++)  {
+          bc.floats().push_back(0f);
+        }
+
+        if (conv_inputs.size() == 3) {
+          auto bc_index = get_initializer_index(conv_inputs[1]);
+          if (bc_index == -1) {
+            return false;
+          }
+          bc = graph.get(bc_index);
+        }
 
         var.apply_binary_function(add_nums<float>, eps);
         var.apply_unary_function(sqrt_num<float>)
         s.apply_binary_function(divide_nums<float>, var);
-        // TODO: MAKE SURE s is raw_data
+        if (!s.is_raw_data()) {
+          char const * ptr = reinterpret_cast<char const *>(s.floats().data());
+          std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
+          s.set_raw_data(string_rep);
+        }
         W.scale_by_channel(s);
         bc.apply_binary_function(sub_nums<float>, m);
         bc.apply_binary_function(mult_nums<float>, s);
         bc.apply_binary_function(add_nums<float>)
-
-
-        break;
-      }
-      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
-
-
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
+      {
+        Tensor eps;
+        eps.sizes().push_back(bbn.sizes()[0]);
+        eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
+        for (int i = 0; i < eps.sizes()[0]; i++)  {
+          eps.doubles().push_back((double)epsilon)
+        }
+        Tensor bc;
+        bc.sizes().push_back(bbn.sizes()[0]);
+        bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
+        for (int i = 0; i < eps.sizes()[0]; i++)  {
+          bc.doubles().push_back(0);
+        }
 
+        if (conv_inputs.size() == 3) {
+          auto bc_index = get_initializer_index(conv_inputs[1]);
+          if (bc_index == -1) {
+            return false;
+          }
+          bc = graph.get(bc_index);
+        }
+
+        var.apply_binary_function(add_nums<double>, eps);
+        var.apply_unary_function(sqrt_num<double>)
+        s.apply_binary_function(divide_nums<double>, var);
+        if (!s.is_raw_data()) {
+          char const * ptr = reinterpret_cast<char const *>(s.doubles().data());
+          std::string string_rep(ptr, ptr + sizeof(double) * s.doubles().size());
+          s.set_raw_data(string_rep);
+        }
+        W.scale_by_channel(s);
+        bc.apply_binary_function(sub_nums<double>, m);
+        bc.apply_binary_function(mult_nums<double>, s);
+        bc.apply_binary_function(add_nums<double>);
         break;
       }
       default:
