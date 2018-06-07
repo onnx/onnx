@@ -100,6 +100,8 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
 
       // get BatchNormalization shape
       auto bn_shape = orig_batch_norm->sizes();
+      auto const_shape = orig_const->sizes();
+
       if (bn_shape.size() == 0) {
         bn_shape = orig_batch_norm->node()->inputs()[0]->sizes();
       }
@@ -109,12 +111,15 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
         continue;
       }
 
+      auto const_rank = static_cast<int64_t>(const_shape.size());
+      auto bn_rank = static_cast<int64_t>(bn_shape.size());
+
       Value* orig_scale = orig_batch_norm->node()->inputs()[1];
       Value* orig_bias = orig_batch_norm->node()->inputs()[2];
 
       // get num of Channels C
       int64_t C = -1;
-      if (bn_shape.size() > 1 && bn_shape[1].is_int) {
+      if (bn_rank > 1 && bn_shape[1].is_int) {
         C = bn_shape[1].dim;
       } else if (
           orig_scale->sizes().size() == 1 && orig_scale->sizes()[0].is_int) {
@@ -124,10 +129,8 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
         C = orig_bias->sizes()[0].dim;
       }
 
-      auto const_shape = orig_const->sizes();
-
       // arithmetic param dim should not be greater than batch norm dim
-      if (const_shape.size() > bn_shape.size()) {
+      if (const_rank > bn_rank) {
         continue;
       }
 
@@ -142,7 +145,7 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
           num_el *= const_shape[i].dim;
           // C should be in index 1
           if (const_shape[i].dim == C &&
-              i != 1 + const_shape.size() - bn_shape.size()) {
+              i != 1 + const_rank - bn_rank) {
             num_el = -1;
             break;
           }
@@ -156,11 +159,11 @@ struct FuseArithmeticIntoBatchNorm final : public OptimizePass {
         continue;
       }
 
-      std::vector<int64_t> squeeze_axes(const_shape.size());
+      std::vector<int64_t> squeeze_axes(const_rank);
       std::iota(squeeze_axes.begin(), squeeze_axes.end(), 0);
       if (num_el == 1 || num_el == C) {
         squeeze_axes.erase(
-            squeeze_axes.begin() + 1 + const_shape.size() - bn_shape.size());
+            squeeze_axes.begin() + 1 + const_rank - bn_rank);
       } else {
         continue;
       }
