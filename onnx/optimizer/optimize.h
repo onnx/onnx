@@ -12,6 +12,7 @@
 #include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
 #include "onnx/optimizer/passes/fuse_arithmetic_into_batch_norm.h"
+#include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
@@ -34,6 +35,7 @@ struct Optimizer {
     _registerOptimizer<ExtractConstantToInitializer>();
     _registerOptimizer<FuseAddBiasIntoConv>();
     _registerOptimizer<FuseArithmeticIntoBatchNorm>();
+    _registerOptimizer<FuseConsecutiveSqueezes>();
     _registerOptimizer<FuseConsecutiveTransposes>();
     _registerOptimizer<FuseTransposeIntoGemm>();
     _registerOptimizer<Nop>();

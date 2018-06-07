@@ -3732,7 +3732,7 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
   It normalizes over local input regions.
   The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
   of shape (N x C x D1 x D2, ..., Dk), its region is
-  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
   
   square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
   where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
@@ -3776,6 +3776,69 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output  types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+alpha = 0.0001
+beta = 0.75
+bias = 1.0
+nsize = 3
+node = onnx.helper.make_node(
+    'LRN',
+    inputs=['x'],
+    outputs=['y'],
+    size=3
+)
+x = np.random.randn(5, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+for n, c, h, w in np.ndindex(x.shape):
+    square_sum[n, c, h, w] = sum(x[n,
+                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(4, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                                   h,
+                                   w] ** 2)
+y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
+expect(node, inputs=[x], outputs=[y],
+       name='test_lrn_default')
+```
+
+</details>
+
+
+<details>
+<summary>lrn</summary>
+
+```python
+alpha = 0.0002
+beta = 0.5
+bias = 2.0
+nsize = 3
+node = onnx.helper.make_node(
+    'LRN',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=alpha,
+    beta=beta,
+    bias=bias,
+    size=nsize
+)
+x = np.random.randn(5, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+for n, c, h, w in np.ndindex(x.shape):
+    square_sum[n, c, h, w] = sum(x[n,
+                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(4, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                                   h,
+                                   w] ** 2)
+y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
+expect(node, inputs=[x], outputs=[y],
+       name='test_lrn')
+```
+
+</details>
 
 
 ### <a name="LSTM"></a><a name="lstm">**LSTM**</a>
@@ -5587,9 +5650,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
+Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>, <a href="Changelog.md#PRelu-6">PRelu-6</a>
 
 #### Inputs
 

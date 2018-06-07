@@ -31,6 +31,7 @@ Supported pass names:
     -- eliminate_unused_initializer
     -- fuse_add_bias_into_conv
     -- fuse_arithmetic_into_batch_norm
+    -- fuse_consecutive_squeezes
     -- fuse_consecutive_transposes
     -- fuse_transpose_into_gemm
 """
