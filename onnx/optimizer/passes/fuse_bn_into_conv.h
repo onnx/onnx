@@ -82,14 +82,20 @@ struct FuseBNIntoConv final : public OptimizePass {
     Tensor eps;
     Tensor bc;
 
+    ONNX_ASSERT(s.sizes().size() == 1);
+    ONNX_ASSERT(bbn.sizes().size() == 1 && bbn.sizes()[0] == s.sizes()[0]);
+    ONNX_ASSERT(m.sizes().size() == 1 && m.sizes()[0] == s.sizes()[0]);
+    ONNX_ASSERT(var.sizes().size() == 1 && var.sizes()[0] == s.sizes()[0]);
+    ONNX_ASSERT(W.sizes().size() > 2 && W.sizes()[0] == s.sizes()[0]);
+
     switch(s.elem_type()) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
-        eps.sizes().push_back(bbn.sizes()[0]);
+        eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
           eps.floats().push_back(epsilon);
         }
-        bc.sizes().push_back(bbn.sizes()[0]);
+        bc.sizes().push_back(s.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
           bc.floats().push_back(0.f);
@@ -101,6 +107,7 @@ struct FuseBNIntoConv final : public OptimizePass {
             return false;
           }
           bc = graph.initializers()[bc_index];
+          ONNX_ASSERT(bc.sizes() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
         var.apply_binary_function(&(add_nums<float>), eps);
@@ -111,7 +118,7 @@ struct FuseBNIntoConv final : public OptimizePass {
           std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
           s.set_raw_data(string_rep);
         }
-        W.scale_by_channel(s);
+        W.scale_by_first_dim(s);
         bc.apply_binary_function(&(sub_nums<float>), m);
         bc.apply_binary_function(&(mult_nums<float>), s);
         bc.apply_binary_function(&(add_nums<float>), bbn);
@@ -119,12 +126,12 @@ struct FuseBNIntoConv final : public OptimizePass {
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       {
-        eps.sizes().push_back(bbn.sizes()[0]);
+        eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
           eps.doubles().push_back((double)epsilon);
         }
-        bc.sizes().push_back(bbn.sizes()[0]);
+        bc.sizes().push_back(s.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
         for (int i = 0; i < eps.sizes()[0]; i++)  {
           bc.doubles().push_back(0.);
@@ -136,6 +143,7 @@ struct FuseBNIntoConv final : public OptimizePass {
             return false;
           }
           bc = graph.initializers()[bc_index];
+          ONNX_ASSERT(bc.sizes() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
         var.apply_binary_function(&(add_nums<double>), eps);
@@ -146,7 +154,7 @@ struct FuseBNIntoConv final : public OptimizePass {
           std::string string_rep(ptr, ptr + sizeof(double) * s.doubles().size());
           s.set_raw_data(string_rep);
         }
-        W.scale_by_channel(s);
+        W.scale_by_first_dim(s);
         bc.apply_binary_function(&(sub_nums<double>), m);
         bc.apply_binary_function(&(mult_nums<double>), s);
         bc.apply_binary_function(&(add_nums<double>), bbn);

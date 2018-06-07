@@ -187,15 +187,14 @@ public:
   }
 
   template<typename T, int64_t block_size>
-  void channel_scale(Tensor&s, std::vector<T>& T_data_)  {
-    int64_t dim_per_data = block_size;
-    for (int i = 2; i < sizes_.size(); i++) {
-      dim_per_data *= sizes_[i];
+  void scale_dim(Tensor&s, std::vector<T>& T_data_)  {
+    int64_t elems_per_first_dim = block_size;
+    for (int i = 1; i < sizes_.size(); i++) {
+      elems_per_first_dim *= sizes_[i];
     }
-    int64_t feature_maps = sizes_[0];
-    int64_t num_channels = sizes_[1];
+    int64_t first_dim_size = sizes_[0];
     T* T_ptr;
-    const T* channel_scales = (const T*) s.raw().c_str();
+    const T* scales = (const T*) s.raw().c_str();
     if (is_raw_data_)  {
       T_ptr = (T*) malloc(raw_data_.size());
       memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
@@ -203,11 +202,9 @@ public:
       T_ptr = (T*) &T_data_[0];
     }
     int counter = 0;
-    for (int i = 0; i < feature_maps; i++)  {
-      for(int j = 0; j < num_channels; j++) {
-        for (int k = 0; k < dim_per_data; k++)  {
-          T_ptr[counter++] *= channel_scales[j];
-        }
+    for (int i = 0; i < first_dim_size; i++)  {
+      for (int j = 0; j < elems_per_first_dim; j++) {
+        T_ptr[counter++] *= scales[i];
       }
     }
     if (is_raw_data_)  {
@@ -218,32 +215,32 @@ public:
 
 
 
-  //Element wise scaling of tensor by scale_by_channel
-  //s is one dimensional, has size C, where C is number of channels
+  //Element wise scaling of tensor by scale_by_first_dim
+  //s is one dimensional, has size M, where M is size of first dimension of tensor
   //s must have data as raw_data and has data type corresponding to this
-  void scale_by_channel(Tensor& s) {
-    ONNX_ASSERT(sizes_.size() > 2 && s.sizes().size() == 1 && s.sizes()[0] == sizes_[1]);
+  void scale_by_first_dim(Tensor& s) {
+    ONNX_ASSERT(sizes_.size() > 1 && s.sizes().size() == 1 && s.sizes()[0] == sizes_[0]);
     ONNX_ASSERT(s.is_raw_data() && s.elem_type() == elem_type_);
 
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
-        channel_scale<float, 1>(s, float_data_);
+        scale_dim<float, 1>(s, float_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
-        channel_scale<float, 2>(s, float_data_);
+        scale_dim<float, 2>(s, float_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
-        channel_scale<int32_t, 1>(s, int32_data_);
+        scale_dim<int32_t, 1>(s, int32_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
-        channel_scale<double, 1>(s, double_data_);
+        scale_dim<double, 1>(s, double_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
-        channel_scale<double, 2>(s, double_data_);
+        scale_dim<double, 2>(s, double_data_);
         break;
       }
       default:
