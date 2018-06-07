@@ -144,92 +144,110 @@ public:
     return is_raw_data_;
   }
 
+  template<typename T, int64_t block_size>
+  void bin_func(void (*f)(void*, const void*), Tensor& a) {
+    T* T_ptr;
+    const T* a_ptr;
+    if (is_raw_data_)  {
+      T_ptr = (T*) malloc(raw_data_.size());
+      memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
+    } else {
+      T_ptr = (T*) &T_data_[0];
+    }
+    if (a.is_raw_data())  {
+      a_ptr = (const T*) a.raw().c_str();
+    } else {
+      a_ptr = (const T*) &a.Ts()[0];
+    }
+    for (int i = 0; i < T_data_.size(); i++) {
+      f((void*)(T_ptr + i * block_size), (const void*)(a_ptr + i * block_size));
+    }
+    if (is_raw_data_)  {
+      raw_data_.assign((const char*) T_ptr, raw_data_.size());
+      free(T_ptr);
+    }
+  }
+
+  template<typename T, int64_t block_size>
+  void un_func(void (*f)(void*))  {
+    T* T_ptr;
+    if (is_raw_data_)  {
+      T_ptr = (T*) malloc(raw_data_.size());
+      memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
+    } else {
+      T_ptr = (T*) &T_data_[0];
+    }
+    for (int i = 0; i < T_data_.size(); i++) {
+      f((void*)(T_ptr + i * block_size));
+    }
+    if (is_raw_data_)  {
+      raw_data_.assign((const char*) T_ptr, raw_data_.size());
+      free(T_ptr);
+    }
+  }
+
+  template<typename T, int64_t block_size>
+  void channel_scale(Tensor&s)  {
+    int64_t dim_per_data = block_size;
+    for (int i = 2; i < sizes_.size(); i++) {
+      dim_per_data *= sizes_[i];
+    }
+    int64_t feature_maps = sizes_[0];
+    int64_t num_channels = sizes_[1];
+    T* T_ptr;
+    const T* channel_scales = (const T*) s.raw().c_str();
+    if (is_raw_data_)  {
+      T_ptr = (T*) malloc(raw_data_.size());
+      memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
+    } else {
+      T_ptr = (T*) &T_data_[0];
+    }
+    int counter = 0;
+    for (int i = 0; i < feature_maps; i++)  {
+      for(int j = 0; j < num_channels; j++) {
+        for (int k = 0; k < dim_per_data; k++)  {
+          T_ptr[counter++] *= channel_scales[j];
+        }
+      }
+    }
+    if (is_raw_data_)  {
+      raw_data_.assign((const char*) T_ptr, raw_data_.size());
+      free(T_ptr);
+    }
+  }
+
+
+
   //Element wise scaling of tensor by scale_by_channel
   //s is one dimensional, has size C, where C is number of channels
   //s must have data as raw_data and has data type corresponding to this
   void scale_by_channel(Tensor& s) {
     ONNX_ASSERT(sizes_.size() > 2 && s.sizes().size() == 1 && s.sizes()[0] == sizes_[1]);
     ONNX_ASSERT(s.is_raw_data() && s.elem_type() == elem_type_);
-    int64_t dim_per_data = 1;
-    for (int i = 2; i < sizes_.size(); i++) {
-      dim_per_data *= sizes_[i];
-    }
-    int64_t feature_maps = sizes_[0];
-    int64_t num_channels = sizes_[1];
+
     switch(elem_type_) {
-      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
+        channel_scale<float, 1>(s);
+        break;
+      }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
-        float* float_ptr;
-        const float* channel_scales = (const float*) s.raw().c_str();
-        if (is_raw_data_)  {
-          float_ptr = (float*) malloc(raw_data_.size());
-          memcpy(float_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          float_ptr = (float*) &float_data_[0];
-        }
-        int counter = 0;
-        for (int i = 0; i < feature_maps; i++)  {
-          for(int j = 0; j < num_channels; j++) {
-            for (int k = 0; k < dim_per_data; k++)  {
-              float_ptr[counter++] *= channel_scales[j];
-            }
-          }
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) float_ptr, raw_data_.size());
-          free(float_ptr);
-        }
+        channel_scale<float, 2>(s);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
-        int32_t* int32_ptr;
-        const int32_t* channel_scales = (const int32_t*) s.raw().c_str();
-        if (is_raw_data_)  {
-          int32_ptr = (int32_t*) malloc(raw_data_.size());
-          memcpy(int32_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          int32_ptr = (int32_t*) &int32_data_[0];
-        }
-        int counter = 0;
-        for (int i = 0; i < feature_maps; i++)  {
-          for(int j = 0; j < num_channels; j++) {
-            for (int k = 0; k < dim_per_data; k++)  {
-              int32_ptr[counter++] *= channel_scales[j];
-            }
-          }
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) int32_ptr, raw_data_.size());
-          free(int32_ptr);
-        }
+        channel_scale<int32_t, 1>(s);
         break;
       }
-      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
+        channel_scale<double, 1>(s);
+        break;
+      }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
-        double* double_ptr;
-        const double* channel_scales = (const double*) s.raw().c_str();
-        if (is_raw_data_)  {
-          double_ptr = (double*) malloc(raw_data_.size());
-          memcpy(double_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          double_ptr = (double*) &double_data_[0];
-        }
-        int counter = 0;
-        for (int i = 0; i < feature_maps; i++)  {
-          for(int j = 0; j < num_channels; j++) {
-            for (int k = 0; k < dim_per_data; k++)  {
-              double_ptr[counter++] *= channel_scales[j];
-            }
-          }
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) double_ptr, raw_data_.size());
-          free(double_ptr);
-        }
+        channel_scale<double, 2>(s);
         break;
       }
       default:
-        throw("Incompatible data type: FLOAT, COMPLEX64, FLOAT16, DOUBLE< and COMPLEX128 supported");
+        throw("Incompatible data type: FLOAT, COMPLEX64, FLOAT16, DOUBLE and COMPLEX128 supported");
     }
   }
 
@@ -247,28 +265,12 @@ public:
     }
 
     switch(elem_type_) {
-      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
-      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
-        float* float_ptr;
-        const float* a_ptr;
-        if (is_raw_data_)  {
-          float_ptr = (float*) malloc(raw_data_.size());
-          memcpy(float_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          float_ptr = (float*) &float_data_[0];
-        }
-        if (a.is_raw_data())  {
-          a_ptr = (const float*) a.raw().c_str();
-        } else {
-          a_ptr = (const float*) &a.floats()[0];
-        }
-        for (int i = 0; i < float_data_.size(); i++) {
-          f((void*)(float_ptr + i), (const void*)(a_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) float_ptr, raw_data_.size());
-          free(float_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
+        bin_func<float, 1>(f, a);
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
+        bin_func<float, 2>(f, a);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
@@ -277,98 +279,25 @@ public:
       case ONNX_NAMESPACE::TensorProto_DataType_INT16:
       case ONNX_NAMESPACE::TensorProto_DataType_INT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
-        int32_t* int32_ptr;
-        const int32_t* a_ptr;
-        if (is_raw_data_)  {
-          int32_ptr = (int32_t*) malloc(raw_data_.size());
-          memcpy(int32_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          int32_ptr = (int32_t*) &int32_data_[0];
-        }
-        if (a.is_raw_data())  {
-          a_ptr = (const int32_t*) a.raw().c_str();
-        } else {
-          a_ptr = (const int32_t*) &a.int32s()[0];
-        }
-        for (int i = 0; i < int32_data_.size(); i++) {
-          f((void*)(int32_ptr + i), (const void*)(a_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) int32_ptr, raw_data_.size());
-          free(int32_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
+        bin_func<int32_t, 1>(f, a);
         break;
       }
-      case ONNX_NAMESPACE::TensorProto_DataType_INT64: {
-        int64_t* int64_ptr;
-        const int64_t* a_ptr;
-        if (is_raw_data_)  {
-          int64_ptr = (int64_t*) malloc(raw_data_.size());
-          memcpy(int64_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          int64_ptr = (int64_t*) &int64_data_[0];
-        }
-        if (a.is_raw_data())  {
-          a_ptr = (const int64_t*) a.raw().c_str();
-        } else {
-          a_ptr = (const int64_t*) &a.int64s()[0];
-        }
-        for (int i = 0; i < int64_data_.size(); i++) {
-          f((void*)(int64_ptr + i), (const void*)(a_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) int64_ptr, raw_data_.size());
-          free(int64_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
+        bin_func<int64_t, 1>(f, a);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {
-        uint64_t* uint64_ptr;
-        const uint64_t* a_ptr;
-        if (is_raw_data_)  {
-          uint64_ptr = (uint64_t*) malloc(raw_data_.size());
-          memcpy(uint64_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          uint64_ptr = (uint64_t*) &uint64_data_[0];
-        }
-        if (a.is_raw_data())  {
-          a_ptr = (const uint64_t*) a.raw().c_str();
-        } else {
-          a_ptr = (const uint64_t*) &a.uint64s()[0];
-        }
-        for (int i = 0; i < uint64_data_.size(); i++) {
-          f((void*)(uint64_ptr + i), (const void*)(a_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) uint64_ptr, raw_data_.size());
-          free(uint64_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
+        bin_func<uint64_t, 1>(f, a);
         break;
       }
-      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
-        double* double_ptr;
-        const double* a_ptr;
-        if (is_raw_data_)  {
-          double_ptr = (double*) malloc(raw_data_.size());
-          memcpy(double_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          double_ptr = (double*) &double_data_[0];
-        }
-        if (a.is_raw_data())  {
-          a_ptr = (const double*) a.raw().c_str();
-        } else {
-          a_ptr = (const double*) &a.doubles()[0];
-        }
-        for (int i = 0; i < double_data_.size(); i++) {
-          f((void*)(double_ptr + i), (const void*)(a_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) double_ptr, raw_data_.size());
-          free(double_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:  {
+        bin_func<double, 1>(f, a);
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:  {
+        bin_func<double, 2>(f, a);
         break;
       }
       default:
@@ -381,22 +310,12 @@ public:
   //type before using
   void apply_unary_function(void (*f)(void*))  {
     switch(elem_type_) {
-      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
-      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
-        float* float_ptr;
-        if (is_raw_data_)  {
-          float_ptr = (float*) malloc(raw_data_.size());
-          memcpy(float_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          float_ptr = (float*) &float_data_[0];
-        }
-        for (int i = 0; i < float_data_.size(); i++) {
-          f((void*)(float_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) float_ptr, raw_data_.size());
-          free(float_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
+        un_func<float, 1>(f);
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
+        un_func<float, 2>(f);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
@@ -405,74 +324,25 @@ public:
       case ONNX_NAMESPACE::TensorProto_DataType_INT16:
       case ONNX_NAMESPACE::TensorProto_DataType_INT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT16: {
-        int32_t* int32_ptr;
-        if (is_raw_data_)  {
-          int32_ptr = (int32_t*) malloc(raw_data_.size());
-          memcpy(int32_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          int32_ptr = (int32_t*) &int32_data_[0];
-        }
-        for (int i = 0; i < int32_data_.size(); i++) {
-          f((void*)(int32_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) int32_ptr, raw_data_.size());
-          free(int32_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
+        un_func<int32_t, 1>(f);
         break;
       }
-      case ONNX_NAMESPACE::TensorProto_DataType_INT64: {
-        int64_t* int64_ptr;
-        if (is_raw_data_)  {
-          int64_ptr = (int64_t*) malloc(raw_data_.size());
-          memcpy(int64_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          int64_ptr = (int64_t*) &int64_data_[0];
-        }
-        for (int i = 0; i < int64_data_.size(); i++) {
-          f((void*)(int64_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) int64_ptr, raw_data_.size());
-          free(int64_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
+        un_func<int64_t, 1>(f);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
-      case ONNX_NAMESPACE::TensorProto_DataType_UINT64: {
-        uint64_t* uint64_ptr;
-        if (is_raw_data_)  {
-          uint64_ptr = (uint64_t*) malloc(raw_data_.size());
-          memcpy(uint64_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          uint64_ptr = (uint64_t*) &uint64_data_[0];
-        }
-        for (int i = 0; i < uint64_data_.size(); i++) {
-          f((void*)(uint64_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) uint64_ptr, raw_data_.size());
-          free(uint64_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
+        un_func<uint64_t, 1>(f);
         break;
       }
-      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
-        double* double_ptr;
-        if (is_raw_data_)  {
-          double_ptr = (double*) malloc(raw_data_.size());
-          memcpy(double_ptr, raw_data_.c_str(), raw_data_.size());
-        } else {
-          double_ptr = (double*) &double_data_[0];
-        }
-        for (int i = 0; i < double_data_.size(); i++) {
-          f((void*)(double_ptr + i));
-        }
-        if (is_raw_data_)  {
-          raw_data_.assign((const char*) double_ptr, raw_data_.size());
-          free(double_ptr);
-        }
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:  {
+        un_func<double, 1>(f);
+        break;
+      }
+      case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:  {
+        un_func<double, 2>(f);
         break;
       }
       default:
