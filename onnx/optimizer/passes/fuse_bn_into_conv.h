@@ -73,11 +73,11 @@ struct FuseBNIntoConv final : public OptimizePass {
     if (s_index == -1 || bbn_index == -1 || m_index == -1 || var_index == -1 || W_index == -1) {
       return false;
     }
-    auto s = graph.get(s_index);
-    auto bbn = graph.get(bbn_index);
-    auto m = graph.get(m_index);
-    auto var = graph.get(var_index);
-    auto W = graph.get(W_index);
+    auto s = graph.initializers()[s_index];
+    auto bbn = graph.initializers()[bbn_index];
+    auto m = graph.initializers()[m_index];
+    auto var = graph.initializers()[var_index];
+    auto W = graph.initializers()[W_index];
     auto epsilon = bn->f(kepsilon);
     Tensor eps;
     Tensor bc;
@@ -100,14 +100,14 @@ struct FuseBNIntoConv final : public OptimizePass {
           if (bc_index == -1) {
             return false;
           }
-          bc = graph.get(bc_index);
+          bc = graph.initializers()[bc_index];
         }
 
         var.apply_binary_function(&(add_nums<float>), eps);
         var.apply_unary_function(&(sqrt_num<float>));
         s.apply_binary_function(&(divide_nums<float>), var);
         if (!s.is_raw_data()) {
-          char const * ptr = reinterpret_cast<char const *>(s.floats().data());
+          const char * ptr = reinterpret_cast<const char *>(s.floats().data());
           std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
           s.set_raw_data(string_rep);
         }
@@ -135,7 +135,7 @@ struct FuseBNIntoConv final : public OptimizePass {
           if (bc_index == -1) {
             return false;
           }
-          bc = graph.get(bc_index);
+          bc = graph.initializers()[bc_index];
         }
 
         var.apply_binary_function(&(add_nums<double>), eps);

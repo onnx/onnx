@@ -871,10 +871,6 @@ public:
     }
     return -1;
   }
-  Tensor get(int64_t index) {
-    ONNX_ASSERT(index >= 0 && index < initializers_.size());
-    return initializers_[index];
-  }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
   }
