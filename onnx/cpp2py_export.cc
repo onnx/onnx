@@ -96,34 +96,56 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   py::class_<FunctionProto> function_proto(defs, "FunctionProto");
   function_proto.def_property_readonly("name", &FunctionProto::name)
-    .def_property_readonly("doc_string", &FunctionProto::doc_string)
-    .def_property_readonly("since_version", &FunctionProto::since_version)
-    .def_property_readonly("inputs", [](FunctionProto* fp)->py::str {
-        std::string s = "";
-        for (auto& ptr = fp->input().begin(); ptr != fp->input().end(); ++ptr) {
-          s += *ptr;
-        }
-        return py::str(s);
+      .def_property_readonly("doc_string", &FunctionProto::doc_string)
+      .def_property_readonly("since_version", &FunctionProto::since_version)
+      .def_property_readonly("inputs", [](FunctionProto* fp)->std::vector<std::string>{
+          std::vector<std::string> _stl_vec;
+          for (auto& ptr = fp->input().begin(); ptr != fp->input().end(); ++ptr) {
+              _stl_vec.emplace_back(*ptr);
+          }
+          return _stl_vec;
+        })
+      .def_property_readonly("outputs", [](FunctionProto* fp)->std::vector<std::string> {
+          std::vector<std::string> _stl_vec;
+          for (auto& ptr = fp->output().begin(); ptr != fp->output().end(); ++ptr) {
+              _stl_vec.emplace_back(*ptr);
+          }
+          return _stl_vec;
+        })
+      .def_property_readonly("attribute", [](FunctionProto* fp)->std::vector<std::string> {
+          std::vector<std::string> _stl_vec;
+          for (auto& ptr = fp->attribute().begin(); ptr != fp->attribute().end(); ++ptr) {
+              _stl_vec.emplace_back(*ptr);
+          }
+          return _stl_vec;
+        })
+      .def_property_readonly("nodes", [](FunctionProto* fp)->std::vector<NodeProto> {
+          std::vector<NodeProto> _stl_vec;
+          for (auto& ptr = fp->node().begin(); ptr != fp->node().end(); ++ptr) {
+            _stl_vec.emplace_back(*ptr);
+          }
+          return _stl_vec;
+        });
+
+  py::class_<NodeProto>node_proto(function_proto, "NodeProto");
+  node_proto.def_property_readonly("name", &NodeProto::name)
+      .def_property_readonly("doc_string", &NodeProto::doc_string)
+      .def_property_readonly("domain", &NodeProto::domain)
+      .def_property_readonly("op_type", &NodeProto::op_type)
+      .def_property_readonly("inputs", [](NodeProto* np)->std::vector<std::string> {
+          std::vector<std::string> _stl_vec;
+          for (auto& ptr = np->input().begin(); ptr != np->input().end(); ++ptr) {
+            _stl_vec.emplace_back(*ptr);
+          }
+          return _stl_vec;
       })
-    .def_property_readonly("outputs", [](FunctionProto* fp)->py::str {
-        std::string s = "";
-        for (auto& ptr = fp->output().begin(); ptr != fp->output().end(); ++ptr) {
-          s += *ptr;
+      .def_property_readonly("outputs", [](NodeProto* np)->std::vector<std::string> {
+        std::vector<std::string> _stl_vec;
+        for (auto& ptr = np->output().begin(); ptr != np->output().end(); ++ptr) {
+          _stl_vec.emplace_back(*ptr);
         }
-        return py::str(s);
-     })
-        .def_property_readonly("attribute", [](FunctionProto* fp)->py::str {
-       std::string s = "";
-       for (auto& ptr = fp->attribute().begin(); ptr != fp->attribute().end(); ++ptr) {
-         s += *ptr;
-       }
-       return py::str(s);
-     });
-
-  
-  //py::class_<NodeProto> node_proto(function_proto, "");
-
-
+        return _stl_vec;
+      });
 
   defs.def(
       "has_schema",
@@ -177,23 +199,27 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   defs.def("get_all_functions", [](
     const std::string& domain
-  )->std::multimap<std::string, std::unique_ptr<FunctionProto>> {
-    std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_map;
+  )->std::unordered_map<std::string, FunctionProto> {
+    std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_ptr_map;
+    std::unordered_map<std::string, FunctionProto> temp_map;
     FunctionBuilderRegistry& function_registry = FunctionBuilderRegistry::OnnxInstance();
-    Common::Status status = function_registry.GetFunctions(domain, &temp_map);
+    Common::Status status = function_registry.GetFunctions(domain, &temp_ptr_map);
+    // Pybind not support stl with smart pointers well
+    for (auto& iter = temp_ptr_map.begin(); iter != temp_ptr_map.end(); ++iter)
+      temp_map.insert(std::unordered_map<std::string, FunctionProto>::value_type(iter->first, *(iter->second)));
     return temp_map;
   });
 
-  defs.def("register_function", [](
-      const std::string& domain,
-      FunctionProto function
-    )->Common::Status{
-      std::unique_ptr<FunctionProto> *func_ptr = new std::unique_ptr<FunctionProto>();
-      func_ptr->reset(&function);
-      ONNX_FUNCTION(FunctionBuilder().SetDomain(domain).SetBuildFunction(BuildFunction(func_ptr)));
-      return Common::Status::OK();
-    }
-  );
+  //defs.def("register_function", [](
+  //    const std::string& domain,
+  //    FunctionProto function
+  //  )->Common::Status{
+  //    std::unique_ptr<FunctionProto> *func_ptr = new std::unique_ptr<FunctionProto>();
+  //    func_ptr->reset(&function);
+  //    ONNX_FUNCTION(FunctionBuilder().SetDomain(domain).SetBuildFunction(BuildFunction(func_ptr)));
+  //    return Common::Status::OK();
+  //  }
+  //);
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");

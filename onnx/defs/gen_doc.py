@@ -180,7 +180,8 @@ def display_function(function, versions, domain=""): # type: (Function, Sequence
     if function.attribute:
         s += '\n#### Attribute:\n\n'
         s += '<dl>\n'
-        s += '<dd>{}</dd>\n'.format(function.attribute)
+        for attr in function.attribute:
+            s += '<dt>{};<br/></dt>\n'.format(attr)
         s += '</dl>\n'
 
     # inputs
@@ -189,7 +190,7 @@ def display_function(function, versions, domain=""): # type: (Function, Sequence
     if function.inputs:
         s += '<dl>\n'
         for input in function.inputs:
-            s += '<dt>{}</dt>\n'.format(input)
+            s += '<dt>{};<br/></dt>\n'.format(input)
         s += '</dl>\n'
 
     # outputs
@@ -198,7 +199,7 @@ def display_function(function, versions, domain=""): # type: (Function, Sequence
     if function.outputs:
         s += '<dl>\n'
         for output in function.outputs:
-            s += '<dt>{}</dt>\n'.format(output)
+            s += '<dt>{};<br/></dt>\n'.format(output)
         s += '</dl>\n'
 
     return s
@@ -331,29 +332,43 @@ def main(args):  # type: (Type[Args]) -> None
             "            [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).\n"
             "            Do not modify directly and instead edit function definitions.*\n")
 
-        if os.getenv(ONNX_ML):
+        if os.getenv('ONNX_ML'):
             functions = defs.get_functions(ONNX_ML_DOMAIN)
         else:
             functions = defs.get_functions('')
 
-        versions = sorted(functions, key=lambda s: s.since_version)
-        latest_version = versions[-1]
+        versions = [functions[fn].since_version for fn in functions]
+        latest_version = sorted(versions)[-1]
 
-        for function in sorted(functions.items()):
-            if os.getenv(ONNX_ML):
-                s = '## {}\n'.format(ONNX_ML_DOMAIN)
-                domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
-            else:
-                s = '## ai.onnx (default)\n'
-                domain_prefix = ''
+        if os.getenv('ONNX_ML'):
+            s = '## {}\n'.format(ONNX_ML_DOMAIN)
+            domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
+        else:
+            s = '## ai.onnx (default)\n'
+            domain_prefix = ''
+        fout.write(s)
+
+        existing_functions = set()
+        for fn, function in sorted(functions.items()):
+            if fn in existing_functions:
+                continue
+            existing_functions.add(fn)
+            s = '  * {}<a href="#{}">{}</a>\n'.format(
+                "<sub>experimental</sub>" if latest_version == function.since_version else "",
+                domain_prefix + function.name, domain_prefix + function.name)
             fout.write(s)
 
+
+        fout.write('\n')
+
+        for _, function in sorted(functions.items()):
+
             s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
-                support_level_str(latest_version),
+                "<sub>experimental</sub> " if latest_version == function.since_version else "",
                 domain_prefix + function.name, domain_prefix + function.name.lower(),
                 domain_prefix + function.name)
 
-            s += display_function(function, latest_version, domain_prefix)
+            s += display_function(function, versions, domain_prefix)
 
             s += '\n\n'
 
