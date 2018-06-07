@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from collections import defaultdict
+from time import sleep
 import functools
 import glob
 import os
@@ -36,13 +37,14 @@ def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callab
     def wrapper(func):  # type: (Callable[..., Any]) -> Callable[..., Any]
         @functools.wraps(func)
         def wrapped(*args, **kwargs):  # type: (*Any, **Any) -> Any
-            for i in range(times):
+            for i in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
                 except Exception:
                     print('{} times tried'.format(i))
-                    if i == times - 1:
+                    if i == times:
                         raise
+                    sleep(5 * i)
         return wrapped
     return wrapper
 
