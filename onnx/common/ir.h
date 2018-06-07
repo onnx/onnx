@@ -977,12 +977,29 @@ public:
     return n;
   }
 
+  //Adds to graph initializer list, initializer names list, and as a graph input
+  //Also syncs the initializer name, tensor name, and value name
+  Value* addInitializerAndInput(Tensor &initializer) {
+    std::vector<Dimension> dim_sizes;
+    for (auto v : initializer.sizes()) {
+      dim_sizes.push_back(v);
+    }
+    Value* new_init = addInput();
+    initializer.setName(new_init->uniqueName());
+    new_init->setUniqueName(new_init->uniqueName());
+    new_init->setSizes(dim_sizes);
+    new_init->setElemType(initializer.elem_type());
+    addInitializer(initializer, new_init->uniqueName());
+    return new_init;
+  }
+
   Value* addInitializerAndInput(Tensor &initializer, std::string name) {
     std::vector<Dimension> dim_sizes;
     for (auto v : initializer.sizes()) {
       dim_sizes.push_back(v);
     }
     Value* new_init = addInput();
+    initializer.setName(name);
     new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializer.elem_type());
@@ -990,19 +1007,13 @@ public:
     return new_init;
   }
 
-  Value* addInitializerAndInput(Tensor &initializer) {
-    std::vector<Dimension> dim_sizes;
-    for (auto v : initializer.sizes()) {
-      dim_sizes.push_back(v);
-    }
-    Value* new_init = addInput();
-    new_init->setSizes(dim_sizes);
-    new_init->setElemType(initializer.elem_type());
-    addInitializer(initializer, new_init->uniqueName());
-    return new_init;
+  //Erases from graph initializer list, initializer names list, and as a graph input
+  //Must have no uses
+  void eraseInitializerAndInput(Value* v) {
+    ONNX_ASSERT(v->uses().size() == 0);
+    eraseInitializer(v->uniqueName());
+    eraseInput(v->offset());
   }
-
-  void erase_old_initializer(Value* v);
 
   ~Graph() {
     for (const Node * n : all_nodes)
@@ -1109,14 +1120,6 @@ inline void Node::destroy() {
   removeAllInputs();
   removeFromList();
   graph_->freeNode(this);
-}
-
-// Frees value and deletes corresponding initializer if no longer used
-inline void Graph::erase_old_initializer(Value* v) {
-  if (v->uses().size() == 0) {
-    eraseInitializer(v->uniqueName());
-    freeValue(v);
-  }
 }
 
 /************* All nodes not required to be defined before Graph **************/

@@ -11,7 +11,7 @@ namespace ONNX_NAMESPACE { namespace optimization {
 //TODO: Currently broken for complex values and float16
 struct FuseBNIntoConv final : public OptimizePass {
   explicit FuseBNIntoConv()
-    : OptimizePass("fuse_consecutive_transposes", API_TYPE::IR) {
+    : OptimizePass("fuse_bn_into_conv", API_TYPE::IR) {
   }
 
   template<typename T>
@@ -51,13 +51,19 @@ struct FuseBNIntoConv final : public OptimizePass {
     Value* new_W_value = graph.addInitializerAndInput(W);
     Value* old_W_value = conv->inputs()[1];
     conv->replaceInput(1, new_W_value);
-    graph.erase_old_initializer(old_W_value);
-    Value* new_b_value = graph.addInitializerAndInput(b);
+    if (old_W_value->uses().size() == 0) {
+      graph.eraseInitializerAndInput(old_W_value);
+    }
+
     if (conv->inputs().size() == 3) {
+      Value* new_b_value = graph.addInitializerAndInput(b);
       Value* old_b_value = conv->inputs()[2];
       conv->replaceInput(2, new_b_value);
-      graph.erase_old_initializer(old_b_value);
+      if (old_b_value->uses().size() == 0) {
+        graph.eraseInitializerAndInput(old_b_value);
+      }
     } else {
+      Value* new_b_value = graph.addInitializerAndInput(b);
       conv->addInput(new_b_value);
     }
   }
@@ -78,7 +84,7 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto m = graph.initializers()[m_index];
     auto var = graph.initializers()[var_index];
     auto W = graph.initializers()[W_index];
-    auto epsilon = bn->f(kepsilon);
+    auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
     Tensor eps;
     Tensor bc;
 
@@ -102,12 +108,12 @@ struct FuseBNIntoConv final : public OptimizePass {
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = graph.get_initializer_index(conv_inputs[1]);
+          auto bc_index = graph.get_initializer_index(conv_inputs[2]);
           if (bc_index == -1) {
             return false;
           }
           bc = graph.initializers()[bc_index];
-          ONNX_ASSERT(bc.sizes() == 1 && bc.sizes()[0] == s.sizes()[0]);
+          ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
         var.apply_binary_function(&(add_nums<float>), eps);
@@ -138,12 +144,12 @@ struct FuseBNIntoConv final : public OptimizePass {
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = graph.get_initializer_index(conv_inputs[1]);
+          auto bc_index = graph.get_initializer_index(conv_inputs[2]);
           if (bc_index == -1) {
             return false;
           }
           bc = graph.initializers()[bc_index];
-          ONNX_ASSERT(bc.sizes() == 1 && bc.sizes()[0] == s.sizes()[0]);
+          ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
         var.apply_binary_function(&(add_nums<double>), eps);
@@ -176,11 +182,13 @@ struct FuseBNIntoConv final : public OptimizePass {
         auto origInput = n->inputs()[0];
         if (origInput->uses().size() > 1 ||
             n->outputs().size() > 1 ||
-            !modify_conv(n->input()->node(), n, graph)) {
+            !modify_conv(origInput->node(), n, graph)) {
           continue;
         }
-        for (int i = 1; i <=4; i++)  {
-          graph.erase_old_initializer(n->inputs()[i]);
+        for (int i = 1; i <= 4; i++)  {
+          if (n->inputs()[i]->uses().size() == 0) {
+            graph.eraseInitializerAndInput(n->inputs()[i]);
+          }
         }
         n->output()->replaceAllUsesWith(origInput);
         it.destroyCurrent();

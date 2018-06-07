@@ -28,7 +28,6 @@ struct ExtractConstantToInitializer final : public OptimizePass {
       if (n->kind() == kConstant) {
         const auto name = n->output()->uniqueName();
         Tensor t = n->t(kvalue);
-        t.setName(name);
         Value* new_init = graph.addInitializerAndInput(t, name);
         n->output()->replaceAllUsesWith(new_init);
         it.destroyCurrent();
