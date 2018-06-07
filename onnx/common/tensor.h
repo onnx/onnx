@@ -145,7 +145,7 @@ public:
   }
 
   template<typename T, int64_t block_size>
-  void bin_func(void (*f)(void*, const void*), Tensor& a) {
+  void bin_func(void (*f)(void*, const void*), Tensor& a, std::vector<T>& T_data_, std::vector<T>& a_T_data_) {
     T* T_ptr;
     const T* a_ptr;
     if (is_raw_data_)  {
@@ -157,7 +157,7 @@ public:
     if (a.is_raw_data())  {
       a_ptr = (const T*) a.raw().c_str();
     } else {
-      a_ptr = (const T*) &a.Ts()[0];
+      a_ptr = (const T*) &a_T_data_[0];
     }
     for (int i = 0; i < T_data_.size(); i++) {
       f((void*)(T_ptr + i * block_size), (const void*)(a_ptr + i * block_size));
@@ -169,7 +169,7 @@ public:
   }
 
   template<typename T, int64_t block_size>
-  void un_func(void (*f)(void*))  {
+  void un_func(void (*f)(void*), std::vector<T>& T_data_)  {
     T* T_ptr;
     if (is_raw_data_)  {
       T_ptr = (T*) malloc(raw_data_.size());
@@ -187,7 +187,7 @@ public:
   }
 
   template<typename T, int64_t block_size>
-  void channel_scale(Tensor&s)  {
+  void channel_scale(Tensor&s, std::vector<T>& T_data_)  {
     int64_t dim_per_data = block_size;
     for (int i = 2; i < sizes_.size(); i++) {
       dim_per_data *= sizes_[i];
@@ -227,23 +227,23 @@ public:
 
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
-        channel_scale<float, 1>(s);
+        channel_scale<float, 1>(s, float_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64: {
-        channel_scale<float, 2>(s);
+        channel_scale<float, 2>(s, float_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16: {
-        channel_scale<int32_t, 1>(s);
+        channel_scale<int32_t, 1>(s, int32_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
-        channel_scale<double, 1>(s);
+        channel_scale<double, 1>(s, double_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128: {
-        channel_scale<double, 2>(s);
+        channel_scale<double, 2>(s, double_data_);
         break;
       }
       default:
@@ -266,11 +266,11 @@ public:
 
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
-        bin_func<float, 1>(f, a);
+        bin_func<float, 1>(f, a, float_data_, a.floats());
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
-        bin_func<float, 2>(f, a);
+        bin_func<float, 2>(f, a, float_data_, a.floats());
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
@@ -280,24 +280,24 @@ public:
       case ONNX_NAMESPACE::TensorProto_DataType_INT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
-        bin_func<int32_t, 1>(f, a);
+        bin_func<int32_t, 1>(f, a, int32_data_, a.int32s());
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
-        bin_func<int64_t, 1>(f, a);
+        bin_func<int64_t, 1>(f, a, int64_data_, a.int64s());
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
-        bin_func<uint64_t, 1>(f, a);
+        bin_func<uint64_t, 1>(f, a, uint64_data_, a.uint64s());
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:  {
-        bin_func<double, 1>(f, a);
+        bin_func<double, 1>(f, a, double_data_, a.doubles());
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:  {
-        bin_func<double, 2>(f, a);
+        bin_func<double, 2>(f, a, double_data_, a.doubles());
         break;
       }
       default:
@@ -311,11 +311,11 @@ public:
   void apply_unary_function(void (*f)(void*))  {
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
-        un_func<float, 1>(f);
+        un_func<float, 1>(f, float_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
-        un_func<float, 2>(f);
+        un_func<float, 2>(f, float_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
@@ -325,24 +325,24 @@ public:
       case ONNX_NAMESPACE::TensorProto_DataType_INT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
-        un_func<int32_t, 1>(f);
+        un_func<int32_t, 1>(f, int32_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
-        un_func<int64_t, 1>(f);
+        un_func<int64_t, 1>(f, int64_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
       case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
-        un_func<uint64_t, 1>(f);
+        un_func<uint64_t, 1>(f, uint64_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:  {
-        un_func<double, 1>(f);
+        un_func<double, 1>(f, double_data_);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:  {
-        un_func<double, 2>(f);
+        un_func<double, 2>(f, double_data_);
         break;
       }
       default:
