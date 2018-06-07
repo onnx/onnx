@@ -543,7 +543,7 @@ class TestOptimizer(unittest.TestCase):
              helper.make_tensor_value_info("X3", TensorProto.FLOAT, (5,)),
              helper.make_tensor_value_info("X4", TensorProto.FLOAT, (5,)),
              helper.make_tensor_value_info("X5", TensorProto.FLOAT, (5,)),
-             helper.make_tensor_value_info("A", TensorProto.FLOAT, (5,))],
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (5, 1, 1))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 5, 3, 3))]
         )
         return graph
@@ -554,10 +554,12 @@ class TestOptimizer(unittest.TestCase):
         graph = self.helper_make_graph_fuse_arithmetic_into_batch_norm([batch_norm, arith])
         optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
 
-        assert len(list(optimized_model.graph.node)) == 2
-        assert optimized_model.graph.node[0].op_type == "Add"
-        assert optimized_model.graph.node[1].op_type == "BatchNormalization"
-        assert list(optimized_model.graph.node[0].input) == ["X3", "A"]
+        assert len(list(optimized_model.graph.node)) == 3
+        assert optimized_model.graph.node[0].op_type == "Squeeze"
+        assert optimized_model.graph.node[1].op_type == "Add"
+        assert optimized_model.graph.node[2].op_type == "BatchNormalization"
+        assert list(optimized_model.graph.node[0].input) == ["A"]
+        assert list(optimized_model.graph.node[1].input) == ["X3", optimized_model.graph.node[0].output[0]]
 
     def test_fuse_arithmetic_into_batch_norm(self):  # type: () -> None
         batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
@@ -571,17 +573,19 @@ class TestOptimizer(unittest.TestCase):
              (TensorProto.FLOAT, (5,), "X3"),
              (TensorProto.FLOAT, (5,), "X4"),
              (TensorProto.FLOAT, (5,), "X5"),
-             (TensorProto.FLOAT, (5,), "A")],
+             (TensorProto.FLOAT, (5, 1, 1), "A")],
             [(TensorProto.FLOAT, (1, 5, 3, 3), "Z2")]
         ))
         graph = self.helper_make_graph_fuse_arithmetic_into_batch_norm(nodes)
         optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
 
-        # Add, BatchNormalization, Constant (trip count), Constant (cond), Loop
-        assert len(list(optimized_model.graph.node)) == 5
-        assert optimized_model.graph.node[0].op_type == "Add"
-        assert optimized_model.graph.node[1].op_type == "BatchNormalization"
-        assert list(optimized_model.graph.node[0].input) == ["X3", "A"]
+        # Squeeze, Add, BatchNormalization, Constant (trip count), Constant (cond), Loop
+        assert len(list(optimized_model.graph.node)) == 6
+        assert optimized_model.graph.node[0].op_type == "Squeeze"
+        assert optimized_model.graph.node[1].op_type == "Add"
+        assert optimized_model.graph.node[2].op_type == "BatchNormalization"
+        assert list(optimized_model.graph.node[0].input) == ["A"]
+        assert list(optimized_model.graph.node[1].input) == ["X3", optimized_model.graph.node[0].output[0]]
 
     def test_fuse_arithmetic_into_batch_norm_mul(self):  # type: () -> None
         batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
@@ -589,12 +593,14 @@ class TestOptimizer(unittest.TestCase):
         graph = self.helper_make_graph_fuse_arithmetic_into_batch_norm([batch_norm, arith])
         optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
 
-        assert len(list(optimized_model.graph.node)) == 3
-        assert optimized_model.graph.node[0].op_type == "Mul"
+        assert len(list(optimized_model.graph.node)) == 4
+        assert optimized_model.graph.node[0].op_type == "Squeeze"
         assert optimized_model.graph.node[1].op_type == "Mul"
-        assert optimized_model.graph.node[2].op_type == "BatchNormalization"
-        assert list(optimized_model.graph.node[0].input) == ["X2", "A"]
-        assert list(optimized_model.graph.node[1].input) == ["X3", "A"]
+        assert optimized_model.graph.node[2].op_type == "Mul"
+        assert optimized_model.graph.node[3].op_type == "BatchNormalization"
+        assert list(optimized_model.graph.node[0].input) == ["A"]
+        assert list(optimized_model.graph.node[1].input) == ["X2", optimized_model.graph.node[0].output[0]]
+        assert list(optimized_model.graph.node[2].input) == ["X3", optimized_model.graph.node[0].output[0]]
 
     def test_fuse_arithmetic_into_batch_norm_multi_broadcast(self):  # type: () -> None
         batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y1"])
@@ -609,19 +615,23 @@ class TestOptimizer(unittest.TestCase):
              helper.make_tensor_value_info("X4", TensorProto.FLOAT, (5,)),
              helper.make_tensor_value_info("X5", TensorProto.FLOAT, (5,)),
              helper.make_tensor_value_info("A", TensorProto.FLOAT, (5, 1, 1)),
-             helper.make_tensor_value_info("B", TensorProto.FLOAT, (5, 1, 3))],
+             helper.make_tensor_value_info("B", TensorProto.FLOAT, (5, 1, 1))],
             [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 5, 3, 3))]
         )
         optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
 
-        assert len(list(optimized_model.graph.node)) == 4
-        assert optimized_model.graph.node[0].op_type == "Div"
+        assert len(list(optimized_model.graph.node)) == 6
+        assert optimized_model.graph.node[0].op_type == "Squeeze"
         assert optimized_model.graph.node[1].op_type == "Div"
-        assert optimized_model.graph.node[2].op_type == "Sub"
-        assert optimized_model.graph.node[3].op_type == "BatchNormalization"
-        assert list(optimized_model.graph.node[0].input) == ["X2", "A"]
-        assert list(optimized_model.graph.node[1].input) == ["X3", "A"]
-        assert list(optimized_model.graph.node[2].input)[1] == "B"
+        assert optimized_model.graph.node[2].op_type == "Div"
+        assert optimized_model.graph.node[3].op_type == "Squeeze"
+        assert optimized_model.graph.node[4].op_type == "Sub"
+        assert optimized_model.graph.node[5].op_type == "BatchNormalization"
+        assert list(optimized_model.graph.node[0].input) == ["A"]
+        assert list(optimized_model.graph.node[1].input) == ["X2", optimized_model.graph.node[0].output[0]]
+        assert list(optimized_model.graph.node[2].input) == ["X3", optimized_model.graph.node[0].output[0]]
+        assert list(optimized_model.graph.node[3].input) == ["B"]
+        assert list(optimized_model.graph.node[4].input)[1] == optimized_model.graph.node[3].output[0]
 
     def test_fuse_arithmetic_into_batch_norm_sub_first(self):  # type: () -> None
         batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
@@ -633,6 +643,26 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == "BatchNormalization"
         assert optimized_model.graph.node[1].op_type == "Sub"
         assert list(optimized_model.graph.node[1].input) == ["A", "Y"]
+
+    def test_fuse_arithmetic_into_batch_norm_dim_no_fuse_broadcast(self):  # type: () -> None
+        batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
+        arith = helper.make_node("Add", ["Y", "A"], ["Z"])
+        graph = helper.make_graph(
+            [batch_norm, arith],
+            "test",
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (1, 5, 3, 3)),
+             helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("X3", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("X4", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("X5", TensorProto.FLOAT, (5,)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (5, 3, 3))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 5, 3, 3))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_arithmetic_into_batch_norm"])
+
+        assert len(list(optimized_model.graph.node)) == 2
+        assert optimized_model.graph.node[0].op_type == "BatchNormalization"
+        assert optimized_model.graph.node[1].op_type == "Add"
 
     def test_fuse_arithmetic_into_batch_norm_dim_exceed(self):  # type: () -> None
         batch_norm = helper.make_node("BatchNormalization", ["X1", "X2", "X3", "X4", "X5"], ["Y"])
