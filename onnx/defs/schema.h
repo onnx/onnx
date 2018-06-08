@@ -429,7 +429,7 @@ class OpSchema final {
         "tensor(uint64)",
         "tensor(int32)",
         "tensor(int64)",
-		"tensor(float16)",
+        "tensor(float16)",
         "tensor(float)",
         "tensor(double)"};
     return numeric_types_for_math_reduction;
@@ -786,8 +786,7 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(name, Onnx, ONNX_DOMAIN, ver, true, impl)
 
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(                       \
-      name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
