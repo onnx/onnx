@@ -38,12 +38,6 @@ static Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
   node1->add_input("b");
   node1->add_output("y");
 
-  // set function inputs.
-  // set function outputs.
-  // set function attributes.
-  // set function description.
-  // set function body (nodes).
-
   return Status::OK();
 }
 

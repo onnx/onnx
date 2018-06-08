@@ -237,17 +237,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         return temp_map;
       });
 
-  // defs.def("register_function", [](
-  //    const std::string& domain,
-  //    FunctionProto function
-  //  )->Common::Status{
-  //    std::unique_ptr<FunctionProto> *func_ptr = new
-  //    std::unique_ptr<FunctionProto>(); func_ptr->reset(&function);
-  //    ONNX_FUNCTION(FunctionBuilder().SetDomain(domain).SetBuildFunction(BuildFunction(func_ptr)));
-  //    return Common::Status::OK();
-  //  }
-  //);
-
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
   checker.doc() = "Checker submodule";
