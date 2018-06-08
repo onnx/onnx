@@ -11,26 +11,29 @@
 
 #### Version
 
-This version of the function has been available since version 0 of the default ONNX operator set.
-
-#### Attribute:
-
-<dl>
-<dt>Test attribute;<br/></dt>
-</dl>
+This version of the function has been available since version 8 of the default ONNX operator set.
 
 #### Inputs
 
 <dl>
-<dt>Test input0;<br/></dt>
-<dt>Test input1;<br/></dt>
-</dl>
+<dt>w; </dt>
+<dt>x; </dt>
+<dt>b; </dt>
+<br/></dl>
 
 #### Outputs
 
 <dl>
-<dt>Test output0;<br/></dt>
-<dt>Test output1;<br/></dt>
+<dt>y; </dt>
+<br/></dl>
+
+#### Nodes
+
+<dl>
+<dt>node0</dt>: <br/><dd>Input(s):</dd><dd> w;</dd><dd> x;</dd><br/>
+<dd>Output(s):</dd><dd> w;</dd><dd> x;</dd><br/>
+<dt>node1</dt>: <br/><dd>Input(s):</dd><dd> y_1;</dd><dd> b;</dd><br/>
+<dd>Output(s):</dd><dd> y_1;</dd><dd> b;</dd><br/>
 </dl>
 
 

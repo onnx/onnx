@@ -176,22 +176,14 @@ def display_function(function, versions, domain=""): # type: (Function, Sequence
         s += '\nOther versions of this function: {}\n'.format(
             ', '.join(display_version_link(domain_prefix + v.name, v.since_version) for v in versions[:-1]))
 
-    # attributes
-    if function.attribute:
-        s += '\n#### Attribute:\n\n'
-        s += '<dl>\n'
-        for attr in function.attribute:
-            s += '<dt>{};<br/></dt>\n'.format(attr)
-        s += '</dl>\n'
-
     # inputs
     s += '\n#### Inputs'
     s += '\n\n'
     if function.inputs:
         s += '<dl>\n'
         for input in function.inputs:
-            s += '<dt>{};<br/></dt>\n'.format(input)
-        s += '</dl>\n'
+            s += '<dt>{}; </dt>\n'.format(input)
+        s += '<br/></dl>\n'
 
     # outputs
     s += '\n#### Outputs'
@@ -199,7 +191,32 @@ def display_function(function, versions, domain=""): # type: (Function, Sequence
     if function.outputs:
         s += '<dl>\n'
         for output in function.outputs:
-            s += '<dt>{};<br/></dt>\n'.format(output)
+            s += '<dt>{}; </dt>\n'.format(output)
+        s += '<br/></dl>\n'
+
+        # attributes
+    if function.attribute:
+        s += '\n#### Attribute:\n\n'
+        s += '<dl>\n'
+        for attr in function.attribute:
+            s += '<dt>{};<br/></dt>\n'.format(attr)
+        s += '</dl>\n'
+
+    # nodes
+    s += '\n#### Nodes'
+    s += '\n\n'
+    if function.nodes:
+        s += '<dl>\n'
+        for node in function.nodes:
+            s += '<dt>{}</dt>: <br/>'.format(node.name)
+            s += '<dd>Input(s):</dd>'
+            for input in node.inputs:
+                s += '<dd> {};</dd>'.format(input)
+            s += '<br/>\n'
+            s += '<dd>Output(s):</dd>'
+            for input in node.inputs:
+                s += '<dd> {};</dd>'.format(input)
+            s += '<br/>\n'
         s += '</dl>\n'
 
     return s
