@@ -7,9 +7,9 @@ using namespace ONNX_NAMESPACE;
 static Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
   if (nullptr == func_proto) {
     return Status(
-      Common::CHECKER,
-      Common::INVALID_ARGUMENT,
-      "func_proto should not be nullptr.");
+        Common::CHECKER,
+        Common::INVALID_ARGUMENT,
+        "func_proto should not be nullptr.");
   }
 
   func_proto->reset(new FunctionProto);
@@ -37,12 +37,12 @@ static Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
   node1->add_input("y_1");
   node1->add_input("b");
   node1->add_output("y");
-  
-  //set function inputs.
-  //set function outputs.
-  //set function attributes.
-  //set function description.
-  //set function body (nodes).
+
+  // set function inputs.
+  // set function outputs.
+  // set function attributes.
+  // set function description.
+  // set function body (nodes).
 
   return Status::OK();
 }
