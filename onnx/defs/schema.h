@@ -423,15 +423,16 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& high_precision_numeric_types() {
-    static const std::vector<std::string> high_precision_numeric_types = {
+  static const std::vector<std::string>& numeric_types_for_math_reduction() {
+    static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
         "tensor(uint64)",
         "tensor(int32)",
         "tensor(int64)",
+		"tensor(float16)",
         "tensor(float)",
         "tensor(double)"};
-    return high_precision_numeric_types;
+    return numeric_types_for_math_reduction;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
