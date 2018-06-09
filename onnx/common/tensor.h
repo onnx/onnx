@@ -146,6 +146,10 @@ public:
 
   template<typename T, int64_t block_size>
   void bin_func(void (*f)(void*, const void*), Tensor& a, std::vector<T>& T_data_, std::vector<T>& a_T_data_) {
+    int64_t num_elements = 1;
+    for (auto i : sizes_) {
+      num_elements *= i;
+    }
     T* T_ptr;
     const T* a_ptr;
     if (is_raw_data_)  {
@@ -159,7 +163,7 @@ public:
     } else {
       a_ptr = (const T*) &a_T_data_[0];
     }
-    for (int i = 0; i < T_data_.size(); i++) {
+    for (int i = 0; i < num_elements; i++) {
       f((void*)(T_ptr + i * block_size), (const void*)(a_ptr + i * block_size));
     }
     if (is_raw_data_)  {
@@ -170,6 +174,10 @@ public:
 
   template<typename T, int64_t block_size>
   void un_func(void (*f)(void*), std::vector<T>& T_data_)  {
+    int64_t num_elements = 1;
+    for (auto i : sizes_) {
+      num_elements *= i;
+    }
     T* T_ptr;
     if (is_raw_data_)  {
       T_ptr = (T*) malloc(raw_data_.size());
@@ -177,7 +185,7 @@ public:
     } else {
       T_ptr = (T*) &T_data_[0];
     }
-    for (int i = 0; i < T_data_.size(); i++) {
+    for (int i = 0; i < num_elements; i++) {
       f((void*)(T_ptr + i * block_size));
     }
     if (is_raw_data_)  {

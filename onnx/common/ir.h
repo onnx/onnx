@@ -834,6 +834,7 @@ public:
 
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
+    std::cout << "Adding initializer: " << name << std::endl;
     initializer_names_.push_back(std::move(name));
   }
   void eraseInitializer(std::string name) {
@@ -986,7 +987,6 @@ public:
     }
     Value* new_init = addInput();
     initializer.setName(new_init->uniqueName());
-    new_init->setUniqueName(new_init->uniqueName());
     new_init->setSizes(dim_sizes);
     new_init->setElemType(initializer.elem_type());
     addInitializer(initializer, new_init->uniqueName());
