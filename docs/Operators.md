@@ -2725,13 +2725,13 @@ expect(node, inputs=[x], outputs=[y],
   
   Equations (Default: f=Sigmoid, g=Tanh):
   
-    - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
+    - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
   
-    - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
+    - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
   
-    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -3912,15 +3912,15 @@ expect(node, inputs=[x], outputs=[y],
   
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   
-    - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+    - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
   
-    - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+    - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
   
-    - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
+    - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
   
     - Ct = ft (.) Ct-1 + it (.) ct
   
-    - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
+    - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
   
     - Ht = ot (.) h(Ct)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -5993,7 +5993,7 @@ expect(node, inputs=[x, y], outputs=[z],
   
   Equations (Default: f=Tanh):
   
-    - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+    - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
