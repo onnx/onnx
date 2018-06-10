@@ -316,6 +316,8 @@ if (MSVC)
     target_compile_options(onnx_proto PRIVATE
         /MP
         /WX
+        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+        /wd4503 # identifier' : decorated name length exceeded, name was truncated
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
     )
     target_compile_options(onnx PRIVATE
