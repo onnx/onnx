@@ -250,10 +250,6 @@ else()
   target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
 endif()
 
-if(MSVC)
-  target_compile_options(onnx_proto PRIVATE /WX-)
-endif()
-
 add_library(onnx ${onnx_src})
 target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
@@ -300,9 +296,10 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
       /MP
-      /MX
+      /WX
       /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
       /wd4503 # identifier' : decorated name length exceeded, name was truncated
+      /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
       )
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
@@ -332,11 +329,11 @@ endif()
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
         /MP
-        /MX
+        /WX
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
     )
     target_compile_options(onnx PRIVATE
         /MP
-        /MX
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
