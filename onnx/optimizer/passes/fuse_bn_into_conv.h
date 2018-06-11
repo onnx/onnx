@@ -77,7 +77,6 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto var_index = graph.get_initializer_index(bn_inputs[4]);
     auto W_index = graph.get_initializer_index(conv_inputs[1]);
     if (s_index == -1 || bbn_index == -1 || m_index == -1 || var_index == -1 || W_index == -1) {
-      std::cout << "not initialized" << std::endl;
       return false;
     }
     auto s = graph.initializers()[s_index];
@@ -88,11 +87,6 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
     Tensor eps;
     Tensor bc;
-
-    std::cout << *((float*) s.raw().c_str()) << std::endl;
-    std::cout << *((float*) bbn.raw().c_str()) << std::endl;
-    std::cout << *((float*) m.raw().c_str()) << std::endl;
-    std::cout << *((float*) var.raw().c_str()) << std::endl;
 
     ONNX_ASSERT(s.sizes().size() == 1);
     ONNX_ASSERT(bbn.sizes().size() == 1 && bbn.sizes()[0] == s.sizes()[0]);
@@ -130,8 +124,7 @@ struct FuseBNIntoConv final : public OptimizePass {
           std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
           s.set_raw_data(string_rep);
         }
-        std::cout << "AAA" << std::endl;
-        std::cout << *((float*) s.raw().c_str()) << std::endl;
+
         W.scale_by_first_dim(s);
         bc.apply_binary_function(&(sub_nums<float>), m);
         bc.apply_binary_function(&(mult_nums<float>), s);
