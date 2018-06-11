@@ -106,7 +106,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "inputs",
           [](FunctionProto* fp) -> std::vector<std::string> {
             std::vector<std::string> _stl_vec;
-            for (auto& ptr = fp->input().begin(); ptr != fp->input().end();
+            for (auto ptr = fp->input().begin(); ptr != fp->input().end();
                  ++ptr) {
               _stl_vec.emplace_back(*ptr);
             }
@@ -116,7 +116,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "outputs",
           [](FunctionProto* fp) -> std::vector<std::string> {
             std::vector<std::string> _stl_vec;
-            for (auto& ptr = fp->output().begin(); ptr != fp->output().end();
+            for (auto ptr = fp->output().begin(); ptr != fp->output().end();
                  ++ptr) {
               _stl_vec.emplace_back(*ptr);
             }
@@ -126,7 +126,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "attribute",
           [](FunctionProto* fp) -> std::vector<std::string> {
             std::vector<std::string> _stl_vec;
-            for (auto& ptr = fp->attribute().begin();
+            for (auto ptr = fp->attribute().begin();
                  ptr != fp->attribute().end();
                  ++ptr) {
               _stl_vec.emplace_back(*ptr);
@@ -136,7 +136,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "nodes", [](FunctionProto* fp) -> std::vector<NodeProto> {
             std::vector<NodeProto> _stl_vec;
-            for (auto& ptr = fp->node().begin(); ptr != fp->node().end();
+            for (auto ptr = fp->node().begin(); ptr != fp->node().end();
                  ++ptr) {
               _stl_vec.emplace_back(*ptr);
             }
@@ -152,7 +152,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           "inputs",
           [](NodeProto* np) -> std::vector<std::string> {
             std::vector<std::string> _stl_vec;
-            for (auto& ptr = np->input().begin(); ptr != np->input().end();
+            for (auto ptr = np->input().begin(); ptr != np->input().end();
                  ++ptr) {
               _stl_vec.emplace_back(*ptr);
             }
@@ -161,7 +161,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "outputs", [](NodeProto* np) -> std::vector<std::string> {
             std::vector<std::string> _stl_vec;
-            for (auto& ptr = np->output().begin(); ptr != np->output().end();
+            for (auto ptr = np->output().begin(); ptr != np->output().end();
                  ++ptr) {
               _stl_vec.emplace_back(*ptr);
             }
@@ -229,7 +229,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         Common::Status status =
             function_registry.GetFunctions(domain, &temp_ptr_map);
         // Pybind not support stl with smart pointers well
-        for (auto& iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
+        for (auto iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
              ++iter)
           temp_map.insert(
               std::unordered_map<std::string, FunctionProto>::value_type(

@@ -19,10 +19,10 @@ set(${UT_NAME}_libs
     ${googletest_STATIC_LIBRARIES}
 )
 
-list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
-list(APPEND ${UT_NAME}_libs onnx_proto)
 add_whole_archive_flag(onnx tmp)
 list(APPEND ${UT_NAME}_libs ${tmp})
+list(APPEND ${UT_NAME}_libs onnx_proto)
+list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src
     "${ONNX_ROOT}/onnx/test/c++/*.cc"
