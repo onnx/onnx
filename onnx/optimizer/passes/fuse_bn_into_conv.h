@@ -5,46 +5,12 @@
 #pragma once
 
 #include "onnx/optimizer/passes/optimize_pass.h"
-#include <math.h>
 
 namespace ONNX_NAMESPACE { namespace optimization {
 //TODO: Currently broken for complex values and float16
 struct FuseBNIntoConv final : public OptimizePass {
   explicit FuseBNIntoConv()
     : OptimizePass("fuse_bn_into_conv", API_TYPE::IR) {
-  }
-
-  template<typename T>
-  static void add_nums(void* x, const void* y) {
-    T* x_cast = (T*) x;
-    const T* y_cast = (const T*) y;
-    *x_cast = *x_cast + *y_cast;
-  }
-
-  template<typename T>
-  static void sub_nums(void* x, const void* y) {
-    T* x_cast = (T*) x;
-    const T* y_cast = (const T*) y;
-    *x_cast = *x_cast - *y_cast;
-  }
-
-  template<typename T>
-  static void mult_nums(void* x, const void* y) {
-    T* x_cast = (T*) x;
-    const T* y_cast = (const T*) y;
-    *x_cast = *x_cast * *y_cast;
-  }
-
-  template<typename T>
-  static void divide_nums(void* x, const void* y) {
-    T* x_cast = (T*) x;
-    const T* y_cast = (const T*) y;
-    *x_cast = *x_cast / *y_cast;
-  }
-  template<typename T>
-  static void sqrt_num(void* x) {
-    T* x_cast = (T*) x;
-    *x_cast = (T) sqrt((double) *x_cast);
   }
 
   void replace_inputs(Tensor& W, Tensor& b, Node* conv, Graph& graph) {
@@ -116,9 +82,9 @@ struct FuseBNIntoConv final : public OptimizePass {
           ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
-        var.apply_binary_function(&(add_nums<float>), eps);
-        var.apply_unary_function(&(sqrt_num<float>));
-        s.apply_binary_function(&(divide_nums<float>), var);
+        var.add(eps);
+        var.sqrt();
+        s.divide(var);
         if (!s.is_raw_data()) {
           const char * ptr = reinterpret_cast<const char *>(s.floats().data());
           std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
@@ -126,9 +92,9 @@ struct FuseBNIntoConv final : public OptimizePass {
         }
 
         W.scale_by_first_dim(s);
-        bc.apply_binary_function(&(sub_nums<float>), m);
-        bc.apply_binary_function(&(mult_nums<float>), s);
-        bc.apply_binary_function(&(add_nums<float>), bbn);
+        bc.subtract(m);
+        bc.multiply(s);
+        bc.add(bbn);
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
@@ -153,18 +119,18 @@ struct FuseBNIntoConv final : public OptimizePass {
           ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
-        var.apply_binary_function(&(add_nums<double>), eps);
-        var.apply_unary_function(&(sqrt_num<double>));
-        s.apply_binary_function(&(divide_nums<double>), var);
+        var.add(eps);
+        var.sqrt();
+        s.divide(var);
         if (!s.is_raw_data()) {
-          char const * ptr = reinterpret_cast<char const *>(s.doubles().data());
+          const char * ptr = reinterpret_cast<const char *>(s.doubles().data());
           std::string string_rep(ptr, ptr + sizeof(double) * s.doubles().size());
           s.set_raw_data(string_rep);
         }
         W.scale_by_first_dim(s);
-        bc.apply_binary_function(&(sub_nums<double>), m);
-        bc.apply_binary_function(&(mult_nums<double>), s);
-        bc.apply_binary_function(&(add_nums<double>), bbn);
+        bc.subtract(m);
+        bc.multiply(s);
+        bc.add(bbn);
         break;
       }
       default:

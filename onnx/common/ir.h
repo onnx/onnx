@@ -967,7 +967,7 @@ public:
   //Also syncs the initializer name, tensor name, and value name
   Value* addInitializerAndInput(Tensor &initializer) {
     std::vector<Dimension> dim_sizes;
-    for (auto v : initializer.sizes()) {
+    for (const auto& v : initializer.sizes()) {
       dim_sizes.push_back(v);
     }
     Value* new_init = addInput();
