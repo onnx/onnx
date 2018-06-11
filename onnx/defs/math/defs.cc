@@ -21,7 +21,7 @@ Performs element-wise binary {name} (with Numpy-style broadcasting support).
     schema.Output(0, "C", "Result, has same element type as two inputs", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::high_precision_numeric_types(),
+        OpSchema::numeric_types_for_math_reduction(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
