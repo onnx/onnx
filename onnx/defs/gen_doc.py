@@ -9,7 +9,7 @@ import os
 from collections import defaultdict
 
 from onnx import defs
-from onnx.defs import OpSchema
+from onnx.defs import OpSchema, FunctionProto
 from onnx.backend.test.case import collect_snippets
 from typing import Text, Sequence, Dict, List, Type, Set
 
@@ -152,7 +152,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
     return s
 
-def display_function(function, versions, domain=""): # type: (Function, Sequence[OpSchema]) -> Text
+
+def display_function(function, versions, domain=""):  # type: (FunctionProto, List[int], Text) -> Text
     s = ''
 
     if domain:
@@ -174,7 +175,7 @@ def display_function(function, versions, domain=""): # type: (Function, Sequence
     if len(versions) > 1:
         # TODO: link to the Changelog.md
         s += '\nOther versions of this function: {}\n'.format(
-            ', '.join(display_version_link(domain_prefix + v.name, v.since_version) for v in versions[:-1]))
+            ', '.join(display_version_link(domain_prefix + function.name, v) for v in versions[:-1]))
 
     # inputs
     s += '\n#### Inputs'
@@ -220,6 +221,7 @@ def display_function(function, versions, domain=""): # type: (Function, Sequence
         s += '</dl>\n'
 
     return s
+
 
 def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
     return \
@@ -354,42 +356,41 @@ def main(args):  # type: (Type[Args]) -> None
         else:
             functions = defs.get_functions('')
 
-        versions = [functions[fn].since_version for fn in functions]
-        latest_version = sorted(versions)[-1]
-
-        if os.getenv('ONNX_ML'):
-            s = '## {}\n'.format(ONNX_ML_DOMAIN)
-            domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
-        else:
-            s = '## ai.onnx (default)\n'
-            domain_prefix = ''
-        fout.write(s)
-
-        existing_functions = set()
-        for fn, function in sorted(functions.items()):
-            if fn in existing_functions:
-                continue
-            existing_functions.add(fn)
-            s = '  * {}<a href="#{}">{}</a>\n'.format(
-                "<sub>experimental</sub>" if latest_version == function.since_version else "",
-                domain_prefix + function.name, domain_prefix + function.name)
+        if functions:
+            if os.getenv('ONNX_ML'):
+                s = '## {}\n'.format(ONNX_ML_DOMAIN)
+                domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
+            else:
+                s = '## ai.onnx (default)\n'
+                domain_prefix = ''
             fout.write(s)
 
+            available_versions = [func.since_version for _, func in functions.items()]  # TODO: define support for multi version functions
+            latest_version = sorted(available_versions)[-1]
 
-        fout.write('\n')
+            existing_functions = set()  # type: Set[Text]
+            for fn, function in sorted(functions.items()):
+                if fn in existing_functions:
+                    continue
+                existing_functions.add(fn)
+                s = '  * {}<a href="#{}">{}</a>\n'.format(
+                    "<sub>experimental</sub>" if latest_version == function.since_version else "",
+                    domain_prefix + function.name, domain_prefix + function.name)
+                fout.write(s)
 
-        for _, function in sorted(functions.items()):
+            fout.write('\n')
 
-            s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
-                "<sub>experimental</sub> " if latest_version == function.since_version else "",
-                domain_prefix + function.name, domain_prefix + function.name.lower(),
-                domain_prefix + function.name)
+            for _, function in sorted(functions.items()):
+                s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
+                    "<sub>experimental</sub> " if latest_version == function.since_version else "",
+                    domain_prefix + function.name, domain_prefix + function.name.lower(),
+                    domain_prefix + function.name)
 
-            s += display_function(function, versions, domain_prefix)
+                s += display_function(function, available_versions, domain_prefix)
 
-            s += '\n\n'
+                s += '\n\n'
 
-            fout.write(s)
+                fout.write(s)
 
 
 if __name__ == '__main__':
