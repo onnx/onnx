@@ -188,7 +188,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
       continue;
     } else {
-      fail_check("Unrecognized attribute: ", name);
+      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
     switch (expected_type) {

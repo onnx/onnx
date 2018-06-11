@@ -670,21 +670,7 @@ public:
   }
 
   // Check whether this node is before node n in the graph.
-  bool isBefore(Node* n) {
-    if (n == nullptr || this == n) {
-      // Bail out early.
-      return false;
-    }
-    ONNX_ASSERT(n->inGraphList());
-    Node* p = next();
-    while (p != nullptr) {
-      if (p == n) {
-        return true;
-      }
-      p = next();
-    }
-    return false;
-  }
+  bool isBefore(Node* n);
 
   // iterators of the node list starting at this node
   // useful for resuming a search starting at this node
@@ -1110,6 +1096,28 @@ inline void Node::eraseOutput(size_t i) {
   for(size_t j = i; j < outputs_.size(); j++) {
     outputs_[j]->offset_--;
   }
+}
+
+inline bool Node::isBefore(Node* n) {
+  if (n == nullptr || this == n) {
+    // Bail out early.
+    return false;
+  }
+  // return true if node is Param (in initializers)
+  if (kind_ == kParam) {
+    return true;
+  }
+  // return false if target node is Param (in initializers)
+  if (n->kind() == kParam) {
+    return false;
+  }
+  ONNX_ASSERT(n->inGraphList());
+  for (Node* p = next(); p != *graph_->end(); p = p->next()) {
+    if (p == n) {
+      return true;
+    }
+  }
+  return false;
 }
 
 inline void Node::destroy() {

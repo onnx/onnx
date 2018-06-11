@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 
-#include <onnx/onnx.pb.h>
+#include <onnx/onnx_pb.h>
 
 using namespace ONNX_NAMESPACE;
 
