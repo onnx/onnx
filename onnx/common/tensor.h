@@ -4,8 +4,8 @@
 #pragma once
 
 #include "onnx/onnx_pb.h"
-#include <type_traits>
 #include <math.h>
+#include <numeric>
 
 namespace ONNX_NAMESPACE {
 
@@ -57,22 +57,19 @@ private:
 
   template<typename T, int64_t block_size>
   void bin_func(void (*f)(T*, const T*), Tensor& a, std::vector<T>& T_data_, std::vector<T>& a_T_data_) {
-    int64_t num_elements = 1;
-    for (auto i : sizes_) {
-      num_elements *= i;
-    }
+    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), 1, std::multiplies<int64_t>());
     T* T_ptr;
     const T* a_ptr;
     if (is_raw_data_)  {
       T_ptr = (T*) malloc(raw_data_.size());
       memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
     } else {
-      T_ptr = (T*) &T_data_[0];
+      T_ptr = (T*) T_data_.data();
     }
     if (a.is_raw_data())  {
       a_ptr = (const T*) a.raw().c_str();
     } else {
-      a_ptr = (const T*) &a_T_data_[0];
+      a_ptr = (const T*) a_T_data_.data();
     }
     for (int i = 0; i < num_elements; i++) {
       f(T_ptr + i * block_size, a_ptr + i * block_size);
@@ -85,16 +82,13 @@ private:
 
   template<typename T, int64_t block_size>
   void un_func(void (*f)(T*), std::vector<T>& T_data_)  {
-    int64_t num_elements = 1;
-    for (auto i : sizes_) {
-      num_elements *= i;
-    }
+    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), 1, std::multiplies<int64_t>());
     T* T_ptr;
     if (is_raw_data_)  {
       T_ptr = (T*) malloc(raw_data_.size());
       memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
     } else {
-      T_ptr = (T*) &T_data_[0];
+      T_ptr = (T*) T_data_.data();
     }
     for (int i = 0; i < num_elements; i++) {
       f(T_ptr + i * block_size);
@@ -107,10 +101,7 @@ private:
 
   template<typename T, int64_t block_size>
   void scale_dim(Tensor&s, std::vector<T>& T_data_)  {
-    int64_t elems_per_first_dim = block_size;
-    for (int i = 1; i < sizes_.size(); i++) {
-      elems_per_first_dim *= sizes_[i];
-    }
+    int64_t elems_per_first_dim = std::accumulate(sizes_.begin() + 1, sizes_.end(), block_size, std::multiplies<int64_t>());
     int64_t first_dim_size = sizes_[0];
     T* T_ptr;
     const T* scales = (const T*) s.raw().c_str();
@@ -118,7 +109,7 @@ private:
       T_ptr = (T*) malloc(raw_data_.size());
       memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
     } else {
-      T_ptr = (T*) &T_data_[0];
+      T_ptr = (T*) T_data_.data();
     }
     int counter = 0;
     for (int i = 0; i < first_dim_size; i++)  {
