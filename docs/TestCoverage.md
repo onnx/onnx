@@ -1,3 +1,8 @@
+# Test Coverage Report (ONNX Core Operators)
+## Outlines
+* [Node Test Coverage](#node-test-coverage)
+* [Model Test Coverage](#model-test-coverage)
+* [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
 Node tests have covered 85/100 (0.85%) common operators.
@@ -10,8 +15,7 @@ Node tests have covered 1/15 (0.07%) experimental operators.
 * [No Cover Experimental Operators](#no-cover-experimental-operators)
 
 ## &#x1F49A;Covered Common Operators
-### Abs
-There are 1 test cases, listed as following:
+### AbsThere are 1 test cases, listed as following:
 <details>
 <summary>abs</summary>
 
@@ -31,8 +35,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Acos
-There are 1 test cases, listed as following:
+
+### AcosThere are 1 test cases, listed as following:
 <details>
 <summary>acos</summary>
 
@@ -57,8 +61,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Add
-There are 2 test cases, listed as following:
+
+### AddThere are 2 test cases, listed as following:
 <details>
 <summary>add</summary>
 
@@ -97,8 +101,8 @@ expect(node, inputs=[x, y], outputs=[x + y],
 </details>
 
 
-### And
-There are 2 test cases, listed as following:
+
+### AndThere are 2 test cases, listed as following:
 <details>
 <summary>and</summary>
 
@@ -183,8 +187,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### Asin
-There are 1 test cases, listed as following:
+
+### AsinThere are 1 test cases, listed as following:
 <details>
 <summary>asin</summary>
 
@@ -209,8 +213,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Atan
-There are 1 test cases, listed as following:
+
+### AtanThere are 1 test cases, listed as following:
 <details>
 <summary>atan</summary>
 
@@ -235,8 +239,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### AveragePool
-There are 10 test cases, listed as following:
+
+### AveragePoolThere are 10 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
@@ -559,8 +563,8 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
 </details>
 
 
-### Cast
-There are 1 test cases, listed as following:
+
+### CastThere are 1 test cases, listed as following:
 <details>
 <summary>cast</summary>
 
@@ -593,8 +597,8 @@ for from_type, to_type in test_cases:
 </details>
 
 
-### Ceil
-There are 1 test cases, listed as following:
+
+### CeilThere are 1 test cases, listed as following:
 <details>
 <summary>ceil</summary>
 
@@ -619,8 +623,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Clip
-There are 2 test cases, listed as following:
+
+### ClipThere are 2 test cases, listed as following:
 <details>
 <summary>clip</summary>
 
@@ -677,8 +681,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Concat
-There are 1 test cases, listed as following:
+
+### ConcatThere are 1 test cases, listed as following:
 <details>
 <summary>concat</summary>
 
@@ -710,8 +714,8 @@ for test_case, values_ in test_cases.items():
 </details>
 
 
-### Constant
-There are 1 test cases, listed as following:
+
+### ConstantThere are 1 test cases, listed as following:
 <details>
 <summary>constant</summary>
 
@@ -736,8 +740,8 @@ expect(node, inputs=[], outputs=[values],
 </details>
 
 
-### Conv
-There are 2 test cases, listed as following:
+
+### ConvThere are 2 test cases, listed as following:
 <details>
 <summary>conv</summary>
 
@@ -855,8 +859,8 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 </details>
 
 
-### ConvTranspose
-There are 6 test cases, listed as following:
+
+### ConvTransposeThere are 6 test cases, listed as following:
 <details>
 <summary>convtranspose</summary>
 
@@ -1161,8 +1165,8 @@ expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
 </details>
 
 
-### Cos
-There are 1 test cases, listed as following:
+
+### CosThere are 1 test cases, listed as following:
 <details>
 <summary>cos</summary>
 
@@ -1187,8 +1191,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### DepthToSpace
-There are 2 test cases, listed as following:
+
+### DepthToSpaceThere are 2 test cases, listed as following:
 <details>
 <summary>depthtospace</summary>
 
@@ -1245,8 +1249,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Div
-There are 2 test cases, listed as following:
+
+### DivThere are 2 test cases, listed as following:
 <details>
 <summary>div</summary>
 
@@ -1293,8 +1297,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### Elu
-There are 2 test cases, listed as following:
+
+### EluThere are 2 test cases, listed as following:
 <details>
 <summary>elu</summary>
 
@@ -1340,8 +1344,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Equal
-There are 2 test cases, listed as following:
+
+### EqualThere are 2 test cases, listed as following:
 <details>
 <summary>equal</summary>
 
@@ -1382,8 +1386,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### Exp
-There are 1 test cases, listed as following:
+
+### ExpThere are 1 test cases, listed as following:
 <details>
 <summary>exp</summary>
 
@@ -1408,8 +1412,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Flatten
-There are 2 test cases, listed as following:
+
+### FlattenThere are 2 test cases, listed as following:
 <details>
 <summary>flatten</summary>
 
@@ -1455,8 +1459,8 @@ expect(node, inputs=[a], outputs=[b],
 </details>
 
 
-### Floor
-There are 1 test cases, listed as following:
+
+### FloorThere are 1 test cases, listed as following:
 <details>
 <summary>floor</summary>
 
@@ -1481,8 +1485,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### GRU
-There are 3 test cases, listed as following:
+
+### GRUThere are 3 test cases, listed as following:
 <details>
 <summary>defaults</summary>
 
@@ -1581,8 +1585,8 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 </details>
 
 
-### Gather
-There are 2 test cases, listed as following:
+
+### GatherThere are 2 test cases, listed as following:
 <details>
 <summary>gather_0</summary>
 
@@ -1625,8 +1629,8 @@ expect(node, inputs=[data, indices.astype(np.int64)], outputs=[y],
 </details>
 
 
-### Gemm
-There are 2 test cases, listed as following:
+
+### GemmThere are 2 test cases, listed as following:
 <details>
 <summary>notranspose</summary>
 
@@ -1673,8 +1677,8 @@ expect(node, inputs=[a, b, c], outputs=[y],
 </details>
 
 
-### GlobalAveragePool
-There are 2 test cases, listed as following:
+
+### GlobalAveragePoolThere are 2 test cases, listed as following:
 <details>
 <summary>globalaveragepool</summary>
 
@@ -1717,8 +1721,8 @@ expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
 </details>
 
 
-### GlobalMaxPool
-There are 2 test cases, listed as following:
+
+### GlobalMaxPoolThere are 2 test cases, listed as following:
 <details>
 <summary>globalmaxpool</summary>
 
@@ -1762,8 +1766,8 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 </details>
 
 
-### Greater
-There are 2 test cases, listed as following:
+
+### GreaterThere are 2 test cases, listed as following:
 <details>
 <summary>greater</summary>
 
@@ -1804,8 +1808,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### HardSigmoid
-There are 2 test cases, listed as following:
+
+### HardSigmoidThere are 2 test cases, listed as following:
 <details>
 <summary>hardsigmoid</summary>
 
@@ -1852,8 +1856,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Hardmax
-There are 2 test cases, listed as following:
+
+### HardmaxThere are 2 test cases, listed as following:
 <details>
 <summary>hardmax</summary>
 
@@ -1930,8 +1934,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Identity
-There are 1 test cases, listed as following:
+
+### IdentityThere are 1 test cases, listed as following:
 <details>
 <summary>identity</summary>
 
@@ -1954,8 +1958,8 @@ expect(node, inputs=[data], outputs=[data],
 </details>
 
 
-### LRN
-There are 2 test cases, listed as following:
+
+### LRNThere are 2 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -2017,8 +2021,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### LSTM
-There are 3 test cases, listed as following:
+
+### LSTMThere are 3 test cases, listed as following:
 <details>
 <summary>defaults</summary>
 
@@ -2120,8 +2124,8 @@ expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.
 </details>
 
 
-### LeakyRelu
-There are 2 test cases, listed as following:
+
+### LeakyReluThere are 2 test cases, listed as following:
 <details>
 <summary>leakyrelu</summary>
 
@@ -2167,8 +2171,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Less
-There are 2 test cases, listed as following:
+
+### LessThere are 2 test cases, listed as following:
 <details>
 <summary>less</summary>
 
@@ -2209,8 +2213,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### Log
-There are 1 test cases, listed as following:
+
+### LogThere are 1 test cases, listed as following:
 <details>
 <summary>log</summary>
 
@@ -2235,8 +2239,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### LogSoftmax
-There are 2 test cases, listed as following:
+
+### LogSoftmaxThere are 2 test cases, listed as following:
 <details>
 <summary>logsoftmax</summary>
 
@@ -2322,8 +2326,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### MatMul
-There are 1 test cases, listed as following:
+
+### MatMulThere are 1 test cases, listed as following:
 <details>
 <summary>matmul</summary>
 
@@ -2359,8 +2363,8 @@ expect(node, inputs=[a, b], outputs=[c],
 </details>
 
 
-### Max
-There are 1 test cases, listed as following:
+
+### MaxThere are 1 test cases, listed as following:
 <details>
 <summary>max</summary>
 
@@ -2398,8 +2402,8 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
-### MaxPool
-There are 10 test cases, listed as following:
+
+### MaxPoolThere are 10 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -2723,8 +2727,8 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
 </details>
 
 
-### Mean
-There are 1 test cases, listed as following:
+
+### MeanThere are 1 test cases, listed as following:
 <details>
 <summary>mean</summary>
 
@@ -2762,8 +2766,8 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
-### Min
-There are 1 test cases, listed as following:
+
+### MinThere are 1 test cases, listed as following:
 <details>
 <summary>min</summary>
 
@@ -2801,8 +2805,8 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
-### Mul
-There are 2 test cases, listed as following:
+
+### MulThere are 2 test cases, listed as following:
 <details>
 <summary>mul</summary>
 
@@ -2849,8 +2853,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### Neg
-There are 1 test cases, listed as following:
+
+### NegThere are 1 test cases, listed as following:
 <details>
 <summary>neg</summary>
 
@@ -2875,8 +2879,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Not
-There are 1 test cases, listed as following:
+
+### NotThere are 1 test cases, listed as following:
 <details>
 <summary>not</summary>
 
@@ -2906,8 +2910,8 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 </details>
 
 
-### Or
-There are 2 test cases, listed as following:
+
+### OrThere are 2 test cases, listed as following:
 <details>
 <summary>or</summary>
 
@@ -2992,8 +2996,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### PRelu
-There are 2 test cases, listed as following:
+
+### PReluThere are 2 test cases, listed as following:
 <details>
 <summary>prelu</summary>
 
@@ -3036,8 +3040,8 @@ expect(node, inputs=[x, slope], outputs=[y],
 </details>
 
 
-### Pad
-There are 2 test cases, listed as following:
+
+### PadThere are 2 test cases, listed as following:
 <details>
 <summary>constant_pad</summary>
 
@@ -3091,8 +3095,8 @@ for mode in ['edge', 'reflect']:
 </details>
 
 
-### Pow
-There are 2 test cases, listed as following:
+
+### PowThere are 2 test cases, listed as following:
 <details>
 <summary>pow</summary>
 
@@ -3151,8 +3155,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### RNN
-There are 3 test cases, listed as following:
+
+### RNNThere are 3 test cases, listed as following:
 <details>
 <summary>defaults</summary>
 
@@ -3249,8 +3253,8 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 </details>
 
 
-### Reciprocal
-There are 1 test cases, listed as following:
+
+### ReciprocalThere are 1 test cases, listed as following:
 <details>
 <summary>reciprocal</summary>
 
@@ -3275,8 +3279,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### ReduceL1
-There are 3 test cases, listed as following:
+
+### ReduceL1There are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3390,8 +3394,8 @@ expect(node, inputs=[data], outputs=[reduced],
 </details>
 
 
-### ReduceL2
-There are 3 test cases, listed as following:
+
+### ReduceL2There are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3514,8 +3518,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_l2_keep_dims_ra
 </details>
 
 
-### ReduceLogSum
-There are 2 test cases, listed as following:
+
+### ReduceLogSumThere are 2 test cases, listed as following:
 <details>
 <summary>keepdims</summary>
 
@@ -3566,8 +3570,8 @@ expect(node, inputs=[data], outputs=[reduced],
 </details>
 
 
-### ReduceLogSumExp
-There are 3 test cases, listed as following:
+
+### ReduceLogSumExpThere are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3689,8 +3693,8 @@ expect(node, inputs=[data], outputs=[reduced],
 </details>
 
 
-### ReduceMax
-There are 3 test cases, listed as following:
+
+### ReduceMaxThere are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3789,8 +3793,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_max_keepdims_ra
 </details>
 
 
-### ReduceMean
-There are 3 test cases, listed as following:
+
+### ReduceMeanThere are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3890,8 +3894,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_mean_keepdims_r
 </details>
 
 
-### ReduceMin
-There are 3 test cases, listed as following:
+
+### ReduceMinThere are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -3990,8 +3994,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_min_keepdims_ra
 </details>
 
 
-### ReduceProd
-There are 3 test cases, listed as following:
+
+### ReduceProdThere are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4088,8 +4092,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_prod_keepdims_r
 </details>
 
 
-### ReduceSum
-There are 3 test cases, listed as following:
+
+### ReduceSumThere are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4189,8 +4193,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_keepdims_ra
 </details>
 
 
-### ReduceSumSquare
-There are 3 test cases, listed as following:
+
+### ReduceSumSquareThere are 3 test cases, listed as following:
 <details>
 <summary>default_axes_keepdims</summary>
 
@@ -4290,8 +4294,8 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_keep
 </details>
 
 
-### Relu
-There are 1 test cases, listed as following:
+
+### ReluThere are 1 test cases, listed as following:
 <details>
 <summary>relu</summary>
 
@@ -4311,8 +4315,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Reshape
-There are 1 test cases, listed as following:
+
+### ReshapeThere are 1 test cases, listed as following:
 <details>
 <summary>reshape</summary>
 
@@ -4342,8 +4346,8 @@ for test_name, shape in test_cases.items():
 </details>
 
 
-### Selu
-There are 2 test cases, listed as following:
+
+### SeluThere are 2 test cases, listed as following:
 <details>
 <summary>selu</summary>
 
@@ -4392,8 +4396,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Shape
-There are 1 test cases, listed as following:
+
+### ShapeThere are 1 test cases, listed as following:
 <details>
 <summary>shape</summary>
 
@@ -4425,8 +4429,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Sigmoid
-There are 1 test cases, listed as following:
+
+### SigmoidThere are 1 test cases, listed as following:
 <details>
 <summary>sigmoid</summary>
 
@@ -4451,8 +4455,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Sin
-There are 1 test cases, listed as following:
+
+### SinThere are 1 test cases, listed as following:
 <details>
 <summary>sin</summary>
 
@@ -4477,8 +4481,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Size
-There are 1 test cases, listed as following:
+
+### SizeThere are 1 test cases, listed as following:
 <details>
 <summary>size</summary>
 
@@ -4508,8 +4512,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Slice
-There are 5 test cases, listed as following:
+
+### SliceThere are 5 test cases, listed as following:
 <details>
 <summary>slice</summary>
 
@@ -4624,8 +4628,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Softmax
-There are 2 test cases, listed as following:
+
+### SoftmaxThere are 2 test cases, listed as following:
 <details>
 <summary>softmax</summary>
 
@@ -4711,8 +4715,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Softplus
-There are 1 test cases, listed as following:
+
+### SoftplusThere are 1 test cases, listed as following:
 <details>
 <summary>softplus</summary>
 
@@ -4737,8 +4741,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Softsign
-There are 1 test cases, listed as following:
+
+### SoftsignThere are 1 test cases, listed as following:
 <details>
 <summary>softsign</summary>
 
@@ -4763,8 +4767,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Split
-There are 3 test cases, listed as following:
+
+### SplitThere are 3 test cases, listed as following:
 <details>
 <summary>1d</summary>
 
@@ -4862,8 +4866,8 @@ expect(node, inputs=[input], outputs=[y for y in expected_outputs], name='test_s
 </details>
 
 
-### Sqrt
-There are 1 test cases, listed as following:
+
+### SqrtThere are 1 test cases, listed as following:
 <details>
 <summary>sqrt</summary>
 
@@ -4888,8 +4892,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Squeeze
-There are 1 test cases, listed as following:
+
+### SqueezeThere are 1 test cases, listed as following:
 <details>
 <summary>squeeze</summary>
 
@@ -4910,8 +4914,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Sub
-There are 2 test cases, listed as following:
+
+### SubThere are 2 test cases, listed as following:
 <details>
 <summary>sub</summary>
 
@@ -4958,8 +4962,8 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
-### Sum
-There are 1 test cases, listed as following:
+
+### SumThere are 1 test cases, listed as following:
 <details>
 <summary>sum</summary>
 
@@ -4997,8 +5001,8 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 </details>
 
 
-### Tan
-There are 1 test cases, listed as following:
+
+### TanThere are 1 test cases, listed as following:
 <details>
 <summary>tan</summary>
 
@@ -5023,8 +5027,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Tanh
-There are 1 test cases, listed as following:
+
+### TanhThere are 1 test cases, listed as following:
 <details>
 <summary>tanh</summary>
 
@@ -5049,8 +5053,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Tile
-There are 2 test cases, listed as following:
+
+### TileThere are 2 test cases, listed as following:
 <details>
 <summary>tile</summary>
 
@@ -5109,8 +5113,8 @@ expect(node,
 </details>
 
 
-### TopK
-There are 1 test cases, listed as following:
+
+### TopKThere are 1 test cases, listed as following:
 <details>
 <summary>top_k</summary>
 
@@ -5144,8 +5148,8 @@ expect(node, inputs=[X], outputs=[values_ref, indices_ref],
 </details>
 
 
-### Transpose
-There are 2 test cases, listed as following:
+
+### TransposeThere are 2 test cases, listed as following:
 <details>
 <summary>all_permutations</summary>
 
@@ -5190,8 +5194,8 @@ expect(node, inputs=[data], outputs=[transposed],
 </details>
 
 
-### Unsqueeze
-There are 1 test cases, listed as following:
+
+### UnsqueezeThere are 1 test cases, listed as following:
 <details>
 <summary>squeeze</summary>
 
@@ -5212,8 +5216,8 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Upsample
-There are 1 test cases, listed as following:
+
+### UpsampleThere are 1 test cases, listed as following:
 <details>
 <summary>nearest</summary>
 
@@ -5245,8 +5249,8 @@ expect(node, inputs=[data], outputs=[output],
 </details>
 
 
-### Xor
-There are 2 test cases, listed as following:
+
+### XorThere are 2 test cases, listed as following:
 <details>
 <summary>xor</summary>
 
@@ -5331,29 +5335,29 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+
 <br/>
 
 ## &#x1F494;No Cover Common Operators
-### ArgMax
-### ArgMin
-### BatchNormalization
-### Dropout
-### GlobalLpPool
-### InstanceNormalization
-### LpNormalization
-### LpPool
-### MaxRoiPool
-### Multinomial
-### RandomNormal
-### RandomNormalLike
-### RandomUniform
-### RandomUniformLike
-### SpaceToDepth
+### ArgMax (call for test cases)
+### ArgMin (call for test cases)
+### BatchNormalization (call for test cases)
+### Dropout (call for test cases)
+### GlobalLpPool (call for test cases)
+### InstanceNormalization (call for test cases)
+### LpNormalization (call for test cases)
+### LpPool (call for test cases)
+### MaxRoiPool (call for test cases)
+### Multinomial (call for test cases)
+### RandomNormal (call for test cases)
+### RandomNormalLike (call for test cases)
+### RandomUniform (call for test cases)
+### RandomUniformLike (call for test cases)
+### SpaceToDepth (call for test cases)
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
-### ThresholdedRelu
-There are 2 test cases, listed as following:
+### ThresholdedReluThere are 2 test cases, listed as following:
 <details>
 <summary>default</summary>
 
@@ -5405,22 +5409,25 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+
 <br/>
 
 ## &#x1F494;No Cover Experimental Operators
-### ATen
-### Affine
-### ConstantFill
-### Crop
-### GRUUnit
-### GivenTensorFill
-### If
-### ImageScaler
-### Loop
-### LoopIndexTensor
-### MeanVarianceNormalization
-### ParametricSoftplus
-### Scale
-### ScaledTanh
+### ATen (call for test cases)
+### Affine (call for test cases)
+### ConstantFill (call for test cases)
+### Crop (call for test cases)
+### GRUUnit (call for test cases)
+### GivenTensorFill (call for test cases)
+### If (call for test cases)
+### ImageScaler (call for test cases)
+### Loop (call for test cases)
+### LoopIndexTensor (call for test cases)
+### MeanVarianceNormalization (call for test cases)
+### ParametricSoftplus (call for test cases)
+### Scale (call for test cases)
+### ScaledTanh (call for test cases)
 <br/>
 
+# Model Test Coverage
+## To be filled.
