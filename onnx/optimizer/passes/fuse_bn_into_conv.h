@@ -64,12 +64,12 @@ struct FuseBNIntoConv final : public OptimizePass {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
         eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-        for (int i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
           eps.floats().push_back(epsilon);
         }
         bc.sizes().push_back(s.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-        for (int i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
           bc.floats().push_back(0.f);
         }
 
@@ -101,12 +101,12 @@ struct FuseBNIntoConv final : public OptimizePass {
       {
         eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
-        for (int i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
           eps.doubles().push_back((double)epsilon);
         }
         bc.sizes().push_back(s.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
-        for (int i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
           bc.doubles().push_back(0.);
         }
 

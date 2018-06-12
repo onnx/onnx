@@ -90,7 +90,7 @@ private:
     } else {
       T_ptr = (T*) T_data_.data();
     }
-    for (int i = 0; i < num_elements; i++) {
+    for (int64_t i = 0; i < num_elements; i++) {
       f(T_ptr + i * block_size);
     }
     if (is_raw_data_)  {
