@@ -37,19 +37,19 @@ struct FuseBNIntoConv final : public OptimizePass {
   bool modify_conv(Node* conv, Node* bn, Graph& graph)  {
     auto bn_inputs = bn->inputs();
     auto conv_inputs = conv->inputs();
-    auto s_index = graph.get_initializer_index(bn_inputs[1]);
-    auto bbn_index = graph.get_initializer_index(bn_inputs[2]);
-    auto m_index = graph.get_initializer_index(bn_inputs[3]);
-    auto var_index = graph.get_initializer_index(bn_inputs[4]);
-    auto W_index = graph.get_initializer_index(conv_inputs[1]);
-    if (s_index == -1 || bbn_index == -1 || m_index == -1 || var_index == -1 || W_index == -1) {
+    auto s_index = graph.hasInitializer(bn_inputs[1]->uniqueName());
+    auto bbn_index = graph.hasInitializer(bn_inputs[2]->uniqueName());
+    auto m_index = graph.hasInitializer(bn_inputs[3]->uniqueName());
+    auto var_index = graph.hasInitializer(bn_inputs[4]->uniqueName());
+    auto W_index = graph.hasInitializer(conv_inputs[1]->uniqueName());
+    if (!s_index || !bbn_index || !m_index || !var_index || !W_index) {
       return false;
     }
-    auto s = graph.initializers()[s_index];
-    auto bbn = graph.initializers()[bbn_index];
-    auto m = graph.initializers()[m_index];
-    auto var = graph.initializers()[var_index];
-    auto W = graph.initializers()[W_index];
+    auto s = graph.getInitializer(bn_inputs[1]->uniqueName());
+    auto bbn = graph.getInitializer(bn_inputs[2]->uniqueName());
+    auto m = graph.getInitializer(bn_inputs[3]->uniqueName());
+    auto var = graph.getInitializer(bn_inputs[4]->uniqueName());
+    auto W = graph.getInitializer(conv_inputs[1]->uniqueName());
     auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
     Tensor eps;
     Tensor bc;
@@ -65,7 +65,7 @@ struct FuseBNIntoConv final : public OptimizePass {
         eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
         for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
-          eps.floats().push_back(epsilon);
+          eps.floats().push_back((float) epsilon);
         }
         bc.sizes().push_back(s.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;

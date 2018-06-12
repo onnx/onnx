@@ -848,14 +848,21 @@ public:
   const std::vector<std::string>& initializer_names() {
     return initializer_names_;
   }
-  const int64_t get_initializer_index(Value* v) {
-    std::string name = v->uniqueName();
+  Tensor hasInitializer(std::string& name) {
     for (auto i = 0; i < initializer_names_.size(); i++) {
       if (initializer_names_[i].compare(name) == 0) {
-        return i;
+        return true;
       }
     }
-    return -1;
+    return false;
+  }
+  Tensor getInitializer(std::string& name) {
+    for (auto i = 0; i < initializer_names_.size(); i++) {
+      if (initializer_names_[i].compare(name) == 0) {
+        return initializers_[i];
+      }
+    }
+    ONNX_ASSERT(false)
   }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
