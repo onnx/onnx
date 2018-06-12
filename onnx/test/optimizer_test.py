@@ -798,6 +798,5 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == 'Conv'
 
-
 if __name__ == '__main__':
     unittest.main()
