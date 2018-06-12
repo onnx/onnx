@@ -3,16 +3,17 @@ import os
 
 from onnx import defs
 from onnx.backend.test.case import collect_snippets
+from typing import Any, IO, Sequence, Text
 
 
-def is_ml(schemas):
+def is_ml(schemas):  # type: (Sequence[defs.OpSchema]) -> bool
     for s in schemas:
         if s.domain == 'ai.onnx.ml':
             return True
     return False
 
 
-def gen_outlines(f, ml):
+def gen_outlines(f, ml):  # type: (IO[Any], bool) -> None
     f.write('# Test Coverage Report')
     if ml:
         f.write(' (ONNX-ML Operators)\n')
@@ -25,6 +26,7 @@ def gen_outlines(f, ml):
 
 
 def gen_node_test_coverage(schemas, f, ml):
+    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
     node_tests = collect_snippets()
     common_covered = sorted([s.name for s in schemas
             if s.name in node_tests
@@ -88,16 +90,19 @@ def gen_node_test_coverage(schemas, f, ml):
 
 
 def gen_model_test_coverage(schemas, f, ml):
+    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
     f.write('# Model Test Coverage\n')
     f.write('## To be filled.\n')
 
 
 def gen_overall_test_coverage(schemas, f, ml):
+    # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
     f.write('# Overall Test Coverage\n')
     f.write('## To be filled.\n')
 
 
 def main():
+    # type: () -> None
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.realpath(__file__)))))
     docs_dir = os.path.join(base_dir, 'docs')
