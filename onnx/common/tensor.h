@@ -62,7 +62,7 @@ private:
     std::vector<T> vals;
     const T* a_ptr;
     if (is_raw_data_)  {
-      for (auto i = 0; i < raw_data_.size(); i += sizeof(T))  {
+      for (int64_t i = 0; i < (int64_t) raw_data_.size(); i += (int64_t) sizeof(T))  {
         vals.push_back(*((const T*)(raw_data_.c_str() + i)));
       }
       T_ptr = (T*) vals.data();
@@ -88,7 +88,7 @@ private:
     T* T_ptr;
     std::vector<T> vals;
     if (is_raw_data_)  {
-      for (auto i = 0; i < raw_data_.size(); i += sizeof(T))  {
+      for (int64_t i = 0; i < (int64_t) raw_data_.size(); i += (int64_t) sizeof(T))  {
         vals.push_back(*((const T*)(raw_data_.c_str() + i)));
       }
       T_ptr = (T*) vals.data();
@@ -111,7 +111,7 @@ private:
     std::vector<T> vals;
     const T* scales = (const T*) s.raw().c_str();
     if (is_raw_data_)  {
-      for (auto i = 0; i < raw_data_.size(); i += sizeof(T))  {
+      for (int64_t i = 0; i < (int64_t) raw_data_.size(); i += (int64_t) sizeof(T))  {
         vals.push_back(*((const T*)(raw_data_.c_str() + i)));
       }
       T_ptr = (T*) vals.data();
