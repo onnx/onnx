@@ -37,19 +37,21 @@ struct FuseBNIntoConv final : public OptimizePass {
   bool modify_conv(Node* conv, Node* bn, Graph& graph)  {
     auto bn_inputs = bn->inputs();
     auto conv_inputs = conv->inputs();
-    auto s_index = graph.hasInitializer(bn_inputs[1]->uniqueName());
-    auto bbn_index = graph.hasInitializer(bn_inputs[2]->uniqueName());
-    auto m_index = graph.hasInitializer(bn_inputs[3]->uniqueName());
-    auto var_index = graph.hasInitializer(bn_inputs[4]->uniqueName());
-    auto W_index = graph.hasInitializer(conv_inputs[1]->uniqueName());
-    if (!s_index || !bbn_index || !m_index || !var_index || !W_index) {
+    auto end_iter = graph.initializers().end();
+    auto s_iter = graph.getInitializer(bn_inputs[1]->uniqueName());
+    auto bbn_iter = graph.getInitializer(bn_inputs[2]->uniqueName());
+    auto m_iter = graph.getInitializer(bn_inputs[3]->uniqueName());
+    auto var_iter = graph.getInitializer(bn_inputs[4]->uniqueName());
+    auto W_iter = graph.getInitializer(conv_inputs[1]->uniqueName());
+    if (s_iter == end_iter || bbn_iter == end_iter || m_iter == end_iter ||
+        var_iter == end_iter || W_iter == end_iter) {
       return false;
     }
-    auto s = graph.getInitializer(bn_inputs[1]->uniqueName());
-    auto bbn = graph.getInitializer(bn_inputs[2]->uniqueName());
-    auto m = graph.getInitializer(bn_inputs[3]->uniqueName());
-    auto var = graph.getInitializer(bn_inputs[4]->uniqueName());
-    auto W = graph.getInitializer(conv_inputs[1]->uniqueName());
+    auto s = *s_iter;
+    auto bbn = *bbn_iter;
+    auto m = *m_iter;
+    auto var = *var_iter;
+    auto W = *W_iter;
     auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
     Tensor eps;
     Tensor bc;
@@ -74,11 +76,11 @@ struct FuseBNIntoConv final : public OptimizePass {
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = graph.hasInitializer(conv_inputs[2]->uniqueName());
-          if (!bc_index) {
+          auto bc_iter = graph.getInitializer(conv_inputs[2]->uniqueName());
+          if (bc_iter == end_iter) {
             return false;
           }
-          bc = graph.getInitializer(conv_inputs[2]->uniqueName());
+          bc = *bc_iter;
           ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
@@ -111,11 +113,11 @@ struct FuseBNIntoConv final : public OptimizePass {
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = graph.hasInitializer(conv_inputs[2]->uniqueName());
-          if (!bc_index) {
+          auto bc_iter = graph.getInitializer(conv_inputs[2]->uniqueName());
+          if (bc_iter == end_iter) {
             return false;
           }
-          bc = graph.getInitializer(conv_inputs[2]->uniqueName());
+          bc = *bc_iter;
           ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
