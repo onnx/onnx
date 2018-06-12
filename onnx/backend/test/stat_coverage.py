@@ -118,6 +118,7 @@ def main():
         gen_outlines(f, ml)
         gen_node_test_coverage(schemas, f, ml)
         gen_model_test_coverage(schemas, f, ml)
+        gen_overall_test_coverage(schemas, f, ml)
 
 
 if __name__ == '__main__':
