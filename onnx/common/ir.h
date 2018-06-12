@@ -850,7 +850,7 @@ public:
   }
   const int64_t get_initializer_index(Value* v) {
     std::string name = v->uniqueName();
-    for (int i = 0; i < initializer_names_.size(); i++) {
+    for (auto i = 0; i < initializer_names_.size(); i++) {
       if (initializer_names_[i].compare(name) == 0) {
         return i;
       }
