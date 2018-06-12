@@ -214,14 +214,14 @@ def display_function(function, versions, domain=""):  # type: (FunctionProto, Li
     if function.nodes:
         s += '<dl>\n'
         for node in function.nodes:
-            s += '<dt>{}</dt>: <br/>'.format(node.name)
+            s += '<dd><b>{}: </b></dd><br/>'.format(node.name)
             s += '<dd>Input(s):</dd>'
             for input in node.inputs:
                 s += '<dd> {};</dd>'.format(input)
             s += '<br/>\n'
             s += '<dd>Output(s):</dd>'
-            for input in node.inputs:
-                s += '<dd> {};</dd>'.format(input)
+            for output in node.outputs:
+                s += '<dd> {};</dd>'.format(output)
             s += '<br/>\n'
         s += '</dl>\n'
 

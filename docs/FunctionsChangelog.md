@@ -29,9 +29,9 @@ This version of the function has been available since version 8 of the default O
 #### Nodes
 
 <dl>
-<dt>node0</dt>: <br/><dd>Input(s):</dd><dd> w;</dd><dd> x;</dd><br/>
-<dd>Output(s):</dd><dd> w;</dd><dd> x;</dd><br/>
-<dt>node1</dt>: <br/><dd>Input(s):</dd><dd> y_1;</dd><dd> b;</dd><br/>
-<dd>Output(s):</dd><dd> y_1;</dd><dd> b;</dd><br/>
+<dd><b>node0: </b></dd><br/><dd>Input(s):</dd><dd> w;</dd><dd> x;</dd><br/>
+<dd>Output(s):</dd><dd> y_1;</dd><br/>
+<dd><b>node1: </b></dd><br/><dd>Input(s):</dd><dd> y_1;</dd><dd> b;</dd><br/>
+<dd>Output(s):</dd><dd> y;</dd><br/>
 </dl>
 
