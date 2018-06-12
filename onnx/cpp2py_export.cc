@@ -219,31 +219,29 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
 
   defs.def(
-    "get_all_functions",
-    [](const std::string& domain)
-    -> std::unordered_map<std::string, std::vector<FunctionProto>> {
-    std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_ptr_map;
-    std::unordered_map<std::string, std::vector<FunctionProto>> temp_map;
-    FunctionBuilderRegistry& function_registry =
-      FunctionBuilderRegistry::OnnxInstance();
-    Common::Status status =
-      function_registry.GetFunctions(domain, &temp_ptr_map);
-    // Pybind not support stl with smart pointers well
-    for (auto iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
-      ++iter)
-      if (!temp_map.count(iter->first)) {
-        std::vector<FunctionProto> tmp_vec;
-        tmp_vec.emplace_back(*iter->second);
-        temp_map.insert(
-          std::unordered_map<std::string, std::vector<FunctionProto>>::value_type(
-            iter->first, tmp_vec));
-      }
-      else
-      {
-        temp_map.at(iter->first).emplace_back(*iter->second);
-      }
-    return temp_map;
-  });
+      "get_all_functions",
+      [](const std::string& domain)
+          -> std::unordered_map<std::string, std::vector<FunctionProto>> {
+        std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_ptr_map;
+        std::unordered_map<std::string, std::vector<FunctionProto>> temp_map;
+        FunctionBuilderRegistry& function_registry =
+            FunctionBuilderRegistry::OnnxInstance();
+        Common::Status status =
+            function_registry.GetFunctions(domain, &temp_ptr_map);
+        // Pybind not support stl with smart pointers well
+        for (auto iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
+             ++iter)
+          if (!temp_map.count(iter->first)) {
+            std::vector<FunctionProto> tmp_vec;
+            tmp_vec.emplace_back(*iter->second);
+            temp_map.insert(
+                std::unordered_map<std::string, std::vector<FunctionProto>>::
+                    value_type(iter->first, tmp_vec));
+          } else {
+            temp_map.at(iter->first).emplace_back(*iter->second);
+          }
+        return temp_map;
+      });
 
   // Submodule `checker`
   auto checker = onnx_cpp2py_export.def_submodule("checker");
