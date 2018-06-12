@@ -57,7 +57,7 @@ private:
 
   template<typename T, int64_t block_size>
   void bin_func(void (*f)(T*, const T*), Tensor& a, std::vector<T>& T_data_, std::vector<T>& a_T_data_) {
-    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), 1, std::multiplies<int64_t>());
+    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
     T* T_ptr;
     const T* a_ptr;
     if (is_raw_data_)  {
@@ -71,7 +71,7 @@ private:
     } else {
       a_ptr = (const T*) a_T_data_.data();
     }
-    for (int i = 0; i < num_elements; i++) {
+    for (int64_t i = 0; i < num_elements; i++) {
       f(T_ptr + i * block_size, a_ptr + i * block_size);
     }
     if (is_raw_data_)  {
@@ -82,7 +82,7 @@ private:
 
   template<typename T, int64_t block_size>
   void un_func(void (*f)(T*), std::vector<T>& T_data_)  {
-    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), 1, std::multiplies<int64_t>());
+    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
     T* T_ptr;
     if (is_raw_data_)  {
       T_ptr = (T*) malloc(raw_data_.size());
@@ -111,9 +111,9 @@ private:
     } else {
       T_ptr = (T*) T_data_.data();
     }
-    int counter = 0;
-    for (int i = 0; i < first_dim_size; i++)  {
-      for (int j = 0; j < elems_per_first_dim; j++) {
+    int64_t counter = 0;
+    for (int64_t i = 0; i < first_dim_size; i++)  {
+      for (int64_t j = 0; j < elems_per_first_dim; j++) {
         T_ptr[counter++] *= scales[i];
       }
     }
