@@ -61,11 +61,12 @@ private:
     T* T_ptr;
     const T* a_ptr;
     if (is_raw_data_)  {
-      T_ptr = (T*) malloc(raw_data_.size());
-      memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
-    } else {
-      T_ptr = (T*) T_data_.data();
+      T_data_.clear();
+      for (auto i = 0; i < raw_data_.size(); i += sizeof(T))  {
+        T_data_.push_back(*((T*)(raw_data_.c_str() + i)));
+      }
     }
+    T_ptr = (T*) T_data_.data();
     if (a.is_raw_data())  {
       a_ptr = (const T*) a.raw().c_str();
     } else {
@@ -76,7 +77,6 @@ private:
     }
     if (is_raw_data_)  {
       raw_data_.assign((const char*) T_ptr, raw_data_.size());
-      free(T_ptr);
     }
   }
 
@@ -85,17 +85,17 @@ private:
     int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
     T* T_ptr;
     if (is_raw_data_)  {
-      T_ptr = (T*) malloc(raw_data_.size());
-      memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
-    } else {
-      T_ptr = (T*) T_data_.data();
+      T_data_.clear();
+      for (auto i = 0; i < raw_data_.size(); i += sizeof(T))  {
+        T_data_.push_back(*((T*)(raw_data_.c_str() + i)));
+      }
     }
+    T_ptr = (T*) T_data_.data();
     for (int64_t i = 0; i < num_elements; i++) {
       f(T_ptr + i * block_size);
     }
     if (is_raw_data_)  {
       raw_data_.assign((const char*) T_ptr, raw_data_.size());
-      free(T_ptr);
     }
   }
 
@@ -106,11 +106,12 @@ private:
     T* T_ptr;
     const T* scales = (const T*) s.raw().c_str();
     if (is_raw_data_)  {
-      T_ptr = (T*) malloc(raw_data_.size());
-      memcpy(T_ptr, raw_data_.c_str(), raw_data_.size());
-    } else {
-      T_ptr = (T*) T_data_.data();
+      T_data_.clear();
+      for (auto i = 0; i < raw_data_.size(); i += sizeof(T))  {
+        T_data_.push_back(*((T*)(raw_data_.c_str() + i)));
+      }
     }
+    T_ptr = (T*) T_data_.data();
     int64_t counter = 0;
     for (int64_t i = 0; i < first_dim_size; i++)  {
       for (int64_t j = 0; j < elems_per_first_dim; j++) {
@@ -119,7 +120,6 @@ private:
     }
     if (is_raw_data_)  {
       raw_data_.assign((const char*) T_ptr, raw_data_.size());
-      free(T_ptr);
     }
   }
 
