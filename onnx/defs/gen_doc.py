@@ -352,11 +352,11 @@ def main(args):  # type: (Type[Args]) -> None
             "            Do not modify directly and instead edit function definitions.*\n")
 
         if os.getenv('ONNX_ML'):
-            functions = defs.get_functions(ONNX_ML_DOMAIN)
+            all_functions = defs.get_functions(ONNX_ML_DOMAIN)
         else:
-            functions = defs.get_functions('')
+            all_functions = defs.get_functions('')
 
-        if functions:
+        if all_functions:
             if os.getenv('ONNX_ML'):
                 s = '## {}\n'.format(ONNX_ML_DOMAIN)
                 domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
@@ -365,32 +365,33 @@ def main(args):  # type: (Type[Args]) -> None
                 domain_prefix = ''
             fout.write(s)
 
-            available_versions = [func.since_version for _, func in functions.items()]  # TODO: define support for multi version functions
-            latest_version = sorted(available_versions)[-1]
-
             existing_functions = set()  # type: Set[Text]
-            for fn, function in sorted(functions.items()):
-                if fn in existing_functions:
-                    continue
-                existing_functions.add(fn)
-                s = '  * {}<a href="#{}">{}</a>\n'.format(
-                    "<sub>experimental</sub>" if latest_version == function.since_version else "",
-                    domain_prefix + function.name, domain_prefix + function.name)
-                fout.write(s)
+            for function_name, functions in sorted(all_functions.items()):
+                available_versions = [func.since_version for func in functions]
+                latest_version = sorted(available_versions)[-1]
 
-            fout.write('\n')
+                for function in sorted(functions, key=lambda s: s.since_version):
+                    if function.name in existing_functions:
+                        continue
+                    existing_functions.add(function.name)
+                    s = '  * {}<a href="#{}">{}</a>\n'.format(
+                        "<sub>experimental</sub>" if latest_version == function.since_version else "",
+                        domain_prefix + function.name, domain_prefix + function.name)
+                    fout.write(s)
 
-            for _, function in sorted(functions.items()):
-                s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
-                    "<sub>experimental</sub> " if latest_version == function.since_version else "",
-                    domain_prefix + function.name, domain_prefix + function.name.lower(),
-                    domain_prefix + function.name)
+                fout.write('\n')
 
-                s += display_function(function, available_versions, domain_prefix)
+                for function in sorted(functions, key=lambda s: s.since_version):
+                    s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
+                        "<sub>experimental</sub> " if latest_version == function.since_version else "",
+                        domain_prefix + function.name, domain_prefix + function.name.lower(),
+                        domain_prefix + function.name)
 
-                s += '\n\n'
+                    s += display_function(function, available_versions, domain_prefix)
 
-                fout.write(s)
+                    s += '\n\n'
+
+                    fout.write(s)
 
 
 if __name__ == '__main__':
