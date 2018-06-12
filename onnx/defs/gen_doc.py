@@ -295,7 +295,7 @@ def main(args):  # type: (Type[Args]) -> None
             sorted_functions = sorted(functions, key=lambda s: s.since_version)
             available_versions = [func.since_version for func in sorted_functions]
             for function in sorted_functions:
-                s += '## Version {} of domain {}\n'.format(sorted_functions.index(function)+1, domain_display_name)
+                s += '## Version {} of domain {}\n'.format(sorted_functions.index(function) + 1, domain_display_name)
                 name_with_ver = '{}-{}'.format(domain_prefix +
                                                fn_name, function.since_version)
                 s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
