@@ -61,7 +61,7 @@ def gen_node_test_coverage(schemas, f, ml):
               '&#x1F494;No Cover Common Operators',
               '&#x1F49A;Covered Experimental Operators',
               '&#x1F494;No Cover Experimental Operators',
-             ]
+              ]
     all_lists = [common_covered, common_no_cover,
             experimental_covered, experimental_no_cover]
     for t in titles:
@@ -84,7 +84,7 @@ def gen_node_test_coverage(schemas, f, ml):
                 f.write(' (call for test cases)')
             f.write('\n')
         f.write('<br/>\n\n')
-  
+
 
 def gen_model_test_coverage(schemas, f, ml):
     f.write('# Model Test Coverage\n')
@@ -101,9 +101,9 @@ def main():
         os.path.dirname(os.path.realpath(__file__)))))
     docs_dir = os.path.join(base_dir, 'docs')
     schemas = defs.get_all_schemas()
-    
+
     ml = is_ml(schemas)
-    if ml == True:
+    if ml:
         fname = os.path.join(docs_dir, 'TestCoverage-ml.md')
     else:
         fname = os.path.join(docs_dir, 'TestCoverage.md')
