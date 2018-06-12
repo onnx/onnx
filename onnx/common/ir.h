@@ -848,7 +848,7 @@ public:
   const std::vector<std::string>& initializer_names() {
     return initializer_names_;
   }
-  Tensor hasInitializer(std::string& name) {
+  bool hasInitializer(std::string& name) {
     for (auto i = 0; i < initializer_names_.size(); i++) {
       if (initializer_names_[i].compare(name) == 0) {
         return true;
