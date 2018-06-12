@@ -48,13 +48,14 @@ def gen_node_test_coverage(schemas, f, ml):
     f.write('## Summary\n')
     if num_common:
         f.write('Node tests have covered {}/{} ({:.2f}%) common operators.\n\n'.format(
-            len(common_covered), num_common, (len(common_covered) / num_common)))
+            len(common_covered), num_common,
+            (len(common_covered) / float(num_common))))
     else:
         f.write('Node tests have covered 0/0 (N/A) common operators. \n\n')
     if num_experimental:
         f.write('Node tests have covered {}/{} ({:.2f}%) experimental operators.\n\n'.format(
             len(experimental_covered), num_experimental,
-            (len(experimental_covered) / num_experimental)))
+            (len(experimental_covered) / float(num_experimental))))
     else:
         f.write('Node tests have covered 0/0 (N/A) experimental operators.\n\n')
     titles = ['&#x1F49A;Covered Common Operators',
