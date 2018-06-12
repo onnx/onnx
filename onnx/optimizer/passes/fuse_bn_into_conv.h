@@ -74,11 +74,11 @@ struct FuseBNIntoConv final : public OptimizePass {
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = graph.get_initializer_index(conv_inputs[2]);
-          if (bc_index == -1) {
+          auto bc_index = graph.hasInitializer(conv_inputs[2]->uniqueName());
+          if (!bc_index) {
             return false;
           }
-          bc = graph.initializers()[bc_index];
+          bc = graph.getInitializer(conv_inputs[2]->uniqueName());
           ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
@@ -111,11 +111,11 @@ struct FuseBNIntoConv final : public OptimizePass {
         }
 
         if (conv_inputs.size() == 3) {
-          auto bc_index = graph.get_initializer_index(conv_inputs[2]);
-          if (bc_index == -1) {
+          auto bc_index = graph.hasInitializer(conv_inputs[2]->uniqueName());
+          if (!bc_index) {
             return false;
           }
-          bc = graph.initializers()[bc_index];
+          bc = graph.getInitializer(conv_inputs[2]->uniqueName());
           ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
 
