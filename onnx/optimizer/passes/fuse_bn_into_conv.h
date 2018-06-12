@@ -35,8 +35,8 @@ struct FuseBNIntoConv final : public OptimizePass {
   }
 
   bool modify_conv(Node* conv, Node* bn, Graph& graph)  {
-    auto bn_inputs = bn->inputs();
-    auto conv_inputs = conv->inputs();
+    const auto& bn_inputs = bn->inputs();
+    const auto& conv_inputs = conv->inputs();
     auto end_iter = graph.initializers().end();
     auto s_iter = graph.getInitializer(bn_inputs[1]->uniqueName());
     auto bbn_iter = graph.getInitializer(bn_inputs[2]->uniqueName());
