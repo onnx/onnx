@@ -75,17 +75,16 @@ def gen_node_test_coverage(schemas, f, ml):
         for s in l:
             f.write('### {}'.format(s))
             if s in node_tests:
-                f.write('There are {} test cases, listed as following:\n'.format(
+                f.write('\nThere are {} test cases, listed as following:\n'.format(
                     len(node_tests[s])))
                 for summary, code in sorted(node_tests[s]):
                     f.write('<details>\n')
                     f.write('<summary>{}</summary>\n\n'.format(summary))
                     f.write('```python\n{}\n```\n\n'.format(code))
                     f.write('</details>\n')
-                    f.write('\n\n')
             else:
-                f.write(' (call for test cases)')
-            f.write('\n')
+                f.write(' (call for test cases)\n')
+            f.write('\n\n')
         f.write('<br/>\n\n')
 
 
