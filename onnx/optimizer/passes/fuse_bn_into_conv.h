@@ -157,9 +157,9 @@ struct FuseBNIntoConv final : public OptimizePass {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
       DescendOnGraphAttributes(n, [this](Graph& g){fuse_bn_into_conv(g);});
-      Node* bn = n;
-      Node* conv = n->inputs()[0]->node();
-      if (bn->kind() == kBatchNormalization && conv->kind() == kConv) {
+      if (n->kind() == kBatchNormalization && n->inputs()[0]->node()->kind() == kConv) {
+        Node* bn = n;
+        Node* conv = n->inputs()[0]->node();
         auto origInput = bn->inputs()[0];
         if (origInput->uses().size() > 1 ||
             bn->outputs().size() > 1 ||
