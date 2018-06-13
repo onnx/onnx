@@ -75,12 +75,12 @@ struct FuseBNIntoConv final : public OptimizePass {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
         eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
           eps.floats().push_back((float) epsilon);
         }
         bc.sizes().push_back(s.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
           bc.floats().push_back(0.f);
         }
 
@@ -112,12 +112,12 @@ struct FuseBNIntoConv final : public OptimizePass {
       {
         eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
-        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
           eps.doubles().push_back((double)epsilon);
         }
         bc.sizes().push_back(s.sizes()[0]);
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
-        for (int64_t i = 0; i < eps.sizes()[0]; i++)  {
+        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
           bc.doubles().push_back(0.);
         }
 
@@ -157,8 +157,8 @@ struct FuseBNIntoConv final : public OptimizePass {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
       DescendOnGraphAttributes(n, [this](Graph& g){fuse_bn_into_conv(g);});
-      auto* bn = n;
-      auto* conv = n->inputs()[0]->node();
+      Node* bn = n;
+      Node* conv = n->inputs()[0]->node();
       if (bn->kind() == kBatchNormalization && conv->kind() == kConv) {
         auto origInput = bn->inputs()[0];
         if (origInput->uses().size() > 1 ||
@@ -166,7 +166,7 @@ struct FuseBNIntoConv final : public OptimizePass {
             !modify_conv(conv, bn, graph)) {
           continue;
         }
-        for (int i = 1; i <= 4; i++)  {
+        for (int i = 1; i <= 4; ++i)  {
           if (bn->inputs()[i]->uses().size() == 0) {
             graph.eraseInitializerAndInput(bn->inputs()[i]);
           }

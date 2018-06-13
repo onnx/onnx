@@ -95,7 +95,7 @@ private:
     } else {
       T_ptr = (T*) T_data_.data();
     }
-    for (int64_t i = 0; i < num_elements; i++) {
+    for (int64_t i = 0; i < num_elements; ++i) {
       f(T_ptr + i * block_size);
     }
     if (is_raw_data_)  {
@@ -119,8 +119,8 @@ private:
       T_ptr = (T*) T_data_.data();
     }
     int64_t counter = 0;
-    for (int64_t i = 0; i < first_dim_size; i++)  {
-      for (int64_t j = 0; j < elems_per_first_dim; j++) {
+    for (int64_t i = 0; i < first_dim_size; ++i)  {
+      for (int64_t j = 0; j < elems_per_first_dim; ++j) {
         T_ptr[counter++] *= scales[i];
       }
     }
