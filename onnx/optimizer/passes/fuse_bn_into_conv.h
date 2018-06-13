@@ -47,6 +47,21 @@ struct FuseBNIntoConv final : public OptimizePass {
         var_iter == end_iter || W_iter == end_iter) {
       return false;
     }
+
+    ONNX_ASSERT(s_iter->sizes().size() == 1);
+    ONNX_ASSERT(bbn_iter->sizes().size() == 1 && bbn_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(m_iter->sizes().size() == 1 && m_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(var_iter->sizes().size() == 1 && var_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(W_iter->sizes().size() > 2 && W_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(s_iter->elem_type() == bbn_iter->elem_type() &&
+                s_iter->elem_type() == m_iter->elem_type() &&
+                s_iter->elem_type() == var_iter->elem_type() &&
+                s_iter->elem_type() == W_iter->elem_type());
+    if (s_iter->elem_type() != ONNX_NAMESPACE::TensorProto_DataType_FLOAT &&
+        s_iter->elem_type() != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE)  {
+      return false;
+    }
+
     auto s = *s_iter;
     auto bbn = *bbn_iter;
     auto m = *m_iter;
@@ -55,12 +70,6 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
     Tensor eps;
     Tensor bc;
-
-    ONNX_ASSERT(s.sizes().size() == 1);
-    ONNX_ASSERT(bbn.sizes().size() == 1 && bbn.sizes()[0] == s.sizes()[0]);
-    ONNX_ASSERT(m.sizes().size() == 1 && m.sizes()[0] == s.sizes()[0]);
-    ONNX_ASSERT(var.sizes().size() == 1 && var.sizes()[0] == s.sizes()[0]);
-    ONNX_ASSERT(W.sizes().size() > 2 && W.sizes()[0] == s.sizes()[0]);
 
     switch(s.elem_type()) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
@@ -136,7 +145,7 @@ struct FuseBNIntoConv final : public OptimizePass {
         break;
       }
       default:
-        throw("Incompatible data type");
+        return false;
     }
 
     replace_inputs(W, bc, conv, graph);
