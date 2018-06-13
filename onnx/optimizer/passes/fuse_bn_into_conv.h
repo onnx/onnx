@@ -148,19 +148,21 @@ struct FuseBNIntoConv final : public OptimizePass {
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
       DescendOnGraphAttributes(n, [this](Graph& g){fuse_bn_into_conv(g);});
-      if (n->kind() == kBatchNormalization && n->inputs()[0]->node()->kind() == kConv) {
-        auto origInput = n->inputs()[0];
+      auto* bn = n;
+      auto* conv = n->inputs()[0]->node();
+      if (bn->kind() == kBatchNormalization && conv->kind() == kConv) {
+        auto origInput = bn->inputs()[0];
         if (origInput->uses().size() > 1 ||
-            n->outputs().size() > 1 ||
-            !modify_conv(origInput->node(), n, graph)) {
+            bn->outputs().size() > 1 ||
+            !modify_conv(conv, bn, graph)) {
           continue;
         }
         for (int i = 1; i <= 4; i++)  {
-          if (n->inputs()[i]->uses().size() == 0) {
-            graph.eraseInitializerAndInput(n->inputs()[i]);
+          if (bn->inputs()[i]->uses().size() == 0) {
+            graph.eraseInitializerAndInput(bn->inputs()[i]);
           }
         }
-        n->output()->replaceAllUsesWith(origInput);
+        bn->output()->replaceAllUsesWith(origInput);
         it.destroyCurrent();
       }
     }

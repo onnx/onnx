@@ -56,7 +56,7 @@ private:
 
 
   template<typename T, int64_t block_size>
-  void bin_func(void (*f)(T*, const T*), Tensor& a, std::vector<T>& T_data_, std::vector<T>& a_T_data_) {
+  void bin_func(void (*f)(T*, const T*), const Tensor& a, std::vector<T>& T_data_, const std::vector<T>& a_T_data_) {
     int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
     T* T_ptr;
     std::vector<T> vals;
@@ -74,7 +74,7 @@ private:
     } else {
       a_ptr = (const T*) a_T_data_.data();
     }
-    for (int64_t i = 0; i < num_elements; i++) {
+    for (int64_t i = 0; i < num_elements; ++i) {
       f(T_ptr + i * block_size, a_ptr + i * block_size);
     }
     if (is_raw_data_)  {
@@ -104,7 +104,7 @@ private:
   }
 
   template<typename T, int64_t block_size>
-  void scale_dim(Tensor&s, std::vector<T>& T_data_)  {
+  void scale_dim(const Tensor&s, std::vector<T>& T_data_)  {
     int64_t elems_per_first_dim = std::accumulate(sizes_.begin() + 1, sizes_.end(), block_size, std::multiplies<int64_t>());
     int64_t first_dim_size = sizes_[0];
     T* T_ptr;
@@ -129,7 +129,7 @@ private:
     }
   }
 
-  void check(Tensor &a) {
+  void check(const Tensor &a) {
     if (a.elem_type() != elem_type_) {
       throw("Type of tensors do not match");
     }
@@ -330,7 +330,7 @@ public:
   //applies function f element-wise to this and a, storing result in this
   //type T must correspond to appropriate tensor type
 
-  void apply_binary_function(void (*f)(float*, const float*), Tensor& a)  {
+  void apply_binary_function(void (*f)(float*, const float*), const Tensor& a)  {
     check(a);
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
@@ -346,7 +346,7 @@ public:
     }
   }
 
-  void apply_binary_function(void (*f)(int32_t*, const int32_t*), Tensor& a)  {
+  void apply_binary_function(void (*f)(int32_t*, const int32_t*), const Tensor& a)  {
     check(a);
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
@@ -364,7 +364,7 @@ public:
     }
   }
 
-  void apply_binary_function(void (*f)(int64_t*, const int64_t*), Tensor& a)  {
+  void apply_binary_function(void (*f)(int64_t*, const int64_t*), const Tensor& a)  {
     check(a);
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
@@ -376,7 +376,7 @@ public:
     }
   }
 
-  void apply_binary_function(void (*f)(uint64_t*, const uint64_t*), Tensor& a)  {
+  void apply_binary_function(void (*f)(uint64_t*, const uint64_t*), const Tensor& a)  {
     check(a);
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
@@ -388,7 +388,7 @@ public:
     }
   }
 
-  void apply_binary_function(void (*f)(double*, const double*), Tensor& a)  {
+  void apply_binary_function(void (*f)(double*, const double*), const Tensor& a)  {
     check(a);
     switch(elem_type_) {
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:  {
@@ -409,28 +409,28 @@ public:
   //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
   //UINT32, UINT64, DOUBLE,
   //TODO: Support for COMPLEX64, COMPLEX128
-  void add(Tensor& a);
+  void add(const Tensor& a);
 
   //this -= a
   //Supported for
   //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
   //UINT32, UINT64, DOUBLE
   //TODO: Support for COMPLEX64, COMPLEX128
-  void subtract(Tensor& a);
+  void subtract(const Tensor& a);
 
   //this *= a
   //Supported for
   //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
   //UINT32, UINT64, DOUBLE
   //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
-  void multiply(Tensor& a);
+  void multiply(const Tensor& a);
 
   //this /= a
   //Supported for
   //FLOAT, INT8, INT16, INT32, UINT8, UINT16, INT64,
   //UINT32, UINT64, DOUBLE
   //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
-  void divide(Tensor& a);
+  void divide(const Tensor& a);
 
   //Element-wise square root of This
   //Supported for
@@ -441,10 +441,10 @@ public:
   //Element wise scaling of tensor s
   //s is one dimensional, has size M, where M is size of first dimension of tensor
   //s must have data as raw_data and has data type corresponding to this
-  void scale_by_first_dim(Tensor& s);
+  void scale_by_first_dim(const Tensor& s);
 };
 
-inline void Tensor::add(Tensor& a) {
+inline void Tensor::add(const Tensor& a) {
   switch(elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
     case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
@@ -481,7 +481,7 @@ inline void Tensor::add(Tensor& a) {
 
 }
 
-inline void Tensor::subtract(Tensor& a) {
+inline void Tensor::subtract(const Tensor& a) {
   switch(elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
     case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
@@ -518,7 +518,7 @@ inline void Tensor::subtract(Tensor& a) {
 
 }
 
-inline void Tensor::multiply(Tensor& a) {
+inline void Tensor::multiply(const Tensor& a) {
   switch(elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
       apply_binary_function(mult_nums<float>, a);
@@ -551,7 +551,7 @@ inline void Tensor::multiply(Tensor& a) {
   }
 }
 
-inline void Tensor::divide(Tensor& a) {
+inline void Tensor::divide(const Tensor& a) {
   switch(elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
       apply_binary_function(divide_nums<float>, a);
@@ -598,7 +598,7 @@ inline void Tensor::sqrt() {
   }
 }
 
-inline void Tensor::scale_by_first_dim(Tensor& s) {
+inline void Tensor::scale_by_first_dim(const Tensor& s) {
   ONNX_ASSERT(sizes_.size() > 1 && s.sizes().size() == 1 && s.sizes()[0] == sizes_[0]);
   ONNX_ASSERT(s.is_raw_data() && s.elem_type() == elem_type_);
 
