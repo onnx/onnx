@@ -544,7 +544,7 @@ inline void Tensor::subtract(const Tensor& a) {
     }
     case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
     case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:  {
-      apply_binary_function_double(std::minus<int64_t>(), a);
+      apply_binary_function_double(std::minus<double>(), a);
       break;
     }
     default:
