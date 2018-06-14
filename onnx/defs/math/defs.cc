@@ -1051,13 +1051,13 @@ Expand the input tensor following the given shape.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	Expand,
-	8,
-	OpSchema()
-		.SetDoc(Expand_ver8_doc)
-		.Input(0, "input", "Input tensor", "T")
-		.Input(1, "shape", "Shape of output tensor", "T")
-		.Output(0, "output", "Output tensor", "T")
+    Expand,
+    8,
+    OpSchema()
+        .SetDoc(Expand_ver8_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Input(1, "shape", "Shape of output tensor", "T")
+        .Output(0, "output", "Output tensor", "T")
         .TypeConstraint(
             "T",
             {"tensor(float)",
@@ -1067,7 +1067,6 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(int64)",
              "tensor(float16)",
              "tensor(double)"},
-            "Constrain input and output types to signed numeric tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+            "Constrain input and output types to signed numeric tensors."));
 
 } // namespace ONNX_NAMESPACE
