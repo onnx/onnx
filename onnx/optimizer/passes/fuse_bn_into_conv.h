@@ -4,6 +4,30 @@
 
 #pragma once
 
+// Before:
+//	 conv = Conv()
+//   bn = BatchNormalization()
+//
+// After:
+//	 bn is deleted
+//   new inputs/initializers to conv are added to graph
+//   any no longer used inputs/initializers are erased from graph
+//
+//	 this pass can handle the case satisfy all following conditions:
+//	   condition 1: Run in testing mode
+//     condition 2: Inputs 1 - 4 of bn are all initializer_size
+//     condition 3: Output of initial conv has no other uses
+//     condition 3: Currently works for only DOUBLE, FLOAT32 tensor types
+//
+// Formula for transformation
+// $$ X_{bn} = \frac{s(X - m)}{\sqrt{\sigma + \epsilon}} + b_{bn}$$
+// $$ X_{conv} = X * W + b_{conv} $$
+// thus, substituting $X$ with $X_{conv}$ in the BN equation we get:
+// $$X_{bn} = X * \frac{sW}{\sqrt{\sigma + \epsilon}} + \frac{s(b_{conv} - m)}{\sqrt{\sigma + \epsilon}} + b_{bn}$$
+// or
+// $$ W' = W\frac{s}{\sqrt{\sigma + \epsilon}}$$
+// $$ b' = (b_{conv} - m)\frac{s}{\sqrt{\sigma + \epsilon}} + b_{bn}$$
+
 #include "onnx/optimizer/passes/optimize_pass.h"
 
 namespace ONNX_NAMESPACE { namespace optimization {
