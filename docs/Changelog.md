@@ -8023,3 +8023,35 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrains output to boolean tensor.</dd>
 </dl>
 
+## Version 8 of the default ONNX operator set
+### <a name="Expand-8"></a>**Expand-8**</a>
+
+  Expand the input tensor following the given shape.
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>shape</tt> : T</dt>
+<dd>Shape of output tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float), tensor(int32), tensor(int8), tensor(int16), tensor(int64), tensor(float16), tensor(double)</dt>
+<dd>Constrain input and output types to signed numeric tensors.</dd>
+</dl>
+
