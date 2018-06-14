@@ -9,6 +9,7 @@ import onnx
 from ..base import Base
 from . import expect
 
+
 class Expand(Base):
 
     @staticmethod
@@ -44,4 +45,3 @@ class Expand(Base):
         new_shape = np.array(new_shape)
         expect(node, inputs=[data, new_shape], outputs=[expanded],
                name='test_expand_dim_changed')
-
