@@ -24,7 +24,7 @@ class Expand(Base):
         data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
         #print(data)
         #[[1.], [2.], [3.]]
-        expanded = np.reshape(np.array([map(lambda x: np.repeat(x, 4), data)]), new_shape)
+        expanded = np.tile(data, 4)
         #print(expanded)
         #[[1., 1., 1., 1.],
         # [2., 2., 2., 2.],
