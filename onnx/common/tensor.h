@@ -621,7 +621,7 @@ inline void Tensor::divide(const Tensor& a) {
 inline void Tensor::sqrt() {
   switch(elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
-      apply_unary_function_float(static_cast<float (*)(float)>(std::sqrtf));
+      apply_unary_function_float(static_cast<float (*)(float)>(std::sqrt));
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
