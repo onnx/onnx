@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 87/100 (0.87%) common operators.
+Node tests have covered 88/100 (0.88%) common operators.
 
 Node tests have covered 1/15 (0.07%) experimental operators.
 
@@ -1310,6 +1310,45 @@ y = np.random.rand(5).astype(np.float32) + 1.0
 z = x / y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_div_bcast')
+```
+
+</details>
+
+
+### Dropout
+There are 2 test cases, listed as following:
+<details>
+<summary>default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_default')
+```
+
+</details>
+<details>
+<summary>random</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+    ratio=.2,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_random')
 ```
 
 </details>
@@ -5284,9 +5323,6 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### ArgMin (call for test cases)
-
-
-### Dropout (call for test cases)
 
 
 ### GlobalLpPool (call for test cases)
