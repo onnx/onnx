@@ -30,32 +30,6 @@ private:
   bool is_raw_data_;
   std::string raw_data_;
 
-  template<typename T>
-  static void add_nums(T* x, const T* y) {
-    *x += *y;
-  }
-
-  template<typename T>
-  static void sub_nums(T* x, const T* y) {
-    *x -= *y;
-  }
-
-  template<typename T>
-  static void mult_nums(T* x, const T* y) {
-    *x *= *y;
-  }
-
-  template<typename T>
-  static void divide_nums(T* x, const T* y) {
-    *x /= *y;
-  }
-
-  template<typename T>
-  static void sqrt_num(T* x) {
-    *x = (T) std::sqrt((double) *x);
-  }
-
-
   template<typename F, typename T, int64_t block_size>
   void bin_func(F f, const Tensor& a, std::vector<T>& T_data_, const std::vector<T>& a_T_data_) {
     int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
@@ -89,7 +63,7 @@ private:
     T* T_ptr;
     std::vector<T> vals;
     if (is_raw_data_)  {
-      for (int64_t i = 0; i < (int64_t) raw_data_.size(); i += (int64_t) sizeof(T))  {
+      for (size_t i = 0; i < raw_data_.size(); i += sizeof(T))  {
         vals.push_back(*((const T*)(raw_data_.c_str() + i)));
       }
       T_ptr = (T*) vals.data();

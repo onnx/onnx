@@ -850,7 +850,7 @@ public:
   }
   std::vector<Tensor>::iterator getInitializer(const std::string& name) {
     for (auto it = initializers_.begin(); it != initializers_.end(); it++) {
-      if (name.compare(it->name()) == 0) {
+      if (name == it->name()) {
         return it;
       }
     }
@@ -964,37 +964,27 @@ public:
 
   //Adds to graph initializer list, initializer names list, and as a graph input
   //Also syncs the initializer name, tensor name, and value name
-  Value* addInitializerAndInput(Tensor &initializer) {
-    std::vector<Dimension> dim_sizes;
-    for (const auto& v : initializer.sizes()) {
-      dim_sizes.push_back(v);
-    }
+  Value* addInitializerAndInput(const Tensor& initializer, std::string name) {
+    Tensor initializerCopy = initializer;
+    std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(),
+                                     initializerCopy.sizes().cend()};
     Value* new_init = addInput();
-    initializer.setName(new_init->uniqueName());
+    initializerCopy.setName(name);
+    new_init->setUniqueName(name);
     new_init->setSizes(dim_sizes);
-    new_init->setElemType(initializer.elem_type());
-    addInitializer(initializer, new_init->uniqueName());
+    new_init->setElemType(initializerCopy.elem_type());
+    addInitializer(std::move(initializerCopy), name);
     return new_init;
   }
 
-  Value* addInitializerAndInput(Tensor &initializer, std::string name) {
-    std::vector<Dimension> dim_sizes;
-    for (auto v : initializer.sizes()) {
-      dim_sizes.push_back(v);
-    }
-    Value* new_init = addInput();
-    initializer.setName(name);
-    new_init->setUniqueName(name);
-    new_init->setSizes(dim_sizes);
-    new_init->setElemType(initializer.elem_type());
-    addInitializer(initializer, name);
-    return new_init;
+  Value* addInitializerAndInput(const Tensor &initializer) {
+    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(next_unique_++));
   }
+
 
   //Erases from graph initializer list, initializer names list, and as a graph input
   //Must have no uses
   void eraseInitializerAndInput(Value* v) {
-    ONNX_ASSERT(v->uses().size() == 0);
     eraseInitializer(v->uniqueName());
     eraseInput(v->offset());
   }
