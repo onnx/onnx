@@ -59,7 +59,7 @@ private:
 
   template<typename F, typename T>
   void bin_func(F f, T* ptr, const T* a_ptr) {
-    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), 1L, std::multiplies<int64_t>());
+    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
     for (int64_t i = 0; i < num_elements; ++i) {
       ptr[i] = f((T) ptr[i], (T) a_ptr[i]);
     }
@@ -68,7 +68,7 @@ private:
 
   template<typename F, typename T>
   void un_func(F f, T* ptr)  {
-    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), 1L, std::multiplies<int64_t>());
+    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
     for (int64_t i = 0; i < num_elements; ++i) {
       ptr[i] = f((T) ptr[i]);
     }
@@ -77,7 +77,7 @@ private:
 
   template<typename T>
   void scale_dim(T* ptr, const T* s_ptr)  {
-    int64_t elems_per_first_dim = std::accumulate(sizes_.begin() + 1, sizes_.end(), 1L, std::multiplies<int64_t>());
+    int64_t elems_per_first_dim = std::accumulate(sizes_.begin() + 1, sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
     int64_t first_dim_size = sizes_[0];
     int64_t counter = 0;
     for (int64_t i = 0; i < first_dim_size; ++i)  {
@@ -352,5 +352,8 @@ inline void Tensor::scale_by_first_dim(const Tensor& s_tensor) {
       throw("Incompatible data type: FLOAT, FLOAT16, and DOUBLE supported");
   }
 }
+#undef CONST_DATA
+#undef DATA
+#undef SET_RAW_DATA
 
 } // namespace ONNX_NAMESPACE

@@ -708,95 +708,49 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[2].attribute[2].strings[1] == b"Y"
 
     def test_fuse_bn_into_conv_simple_float(self):  # type: () -> None
-        conv = helper.make_node("Conv", ["X", "W", "B"], ["Y"])
-        bn = helper.make_node("BatchNormalization", ["Y", "scale", "b", "mean", "var"], ["Z"])
-        graph = helper.make_graph(
-            [conv, bn],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 2, 28, 28)),
-             helper.make_tensor_value_info("W", TensorProto.FLOAT, (3, 2, 5, 5)),
-             helper.make_tensor_value_info("B", TensorProto.FLOAT, (3,)),
-             helper.make_tensor_value_info("scale", TensorProto.FLOAT, (3,)),
-             helper.make_tensor_value_info("b", TensorProto.FLOAT, (3,)),
-             helper.make_tensor_value_info("mean", TensorProto.FLOAT, (3,)),
-             helper.make_tensor_value_info("var", TensorProto.FLOAT, (3,))],
-            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (3,))],
-            [helper.make_tensor("W", TensorProto.FLOAT,
-                                dims=(3, 2, 5, 5),
-                                vals=np.random.randn(3, 2, 5, 5).astype(np.float32).tobytes(),
-                                raw=True),
-            helper.make_tensor("B", TensorProto.FLOAT,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float32).tobytes(),
-                                raw=True),
-            helper.make_tensor("scale", TensorProto.FLOAT,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float32).tobytes(),
-                                raw=True),
-            helper.make_tensor("b", TensorProto.FLOAT,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float32).tobytes(),
-                                raw=True),
-            helper.make_tensor("mean", TensorProto.FLOAT,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float32).tobytes(),
-                                raw=True),
-            helper.make_tensor("var", TensorProto.FLOAT,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float32).tobytes(),
-                                raw=True)],
-        )
-        optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
+        for tensor_type, np_type in [(TensorProto.FLOAT, np.float32), (TensorProto.DOUBLE, np.float64)]:
+            conv = helper.make_node("Conv", ["X", "W", "B"], ["Y"])
+            bn = helper.make_node("BatchNormalization", ["Y", "scale", "b", "mean", "var"], ["Z"])
+            graph = helper.make_graph(
+                [conv, bn],
+                "test",
+                [helper.make_tensor_value_info("X", tensor_type, (5, 2, 28, 28)),
+                 helper.make_tensor_value_info("W", tensor_type, (3, 2, 5, 5)),
+                 helper.make_tensor_value_info("B", tensor_type, (3,)),
+                 helper.make_tensor_value_info("scale", tensor_type, (3,)),
+                 helper.make_tensor_value_info("b", tensor_type, (3,)),
+                 helper.make_tensor_value_info("mean", tensor_type, (3,)),
+                 helper.make_tensor_value_info("var", tensor_type, (3,))],
+                [helper.make_tensor_value_info("Z", tensor_type, (3,))],
+                [helper.make_tensor("W", tensor_type,
+                                    dims=(3, 2, 5, 5),
+                                    vals=np.random.randn(3, 2, 5, 5).astype(np_type).tobytes(),
+                                    raw=True),
+                helper.make_tensor("B", tensor_type,
+                                    dims=(3,),
+                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
+                                    raw=True),
+                helper.make_tensor("scale", tensor_type,
+                                    dims=(3,),
+                                    vals=np.random.randn(3,).astype(np_type2).tobytes(),
+                                    raw=True),
+                helper.make_tensor("b", tensor_type,
+                                    dims=(3,),
+                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
+                                    raw=True),
+                helper.make_tensor("mean", tensor_type,
+                                    dims=(3,),
+                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
+                                    raw=True),
+                helper.make_tensor("var", tensor_type,
+                                    dims=(3,),
+                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
+                                    raw=True)],
+            )
+            optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
 
-        assert len(list(optimized_model.graph.node)) == 1
-        assert optimized_model.graph.node[0].op_type == 'Conv'
-
-    def test_fuse_bn_into_conv_simple_double(self):  # type: () -> None
-        conv = helper.make_node("Conv", ["X", "W", "B"], ["Y"])
-        bn = helper.make_node("BatchNormalization", ["Y", "scale", "b", "mean", "var"], ["Z"])
-        graph = helper.make_graph(
-            [conv, bn],
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.DOUBLE, (5, 2, 28, 28)),
-             helper.make_tensor_value_info("W", TensorProto.DOUBLE, (3, 2, 5, 5)),
-             helper.make_tensor_value_info("B", TensorProto.DOUBLE, (3,)),
-             helper.make_tensor_value_info("scale", TensorProto.DOUBLE, (3,)),
-             helper.make_tensor_value_info("b", TensorProto.DOUBLE, (3,)),
-             helper.make_tensor_value_info("mean", TensorProto.DOUBLE, (3,)),
-             helper.make_tensor_value_info("var", TensorProto.DOUBLE, (3,))],
-            [helper.make_tensor_value_info("Z", TensorProto.DOUBLE, (3,))],
-            [helper.make_tensor("W", TensorProto.DOUBLE,
-                                dims=(3, 2, 5, 5),
-                                vals=np.random.randn(3, 2, 5, 5).astype(np.float64).tobytes(),
-                                raw=True),
-            helper.make_tensor("B", TensorProto.DOUBLE,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float64).tobytes(),
-                                raw=True),
-            helper.make_tensor("scale", TensorProto.DOUBLE,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float64).tobytes(),
-                                raw=True),
-            helper.make_tensor("b", TensorProto.DOUBLE,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float64).tobytes(),
-                                raw=True),
-            helper.make_tensor("mean", TensorProto.DOUBLE,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float64).tobytes(),
-                                raw=True),
-            helper.make_tensor("var", TensorProto.DOUBLE,
-                                dims=(3,),
-                                vals=np.random.randn(3,).astype(np.float64).tobytes(),
-                                raw=True)],
-            value_info=[
-                helper.make_tensor_value_info("Y", TensorProto.DOUBLE, (3,))
-            ]
-        )
-        optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
-
-        assert len(list(optimized_model.graph.node)) == 1
-        assert optimized_model.graph.node[0].op_type == 'Conv'
+            self.assertEqual(len(list(optimized_model.graph.node)), 1)
+            self.assertEqual(optimized_model.graph.node[0].op_type, 'Conv')
 
 
 if __name__ == '__main__':
