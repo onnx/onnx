@@ -8026,7 +8026,12 @@ This version of the operator has been available since version 7 of the default O
 ## Version 8 of the default ONNX operator set
 ### <a name="Expand-8"></a>**Expand-8**</a>
 
-  Expand the input tensor following the given shape.
+  Broadcast the input tensor following the given shape and the broadcast rule.
+  The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
+  Dimensions are right alignment;
+  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
+  or the shape.ndim < input.shape.ndim.
 
 #### Version
 
@@ -8038,7 +8043,7 @@ This version of the operator has been available since version 8 of the default O
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>shape</tt> : T</dt>
-<dd>Shape of output tensor</dd>
+<dd>A 1-D tensor indicates the shape you want to expand to, following the broadcast rule</dd>
 </dl>
 
 #### Outputs

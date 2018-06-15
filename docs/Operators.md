@@ -2517,7 +2517,12 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Expand"></a><a name="expand">**Expand**</a>
 
-  Expand the input tensor following the given shape.
+  Broadcast the input tensor following the given shape and the broadcast rule.
+  The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
+  Dimensions are right alignment;
+  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
+  or the shape.ndim < input.shape.ndim.
 
 #### Version
 
@@ -2529,7 +2534,7 @@ This version of the operator has been available since version 8 of the default O
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor</dd>
 <dt><tt>shape</tt> : T</dt>
-<dd>Shape of output tensor</dd>
+<dd>A 1-D tensor indicates the shape you want to expand to, following the broadcast rule</dd>
 </dl>
 
 #### Outputs
@@ -2550,7 +2555,7 @@ This version of the operator has been available since version 8 of the default O
 #### Examples
 
 <details>
-<summary>expand</summary>
+<summary>dim_changed</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -2559,18 +2564,9 @@ node = onnx.helper.make_node(
     outputs=['expanded'],
 )
 shape = [3, 1]
-new_shape = [3, 4]
-data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
 #print(data)
 #[[1.], [2.], [3.]]
-expanded = np.tile(data, 4)
-#print(expanded)
-#[[1., 1., 1., 1.],
-# [2., 2., 2., 2.],
-# [3., 3., 3., 3.]]
-new_shape = np.array(new_shape)
-expect(node, inputs=[data, new_shape], outputs=[expanded],
-       name='test_expand_dim_unchanged')
 new_shape = [2, 1, 6]
 expanded = data * np.ones(new_shape)
 #print(expanded)
@@ -2584,6 +2580,33 @@ expanded = data * np.ones(new_shape)
 new_shape = np.array(new_shape)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_changed')
+```
+
+</details>
+
+
+<details>
+<summary>dim_unchanged</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+new_shape = [3, 4]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+expanded = np.tile(data, 4)
+#print(expanded)
+#[[1., 1., 1., 1.],
+# [2., 2., 2., 2.],
+# [3., 3., 3., 3.]]
+new_shape = np.array(new_shape)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_unchanged')
 ```
 
 </details>
