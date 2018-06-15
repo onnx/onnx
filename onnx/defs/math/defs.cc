@@ -1070,6 +1070,6 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Constrain input and output types to all numeric tensors."));
+            "Constrain input and output types to all tensors."));
 
 } // namespace ONNX_NAMESPACE
