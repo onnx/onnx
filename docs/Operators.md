@@ -2343,6 +2343,47 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_default')
+```
+
+</details>
+
+
+<details>
+<summary>random</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+    ratio=.2,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_random')
+```
+
+</details>
+
+
 ### <a name="Elu"></a><a name="elu">**Elu**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
