@@ -8,33 +8,6 @@
 #include <numeric>
 #include <functional>
 
-#define CONST_DATA(owner, type, vec)                                           \
-  const type* owner##_const_data_ptr;                                          \
-  if (owner->is_raw_data())  {                                                 \
-    owner##_const_data_ptr = (const type*) owner->raw().c_str();               \
-  } else {                                                                     \
-    owner##_const_data_ptr = (const type*) owner->vec().data();                \
-  }                                                                            \
-
-
-#define DATA(owner, type, vec)                                                 \
-  type* owner##_data_ptr;                                                      \
-  if (owner->is_raw_data())  {                                                 \
-    std::vector<type> vals;                                                    \
-    for (size_t i = 0; i < raw_data_.size(); i += sizeof(type))  {             \
-        vals.push_back(*((const type*)(owner->raw().c_str() + i)));            \
-    }                                                                          \
-    owner##_data_ptr = (type*) vals.data();                                    \
-  } else {                                                                     \
-    owner##_data_ptr = (type*) owner->vec().data();                            \
-  }                                                                            \
-
-
-#define SET_RAW_DATA(ptr)                                                      \
-  if (is_raw_data_)  {                                                         \
-    raw_data_.assign((const char*) ptr, raw_data_.size());                     \
-  }                                                                            \
-
 namespace ONNX_NAMESPACE {
 
 struct Tensor final {
@@ -58,35 +31,13 @@ private:
   std::string raw_data_;
 
   template<typename F, typename T>
-  void bin_func(F f, T* ptr, const T* a_ptr) {
-    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
-    for (int64_t i = 0; i < num_elements; ++i) {
-      ptr[i] = f((T) ptr[i], (T) a_ptr[i]);
-    }
-    SET_RAW_DATA(ptr)
-  }
+  void bin_func(F f, T* ptr, const T* a_ptr);
 
   template<typename F, typename T>
-  void un_func(F f, T* ptr)  {
-    int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
-    for (int64_t i = 0; i < num_elements; ++i) {
-      ptr[i] = f((T) ptr[i]);
-    }
-    SET_RAW_DATA(ptr)
-  }
+  void un_func(F f, T* ptr);
 
   template<typename T>
-  void scale_dim(T* ptr, const T* s_ptr)  {
-    int64_t elems_per_first_dim = std::accumulate(sizes_.begin() + 1, sizes_.end(), (int64_t) 1, std::multiplies<int64_t>());
-    int64_t first_dim_size = sizes_[0];
-    int64_t counter = 0;
-    for (int64_t i = 0; i < first_dim_size; ++i)  {
-      for (int64_t j = 0; j < elems_per_first_dim; ++j) {
-        ptr[counter++] *= s_ptr[i];
-      }
-    }
-    SET_RAW_DATA(ptr)
-  }
+  void scale_dim(T* ptr, const T* s_ptr);
 
 public:
   Tensor()
@@ -247,7 +198,70 @@ public:
   void scale_by_first_dim(const Tensor& s);
 };
 
-#define CALL_BIN_FUNC(type, vec, f)                                               \
+#define CONST_DATA(owner, type, vec)                                           \
+  const type* owner##_const_data_ptr;                                          \
+  if (owner->is_raw_data())  {                                                 \
+    owner##_const_data_ptr = (const type*) owner->raw().c_str();               \
+  } else {                                                                     \
+    owner##_const_data_ptr = (const type*) owner->vec().data();                \
+  }                                                                            \
+
+
+#define DATA(owner, type, vec)                                                 \
+  type* owner##_data_ptr;                                                      \
+  if (owner->is_raw_data())  {                                                 \
+    std::vector<type> vals;                                                    \
+    for (size_t i = 0; i < raw_data_.size(); i += sizeof(type))  {             \
+        vals.push_back(*((const type*)(owner->raw().c_str() + i)));            \
+    }                                                                          \
+    owner##_data_ptr = (type*) vals.data();                                    \
+  } else {                                                                     \
+    owner##_data_ptr = (type*) owner->vec().data();                            \
+  }                                                                            \
+
+
+#define SET_RAW_DATA(ptr)                                                      \
+  if (is_raw_data_)  {                                                         \
+    raw_data_.assign((const char*) ptr, raw_data_.size());                     \
+  }                                                                            \
+
+
+
+template<typename F, typename T>
+inline void Tensor::bin_func(F f, T* ptr, const T* a_ptr) {
+  int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(),
+                                        (int64_t) 1, std::multiplies<int64_t>());
+  for (int64_t i = 0; i < num_elements; ++i) {
+    ptr[i] = f((T) ptr[i], (T) a_ptr[i]);
+  }
+  SET_RAW_DATA(ptr)
+}
+
+template<typename F, typename T>
+inline void Tensor::un_func(F f, T* ptr)  {
+  int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(),
+                                        (int64_t) 1, std::multiplies<int64_t>());
+  for (int64_t i = 0; i < num_elements; ++i) {
+    ptr[i] = f((T) ptr[i]);
+  }
+  SET_RAW_DATA(ptr)
+}
+
+template<typename T>
+inline void Tensor::scale_dim(T* ptr, const T* s_ptr)  {
+  int64_t elems_per_first_dim = std::accumulate(sizes_.begin() + 1, sizes_.end(),
+                                              (int64_t) 1, std::multiplies<int64_t>());
+  int64_t first_dim_size = sizes_[0];
+  int64_t counter = 0;
+  for (int64_t i = 0; i < first_dim_size; ++i)  {
+    for (int64_t j = 0; j < elems_per_first_dim; ++j) {
+      ptr[counter++] *= s_ptr[i];
+    }
+  }
+  SET_RAW_DATA(ptr)
+}
+
+#define CALL_BIN_FUNC(type, vec, f)                                            \
   DATA(this, type, vec)                                                        \
   CONST_DATA(a, type, vec)                                                     \
   bin_func<f<type>, type>(f<type>(), this_data_ptr, a_const_data_ptr);         \
@@ -265,7 +279,7 @@ public:
     }                                                                          \
     switch(elem_type_) {                                                       \
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {                      \
-        CALL_BIN_FUNC(float, floats, f)                                           \
+        CALL_BIN_FUNC(float, floats, f)                                        \
         break;                                                                 \
       }                                                                        \
       case ONNX_NAMESPACE::TensorProto_DataType_BOOL:                          \
@@ -274,20 +288,20 @@ public:
       case ONNX_NAMESPACE::TensorProto_DataType_INT32:                         \
       case ONNX_NAMESPACE::TensorProto_DataType_UINT8:                         \
       case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {                     \
-        CALL_BIN_FUNC(int32_t, int32s, f)                                         \
+        CALL_BIN_FUNC(int32_t, int32s, f)                                      \
         break;                                                                 \
       }                                                                        \
       case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {                      \
-        CALL_BIN_FUNC(int64_t, int64s, f)                                         \
+        CALL_BIN_FUNC(int64_t, int64s, f)                                      \
         break;                                                                 \
       }                                                                        \
       case ONNX_NAMESPACE::TensorProto_DataType_UINT32:                        \
       case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {                     \
-        CALL_BIN_FUNC(uint64_t, uint64s, f)                                       \
+        CALL_BIN_FUNC(uint64_t, uint64s, f)                                    \
         break;                                                                 \
       }                                                                        \
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {                      \
-        CALL_BIN_FUNC(double, doubles, f)                                         \
+        CALL_BIN_FUNC(double, doubles, f)                                      \
         break;                                                                 \
       }                                                                        \
       default:                                                                 \
@@ -295,15 +309,11 @@ public:
     }                                                                          \
   }                                                                            \
 
-
-
 APPLY_BINARY_FUNCTION(add, std::plus)
-
 APPLY_BINARY_FUNCTION(subtract, std::minus)
-
 APPLY_BINARY_FUNCTION(multiply, std::multiplies)
-
 APPLY_BINARY_FUNCTION(divide, std::divides)
+
 #undef CALL_BIN_FUNC
 #undef APPLY_BINARY_FUNCTION
 
