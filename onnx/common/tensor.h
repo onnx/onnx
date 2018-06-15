@@ -8,6 +8,39 @@
 #include <numeric>
 #include <functional>
 
+#define APPLY_FUNCTION(f)  {                                  \
+  switch(elem_type_) {                                        \
+    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {       \
+      apply_binary_function_float(f<float>(), a);             \
+      break;                                                  \
+    }                                                         \
+    case ONNX_NAMESPACE::TensorProto_DataType_BOOL:           \
+    case ONNX_NAMESPACE::TensorProto_DataType_INT8:           \
+    case ONNX_NAMESPACE::TensorProto_DataType_INT16:          \
+    case ONNX_NAMESPACE::TensorProto_DataType_INT32:          \
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:          \
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {      \
+      apply_binary_function_int32(f<int32_t>(), a);           \
+      break;                                                  \
+    }                                                         \
+    case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {       \
+      apply_binary_function_int64(f<int64_t>(), a);           \
+      break;                                                  \
+    }                                                         \
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT32:         \
+    case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {      \
+      apply_binary_function_uint64(f<uint64_t>(), a);         \
+      break;                                                  \
+    }                                                         \
+    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {       \
+      apply_binary_function_double(f<double>(), a);           \
+      break;                                                  \
+    }                                                         \
+    default:                                                  \
+      throw("Operation not supported for this data type");    \
+  }                                                           \
+}
+
 namespace ONNX_NAMESPACE {
 
 struct Tensor final {
@@ -262,14 +295,14 @@ public:
   //Supported for
   //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
   //UINT32, UINT64, DOUBLE,
-  //TODO: Support for COMPLEX64, COMPLEX128
+  //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
   void add(const Tensor& a);
 
   //this -= a
   //Supported for
   //FLOAT, BOOL, INT8, INT16, INT32, UINT8, UINT16, INT64,
   //UINT32, UINT64, DOUBLE
-  //TODO: Support for COMPLEX64, COMPLEX128
+  //TODO: Support for FLOAT16, COMPLEX64, COMPLEX128
   void subtract(const Tensor& a);
 
   //this *= a
@@ -295,6 +328,8 @@ public:
   //Element wise scaling of tensor s
   //s is one dimensional, has size M, where M is size of first dimension of tensor
   //s must have data as raw_data and has data type corresponding to this
+  //Supported for
+  //FLOAT16, FLOAT, DOUBLE, COMPLEX64, COMPLEX128
   void scale_by_first_dim(const Tensor& s);
 };
 
@@ -452,144 +487,20 @@ inline void Tensor::apply_binary_function_double(F&& f, const Tensor& a) {
   }
 }
 
-
 inline void Tensor::add(const Tensor& a) {
-  switch(elem_type_) {
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
-    case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
-      apply_binary_function_float(std::plus<float>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
-    case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT16:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
-      apply_binary_function_int32(std::plus<int32_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
-      apply_binary_function_int64(std::plus<int64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
-      apply_binary_function_uint64(std::plus<uint64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-    case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:  {
-      apply_binary_function_double(std::plus<double>(), a);
-      break;
-    }
-    default:
-      throw("Operation not supported for this data type");
-  }
-
+  APPLY_FUNCTION(std::plus)
 }
 
 inline void Tensor::subtract(const Tensor& a) {
-  switch(elem_type_) {
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:
-    case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX64:  {
-      apply_binary_function_float(std::minus<float>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
-    case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT16:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
-      apply_binary_function_int32(std::minus<int32_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
-      apply_binary_function_int64(std::minus<int64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
-      apply_binary_function_uint64(std::minus<uint64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-    case ONNX_NAMESPACE::TensorProto_DataType_COMPLEX128:  {
-      apply_binary_function_double(std::minus<double>(), a);
-      break;
-    }
-    default:
-      throw("Operation not supported for this data type");
-  }
-
+  APPLY_FUNCTION(std::minus)
 }
 
 inline void Tensor::multiply(const Tensor& a) {
-  switch(elem_type_) {
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
-      apply_binary_function_float(std::multiplies<float>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT16:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
-      apply_binary_function_int32(std::multiplies<int32_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
-      apply_binary_function_int64(std::multiplies<int64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
-      apply_binary_function_uint64(std::multiplies<uint64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
-      apply_binary_function_double(std::multiplies<double>(), a);
-      break;
-    }
-    default:
-      throw("Operation not supported for this data type");
-  }
+  APPLY_FUNCTION(std::multiplies)
 }
 
 inline void Tensor::divide(const Tensor& a) {
-  switch(elem_type_) {
-    case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
-      apply_binary_function_float(std::divides<float>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_INT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT16:
-    case ONNX_NAMESPACE::TensorProto_DataType_INT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT8:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT16:  {
-      apply_binary_function_int32(std::divides<int32_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_INT64:  {
-      apply_binary_function_int64(std::divides<int64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT32:
-    case ONNX_NAMESPACE::TensorProto_DataType_UINT64:  {
-      apply_binary_function_uint64(std::divides<uint64_t>(), a);
-      break;
-    }
-    case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
-      apply_binary_function_double(std::multiplies<double>(), a);
-      break;
-    }
-    default:
-      throw("Operation not supported for this data type");
-  }
+  APPLY_FUNCTION(std::divides)
 }
 
 inline void Tensor::sqrt() {
