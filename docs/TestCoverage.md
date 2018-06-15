@@ -5,8 +5,8 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
+Node tests have covered 89/101 (0.88%) common operators.
 
-Node tests have covered 88/100 (0.88%) common operators.
 Node tests have covered 1/15 (0.07%) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
