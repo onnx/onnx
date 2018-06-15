@@ -732,7 +732,7 @@ class TestOptimizer(unittest.TestCase):
                                     raw=True),
                 helper.make_tensor("scale", tensor_type,
                                     dims=(3,),
-                                    vals=np.random.randn(3,).astype(np_type2).tobytes(),
+                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
                                     raw=True),
                 helper.make_tensor("b", tensor_type,
                                     dims=(3,),
