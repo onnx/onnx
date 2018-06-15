@@ -746,6 +746,9 @@ class TestOptimizer(unittest.TestCase):
                                     dims=(3,),
                                     vals=np.random.randn(3,).astype(np_type).tobytes(),
                                     raw=True)],
+                value_info=[
+                    helper.make_tensor_value_info("Y", tensor_type, (3,))
+                ]
             )
             optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
 
