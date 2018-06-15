@@ -5,8 +5,8 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 86/101 (0.85%) common operators.
 
+Node tests have covered 88/100 (0.88%) common operators.
 Node tests have covered 1/15 (0.07%) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
@@ -537,6 +537,63 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
+```
+
+</details>
+
+
+### BatchNormalization
+There are 1 test cases, listed as following:
+<details>
+<summary>batchnormalization</summary>
+
+```python
+def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
+    dims_x = len(x.shape)
+    dim_ones = (1,) * (dims_x - 2)
+    s = s.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    mean = mean.reshape(-1, *dim_ones)
+    var = var.reshape(-1, *dim_ones)
+    return s * (x - mean) / np.sqrt(var + epsilon) + bias
+
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+mean = np.array([0, 3]).astype(np.float32)
+var = np.array([1, 1.5]).astype(np.float32)
+y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y'],
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
+       name='test_batchnorm_example')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+epsilon = 1e-2
+y = _batchnorm_test_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y'],
+    epsilon=epsilon,
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
+       name='test_batchnorm_epsilon')
 ```
 
 </details>
@@ -1258,6 +1315,45 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### Dropout
+There are 2 test cases, listed as following:
+<details>
+<summary>default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_default')
+```
+
+</details>
+<details>
+<summary>random</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+    ratio=.2,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_random')
+```
+
+</details>
+
+
 ### Elu
 There are 2 test cases, listed as following:
 <details>
@@ -1953,6 +2049,60 @@ expect(node, inputs=[data], outputs=[data],
 </details>
 
 
+### InstanceNormalization
+There are 1 test cases, listed as following:
+<details>
+<summary>instancenormalization</summary>
+
+```python
+def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
+    dims_x = len(x.shape)
+    axis = tuple(range(2, dims_x))
+    mean = np.mean(x, axis=axis, keepdims=True)
+    var = np.var(x, axis=axis, keepdims=True)
+    dim_ones = (1,) * (dims_x - 2)
+    s = s.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    return s * (x - mean) / np.sqrt(var + epsilon) + bias
+
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+y = _instancenorm_test_mode(x, s, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'InstanceNormalization',
+    inputs=['x', 's', 'bias'],
+    outputs=['y'],
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias], outputs=[y],
+       name='test_instancenorm_example')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+epsilon = 1e-2
+y = _instancenorm_test_mode(x, s, bias, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'InstanceNormalization',
+    inputs=['x', 's', 'bias'],
+    outputs=['y'],
+    epsilon=epsilon,
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias], outputs=[y],
+       name='test_instancenorm_epsilon')
+```
+
+</details>
+
+
 ### LRN
 There are 2 test cases, listed as following:
 <details>
@@ -1973,7 +2123,7 @@ x = np.random.randn(5, 5, 5, 5).astype(np.float32)
 square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(x[n,
-                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(4, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(5, c + int(math.ceil((nsize - 1) / 2)) + 1),
                                    h,
                                    w] ** 2)
 y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
@@ -2003,7 +2153,7 @@ x = np.random.randn(5, 5, 5, 5).astype(np.float32)
 square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
 for n, c, h, w in np.ndindex(x.shape):
     square_sum[n, c, h, w] = sum(x[n,
-                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(4, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(5, c + int(math.ceil((nsize - 1) / 2)) + 1),
                                    h,
                                    w] ** 2)
 y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
@@ -5233,16 +5383,7 @@ expect(node, inputs=[x, y], outputs=[z],
 ### ArgMin (call for test cases)
 
 
-### BatchNormalization (call for test cases)
-
-
-### Dropout (call for test cases)
-
-
 ### GlobalLpPool (call for test cases)
-
-
-### InstanceNormalization (call for test cases)
 
 
 ### LpNormalization (call for test cases)
