@@ -1370,9 +1370,9 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### Expand
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
-<summary>expand</summary>
+<summary>dim_changed</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -1381,18 +1381,9 @@ node = onnx.helper.make_node(
     outputs=['expanded'],
 )
 shape = [3, 1]
-new_shape = [3, 4]
-data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
 #print(data)
 #[[1.], [2.], [3.]]
-expanded = np.tile(data, 4)
-#print(expanded)
-#[[1., 1., 1., 1.],
-# [2., 2., 2., 2.],
-# [3., 3., 3., 3.]]
-new_shape = np.array(new_shape)
-expect(node, inputs=[data, new_shape], outputs=[expanded],
-       name='test_expand_dim_unchanged')
 new_shape = [2, 1, 6]
 expanded = data * np.ones(new_shape)
 #print(expanded)
@@ -1406,6 +1397,31 @@ expanded = data * np.ones(new_shape)
 new_shape = np.array(new_shape)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_changed')
+```
+
+</details>
+<details>
+<summary>dim_unchanged</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+new_shape = [3, 4]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+expanded = np.tile(data, 4)
+#print(expanded)
+#[[1., 1., 1., 1.],
+# [2., 2., 2., 2.],
+# [3., 3., 3., 3.]]
+new_shape = np.array(new_shape)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_unchanged')
 ```
 
 </details>
