@@ -2513,44 +2513,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Indices</dd>
 </dl>
 
-### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
-
-  Given a matrix, apply Lp-normalization along the provided axis.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
-<dt><tt>p</tt> : int</dt>
-<dd>(int64, default 2) the order of the normalization, only 1 or 2 are supported.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input matrix</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Matrix after normalization</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="LpPool-1"></a>**LpPool-1**</a>
 
   LpPool consumes an input tensor X and applies Lp pooling across the

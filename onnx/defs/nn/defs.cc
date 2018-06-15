@@ -1020,35 +1020,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
-static const char* LpNormalization_ver1_doc = R"DOC(
-Given a matrix, apply Lp-normalization along the provided axis.
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    LpNormalization,
-    1,
-    OpSchema()
-        .Input(0, "input", "Input matrix", "T")
-        .Output(0, "output", "Matrix after normalization", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .SetDoc(LpNormalization_ver1_doc)
-        .Attr(
-            "axis",
-            "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.",
-            AttributeProto::INT,
-            static_cast<int64_t>(-1))
-        .Attr(
-            "p",
-            "(int64, default 2) the order of the normalization, only 1 or 2 are supported.",
-            AttributeProto::INT,
-            static_cast<int64_t>(2))
-        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateShapeAndTypeFromFirstInput(ctx);
-        }));
-
 static const char* Dropout_ver7_doc = R"DOC(
 Dropout takes one input data (Tensor<float>) and produces two Tensor outputs,
 output (Tensor<float>) and mask (Tensor<bool>). Depending on whether it is in
