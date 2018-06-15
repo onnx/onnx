@@ -849,7 +849,7 @@ public:
     return initializer_names_;
   }
   std::vector<Tensor>::iterator getInitializer(const std::string& name) {
-    for (auto it = initializers_.begin(); it != initializers_.end(); it++) {
+    for (auto it = initializers_.begin(); it != initializers_.end(); ++it) {
       if (name == it->name()) {
         return it;
       }
