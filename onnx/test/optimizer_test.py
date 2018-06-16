@@ -707,7 +707,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[2].attribute[2].strings[0] == b"X"
         assert optimized_model.graph.node[2].attribute[2].strings[1] == b"Y"
 
-    def test_fuse_bn_into_conv_simple_float(self):  # type: () -> None
+    def test_fuse_bn_into_conv_simple(self):  # type: () -> None
         for (tensor_type, np_type) in [(TensorProto.FLOAT, np.float32), (TensorProto.DOUBLE, np.float64)]:
             conv = helper.make_node("Conv", ["X", "W", "B"], ["Y"])
             bn = helper.make_node("BatchNormalization", ["Y", "scale", "b", "mean", "var"], ["Z"])
@@ -752,6 +752,8 @@ class TestOptimizer(unittest.TestCase):
             )
             optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
 
+            print(optimized_model)
+            print("----_------_____________________")
             self.assertEqual(len(list(optimized_model.graph.node)), 1)
             self.assertEqual(optimized_model.graph.node[0].op_type, 'Conv')
 

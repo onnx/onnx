@@ -985,6 +985,7 @@ public:
   //Erases from graph initializer list, initializer names list, and as a graph input
   //Must have no uses
   void eraseInitializerAndInput(Value* v) {
+    //std::cout << "ERASING" << std::endl;
     eraseInitializer(v->uniqueName());
     eraseInput(v->offset());
   }
