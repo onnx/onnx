@@ -752,8 +752,6 @@ class TestOptimizer(unittest.TestCase):
             )
             optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
 
-            print(optimized_model)
-            print("----_------_____________________")
             self.assertEqual(len(list(optimized_model.graph.node)), 1)
             self.assertEqual(optimized_model.graph.node[0].op_type, 'Conv')
 

@@ -209,8 +209,8 @@ public:
 
 #define DATA(owner, type, vec)                                                 \
   type* owner##_data_ptr;                                                      \
+  std::vector<type> vals;                                                      \
   if (owner->is_raw_data())  {                                                 \
-    std::vector<type> vals;                                                    \
     for (size_t i = 0; i < raw_data_.size(); i += sizeof(type))  {             \
         vals.push_back(*((const type*)(owner->raw().c_str() + i)));            \
     }                                                                          \

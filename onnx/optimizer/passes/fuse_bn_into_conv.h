@@ -116,16 +116,15 @@ struct FuseBNIntoConv final : public OptimizePass {
           bc = *bc_iter;
           ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
         }
-
         var.add(eps);
         var.sqrt();
         s.divide(var);
+
         if (!s.is_raw_data()) {
           const char * ptr = reinterpret_cast<const char *>(s.floats().data());
           std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
           s.set_raw_data(string_rep);
         }
-
         W.scale_by_first_dim(s);
         bc.subtract(m);
         bc.multiply(s);
@@ -134,6 +133,7 @@ struct FuseBNIntoConv final : public OptimizePass {
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       {
+
         eps.sizes().push_back(s.sizes()[0]);
         eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
         for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
@@ -190,13 +190,16 @@ struct FuseBNIntoConv final : public OptimizePass {
             !modify_conv(conv, bn, graph)) {
           continue;
         }
-        for (int i = 1; i <= 4; ++i)  {
-          if (bn->inputs()[i]->uses().size() == 0) {
-            graph.eraseInitializerAndInput(bn->inputs()[i]);
+        for (int i = 4; i >= 1; --i)  {
+          if (bn->inputs()[i]->uses().size() == 1) {
+            auto input = bn->inputs()[i];
+            bn->removeInput(i);
+            graph.eraseInitializerAndInput(input);
           }
         }
         bn->output()->replaceAllUsesWith(origInput);
         it.destroyCurrent();
+
       }
     }
   }
