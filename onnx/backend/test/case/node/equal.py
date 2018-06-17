@@ -13,7 +13,7 @@ from . import expect
 class Equal(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Equal',
             inputs=['x', 'y'],
@@ -27,12 +27,11 @@ class Equal(Base):
                name='test_equal')
 
     @staticmethod
-    def export_equal_broadcast():
+    def export_equal_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Equal',
             inputs=['x', 'y'],
             outputs=['z'],
-            broadcast=1,
         )
 
         x = (np.random.randn(3, 4, 5) * 10).astype(np.int32)

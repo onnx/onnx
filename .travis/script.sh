@@ -3,7 +3,10 @@
 script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[1]))" "${BASH_SOURCE[0]}")
 source "${script_path%/*}/setup.sh"
 
-# onnx tests
+# onnx c++ API tests
+find .setuptools-cmake-build/ -name "onnx_gtests" -ls -exec {} \;
+
+# onnx python API tests
 pip install pytest-cov nbval
 pytest
 
@@ -17,10 +20,7 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   pip uninstall -y onnx
   time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
 
-  time mypy .
-  # Also test in python2 mode (but this is still in the python 3 CI
-  # instance, because mypy itself needs python 3)
-  time mypy --py2 .
+  time python setup.py typecheck
 
   pip uninstall -y onnx
   rm -rf .setuptools-cmake-build
@@ -35,6 +35,7 @@ git diff --exit-code
 # check auto-gen files up-to-date
 python onnx/defs/gen_doc.py
 python onnx/gen_proto.py
+python onnx/backend/test/stat_coverage.py
 backend-test-tools generate-data
 git status
 git diff --exit-code

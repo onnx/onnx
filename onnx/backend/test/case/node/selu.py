@@ -13,7 +13,7 @@ from . import expect
 class Selu(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Selu',
             inputs=['x'],
@@ -34,9 +34,9 @@ class Selu(Base):
                name='test_selu')
 
     @staticmethod
-    def export_selu_default():
-        default_alpha = 1.6732
-        default_gamma = 1.0507
+    def export_selu_default():  # type: () -> None
+        default_alpha = 1.67326319217681884765625
+        default_gamma = 1.05070102214813232421875
         node = onnx.helper.make_node(
             'Selu',
             inputs=['x'],

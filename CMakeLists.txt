@@ -1,11 +1,21 @@
 # Minimum CMake required
 cmake_minimum_required(VERSION 3.1)
 
+# Set default build type
+if(NOT CMAKE_BUILD_TYPE)
+    message(STATUS "Build type not set - defaulting to Release")
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
+endif()
+
 # Project
 project(onnx C CXX)
 option(ONNX_BUILD_BENCHMARKS "Build ONNX micro-benchmarks" OFF)
 
 option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
+option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
+option(ONNX_WERROR "Build with Werror" OFF)
+option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
+option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
 # Set C++11 as standard for the whole project
 set(CMAKE_CXX_STANDARD 11)
@@ -15,10 +25,18 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 set(CMAKE_MODULE_PATH "")
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
-# Set default build type
-if(NOT CMAKE_BUILD_TYPE)
-    message(STATUS "Build type not set - defaulting to Release")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
+if(NOT MSVC)
+  set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+  if(ONNX_COVERAGE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+  endif()
+endif()
+
+if(ONNX_BUILD_TESTS)
+	list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
+	include(googletest)
 endif()
 
 if(TARGET protobuf::libprotobuf)
@@ -35,36 +53,36 @@ else()
   # Customized version of find Protobuf. We need to avoid situations mentioned
   # in https://github.com/caffe2/caffe2/blob/b7d983f255ef5496474f1ea188edb5e0ac442761/cmake/ProtoBuf.cmake#L82-L92
   # The following section is stolen from cmake/ProtoBuf.cmake in Caffe2
-  find_program(PROTOBUF_PROTOC_EXECUTABLE
+  find_program(Protobuf_PROTOC_EXECUTABLE
     NAMES protoc
     DOC "The Google Protocol Buffers Compiler")
 
   # Only if protoc was found, seed the include directories and libraries.
   # We assume that protoc is installed at PREFIX/bin.
   # We use get_filename_component to resolve PREFIX.
-  if(PROTOBUF_PROTOC_EXECUTABLE)
-    set(ONNX_PROTOC_EXECUTABLE ${PROTOBUF_PROTOC_EXECUTABLE})
+  if(Protobuf_PROTOC_EXECUTABLE)
+    set(ONNX_PROTOC_EXECUTABLE ${Protobuf_PROTOC_EXECUTABLE})
     get_filename_component(
       _PROTOBUF_INSTALL_PREFIX
-      ${PROTOBUF_PROTOC_EXECUTABLE}
+      ${Protobuf_PROTOC_EXECUTABLE}
       DIRECTORY)
     get_filename_component(
       _PROTOBUF_INSTALL_PREFIX
       ${_PROTOBUF_INSTALL_PREFIX}/..
       REALPATH)
-    find_library(PROTOBUF_LIBRARY
+    find_library(Protobuf_LIBRARY
       NAMES protobuf
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_library(PROTOBUF_PROTOC_LIBRARY
+    find_library(Protobuf_PROTOC_LIBRARY
       NAMES protoc
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_library(PROTOBUF_LITE_LIBRARY
+    find_library(Protobuf_LITE_LIBRARY
       NAMES protobuf-lite
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
       NO_DEFAULT_PATH)
-    find_path(PROTOBUF_INCLUDE_DIR
+    find_path(Protobuf_INCLUDE_DIR
       google/protobuf/service.h
       PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
       NO_DEFAULT_PATH)
@@ -90,7 +108,7 @@ endif()
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
 # from https://github.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tensorflow/contrib/cmake/tf_core_framework.cmake
 # to solve the problem that customized dir can't be specified when calling PROTOBUF_GENERATE_CPP.
-function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
+function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
   if(NOT ARGN)
     message(SEND_ERROR "Error: RELATIVE_PROTOBUF_GENERATE_CPP() called without any proto files")
     return()
@@ -161,19 +179,41 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
     set(PROTOC_ARGS ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR} --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
     if(BUILD_ONNX_PYTHON)
       list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
-      if(NOT WIN32)
+      if(ONNX_GEN_PB_TYPE_STUBS)
         # Haven't figured out how to generate mypy stubs on Windows yet
-        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${ROOT_DIR}/tools/protoc-gen-mypy.py --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+        if(NOT WIN32)
+          # If onnx was packaged to pypi from Windows, protoc-gen-mypy.py is missing the +x flag. Add it.
+          execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.py)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.py)
+        else(NOT WIN32)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
+        endif()
+        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE} --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
       endif()
     endif()
-    add_custom_command (
-      OUTPUT "${OUTPUT_PB_SRC}"
-             "${OUTPUT_PB_HEADER}"
-      COMMAND ${ONNX_PROTOC_EXECUTABLE}
-      ARGS ${PROTOC_ARGS}
-      DEPENDS ${GENERATED_PROTO}
-      COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
-      VERBATIM )
+    if (NOT ONNX_PROTOC_EXECUTABLE)
+        message(FATAL_ERROR "Protobuf compiler not found")
+    endif()
+    if(ONNX_PROTO_POST_BUILD_SCRIPT)
+      add_custom_command (
+        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
+        COMMAND ${ONNX_PROTOC_EXECUTABLE}
+        ARGS ${PROTOC_ARGS}
+        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER} -DNAMESPACES=${ONNX_NAMESPACE} -P ${ONNX_PROTO_POST_BUILD_SCRIPT}
+        DEPENDS ${GENERATED_PROTO} ${DEPEND}
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        VERBATIM )
+    else()
+      add_custom_command (
+        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
+        COMMAND ${ONNX_PROTOC_EXECUTABLE}
+        ARGS ${PROTOC_ARGS}
+        DEPENDS ${GENERATED_PROTO} ${DEPEND}
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        VERBATIM )
+    endif()
+  add_custom_target(${NAME}
+      DEPENDS ${OUTPUT_PB_SRC} ${OUTPUT_PB_HEADER})
   endforeach()
 
   set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)
@@ -181,17 +221,26 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR)
   set(${HDRS} ${${HDRS}} PARENT_SCOPE)
 endfunction()
 
-RELATIVE_PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${ONNX_ROOT}
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_proto PROTO_SRCS PROTO_HDRS ${ONNX_ROOT} ""
     onnx/onnx.in.proto
+)
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 ${ONNX_ROOT} gen_onnx_proto 
     onnx/onnx-operators.in.proto
 )
+list(APPEND PROTO_SRCS ${PROTO_SRCS2})
+list(APPEND PROTO_HDRS ${PROTO_HDRS2})
+
 
 file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.h"
     "${ONNX_ROOT}/onnx/*.cc"
 )
+file(GLOB_RECURSE onnx_gtests_src
+    "${ONNX_ROOT}/onnx/test/c++/*.h"
+    "${ONNX_ROOT}/onnx/test/c++/*.cc"
+)
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-
+list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
@@ -199,10 +248,6 @@ if(TARGET protobuf::libprotobuf)
   target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
 else()
   target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
-endif()
-
-if(MSVC)
-  target_compile_options(onnx_proto PRIVATE /WX-)
 endif()
 
 add_library(onnx ${onnx_src})
@@ -251,9 +296,10 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
       /MP
-      /MX
+      /WX
       /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
       /wd4503 # identifier' : decorated name length exceeded, name was truncated
+      /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
       )
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
@@ -269,21 +315,27 @@ if(ONNX_BUILD_BENCHMARKS)
   endif()
 
   add_executable(protobuf-bench tools/protobuf-bench.cc)
+  target_include_directories(protobuf-bench PUBLIC "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
 # Export include directories
 set(ONNX_INCLUDE_DIRS "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}")
-set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+get_directory_property(hasParent PARENT_DIRECTORY)
+if(hasParent)
+    set(ONNX_INCLUDE_DIRS ${ONNX_INCLUDE_DIRS} PARENT_SCOPE)
+endif()
 
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
         /MP
-        /MX
+        /WX
+        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+        /wd4503 # identifier' : decorated name length exceeded, name was truncated
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
     )
     target_compile_options(onnx PRIVATE
         /MP
-        /MX
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
@@ -311,6 +363,11 @@ if (MSVC)
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
+elseif(APPLE)
+else()
+  if (${ONNX_WERROR})
+    target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
+  endif()
 endif()
 
 if(APPLE)
@@ -320,3 +377,16 @@ endif()
 # ---[ ONNX Interface for Framework Integratin (ONNXIFI)
 add_library(onnxifi INTERFACE)
 target_include_directories(onnxifi INTERFACE onnx)
+
+
+install(TARGETS onnx onnx_proto
+    DESTINATION lib)
+install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
+    FILES_MATCHING
+    PATTERN "*.h")
+if(ONNX_BUILD_TESTS)
+	include(${ONNX_ROOT}/cmake/unittest.cmake)
+endif()

@@ -13,7 +13,7 @@ from . import expect
 class Abs(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Abs',
             inputs=['x'],

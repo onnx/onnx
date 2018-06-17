@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+#include "onnx/defs/schema.h"
+#include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
@@ -26,8 +28,9 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  throw ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+#define fail_check(...)                           \
+  throw ONNX_NAMESPACE::checker::ValidationError( \
+      ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
 class CheckerContext final {
  public:
@@ -44,18 +47,27 @@ class CheckerContext final {
     opset_imports_ = std::move(imps);
   }
   bool is_main_graph() const {
-	return is_main_graph_;
+    return is_main_graph_;
   }
   void set_is_main_graph(bool is_main_graph) {
-	  is_main_graph_ = is_main_graph;
+    is_main_graph_ = is_main_graph;
+  }
+
+  void set_schema_registry(const ISchemaRegistry* schema_registry) {
+    schema_registry_ = schema_registry;
+  }
+
+  const ISchemaRegistry* get_schema_registry() const {
+    return schema_registry_;
   }
 
   explicit CheckerContext() : ir_version_(-1) {}
 
-private:
-	int ir_version_;
-	std::unordered_map<std::string, int> opset_imports_;
-	bool is_main_graph_ = true;
+ private:
+  int ir_version_;
+  std::unordered_map<std::string, int> opset_imports_;
+  bool is_main_graph_ = true;
+  const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
 };
 
 struct LexicalScopeContext final {
@@ -77,6 +89,11 @@ void check_graph(
     const GraphProto& graph,
     const CheckerContext&,
     const LexicalScopeContext&);
+void check_function(
+    const FunctionProto& function,
+    const CheckerContext&,
+    const LexicalScopeContext&);
+
 void check_model(const ModelProto& model);
 } // namespace checker
 } // namespace ONNX_NAMESPACE

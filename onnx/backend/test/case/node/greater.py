@@ -13,7 +13,7 @@ from . import expect
 class Greater(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Greater',
             inputs=['x', 'y'],
@@ -27,12 +27,11 @@ class Greater(Base):
                name='test_greater')
 
     @staticmethod
-    def export_greater_broadcast():
+    def export_greater_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Greater',
             inputs=['x', 'y'],
             outputs=['greater'],
-            broadcast=1,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)
