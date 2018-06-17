@@ -448,6 +448,20 @@ class OpSet_Onnx_ver7 {
   }
 };
 
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, MatMul_Integer);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Conv_Integer);
+
+// Iterate over schema from ai.onnx version 7
+class OpSet_Onnx_ver8 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 8, MatMul_Integer)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 8, Conv_Integer)>());
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -456,6 +470,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver5>();
   RegisterOpSetSchema<OpSet_Onnx_ver6>();
   RegisterOpSetSchema<OpSet_Onnx_ver7>();
+  RegisterOpSetSchema<OpSet_Onnx_ver8>();
 }
 
 } // namespace ONNX_NAMESPACE

@@ -1038,7 +1038,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-ONNX_OPERATOR_SCHEMA(MatMul_Integer)
+
+ONNX_OPERATOR_SET_SCHEMA(MatMul_Integer, 8, OpSchema()
     .Input(0, "A", "N-dimensional matrix A", "T1")
     .Input(1, "B", "N-dimensional matrix B", "T2")
     .Output(0, "Y", "Matrix multiply results from A * B", "tensor(int32)")
@@ -1063,5 +1064,5 @@ ONNX_OPERATOR_SCHEMA(MatMul_Integer)
     .SetDoc(R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html. The production MUST never overflow.
 The accumulation may overflow if and only if in 32 bits.
-)DOC");
+)DOC"));
 } // namespace ONNX_NAMESPACE
