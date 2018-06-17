@@ -24,12 +24,10 @@ const char* auto_pad_doc =
 
 namespace ONNX_NAMESPACE {
 
-void convPoolTypeAndShapeInference(
+void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape) {
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
   // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -145,6 +143,14 @@ void convPoolTypeAndShapeInference(
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
   }
+}
+
+void convPoolTypeAndShapeInference(
+    InferenceContext& ctx,
+    bool use_dilation,
+    bool require_kernel_shape) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  convPoolShapeInference(ctx, use_dilation, require_kernel_shape);
 }
 
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
@@ -1228,10 +1234,10 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint16)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // TODO:: add type inference function later.
           // TODO: do we need to verify the input type to ensure both inputs (X
           // and W) have same bit width?
           // TODO: Should we enforce B has the same type as W?
+          convPoolShapeInference(ctx, true, false);
         })
         .Attr(
             "kernel_shape",
