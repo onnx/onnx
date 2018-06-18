@@ -848,8 +848,8 @@ public:
   const std::vector<std::string>& initializer_names() {
     return initializer_names_;
   }
-  std::vector<Tensor>::iterator getInitializer(const std::string& name) {
-    for (auto it = initializers_.begin(); it != initializers_.end(); ++it) {
+  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) {
+    for (auto it = initializers_.cbegin(); it != initializers_.cend(); ++it) {
       if (name == it->name()) {
         return it;
       }
