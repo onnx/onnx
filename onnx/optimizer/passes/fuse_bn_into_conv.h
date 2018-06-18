@@ -101,20 +101,20 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto m = *m_iter;
     auto var = *var_iter;
     auto W = *W_iter;
-    auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
+    float epsilon = bn->hasAttribute(kepsilon) ? (float) bn->f(kepsilon) : 1e-5f;
     Tensor eps;
 
-    #define DO_COMPUTATION(TENSOR_TYPE, data_type, vec)                        \
+    #define DO_COMPUTATION(TENSOR_TYPE, vec)                                   \
       eps.sizes().push_back(s.sizes()[0]);                                     \
       eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;    \
       for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {                          \
-        eps.vec().push_back((data_type) epsilon);                              \
+        eps.vec().push_back(epsilon);                                          \
       }                                                                        \
       if (conv_inputs.size() != 3) {                                           \
         bc.sizes().push_back(s.sizes()[0]);                                    \
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;   \
         for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {                        \
-          bc.vec().push_back((data_type) 0.);                                  \
+          bc.vec().push_back(0.f);                                             \
         }                                                                      \
       }                                                                        \
       var.add(eps);                                                            \
@@ -127,12 +127,12 @@ struct FuseBNIntoConv final : public OptimizePass {
 
     switch(s.elem_type()) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
-        DO_COMPUTATION(FLOAT, float, floats)
+        DO_COMPUTATION(FLOAT, floats)
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       {
-        DO_COMPUTATION(DOUBLE, double, doubles)
+        DO_COMPUTATION(DOUBLE, doubles)
         break;
       }
       default:
