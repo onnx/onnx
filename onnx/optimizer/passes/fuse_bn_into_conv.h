@@ -101,7 +101,7 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto m = *m_iter;
     auto var = *var_iter;
     auto W = *W_iter;
-    auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
+    float epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5f;
     Tensor eps;
 
     #define DO_COMPUTATION(TENSOR_TYPE, vec)                                   \
@@ -114,7 +114,7 @@ struct FuseBNIntoConv final : public OptimizePass {
         bc.sizes().push_back(s.sizes()[0]);                                    \
         bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;   \
         for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {                        \
-          bc.vec().push_back(0.);                                              \
+          bc.vec().push_back(0.f);                                             \
         }                                                                      \
       }                                                                        \
       var.add(eps);                                                            \
