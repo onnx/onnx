@@ -32,6 +32,13 @@ def gen_outlines(f, ml):  # type: (IO[Any], bool) -> None
 
 def gen_node_test_coverage(schemas, f, ml):
     # type: (Sequence[defs.OpSchema], IO[Any], bool) -> None
+    generators = set({
+        'Multinomial',
+        'RandomNormal',
+        'RandomNormalLike',
+        'RandomUniform',
+        'RandomUniformLike',
+    })
     node_tests = collect_snippets()
     common_covered = sorted([s.name for s in schemas
             if s.name in node_tests
@@ -41,6 +48,8 @@ def gen_node_test_coverage(schemas, f, ml):
             if s.name not in node_tests
             and s.support_level == defs.OpSchema.SupportType.COMMON
             and (s.domain == 'ai.onnx.ml') == ml])
+    common_generator = sorted([name for name in common_no_cover
+            if name in generators])
     experimental_covered = sorted([s.name for s in schemas
             if s.name in node_tests
             and s.support_level == defs.OpSchema.SupportType.EXPERIMENTAL
@@ -49,20 +58,28 @@ def gen_node_test_coverage(schemas, f, ml):
             if s.name not in node_tests
             and s.support_level == defs.OpSchema.SupportType.EXPERIMENTAL
             and (s.domain == 'ai.onnx.ml') == ml])
-    num_common = len(common_covered) + len(common_no_cover)
-    num_experimental = len(experimental_covered) + len(experimental_no_cover)
+    experimental_generator = sorted([name for name in experimental_no_cover
+            if name in generators])
+    num_common = len(common_covered) + len(common_no_cover) \
+            - len(common_generator)
+    num_experimental = len(experimental_covered) + len(experimental_no_cover) \
+            - len(experimental_generator)
     f.write('# Node Test Coverage\n')
     f.write('## Summary\n')
     if num_common:
-        f.write('Node tests have covered {}/{} ({:.2f}%) common operators.\n\n'.format(
-            len(common_covered), num_common,
-            (len(common_covered) / float(num_common))))
+        f.write('Node tests have covered {}/{} ({:.2f}%, {} generators excluded) '
+                'common operators.\n\n'.format(
+                    len(common_covered), num_common,
+                    (len(common_covered) / float(num_common) * 100),
+                    len(common_generator)))
     else:
         f.write('Node tests have covered 0/0 (N/A) common operators. \n\n')
     if num_experimental:
-        f.write('Node tests have covered {}/{} ({:.2f}%) experimental operators.\n\n'.format(
-            len(experimental_covered), num_experimental,
-            (len(experimental_covered) / float(num_experimental))))
+        f.write('Node tests have covered {}/{} ({:.2f}%, {} generators excluded) '
+                'experimental operators.\n\n'.format(
+                    len(experimental_covered), num_experimental,
+                    (len(experimental_covered) / float(num_experimental) * 100),
+                    len(experimental_generator)))
     else:
         f.write('Node tests have covered 0/0 (N/A) experimental operators.\n\n')
     titles = ['&#x1F49A;Covered Common Operators',
@@ -88,7 +105,10 @@ def gen_node_test_coverage(schemas, f, ml):
                     f.write('```python\n{}\n```\n\n'.format(code))
                     f.write('</details>\n')
             else:
-                f.write(' (call for test cases)\n')
+                if s in generators:
+                    f.write(' (random generator operator)\n')
+                else:
+                    f.write(' (call for test cases)\n')
             f.write('\n\n')
         f.write('<br/>\n\n')
 
