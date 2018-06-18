@@ -71,8 +71,8 @@ class GRU_Helper():
             z, r = np.split(gates, 2, -1)
             z = self.f(z)
             r = self.f(r)
-            h_default = self.g(np.dot(x, np.transpose(w_h)) + np.dot(r * H_t, r_h) + w_bh + r_bh)
-            h_linear = self.g(np.dot(x, np.transpose(w_h)) + r * (np.dot(H_t, r_h) + r_bh) + w_bh)
+            h_default = self.g(np.dot(x, np.transpose(w_h)) + np.dot(r * H_t, np.transpose(r_h)) + w_bh + r_bh)
+            h_linear = self.g(np.dot(x, np.transpose(w_h)) + r * (np.dot(H_t, np.transpose(r_h)) + r_bh) + w_bh)
             h = h_linear if self.LBR else h_default
             H = (1 - z) * h + z * H_t
             h_list.append(H)
