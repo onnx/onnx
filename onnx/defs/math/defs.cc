@@ -1039,6 +1039,11 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+
+static const char* MatMul_Integer_ver8_doc = R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html. The production MUST never overflow.
+The accumulation may overflow if and only if in 32 bits.
+)DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul_Integer,
     8,
@@ -1069,8 +1074,5 @@ ONNX_OPERATOR_SET_SCHEMA(
           // have same bit width?
           malmulShapeInference(ctx);
         })
-        .SetDoc(R"DOC(
-Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html. The production MUST never overflow.
-The accumulation may overflow if and only if in 32 bits.
-)DOC"));
+        .SetDoc(MatMul_Integer_ver8_doc));
 } // namespace ONNX_NAMESPACE
