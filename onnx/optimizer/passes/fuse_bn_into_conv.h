@@ -86,6 +86,16 @@ struct FuseBNIntoConv final : public OptimizePass {
       return false;
     }
 
+    Tensor bc;
+    if (conv_inputs.size() == 3) {
+      auto bc_iter = graph.getInitializer(conv_inputs[2]->uniqueName());
+      if (bc_iter == end_iter) {
+        return false;
+      }
+      bc = *bc_iter;
+      ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s_iter->sizes()[0]);
+    }
+
     auto s = *s_iter;
     auto bbn = *bbn_iter;
     auto m = *m_iter;
@@ -93,79 +103,36 @@ struct FuseBNIntoConv final : public OptimizePass {
     auto W = *W_iter;
     auto epsilon = bn->hasAttribute(kepsilon) ? bn->f(kepsilon) : 1e-5;
     Tensor eps;
-    Tensor bc;
+
+    #define DO_COMPUTATION(TENSOR_TYPE, data_type, vec)                        \
+      eps.sizes().push_back(s.sizes()[0]);                                     \
+      eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;    \
+      for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {                          \
+        eps.vec().push_back((data_type) epsilon);                              \
+      }                                                                        \
+      if (conv_inputs.size() != 3) {                                           \
+        bc.sizes().push_back(s.sizes()[0]);                                    \
+        bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;   \
+        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {                        \
+          bc.vec().push_back((data_type) 0.);                                  \
+        }                                                                      \
+      }                                                                        \
+      var.add(eps);                                                            \
+      var.sqrt();                                                              \
+      s.divide(var);                                                           \
+      W.scale_by_first_dim(s);                                                 \
+      bc.subtract(m);                                                          \
+      bc.multiply(s);                                                          \
+      bc.add(bbn);                                                             \
 
     switch(s.elem_type()) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
-        eps.sizes().push_back(s.sizes()[0]);
-        eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
-          eps.floats().push_back((float) epsilon);
-        }
-        bc.sizes().push_back(s.sizes()[0]);
-        bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_FLOAT;
-        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
-          bc.floats().push_back(0.f);
-        }
-
-        if (conv_inputs.size() == 3) {
-          auto bc_iter = graph.getInitializer(conv_inputs[2]->uniqueName());
-          if (bc_iter == end_iter) {
-            return false;
-          }
-          bc = *bc_iter;
-          ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
-        }
-        var.add(eps);
-        var.sqrt();
-        s.divide(var);
-
-        if (!s.is_raw_data()) {
-          const char * ptr = reinterpret_cast<const char *>(s.floats().data());
-          std::string string_rep(ptr, ptr + sizeof(float) * s.floats().size());
-          s.set_raw_data(string_rep);
-        }
-        W.scale_by_first_dim(s);
-        bc.subtract(m);
-        bc.multiply(s);
-        bc.add(bbn);
+        DO_COMPUTATION(FLOAT, float, floats)
         break;
       }
       case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
       {
-
-        eps.sizes().push_back(s.sizes()[0]);
-        eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
-        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
-          eps.doubles().push_back((double)epsilon);
-        }
-        bc.sizes().push_back(s.sizes()[0]);
-        bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_DOUBLE;
-        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {
-          bc.doubles().push_back(0.);
-        }
-
-        if (conv_inputs.size() == 3) {
-          auto bc_iter = graph.getInitializer(conv_inputs[2]->uniqueName());
-          if (bc_iter == end_iter) {
-            return false;
-          }
-          bc = *bc_iter;
-          ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s.sizes()[0]);
-        }
-
-        var.add(eps);
-        var.sqrt();
-        s.divide(var);
-        if (!s.is_raw_data()) {
-          const char * ptr = reinterpret_cast<const char *>(s.doubles().data());
-          std::string string_rep(ptr, ptr + sizeof(double) * s.doubles().size());
-          s.set_raw_data(string_rep);
-        }
-        W.scale_by_first_dim(s);
-        bc.subtract(m);
-        bc.multiply(s);
-        bc.add(bbn);
+        DO_COMPUTATION(DOUBLE, double, doubles)
         break;
       }
       default:

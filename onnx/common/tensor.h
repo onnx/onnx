@@ -7,8 +7,14 @@
 #include <math.h>
 #include <numeric>
 #include <functional>
+#include <stdexcept>
+
 
 namespace ONNX_NAMESPACE {
+
+class TensorError final : public std::runtime_error {
+  using std::runtime_error::runtime_error;
+};
 
 struct Tensor final {
 private:
@@ -192,7 +198,7 @@ public:
 
   //Element wise scaling of tensor s
   //s is one dimensional, has size M, where M is size of first dimension of tensor
-  //s must have data as raw_data and has data type corresponding to this
+  //s must have has data type corresponding to this
   //Supported for
   //FLOAT16, FLOAT, DOUBLE
   void scale_by_first_dim(const Tensor& s);
@@ -272,10 +278,12 @@ inline void Tensor::scale_dim(T* ptr, const T* s_ptr)  {
   inline void Tensor::op_name(const Tensor& a_tensor) {                        \
     const Tensor* a = &a_tensor;                                               \
     if (a->elem_type() != elem_type_) {                                        \
-      throw("Type of tensors do not match");                                   \
+      throw TensorError(std::string("Tensor types do not match.\nType ") +     \
+      ONNX_NAMESPACE::to_string(elem_type_) + std::string(" != Type ") +       \
+      ONNX_NAMESPACE::to_string(a->elem_type()));                              \
     }                                                                          \
     if (a->sizes() != sizes_) {                                                \
-      throw("Tensor shapes are incompatible");                                 \
+      throw TensorError(std::string("Tensor sizes do not match."));            \
     }                                                                          \
     switch(elem_type_) {                                                       \
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {                      \
@@ -305,7 +313,9 @@ inline void Tensor::scale_dim(T* ptr, const T* s_ptr)  {
         break;                                                                 \
       }                                                                        \
       default:                                                                 \
-        throw("Operation not supported for this data type");                   \
+        throw TensorError(std::string("Operation ") + std::string(#op_name) +  \
+        std::string(" not supported for data type ") +                         \
+        ONNX_NAMESPACE::to_string(elem_type_));                                \
     }                                                                          \
   }                                                                            \
 
@@ -330,14 +340,15 @@ inline void Tensor::sqrt() {
       break;
     }
     default:
-      throw("Operation not supported for this data type");
-  }
+      throw TensorError(std::string("Operation sqrt not supported for data type ") +
+      ONNX_NAMESPACE::to_string(elem_type_));
+    }
 }
 
 inline void Tensor::scale_by_first_dim(const Tensor& s_tensor) {
   const Tensor* s = &s_tensor;
   ONNX_ASSERT(sizes_.size() > 1 && s->sizes().size() == 1 && s->sizes()[0] == sizes_[0]);
-  ONNX_ASSERT(s->is_raw_data() && s->elem_type() == elem_type_);
+  ONNX_ASSERT(s->elem_type() == elem_type_);
 
   switch(elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
@@ -359,8 +370,9 @@ inline void Tensor::scale_by_first_dim(const Tensor& s_tensor) {
       break;
     }
     default:
-      throw("Incompatible data type: FLOAT, FLOAT16, and DOUBLE supported");
-  }
+      throw TensorError(std::string("Operation scale_by_first_dim not supported for data type ") +
+      ONNX_NAMESPACE::to_string(elem_type_));
+    }
 }
 #undef CONST_DATA
 #undef DATA
