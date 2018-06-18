@@ -8,14 +8,14 @@ import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
-
+from typing import Sequence
 
 class ExpandDynamicShape(Base):
 
     @staticmethod
-    def export():  # type -> None
+    def export():  # type: () -> None
 
-        def make_graph(node, input_shape, shape_shape, output_shape):
+        def make_graph(node, input_shape, shape_shape, output_shape):  # type: (onnx.helper.NodeProto, Sequence[int], Sequence[int], Sequence[int]) -> onnx.helper.GraphProto
             graph = onnx.helper.make_graph(
                 nodes=[node],
                 name='Expand',
