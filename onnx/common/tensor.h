@@ -238,7 +238,7 @@ inline void Tensor::bin_func(F f, T* ptr, const T* a_ptr) {
   int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(),
                                         (int64_t) 1, std::multiplies<int64_t>());
   for (int64_t i = 0; i < num_elements; ++i) {
-    ptr[i] = f((T) ptr[i], (T) a_ptr[i]);
+    ptr[i] = f(ptr[i], a_ptr[i]);
   }
   SET_RAW_DATA(ptr)
 }
@@ -248,7 +248,7 @@ inline void Tensor::un_func(F f, T* ptr)  {
   int64_t num_elements = std::accumulate(sizes_.begin(), sizes_.end(),
                                         (int64_t) 1, std::multiplies<int64_t>());
   for (int64_t i = 0; i < num_elements; ++i) {
-    ptr[i] = f((T) ptr[i]);
+    ptr[i] = f(ptr[i]);
   }
   SET_RAW_DATA(ptr)
 }
