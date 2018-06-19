@@ -450,6 +450,10 @@ class OpSet_Onnx_ver7 {
 
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, MatMul_Integer);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Conv_Integer);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Min);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Sum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean);
 
 // Iterate over schema from ai.onnx version 7
 class OpSet_Onnx_ver8 {
@@ -459,6 +463,14 @@ class OpSet_Onnx_ver8 {
            Onnx, 8, MatMul_Integer)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 8, Conv_Integer)>());
+	fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+		Onnx, 8, Min)>());
+	fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+		Onnx, 8, Max)>());
+	fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+		Onnx, 8, Sum)>());
+	fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+		Onnx, 8, Mean)>());
   }
 };
 
