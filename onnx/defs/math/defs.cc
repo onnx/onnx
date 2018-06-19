@@ -10,7 +10,6 @@ std::function<void(OpSchema&)> MathDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Performs element-wise binary {name} (with Numpy-style broadcasting support).
-
 {broadcast_doc}
 )DOC";
     ReplaceAll(doc, "{name}", name);
@@ -43,7 +42,6 @@ The operator computes the {name} ({description}) values for each layer in the ba
  of the given input. The input is a 2-D tensor (Tensor<float>) of size
 (batch_size x input_feature_dimensions). The output tensor has the same shape
 and contains the {name} values of the corresponding input.
-
 X does not need to explicitly be a 2D vector; rather, it will be
 coerced into one. For an arbitrary n-dimensional tensor
 X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
@@ -304,7 +302,6 @@ static const char* Elu_ver6_doc = R"DOC(
 Elu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the function `f(x) = alpha * (exp(x) - 1.) for x <
 0`, `f(x) = x for x >= 0`., is applied to the tensor elementwise.
-
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -493,82 +490,50 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Max_ver6_doc = R"DOC(
-Element-wise max of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
+std::function<void(OpSchema&)> ElementwiseOpDocGenerator(const char* name) {
+  return [=](OpSchema& schema) {
+    std::string doc = R"DOC(
+Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
+All inputs and outputs must have the same data type.
+{broadcast_doc}
 )DOC";
+    ReplaceAll(doc, "{name}", name);
+    ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+    schema.SetDoc(doc);
+    schema.Input(
+        0,
+        "data_0",
+        "List of tensors for " + std::string(name) + ".",
+        "T",
+        OpSchema::Variadic);
+    schema.Output(0, name, "Output tensor.", "T");
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+  };
+}
 
 ONNX_OPERATOR_SET_SCHEMA(
     Max,
-    6,
-    OpSchema()
-        .SetDoc(Max_ver6_doc)
-        .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
-        .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static const char* Min_ver6_doc = R"DOC(
-Element-wise min of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
-)DOC";
+    8,
+    OpSchema().FillUsing(ElementwiseOpDocGenerator("max")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Min,
-    6,
-    OpSchema()
-        .SetDoc(Min_ver6_doc)
-        .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
-        .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static const char* Sum_ver6_doc = R"DOC(
-Element-wise sum of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
-)DOC";
+    8,
+    OpSchema().FillUsing(ElementwiseOpDocGenerator("min")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sum,
-    6,
-    OpSchema()
-        .SetDoc(Sum_ver6_doc)
-        .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
-        .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static const char* Mean_ver6_doc = R"DOC(
-Element-wise mean of each of the input tensors. All inputs and outputs must
-have the same shape and data type.
-)DOC";
+    8,
+    OpSchema().FillUsing(ElementwiseOpDocGenerator("sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mean,
-    6,
-    OpSchema()
-        .SetDoc(Mean_ver6_doc)
-        .Input(
-            0,
-            "data_0",
-            "List of tensors for Mean.",
-            "T",
-            OpSchema::Variadic)
-        .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+    8,
+    OpSchema().FillUsing(ElementwiseOpDocGenerator("mean")));
 
 static const char* Clip_ver6_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
@@ -660,11 +625,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Gemm_ver7_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-
 A' = transpose(A) if transA else A
-
 B' = transpose(B) if transB else B
-
 Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
 input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
 and output tensor Y has shape (M, N). A will be transposed before doing the
@@ -750,6 +712,76 @@ static const char* MatMul_ver6_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC";
 
+void malmulShapeInference(InferenceContext& ctx) {
+  if (!hasNInputShapes(ctx, 2)) {
+    return;
+  }
+
+  const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
+  const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
+
+  if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
+    fail_shape_inference("Input tensors of wrong rank (0).");
+  }
+
+  TensorShapeProto shapeL, shapeR;
+
+  // First promote each shape to at least rank-2. This logic is
+  // specific to matmul, not generic broadcasting.
+  {
+    if (shape0.dim_size() == 1) {
+      shapeL.add_dim()->set_dim_value(1);
+      *shapeL.add_dim() = shape0.dim(0);
+    } else {
+      *shapeL.mutable_dim() = shape0.dim();
+    }
+    if (shape1.dim_size() == 1) {
+      *shapeR.add_dim() = shape1.dim(0);
+      shapeR.add_dim()->set_dim_value(1);
+    } else {
+      *shapeR.mutable_dim() = shape1.dim();
+    }
+  }
+
+  // Check for compatible matrix multiply dimensions
+  {
+    auto dimL = shapeL.dim(shapeL.dim_size() - 1);
+    auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+    if (dimL.has_dim_value() && dimR.has_dim_value() &&
+        dimL.dim_value() != dimR.dim_value()) {
+      fail_shape_inference("Incompatible dimensions for matrix multiplication");
+    }
+  }
+
+  TensorShapeProto resultShape;
+
+  // Now call out to generic multidimensional broadcasting for
+  // the broadcastable prefixes.
+  {
+    TensorShapeProto prefixShapeL, prefixShapeR;
+    for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
+      *prefixShapeL.add_dim() = shapeL.dim(i);
+    }
+    for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
+      *prefixShapeR.add_dim() = shapeR.dim(i);
+    }
+    bidirectionalBroadcastShapeInference(
+        prefixShapeL, prefixShapeR, resultShape);
+  }
+
+  // Back to matmul-specific. Add the trailing dimensions back in.
+  {
+    if (shape0.dim_size() != 1) {
+      *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
+    }
+    if (shape1.dim_size() != 1) {
+      *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
+    }
+  }
+
+  *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() = resultShape;
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
     1,
@@ -764,77 +796,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(MatMul_ver6_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (!hasNInputShapes(ctx, 2)) {
-            return;
-          }
-
-          const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
-          const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
-
-          if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
-            fail_shape_inference("Input tensors of wrong rank (0).");
-            ;
-          }
-
-          TensorShapeProto shapeL, shapeR;
-
-          // First promote each shape to at least rank-2. This logic is
-          // specific to matmul, not generic broadcasting.
-          {
-            if (shape0.dim_size() == 1) {
-              shapeL.add_dim()->set_dim_value(1);
-              *shapeL.add_dim() = shape0.dim(0);
-            } else {
-              *shapeL.mutable_dim() = shape0.dim();
-            }
-            if (shape1.dim_size() == 1) {
-              *shapeR.add_dim() = shape1.dim(0);
-              shapeR.add_dim()->set_dim_value(1);
-            } else {
-              *shapeR.mutable_dim() = shape1.dim();
-            }
-          }
-
-          // Check for compatible matrix multiply dimensions
-          {
-            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
-            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
-            if (dimL.has_dim_value() && dimR.has_dim_value() &&
-                dimL.dim_value() != dimR.dim_value()) {
-              fail_shape_inference(
-                  "Incompatible dimensions for matrix multiplication");
-              ;
-            }
-          }
-
-          TensorShapeProto resultShape;
-
-          // Now call out to generic multidimensional broadcasting for
-          // the broadcastable prefixes.
-          {
-            TensorShapeProto prefixShapeL, prefixShapeR;
-            for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
-              *prefixShapeL.add_dim() = shapeL.dim(i);
-            }
-            for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
-              *prefixShapeR.add_dim() = shapeR.dim(i);
-            }
-            bidirectionalBroadcastShapeInference(
-                prefixShapeL, prefixShapeR, resultShape);
-          }
-
-          // Back to matmul-specific. Add the trailing dimensions back in.
-          {
-            if (shape0.dim_size() != 1) {
-              *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
-            }
-            if (shape1.dim_size() != 1) {
-              *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
-            }
-          }
-
-          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
-              resultShape;
+          malmulShapeInference(ctx);
         }));
 
 static const char* TopK_ver1_doc = R"DOC(
@@ -845,7 +807,6 @@ shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
   -Index tensor of shape [a_1, a_2, ..., a_{axis-1}, k, a_{axis+1}, ... a_n] which
    contains the indices of the top k elements (original indices from the input
    tensor).
-
 Given two equivalent values, this operator uses the indices along the axis  as
  a tiebreaker. That is, the element with the lower index will appear first.
 )DOC";
@@ -1046,4 +1007,39 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* MatMul_Integer_ver8_doc = R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html. The production MUST never overflow.
+The accumulation may overflow if and only if in 32 bits.
+)DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+    MatMul_Integer,
+    8,
+    OpSchema()
+        .Input(0, "A", "N-dimensional matrix A", "T1")
+        .Input(1, "B", "N-dimensional matrix B", "T2")
+        .Output(0, "Y", "Matrix multiply results from A * B", "tensor(int32)")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(int16)",
+             "tensor(uint16)"},
+            "Constrain input types.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(int16)",
+             "tensor(uint16)"},
+            "Constrain input types.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // int8 * uint8  | uint8 * int8
+          // int8 * int8	 | uint8 * uint8
+          // int16 * uint16 | uint16 * int16
+          // int16 * int16  | uint16 * uint16
+          // TODO: do we need to verify the input type to ensure both inputs
+          // have same bit width?
+          malmulShapeInference(ctx);
+        })
+        .SetDoc(MatMul_Integer_ver8_doc));
 } // namespace ONNX_NAMESPACE

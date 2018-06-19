@@ -24,12 +24,10 @@ const char* auto_pad_doc =
 
 namespace ONNX_NAMESPACE {
 
-void convPoolTypeAndShapeInference(
+void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape) {
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
   // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -147,6 +145,14 @@ void convPoolTypeAndShapeInference(
   }
 }
 
+void convPoolTypeAndShapeInference(
+    InferenceContext& ctx,
+    bool use_dilation,
+    bool require_kernel_shape) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  convPoolShapeInference(ctx, use_dilation, require_kernel_shape);
+}
+
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* name,
     const char* opName,
@@ -160,10 +166,8 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
  data into the output tensor Y for further processing. The output spatial shape will be following:
  ```
  output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
-
  * pad_shape[i] is sum of pads along axis i
  ```
-
  `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
  ```
  VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
@@ -640,17 +644,12 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
     std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
 and computes the output. 
-
 If the pads parameter is provided the shape of the output is calculated via the following equation:
-
   output_shape[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - pads[start_i] - pads[end_i]
-
 output_shape can also be explicitly specified in which case pads values are auto generated using these equations:
-
   total_padding[i] = stride[i] * (input_size[i] - 1) + output_padding[i] + kernel_shape[i] - output_shape[i]
   If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
-
     )DOC";
     ReplaceAll(doc, "{filter_desc}", filter_desc);
     schema.SetDoc(doc);
@@ -868,7 +867,6 @@ static const char* BatchNormalization_ver7_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
-
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
     )DOC";
@@ -973,10 +971,8 @@ ONNX_OPERATOR_SET_SCHEMA(
 static const char* InstanceNormalization_ver6_doc = R"DOC(
 Carries out instance normalization as described in the paper
 https://arxiv.org/abs/1607.08022.
-
 y = scale * (x - mean) / sqrt(variance + epsilon) + B,
 where mean and variance are computed per instance per channel.
-
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1134,10 +1130,8 @@ It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
 of shape (N x C x D1 x D2, ..., Dk), its region is
 {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
-
 square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
 where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
-
 Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 )DOC";
 
@@ -1184,5 +1178,92 @@ ONNX_OPERATOR_SET_SCHEMA(
             " types to float tensors.")
         .SetDoc(LRN_ver1_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Conv_Integer,
+    8,
+    OpSchema()
+        .SetDoc(
+            "The integer convolution operator consumes an input tensor, a filter and a padding value, and computes the output. "
+            "The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.")
+        .Input(
+            0,
+            "X",
+            "Input data tensor from previous layer; "
+            "has size (N x C x H x W), where N is the batch size, "
+            "C is the number of channels, and H and W are the "
+            "height and width. Note that this is for the 2D image. "
+            "Otherwise the size is (N x C x D1 x D2 ... x Dn)",
+            "T1")
+        .Input(
+            1,
+            "W",
+            "The weight tensor that will be used in the "
+            "convolutions; has size (M x C x kH x kW), where C "
+            "is the number of channels, and kH and kW are the "
+            "height and width of the kernel, and M is the number "
+            "of feature maps. For more than 2 dimensions, the "
+            "kernel shape will be (M x C x k1 x k2 x ... x kn), "
+            "where is the dimension of the kernel",
+            "T2")
+        .Input(
+            2,
+            "Z",
+            "padding value (zero_point normally), which should be a scalar tensor.",
+            "T1",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "Y",
+            "Output data tensor that contains the result of the "
+            "convolution. The output dimensions are functions "
+            "of the kernel size, stride size, and pad lengths.",
+            "tensor(int32)")
+        .TypeConstraint(
+            "T1",
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(int16)",
+             "tensor(uint16)"},
+            "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int8)",
+             "tensor(uint8)",
+             "tensor(int16)",
+             "tensor(uint16)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // TODO: do we need to verify the input type to ensure both inputs (X
+          // and W) have same bit width?
+          // TODO: Should we enforce B has the same type as W?
+          convPoolShapeInference(ctx, true, false);
+        })
+        .Attr(
+            "kernel_shape",
+            "The shape of the convolution kernel. If not present, should be inferred from input W.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "dilations",
+            "dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "strides",
+            "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "auto_pad",
+            auto_pad_doc,
+            AttributeProto::STRING,
+            std::string("NOTSET"))
+        .Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL)
+        .Attr(
+            "group",
+            "number of groups input channels and output channels are divided into, default is 1.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1)));
 
 } // namespace ONNX_NAMESPACE

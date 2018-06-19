@@ -273,6 +273,12 @@ message GraphProto {
   // optional string domain = 9;
 }
 
+message TensorPackingInfo {
+  optional int64 bit_width = 1;
+  // other tensor packing information.
+}
+
+// A message defined to store a tensor in its serialized format.
 // Tensors
 //
 // A serialized tensor value.
@@ -302,6 +308,8 @@ message TensorProto {
 
   // The shape of the tensor.
   repeated int64 dims = 1;
+  // The packing information of the tensor.
+  optional TensorPackingInfo packing_info = 13;
 
   // The data type of the tensor.
   optional DataType data_type = 2;
@@ -414,6 +422,7 @@ message TypeProto {
     // This field MUST be present for this version of the IR.
     optional TensorProto.DataType elem_type = 1;
     optional TensorShapeProto shape = 2;
+    optional TensorPackingInfo packing_info = 3;
   }
 
 
