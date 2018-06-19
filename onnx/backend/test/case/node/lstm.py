@@ -89,7 +89,7 @@ class LSTM_Helper():
 
 
     @staticmethod
-    def get_random(shape, scale = 1.0):
+    def get_random(shape, scale = 1.0):  # type: ignore
         """ 
         return float 32 array with values uniformly sampled from [-scale, scale)
         """
