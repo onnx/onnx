@@ -515,6 +515,23 @@ All inputs and outputs must have the same data type.
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
     schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      propagateElemTypeFromInputToOutput(ctx, 0, 0);
+      int num_inputs = static_cast<int>(ctx.getNumInputs());
+      std::vector<const TensorShapeProto*> shapes;
+      for (int i = 0; i < num_inputs; ++i) {
+        auto input_type = ctx.getInputType(i);
+        if (nullptr == input_type || !input_type->has_tensor_type() ||
+            !input_type->tensor_type().has_shape()) {
+          return;
+        }
+        shapes.push_back(&input_type->tensor_type().shape());
+      }
+
+      multidirectionalBroadcastShapeInference(
+          shapes,
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+    });
   };
 }
 
@@ -741,7 +758,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
             fail_shape_inference("Input tensors of wrong rank (0).");
-            ;
           }
 
           TensorShapeProto shapeL, shapeR;
