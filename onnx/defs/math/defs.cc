@@ -493,7 +493,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> ElementwiseOpDocGenerator(const char* name) {
+std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
@@ -538,22 +538,22 @@ All inputs and outputs must have the same data type.
 ONNX_OPERATOR_SET_SCHEMA(
     Max,
     8,
-    OpSchema().FillUsing(ElementwiseOpDocGenerator("max")));
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("max")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Min,
     8,
-    OpSchema().FillUsing(ElementwiseOpDocGenerator("min")));
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("min")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Sum,
     8,
-    OpSchema().FillUsing(ElementwiseOpDocGenerator("sum")));
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Mean,
     8,
-    OpSchema().FillUsing(ElementwiseOpDocGenerator("mean")));
+    OpSchema().FillUsing(ElementwiseMultiOpDocGenerator("mean")));
 
 static const char* Clip_ver6_doc = R"DOC(
 Clip operator limits the given input within an interval. The interval is
