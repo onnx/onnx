@@ -270,7 +270,7 @@ inline void Tensor::scale_dim(T* ptr, const T* s_ptr)  {
 #define CALL_BIN_FUNC(type, vec, f)                                            \
   DATA(this, type, vec)                                                        \
   CONST_DATA(a, type, vec)                                                     \
-  bin_func<f<type>, type>(f<type>(), this_data_ptr, a_const_data_ptr);         \
+  bin_func(f<type>(), this_data_ptr, a_const_data_ptr);                        \
 
 
 
@@ -331,12 +331,12 @@ inline void Tensor::sqrt() {
   switch(elem_type_) {
     case ONNX_NAMESPACE::TensorProto_DataType_FLOAT:  {
       DATA(this, float, floats)
-      un_func<float (*)(float), float>(static_cast<float (*)(float)>(std::sqrt), this_data_ptr);
+      un_func<float (*)(float), float>(std::sqrt, this_data_ptr);
       break;
     }
     case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
       DATA(this, double, doubles)
-      un_func<double (*)(double), double>(static_cast<double (*)(double)>(std::sqrt), this_data_ptr);
+      un_func<double (*)(double), double>(std::sqrt, this_data_ptr);
       break;
     }
     default:
