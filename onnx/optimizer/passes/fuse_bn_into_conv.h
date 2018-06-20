@@ -96,11 +96,11 @@ struct FuseBNIntoConv final : public OptimizePass {
       ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s_iter->sizes()[0]);
     }
 
-    auto s = *s_iter;
-    auto& bbn = *bbn_iter;
-    auto& m = *m_iter;
-    auto var = *var_iter;
-    auto W = *W_iter;
+    Tensor s = *s_iter;
+    const Tensor& bbn = *bbn_iter;
+    const Tensor& m = *m_iter;
+    Tensor var = *var_iter;
+    Tensor W = *W_iter;
     float epsilon = bn->hasAttribute(kepsilon) ? (float) bn->f(kepsilon) : 1e-5f;
     Tensor eps;
 
