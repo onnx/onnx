@@ -127,6 +127,14 @@ public:
     raw_data_ = std::move(raw_data);
   }
 
+  void set_raw_data(const char* raw_data, size_t size) {
+    set_raw_data({raw_data, size});
+  }
+
+  void set_raw_data(const char* raw_data) {
+    set_raw_data(raw_data, raw_data_.size());
+  }
+
   bool is_segment() const {
     return is_segment_;
   }
@@ -228,7 +236,7 @@ public:
 
 #define SET_RAW_DATA(ptr)                                                      \
   if (is_raw_data_)  {                                                         \
-    raw_data_.assign((const char*) ptr, raw_data_.size());                     \
+    set_raw_data((const char*)(ptr));                                          \
   }                                                                            \
 
 

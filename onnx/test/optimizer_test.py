@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto
 from typing import Sequence, Text, Tuple, List, Callable
+from onnx import numpy_helper
 
 import numpy as np  # type: ignore
 
@@ -711,6 +712,18 @@ class TestOptimizer(unittest.TestCase):
         for (tensor_type, np_type) in [(TensorProto.FLOAT, np.float32), (TensorProto.DOUBLE, np.float64)]:
             conv = helper.make_node("Conv", ["X", "W", "B"], ["Y"])
             bn = helper.make_node("BatchNormalization", ["Y", "scale", "b", "mean", "var"], ["Z"])
+
+            W = np.random.randn(3, 2, 5, 5).astype(np_type) + 2
+            B = np.random.randn(3,).astype(np_type) + 2
+            scale = np.random.randn(3,).astype(np_type) + 2
+            b = np.random.randn(3,).astype(np_type) + 2
+            mean = np.random.randn(3,).astype(np_type) + 2
+            var = np.random.randn(3,).astype(np_type) + 2
+
+            initializers = [
+                helper.make_tensor(name, tensor_type, npa.shape, npa.tobytes(), raw=True)
+                for name, npa in [('W', W), ('B', B), ('scale', scale), ('b', b), ('mean', mean), ('var', var)]
+            ]
             graph = helper.make_graph(
                 [conv, bn],
                 "test",
@@ -722,38 +735,22 @@ class TestOptimizer(unittest.TestCase):
                  helper.make_tensor_value_info("mean", tensor_type, (3,)),
                  helper.make_tensor_value_info("var", tensor_type, (3,))],
                 [helper.make_tensor_value_info("Z", tensor_type, (3,))],
-                [helper.make_tensor("W", tensor_type,
-                                    dims=(3, 2, 5, 5),
-                                    vals=np.random.randn(3, 2, 5, 5).astype(np_type).tobytes(),
-                                    raw=True),
-                helper.make_tensor("B", tensor_type,
-                                    dims=(3,),
-                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
-                                    raw=True),
-                helper.make_tensor("scale", tensor_type,
-                                    dims=(3,),
-                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
-                                    raw=True),
-                helper.make_tensor("b", tensor_type,
-                                    dims=(3,),
-                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
-                                    raw=True),
-                helper.make_tensor("mean", tensor_type,
-                                    dims=(3,),
-                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
-                                    raw=True),
-                helper.make_tensor("var", tensor_type,
-                                    dims=(3,),
-                                    vals=np.random.randn(3,).astype(np_type).tobytes(),
-                                    raw=True)],
+                initializer=initializers,
                 value_info=[
                     helper.make_tensor_value_info("Y", tensor_type, (3,))
                 ]
             )
             optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
 
-            self.assertEqual(len(list(optimized_model.graph.node)), 1)
+            self.assertEqual(len(optimized_model.graph.node), 1)
             self.assertEqual(optimized_model.graph.node[0].op_type, 'Conv')
+            self.assertEqual(len(optimized_model.graph.initializer), 2)
+            new_W = numpy_helper.to_array(optimized_model.graph.initializer[0])
+            new_b = numpy_helper.to_array(optimized_model.graph.initializer[1])
+
+            f = scale / np.sqrt(var + 1e-5)
+            np.testing.assert_almost_equal((B - mean) * f + b, new_b)
+            np.testing.assert_almost_equal(W * f[:, np.newaxis, np.newaxis, np.newaxis], new_W)
 
 
 if __name__ == '__main__':
