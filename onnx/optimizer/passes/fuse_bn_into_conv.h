@@ -97,8 +97,8 @@ struct FuseBNIntoConv final : public OptimizePass {
     }
 
     auto s = *s_iter;
-    auto bbn = *bbn_iter;
-    auto m = *m_iter;
+    auto& bbn = *bbn_iter;
+    auto& m = *m_iter;
     auto var = *var_iter;
     auto W = *W_iter;
     float epsilon = bn->hasAttribute(kepsilon) ? (float) bn->f(kepsilon) : 1e-5f;
