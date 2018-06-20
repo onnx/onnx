@@ -391,6 +391,32 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+
+static const char* Hardtanh_ver8_doc = R"DOC(
+Calculates the hard hyperbolic tangent of the given input tensor element-wise:
+1 if x > 1, -1 if x < -1, x otherwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Hardtanh,
+    8,
+    OpSchema()
+        .SetDoc(Hardtanh_ver8_doc)
+        .Attr("min_val", "Minimum value of the linear region range", AttributeProto::FLOAT, -1.0f)
+        .Attr("max_val", "Maximum value of the linear region range", AttributeProto::FLOAT, 1.0f)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hard hyperbolic tangent values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* Pow_ver7_doc = R"DOC(
 Pow takes input data (Tensor<T>) and exponent Tensor, and
 produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
