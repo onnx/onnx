@@ -267,7 +267,7 @@ For each variadic operator input, one or more node inputs must be specified. For
 
 Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
 
-Some operators have outputs that are optional, which means that an operator, depending on its input parameters and/or attributes, MAY forgo computing values for such outputs. 
+Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs. 
 
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
@@ -282,7 +282,7 @@ With respect to supported types, the __ONNX__ definition recognizes only tensors
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
-Primitive numeric, string, and Boolean types MUST be used as elements of tensors. Maps and sequences MUST contain tensors as values.
+Primitive numeric, string, and Boolean types MUST be used as elements of tensors.
 
 ### Tensor Element Types
 
@@ -356,6 +356,8 @@ The type system used for attributes is a superset of that used for of inputs and
 ## Other Specification Documents 
 
 The ONNX specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining standard operator semantics and the IR syntax. The latter is specified as Protobuf v2 and v3 schema files.
+
+See the [metadata category documentation](MetadataProps.md) for more details.
 
 ### Operators
 

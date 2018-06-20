@@ -43,7 +43,7 @@ class TestBasicFunctions(unittest.TestCase):
 
         # Test if input has a read function
         f = io.BytesIO()
-        onnx.save_model(proto_string, f)  # type: ignore
+        onnx.save_model(proto_string, f)
         f = io.BytesIO(f.getvalue())
         loaded_proto = onnx.load_model(f, cls)
         self.assertTrue(proto == loaded_proto)
