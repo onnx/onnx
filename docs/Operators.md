@@ -39,6 +39,7 @@
   * <a href="#Greater">Greater</a>
   * <a href="#HardSigmoid">HardSigmoid</a>
   * <a href="#Hardmax">Hardmax</a>
+  * <a href="#Hardtanh">Hardtanh</a>
   * <a href="#Identity">Identity</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
   * <a href="#LRN">LRN</a>
@@ -3720,6 +3721,46 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="Hardtanh"></a><a name="hardtanh">**Hardtanh**</a>
+
+  Calculates the hard hyperbolic tangent of the given input tensor element-wise:
+  1 if x > 1, -1 if x < -1, x otherwise.
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>max_val</tt> : float</dt>
+<dd>Maximum value of the linear region range</dd>
+<dt><tt>min_val</tt> : float</dt>
+<dd>Minimum value of the linear region range</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hard hyperbolic tangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
 
 
 ### <a name="Identity"></a><a name="identity">**Identity**</a>
@@ -10694,8 +10735,7 @@ This version of the operator has been available since version 1 of the default O
 ### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
+  alpha * tanh(beta * x).
       
 
 #### Version

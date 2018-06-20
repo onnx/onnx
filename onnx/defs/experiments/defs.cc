@@ -52,8 +52,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* ScaledTanh_ver1_doc = R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
-by providing the same input and output blobs.
+alpha * tanh(beta * x).
     )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
