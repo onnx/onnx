@@ -381,7 +381,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Sum', ['x', 'y', 'z'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (30, 4, 5))])
-        
+
     def test_sum_multi_broadcasting(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (30, 1, 5)),
