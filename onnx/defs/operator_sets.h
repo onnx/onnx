@@ -447,6 +447,18 @@ class OpSet_Onnx_ver7 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 7, PRelu)>());
   }
 };
+a
+
+// Forward declarations for ai.onnx version 8
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Hardtanh);
+
+// Iterate over schema from ai.onnx version 8
+class OpSet_Onnx_ver8 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Hardtanh)>());
+  }
+};
 
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Min);
