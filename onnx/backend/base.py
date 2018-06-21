@@ -60,8 +60,8 @@ class Backend(object):
                       model,  # type: ModelProto
                       device='CPU',  # type: Text
                       **kwargs  # type: Any
-                      ):  # type: (...) -> Optional[bool]
-        # Return whether the model is comptabile with the backend.
+                      ):  # type: (...) -> bool
+        # Return whether the model is compatible with the backend.
         return True
 
     @classmethod
