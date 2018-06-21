@@ -422,12 +422,6 @@ produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
 is applied to the data tensor elementwise.
 )DOC";
 
-static const char* Pow_ver7_doc = R"DOC(
-Pow takes input data (Tensor<T>) and exponent Tensor, and
-produces one output data (Tensor<T>) where the function `f(x) = x^exponent`,
-is applied to the data tensor elementwise.
-)DOC";
-
 ONNX_OPERATOR_SET_SCHEMA(
     Pow,
     7,
