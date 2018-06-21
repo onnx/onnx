@@ -56,6 +56,15 @@ class BackendRep(object):
 
 class Backend(object):
     @classmethod
+    def is_compatible(cls,
+                      model,  # type: ModelProto
+                      device='CPU',  # type: Text
+                      **kwargs  # type: Any
+                      ):  # type: (...) -> Optional[bool]
+        # Return whether the model is comptabile with the backend.
+        return True
+
+    @classmethod
     def prepare(cls,
                 model,  # type: ModelProto
                 device='CPU',  # type: Text
