@@ -12,6 +12,10 @@ from . import expect
 
 
 class LSTM_Helper():
+
+    number_of_gates = 4
+    number_of_peepholes = 3
+
     def __init__(self, **params):  # type: (*Any) -> None
         # LSTM Input Names
         X = str('X')
@@ -21,8 +25,6 @@ class LSTM_Helper():
         H_0 = str('initial_h')
         C_0 = str('initial_c')
         P = str('P')
-        number_of_gates = 4
-        number_of_peepholes = 3
 
         required_inputs = [X, W, R]
         for i in required_inputs:
@@ -38,10 +40,14 @@ class LSTM_Helper():
             hidden_size = params[R].shape[-1]
             batch_size = params[X].shape[1]
 
-            b = params[B] if B in params else np.zeros(2 * number_of_gates * hidden_size, dtype=np.float32)
-            p = params[P] if P in params else np.zeros(number_of_peepholes * hidden_size, dtype=np.float32)
-            h_0 = params[H_0] if H_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
-            c_0 = params[C_0] if C_0 in params else np.zeros((batch_size, hidden_size), dtype=np.float32)
+            b = params[B] if B in params else np.zeros(
+                2 * self.number_of_gates * hidden_size, dtype=np.float32)
+            p = params[P] if P in params else np.zeros(
+                self.number_of_peepholes * hidden_size, dtype=np.float32)
+            h_0 = params[H_0] if H_0 in params else np.zeros(
+                (batch_size, hidden_size), dtype=np.float32)
+            c_0 = params[C_0] if C_0 in params else np.zeros(
+                (batch_size, hidden_size), dtype=np.float32)
 
             self.X = params[X]
             self.W = params[W]
@@ -68,8 +74,8 @@ class LSTM_Helper():
         H_t = self.H_0
         C_t = self.C_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
-            gates = np.dot(x, np.transpose(self.W)) + np.dot(H_t, np.transpose(self.R)) + np.add(
-                *np.split(self.B, 2))
+            gates = np.dot(x, np.transpose(self.W)) + np.dot(
+                H_t, np.transpose(self.R)) + np.add(*np.split(self.B, 2))
             i, o, f, c = np.split(gates, 4, -1)
             i = self.f(i + p_i * C_t)
             f = self.f(f + p_f * C_t)
@@ -85,88 +91,108 @@ class LSTM_Helper():
             output = np.expand_dims(concatenated, 1)
         return output, h_list[-1]
 
+    @staticmethod
+    def get_random(shape, scale=1.0):  # type: ignore
+        """
+        return float 32 array with values uniformly sampled from [-scale, scale)
+        """
+        return (scale * (2. * np.random.random_sample(shape) - 1.)).astype(np.float32)
+
 
 class LSTM(Base):
-
     @staticmethod
     def export_defaults():  # type: () -> None
-        input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
-
         input_size = 2
+        batch_size = 4
         hidden_size = 3
-        weight_scale = 0.1
-        number_of_gates = 4
+        input = LSTM_Helper.get_random([1, batch_size, input_size])
 
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R'],
             outputs=['', 'Y'],
-            hidden_size=hidden_size
-        )
+            hidden_size=hidden_size)
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+        R = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
 
         lstm = LSTM_Helper(X=input, W=W, R=R)
         _, Y_h = lstm.step()
-        expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_lstm_defaults')
+        expect(
+            node,
+            inputs=[input, W, R],
+            outputs=[Y_h.astype(np.float32)],
+            name='test_lstm_defaults')
 
     @staticmethod
     def export_initial_bias():  # type: () -> None
-        input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
-
         input_size = 3
+        batch_size = 3
         hidden_size = 4
-        weight_scale = 0.1
-        custom_bias = 0.1
-        number_of_gates = 4
+        input = LSTM_Helper.get_random([1, batch_size, input_size])
 
         node = onnx.helper.make_node(
             'LSTM',
             inputs=['X', 'W', 'R', 'B'],
             outputs=['', 'Y'],
-            hidden_size=hidden_size
-        )
+            hidden_size=hidden_size)
 
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+        W = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+        R = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
 
         # Adding custom bias
-        W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
-        R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+        W_B = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_gates * hidden_size])
+        R_B = np.zeros(
+            (1, LSTM_Helper.number_of_gates * hidden_size)).astype(np.float32)
         B = np.concatenate((W_B, R_B), 1)
 
         lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
         _, Y_h = lstm.step()
-        expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='test_lstm_with_initial_bias')
+        expect(
+            node,
+            inputs=[input, W, R, B],
+            outputs=[Y_h.astype(np.float32)],
+            name='test_lstm_with_initial_bias')
 
     @staticmethod
     def export_peepholes():  # type: () -> None
-        input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
-
         input_size = 4
+        batch_size = 2
         hidden_size = 3
-        weight_scale = 0.1
-        number_of_gates = 4
-        number_of_peepholes = 3
+        input = np.random.rand(1, batch_size, input_size).astype(np.float32)
 
         node = onnx.helper.make_node(
             'LSTM',
-            inputs=['X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c', 'P'],
+            inputs=[
+                'X', 'W', 'R', 'B', 'sequence_lens', 'initial_h', 'initial_c',
+                'P'
+            ],
             outputs=['', 'Y'],
-            hidden_size=hidden_size
-        )
+            hidden_size=hidden_size)
 
         # Initializing Inputs
-        W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-        R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
-        B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
+        W = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+        R = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
+        B = np.zeros(
+            (1,
+             2 * LSTM_Helper.number_of_gates * hidden_size)).astype(np.float32)
         seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
         init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
         init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-        P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
-
-        lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
+        P = LSTM_Helper.get_random(
+            [1, LSTM_Helper.number_of_peepholes * hidden_size])
+        lstm = LSTM_Helper(
+            X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
         _, Y_h = lstm.step()
-        expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.astype(np.float32)],
-               name='test_lstm_with_peepholes')
+        expect(
+            node,
+            inputs=[input, W, R, B, seq_lens, init_h, init_c, P],
+            outputs=[Y_h.astype(np.float32)],
+            name='test_lstm_with_peepholes')
