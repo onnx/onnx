@@ -4160,8 +4160,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ScaledTanh-1"></a>**ScaledTanh-1**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
+  alpha * tanh(beta * x).
       
 
 #### Version
@@ -8022,5 +8021,45 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrains input to boolean tensor.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+## Version 8 of the default ONNX operator set
+### <a name="Hardtanh-8"></a>**Hardtanh-8**</a>
+
+  Calculates the hard hyperbolic tangent of the given input tensor element-wise:
+  1 if x > 1, -1 if x < -1, x otherwise.
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>max_val</tt> : float</dt>
+<dd>Maximum value of the linear region range</dd>
+<dt><tt>min_val</tt> : float</dt>
+<dd>Minimum value of the linear region range</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hard hyperbolic tangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 

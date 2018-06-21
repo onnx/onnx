@@ -448,6 +448,18 @@ class OpSet_Onnx_ver7 {
   }
 };
 
+
+// Forward declarations for ai.onnx version 8
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Hardtanh);
+
+// Iterate over schema from ai.onnx version 8
+class OpSet_Onnx_ver8 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Hardtanh)>());
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -456,6 +468,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver5>();
   RegisterOpSetSchema<OpSet_Onnx_ver6>();
   RegisterOpSetSchema<OpSet_Onnx_ver7>();
+  RegisterOpSetSchema<OpSet_Onnx_ver8>();
 }
 
 } // namespace ONNX_NAMESPACE
