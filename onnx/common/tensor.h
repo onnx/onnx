@@ -4,7 +4,7 @@
 #pragma once
 
 #include "onnx/onnx_pb.h"
-#include <math.h>
+#include <cmath>
 #include <numeric>
 #include <functional>
 #include <stdexcept>
