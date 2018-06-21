@@ -2112,12 +2112,10 @@ There are 3 test cases, listed as following:
 <summary>defaults</summary>
 
 ```python
-input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
-
 input_size = 2
+batch_size = 4
 hidden_size = 3
-weight_scale = 0.1
-number_of_gates = 4
+input  = LSTM_Helper.get_random([1, batch_size, input_size])
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -2126,8 +2124,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+R = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
 
 lstm = LSTM_Helper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
@@ -2139,13 +2137,11 @@ expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_
 <summary>initial_bias</summary>
 
 ```python
-input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
-
 input_size = 3
+batch_size = 3
 hidden_size = 4
-weight_scale = 0.1
 custom_bias = 0.1
-number_of_gates = 4
+input  = LSTM_Helper.get_random([1, batch_size, input_size])
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -2154,12 +2150,12 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+R = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
 
 # Adding custom bias
-W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
-R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+W_B = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates*hidden_size])
+R_B = np.zeros((1, LSTM_Helper.number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
@@ -2172,13 +2168,10 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 <summary>peepholes</summary>
 
 ```python
-input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
-
 input_size = 4
+batch_size = 2
 hidden_size = 3
-weight_scale = 0.1
-number_of_gates = 4
-number_of_peepholes = 3
+input  = np.random.rand(1, batch_size, input_size).astype(np.float32)
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -2188,14 +2181,13 @@ node = onnx.helper.make_node(
 )
 
 # Initializing Inputs
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
-B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
+W = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+R = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
+B = np.zeros((1, 2 * LSTM_Helper.number_of_gates * hidden_size)).astype(np.float32)
 seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
 init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
-
+P = LSTM_Helper.get_random([1, LSTM_Helper.number_of_peepholes*hidden_size]);
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
 _, Y_h = lstm.step()
 expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.astype(np.float32)],
