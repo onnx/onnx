@@ -514,7 +514,6 @@ All inputs and outputs must have the same data type.
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
-    schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);
       int num_inputs = static_cast<int>(ctx.getNumInputs());
