@@ -13,7 +13,7 @@ from . import expect
 class Hardtanh(Base):
 
     @staticmethod
-    def export_hardtanh():  # type: () -> None
+    def export_hardtanh_default():  # type: () -> None
         node = onnx.helper.make_node(
             'Hardtanh',
             inputs=['x'],
@@ -36,13 +36,13 @@ class Hardtanh(Base):
                name='test_hardtanh_default_splitbounds')
 
     @staticmethod
-    def export_hardtanh_default():  # type: () -> None
+    def export_hardtanh():  # type: () -> None
         node = onnx.helper.make_node(
             'Hardtanh',
             inputs=['x'],
             outputs=['y'],
-            min_val=-5,
-            max_val=5,
+            min_val=-5.0,
+            max_val=5.0,
         )
 
         x = np.array([-1, 0, 1]).astype(np.float32)
