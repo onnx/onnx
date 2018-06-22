@@ -86,7 +86,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node7 = func.add_node();
   node7->set_name("DIV_0");
   node7->set_domain("");
-  node7->set_doc_string("Caculating X-EX");
+  node7->set_doc_string("Caculating MVN-ed tensor for output");
   node7->set_op_type("Div");
   node7->add_input("X_VAR");
   node7->add_input("STD_VAR");

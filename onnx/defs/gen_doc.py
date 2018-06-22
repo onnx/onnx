@@ -202,7 +202,7 @@ def display_function(function, versions, domain=""):  # type: (FunctionProto, Li
 
         # attributes
     if function.attribute:
-        s += '\n#### Attribute:\n\n'
+        s += '\n#### Attributes\n\n'
         s += '<dl>\n'
         for attr in function.attribute:
             s += '<dt>{};<br/></dt>\n'.format(attr)
@@ -215,6 +215,8 @@ def display_function(function, versions, domain=""):  # type: (FunctionProto, Li
         s += '<dl>\n'
         for node in function.nodes:
             s += '<dd><b>{}: </b></dd><br/>'.format(node.name)
+            s += '<dd>{}</dd><br/>'.format(node.doc_string)
+            s += '<dd><b><i>Type: </i></b>{}</dd><br/>'.format(node.op_type)
             s += '<dd>Input(s):</dd>'
             for input in node.inputs:
                 s += '<dd> {};</dd>'.format(input)

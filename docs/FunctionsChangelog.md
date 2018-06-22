@@ -25,7 +25,7 @@ This version of the function has been available since version 8 of the default O
 <dt>X_MVN; </dt>
 <br/></dl>
 
-#### Attribute:
+#### Attributes
 
 <dl>
 <dt>axes;<br/></dt>
@@ -34,21 +34,21 @@ This version of the function has been available since version 8 of the default O
 #### Nodes
 
 <dl>
-<dd><b>Reduced_Mean_0: </b></dd><br/><dd>Input(s):</dd><dd> X;</dd><br/>
+<dd><b>Reduced_Mean_0: </b></dd><br/><dd>Caculating Reduced Mean on input tensor X</dd><br/><dd><b><i>Type: </i></b>ReduceMean</dd><br/><dd>Input(s):</dd><dd> X;</dd><br/>
 <dd>Output(s):</dd><dd> X_RM;</dd><br/>
-<dd><b>Pow_0: </b></dd><br/><dd>Input(s):</dd><dd> X_RM;</dd><dd> Pow_exponent;</dd><br/>
+<dd><b>Pow_0: </b></dd><br/><dd>Caculating (EX)^2</dd><br/><dd><b><i>Type: </i></b>Pow</dd><br/><dd>Input(s):</dd><dd> X_RM;</dd><dd> Pow_exponent;</dd><br/>
 <dd>Output(s):</dd><dd> EX_POW;</dd><br/>
-<dd><b>Pow_1: </b></dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> Pow_exponent;</dd><br/>
+<dd><b>Pow_1: </b></dd><br/><dd>Caculating X^2</dd><br/><dd><b><i>Type: </i></b>Pow</dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> Pow_exponent;</dd><br/>
 <dd>Output(s):</dd><dd> X_POW;</dd><br/>
-<dd><b>Reduced_Mean_1: </b></dd><br/><dd>Input(s):</dd><dd> X_POW;</dd><br/>
+<dd><b>Reduced_Mean_1: </b></dd><br/><dd>Caculating E(X^2)</dd><br/><dd><b><i>Type: </i></b>ReduceMean</dd><br/><dd>Input(s):</dd><dd> X_POW;</dd><br/>
 <dd>Output(s):</dd><dd> E_XPOW;</dd><br/>
-<dd><b>SUB_0: </b></dd><br/><dd>Input(s):</dd><dd> EX_POW;</dd><dd> E_XPOW;</dd><br/>
+<dd><b>SUB_0: </b></dd><br/><dd>Caculating variance (E(X^2)-(EX)^2)</dd><br/><dd><b><i>Type: </i></b>Sub</dd><br/><dd>Input(s):</dd><dd> EX_POW;</dd><dd> E_XPOW;</dd><br/>
 <dd>Output(s):</dd><dd> VAR;</dd><br/>
-<dd><b>SQRT_0: </b></dd><br/><dd>Input(s):</dd><dd> VAR;</dd><br/>
+<dd><b>SQRT_0: </b></dd><br/><dd>Caculating standard variance from variance</dd><br/><dd><b><i>Type: </i></b>Sqrt</dd><br/><dd>Input(s):</dd><dd> VAR;</dd><br/>
 <dd>Output(s):</dd><dd> STD_VAR;</dd><br/>
-<dd><b>SUB_1: </b></dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> X_RM;</dd><br/>
+<dd><b>SUB_1: </b></dd><br/><dd>Caculating X-EX</dd><br/><dd><b><i>Type: </i></b>Sub</dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> X_RM;</dd><br/>
 <dd>Output(s):</dd><dd> X_VAR;</dd><br/>
-<dd><b>DIV_0: </b></dd><br/><dd>Input(s):</dd><dd> X_VAR;</dd><dd> STD_VAR;</dd><br/>
+<dd><b>DIV_0: </b></dd><br/><dd>Caculating MVN-ed tensor for output</dd><br/><dd><b><i>Type: </i></b>Div</dd><br/><dd>Input(s):</dd><dd> X_VAR;</dd><dd> STD_VAR;</dd><br/>
 <dd>Output(s):</dd><dd> X_MVN;</dd><br/>
 </dl>
 
