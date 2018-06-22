@@ -3,7 +3,6 @@
 
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
-
 static const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -308,34 +307,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int32)", "tensor(int64)"},
             "Constrain output types to integral tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto output_type = ctx.getOutputType(0);
-          auto input_type = ctx.getInputType(0);
-          if (input_type == nullptr || output_type == nullptr ||
-              TypeProto::kTensorType != output_type->value_case() ||
-              TypeProto::kTensorType != input_type->value_case()) {
-            return;
-          }
-          auto sample_size = ctx.getAttribute("sample_size");
-          if (nullptr == sample_size ||
-              !sample_size->has_type() || // invalid attribute : has no type
-              sample_size->type() !=
-                  AttributeProto_AttributeType_INT) { // invalid attribute type
-            return;
-          }
           auto dtype = ctx.getAttribute("dtype");
           auto dataType = TensorProto_DataType::TensorProto_DataType_INT32;
           if (dtype != nullptr) {
             dataType = static_cast<TensorProto_DataType>(dtype->i());
+            if (dataType != TensorProto_DataType::TensorProto_DataType_INT32 &&
+                dataType != TensorProto_DataType::TensorProto_DataType_INT64)
+              fail_type_inference("Output type must be int32 or int64");
           }
-          if (dataType != TensorProto_DataType::TensorProto_DataType_INT32 &&
-              dataType != TensorProto_DataType::TensorProto_DataType_INT64) {
-            return;
-          }
-          output_type->mutable_tensor_type()->set_elem_type(dataType);
-          auto shape = output_type->mutable_tensor_type()->mutable_shape();
-          auto dim = shape->add_dim();
-          *dim = input_type->tensor_type().shape().dim(0);
-          shape->add_dim()->set_dim_value(sample_size->i());
+          updateOutputElemType(ctx, 0, dataType);
+
+          TensorShapeProto::Dimension batch_size, sample_size;
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() != 2)
+              fail_shape_inference("Input tensor must have rank 2");
+            batch_size = input_shape.dim(0);
+          } // else statically-unknown batch-size
+          sample_size.set_dim_value(getAttribute(ctx, "sample_size", 1));
+          updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
 
 } // namespace ONNX_NAMESPACE

@@ -12,7 +12,6 @@
 #include "onnx/shape_inference/implementation.h"
 
 namespace ONNX_NAMESPACE {
-
 namespace py = pybind11;
 using namespace pybind11::literals;
 

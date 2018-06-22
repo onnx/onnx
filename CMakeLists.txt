@@ -186,21 +186,34 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         if(NOT WIN32)
           # If onnx was packaged to pypi from Windows, protoc-gen-mypy.py is missing the +x flag. Add it.
           execute_process(COMMAND chmod +x ${ROOT_DIR}/tools/protoc-gen-mypy.py)
-          list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${ROOT_DIR}/tools/protoc-gen-mypy.py --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.py)
+        else(NOT WIN32)
+          set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
+        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE} --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
       endif()
     endif()
     if (NOT ONNX_PROTOC_EXECUTABLE)
         message(FATAL_ERROR "Protobuf compiler not found")
     endif()
-    add_custom_command (
-      OUTPUT "${OUTPUT_PB_SRC}"
-             "${OUTPUT_PB_HEADER}"
-      COMMAND ${ONNX_PROTOC_EXECUTABLE}
-      ARGS ${PROTOC_ARGS}
-      DEPENDS ${GENERATED_PROTO} ${DEPEND}
-      COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
-      VERBATIM )
+    if(ONNX_PROTO_POST_BUILD_SCRIPT)
+      add_custom_command (
+        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
+        COMMAND ${ONNX_PROTOC_EXECUTABLE}
+        ARGS ${PROTOC_ARGS}
+        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER} -DNAMESPACES=${ONNX_NAMESPACE} -P ${ONNX_PROTO_POST_BUILD_SCRIPT}
+        DEPENDS ${GENERATED_PROTO} ${DEPEND}
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        VERBATIM )
+    else()
+      add_custom_command (
+        OUTPUT "${OUTPUT_PB_SRC}" "${OUTPUT_PB_HEADER}"
+        COMMAND ${ONNX_PROTOC_EXECUTABLE}
+        ARGS ${PROTOC_ARGS}
+        DEPENDS ${GENERATED_PROTO} ${DEPEND}
+        COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
+        VERBATIM )
+    endif()
   add_custom_target(${NAME}
       DEPENDS ${OUTPUT_PB_SRC} ${OUTPUT_PB_HEADER})
   endforeach()
@@ -237,10 +250,6 @@ if(TARGET protobuf::libprotobuf)
   target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
 else()
   target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
-endif()
-
-if(MSVC)
-  target_compile_options(onnx_proto PRIVATE /WX-)
 endif()
 
 add_library(onnx ${onnx_src})
@@ -289,9 +298,10 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
       /MP
-      /MX
+      /WX
       /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
       /wd4503 # identifier' : decorated name length exceeded, name was truncated
+      /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
       )
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
@@ -307,6 +317,7 @@ if(ONNX_BUILD_BENCHMARKS)
   endif()
 
   add_executable(protobuf-bench tools/protobuf-bench.cc)
+  target_include_directories(protobuf-bench PUBLIC "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
@@ -320,11 +331,13 @@ endif()
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
         /MP
-        /MX
+        /WX
+        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+        /wd4503 # identifier' : decorated name length exceeded, name was truncated
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
     )
     target_compile_options(onnx PRIVATE
         /MP
-        /MX
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
@@ -368,6 +381,15 @@ endif()
 add_library(onnxifi INTERFACE)
 target_include_directories(onnxifi INTERFACE onnx)
 
+# ---[ ONNXIFI loader
+add_library(onnxifi_loader STATIC onnx/onnxifi_loader.c)
+# Users of ONNX backend API would compile it with their toolchain,
+# so it is implemented in standard C89 for maximum compatibility
+set_target_properties(onnxifi_loader PROPERTIES
+  C_STANDARD 90
+  C_EXTENSIONS NO)
+target_link_libraries(onnxifi_loader PUBLIC onnxifi)
+target_include_directories(onnxifi_loader PUBLIC onnx)
 
 install(TARGETS onnx onnx_proto
     DESTINATION lib)

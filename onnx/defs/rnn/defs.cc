@@ -4,7 +4,6 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-
 void RNNShapeInference(InferenceContext& ctx) {
   TensorShapeProto::Dimension num_directions, seq_length, batch_size,
       hidden_size;
@@ -22,6 +21,9 @@ void RNNShapeInference(InferenceContext& ctx) {
 
   if (hasInputShape(ctx, 0)) {
     auto& first_input_shape = getInputShape(ctx, 0);
+    if (first_input_shape.dim_size() != 3) {
+      fail_shape_inference("First input tensor must have rank 3");
+    }
     seq_length = first_input_shape.dim(0);
     batch_size = first_input_shape.dim(1);
   }
@@ -49,52 +51,83 @@ void RNNShapeInference(InferenceContext& ctx) {
 }
 
 std::function<void(OpSchema&)> RNNDocGenerator(const char* /*name*/) {
-    return [=](OpSchema& schema) {
-        schema.Attr("direction", "Specify if the RNN is forward, reverse, or bidirectional. "
-                    "Must be one of forward (default), reverse, or bidirectional.",
-                    AttributeProto::STRING,
-                    std::string("forward"));
-        schema.Attr("hidden_size", "Number of neurons in the hidden layer", AttributeProto::INT, OPTIONAL);
-        schema.Attr("activation_alpha",
-                    "Optional scaling values used by some activation functions. The values "
-                    "are consumed in the order of activation functions, for example (f, g, h) "
-                    "in LSTM. Default values are the same as of corresponding ONNX operators."
-                    "For example with LeakyRelu, the default alpha is 0.01.",
-                    AttributeProto::FLOATS,
-                    OPTIONAL);
-        schema.Attr("activation_beta",
-                    "Optional scaling values used by some activation functions. The values "
-                    "are consumed in the order of activation functions, for example (f, g, h) "
-                    "in LSTM. Default values are the same as of corresponding ONNX operators.",
-                    AttributeProto::FLOATS,
-                    OPTIONAL);
-        schema.Attr("clip", "Cell clip threshold. Clipping bounds the elements of a tensor "
-                    "in the range of [-threshold, +threshold] and is applied to the input "
-                    "of activations. No clip if not specified.", AttributeProto::FLOAT, OPTIONAL);
-        schema.Input(0, "X",
-                     "The input sequences packed (and potentially padded) into one 3-D "
-                     "tensor with the shape of `[seq_length, batch_size, input_size]`.", "T");
-        schema.Input(4, "sequence_lens",
-                     "Optional tensor specifying lengths of the sequences in a batch. "
-                     "If not specified - assumed all sequences in the batch to have "
-                     "length `seq_length`. It has shape `[batch_size]`.", "T1",
-                     OpSchema::Optional);
-        schema.Input(5, "initial_h",
-                     "Optional initial value of the hidden. If not specified - assumed "
-                     "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
-                     "T", OpSchema::Optional);
-        schema.Output(0, "Y",
-                      "A tensor that concats all the intermediate output values of the hidden. "
-                      "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
-                      "T", OpSchema::Optional);
-        schema.Output(1, "Y_h",
-                      "The last output value of the hidden. It has shape "
-                      "`[num_directions, batch_size, hidden_size]`.", "T", OpSchema::Optional);
-        schema.TypeConstraint("T", { "tensor(float16)", "tensor(float)", "tensor(double)" },
-                              "Constrain input and output types to float tensors.");
-        schema.TypeConstraint("T1", { "tensor(int32)" }, "Constrain seq_lens to integer tensor.");
-        schema.TypeAndShapeInferenceFunction(RNNShapeInference);
-    };
+  return [=](OpSchema& schema) {
+    schema.Attr(
+        "direction",
+        "Specify if the RNN is forward, reverse, or bidirectional. "
+        "Must be one of forward (default), reverse, or bidirectional.",
+        AttributeProto::STRING,
+        std::string("forward"));
+    schema.Attr(
+        "hidden_size",
+        "Number of neurons in the hidden layer",
+        AttributeProto::INT,
+        OPTIONAL);
+    schema.Attr(
+        "activation_alpha",
+        "Optional scaling values used by some activation functions. The values "
+        "are consumed in the order of activation functions, for example (f, g, h) "
+        "in LSTM. Default values are the same as of corresponding ONNX operators."
+        "For example with LeakyRelu, the default alpha is 0.01.",
+        AttributeProto::FLOATS,
+        OPTIONAL);
+    schema.Attr(
+        "activation_beta",
+        "Optional scaling values used by some activation functions. The values "
+        "are consumed in the order of activation functions, for example (f, g, h) "
+        "in LSTM. Default values are the same as of corresponding ONNX operators.",
+        AttributeProto::FLOATS,
+        OPTIONAL);
+    schema.Attr(
+        "clip",
+        "Cell clip threshold. Clipping bounds the elements of a tensor "
+        "in the range of [-threshold, +threshold] and is applied to the input "
+        "of activations. No clip if not specified.",
+        AttributeProto::FLOAT,
+        OPTIONAL);
+    schema.Input(
+        0,
+        "X",
+        "The input sequences packed (and potentially padded) into one 3-D "
+        "tensor with the shape of `[seq_length, batch_size, input_size]`.",
+        "T");
+    schema.Input(
+        4,
+        "sequence_lens",
+        "Optional tensor specifying lengths of the sequences in a batch. "
+        "If not specified - assumed all sequences in the batch to have "
+        "length `seq_length`. It has shape `[batch_size]`.",
+        "T1",
+        OpSchema::Optional);
+    schema.Input(
+        5,
+        "initial_h",
+        "Optional initial value of the hidden. If not specified - assumed "
+        "to be 0. It has shape `[num_directions, batch_size, hidden_size]`.",
+        "T",
+        OpSchema::Optional);
+    schema.Output(
+        0,
+        "Y",
+        "A tensor that concats all the intermediate output values of the hidden. "
+        "It has shape `[seq_length, num_directions, batch_size, hidden_size]`. ",
+        "T",
+        OpSchema::Optional);
+    schema.Output(
+        1,
+        "Y_h",
+        "The last output value of the hidden. It has shape "
+        "`[num_directions, batch_size, hidden_size]`.",
+        "T",
+        OpSchema::Optional);
+    schema.TypeConstraint(
+        "T",
+        {"tensor(float16)", "tensor(float)", "tensor(double)"},
+        "Constrain input and output types to float tensors.");
+    schema.TypeConstraint(
+        "T1", {"tensor(int32)"}, "Constrain seq_lens to integer tensor.");
+    schema.TypeAndShapeInferenceFunction(RNNShapeInference);
+  };
 }
 
 static const char* RNN_ver7_doc = R"DOC(
@@ -157,7 +190,7 @@ Activation functions:
 
 Equations (Default: f=Tanh):
 
-  - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+  - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -261,13 +294,13 @@ Activation functions:
 
 Equations (Default: f=Sigmoid, g=Tanh):
 
-  - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
+  - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
 
-  - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
+  - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
 
-  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+  - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
 
-  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
+  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";
@@ -387,15 +420,15 @@ Activation functions:
 
 Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
 
-  - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+  - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
 
-  - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+  - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
 
-  - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
+  - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
 
   - Ct = ft (.) Ct-1 + it (.) ct
 
-  - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
+  - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
 
   - Ht = ot (.) h(Ct)
 )DOC";
@@ -465,4 +498,4 @@ ONNX_OPERATOR_SET_SCHEMA(
             "`[num_directions, batch_size, hidden_size]`.",
             "T",
             OpSchema::Optional));
-}  // namespace ONNX_NAMESPACE
+} // namespace ONNX_NAMESPACE

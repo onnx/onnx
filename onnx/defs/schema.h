@@ -18,8 +18,8 @@
 #include <vector>
 
 #include "data_type_utils.h"
+#include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
-
 namespace ONNX_NAMESPACE {
 
 class SchemaError final : public std::runtime_error {
@@ -48,10 +48,6 @@ class SchemaError final : public std::runtime_error {
   throw ONNX_NAMESPACE::SchemaError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
 using OperatorSetVersion = int;
-
-constexpr const char* AI_ONNX_ML_DOMAIN = "ai.onnx.ml";
-constexpr const char* ONNX_DOMAIN = "";
-constexpr bool OPTIONAL = false;
 
 using DataTypeSet = std::unordered_set<DataType>;
 
@@ -234,7 +230,8 @@ class OpSchema final {
   // any structs used from ir.h
   OpSchema& TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction);
   InferenceFunction GetTypeAndShapeInferenceFunction() const {
-    return tensor_inference_function_ ? tensor_inference_function_ : dummyInferenceFunction;
+    return tensor_inference_function_ ? tensor_inference_function_
+                                      : dummyInferenceFunction;
   }
 
   // Set the support level for the op schema.
@@ -426,31 +423,32 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& high_precision_numeric_types() {
-    static const std::vector<std::string> high_precision_numeric_types = {
+  static const std::vector<std::string>& numeric_types_for_math_reduction() {
+    static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
         "tensor(uint64)",
         "tensor(int32)",
         "tensor(int64)",
+        "tensor(float16)",
         "tensor(float)",
         "tensor(double)"};
-    return high_precision_numeric_types;
+    return numeric_types_for_math_reduction;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
-      static const std::vector<std::string> all_numeric_types = {
-          +"tensor(uint8)",
-          +"tensor(uint16)",
-          +"tensor(uint32)",
-          +"tensor(uint64)",
-          +"tensor(int8)",
-          +"tensor(int16)",
-          +"tensor(int32)",
-          +"tensor(int64)",
-          +"tensor(float16)",
-          +"tensor(float)",
-          +"tensor(double)" };
-      return all_numeric_types;
+    static const std::vector<std::string> all_numeric_types = {
+        +"tensor(uint8)",
+        +"tensor(uint16)",
+        +"tensor(uint32)",
+        +"tensor(uint64)",
+        +"tensor(int8)",
+        +"tensor(int16)",
+        +"tensor(int32)",
+        +"tensor(int64)",
+        +"tensor(float16)",
+        +"tensor(float)",
+        +"tensor(double)"};
+    return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
@@ -505,7 +503,7 @@ class OpSchema final {
     return name_;
   }
 
-  const OperatorSetVersion SinceVersion() const {
+  OperatorSetVersion SinceVersion() const {
     return since_version_;
   }
 
@@ -589,7 +587,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
       map_[ONNX_DOMAIN] = std::make_pair(1, 7);
-      map_["ai.onnx.ml"] = std::make_pair(1, 1);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
@@ -843,6 +841,12 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
+#ifdef __GNUC__
+#define ONNX_UNUSED __attribute__((__unused__))
+#else
+#define ONNX_UNUSED
+#endif
+
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) \
   ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
@@ -850,19 +854,19 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
   ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                 \
   static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
-      op_schema_register_once##name##Counter) =                  \
+      op_schema_register_once##name##Counter) ONNX_UNUSED =      \
       OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
 inline std::string GenerateOptionalArgumentsDoc() {
-	return "This operator has **optional** inputs/outputs. "
-		"See [the doc](IR.md) for more details about the representation of "
-		"optional arguments. An empty string may be used in the place of "
-		"an actual argument's name to indicate a missing argument. "
-		"Trailing optional arguments (those not followed by an argument "
-		"that is present) may also be simply omitted.\n";
+  return "This operator has **optional** inputs/outputs. "
+         "See [the doc](IR.md) for more details about the representation of "
+         "optional arguments. An empty string may be used in the place of "
+         "an actual argument's name to indicate a missing argument. "
+         "Trailing optional arguments (those not followed by an argument "
+         "that is present) may also be simply omitted.\n";
 }
 
 inline std::string GenerateBroadcastingDocMul() {
@@ -870,10 +874,13 @@ inline std::string GenerateBroadcastingDocMul() {
          " for more details please check [the doc](Broadcasting.md).";
 }
 
-inline std::string GenerateBroadcastingDocUni(const char* from, const char* to) {
+inline std::string GenerateBroadcastingDocUni(
+    const char* from,
+    const char* to) {
   std::string ret = "This operator supports **unidirectional broadcasting** (";
-  ret = ret + from + " should be unidirectional broadcastable to " + to + ");"
-        " for more details please check [the doc](Broadcasting.md).";
+  ret = ret + from + " should be unidirectional broadcastable to " + to +
+      ");"
+      " for more details please check [the doc](Broadcasting.md).";
   return ret;
 }
 

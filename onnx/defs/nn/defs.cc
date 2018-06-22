@@ -30,12 +30,13 @@ void convPoolTypeAndShapeInference(
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
 
-  // we need at least one input to have a shape for this inference.
+  // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
 
-  // if no kernel shape is required, then we need two inputs.
+  // if kernel shape is an input (and not attribute)
+  // we need the shape of the second input.
   if (!require_kernel_shape && !hasNInputShapes(ctx, 2)) {
     return;
   }
@@ -73,7 +74,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");;
+      fail_shape_inference("Attribute pads has incorrect size");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -82,7 +83,7 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");;
+      fail_shape_inference("Attribute strides has incorrect size");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -91,10 +92,10 @@ void convPoolTypeAndShapeInference(
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size");;
+      fail_shape_inference("Attribute kernel_shape has incorrect size");
     }
   } else if (require_kernel_shape) {
-    fail_shape_inference("Attribute kernel_shape must be specified");;
+    fail_shape_inference("Attribute kernel_shape must be specified");
   } else {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
@@ -114,8 +115,11 @@ void convPoolTypeAndShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-    *output_shape->add_dim() =
-        ctx.getInputType(1)->tensor_type().shape().dim(0);
+    auto& second_input_shape = getInputShape(ctx, 1);
+    if (second_input_shape.dim_size() < 1) {
+      fail_shape_inference("Second input tensor has wrong dimension");
+    }
+    *output_shape->add_dim() = second_input_shape.dim(0);
   }
 
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
@@ -333,6 +337,13 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
+
+  if (input_shape.dim_size() < 2) {
+    fail_shape_inference("Input tensor must have at least 2 dimensions");
+  }
+  if (rios_shape.dim_size() != 2) {
+    fail_shape_inference("RoIs tensor must have 2 dimensions");
+  }
 
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
@@ -1100,19 +1111,21 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasInputShape(ctx, 0)) {
-            auto& input_shape = getInputShape(ctx, 0);
-            int rank = static_cast<int>(input_shape.dim_size());
-            int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
-            if (axis > rank)
-              axis = rank;
-            // TODO: is the operation defined for input-rank < 2?
-            updateOutputShape(
-                ctx,
-                0,
-                {multiplyDims(input_shape, 0, axis),
-                 multiplyDims(input_shape, axis, rank)});
+          if (!hasInputShape(ctx, 0))
+            return;
+          auto& input_shape = getInputShape(ctx, 0);
+          int rank = static_cast<int>(input_shape.dim_size());
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+          if (axis > rank || axis < 0) {
+            fail_shape_inference(
+                "Invalid value(", axis, ") for attribute 'axis'");
           }
+          // TODO: is the operation defined for input-rank < 2?
+          updateOutputShape(
+              ctx,
+              0,
+              {multiplyDims(input_shape, 0, axis),
+               multiplyDims(input_shape, axis, rank)});
         }));
 
 static const char* LRN_ver1_doc = R"DOC(
@@ -1120,10 +1133,10 @@ Local Response Normalization proposed in the [AlexNet paper](https://papers.nips
 It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
 of shape (N x C x D1 x D2, ..., Dk), its region is
-{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
 
 square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
 
 Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 )DOC";

@@ -67,12 +67,10 @@ public:
 
 
 struct Dimension final {
-  Dimension(int dim)
-    : is_int(true), dim(dim) {
-  }
   Dimension(std::string param)
     : is_int(false), dim(-1), param(std::move(param)) {
   }
+  Dimension(int64_t dim) : is_int(true), dim(dim) {}
 
   bool is_int;
   int64_t dim;
@@ -672,21 +670,7 @@ public:
   }
 
   // Check whether this node is before node n in the graph.
-  bool isBefore(Node* n) {
-    if (n == nullptr || this == n) {
-      // Bail out early.
-      return false;
-    }
-    ONNX_ASSERT(n->inGraphList());
-    Node* p = next();
-    while (p != nullptr) {
-      if (p == n) {
-        return true;
-      }
-      p = next();
-    }
-    return false;
-  }
+  bool isBefore(Node* n);
 
   // iterators of the node list starting at this node
   // useful for resuming a search starting at this node
@@ -833,6 +817,7 @@ public:
     has_doc_string_ = true;
     doc_string_ = std::move(doc_string);
   }
+
   void addInitializer(Tensor initializer, std::string name) {
     initializers_.push_back(std::move(initializer));
     initializer_names_.push_back(std::move(name));
@@ -862,6 +847,14 @@ public:
   }
   const std::vector<std::string>& initializer_names() {
     return initializer_names_;
+  }
+  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) {
+    for (auto it = initializers_.cbegin(); it != initializers_.cend(); ++it) {
+      if (name == it->name()) {
+        return it;
+      }
+    }
+    return initializers_.end();
   }
   ArrayRef<Value*> inputs() {
     return input_->outputs();
@@ -969,6 +962,33 @@ public:
     return n;
   }
 
+  //Adds to graph initializer list, initializer names list, and as a graph input
+  //Also syncs the initializer name, tensor name, and value name
+  Value* addInitializerAndInput(const Tensor& initializer, std::string name) {
+    Tensor initializerCopy = initializer;
+    std::vector<Dimension> dim_sizes{initializerCopy.sizes().cbegin(),
+                                     initializerCopy.sizes().cend()};
+    Value* new_init = addInput();
+    initializerCopy.setName(name);
+    new_init->setUniqueName(name);
+    new_init->setSizes(dim_sizes);
+    new_init->setElemType(initializerCopy.elem_type());
+    addInitializer(std::move(initializerCopy), name);
+    return new_init;
+  }
+
+  Value* addInitializerAndInput(const Tensor &initializer) {
+    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(next_unique_++));
+  }
+
+
+  //Erases from graph initializer list, initializer names list, and as a graph input
+  //Must have no uses
+  void eraseInitializerAndInput(Value* v) {
+    eraseInitializer(v->uniqueName());
+    eraseInput(v->offset());
+  }
+
   ~Graph() {
     for (const Node * n : all_nodes)
       delete n;
@@ -1065,6 +1085,28 @@ inline void Node::eraseOutput(size_t i) {
   for(size_t j = i; j < outputs_.size(); j++) {
     outputs_[j]->offset_--;
   }
+}
+
+inline bool Node::isBefore(Node* n) {
+  if (n == nullptr || this == n) {
+    // Bail out early.
+    return false;
+  }
+  // return true if node is Param (in initializers)
+  if (kind_ == kParam) {
+    return true;
+  }
+  // return false if target node is Param (in initializers)
+  if (n->kind() == kParam) {
+    return false;
+  }
+  ONNX_ASSERT(n->inGraphList());
+  for (Node* p = next(); p != *graph_->end(); p = p->next()) {
+    if (p == n) {
+      return true;
+    }
+  }
+  return false;
 }
 
 inline void Node::destroy() {

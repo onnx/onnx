@@ -187,7 +187,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
       continue;
     } else {
-      fail_check("Unrecognized attribute: ", name);
+      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
     if (attr_proto.has_ref_attr_name()) {
@@ -531,7 +531,10 @@ OpSchema& OpSchema::TypeConstraint(
     std::string type_str,
     std::vector<std::string> constraints,
     std::string description) {
-  assert(type_constraints_.end() == type_constraints_.find(type_str));
+  if (type_constraints_.end() != type_constraints_.find(type_str)) {
+    fail_schema("Duplicate type constraint name");
+  }
+
   DataTypeSet d;
   for (const auto& t : constraints) {
     d.insert(Utils::DataTypeUtils::ToType(t));

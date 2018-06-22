@@ -35,6 +35,7 @@ git diff --exit-code
 # check auto-gen files up-to-date
 python onnx/defs/gen_doc.py
 python onnx/gen_proto.py
+python onnx/backend/test/stat_coverage.py
 backend-test-tools generate-data
 git status
 git diff --exit-code
