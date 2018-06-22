@@ -66,6 +66,7 @@ Status FunctionBuilderRegistry::GetFunctions(
                        ? function_proto->since_version()
                        : version_range.second});
     ctx.set_opset_imports(op_set);
+    ctx.set_is_main_graph(false);
     LexicalScopeContext lex_ctx;
     try {
       check_function(*function_proto, ctx, lex_ctx);

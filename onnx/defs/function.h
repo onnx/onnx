@@ -57,4 +57,27 @@ class FunctionBuilderRegistry {
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
+// Example to register a function.
+// Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
+//  if (nullptr == func_proto) {
+//    return Status(
+//        Common::CHECKER,
+//        Common::INVALID_ARGUMENT,
+//        "func_proto should not be nullptr.");
+//  }
+//
+//  func_proto->reset(new FunctionProto);
+//  auto& func = **func_proto;
+//  func.set_name("FC");
+//   set function inputs.
+//   set function outputs.
+//   set function attributes.
+//   set function description.
+//   set function body (nodes).
+//
+//  return Status::OK();
+//}
+//
+// ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
+
 } // namespace ONNX_NAMESPACE

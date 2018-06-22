@@ -3,13 +3,13 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit function definitions.*
 ## ai.onnx (default)
-  * <sub>experimental</sub><a href="#FC">FC</a>
+  * <sub>experimental</sub><a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
 
 
 
-### <sub>experimental</sub> <a name="FC"></a><a name="fc">**FC**</a>
+### <sub>experimental</sub> <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
 
-  this is a full connection function.
+  A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X
 
 #### Version
 
@@ -18,24 +18,41 @@ This version of the function has been available since version 8 of the default O
 #### Inputs
 
 <dl>
-<dt>w; </dt>
-<dt>x; </dt>
-<dt>b; </dt>
+<dt>X; </dt>
+<dt>Pow_exponent; </dt>
 <br/></dl>
 
 #### Outputs
 
 <dl>
-<dt>y; </dt>
+<dt>X_MVN; </dt>
 <br/></dl>
+
+#### Attribute:
+
+<dl>
+<dt>axes;<br/></dt>
+</dl>
 
 #### Nodes
 
 <dl>
-<dd><b>node0: </b></dd><br/><dd>Input(s):</dd><dd> w;</dd><dd> x;</dd><br/>
-<dd>Output(s):</dd><dd> y_1;</dd><br/>
-<dd><b>node1: </b></dd><br/><dd>Input(s):</dd><dd> y_1;</dd><dd> b;</dd><br/>
-<dd>Output(s):</dd><dd> y;</dd><br/>
+<dd><b>Reduced_Mean_0: </b></dd><br/><dd>Input(s):</dd><dd> X;</dd><br/>
+<dd>Output(s):</dd><dd> X_RM;</dd><br/>
+<dd><b>Pow_0: </b></dd><br/><dd>Input(s):</dd><dd> X_RM;</dd><dd> Pow_exponent;</dd><br/>
+<dd>Output(s):</dd><dd> EX_POW;</dd><br/>
+<dd><b>Pow_1: </b></dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> Pow_exponent;</dd><br/>
+<dd>Output(s):</dd><dd> X_POW;</dd><br/>
+<dd><b>Reduced_Mean_1: </b></dd><br/><dd>Input(s):</dd><dd> X_POW;</dd><br/>
+<dd>Output(s):</dd><dd> E_XPOW;</dd><br/>
+<dd><b>SUB_0: </b></dd><br/><dd>Input(s):</dd><dd> EX_POW;</dd><dd> E_XPOW;</dd><br/>
+<dd>Output(s):</dd><dd> VAR;</dd><br/>
+<dd><b>SQRT_0: </b></dd><br/><dd>Input(s):</dd><dd> VAR;</dd><br/>
+<dd>Output(s):</dd><dd> STD_VAR;</dd><br/>
+<dd><b>SUB_1: </b></dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> X_RM;</dd><br/>
+<dd>Output(s):</dd><dd> X_VAR;</dd><br/>
+<dd><b>DIV_0: </b></dd><br/><dd>Input(s):</dd><dd> X_VAR;</dd><dd> STD_VAR;</dd><br/>
+<dd>Output(s):</dd><dd> X_MVN;</dd><br/>
 </dl>
 
 
