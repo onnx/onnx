@@ -3892,15 +3892,15 @@ This version of the operator has been available since version 8 of the default O
 #### Examples
 
 <details>
-<summary>hardtanh_default</summary>
+<summary>hardtanh</summary>
 
 ```python
 node = onnx.helper.make_node(
     'Hardtanh',
     inputs=['x'],
     outputs=['y'],
-    min_val=-5,
-    max_val=5,
+    min_val=-5.0,
+    max_val=5.0,
 )
 
 x = np.array([-1, 0, 1]).astype(np.float32)
@@ -3917,6 +3917,35 @@ x = np.array([-1, 0, 6]).astype(np.float32)
 y = np.array([-1, 0, 5]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_hardtanh_splitbounds')
+```
+
+</details>
+
+
+<details>
+<summary>hardtanh_default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Hardtanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardtanh_default_inbounds')
+
+x = np.array([-1.1, 0, 1.1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardtanh_default_outbounds')
+
+x = np.array([-1, 0, 1.1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_hardtanh_default_splitbounds')
 ```
 
 </details>
