@@ -13,7 +13,7 @@ from . import expect
 class Hardtanh(Base):
 
     @staticmethod
-    def export_hardtanh_default():  # type: () -> None
+    def export_hardtanh():  # type: () -> None
         node = onnx.helper.make_node(
             'Hardtanh',
             inputs=['x'],
