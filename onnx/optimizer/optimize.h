@@ -11,11 +11,13 @@
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
 #include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
+#include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
+#include "onnx/optimizer/passes/fuse_bn_into_conv.h"
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE { namespace optimization {
@@ -31,6 +33,7 @@ struct Optimizer {
     _registerOptimizer<EliminateNopTranspose>();
     _registerOptimizer<EliminateUnusedInitializer>();
     _registerOptimizer<ExtractConstantToInitializer>();
+    _registerOptimizer<FuseConsecutiveSqueezes>();
     _registerOptimizer<FuseConsecutiveTransposes>();
     _registerOptimizer<FuseTransposeIntoGemm>();
     _registerOptimizer<FuseAddBiasIntoConv>();
@@ -38,6 +41,7 @@ struct Optimizer {
     _registerOptimizer<SplitInit>();
     _registerOptimizer<SplitPredict>();
     _registerOptimizer<LiftLexicalReferences>();
+    _registerOptimizer<FuseBNIntoConv>();
   }
 
   virtual ~Optimizer() = default;

@@ -12,6 +12,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import time
 import unittest
 
 import numpy as np  # type: ignore
@@ -28,6 +29,24 @@ from typing import Optional, Pattern, Set, Dict, Text, Type, Sequence, Any, Call
 
 class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
     pass
+
+
+def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callable[..., Any]]
+    assert times >= 1
+
+    def wrapper(func):  # type: (Callable[..., Any]) -> Callable[..., Any]
+        @functools.wraps(func)
+        def wrapped(*args, **kwargs):  # type: (*Any, **Any) -> Any
+            for i in range(1, times + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception:
+                    print('{} times tried'.format(i))
+                    if i == times:
+                        raise
+                    time.sleep(5 * i)
+        return wrapped
+    return wrapper
 
 
 class Runner(object):
@@ -155,6 +174,27 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
+    @retry_excute(3)
+    def _download_model(self, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
+        # On Windows, NamedTemporaryFile can not be opened for a
+        # second time
+        download_file = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            download_file.close()
+            print('Start downloading model {} from {}'.format(
+                model_test.model_name,
+                model_test.url))
+            urlretrieve(model_test.url, download_file.name)
+            print('Done')
+            with tarfile.open(download_file.name) as t:
+                t.extractall(models_dir)
+        except Exception as e:
+            print('Failed to prepare data for model {}: {}'.format(
+                model_test.model_name, e))
+            raise
+        finally:
+            os.remove(download_file.name)
+
     def _prepare_model_data(self, model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
@@ -172,23 +212,7 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            # On Windows, NamedTemporaryFile can not be opened for a
-            # second time
-            download_file = tempfile.NamedTemporaryFile(delete=False)
-            try:
-                download_file.close()
-                print('Start downloading model {} from {}'.format(
-                    model_test.model_name, model_test.url))
-                urlretrieve(model_test.url, download_file.name)
-                print('Done')
-                with tarfile.open(download_file.name) as t:
-                    t.extractall(models_dir)
-            except Exception as e:
-                print('Failed to prepare data for model {}: {}'.format(
-                    model_test.model_name, e))
-                raise
-            finally:
-                os.remove(download_file.name)
+            self._download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
         return model_dir
 
     def _add_test(self,
@@ -242,6 +266,10 @@ class Runner(object):
             model_pb_path = os.path.join(model_dir, 'model.onnx')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
+            if hasattr(self.backend, 'is_compatible') \
+               and callable(self.backend.is_compatible) \
+               and not self.backend.is_compatible(model):
+                raise unittest.SkipTest('Not compatible with backend')
             prepared_model = self.backend.prepare(model, device)
             assert prepared_model is not None
 

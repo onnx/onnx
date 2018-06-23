@@ -71,9 +71,7 @@ void checkShapesAndTypes(
       existingType.elem_type() != inferredType.elem_type()) {
     std::stringstream ss;
     ss << "Inferred elem type differs from existing elem type: ("
-       << inferredType.elem_type()
-       << ") vs ("
-       << existingType.elem_type()
+       << inferredType.elem_type() << ") vs (" << existingType.elem_type()
        << ")";
     throw std::runtime_error(ss.str());
   }
@@ -85,27 +83,20 @@ void checkShapesAndTypes(
   if (inferredType.shape().dim_size() != existingType.shape().dim_size()) {
     std::stringstream ss;
     ss << "Inferred shape and existing shape differ in rank: ("
-       << inferredType.shape().dim_size()
-       << ") vs ("
-       << existingType.shape().dim_size()
-       << ")";
+       << inferredType.shape().dim_size() << ") vs ("
+       << existingType.shape().dim_size() << ")";
     throw std::runtime_error(ss.str());
   }
 
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
     const auto& existingDim = existingType.shape().dim(i);
-    if (inferredDim.has_dim_value() &&
-        existingDim.has_dim_value() &&
+    if (inferredDim.has_dim_value() && existingDim.has_dim_value() &&
         inferredDim.dim_value() != existingDim.dim_value()) {
       std::stringstream ss;
-      ss << "Inferred shape and existing shape differ in dimension "
-         << i
-         << ": ("
-         << inferredDim.dim_value()
-         << ") vs ("
-         << existingDim.dim_value()
-         << ")";
+      ss << "Inferred shape and existing shape differ in dimension " << i
+         << ": (" << inferredDim.dim_value() << ") vs ("
+         << existingDim.dim_value() << ")";
       throw std::runtime_error(ss.str());
     }
   }
@@ -182,12 +173,13 @@ void InferShapes(
     }
 
     InferenceContextImpl ctx(n, valueTypesByName);
-	try {
+    try {
       schema->GetTypeAndShapeInferenceFunction()(ctx);
-	} catch (ONNX_NAMESPACE::InferenceError& ex) {
-	  // Continue with inference for remaining nodes
-	  continue;
-	}
+    } catch (const ONNX_NAMESPACE::InferenceError& ex) {
+      (void)ex;
+      // Continue with inference for remaining nodes
+      continue;
+    }
 
     for (int i = 0; i < n.output_size(); ++i) {
       if (!ctx.getOutputType(i)->has_tensor_type()) {
@@ -196,7 +188,8 @@ void InferShapes(
       const auto& inferredType = ctx.getOutputType(i)->tensor_type();
 
       // Bail out early if shape inference does nothing useful.
-      if (inferredType.elem_type() == TensorProto::UNDEFINED && !inferredType.has_shape()) {
+      if (inferredType.elem_type() == TensorProto::UNDEFINED &&
+          !inferredType.has_shape()) {
         continue;
       }
 
