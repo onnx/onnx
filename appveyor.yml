@@ -47,24 +47,32 @@ environment:
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
+    CFLAGS: -m64
+    CXXFLAGS: -m64
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda36-x64
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
+    CFLAGS: -m64
+    CXXFLAGS: -m64
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda36
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
+    CFLAGS: -m32
+    CXXFLAGS: -m32
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda35
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
+    CFLAGS: -m32
+    CXXFLAGS: -m32
 
 install:
 - cmd: git submodule update --init --recursive
