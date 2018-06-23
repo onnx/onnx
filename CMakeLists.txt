@@ -291,15 +291,30 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
+    IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      SET(MP_FLAG "-Xclang -fopenmp")
+      SET(EXTRA_FLAGS  "-Wno-implicit-function-declaration
+                        -Wno-undefined-inline
+                        -Wno-incompatible-pointer-type
+                        -Wno-dllexport-explicit-instantiation-decl
+                        -Wno-microsoft-unqualified-friend
+                        -Wno-absolute-value
+                        -Wno-writable-strings
+                        -Qunused-arguments")
+    ELSE()
+      SET(MP_FLAG "/MP")
+      SET(EXTRA_FLAGS "")
+    ENDIF()
     find_package(PythonInterp ${PY_VERSION} REQUIRED)
     find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
-      /MP
+      ${MP_FLAG}
       /WX
       /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
       /wd4503 # identifier' : decorated name length exceeded, name was truncated
       /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
+      ${EXTRA_FLAGS}
       )
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
@@ -328,18 +343,20 @@ endif()
 
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
-        /MP
+        ${MP_FLAG}
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
+        ${EXTRA_FLAGS}
     )
     target_compile_options(onnx PRIVATE
-        /MP
+        ${MP_FLAG}
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned
+        ${EXTRA_FLAGS}
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
