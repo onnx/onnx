@@ -189,7 +189,7 @@ class cmake_build(setuptools.Command):
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, '--build', os.curdir]
-            if WINDOWS and '-GNinja' not in extra_cmake_args:
+            if WINDOWS and '-GNinja' not in cmake_args:
                 build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
             else:
                 build_args.extend(['--', '-j', str(self.jobs)])
