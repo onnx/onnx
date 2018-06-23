@@ -163,18 +163,6 @@ class cmake_build(setuptools.Command):
                 # in order to get accurate coverage information, the
                 # build needs to turn off optimizations
                 cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
-            if WINDOWS:
-                cmake_args.extend([
-                    # we need to link with libpython on windows, so
-                    # passing python version to window in order to
-                    # find python in cmake
-                    '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
-                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
-                ])
-                if 8 * struct.calcsize("P") == 64:
-                    # Temp fix for CI
-                    # TODO: need a better way to determine generator
-                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
             if ONNX_BUILD_TESTS:
@@ -185,6 +173,18 @@ class cmake_build(setuptools.Command):
                 del os.environ['CMAKE_ARGS']
                 log.info('Extra cmake args: {}'.format(extra_cmake_args))
                 cmake_args.extend(extra_cmake_args)
+            if WINDOWS:
+                cmake_args.extend([
+                    # we need to link with libpython on windows, so
+                    # passing python version to window in order to
+                    # find python in cmake
+                    '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
+                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
+                ])
+                if 8 * struct.calcsize("P") == 64 and '-GNinja' not in cmake_args:
+                    # Temp fix for CI
+                    # TODO: need a better way to determine generator
+                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             cmake_args.append(TOP_DIR)
             subprocess.check_call(cmake_args)
 
