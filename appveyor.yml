@@ -30,13 +30,37 @@ environment:
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda35
 
+  - ONNX_ML: 1
+    CONDA_PREFIX: C:\Miniconda35-x64
+    CMAKE_ARGS: -GNinja
+    CC: clang-cl.exe
+    CXX: clang-cl.exe
+
+  - ONNX_ML: 1
+    CONDA_PREFIX: C:\Miniconda36-x64
+    CMAKE_ARGS: -GNinja
+    CC: clang-cl.exe
+    CXX: clang-cl.exe
+
+  - ONNX_ML: 1
+    CONDA_PREFIX: C:\Miniconda36
+    CMAKE_ARGS: -GNinja
+    CC: clang-cl.exe
+    CXX: clang-cl.exe
+
+  - ONNX_ML: 1
+    CONDA_PREFIX: C:\Miniconda35
+    CMAKE_ARGS: -GNinja
+    CC: clang-cl.exe
+    CXX: clang-cl.exe
+
 install:
 - cmd: git submodule update --init --recursive
 
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
 - cmd: conda install -y -c conda-forge protobuf numpy
-- cmd: pip install pytest-cov nbval
+- cmd: pip install pytest-cov nbval ninja
 
 build_script:
 # Build and test onnx.
