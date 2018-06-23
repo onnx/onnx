@@ -76,7 +76,9 @@ before_build:
 
 build_script:
 # Build and test onnx.
-- cmd: call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat" x86_amd64
+- cmd: for /F "usebackq delims=" %%i in (`python -c "import struct;print( 8 * struct.calcsize('P'))"`) do set /a PYSIZE=%%i
+- cmd: if %PYSIZE% NEQ 64 (set VC_ARGS=x86) else (set VC_ARGS=x86_amd64)
+- cmd: call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat" %VC_ARGS%
 - cmd: cd c:\projects\onnx
 - cmd: set ONNX_BUILD_TESTS=1
 - cmd: python setup.py bdist_wheel --universal --dist-dir .
