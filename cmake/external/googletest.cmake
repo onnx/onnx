@@ -14,11 +14,22 @@ if(MSVC)
         set(googletest_STATIC_LIBRARIES
             ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/Release/gtest.lib)
     endif()
-    set(ADDITIONAL_FLAGS "/wd4996")
+    set(ADDITIONAL_C_FLAGS "/wd4996")
+    set(ADDITIONAL_CXX_FLAGS "/wd4996")
 else()
   set(googletest_STATIC_LIBRARIES
       ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtest.a)
-  set(ADDITIONAL_FLAGS "")
+  set(ADDITIONAL_C_FLAGS "")
+  set(ADDITIONAL_CXX_FLAGS "")
+endif()
+
+
+if($ENV{CFLAGS})
+    set(ADDITIONAL_C_FLAGS "${ADDITIONAL_C_FLAGS} $ENV{CFLAGS}")
+endif()
+
+if($ENV{CXXFLAGS})
+    set(ADDITIONAL_CXX_FLAGS "${ADDITIONAL_CXX_FLAGS} $ENV{CXXFLAGS}")
 endif()
 
 ExternalProject_Add(googletest
@@ -31,8 +42,8 @@ ExternalProject_Add(googletest
     INSTALL_COMMAND ""
     BUILD_BYPRODUCTS "${googletest_STATIC_LIBRARIES}"
     CMAKE_ARGS
-        -DCMAKE_C_FLAGS=${ADDITIONAL_FLAGS}
-        -DCMAKE_CXX_FLAGS=${ADDITIONAL_FLAGS}
+        -DCMAKE_C_FLAGS=${ADDITIONAL_C_FLAGS}
+        -DCMAKE_CXX_FLAGS=${ADDITIONAL_CXX_FLAGS}
     CMAKE_CACHE_ARGS
         -DCMAKE_BUILD_TYPE:STRING=Release
         -DBUILD_GMOCK:BOOL=OFF
