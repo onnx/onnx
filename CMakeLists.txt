@@ -18,7 +18,9 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
 # Set C++11 as standard for the whole project
-set(CMAKE_CXX_STANDARD 11)
+IF(NOT MSVC)
+  set(CMAKE_CXX_STANDARD 11)
+ENDIF(NOT MSVC)
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
@@ -292,15 +294,16 @@ if(BUILD_ONNX_PYTHON)
 
   if(MSVC)
     IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      SET(MP_FLAG "-Xclang -fopenmp")
-      SET(EXTRA_FLAGS  "-Wno-implicit-function-declaration
-                        -Wno-undefined-inline
-                        -Wno-incompatible-pointer-type
-                        -Wno-dllexport-explicit-instantiation-decl
-                        -Wno-microsoft-unqualified-friend
-                        -Wno-absolute-value
-                        -Wno-writable-strings
-                        -Qunused-arguments")
+      SET(MP_FLAG "-Xclang" "-fopenmp")
+      SET(EXTRA_FLAGS   "-Wno-implicit-function-declaration"
+                        "-Wno-undefined-inline"
+                        "-Wno-incompatible-pointer-types"
+                        "-Wno-dllexport-explicit-instantiation-decl"
+                        "-Wno-microsoft-unqualified-friend"
+                        "-Wno-absolute-value"
+                        "-Wno-unused-variable"
+                        "-Wno-writable-strings"
+                        "-Qunused-arguments")
     ELSE()
       SET(MP_FLAG "/MP")
       SET(EXTRA_FLAGS "")
