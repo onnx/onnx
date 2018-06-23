@@ -450,9 +450,7 @@ void encodeTypeProtoTensorType(ONNX_NAMESPACE::TypeProto_Tensor* tensor_type, Va
 }
 
 void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
-  if (n->has_unique_name()) {
-    v->set_name(value_name(n));
-  }
+  v->set_name(value_name(n));
   ONNX_NAMESPACE::TypeProto* t = v->mutable_type();
   ONNX_NAMESPACE::TypeProto_Tensor* tensor_type = t->mutable_tensor_type();
   encodeTypeProtoTensorType(tensor_type, n);
