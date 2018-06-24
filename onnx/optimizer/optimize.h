@@ -18,6 +18,7 @@
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
 #include "onnx/optimizer/passes/fuse_bn_into_conv.h"
+#include "onnx/optimizer/passes/fuse_mul_add_into_bn.h"
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE { namespace optimization {
@@ -42,6 +43,7 @@ struct Optimizer {
     _registerOptimizer<SplitPredict>();
     _registerOptimizer<LiftLexicalReferences>();
     _registerOptimizer<FuseBNIntoConv>();
+    _registerOptimizer<FuseMulAddIntoBN>();
   }
 
   virtual ~Optimizer() = default;

@@ -752,6 +752,50 @@ class TestOptimizer(unittest.TestCase):
             np.testing.assert_almost_equal((B - mean) * f + b, new_b)
             np.testing.assert_almost_equal(W * f[:, np.newaxis, np.newaxis, np.newaxis], new_W)
 
+    def test_fuse_mul_add_into_bn_simple(self):  # type: () -> None
+        for (tensor_type, np_type) in [(TensorProto.FLOAT, np.float32), (TensorProto.DOUBLE, np.float64)]:
+            bn = helper.make_node("BatchNormalization", ["A", "scale", "b", "mean", "var"], ["B"])
+            mul = helper.make_node("Mul", ["B", "y1"], ["C"], broadcast=1, axis=1)
+            add = helper.make_node("Add", ["C", "y2"], ["D"], broadcast=1, axis=1)
+
+            scale = np.random.randn(3,).astype(np_type) + 2
+            b = np.random.randn(3,).astype(np_type) + 2
+            mean = np.random.randn(3,).astype(np_type) + 2
+            var = np.random.randn(3,).astype(np_type) + 2
+            y1 = np.random.randn(3,).astype(np_type) + 2
+            y2 = np.random.randn(3,).astype(np_type) + 2
+
+            initializers = [
+                helper.make_tensor(name, tensor_type, npa.shape, npa.tobytes(), raw=True)
+                for name, npa in [('scale', scale), ('b', b), ('mean', mean), ('var', var), ('y1', y1), ('y2', y2)]
+            ]
+            graph = helper.make_graph(
+                [bn, mul, add],
+                "test",
+                [helper.make_tensor_value_info("A", tensor_type, (3, 5, 28, 28)),
+                 helper.make_tensor_value_info("scale", tensor_type, (3,)),
+                 helper.make_tensor_value_info("b", tensor_type, (3,)),
+                 helper.make_tensor_value_info("mean", tensor_type, (3,)),
+                 helper.make_tensor_value_info("var", tensor_type, (3,)),
+                 helper.make_tensor_value_info("y1", tensor_type, (3,)),
+                 helper.make_tensor_value_info("y2", tensor_type, (3,))],
+                [helper.make_tensor_value_info("D", tensor_type, (3,))],
+                initializer=initializers,
+                value_info=[
+                    helper.make_tensor_value_info("C", tensor_type, (3,)),
+                    helper.make_tensor_value_info("D", tensor_type, (3,))
+                ]
+            )
+            optimized_model = self._optimized(graph, ["fuse_mul_add_into_bn"])
+            self.assertEqual(len(optimized_model.graph.node), 1)
+            self.assertEqual(optimized_model.graph.node[0].op_type, 'BatchNormalization')
+            self.assertEqual(len(optimized_model.graph.initializer), 4)
+            new_scale = numpy_helper.to_array(optimized_model.graph.initializer[2])
+            new_bias = numpy_helper.to_array(optimized_model.graph.initializer[3])
+
+            np.testing.assert_almost_equal(scale * y1, new_scale)
+            np.testing.assert_almost_equal(b * y1 + y2, new_bias)
+
 
 if __name__ == '__main__':
     unittest.main()
