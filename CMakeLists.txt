@@ -284,7 +284,6 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export PRIVATE -Wl,-force_load,$<TARGET_FILE:onnx>)
   elseif(MSVC)
     # In MSVC, we will add whole archive in default
-    set_target_properties(onnx_cpp2py_export PROPERTIES LINK_FLAGS "/DEBUG:FULL")
     target_link_libraries(onnx_cpp2py_export PRIVATE -WHOLEARCHIVE:$<TARGET_FILE:onnx>)
   else()
     # Assume everything else is like gcc
@@ -306,7 +305,8 @@ if(BUILD_ONNX_PYTHON)
                         "-Wno-writable-strings"
                         "-Qunused-arguments"
                         "-fms-extensions"
-                        "-fms-compatibility")
+                        "-fms-compatibility"
+                        "-fdelayed-template-parsing")
     ELSE()
       SET(MP_FLAG "/MP")
       SET(EXTRA_FLAGS "")

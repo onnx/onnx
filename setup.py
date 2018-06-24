@@ -180,6 +180,8 @@ class cmake_build(setuptools.Command):
                     # find python in cmake
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
                     '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
+                    '-DCMAKE_EXE_LINKER_FLAGS="/DEBUG:FULL"',
+                    '-DCMAKE_SHARED_LINKER_FLAGS="/DEBUG:FULL"'
                 ])
                 if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI

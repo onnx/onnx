@@ -106,8 +106,8 @@ build_script:
 #- cmd: C:\Miniconda36\Scripts\backend-test-tools generate-data
 - cmd: git diff --exit-code
 
-on_failure:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# on_failure:
+  # - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
