@@ -1020,13 +1020,22 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
-static const char* LpNormalization_ver1_doc = R"DOC(
+static const char* LpNormalization_ver7_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
+
+For p=2,
+
+y = x  / (sqrt(sum(x ** 2)) + epsilon),
+
+For p=1,
+
+y = x  / (sum(abs(x)) + epsilon),
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
-    1,
+    7,
     OpSchema()
         .Input(0, "input", "Input matrix", "T")
         .Output(0, "output", "Matrix after normalization", "T")
@@ -1034,7 +1043,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .SetDoc(LpNormalization_ver1_doc)
+        .SetDoc(LpNormalization_ver7_doc)
 		.Attr(
 			"epsilon",
 		    "The epsilon value to use to avoid division by zero, default is 1e-10f.",
