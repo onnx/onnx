@@ -80,7 +80,7 @@ install:
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
 - cmd: conda install -y -c conda-forge protobuf numpy
-- cmd: pip install pytest-cov nbval ninja intel-openmp
+- cmd: pip install pytest-cov nbval ninja
 
 build_script:
 # Build and test onnx.
@@ -93,7 +93,7 @@ build_script:
 - cmd: dir /s /b /a-d "onnx_gtests.exe" >UT.txt & set /p _UT= < UT.txt & %_UT%
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
 - cmd: pip install %_wheel%
-- cmd: pytest
+- cmd: pytest -v
 - cmd: python onnx/defs/gen_doc.py
 - cmd: python onnx/gen_proto.py
 # Run type checks
