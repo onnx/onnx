@@ -16,6 +16,12 @@ if(MSVC)
     endif()
     set(ADDITIONAL_C_FLAGS "/wd4996")
     set(ADDITIONAL_CXX_FLAGS "/wd4996")
+    IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        if (PY_ARCH)
+            set(ADDITIONAL_C_FLAGS "${ADDITIONAL_C_FLAGS} -m${PY_ARCH}")
+            set(ADDITIONAL_CXX_FLAGS "${ADDITIONAL_CXX_FLAGS} -m${PY_ARCH}")
+        endif(PY_ARCH)
+    endif()
 else()
   set(googletest_STATIC_LIBRARIES
       ${CMAKE_CURRENT_BINARY_DIR}/googletest/src/googletest/googletest/libgtest.a)
@@ -23,14 +29,8 @@ else()
   set(ADDITIONAL_CXX_FLAGS "")
 endif()
 
-
-if($ENV{CFLAGS})
-    set(ADDITIONAL_C_FLAGS "${ADDITIONAL_C_FLAGS} $ENV{CFLAGS}")
-endif()
-
-if($ENV{CXXFLAGS})
-    set(ADDITIONAL_CXX_FLAGS "${ADDITIONAL_CXX_FLAGS} $ENV{CXXFLAGS}")
-endif()
+MESSAGE(STATUS "ADDITIONAL_C_FLAGS: ${ADDITIONAL_C_FLAGS}")
+MESSAGE(STATUS "ADDITIONAL_CXX_FLAGS: ${ADDITIONAL_CXX_FLAGS}")
 
 ExternalProject_Add(googletest
     PREFIX googletest

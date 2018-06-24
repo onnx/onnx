@@ -80,7 +80,7 @@ install:
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
 - cmd: conda install -y -c conda-forge protobuf numpy
-- cmd: pip install pytest-cov nbval ninja
+- cmd: pip install pytest-cov nbval ninja intel-openmp
 
 build_script:
 # Build and test onnx.

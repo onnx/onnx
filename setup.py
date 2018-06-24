@@ -181,10 +181,16 @@ class cmake_build(setuptools.Command):
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
                     '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
                 ])
-                if 8 * struct.calcsize("P") == 64 and '-GNinja' not in cmake_args:
+                if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI
                     # TODO: need a better way to determine generator
                     cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
+                if '-GNinja' in cmake_args:
+                    if '-DCMAKE_GENERATOR_PLATFORM=x64' in cmake_args:
+                        cmake_args.remove('-DCMAKE_GENERATOR_PLATFORM=x64')
+                        cmake_args.append('-DPY_ARCH=64')
+                    else:
+                        cmake_args.append('-DPY_ARCH=32')
             cmake_args.append(TOP_DIR)
             subprocess.check_call(cmake_args)
 

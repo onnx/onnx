@@ -294,6 +294,7 @@ if(BUILD_ONNX_PYTHON)
 
   if(MSVC)
     IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      ADD_DEFINITIONS(-D_OPENMP_NOFORCE_MANIFEST)
       SET(MP_FLAG "-Xclang" "-fopenmp")
       SET(EXTRA_FLAGS   "-Wno-implicit-function-declaration"
                         "-Wno-undefined-inline"
@@ -304,12 +305,19 @@ if(BUILD_ONNX_PYTHON)
                         "-Wno-unused-variable"
                         "-Wno-writable-strings"
                         "-Qunused-arguments")
+      find_library(IOMP_LIBRARY
+                   NAMES libiomp5md
+                   PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib ${PYTHON_INCLUDE_DIR}/../libs ${PYTHON_INCLUDE_DIR}/../Library/bin
+                   NO_DEFAULT_PATH)
+      SET(MP_LINK_FLAGS "/NODEFAULTLIB:vcomp ${IOMP_LIBRARY}")
     ELSE()
       SET(MP_FLAG "/MP")
       SET(EXTRA_FLAGS "")
+      SET(MP_LINK_FLAGS "")
     ENDIF()
     find_package(PythonInterp ${PY_VERSION} REQUIRED)
     find_package(PythonLibs ${PY_VERSION} REQUIRED)
+    set_target_properties(onnx_cpp2py_export PROPERTIES LINK_FLAGS ${MP_LINK_FLAGS})
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
       ${MP_FLAG}
@@ -353,6 +361,7 @@ if (MSVC)
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
         ${EXTRA_FLAGS}
     )
+    set_target_properties(onnx_proto PROPERTIES LINK_FLAGS ${MP_LINK_FLAGS})
     target_compile_options(onnx PRIVATE
         ${MP_FLAG}
         /WX
@@ -361,6 +370,7 @@ if (MSVC)
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned
         ${EXTRA_FLAGS}
     )
+    set_target_properties(onnx PROPERTIES LINK_FLAGS ${MP_LINK_FLAGS})
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
         target_compile_options(onnx_proto PRIVATE /MTd)
