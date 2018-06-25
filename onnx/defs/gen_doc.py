@@ -235,6 +235,7 @@ def main(args):  # type: (Type[Args]) -> None
 
         fout.write('\n')
 
+        exsting_ops = set()  # type: Set[Text]
         for domain, supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
@@ -251,6 +252,9 @@ def main(args):  # type: (Type[Args]) -> None
                 for op_type, unsorted_versions in sorted(namemap.items()):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
+                    if schema.name in exsting_ops:
+                        continue
+                    exsting_ops.add(schema.name)
 
                     # op_type
                     s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
