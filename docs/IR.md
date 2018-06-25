@@ -250,7 +250,7 @@ Name|Type|Description|Spec Variant|
 |---|---|---|---|
 |name|string|The name of the attribute. Must be unique among attributes, inputs, and outputs for any given operator and node.|ONNX|
 |doc_string|string|A human-readable documentation for this value. Markdown is allowed.|ONNX|
-|ref_attr_name|string||ONNX|
+|ref_attr_name|string|The attribute name in parent function. If not empty|ONNX|
 |type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.|ONNX|
 |f|float|A 32-bit floating-point value.|ONNX|
 |i|int64|A 64-bit integer value.|ONNX|

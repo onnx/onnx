@@ -68,12 +68,29 @@ enum Version {
   // - Added type discriminator to AttributeProto to support proto3 users
   IR_VERSION_2017_10_30 = 0x0000000000000002;
 
+// #if ONNX-ML
+  // IR VERSION 3 published on Nov 3, 2017
+  // - For operator versioning:
+  //    - Added new message OperatorSetIdProto
+  //    - Added opset_import in ModelProto
+  // - For vendor extensions, added domain in NodeProto
+  IR_VERSION_2017_11_03 = 0x0000000000000003;
+
+  // IR VERSION 4 published on MM DD, 2018
+  // - For ONNX-ML:
+  //    - Added functions
+  //    - Added ONNX-ML types: records, tuples, scalar, 
+  //      sparse tensors, opaque.
+  //    - Added type aliases
+  IR_VERSION = 0x0000000000000004;
+// #else
   // IR VERSION 3 published on Nov 3, 2017
   // - For operator versioning:
   //    - Added new message OperatorSetIdProto
   //    - Added opset_import in ModelProto
   // - For vendor extensions, added domain in NodeProto
   IR_VERSION = 0x0000000000000003;
+// #endif
 }
 
 // Attributes
@@ -104,10 +121,12 @@ message AttributeProto {
     RECORD = 12;
     NULLABLE = 13;
     SPARSE = 14;
-    TUPLES = 15;
-    RECORDS = 16;
-    NULLABLES = 17;
-    SPARSES = 18;
+    TYPE = 15;
+    TUPLES = 16;
+    RECORDS = 17;
+    NULLABLES = 18;
+    SPARSES = 19;
+    TYPES = 20;
 // #endif
   }
 
