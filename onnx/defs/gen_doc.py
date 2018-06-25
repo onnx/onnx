@@ -11,7 +11,7 @@ from collections import defaultdict
 from onnx import defs
 from onnx.defs import OpSchema
 from onnx.backend.test.case import collect_snippets
-from typing import Text, Sequence, Dict, List, Type, Set
+from typing import Text, Sequence, Dict, List, Type, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
@@ -37,6 +37,13 @@ def should_render_domain(domain):  # type: (Text) -> bool
     return True
 
 
+def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
+    if domain:
+        return '{}.{}'.format(domain, schema_name)
+    else:
+        return schema_name
+
+
 def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
     assert isinstance(v, OpSchema.AttrType)
     s = Text(v)
@@ -53,6 +60,13 @@ def display_domain(domain):  # type: (Text) -> Text
         return "the default ONNX operator set"
 
 
+def display_domain_short(domain):  # type: (Text) -> Text
+    if domain:
+        return domain
+    else:
+        return 'ai.onnx (default)'
+
+
 def display_version_link(name, version):  # type: (Text, int) -> Text
     changelog_md = 'Changelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
@@ -61,11 +75,6 @@ def display_version_link(name, version):  # type: (Text, int) -> Text
 
 def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
     s = ''
-
-    if schema.domain:
-        domain_prefix = '{}.'.format(schema.domain)
-    else:
-        domain_prefix = ''
 
     # doc
     if schema.doc:
@@ -81,7 +90,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     if len(versions) > 1:
         # TODO: link to the Changelog.md
         s += '\nOther versions of this operator: {}\n'.format(
-            ', '.join(display_version_link(domain_prefix + v.name, v.since_version) for v in versions[:-1]))
+            ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
+                                           v.since_version) for v in versions[:-1]))
 
     # attributes
     if schema.attributes:
@@ -175,18 +185,13 @@ def main(args):  # type: (Type[Args]) -> None
             if not should_render_domain(domain):
                 continue
 
-            if domain:
-                s = '# {}\n'.format(domain)
-                domain_prefix = '{}.'.format(domain)
-            else:
-                s = '# ai.onnx (default)\n'
-                domain_prefix = ''
+            s = '# {}\n'.format(display_domain_short(domain))
 
             for version, unsorted_schemas in sorted(versionmap.items()):
                 s += '## Version {} of {}\n'.format(version, display_domain(domain))
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
-                    name_with_ver = '{}-{}'.format(domain_prefix +
-                                                   schema.name, schema.since_version)
+                    name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
+                                                   schema.since_version)
                     s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
@@ -207,60 +212,54 @@ def main(args):  # type: (Type[Args]) -> None
 
         fout.write('\n')
 
-        # Table of contents
+        # Preprocess the Operator Schemas
+        # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
+        operator_schemas = list()  # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
         exsting_ops = set()  # type: Set[Text]
-        for domain, supportmap in sorted(index.items()):
+        for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
 
-            if domain:
-                s = '* {}\n'.format(domain)
-                domain_prefix = '{}.'.format(domain)
-            else:
-                s = '* ai.onnx (default)\n'
-                domain_prefix = ''
-            fout.write(s)
-
-            for _, namemap in sorted(supportmap.items()):
-                for n, unsorted_versions in sorted(namemap.items()):
+            processed_supportmap = list()
+            for _support, _namemap in sorted(_supportmap.items()):
+                processed_namemap = list()
+                for n, unsorted_versions in sorted(_namemap.items()):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
                     if schema.name in exsting_ops:
                         continue
                     exsting_ops.add(schema.name)
+                    processed_namemap.append((n, schema, versions))
+                processed_supportmap.append((_support, processed_namemap))
+            operator_schemas.append((domain, processed_supportmap))
+
+        # Table of contents
+        for domain, supportmap in operator_schemas:
+            s = '* {}\n'.format(display_domain_short(domain))
+            fout.write(s)
+
+            for _, namemap in supportmap:
+                for n, schema, versions in namemap:
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
                         support_level_str(schema.support_level),
-                        domain_prefix + n, domain_prefix + n)
+                        format_name_with_domain(domain, n),
+                        format_name_with_domain(domain, n))
                     fout.write(s)
 
         fout.write('\n')
 
-        exsting_ops = set()  # type: Set[Text]
-        for domain, supportmap in sorted(index.items()):
-            if not should_render_domain(domain):
-                continue
-
-            if domain:
-                s = '## {}\n'.format(domain)
-                domain_prefix = '{}.'.format(domain)
-            else:
-                s = '## ai.onnx (default)\n'
-                domain_prefix = ''
+        for domain, supportmap in operator_schemas:
+            s = '## {}\n'.format(display_domain_short(domain))
             fout.write(s)
 
-            for _support, namemap in sorted(supportmap.items()):
-                for op_type, unsorted_versions in sorted(namemap.items()):
-                    versions = sorted(unsorted_versions, key=lambda s: s.since_version)
-                    schema = versions[-1]
-                    if schema.name in exsting_ops:
-                        continue
-                    exsting_ops.add(schema.name)
-
+            for _, namemap in supportmap:
+                for op_type, schema, versions in namemap:
                     # op_type
                     s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
                         support_level_str(schema.support_level),
-                        domain_prefix + op_type, domain_prefix + op_type.lower(),
-                        domain_prefix + op_type)
+                        format_name_with_domain(domain, op_type),
+                        format_name_with_domain(domain, op_type.lower()),
+                        format_name_with_domain(domain, op_type))
 
                     s += display_schema(schema, versions)
 
