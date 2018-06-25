@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto
 from typing import Sequence, Text, Tuple, List, Callable
+from onnx import numpy_helper
 
 import numpy as np  # type: ignore
 
@@ -857,6 +858,50 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[2].attribute[2].name == "__control_inputs"
         assert optimized_model.graph.node[2].attribute[2].strings[0] == b"X"
         assert optimized_model.graph.node[2].attribute[2].strings[1] == b"Y"
+
+    def test_fuse_bn_into_conv_simple(self):  # type: () -> None
+        for (tensor_type, np_type) in [(TensorProto.FLOAT, np.float32), (TensorProto.DOUBLE, np.float64)]:
+            conv = helper.make_node("Conv", ["X", "W", "B"], ["Y"])
+            bn = helper.make_node("BatchNormalization", ["Y", "scale", "b", "mean", "var"], ["Z"])
+
+            W = np.random.randn(3, 2, 5, 5).astype(np_type) + 2
+            B = np.random.randn(3,).astype(np_type) + 2
+            scale = np.random.randn(3,).astype(np_type) + 2
+            b = np.random.randn(3,).astype(np_type) + 2
+            mean = np.random.randn(3,).astype(np_type) + 2
+            var = np.random.randn(3,).astype(np_type) + 2
+
+            initializers = [
+                helper.make_tensor(name, tensor_type, npa.shape, npa.tobytes(), raw=True)
+                for name, npa in [('W', W), ('B', B), ('scale', scale), ('b', b), ('mean', mean), ('var', var)]
+            ]
+            graph = helper.make_graph(
+                [conv, bn],
+                "test",
+                [helper.make_tensor_value_info("X", tensor_type, (5, 2, 28, 28)),
+                 helper.make_tensor_value_info("W", tensor_type, (3, 2, 5, 5)),
+                 helper.make_tensor_value_info("B", tensor_type, (3,)),
+                 helper.make_tensor_value_info("scale", tensor_type, (3,)),
+                 helper.make_tensor_value_info("b", tensor_type, (3,)),
+                 helper.make_tensor_value_info("mean", tensor_type, (3,)),
+                 helper.make_tensor_value_info("var", tensor_type, (3,))],
+                [helper.make_tensor_value_info("Z", tensor_type, (3,))],
+                initializer=initializers,
+                value_info=[
+                    helper.make_tensor_value_info("Y", tensor_type, (3,))
+                ]
+            )
+            optimized_model = self._optimized(graph, ["fuse_bn_into_conv"])
+
+            self.assertEqual(len(optimized_model.graph.node), 1)
+            self.assertEqual(optimized_model.graph.node[0].op_type, 'Conv')
+            self.assertEqual(len(optimized_model.graph.initializer), 2)
+            new_W = numpy_helper.to_array(optimized_model.graph.initializer[0])
+            new_b = numpy_helper.to_array(optimized_model.graph.initializer[1])
+
+            f = scale / np.sqrt(var + 1e-5)
+            np.testing.assert_almost_equal((B - mean) * f + b, new_b)
+            np.testing.assert_almost_equal(W * f[:, np.newaxis, np.newaxis, np.newaxis], new_W)
 
 
 if __name__ == '__main__':
