@@ -74,7 +74,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(float)", "tensor(int64)"},
-            "The output is a tensor of string, float, or integer.")
+            "The output is a 1-D tensor of string, float, or integer.")
         .Attr(
             "cast_to",
             "A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'; the default is 'TO_FLOAT'",
@@ -136,7 +136,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output is a tensor of strings or integers.")
+            "The output is a tensor of strings or integers. Its shape will be the same as the input shape.")
         .Attr(
             "cats_strings",
             "The strings of the map. This sequence must be the same length as the 'cats_int64s' sequence",
@@ -204,7 +204,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(float)",
              "tensor(double)",
              "tensor(string)"},
-            "The output will be a tensor of the value type of the input map.")
+            "The output will be a tensor of the value type of the input map. It's shape will be [1,C], where C is the length of the input dictionary.")
         .Attr(
             "string_vocabulary",
             "A string vocabulary array.<br>One and only one of the vocabularies must be defined.",
@@ -501,7 +501,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 static const char* OneHotEncoder_ver1_doc = R"DOC(
     Replace each input element with an array of ones and zeros, where a single
     one is placed at the index of the category that was passed in. The total category count 
-    will determine the sized of the extra dimension of the output array Y.<br>
+    will determine the size of the extra dimension of the output array Y.<br>
     For example, if we pass a tensor with a single value of 4, and a category count of 8, 
     the output will be a tensor with ``[0,0,0,0,1,0,0,0]``.<br>
     This operator assumes every input feature is from the same set of categories.<br>
@@ -560,12 +560,12 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input must be a tensor of a numeric type.")
         .Attr(
             "offset",
-            "First, offset by this. Can be length of features or length 1, in which case it applies to all features",
+            "First, offset by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.",
             AttributeProto::FLOATS,
             OPTIONAL)
         .Attr(
             "scale",
-            "Second, multiply by this, must be same length as offset.<br>Can be length of features or length 1, in which case it applies to all features.",
+            "Second, multiply by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.<br>Must be same length as 'offset'",
             AttributeProto::FLOATS,
             OPTIONAL));
 

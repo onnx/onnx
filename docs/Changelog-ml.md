@@ -38,7 +38,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 ### <a name="ai.onnx.ml.Binarizer-1"></a>**ai.onnx.ml.Binarizer-1**</a>
 
-  Maps the values of the input tensor by either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
+  Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
 
 #### Version
 
@@ -113,7 +113,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T1</tt> : map(int64, string), map(int64, float)</dt>
 <dd>The input must be an integer map to either string or float.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(float), tensor(int64)</dt>
-<dd>The output is a tensor of string, float, or integer.</dd>
+<dd>The output is a 1-D tensor of string, float, or integer.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.CategoryMapper-1"></a>**ai.onnx.ml.CategoryMapper-1**</a>
@@ -164,7 +164,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
 <dd>The input must be a tensor of strings or integers.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output is a tensor of strings or integers.</dd>
+<dd>The output is a tensor of strings or integers. Its shape will be the same as the input shape.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.DictVectorizer-1"></a>**ai.onnx.ml.DictVectorizer-1**</a>
@@ -216,7 +216,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>T1</tt> : map(string, int64), map(int64, string), map(int64, float), map(int64, double), map(string, float), map(string, double)</dt>
 <dd>The input must be a map from strings or integers to either strings or a numeric type. The key and value types cannot be the same.</dd>
 <dt><tt>T2</tt> : tensor(int64), tensor(float), tensor(double), tensor(string)</dt>
-<dd>The output will be a tensor of the value type of the input map.</dd>
+<dd>The output will be a tensor of the value type of the input map. It's shape will be [1,C], where C is the length of the input dictionary.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**</a>
@@ -500,7 +500,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
   Replace each input element with an array of ones and zeros, where a single
       one is placed at the index of the category that was passed in. The total category count 
-      will determine the sized of the extra dimension of the output array Y.<br>
+      will determine the size of the extra dimension of the output array Y.<br>
       For example, if we pass a tensor with a single value of 4, and a category count of 8, 
       the output will be a tensor with ``[0,0,0,0,1,0,0,0]``.<br>
       This operator assumes every input feature is from the same set of categories.<br>
@@ -665,9 +665,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>offset</tt> : list of floats</dt>
-<dd>First, offset by this. Can be length of features or length 1, in which case it applies to all features</dd>
+<dd>First, offset by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.</dd>
 <dt><tt>scale</tt> : list of floats</dt>
-<dd>Second, multiply by this, must be same length as offset.<br>Can be length of features or length 1, in which case it applies to all features.</dd>
+<dd>Second, multiply by this.<br>Can be length of features in an [N,F] tensor or length 1, in which case it applies to all features, regardless of dimension count.<br>Must be same length as 'offset'</dd>
 </dl>
 
 #### Inputs
