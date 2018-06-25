@@ -31,7 +31,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input must be a tensor of a numeric type or string. The output will be of the same tensor type."));
 
 static const char* Binarizer_ver1_doc = R"DOC(
-    Maps the values of the input tensor by either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
+    Maps the values of the input tensor to either 0 or 1, element-wise, based on the outcome of a comparison against a threshold value.
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
