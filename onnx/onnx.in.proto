@@ -99,7 +99,55 @@ message AttributeProto {
     STRINGS = 8;
     TENSORS = 9;
     GRAPHS = 10;
+// #if ONNX-ML
+    TUPLE = 11;
+    RECORD = 12;
+    NULLABLE = 13;
+    SPARSE = 14;
+    TUPLES = 15;
+    RECORDS = 16;
+    NULLABLES = 17;
+    SPARSES = 18;
+// #endif
   }
+
+// #if ONNX-ML
+  message TupleAttribute {
+    repeated AttributeProto values = 1;
+  };
+
+  message RecordAttribute {
+    repeated AttributeProto fields = 1;
+    repeated AttributeProto values = 2;
+  };
+
+  message NullableAttribute {
+    optional AttributeProto value = 1;
+  };
+
+  message SparseTensorAttribute {
+
+    // The shape of the tensor.
+    repeated int64 dims = 4;
+
+    // Sparse tensors are stored using the CSR (Yale) format, which is is described at: 
+    // https://en.wikipedia.org/wiki/Sparse_matrix#Compressed_sparse_row_(CSR,_CRS_or_Yale_format).
+    //
+    // The data type of the tensor elements are determined from the 'A' tensor, which holds the non-zero elements.
+    // Note that for the purposes of encoding, only the first dimension is compressed, the rest are treated as 
+    // if the tensor were of two dimensions.
+    optional TensorProto non_zero_elements = 1;
+
+    // This is the IA array, which stores the index in NZE of the
+    // first non-zero element in row i. If there are m rows, this
+    // array is m+1 elements long.
+    repeated int64 first_indices = 2;
+
+    // This is the JA array, which stores the column index of
+    // each element. It must be the same length as the NZE tensor.
+    repeated int64 column_indices = 3;
+};
+// #endif
 
   // The name field MUST be present for this version of the IR.
   optional string name = 1;           // namespace Attribute
@@ -135,6 +183,20 @@ message AttributeProto {
   repeated bytes strings = 9;         // list of UTF-8 strings
   repeated TensorProto tensors = 10;  // list of tensors
   repeated GraphProto graphs = 11;    // list of graph
+
+// #if ONNX-ML
+  optional TupleAttribute        tuple    = 100; // A single tuple value
+  optional RecordAttribute       record   = 101; // A single record value
+  optional NullableAttribute     nullable = 102; // A single nullable value
+  optional SparseTensorAttribute sparse   = 103; // A single sparse tensor
+  optional TypeProto             typea    = 104; // A single type
+
+  repeated TupleAttribute        tuples    = 105; // List of tuple values
+  repeated RecordAttribute       records   = 106; // List of record values
+  repeated NullableAttribute     nullables = 107; // List of nullable values
+  repeated SparseTensorAttribute sparses   = 108; // List of sparse tensors
+  repeated TypeProto             types     = 109; // List of types
+// #endif
 }
 
 // Defines information on value, including the name, the type, and
@@ -225,6 +287,11 @@ message ModelProto {
 
   // Named metadata values; keys should be distinct.
   repeated StringStringEntryProto metadata_props = 14;
+
+// #if ONNX-ML
+  // Aliased types, visible througout the document.
+  repeated TypeAliasProto type_aliases = 15;  
+// #endif
 };
 
 // StringStringEntryProto follows the pattern for cross-proto-version maps.
@@ -233,6 +300,17 @@ message StringStringEntryProto {
   optional string key = 1;
   optional string value= 2;
 };
+
+// #if ONNX-ML
+// For space consideration, a type alias may be used to represent a type 
+// anywhere in a model document. Aliases are declared in the top-level model
+// and are visible throughout the document. The alias does not become part
+// of the type identity.
+message TypeAliasProto {
+  optional string    name = 1;   // namespace TypeAliases
+  optional TypeProto type = 2;
+};
+// #endif
 
 // Graphs
 //
@@ -417,12 +495,47 @@ message TypeProto {
 
 // #if ONNX-ML
 
-  // repeated T
-  message Sequence {
-  // The type and optional shape of each element of the sequence.
-  // This field MUST be present for this version of the IR.
-    optional TypeProto elem_type = 1;
-  };
+  message Scalar { 
+    // This field MUST NOT have the value of UNDEFINED 
+    // This field MUST be present for this version of the IR. 
+    optional TensorProto.DataType data_type = 1; 
+  }; 
+
+  message Sequence { 
+    // The type and optional shape of each element of the sequence. 
+    // This field MUST be present for this version of the IR. 
+    optional TypeProto elem_type = 1; 
+  }; 
+
+  message Tuple { 
+    // The element types of the tuple. 
+    repeated TypeProto elem_type = 1; 
+  }; 
+
+  message Record { 
+    // The type and shape of each field is described by a ValueInfoProto. 
+    // The field names must be unique. 
+    // This field MUST be present for this version of the IR. 
+    repeated ValueInfoProto fields = 1; 
+  }; 
+
+  message Opaque { 
+    // Domain with empty string means ONNX domain. 
+    optional string domain = 1; 
+    // The name is optional but significant when provided. 
+    optional string name = 2; 
+  }; 
+
+  message SparseTensor { 
+    // This field MUST NOT have the value of UNDEFINED 
+    // This field MUST be present for this version of the IR. 
+    optional TensorProto.DataType elem_type = 1; 
+    optional TensorShapeProto shape = 2;   
+  }; 
+
+  message Nullable { 
+    optional TypeProto base_type = 1;   
+  }; 
 
   // map<K,V>
   message Map {
@@ -433,6 +546,12 @@ message TypeProto {
     optional TypeProto value_type = 2;
   };
 
+  // A type alias, declared in the ModelProto
+  message Alias {
+    // The alias for the type, namespace TypeAlias.
+    optional string name = 1;
+  };
+
 // #endif
 
   oneof value {
@@ -441,7 +560,7 @@ message TypeProto {
 
 // #if ONNX-ML
 
-    // NOTE:  DNN-only implementations of ONNX MAY elect to not support non-tensor values
+    // NOTE:  DNN-only implementations of ONNX MAY elect not to support non-tensor values
     //        as input and output to graphs and nodes. These types are needed to naturally
     //        support classical ML operators.  DNN operators SHOULD restrict their input
     //        and output types to tensors.
@@ -451,6 +570,20 @@ message TypeProto {
 
     // The type of a map.
     Map map_type = 5;
+
+    Tuple tuple_type = 7; 
+
+    Opaque opaque_type = 8; 
+    
+    SparseTensor sparse_type = 9; 
+    
+    Record record_type = 10; 
+    
+    Nullable nullable_type = 11; 
+    
+    Scalar scalar_type = 12;     
+
+    Alias aliased_type = 13;
 
 // #endif
   }

@@ -27,7 +27,7 @@ ONNX is an open specification that consists of the following components:
 
 Of these, #1 and #2 are covered herein; the built-in operators are covered separately in documents listed at the end of this.
 
-There are two official ONNX variants; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, also recognizes sequences and maps. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks.
+There are two official ONNX variants: __ONNX__ and __ONNX-ML__. The latter is a strict superset of the former; the main distinction between the two is found in the supported types and the default operator sets. The neural-network-only __ONNX__ variant recognizes only tensors as input and output types, while the Classical Machine Learning extension, __ONNX-ML__, recognizes and extended set of types. __ONNX-ML__ extends the __ONNX__ operator set with ML algorithms that are not based on neural networks. __ONNX-ML__ also extends the __ONNX__ operator set with support for data processing pipeline stages.
 
 ## Runtime Agnostic
 
@@ -73,19 +73,20 @@ The top-level ONNX construct is a ‘Model.’
 
 The main purpose of the model structure is to associate metadata with a graph, which is what contains all the executable elements. The metadata is used when first reading the model file, giving an implementation the information that it needs in order to determine whether it will be able to execute the model, generate logging messages, error reports, etc. Further, the metadata is useful to tools, such as IDEs and model galleries, which need it for informing humans about a given model’s purpose and characteristics.
 
-Each model has the following components:
+Depending on the ONNX variant, each model has the following components:
 
-|Name|Type|Description|
-|---|---|---|
-|ir_version|int64|The ONNX version assumed by the model.|
-|opset_import|OperatorSetId|A collection of operator set identifiers made available to the model. An implementation must support all operators in the set or reject the model.|
-|producer_name|string|The name of the tool used to generate the model.|
-|producer_version|string|A string representing the version of the generating tool.|
-|domain|string|A reverse-DNS name to indicate the model namespace or domain, for example, 'org.onnx'|
-|model_version|int64|A version of the model itself, encoded in an integer.|
-|doc_string|string|A human-readable documentation for this model. Markdown is allowed.|
-|graph|Graph|The parameterized graph that is evaluated to execute the model.|
-|metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
+|Name|Type|Description|ONNX Variant|
+|---|---|---|---|
+|ir_version|int64|The ONNX version assumed by the model.|ONNX|
+|opset_import|OperatorSetId|A collection of operator set identifiers made available to the model. An implementation must support all operators in the set or reject the model.|ONNX|
+|producer_name|string|The name of the tool used to generate the model.|ONNX|
+|producer_version|string|A string representing the version of the generating tool.|ONNX|
+|domain|string|A reverse-DNS name to indicate the model namespace or domain, for example, 'org.onnx'|ONNX|
+|model_version|int64|A version of the model itself, encoded in an integer.|ONNX|
+|doc_string|string|A human-readable documentation for this model. Markdown is allowed.|ONNX|
+|graph|Graph|The parameterized graph that is evaluated to execute the model.|ONNX|
+|metadata_props|map<string,string>|Named metadata values; keys should be distinct.|ONNX|
+|type_aliases|TypeAlias|A sequence of aliased types, usable throughout the document.|ONNX-ML|
 
  Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
  
@@ -144,6 +145,12 @@ The ‘status’ property indicates whether the syntax, semantics, or presence o
 
 There are two distinct ways to pass information to operators – inputs and attributes. The latter are used for values that are constants in the graph, while the former represent graph inputs or values computed elsewhere in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
 
+### Functions
+
+Functions are named sub-graphs and declared within the definition of an operator set. From the perspective of a node reference, the function and operator namespaces overlap.
+
+Function bodies are evaluated at the point where they are referenced by a node in an ONNX graph. The attributes, inputs, and outputs of functions are generally untyped at the point of declaration and bound to values when referenced in a graph node. Attributes of functions MUST be used only as attributes in nodes within the functoin, using the 'ref_attr_name' attribute property. Type constraints MAY be placed on values inside the function graph by adding records to a function's 'value_info' collection.
+
 ### Graphs
 
 A serialized graph is comprised of a set of metadata fields, a list of model parameters, and a list of computation nodes.
@@ -186,12 +193,13 @@ The namespaces are:
 
 Namespace|Description
 |---|---|
-Attribute|The names of attributes of an operator. Unique for each operator.
-Value|The names of values – node inputs & outputs, tensor values (if named), graph inputs, outputs.
-Node|The names of graph nodes.
-Graph|The names of graphs within a domain, unique within the model domain.
-Operator|The names of operators within a domain.
-Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.
+|Attribute|The names of attributes of an operator. Unique for each operator.|
+|Value|The names of values – node inputs & outputs, tensor values (if named), graph inputs, outputs.|
+|Node|The names of graph nodes.|
+|Graph|The names of graphs within a domain, unique within the model domain.|
+|Operator|The names of operators within a domain.|
+|Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.|
+|TypeAlias|The aliases of types declared within an ONNX-ML document.|
 
 
 ### Nodes
@@ -238,24 +246,36 @@ Attribute values are only found in nodes, passed to operators by name associatio
 
 Attributes have the following properties:
 
-Name|Type|Description
-|---|---|---|
-name|string|The name of the attribute. Must be unique among attributes, inputs, and outputs for any given operator and node.
-doc_string|string|A human-readable documentation for this value. Markdown is allowed.
-type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.
-f|float|A 32-bit floating-point value.
-i|int64|A 64-bit integer value.
-S|byte[]|UTF-8 string.
-t|Tensor|A tensor value.
-g|Graph|A graph.
-floats|float[]|A list of 32-bit floating-point values.
-ints|int64[]|A list of 64-bit integer values.
-strings|byte[][]|A list of UTF-8 strings.
-tensors|Tensor[]|A list of tensor values.
-graphs|Graph[]|A list of graphs.
+Name|Type|Description|Spec Variant|
+|---|---|---|---|
+|name|string|The name of the attribute. Must be unique among attributes, inputs, and outputs for any given operator and node.|ONNX|
+|doc_string|string|A human-readable documentation for this value. Markdown is allowed.|ONNX|
+|ref_attr_name|string||ONNX|
+|type|AttributeType|The type of the attribute, determining which of the remaining fields is used to hold the value of the attribute.|ONNX|
+|f|float|A 32-bit floating-point value.|ONNX|
+|i|int64|A 64-bit integer value.|ONNX|
+|s|byte[]|UTF-8 string.|ONNX|
+|t|Tensor|A tensor value.|ONNX|
+|g|Graph|A graph.|ONNX|
+|floats|float[]|A list of 32-bit floating-point values.|ONNX|
+|ints|int64[]|A list of 64-bit integer values.|ONNX|
+|strings|byte[][]|A list of UTF-8 strings.|ONNX|
+|tensors|Tensor[]|A list of tensor values.|ONNX|
+|graphs|Graph[]|A list of graphs.|ONNX|
+|tuple|Tuple|A single tuple value|ONNX-ML|
+|record|Record|A single record value|ONNX-ML|
+|nullable|Nullable|A single nullable value|ONNX-ML|
+|sparse|SparseTensor|A single sparse tensor|ONNX-ML|
+|type_|TypeProto|A single type|ONNX-ML|
+|tuples|Tuple[]|A list of tuple values|ONNX-ML|
+|records|Record[]|A list of record values|ONNX-ML|
+|nullables|Nullable[]|A list of nullable values|ONNX-ML|
+|sparses|SparseTensor[]|A list of sparse tensors|ONNX-ML|
+|types|TypeProto[]|A list of types|ONNX-ML|
 
 The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
 
+__Note__: ONNX-ML will likely introduce the ability to define custom operators that are higher-order, i.e. accept one or more graphs as  attributes. In order to statically represent the expected signature of such higher-order custom operators, we will likely have to introduce the notion of a function signature into the attribute type system.
 
 #### Variadic Inputs and Outputs
  
@@ -297,15 +317,24 @@ Other|bool|Boolean value represent data with only two values, typically true and
 
 ### Input / Output Data Types
 
-The following types are used to define the types of graph and node inputs and outputs.
+The following types are used to define the types of graph and node inputs and outputs. __ONNX-ML__ supports a larger set of types than __ONNX__.
 
-|Variant | Type | Description | 
-|---|---|---|
-ONNX|dense tensors|Tensors are a generalization of vectors and matrices; whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero. A zero-dimensional tensor is logically equivalent to a scalar value.
-ONNX-ML|sequence|Sequences represent dense, ordered, collections of elements that are of homogeneous types.
-ONNX-ML|map|Maps represent associative tables, defined by a key type and a value type.
+|Type | Description | Spec Variant| 
+|---|---|---|---|
+|dense tensor|Tensors are a generalization of vectors and matrices.<br>Whereas vectors have one dimension, and matrices two, tensors can have any number of dimensions, including zero.<br>A zero-dimensional tensor is logically equivalent to a scalar value.|ONNX|
+|sparse tensor|Sparse representation of tensors. Conversion between sparse and dense tensors are explicit.|ONNX-ML|
+|sequence|A dense, ordered, collection of elements that are of homogeneous types.|ONNX-ML|
+|tuple|A fixed-size collection of heterogeneous elements, indexed by an integer.|ONNX-ML|
+|map|A fixed-size collection of homogeneous elements, defined by a key type and a value type.|ONNX-ML|
+|record|A fixed-size collection of heterogeneous elements, indexed by a string.|ONNX-ML|
+|nullable|A canonical representation of missing values, for any type.|ONNX-ML|
+|opaque|A type with semantics unknown to all standard operators.<br>When present, the name and domain are significant to the type identity.<br>When absent, the type represents an opaque handle.|ONNX-ML|
 
-ONNX currently does not define a sparse tensor type.
+### Type Denotations
+
+Any type proto may have a specific denotation. When present, the denotation becomes part of the type identity, that is, any type with a type denotation should be considered a nominal type.
+
+There are a number of predefined ONNX denotations, the semantics of which are informally described in [Type Denotation](TypeDenotation.md). 
 
 #### Tensor shapes
 
@@ -351,13 +380,15 @@ Shapes MAY be defined using a combination of integers and variables.
 
 ### Attribute Types
 
-The type system used for attributes is a superset of that used for of inputs and outputs. In addition to tensors, attribute values may be scalar numerical values, strings, and graphs. Sequences are available for attributes in both ONNX and ONNX-ML. Maps are not available for attributes in either variant. 
+The type system used for attributes is a superset of that used for of inputs and outputs. In addition to tensors, attribute values may be scalar numerical values, strings, and graphs. Sequences are available for attributes in both ONNX. Maps are not available for attributes in either variant. 
 
 ## Other Specification Documents 
 
 The ONNX specification is comprised of this document, which defines the semantics of the IR and the standard data types, and the following documents defining standard operator semantics and the IR syntax. The latter is specified as Protobuf v2 and v3 schema files.
 
-See the [metadata category documentation](MetadataProps.md) for more details.
+See the [metadata category documentation](MetadataProps.md) for more details on optional metadata.
+
+See the [type denotation proposal](TypeDenotation.md) for more information on how type denotations are intended to be used.
 
 ### Operators
 

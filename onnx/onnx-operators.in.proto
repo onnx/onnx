@@ -63,6 +63,10 @@ message FunctionProto {
   repeated NodeProto node = 7;
   // A human-readable documentation for this function. Markdown is allowed.
   optional string doc_string = 8;
+
+  // Information for the values in the function. The ValueInfoProto.name's
+  // must be distinct. It is optional for a value to appear in value_info list.
+  repeated ValueInfoProto value_info = 9;
 }
 
 // An OperatorProto represents the immutable specification of the signature

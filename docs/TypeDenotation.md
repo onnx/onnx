@@ -1,6 +1,6 @@
 # Type Denotation
 
-Type Denotation is used to describe semantic information around what the inputs and outputs are.    It is stored on the TypeProto message.
+Type Denotation is used to describe semantic information around what the inputs and outputs are. It is stored in the TypeProto message.
 
 ## Motivation
 
@@ -34,6 +34,8 @@ Specifically, in our first proposal we define the following set of standard deno
 3. `TEXT` describes that a type holds a block of text.
 
 Model authors SHOULD add type denotation to inputs and outputs for the model as appropriate.
+
+When intended as having nominal semantics, record types should use the denotation property to specify the name of the record type.
 
 ## An Example with input IMAGE
 
