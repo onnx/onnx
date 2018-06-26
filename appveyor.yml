@@ -47,32 +47,32 @@ environment:
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
-    CFLAGS: -m64
-    CXXFLAGS: -m64
+    CFLAGS: -m64 -fmsc-version=1911
+    CXXFLAGS: -m64 -fmsc-version=1911
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda36-x64
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
-    CFLAGS: -m64
-    CXXFLAGS: -m64
+    CFLAGS: -m64 -fmsc-version=1911
+    CXXFLAGS: -m64 -fmsc-version=1911
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda36
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
-    CFLAGS: -m32
-    CXXFLAGS: -m32
+    CFLAGS: -m32 -fmsc-version=1911
+    CXXFLAGS: -m32 -fmsc-version=1911
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda35
     CMAKE_ARGS: -GNinja
     CC: clang-cl.exe
     CXX: clang-cl.exe
-    CFLAGS: -m32
-    CXXFLAGS: -m32
+    CFLAGS: -m32 -fmsc-version=1911
+    CXXFLAGS: -m32 -fmsc-version=1911
 
 install:
 - cmd: git submodule update --init --recursive
@@ -106,8 +106,8 @@ build_script:
 #- cmd: C:\Miniconda36\Scripts\backend-test-tools generate-data
 - cmd: git diff --exit-code
 
-on_failure:
-  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# on_failure:
+#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
