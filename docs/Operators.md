@@ -4773,27 +4773,28 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Max"></a><a name="max">**Max**</a>
 
-  Element-wise max of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Max.</dd>
+<dd>List of tensors for max.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>max</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -5277,27 +5278,28 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
 
-  Element-wise mean of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise mean of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>
+Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>, <a href="Changelog.md#Mean-6">Mean-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Mean.</dd>
+<dd>List of tensors for mean.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>mean</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -5349,27 +5351,28 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 ### <a name="Min"></a><a name="min">**Min**</a>
 
-  Element-wise min of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Min</dd>
+<dd>List of tensors for min.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>min</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -9162,7 +9165,8 @@ expect(node, inputs=[x], outputs=[y],
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
-  If an axis is selected with shape entry not equal to one, an error is raised.
+  If `axes` is not provided, all the single dimensions will be removed from
+  the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 
 #### Version
 
@@ -9171,7 +9175,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>List of positive integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
@@ -9305,27 +9309,28 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Sum"></a><a name="sum">**Sum**</a>
 
-  Element-wise sum of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>
+Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>, <a href="Changelog.md#Sum-6">Sum-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Sum.</dd>
+<dd>List of tensors for sum.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>sum</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -10820,99 +10825,6 @@ y[y == alpha] = 0
 
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu')
-```
-
-</details>
-
-
-### <sub>experimental</sub> <a name="Upsample"></a><a name="upsample">**Upsample**</a>
-
-  Upsample the input tensor.
-  The width and height of the output tensor are:
-    output_width = floor(input_width * width_scale),
-    output_height = floor(input_height * height_scale).
-  Example:
-    Given `data` tensor, width_scale, height_scale, mode,
-    Upsample the input 4-D tensor in nearest mode:
-    data = [[[
-        [1, 2],
-        [3, 4]
-    ]]]
-    width_scale = 2
-    height_scale = 2
-    mode = "nearest"
-    output = [[[
-        [1, 1, 2, 2],
-        [1, 1, 2, 2],
-        [3, 3, 4, 4],
-        [3, 3, 4, 4]
-    ]]]
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>height_scale</tt> : float (required)</dt>
-<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
-<dt><tt>mode</tt> : string</dt>
-<dd>Two interpolation modes: nearest(default), bilinear</dd>
-<dt><tt>width_scale</tt> : float (required)</dt>
-<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>4-D tensor, [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>4-D tensor after resizing, [N,C,H,W]</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>nearest</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
-    mode='nearest',
-)
-
-data = np.array([[[
-    [1, 2],
-    [3, 4],
-]]], dtype=np.float32)
-
-output = np.array([[[
-    [1, 1, 1, 2, 2, 2],
-    [1, 1, 1, 2, 2, 2],
-    [3, 3, 3, 4, 4, 4],
-    [3, 3, 3, 4, 4, 4],
-]]], dtype=np.float32)
-
-expect(node, inputs=[data], outputs=[output],
-       name='test_upsample_nearest')
 ```
 
 </details>
