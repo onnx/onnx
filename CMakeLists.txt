@@ -303,10 +303,7 @@ if(BUILD_ONNX_PYTHON)
                         "-Wno-absolute-value"
                         "-Wno-unused-variable"
                         "-Wno-writable-strings"
-                        "-Qunused-arguments"
-                        "-fms-extensions"
-                        "-fms-compatibility"
-                        "-fdelayed-template-parsing")
+                        "-Qunused-arguments")
     ELSE()
       SET(MP_FLAG "/MP")
       SET(EXTRA_FLAGS "")

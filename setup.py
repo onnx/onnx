@@ -163,6 +163,18 @@ class cmake_build(setuptools.Command):
                 # in order to get accurate coverage information, the
                 # build needs to turn off optimizations
                 cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
+            if WINDOWS:
+                cmake_args.extend([
+                    # we need to link with libpython on windows, so
+                    # passing python version to window in order to
+                    # find python in cmake
+                    '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
+                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
+                ])
+                if 8 * struct.calcsize("P") == 64:
+                    # Temp fix for CI
+                    # TODO: need a better way to determine generator
+                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
             if ONNX_ML:
                 cmake_args.append('-DONNX_ML=1')
             if ONNX_BUILD_TESTS:
@@ -173,33 +185,11 @@ class cmake_build(setuptools.Command):
                 del os.environ['CMAKE_ARGS']
                 log.info('Extra cmake args: {}'.format(extra_cmake_args))
                 cmake_args.extend(extra_cmake_args)
-            if WINDOWS:
-                cmake_args.extend([
-                    # we need to link with libpython on windows, so
-                    # passing python version to window in order to
-                    # find python in cmake
-                    '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
-                    '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
-                    '-DCMAKE_EXE_LINKER_FLAGS="/DEBUG:FULL"',
-                    '-DCMAKE_SHARED_LINKER_FLAGS="/DEBUG:FULL"',
-                    '-DCMAKE_MODULE_LINKER_FLAGS="/DEBUG:FULL"',
-                    '-DCMAKE_STATIC_LINKER_FLAGS="/DEBUG:FULL"'
-                ])
-                if 8 * struct.calcsize("P") == 64:
-                    # Temp fix for CI
-                    # TODO: need a better way to determine generator
-                    cmake_args.append('-DCMAKE_GENERATOR_PLATFORM=x64')
-                if '-GNinja' in cmake_args:
-                    if '-DCMAKE_GENERATOR_PLATFORM=x64' in cmake_args:
-                        cmake_args.remove('-DCMAKE_GENERATOR_PLATFORM=x64')
-                        cmake_args.append('-DPY_ARCH=64')
-                    else:
-                        cmake_args.append('-DPY_ARCH=32')
             cmake_args.append(TOP_DIR)
             subprocess.check_call(cmake_args)
 
             build_args = [CMAKE, '--build', os.curdir]
-            if WINDOWS and '-GNinja' not in cmake_args:
+            if WINDOWS:
                 build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
             else:
                 build_args.extend(['--', '-j', str(self.jobs)])

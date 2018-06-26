@@ -20,59 +20,15 @@ environment:
   # onnx-ml
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda35-x64
-    CMAKE_ARGS: -GNinja
-    CC: cl.exe
-    CXX: cl.exe
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda36-x64
-    CMAKE_ARGS: -GNinja
-    CC: cl.exe
-    CXX: cl.exe
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda36
-    CMAKE_ARGS: -GNinja
-    CC: cl.exe
-    CXX: cl.exe
 
   - ONNX_ML: 1
     CONDA_PREFIX: C:\Miniconda35
-    CMAKE_ARGS: -GNinja
-    CC: cl.exe
-    CXX: cl.exe
-
-  - ONNX_ML: 1
-    CONDA_PREFIX: C:\Miniconda35-x64
-    CMAKE_ARGS: -GNinja
-    CC: clang-cl.exe
-    CXX: clang-cl.exe
-    CFLAGS: -m64 -fmsc-version=1911
-    CXXFLAGS: -m64 -fmsc-version=1911
-
-  - ONNX_ML: 1
-    CONDA_PREFIX: C:\Miniconda36-x64
-    CMAKE_ARGS: -GNinja
-    CC: clang-cl.exe
-    CXX: clang-cl.exe
-    CFLAGS: -m64 -fmsc-version=1911
-    CXXFLAGS: -m64 -fmsc-version=1911
-
-  - ONNX_ML: 1
-    CONDA_PREFIX: C:\Miniconda36
-    CMAKE_ARGS: -GNinja
-    CC: clang-cl.exe
-    CXX: clang-cl.exe
-    CFLAGS: -m32 -fmsc-version=1911
-    CXXFLAGS: -m32 -fmsc-version=1911
-
-  - ONNX_ML: 1
-    CONDA_PREFIX: C:\Miniconda35
-    CMAKE_ARGS: -GNinja
-    CC: clang-cl.exe
-    CXX: clang-cl.exe
-    CFLAGS: -m32 -fmsc-version=1911
-    CXXFLAGS: -m32 -fmsc-version=1911
 
 install:
 - cmd: git submodule update --init --recursive
@@ -80,20 +36,17 @@ install:
 before_build:
 - cmd: SET PATH=%CONDA_PREFIX%;%CONDA_PREFIX%\Scripts;%PATH%
 - cmd: conda install -y -c conda-forge protobuf numpy
-- cmd: pip install pytest-cov nbval ninja
+- cmd: pip install pytest-cov nbval
 
 build_script:
 # Build and test onnx.
-- cmd: for /F "usebackq delims=" %%i in (`python -c "import struct;print( 8 * struct.calcsize('P'))"`) do set /a PYSIZE=%%i
-- cmd: if %PYSIZE% NEQ 64 (set VC_ARGS=x86) else (set VC_ARGS=x86_amd64)
-- cmd: call "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat" %VC_ARGS%
 - cmd: cd c:\projects\onnx
 - cmd: set ONNX_BUILD_TESTS=1
 - cmd: python setup.py bdist_wheel --universal --dist-dir .
 - cmd: dir /s /b /a-d "onnx_gtests.exe" >UT.txt & set /p _UT= < UT.txt & %_UT%
 - cmd: dir /b /a-d "*.whl" >WheelFile.txt & set /p _wheel= < WheelFile.txt
 - cmd: pip install %_wheel%
-- cmd: pytest -v
+- cmd: pytest
 - cmd: python onnx/defs/gen_doc.py
 - cmd: python onnx/gen_proto.py
 # Run type checks
@@ -105,9 +58,6 @@ build_script:
 # Will figure out and fix it in separate PR.
 #- cmd: C:\Miniconda36\Scripts\backend-test-tools generate-data
 - cmd: git diff --exit-code
-
-# on_failure:
-#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 # add after_test commands to collect logs and such
 # add artifacts: -path to collect build artifacts
