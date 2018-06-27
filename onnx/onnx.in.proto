@@ -132,15 +132,23 @@ message AttributeProto {
 
 // #if ONNX-ML
   message TupleAttribute {
+    // The tuple elements, represented as a series of attributes. If present,
+    // any attribute names are ignored.
     repeated AttributeProto values = 1;
   };
 
   message RecordAttribute {
-    repeated AttributeProto fields = 1;
-    repeated AttributeProto values = 2;
+    // The name of the record type this attribute corresponds to.
+    optional string name = 1;
+    // The domain of the record type this attribute corresponds to.
+    optional string domain = 2;
+    // The fields, represented as a series of attributes. The names of the 
+    // attributes MUST correspond to the respective field names of the record type.
+    repeated AttributeProto values = 3;
   };
 
   message NullableAttribute {
+    // The optional value. If present, an attribute name is ignored.
     optional AttributeProto value = 1;
   };
 
@@ -532,7 +540,11 @@ message TypeProto {
   }; 
 
   message Record { 
-    // The type and shape of each field is described by a ValueInfoProto. 
+      // Domain with empty string means the model's domain. 
+      optional string domain = 1; 
+      // The name is required for this version of the IR.
+      optional string name = 2; 
+    // The name and type of each field is described by a ValueInfoProto. 
     // The field names must be unique. 
     // This field MUST be present for this version of the IR. 
     repeated ValueInfoProto fields = 1; 
@@ -565,8 +577,8 @@ message TypeProto {
     optional TypeProto value_type = 2;
   };
 
-  // A type alias, declared in the ModelProto
-  message Alias {
+  // A reference to a type alias declared in the ModelProto
+  message TypeReference {
     // The alias for the type, namespace TypeAlias.
     optional string name = 1;
   };
@@ -602,7 +614,7 @@ message TypeProto {
     
     Scalar scalar_type = 12;     
 
-    Alias aliased_type = 13;
+    TypeReference aliased_type = 13;
 
 // #endif
   }
