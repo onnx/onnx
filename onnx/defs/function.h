@@ -57,6 +57,18 @@ class FunctionBuilderRegistry {
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
+// Helper function for register nodes in
+// a FunctionProto. Attributes need to be
+// registered separately.
+Common::Status FunctionNewNodeHelper(
+    NodeProto* node,
+    const std::string& name,
+    const std::string& domain,
+    const std::string& doc_string,
+    const std::string& op_type,
+    std::vector<std::string> const& inputs,
+    std::vector<std::string> const& outputs);
+
 // Example to register a function.
 // Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
 //  if (nullptr == func_proto) {

@@ -104,4 +104,32 @@ FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
   return func_builder_registry;
 }
 
+Common::Status FunctionNewNodeHelper(
+    NodeProto* node,
+    const std::string& name,
+    const std::string& domain,
+    const std::string& doc_string,
+    const std::string& op_type,
+    std::vector<std::string> const& inputs,
+    std::vector<std::string> const& outputs) {
+  if (node == NULL) {
+    return Status(
+        Common::CHECKER,
+        Common::INVALID_ARGUMENT,
+        "node_proto should not be nullptr.");
+  }
+  node->set_name(name);
+  node->set_domain(domain);
+  node->set_doc_string(doc_string);
+  node->set_op_type(op_type);
+  for (auto& input : inputs) {
+    node->add_input(input);
+  }
+  for (auto& output : outputs) {
+    node->add_output(output);
+  }
+
+  return Status::OK();
+}
+
 } // namespace ONNX_NAMESPACE

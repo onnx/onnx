@@ -13,9 +13,7 @@ TEST(FunctionAPITest, Get_All_Functions) {
   EXPECT_EQ(input_size, 1);
   EXPECT_EQ(temp_map.count("MeanVarianceNormalization"), 1);
   auto temp_iter = temp_map.find("MeanVarianceNormalization");
-  EXPECT_EQ(
-      temp_iter->second->doc_string(),
-      "A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X");
+  EXPECT_EQ(temp_iter->second->attribute_size(), 1);
 }
 } // namespace Test
 } // namespace ONNX_NAMESPACE

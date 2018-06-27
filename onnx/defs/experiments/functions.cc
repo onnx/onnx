@@ -16,81 +16,115 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   auto& func = **func_proto;
   func.set_name("MeanVarianceNormalization");
   func.set_doc_string(
-      "A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X");
+      "A MeanVarianceNormalization Function: Perform mean variance normalization "
+      "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>"
+      "INPUT: X(float/float16/double) with Shape [N,C,W,H] <br/>"
+      "ATTRIBUTE: <br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. "
+      "Use [0,2,3] for no across channel, [0,1,2,3] for across channel caculation.<br/>"
+      "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean ops is set to true for caculation)<br/>"
+      "OUTPUT: X(float/float16/double) with Shape [N,C,W,H] <br/>");
   func.set_since_version(8);
   func.add_input("X");
-  func.add_input("Pow_exponent");
   func.add_output("X_MVN");
   func.add_attribute("axes");
+  NodeProto* initial_node0 = func.add_node();
+  FunctionNewNodeHelper(
+      initial_node0,
+      "Pow_exponent_0",
+      "",
+      "Initialize a Constant tensor to caculate squared products",
+      "Constant",
+      std::vector<std::string>{},
+      std::vector<std::string>{});
+  AttributeProto* value_attr = initial_node0->add_attribute();
+  value_attr->set_name("value");
+  value_attr->set_doc_string(
+      "Value for the constant tensor as power exponent to caculate MVN");
+  value_attr->set_type(AttributeProto_AttributeType_TENSOR);
+  TensorProto* tensor_proto = value_attr->mutable_t();
+  tensor_proto->set_data_type(TensorProto_DataType_FLOAT);
+  tensor_proto->add_float_data(2.0); // [2.0]
+  initial_node0->add_output("Exponent");
   NodeProto* node0 = func.add_node();
-  node0->set_name("Reduced_Mean_0");
-  node0->set_domain("");
-  node0->set_doc_string("Caculating Reduced Mean on input tensor X");
-  node0->set_op_type("ReduceMean");
-  node0->add_input("X");
-  node0->add_output("X_RM");
+  FunctionNewNodeHelper(
+      node0,
+      "Reduced_Mean_0",
+      "",
+      "Caculate Reduced Mean on input tensor X",
+      "ReduceMean",
+      std::vector<std::string>{"X"},
+      std::vector<std::string>{"X_RM"});
   AttributeProto* attr0 = node0->add_attribute();
   attr0->set_ref_attr_name("axes");
   attr0->set_name("axes");
   attr0->set_type(AttributeProto_AttributeType_INTS);
   NodeProto* node1 = func.add_node();
-  node1->set_name("Pow_0");
-  node1->set_domain("");
-  node1->set_doc_string("Caculating (EX)^2");
-  node1->set_op_type("Pow");
-  node1->add_input("X_RM");
-  node1->add_input("Pow_exponent");
-  node1->add_output("EX_POW");
+  FunctionNewNodeHelper(
+      node1,
+      "Pow_0",
+      "",
+      "Caculate (EX)^2",
+      "Pow",
+      std::vector<std::string>{"X_RM", "Exponent"},
+      std::vector<std::string>{"EX_squared"});
   NodeProto* node2 = func.add_node();
-  node2->set_name("Pow_1");
-  node2->set_domain("");
-  node2->set_doc_string("Caculating X^2");
-  node2->set_op_type("Pow");
-  node2->add_input("X");
-  node2->add_input("Pow_exponent");
-  node2->add_output("X_POW");
+  FunctionNewNodeHelper(
+      node2,
+      "Pow_1",
+      "",
+      "Caculate X^2",
+      "Pow",
+      std::vector<std::string>{"X", "Exponent"},
+      std::vector<std::string>{"X_squared"});
   NodeProto* node3 = func.add_node();
-  node3->set_name("Reduced_Mean_1");
-  node3->set_domain("");
-  node3->set_doc_string("Caculating E(X^2)");
-  node3->set_op_type("ReduceMean");
-  node3->add_input("X_POW");
-  node3->add_output("E_XPOW");
+  FunctionNewNodeHelper(
+      node3,
+      "Reduced_Mean_1",
+      "",
+      "Caculate E(X^2)",
+      "ReduceMean",
+      std::vector<std::string>{"X_squared"},
+      std::vector<std::string>{"E_Xsquared"});
   AttributeProto* attr1 = node3->add_attribute();
   attr1->set_ref_attr_name("axes");
   attr1->set_name("axes");
   attr1->set_type(AttributeProto_AttributeType_INTS);
   NodeProto* node4 = func.add_node();
-  node4->set_name("SUB_0");
-  node4->set_domain("");
-  node4->set_doc_string("Caculating variance (E(X^2)-(EX)^2)");
-  node4->set_op_type("Sub");
-  node4->add_input("EX_POW");
-  node4->add_input("E_XPOW");
-  node4->add_output("VAR");
+  FunctionNewNodeHelper(
+      node4,
+      "SUB_0",
+      "",
+      "Caculate variance (E(X^2)-(EX)^2)",
+      "Sub",
+      std::vector<std::string>{"EX_squared", "E_Xsquared"},
+      std::vector<std::string>{"Variance"});
   NodeProto* node5 = func.add_node();
-  node5->set_name("SQRT_0");
-  node5->set_domain("");
-  node5->set_doc_string("Caculating standard variance from variance");
-  node5->set_op_type("Sqrt");
-  node5->add_input("VAR");
-  node5->add_output("STD_VAR");
+  FunctionNewNodeHelper(
+      node5,
+      "SQRT_0",
+      "",
+      "Caculate standard variance from variance",
+      "Sqrt",
+      std::vector<std::string>{"Variance"},
+      std::vector<std::string>{"STD"});
   NodeProto* node6 = func.add_node();
-  node6->set_name("SUB_1");
-  node6->set_domain("");
-  node6->set_doc_string("Caculating X-EX");
-  node6->set_op_type("Sub");
-  node6->add_input("X");
-  node6->add_input("X_RM");
-  node6->add_output("X_VAR");
+  FunctionNewNodeHelper(
+      node6,
+      "SUB_1",
+      "",
+      "Caculate X-EX",
+      "Sub",
+      std::vector<std::string>{"X", "X_RM"},
+      std::vector<std::string>{"X_variance"});
   NodeProto* node7 = func.add_node();
-  node7->set_name("DIV_0");
-  node7->set_domain("");
-  node7->set_doc_string("Caculating MVN-ed tensor for output");
-  node7->set_op_type("Div");
-  node7->add_input("X_VAR");
-  node7->add_input("STD_VAR");
-  node7->add_output("X_MVN");
+  FunctionNewNodeHelper(
+      node7,
+      "DIV_0",
+      "",
+      "Caculate MVN-ed tensor for output",
+      "Div",
+      std::vector<std::string>{"X_variance", "STD"},
+      std::vector<std::string>{"X_MVN"});
 
   return Status::OK();
 }
