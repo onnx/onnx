@@ -6,12 +6,13 @@
 #include "onnx/proto_utils.h"
 #include "onnx/defs/schema.h"
 #include <utility>
+#include "onnx/common/graph_node_list.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct VersionConverter {
   VersionConverter() {
-    // TODO: Should we use a similar registration structure to ops and optimizers for adapters?
+    // TODO: Register adapters to the version converter
   }
 
   virtual ~Converter() = default;
@@ -37,17 +38,29 @@ struct VersionConverter {
       return mp_in;
     }
 
-    // TODO: Get initial model version
-    int initial_version;
+    // Create map of different op schema from OpName_Domain_Version_Schema_Map
+    opset_version_map = std::unordered_map<
+      OperatorSetVersion,
+      std::unordered_map<std::string, OpSchema>>;
+
+    // Get initial model version
+    int initial_version = g.opset_version;
 
     if (initial_version == target_version) {
       return mp_in;
     }
 
+    // Compile list of all ops used in the model
+    graph_node_list nodes = g.nodes();
+
     // Iterate over all versions to target_version
     int curr_version = initial_version;
     while (curr_version != target_version) {
-
+      // TODO: Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
+      for (Node& op : nodes) {
+      //   TODO: Replace node in graph
+      }
+      // TODO: Updated model version
       if (target_version > initial_version) {
         curr_version++;
       } else {
