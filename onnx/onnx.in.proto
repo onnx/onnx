@@ -543,10 +543,10 @@ message TypeProto {
   }; 
 
   message Record { 
-      // Domain with empty string means the model's domain. 
-      optional string domain = 1; 
-      // The name is required for this version of the IR.
-      optional string name = 2; 
+    // Domain with empty string means the model's domain. 
+    optional string domain = 1; 
+    // The name is required for this version of the IR.
+    optional string name = 2; 
     // The name and type of each field is described by a ValueInfoProto. 
     // The field names must be unique. 
     // This field MUST be present for this version of the IR. 

@@ -280,27 +280,29 @@ __Note__: ONNX-ML will likely introduce the ability to define custom operators t
 
 For some operators, it is necessary to define the respective types of some of their outputs using attributes. 
 
-Such attributes __MUST__ be encoded as strings using the following grammar:
+Such attributes __MUST__ be encoded as strings using the following grammar.
 
 ```
 <type> ::= <data_type> |
-           tensor(<data_type>) |
-           sparse(<data_type>) |
-           seq(<type>) |
-           map(<data_type> , <type>) |
-           record(<name> , <domain> , <name_type_list>) |
-           nullable(<type>) |
-           opaque() | opaque(<name> , <domain>)
-<name_type_list> ::= <name> : <type> { , <name_type_list>}
+           tensor ( <data_type> ) |
+           sparse ( <data_type> ) |
+           seq ( <type> ) |
+           map ( <data_type> , <type> ) |
+           record ( <name> , <domain> , <name_type_list> ) |
+           nullable ( <type> ) |
+           opaque ( ) | opaque ( <name> , <domain> )
+<name_type_list> ::= <name> : <type> |
+                     <name> : <type> , <name_type_list>
 <data_type> ::= float | double | float16 |
                 complex64 | complex128 |
                 uint8 | uint16 | uint32 | uint64 |
                 int8  | int16  | int32  | int64  |
-                string | bool | unknown
+                string | bool | undefined
 <name> ::= <<Valid C identifier>>
-<domain> ::== <name> { . <domain>}
+<domain> ::== <name> | 
+              <name> . <domain>
 ```
-__Note__: Type attributes should be free of whitespace. Any whitespace characters found in the grammar productions are meant for grammar legibility only. 
+__Note__: Type attributes should be free of whitespace. Any whitespace characters found in the grammar are only meant to improve its clarity. 
 
 For such operators in the standard ONNX namespace, type attributes __MUST__ only denote tensor types.
 
@@ -325,7 +327,7 @@ Each node referring to an operator with optional outputs __MUST__ provide a name
 
 There are two official ONNX variants; the main distinction between the two is found in the supported types and the supported operators.
 
-With respect to supported types, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension. __ONNX-ML__, also recognizes sequences and maps.
+With respect to supported types, the __ONNX__ definition recognizes only tensors as input and output types, while the Classical Machine Learning extension. __ONNX-ML__ recognizes an extended set of types.
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
@@ -337,7 +339,7 @@ Primitive numeric, string, and Boolean types __MUST__ be used as elements of ten
 |---|---|---|
 Floating Point Types|float16, float32, float64|Values adhering to the IEEE 754-2008 standard representation of floating-point data.
 Signed Integer Types|int8, int16, int32, int64|Signed integers are supported for 8-64 bit widths.
-Unsigned Integer Types|uint8, uint16|Unsigned integers of 8 or 16 bits are supported.
+Unsigned Integer Types|uint8, uint16, uint32, uint64|Unsigned integers of 8-64 bits are supported.
 Complex Types|complex64, complex128|A complex number with either 32- or 64-bit real and imaginary parts.
 Other|string|Strings represent textual data. All strings are encoded using UTF-8.
 Other|bool|Boolean value represent data with only two values, typically true and false.
