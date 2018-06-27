@@ -532,6 +532,9 @@ message TypeProto {
     // The type and optional shape of each element of the sequence. 
     // This field MUST be present for this version of the IR. 
     optional TypeProto elem_type = 1; 
+    // Sequences may be of known or unknown length. If known, the length is
+    // specified using the same means as a tensor dimension.
+    optional TensorShapeProto.Dimension length = 2;
   }; 
 
   message Tuple { 

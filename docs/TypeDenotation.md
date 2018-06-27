@@ -35,8 +35,6 @@ Specifically, in our first proposal we define the following set of standard deno
 
 Model authors SHOULD add type denotation to inputs and outputs for the model as appropriate.
 
-When intended as having nominal semantics, record types should use the denotation property to specify the name of the record type.
-
 ## An Example with input IMAGE
 
 Let's use the same SqueezeNet example from above and show everything to properly annotate the model:

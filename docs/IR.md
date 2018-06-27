@@ -11,7 +11,7 @@ A [tool](../onnx/checker.py) is available to perform general validation of model
 
 __Notes on language in this and all related documents__:
 
-1. The use of SHOULD, MUST, MAY and so on in this document is consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
+1. The use of __SHOULD__, __MUST__, __MAY__ and so on in this document is consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 2. The use of 'list' shall denote an ordered collection of items, 'set' shall denote an unordered collection of unique elements, and 'bag' an unordered collection of possibly non-unique elements.
 
@@ -41,7 +41,7 @@ Nothing in this specification should be construed as advocating one implementati
 
 Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Futhermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
-Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
+Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers __MUST__ be non-zero.
 
 The IR specification uses simple monotonically increasing numbers for its versions. The valid IR versions is defined by an enumeration, which currently has the following values:
 ```
@@ -65,7 +65,7 @@ More details on conventions and best practices for versioning of IR, operator se
 
 ONNX specifies the portable, serialized format of a computation graph. It does not have to be the form a framework chooses to use and manipulate the computation internally. For example, an implementation may represent the model differently in memory if it is more efficient to manipulate during optimization passes.
 
-An implementation MAY extend ONNX is by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support. The mechanism for this is adding operator sets to the opset_import property in a model that depends on the extension operators.
+An implementation __MAY__ extend ONNX is by adding operators expressing semantics beyond the standard set of operators that all implementations __MUST__ support. The mechanism for this is adding operator sets to the opset_import property in a model that depends on the extension operators.
 
 ### Models
 
@@ -88,7 +88,7 @@ Depending on the ONNX variant, each model has the following components:
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|ONNX|
 |type_aliases|TypeAlias|A sequence of aliased types, usable throughout the document.|ONNX-ML|
 
- Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
+ Models __MUST__ specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
  
 
 ### Optional Metadata
@@ -103,7 +103,7 @@ model_license|string|Name or URL.|The well-known name or URL of the license unde
 
 ### Operator Sets
 
-Each model MUST explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
+Each model __MUST__ explicitly name the operator sets that it relies on for its functionality. Operator sets define the available operators, their version, and their status. Each model defines the imported operator sets by their domains. All models implicitly import the default ONNX operator set.
 
 Each operator set SHALL be defined in a separate document, also using protobuf as the serialization format. How operator set documents are found at runtime is implementation-dependent.
 
@@ -124,24 +124,24 @@ operator|Operator[]|The operators of this operator set.
 
 The operator set version is a simple integer value that is monotonically increased as new versions of the operator set are published.
 
-Operator sets other than the default operator set MUST specify its domain and SHOULD use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
+Operator sets other than the default operator set __MUST__ specify its domain and __SHOULD__ use reverse domain names based on the responsible organization's identity, the same convention that is used for [naming Java packages](https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html).
 
 ### Operators
 
-Each operator used within a graph MUST be explicitly declared by one of the operator sets imported by the model.
+Each operator used within a graph __MUST__ be explicitly declared by one of the operator sets imported by the model.
 
 The properties of an operator definition are:
 
 Name|Type|Description
 |---|---|---|
-op_type|string|The name of the operator, as used in graph nodes. MUST be unique within the operator set’s domain.
+op_type|string|The name of the operator, as used in graph nodes. __MUST__ be unique within the operator set’s domain.
 since_version|int64|The version of the operator set when this operator was introduced.
 status|OperatorStatus|One of ‘EXPERIMENTAL’ or ‘STABLE.’
 doc_string|string|A human-readable documentation string for this operator. Markdown is allowed.
 
-The version value MUST be the same value as the operator set version when the operator was first published. Subsequent versions of the operator set MUST NOT alter the signature or semantics of the operator once published as STABLE.
+The version value __MUST__ be the same value as the operator set version when the operator was first published. Subsequent versions of the operator set __MUST NOT__ alter the signature or semantics of the operator once published as STABLE.
 
-The ‘status’ property indicates whether the syntax, semantics, or presence of the operator is in an experimental or stable stage. Once an operator is published as STABLE, it’s syntax and semantics MUST NOT change in subsequent versions of the operator set.
+The ‘status’ property indicates whether the syntax, semantics, or presence of the operator is in an experimental or stable stage. Once an operator is published as STABLE, it’s syntax and semantics __MUST NOT__ change in subsequent versions of the operator set.
 
 There are two distinct ways to pass information to operators – inputs and attributes. The latter are used for values that are constants in the graph, while the former represent graph inputs or values computed elsewhere in the graph. This distinction may be highly relevant to achieving good performance for some implementations, while completely irrelevant to others.
 
@@ -149,13 +149,13 @@ There are two distinct ways to pass information to operators – inputs and attr
 
 Functions are named sub-graphs and declared within the definition of an operator set. From the perspective of a node reference, the function and operator namespaces overlap.
 
-Function bodies are evaluated at the point where they are referenced by a node in an ONNX graph. The attributes, inputs, and outputs of functions are generally untyped at the point of declaration and bound to values when referenced in a graph node. Attributes of functions MUST be used only as attributes in nodes within the functoin, using the 'ref_attr_name' attribute property. Type constraints MAY be placed on values inside the function graph by adding records to a function's 'value_info' collection.
+Function bodies are evaluated at the point where they are referenced by a node in an ONNX graph. The attributes, inputs, and outputs of functions are generally untyped at the point of declaration and bound to values when referenced in a graph node. Attributes of functions __MUST__ be used only as attributes in nodes within the function, using the 'ref_attr_name' attribute property. Type constraints __MAY__ be placed on values inside the function graph by adding records to a function's 'value_info' collection.
 
 ### Graphs
 
 A serialized graph is comprised of a set of metadata fields, a list of model parameters, and a list of computation nodes.
 
-Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which MUST be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
+Each computation dataflow graph is structured as a topologically sorted list of nodes that form a graph, which __MUST__ be free of cycles. Each node represents a call to an operator. Each node has zero or more inputs and one or more outputs.
 
 Graphs have the following properties:
 
@@ -169,7 +169,7 @@ input|ValueInfo[]|The input “parameters” of the graph, possibly initialized 
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
 value_info|ValueInfo|Used to store the type and shape information of values that are not inputs or outputs.
 
-Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
+Each graph __MUST__ define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
 Name|Type|Description
 |---|---|---|
@@ -177,17 +177,17 @@ name|string|The name of the value/parameter.
 type|Type|The type of the value.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
-Each graph MUST specify a name.
+Each graph __MUST__ specify a name.
 
-The graph MUST adhere to single static assignment (SSA) for all node outputs; this means that all node output names MUST be unique within a graph.
+The graph __MUST__ adhere to single static assignment (SSA) for all node outputs; this means that all node output names __MUST__ be unique within a graph.
 
-Graphs SHOULD be populated with documentation strings, which MAY be interpreted using GitHub-style markdown syntax. HTML and other text-markup languages MAY NOT be used in documentation strings.
+Graphs __SHOULD__ be populated with documentation strings, which __MAY__ be interpreted using GitHub-style markdown syntax. HTML and other text-markup language __MUST NOT__ be used in documentation strings.
 
 ### Names Within a Graph
 
-All names MUST adhere to C identifier syntax rules.
+All names __MUST__ adhere to C identifier syntax. That syntax is available in the C standard and multiple online locations. In the interest of not inadvertently introducing errors, the identifier grammar is __not__ included in this specification.
 
-Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. 
+Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name __MUST__ be unique for each given graph. 
 
 The namespaces are:
 
@@ -199,7 +199,7 @@ Namespace|Description
 |Graph|The names of graphs within a domain, unique within the model domain.|
 |Operator|The names of operators within a domain.|
 |Shape|The names of tensor shape variables – scoped to the value information records of a graph, which is where shape variables occur.|
-|TypeAlias|The aliases of types declared within an ONNX-ML document.|
+|TypeAlias|The aliases of types declared within the 'type_aliases' section of an ONNX-ML document.|
 
 
 ### Nodes
@@ -222,15 +222,15 @@ doc_string|string|A human-readable documentation for this value. Markdown is all
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node.
+The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs __MAY__ refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node.
 
-The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph.
+The graph __MUST__ use single static assignment for all node outputs, which means that all node output names __MUST__ be unique within a graph.
 
-Node dependencies MUST NOT create cycles in the computation graph.
+Node dependencies __MUST NOT__ create cycles in the computation graph.
 
-The number of inputs and outputs in a node, their types, the set of attributes specified in a node and their types MUST satisfy the constraints imposed by the signature of the node’s operator.
+The number of inputs and outputs in a node, their types, the set of attributes specified in a node and their types __MUST__ satisfy the constraints imposed by the signature of the node’s operator.
 
-The list of nodes defining the top-level computation graph MUST be ordered topologically; that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
+The list of nodes defining the top-level computation graph __MUST__ be ordered topologically; that is, if node K follows node N in the graph, none of the data inputs of N may refer to outputs of K.
 
 Node attributes are used to pass literal (static) values to operators.
 
@@ -271,27 +271,54 @@ Name|Type|Description|Spec Variant|
 |records|Record[]|A list of record values|ONNX-ML|
 |nullables|Nullable[]|A list of nullable values|ONNX-ML|
 |sparses|SparseTensor[]|A list of sparse tensors|ONNX-ML|
-|types|TypeProto[]|A list of types|ONNX-ML|
 
-The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ SHOULD be used on all attributes. An attribute MUST have only one of the value-carrying properties.
+The properties ‘name’ and ‘type’ are required on all attributes, and ‘doc_string’ __SHOULD__ be used on all attributes. An attribute __MUST__ have only one of the value-carrying properties.
 
 __Note__: ONNX-ML will likely introduce the ability to define custom operators that are higher-order, i.e. accept one or more graphs as  attributes. In order to statically represent the expected signature of such higher-order custom operators, we will likely have to introduce the notion of a function signature into the attribute type system.
 
+#### Type Attributes
+
+For some operators, it is necessary to define the respective types of some of their outputs using attributes. 
+
+Such attributes __MUST__ be encoded as strings using the following grammar:
+
+```
+<type> ::= <data_type> |
+           tensor(<data_type>) |
+           sparse(<data_type>) |
+           seq(<type>) |
+           map(<data_type> , <type>) |
+           record(<name> , <domain> , <name_type_list>) |
+           nullable(<type>) |
+           opaque() | opaque(<name> , <domain>)
+<name_type_list> ::= <name> : <type> { , <name_type_list>}
+<data_type> ::= float | double | float16 |
+                complex64 | complex128 |
+                uint8 | uint16 | uint32 | uint64 |
+                int8  | int16  | int32  | int64  |
+                string | bool | unknown
+<name> ::= <<Valid C identifier>>
+<domain> ::== <name> { . <domain>}
+```
+__Note__: Type attributes should be free of whitespace. Any whitespace characters found in the grammar productions are meant for grammar legibility only. 
+
+For such operators in the standard ONNX namespace, type attributes __MUST__ only denote tensor types.
+
 #### Variadic Inputs and Outputs
  
-The last input or output of an operator MAY be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
+The last input or output of an operator __MAY__ be marked as variadic. For example, the operator 'Max()' can be used to compute the maximum of a varying number of input values.
 
 For each variadic operator input, one or more node inputs must be specified. For each variadic operator output, one or more node outputs must be specified. 
 
 #### Optional Inputs and Outputs
 
-Some operators have inputs that are marked as optional, which means that a referring node MAY forgo providing values for such inputs.
+Some operators have inputs that are marked as optional, which means that a referring node __MAY__ forgo providing values for such inputs.
 
-Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation MAY forgo computing values for such outputs. 
+Some operators have outputs that are optional. When an actual output parameter of an operator is not specified, the operator implementation __MAY__ forgo computing values for such outputs. 
 
 There are two ways to leave an optional input or output unspecified: the first, available only for trailing inputs and outputs, is to simply not provide that input; the second method is to use an empty string in place of an input or output name.
 
-Each node referring to an operator with optional outputs MUST provide a name for each output that is computed and MUST NOT provide names for outputs that are not computed.
+Each node referring to an operator with optional outputs __MUST__ provide a name for each output that is computed and __MUST NOT__ provide names for outputs that are not computed.
 
 
 ## Standard data types
@@ -302,7 +329,7 @@ With respect to supported types, the __ONNX__ definition recognizes only tensors
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
-Primitive numeric, string, and Boolean types MUST be used as elements of tensors.
+Primitive numeric, string, and Boolean types __MUST__ be used as elements of tensors.
 
 ### Tensor Element Types
 
@@ -330,9 +357,31 @@ The following types are used to define the types of graph and node inputs and ou
 |nullable|A canonical representation of missing values, for any type.|ONNX-ML|
 |opaque|A type with semantics unknown to all standard operators.<br>When present, the name and domain are significant to the type identity.<br>When absent, the type represents an opaque handle.|ONNX-ML|
 
+#### Tuples
+
+Tuples contain an ordered, fixed-size, collection of heterogeneously typed values. Each value is indexed by an integer, starting at 0 and incremented by 1. 
+
+#### Records
+
+Records contain an unordered, fixed-size, collection of heterogeneously typed values. Each slot in the collection is referred to as a "field" and is accessed by its name, a string.
+
+Records are nominal types identified by name and domain. If empty, the domain of a record type is derived from the domain of the model in which it is found. 
+
+Records of the same name and domain __MUST__ have the same fields and field types, declared in the same order.
+
+#### Nullable
+
+Nullable is a canonical representation of missing values. Its only property is the base type for which it represents missing values.
+
+#### Opaque
+
+Opaque represents types which are entirely outside the ONNX standard type system. It is an explicit type system extension point. Only custom operators have knowledge of their semantics.
+
+If present, the name and domain values are part of the type identity. If absent, Opaque represents the abstraction of a union of all types.
+
 ### Type Denotations
 
-Any type proto may have a specific denotation. When present, the denotation becomes part of the type identity, that is, any type with a type denotation should be considered a nominal type.
+Any type proto may have a specific denotation. Denotations are useful as metadata for tooling associated with ONNX, bu are not considered a part of the formal type.
 
 There are a number of predefined ONNX denotations, the semantics of which are informally described in [Type Denotation](TypeDenotation.md). 
 
@@ -364,11 +413,11 @@ Which is referenced by the Tensor type message:
 
 The empty list of dimension sizes, [], is a valid tensor shape, denoting a zero-dimension (scalar) value. A zero-dimension tensor is distinct from a tensor of unknown dimensionality, which is indicated by an absent 'shape' property in the Tensor record. When the shape property is absent for an input, a tensor value of any shape may be passed from the caller. When the shape property is absent for an output, the caller should expect that the output value may be of any shape.
 
-Each size in the list MUST be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
+Each size in the list __MUST__ be expressed as an integral value or as a "dimension variable," a string denoting that the actual size of the dimension is not statically constrained to a particular number. This is useful for declaring interfaces that care about the number of dimensions, but not the exact size of each dimension. 
 
 For example, a NxM matrix would have the shape list [N,M].
 
-The name of each dimension variable MUST adhere to C identifier syntax.
+The name of each dimension variable __MUST__ adhere to C identifier syntax.
 
 Dimension variables are scoped to the declaration that they appear in. For graph inputs and outputs, the graph itself is the declaration. Consequently, any name that is repeated denotes the same value within a declaration, allowing a declaration to describe how the shapes of inputs and outputs are related. Dimension variables appearing in a graph's 'value_info' record are scoped to each value, allowing each value to have its shape defined independently. 
 
@@ -376,7 +425,7 @@ For example, a graph that performs matrix cross-product may be defined as taking
 
 The emptry string "", when used as a dimension name, denotes a single dimension of any cardinality. The string "*", when used as a dimension name, denotes zero or more dimensions of unknown cardinality.
 
-Shapes MAY be defined using a combination of integers and variables.
+Shapes __MAY__ be defined using a combination of integers and variables.
 
 ### Attribute Types
 
