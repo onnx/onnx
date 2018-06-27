@@ -775,6 +775,9 @@ ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 friend struct Value;
 
+public:
+  int opset_version;
+
 private:
   // only used to keep track of allocated nodes
   // actual representation of Graph is done with
