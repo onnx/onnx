@@ -550,7 +550,7 @@ message TypeProto {
     // The name and type of each field is described by a ValueInfoProto. 
     // The field names must be unique. 
     // This field MUST be present for this version of the IR. 
-    repeated ValueInfoProto fields = 1; 
+    repeated ValueInfoProto fields = 3; 
   }; 
 
   message Opaque { 
