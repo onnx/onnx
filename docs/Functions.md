@@ -46,7 +46,7 @@ This version of the function has been available since version 8 of the default O
 <dd>Output(s):</dd><dd> X_squared;</dd><br/>
 <dd><b>Reduced_Mean_1: </b></dd><br/><dd>Caculate E(X^2)</dd><br/><dd><b><i>Type: </i></b>ReduceMean</dd><br/><dd>Input(s):</dd><dd> X_squared;</dd><br/>
 <dd>Output(s):</dd><dd> E_Xsquared;</dd><br/>
-<dd><b>SUB_0: </b></dd><br/><dd>Caculate variance (E(X^2)-(EX)^2)</dd><br/><dd><b><i>Type: </i></b>Sub</dd><br/><dd>Input(s):</dd><dd> EX_squared;</dd><dd> E_Xsquared;</dd><br/>
+<dd><b>SUB_0: </b></dd><br/><dd>Caculate variance (E(X^2)-(EX)^2)</dd><br/><dd><b><i>Type: </i></b>Sub</dd><br/><dd>Input(s):</dd><dd> E_Xsquared;</dd><dd> EX_squared;</dd><br/>
 <dd>Output(s):</dd><dd> Variance;</dd><br/>
 <dd><b>SQRT_0: </b></dd><br/><dd>Caculate standard variance from variance</dd><br/><dd><b><i>Type: </i></b>Sqrt</dd><br/><dd>Input(s):</dd><dd> Variance;</dd><br/>
 <dd>Output(s):</dd><dd> STD;</dd><br/>
