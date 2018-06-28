@@ -14,7 +14,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
 
   func_proto->reset(new FunctionProto);
   auto& func = **func_proto;
-  func.set_name("MeanVarianceNormalization");
+  func.set_name("FuncMeanVarianceNormalization");
   func.set_doc_string(
       "A MeanVarianceNormalization Function: Perform mean variance normalization "
       "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>"
@@ -96,7 +96,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "",
       "Caculate variance (E(X^2)-(EX)^2)",
       "Sub",
-      std::vector<std::string>{"EX_squared", "E_Xsquared"},
+      std::vector<std::string>{"E_Xsquared", "EX_squared"},
       std::vector<std::string>{"Variance"});
   NodeProto* node5 = func.add_node();
   FunctionNewNodeHelper(
