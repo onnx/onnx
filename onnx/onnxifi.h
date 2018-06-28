@@ -188,7 +188,9 @@ typedef uint64_t onnxPointer;
  * so this capability requires ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS support.
  *
  * For outputs with data-dependent shapes the shape specified in onnxSetGraphIO
- * call is interpreted as the upper limit.
+ * call is interpreted as the upper limit. The exact numerical shape of the
+ * output can be retrieved by attaching a Shape operator to the tensor with
+ * data-dependent shape and reading its output through ONNXIFI.
  */
 #define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x04
 /**
