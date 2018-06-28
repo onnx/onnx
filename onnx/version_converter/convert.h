@@ -18,7 +18,6 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
   ONNX_NAMESPACE::ModelProto convert_version(
       const ONNX_NAMESPACE::ModelProto& mp_in,
-      const OpSetID initial_version,
       const OpSetID target_version) {
     std::shared_ptr<ONNX_NAMESPACE::Graph> g(ONNX_NAMESPACE::ImportModelProto(mp_in));
 
@@ -160,5 +159,5 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
-    const int target_version);
+    const OperatorSetVersion target_version);
 }}
