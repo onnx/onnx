@@ -89,7 +89,7 @@ You can also build and install ONNX locally from source code:
 ```
 git clone https://github.com/onnx/onnx.git
 cd onnx
-git submodule update --init
+git submodule update --init --recursive
 python setup.py install
 ```
 
