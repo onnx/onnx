@@ -18,6 +18,7 @@ class MVN(Base):
             'FuncMeanVarianceNormalization',
             inputs=['X'],
             outputs=['Y'],
+            axes=[0, 2, 3]
         )
 
         x = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
