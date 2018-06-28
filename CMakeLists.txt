@@ -462,6 +462,29 @@ endif()
 target_include_directories(onnxifi_loader PUBLIC onnx)
 target_include_directories(onnxifi_loader PUBLIC ${ONNX_ROOT})
 
+# ---[ ONNXIFI wrapper
+add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
+set_target_properties(onnxifi_wrapper PROPERTIES
+  C_STANDARD 99
+  C_EXTENSIONS NO
+  OUTPUT_NAME "onnxifi"
+  POSITION_INDEPENDENT_CODE YES)
+target_link_libraries(onnxifi_wrapper PRIVATE onnxifi_loader onnxifi)
+if(DEFINED ONNXIFI_SEARCH_DIR)
+  target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_SEARCH_DIR=\"${ONNXIFI_SEARCH_DIR}\"")
+endif()
+if(WIN32)
+  if(MSVC)
+    target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__declspec(dllexport)")
+  else()
+    target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__attribute__((__dllexport__))")
+  endif()
+endif()
+if(APPLE)
+  # By default CMake would use .so suffix on Mac
+  set_target_properties(onnxifi_wrapper PROPERTIES SUFFIX ".dylib")
+endif()
+
 # ---[ ONNXIFI dummy backend
 add_library(onnxifi_dummy SHARED onnx/onnxifi_dummy.c)
 target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
