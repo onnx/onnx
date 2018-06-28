@@ -104,7 +104,7 @@ FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
   return func_builder_registry;
 }
 
-Common::Status FunctionNewNodeHelper(
+Common::Status BuildNode(
     NodeProto* node,
     const std::string& name,
     const std::string& domain,

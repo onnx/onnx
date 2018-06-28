@@ -28,7 +28,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   func.add_output("X_MVN");
   func.add_attribute("axes");
   NodeProto* initial_node0 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       initial_node0,
       "Pow_exponent_0",
       "",
@@ -46,7 +46,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   tensor_proto->add_float_data(2.0); // [2.0]
   initial_node0->add_output("Exponent");
   NodeProto* node0 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node0,
       "Reduced_Mean_0",
       "",
@@ -59,7 +59,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   attr0->set_name("axes");
   attr0->set_type(AttributeProto_AttributeType_INTS);
   NodeProto* node1 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node1,
       "Pow_0",
       "",
@@ -68,7 +68,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"X_RM", "Exponent"},
       std::vector<std::string>{"EX_squared"});
   NodeProto* node2 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node2,
       "Pow_1",
       "",
@@ -77,7 +77,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"X", "Exponent"},
       std::vector<std::string>{"X_squared"});
   NodeProto* node3 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node3,
       "Reduced_Mean_1",
       "",
@@ -90,7 +90,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   attr1->set_name("axes");
   attr1->set_type(AttributeProto_AttributeType_INTS);
   NodeProto* node4 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node4,
       "SUB_0",
       "",
@@ -99,7 +99,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"E_Xsquared", "EX_squared"},
       std::vector<std::string>{"Variance"});
   NodeProto* node5 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node5,
       "SQRT_0",
       "",
@@ -108,7 +108,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"Variance"},
       std::vector<std::string>{"STD"});
   NodeProto* node6 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node6,
       "SUB_1",
       "",
@@ -117,7 +117,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"X", "X_RM"},
       std::vector<std::string>{"X_variance"});
   NodeProto* node7 = func.add_node();
-  FunctionNewNodeHelper(
+  BuildNode(
       node7,
       "DIV_0",
       "",

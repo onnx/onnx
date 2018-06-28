@@ -60,7 +60,7 @@ class FunctionBuilderRegistry {
 // Helper function for register nodes in
 // a FunctionProto. Attributes need to be
 // registered separately.
-Common::Status FunctionNewNodeHelper(
+Common::Status BuildNode(
     NodeProto* node,
     const std::string& name,
     const std::string& domain,
