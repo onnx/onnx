@@ -1,7 +1,7 @@
 #ifndef ONNXIFI_LOADER_H
 #define ONNXIFI_LOADER_H 1
 
-#include "onnxifi.h"
+#include "onnx/onnxifi.h"
 
 #define ONNXIFI_LOADER_FUNCTION_COUNT 14
 
