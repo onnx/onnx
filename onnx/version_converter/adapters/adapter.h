@@ -19,10 +19,11 @@ struct Adapter {
   virtual ~Adapter() noexcept = 0;
 
   std::string name;
-  API_TYPE type;
+  OpSetID initial_version;
+  OpSetID target_version;
 
-  explicit Adapter(std::string name, API_TYPE type)
-    : name(std::move(name)), type(type) {
+  explicit Adapter(std::string name, OpSetID initial_version, OpSetID target_version)
+    : name(std::move(name)), initial_version(initial_version), target_version(target_version) {
   }
 
   virtual void adapt(ONNX_NAMESPACE::ModelProto& /*mp*/) {}

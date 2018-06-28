@@ -770,13 +770,18 @@ protected:
   }
 };
 
+struct OpSetID {
+  std::string domain;
+  int64_t version;
+};
+
 struct Graph final {
 ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 friend struct Value;
 
 public:
-  int opset_version;
+  OpSetID opset_version;
 
 private:
   // only used to keep track of allocated nodes
