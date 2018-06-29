@@ -26,8 +26,6 @@ struct Adapter {
     : name(std::move(name)), initial_version(initial_version), target_version(target_version) {
   }
 
-  virtual void adapt(ONNX_NAMESPACE::ModelProto& /*mp*/) {}
-
   virtual void adapt(Graph& /*graph*/) {}
 };
 

@@ -11,11 +11,20 @@
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct VersionConverter {
+  // Schema for adapters: {op_name: {from_version: {to_version: adapter}}}
+  std::map<std::string, std::map<OperatorSetVersion, std::map<OperatorSetVersion,
+    std::unique_ptr<Adapter>>>> adapters;
+
   VersionConverter() {
     // TODO: Register adapters to the version converter
+    // TODO: Ensure that keys in map are of format "Domain/op_name"
   }
 
   virtual ~Converter() = default;
+
+  ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
+      const OperatorSetVersion initial_version,
+      const OperatorSetVersion target_verion);
 
   ONNX_NAMESPACE::ModelProto convert_version(
       const ONNX_NAMESPACE::ModelProto& mp_in,
@@ -75,16 +84,20 @@ struct VersionConverter {
       next_version = curr_version - 1;
     }
     while (curr_version != target_version.version) {
-      // TODO: Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
-      // TODO: Use optimize procedure of ExportModelProto(&mp_out, g), adapter->adapt(mp_out), ImportModelProto(mp_out)
-      //  This is because we always process ModelProtos, rather than separate IRs (though we operate on the IR)
+      // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
       for (Node& op : nodes) {
-        if (current_opschemas[*op].SinceVersion() == curr_version) {
+        if (ONNX_NAMESPACE::OpName_Domain_Version_Schema_Map[*(op->name())][domain].contains(curr_version)) {
           // Op is specifically defined for this version
-          if (target_version.version > initial_version.version) {
-            // Need to adapt down
+          ONNX_NAMESPACE::Adapter op_adapter = adapter_lookup(*(op->name()), curr_version, next_version);
+          // If adapter_lookup returns null, no adapter is present.  Error out
+          if (op_adapter == NULL) {
+            // TODO: Verify that conversion is actually needed (that the operator
+            // isn't already optimal, which should be caught by the above condition)
+            std::cerr << "No adapter is present for " << *(op->name())
+              << " in domain " << domain << ". Please implement one and try again." << std::endl;
+            return mp_in;
           } else {
-            // Need to adapt up
+            op_adapter->adapt(*g);
           }
         }
       //   TODO: Replace node in graph
@@ -98,6 +111,13 @@ struct VersionConverter {
         next_version--;
       }
     }
+    // TODO: Export g as ModelProto (use PrepareOutput from Optimize)
+  }
+
+  template<class Converter, class... Args> void registerAdapter(Args&& ...args) {
+    auto adapter = make_unique<Converter>(std::forward<Args>(args)...);
+    adapters[adapter->initial_version][adapter->target_version][adapter->name]
+      = std::move(adapter);
   }
 };
 
