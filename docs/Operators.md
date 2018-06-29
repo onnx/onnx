@@ -481,61 +481,22 @@ This version of the operator has been available since version 1 of the default O
 <summary>default_axes_keepdims</summary>
 
 ```python
-shape = [3, 2, 2]
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
 keepdims = 1
-
 node = onnx.helper.make_node(
     'ArgMax',
     inputs=['data'],
-    outputs=['reduced'],
+    outputs=['result'],
     keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
-reduced = arg_max_use_numpy(data, keepdims=keepdims)
-#print(reduced)
-#[[[1.]]]
+# result: [[1], [1]]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
 
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_max_default_axes_keepdims_example')
-
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = arg_max_use_numpy(data, keepdims=keepdims)
-
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_max_default_axes_keepdims_random')
-```
-
-</details>
-
-
-<details>
-<summary>do_not_keepdims</summary>
-
-```python
-shape = [3, 2, 2]
-axis = 1
-keepdims = 0
-
-node = onnx.helper.make_node(
-    'ArgMax',
-    inputs=['data'],
-    outputs=['reduced'],
-    axis=axis,
-    keepdims=keepdims)
-
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
-reduced = arg_max_use_numpy(data, axis=axis, keepdims=keepdims)
-#print(reduced)
-#[[1 1]
-# [1 1]
-# [1 1]]
-
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_max_do_not_keepdims_example')
-
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = arg_max_use_numpy(data, axis=axis, keepdims=keepdims)
-
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_max_do_not_keepdims_random')
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
 ```
 
 </details>
@@ -545,31 +506,49 @@ expect(node, inputs=[data], outputs=[reduced], name='test_arg_max_do_not_keepdim
 <summary>keepdims</summary>
 
 ```python
-shape = [3, 2, 2]
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
 axis = 1
 keepdims = 1
-
 node = onnx.helper.make_node(
     'ArgMax',
     inputs=['data'],
-    outputs=['reduced'],
+    outputs=['result'],
     axis=axis,
     keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example')
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
-reduced = arg_max_use_numpy(data, axis=axis, keepdims=keepdims)
-#print(reduced)
-#[[[1 1]]
-# [[1 1]]
-# [[1 1]]]
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random')
+```
 
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_max_keepdims_example')
+</details>
 
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = arg_max_use_numpy(data, axis=axis, keepdims=keepdims)
 
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_max_keepdims_random')
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0, 1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random')
 ```
 
 </details>
@@ -623,61 +602,22 @@ This version of the operator has been available since version 1 of the default O
 <summary>default_axes_keepdims</summary>
 
 ```python
-shape = [3, 2, 2]
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
 keepdims = 1
-
 node = onnx.helper.make_node(
     'ArgMin',
     inputs=['data'],
-    outputs=['reduced'],
+    outputs=['result'],
     keepdims=keepdims)
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
-reduced = arg_min_use_numpy(data, keepdims=keepdims)
-#print(reduced)
-#[[[1.]]]
+# result: [[0], [0]]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
 
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_min_default_axes_keepdims_example')
-
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = arg_min_use_numpy(data, keepdims=keepdims)
-
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_min_default_axes_keepdims_random')
-```
-
-</details>
-
-
-<details>
-<summary>do_not_keepdims</summary>
-
-```python
-shape = [3, 2, 2]
-axis = 1
-keepdims = 0
-
-node = onnx.helper.make_node(
-    'ArgMin',
-    inputs=['data'],
-    outputs=['reduced'],
-    axis=axis,
-    keepdims=keepdims)
-
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
-reduced = arg_min_use_numpy(data, axis=axis, keepdims=keepdims)
-#print(reduced)
-#[[1 1]
-# [1 1]
-# [1 1]]
-
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_min_do_not_keepdims_example')
-
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = arg_min_use_numpy(data, axis=axis, keepdims=keepdims)
-
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_min_do_not_keepdims_random')
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
 ```
 
 </details>
@@ -687,31 +627,49 @@ expect(node, inputs=[data], outputs=[reduced], name='test_arg_min_do_not_keepdim
 <summary>keepdims</summary>
 
 ```python
-shape = [3, 2, 2]
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
 axis = 1
 keepdims = 1
-
 node = onnx.helper.make_node(
     'ArgMin',
     inputs=['data'],
-    outputs=['reduced'],
+    outputs=['result'],
     axis=axis,
     keepdims=keepdims)
+# result: [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
 
-data = np.array([[[5, 1], [20, 2]], [[30, 1], [40, 2]], [[55, 1], [60, 2]]], dtype=np.float32)
-reduced = arg_min_use_numpy(data, axis=axis, keepdims=keepdims)
-#print(reduced)
-#[[[1 1]]
-# [[1 1]]
-# [[1 1]]]
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
 
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_min_keepdims_example')
+</details>
 
-np.random.seed(0)
-data = np.random.uniform(-10, 10, shape).astype(np.float32)
-reduced = arg_min_use_numpy(data, axis=axis, keepdims=keepdims)
 
-expect(node, inputs=[data], outputs=[reduced], name='test_arg_min_keepdims_random')
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1, 0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
 ```
 
 </details>
