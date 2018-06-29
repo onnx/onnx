@@ -1,0 +1,28 @@
+backend-test:ß
+w
+x
+wytest"ConvTranspose*
+kernel_shape@@ *
+output_padding@@ *
+output_shape@
+@ *
+strides@@ ConvTransposeZ
+x
+
+
+
+
+Z
+w
+
+
+
+
+b
+y
+
+
+
+
+
+B
