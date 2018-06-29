@@ -208,25 +208,6 @@ def display_function(function, versions, domain=""):  # type: (FunctionProto, Li
             s += '<dt>{};<br/></dt>\n'.format(attr)
         s += '</dl>\n'
 
-    # nodes
-    s += '\n#### Nodes'
-    s += '\n\n'
-    if function.nodes:
-        s += '<dl>\n'
-        for node in function.nodes:
-            s += '<dd><b>{}: </b></dd><br/>'.format(node.name)
-            s += '<dd>{}</dd><br/>'.format(node.doc_string)
-            s += '<dd><b><i>Type: </i></b>{}</dd><br/>'.format(node.op_type)
-            s += '<dd>Input(s):</dd>'
-            for input in node.inputs:
-                s += '<dd> {};</dd>'.format(input)
-            s += '<br/>\n'
-            s += '<dd>Output(s):</dd>'
-            for output in node.outputs:
-                s += '<dd> {};</dd>'.format(output)
-            s += '<br/>\n'
-        s += '</dl>\n'
-
     return s
 
 

@@ -6,7 +6,7 @@
 ## Version 1 of domain ai.onnx (default)
 ### <a name="FuncMeanVarianceNormalization-8"></a>**FuncMeanVarianceNormalization-8**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>INPUT: X(float/float16/double) with Shape [N,C,W,H] <br/>ATTRIBUTE: <br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. Use [0,2,3] for no across channel, [0,1,2,3] for across channel caculation.<br/>&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean ops is set to true for caculation)<br/>OUTPUT: X(float/float16/double) with Shape [N,C,W,H] <br/>
+  A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><b>INPUT: </b>X(float/float16/double) with Shape [N,C,W,H] <br/><b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. Use [0,2,3] for no across channel, [0,1,2,3] for across channel caculation.<br/>&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean ops is set to true for caculation)<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with Shape [N,C,W,H] <br/>
 
 #### Version
 
@@ -28,28 +28,5 @@ This version of the function has been available since version 8 of the default O
 
 <dl>
 <dt>axes;<br/></dt>
-</dl>
-
-#### Nodes
-
-<dl>
-<dd><b>Pow_exponent_0: </b></dd><br/><dd>Initialize a Constant tensor to caculate squared products</dd><br/><dd><b><i>Type: </i></b>Constant</dd><br/><dd>Input(s):</dd><br/>
-<dd>Output(s):</dd><dd> Exponent;</dd><br/>
-<dd><b>Reduced_Mean_0: </b></dd><br/><dd>Caculate Reduced Mean on input tensor X</dd><br/><dd><b><i>Type: </i></b>ReduceMean</dd><br/><dd>Input(s):</dd><dd> X;</dd><br/>
-<dd>Output(s):</dd><dd> X_RM;</dd><br/>
-<dd><b>Pow_0: </b></dd><br/><dd>Caculate (EX)^2</dd><br/><dd><b><i>Type: </i></b>Pow</dd><br/><dd>Input(s):</dd><dd> X_RM;</dd><dd> Exponent;</dd><br/>
-<dd>Output(s):</dd><dd> EX_squared;</dd><br/>
-<dd><b>Pow_1: </b></dd><br/><dd>Caculate X^2</dd><br/><dd><b><i>Type: </i></b>Pow</dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> Exponent;</dd><br/>
-<dd>Output(s):</dd><dd> X_squared;</dd><br/>
-<dd><b>Reduced_Mean_1: </b></dd><br/><dd>Caculate E(X^2)</dd><br/><dd><b><i>Type: </i></b>ReduceMean</dd><br/><dd>Input(s):</dd><dd> X_squared;</dd><br/>
-<dd>Output(s):</dd><dd> E_Xsquared;</dd><br/>
-<dd><b>SUB_0: </b></dd><br/><dd>Caculate variance (E(X^2)-(EX)^2)</dd><br/><dd><b><i>Type: </i></b>Sub</dd><br/><dd>Input(s):</dd><dd> E_Xsquared;</dd><dd> EX_squared;</dd><br/>
-<dd>Output(s):</dd><dd> Variance;</dd><br/>
-<dd><b>SQRT_0: </b></dd><br/><dd>Caculate standard variance from variance</dd><br/><dd><b><i>Type: </i></b>Sqrt</dd><br/><dd>Input(s):</dd><dd> Variance;</dd><br/>
-<dd>Output(s):</dd><dd> STD;</dd><br/>
-<dd><b>SUB_1: </b></dd><br/><dd>Caculate X-EX</dd><br/><dd><b><i>Type: </i></b>Sub</dd><br/><dd>Input(s):</dd><dd> X;</dd><dd> X_RM;</dd><br/>
-<dd>Output(s):</dd><dd> X_variance;</dd><br/>
-<dd><b>DIV_0: </b></dd><br/><dd>Caculate MVN-ed tensor for output</dd><br/><dd><b><i>Type: </i></b>Div</dd><br/><dd>Input(s):</dd><dd> X_variance;</dd><dd> STD;</dd><br/>
-<dd>Output(s):</dd><dd> X_MVN;</dd><br/>
 </dl>
 

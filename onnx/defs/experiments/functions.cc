@@ -18,11 +18,11 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   func.set_doc_string(
       "A MeanVarianceNormalization Function: Perform mean variance normalization "
       "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>"
-      "INPUT: X(float/float16/double) with Shape [N,C,W,H] <br/>"
-      "ATTRIBUTE: <br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. "
+      "<b>INPUT: </b>X(float/float16/double) with Shape [N,C,W,H] <br/>"
+      "<b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. "
       "Use [0,2,3] for no across channel, [0,1,2,3] for across channel caculation.<br/>"
       "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean ops is set to true for caculation)<br/>"
-      "OUTPUT: X(float/float16/double) with Shape [N,C,W,H] <br/>");
+      "<b>OUTPUT: </b>X_MVN(float/float16/double) with Shape [N,C,W,H] <br/>");
   func.set_since_version(8);
   func.add_input("X");
   func.add_output("X_MVN");
