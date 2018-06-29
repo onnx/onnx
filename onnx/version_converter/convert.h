@@ -10,6 +10,8 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
+std::unordered_map<Node, OpSchema> current_opschemas;
+
 struct VersionConverter {
   // Schema for adapters: {op_name: {from_version: {to_version: adapter}}}
   std::map<std::string, std::map<OperatorSetVersion, std::map<OperatorSetVersion,
@@ -22,7 +24,7 @@ struct VersionConverter {
 
   virtual ~Converter() = default;
 
-  ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
+  ONNX_NAMESPACE::Adapter adapter_lookup(const Node op,
       const OperatorSetVersion initial_version,
       const OperatorSetVersion target_verion);
 
@@ -60,7 +62,6 @@ struct VersionConverter {
     graph_node_list nodes = g.nodes();
 
     // Use OpName_Domain_Version_Schema_Map from schema.h to generate map from IR Nodes to OpSchema (particularly for OpSetID)
-    std::unordered_map<Node, OpSchema> current_opschemas;
     for (Node& op : nodes) {
       // Iterate through all OperatorSetVersions, select highest that is leq initial_version
       OperatorSetVersion op_opset_version = 0;
@@ -88,7 +89,7 @@ struct VersionConverter {
       for (Node& op : nodes) {
         if (ONNX_NAMESPACE::OpName_Domain_Version_Schema_Map[*(op->name())][domain].contains(curr_version)) {
           // Op is specifically defined for this version
-          ONNX_NAMESPACE::Adapter op_adapter = adapter_lookup(*(op->name()), curr_version, next_version);
+          ONNX_NAMESPACE::Adapter op_adapter = adapter_lookup(*op, curr_version, next_version);
           // If adapter_lookup returns null, no adapter is present.  Error out
           if (op_adapter == NULL) {
             // TODO: Verify that conversion is actually needed (that the operator
