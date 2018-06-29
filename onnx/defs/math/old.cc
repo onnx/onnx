@@ -938,4 +938,81 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ctx.getInputType(2)->tensor_type().shape();
           }
         }));
+
+static const char* Max_ver6_doc = R"DOC(
+Element-wise max of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Max,
+    6,
+    OpSchema()
+        .SetDoc(Max_ver6_doc)
+        .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
+        .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Min_ver6_doc = R"DOC(
+Element-wise min of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Min,
+    6,
+    OpSchema()
+        .SetDoc(Min_ver6_doc)
+        .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
+        .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Sum_ver6_doc = R"DOC(
+Element-wise sum of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sum,
+    6,
+    OpSchema()
+        .SetDoc(Sum_ver6_doc)
+        .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
+        .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Mean_ver6_doc = R"DOC(
+Element-wise mean of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Mean,
+    6,
+    OpSchema()
+        .SetDoc(Mean_ver6_doc)
+        .Input(
+            0,
+            "data_0",
+            "List of tensors for Mean.",
+            "T",
+            OpSchema::Variadic)
+        .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE
