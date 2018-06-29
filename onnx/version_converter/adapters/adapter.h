@@ -27,7 +27,6 @@ class Adapter {
       return name_;
     }
 
-<<<<<<< HEAD
     const OpSetID& initial_version() const {
       return initial_version_;
     }
@@ -35,9 +34,6 @@ class Adapter {
     const OpSetID& target_version() const {
       return target_version_;
     }
-=======
-  virtual void adapt(Graph& /*graph*/) {}
->>>>>>> Registration Mechanism complete; adapter_lookup mostly there
 };
 
 }} // namespace ONNX_NAMESPACE::version_conversion

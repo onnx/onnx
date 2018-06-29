@@ -1,14 +1,7 @@
-<<<<<<< HEAD
-=======
-// ATTENTION: The code in this file is highly EXPERIMENTAL.
-// Adventurous users should note that the APIs will probably change.
-
->>>>>>> Registration Mechanism complete; adapter_lookup mostly there
 #include "onnx/version_converter/convert.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-<<<<<<< HEAD
 ModelProto ConvertVersion(
     const ModelProto& mp_in,
     const int target_version) {
@@ -111,10 +104,10 @@ ModelProto DefaultVersionConverter::convert_version(
 }
 
 }} // namespace ONNX_NAMESPACE::version_conversion
-=======
 ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
     const OperatorSetVersion initial_version,
     const OperatorSetVersion target_version) {
+  std::string op_name = op.name;
   // TODO: Find appropriate adapter in adapters map for provided initial and target versions
   if (adapters.contains(op_name)) {
     // TODO: If we're adapting downwards, we just want to find the one downwards
@@ -142,7 +135,14 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
     } else {
       // Upwards adapter
       // Either adapt from SinceVersion or Incompatible Breaking Change
-
+      OperatorSetVersion since_version = current_opschemas[*op].SinceVersion();
+      if (adapters[op_name].contains(since_version) && adapters[op_name]
+          [since_version].contains(target_version)) {
+        return adapters[op_name][since_version][target_version];
+      } else {
+        // TODO: Instead return NoUpwardsAdapter
+        return NULL;
+      }
     }
   } else {
     // No adapters exist for the given op
@@ -151,4 +151,3 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
   }
 }
 }}
->>>>>>> Registration Mechanism complete; adapter_lookup mostly there
