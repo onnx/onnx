@@ -209,7 +209,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   {
     // ONNX represents optional arguments in two ways
-    //  - they are simply not privided
+    //  - they are simply not provided
     //  - OR the empty string is passed as the input name
     // This is to handle that second case, which needs a dummy node to
     // be representable in the graph IR.
@@ -303,7 +303,9 @@ std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
     return nullptr;
   }
 
-  return graphProtoToGraph(mp.graph(), false);
+  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
+  g->opset_version = {mp.domain(), mp.opset_import()};
+  return g;
 }
 
 
@@ -536,6 +538,8 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
 void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Graph>& g) {
   ONNX_NAMESPACE::GraphProto* p_g = p_m->mutable_graph();
   encodeGraph(p_g, g);
+  // Add opset_import and domain to p_m - iterate over all indices to determine max
+
 }
 
 } // namespace ONNX_NAMESPACE

@@ -98,21 +98,23 @@ struct VersionConverter {
               << " in domain " << domain << ". Please implement one and try again." << std::endl;
             return mp_in;
           } else {
+            // adapt should handle replacing node in graph
             op_adapter->adapt(*g);
           }
         }
-      //   TODO: Replace node in graph
       }
-      // TODO: Updated model version
+      // Update model version
       if (target_version.version > initial_version.version) {
         curr_version++;
         next_version++;
+        g.opset_version.version++;
       } else {
         curr_version--;
         next_version--;
+        g.opset_version.version--;
       }
     }
-    // TODO: Export g as ModelProto (use PrepareOutput from Optimize)
+    // TODO: Export g as ModelProto (use PrepareOutput from Optimize - Move to higher layer of abstraction)
   }
 
   template<class Converter, class... Args> void registerAdapter(Args&& ...args) {
