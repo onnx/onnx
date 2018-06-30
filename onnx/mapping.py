@@ -21,6 +21,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     TensorProto.COMPLEX128: np.dtype('complex128'),
     TensorProto.UINT32: np.dtype('uint32'),
     TensorProto.UINT64: np.dtype('uint64'),
+    TensorProto.STRING: np.dtype('str'),
 }
 
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()}
