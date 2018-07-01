@@ -2,6 +2,7 @@ recursive-include onnx *.h *.cc *.proto
 recursive-include third_party *
 include LICENSE
 recursive-include onnx/backend/test/data *
+recursive-include onnx/examples *
 recursive-include cmake *
 recursive-include tools *
 include VERSION_NUMBER
