@@ -304,7 +304,9 @@ std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
   }
 
   std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
-  g->opset_version = {mp.domain(), mp.opset_import()};
+  // g->opset_version = {mp.domain(), mp.opset_import()};
+  g->opset_version.domain = mp.opset_import(0).domain();
+  g->opset_version.version = mp.opset_import(0).version();
   return g;
 }
 
@@ -539,7 +541,55 @@ void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Gra
   ONNX_NAMESPACE::GraphProto* p_g = p_m->mutable_graph();
   encodeGraph(p_g, g);
   // Add opset_import and domain to p_m - iterate over all indices to determine max
+  p_m->clear_opset_import();
+  OperatorSetIdProto *opset_version_output = p_m->add_opset_import();
+  opset_version_output->set_domain(g->opset_version.domain);
+  opset_version_output->set_version(g->opset_version.version);
+}
 
+ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in) {
+  ONNX_NAMESPACE::ModelProto mp_out{};
+
+  if (mp_in.has_ir_version()) {
+    mp_out.set_ir_version(mp_in.ir_version());
+  }
+  if (mp_in.has_producer_name()) {
+    mp_out.set_producer_name(mp_in.producer_name());
+  }
+  if (mp_in.has_producer_version()) {
+    mp_out.set_producer_version(mp_in.producer_version());
+  }
+  if (mp_in.has_domain()) {
+    mp_out.set_domain(mp_in.domain());
+  }
+  if (mp_in.has_model_version()) {
+    mp_out.set_model_version(mp_in.model_version());
+  }
+  if (mp_in.has_doc_string()) {
+    mp_out.set_doc_string(mp_in.doc_string());
+  }
+  for (int i = 0; i < mp_in.opset_import_size(); i++) {
+    auto& oi_in = mp_in.opset_import(i);
+    auto* oi_out = mp_out.add_opset_import();
+    if (oi_in.has_domain()) {
+      oi_out->set_domain(oi_in.domain());
+    }
+    if (oi_in.has_version()) {
+      oi_out->set_version(oi_in.version());
+    }
+  }
+  for (int i = 0; i < mp_in.metadata_props_size(); i++) {
+    auto& pp_in = mp_in.metadata_props(i);
+    auto* pp_out = mp_out.add_metadata_props();
+    if (pp_in.has_key()) {
+      pp_out->set_key(pp_in.key());
+    }
+    if (pp_in.has_value()) {
+      pp_out->set_value(pp_in.value());
+    }
+  }
+
+  return mp_out;
 }
 
 } // namespace ONNX_NAMESPACE

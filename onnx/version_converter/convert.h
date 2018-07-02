@@ -6,11 +6,10 @@
 #include "onnx/proto_utils.h"
 #include "onnx/defs/schema.h"
 #include <utility>
-#include "onnx/common/graph_node_list.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-std::unordered_map<Node, OpSchema> current_opschemas;
+std::unordered_map<Node*, OpSchema> current_opschemas;
 
 struct VersionConverter {
   // Schema for adapters: {op_name: {from_version: {to_version: adapter}}}
@@ -22,7 +21,7 @@ struct VersionConverter {
     // TODO: Ensure that keys in map are of format "Domain/op_name"
   }
 
-  virtual ~Converter() = default;
+  virtual ~VersionConverter() = default;
 
   ONNX_NAMESPACE::Adapter adapter_lookup(const Node op,
       const OperatorSetVersion initial_version,
@@ -39,6 +38,8 @@ struct VersionConverter {
       // If we can't parse the file, just return the input.
       return mp_in;
     }
+
+    ONNX_NAMESPACE::ModelProto mp_out = PrepareOutput(mp_in);
 
     // Get initial model version
     OpSetID initial_version = g.opset_version;
@@ -72,7 +73,7 @@ struct VersionConverter {
           op_opset_version = version_pair.first;
         }
       }
-      current_opschemas[*op] = ONNX_NAMESPACE::OpName_Domain_Version_Schema_Map[*(op->name())][domain][op_opset_version];
+      current_opschemas[op] = ONNX_NAMESPACE::OpName_Domain_Version_Schema_Map[*(op->name())][domain][op_opset_version];
     }
 
     // Iterate over all versions to target_version
@@ -114,7 +115,9 @@ struct VersionConverter {
         g.opset_version.version--;
       }
     }
-    // TODO: Export g as ModelProto (use PrepareOutput from Optimize - Move to higher layer of abstraction)
+    // TODO: Export g as ModelProto
+    ExportModelProto(&mp_out, g);
+    return mp_out;
   }
 
   template<class Converter, class... Args> void registerAdapter(Args&& ...args) {

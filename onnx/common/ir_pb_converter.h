@@ -37,4 +37,6 @@ void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Gra
 
 std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp);
 
+ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in);
+
 } // namespace ONNX_NAMESPACE

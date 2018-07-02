@@ -22,8 +22,6 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in);
-
 struct Optimizer {
   std::map<std::string, std::unique_ptr<OptimizePass>> passes;
 
