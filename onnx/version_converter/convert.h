@@ -95,6 +95,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
           }
         }
       }
+      current_opschemas[op] = ONNX_NAMESPACE::OpName_Domain_Version_Schema_Map[*(op->name())][domain][op_opset_version];
     }
 
     // Iterate over all versions to target_version for specified
