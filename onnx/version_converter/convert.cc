@@ -135,7 +135,7 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
     } else {
       // Upwards adapter
       // Either adapt from SinceVersion or Incompatible Breaking Change
-      OperatorSetVersion since_version = current_opschemas[*op].SinceVersion();
+      OperatorSetVersion since_version = current_opschemas[op].SinceVersion();
       if (adapters[op_name].contains(since_version) && adapters[op_name]
           [since_version].contains(target_version)) {
         return adapters[op_name][since_version][target_version];
@@ -150,4 +150,11 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
     return NULL;
   }
 }
+
+ONNX_NAMESPACE::ModelProto Convert(
+    const ONNX_NAMESPACE::ModelProto& mp_in,
+    const OpSetID target_version) {
+  return _version_converter.convert(mp_in, target_version);
+}
+
 }}
