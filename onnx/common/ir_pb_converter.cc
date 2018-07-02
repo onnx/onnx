@@ -547,8 +547,8 @@ void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Gra
   p_m->clear_opset_import();
   for (OpSetID opset : g->opset_versions) {
     OperatorSetIdProto *opset_version_output = p_m->add_opset_import();
-    opset_version_output->set_domain(opset.domain);
-    opset_version_output->set_version(opset.version);
+    opset_version_output->set_domain(g->opset.domain);
+    opset_version_output->set_version(g->opset.version);
   }
 }
 
