@@ -1,6 +1,6 @@
 
 <p align="center"><img width="40%" src="docs/ONNX_logo_main.png" /></p>
- 
+
 | Linux | Windows |
 |-------|---------|
 | [![Build Status](https://travis-ci.org/onnx/onnx.svg?branch=master)](https://travis-ci.org/onnx/onnx) | [![Build status](https://ci.appveyor.com/api/projects/status/lm50cevk2hmrll98/branch/master?svg=true)](https://ci.appveyor.com/project/onnx/onnx) |
@@ -33,6 +33,10 @@ Check ONNX design choices and internals:
 # Tools
 * [Netron: a viewer for ONNX models](https://github.com/lutzroeder/Netron)
 * [Net Drawer ONNX vizualizer](https://github.com/onnx/tutorials/blob/master/tutorials/VisualizingAModel.md)
+
+# Programming utilities for working with ONNX Graphs
+* [Shape and Type Inference](docs/ShapeInference.md)
+* [Graph Optimization](docs/Optimizer.md)
 
 # Contribute
 ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
@@ -80,9 +84,12 @@ You can then install ONNX from PyPi (Note: Set environment variable `ONNX_ML=1` 
 pip install onnx
 ```
 
-You can also build and install ONNX locally from source code (git clone https://github.com/onnx/onnx.git):
+You can also build and install ONNX locally from source code:
 
 ```
+git clone https://github.com/onnx/onnx.git
+cd onnx
+git submodule update --init --recursive
 python setup.py install
 ```
 

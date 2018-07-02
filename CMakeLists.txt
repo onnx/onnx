@@ -202,6 +202,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         COMMAND ${ONNX_PROTOC_EXECUTABLE}
         ARGS ${PROTOC_ARGS}
         COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER} -DNAMESPACES=${ONNX_NAMESPACE} -P ${ONNX_PROTO_POST_BUILD_SCRIPT}
+        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_SRC} -DNAMESPACES=${ONNX_NAMESPACE} -P ${ONNX_PROTO_POST_BUILD_SCRIPT}
         DEPENDS ${GENERATED_PROTO} ${DEPEND}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
         VERBATIM )
@@ -390,6 +391,7 @@ set_target_properties(onnxifi_loader PROPERTIES
   C_EXTENSIONS NO)
 target_link_libraries(onnxifi_loader PUBLIC onnxifi)
 target_include_directories(onnxifi_loader PUBLIC onnx)
+target_include_directories(onnxifi_loader PUBLIC ${ONNX_ROOT})
 
 install(TARGETS onnx onnx_proto
     DESTINATION lib)
