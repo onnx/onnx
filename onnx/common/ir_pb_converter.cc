@@ -304,9 +304,12 @@ std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
   }
 
   std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
-  // g->opset_version = {mp.domain(), mp.opset_import()};
-  g->opset_version.domain = mp.opset_import(0).domain();
-  g->opset_version.version = mp.opset_import(0).version();
+  for (int i = 0; i < mp.opset_import_size(); i++) {
+    OpSetID new_opset_version;
+    new_opset_version.domain = mp.opset_import(0).domain();
+    new_opset_version.version = mp.opset_import(0).version();
+    g->opset_versions.push_back(new_opset_version);
+  }
   return g;
 }
 
@@ -540,11 +543,13 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
 void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Graph>& g) {
   ONNX_NAMESPACE::GraphProto* p_g = p_m->mutable_graph();
   encodeGraph(p_g, g);
-  // Add opset_import and domain to p_m - iterate over all indices to determine max
+  // Add new opset_versions
   p_m->clear_opset_import();
-  OperatorSetIdProto *opset_version_output = p_m->add_opset_import();
-  opset_version_output->set_domain(g->opset_version.domain);
-  opset_version_output->set_version(g->opset_version.version);
+  for (OpSetID opset : g->opset_versions) {
+    OperatorSetIdProto *opset_version_output = p_m->add_opset_import();
+    opset_version_output->set_domain(g->opset.domain);
+    opset_version_output->set_version(g->opset.version);
+  }
 }
 
 ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in) {
