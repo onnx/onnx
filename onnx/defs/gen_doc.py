@@ -265,26 +265,31 @@ def main(args):  # type: (Type[Args]) -> None
         else:
             all_functions = defs.get_functions('')
 
+        changelog_versionmap = defaultdict(list)  # type: Dict[int, List[FunctionProto]]
         for fn_name, functions in sorted(all_functions.items()):
-            if os.getenv('ONNX_ML'):
-                s = '## {}\n'.format(ONNX_ML_DOMAIN)
-                domain_display_name = ONNX_ML_DOMAIN
-                domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
-            else:
-                s = '# ai.onnx (default)\n'
-                domain_display_name = 'ai.onnx (default)'
-                domain_prefix = ''
+            for func in functions:
+                changelog_versionmap[func.since_version].append(func)
 
-            sorted_functions = sorted(functions, key=lambda s: s.since_version)
-            available_versions = [func.since_version for func in sorted_functions]
-            for function in sorted_functions:
-                s += '## Version {} of domain {}\n'.format(sorted_functions.index(function) + 1, domain_display_name)
+        if os.getenv('ONNX_ML'):
+            s = '## {}\n'.format(ONNX_ML_DOMAIN)
+            domain_display_name = ONNX_ML_DOMAIN
+            domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
+        else:
+            s = '# ai.onnx (default)\n'
+            domain_display_name = 'ai.onnx (default)'
+            domain_prefix = ''
+        fout.write(s)
+
+        for version, function_list in sorted(changelog_versionmap.items()):
+            s = ""
+            for function in function_list:
+                s += '## Version {} of domain {}\n'.format(version, domain_display_name)
                 name_with_ver = '{}-{}'.format(domain_prefix +
                                                fn_name, function.since_version)
                 s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
+                available_versions = [func.since_version for func in all_functions[function.name]]
                 s += display_function(function, available_versions, domain_prefix)
                 s += '\n'
-
             fout.write(s)
 
     with io.open(args.output, 'w', newline='') as fout:

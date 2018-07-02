@@ -3,7 +3,7 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit function definitions.*
 # ai.onnx (default)
-## Version 1 of domain ai.onnx (default)
+## Version 8 of domain ai.onnx (default)
 ### <a name="FuncMeanVarianceNormalization-8"></a>**FuncMeanVarianceNormalization-8**</a>
 
   A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><b>INPUT: </b>X(float/float16/double) with Shape [N,C,W,H] <br/><b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. Use [0,2,3] for no across channel, [0,1,2,3] for across channel caculation.<br/>&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean ops is set to true for caculation)<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with Shape [N,C,W,H] <br/>
