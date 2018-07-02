@@ -892,7 +892,7 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 
 
 ### ConvTranspose
-There are 6 test cases, listed as following:
+There are 7 test cases, listed as following:
 <details>
 <summary>convtranspose</summary>
 
@@ -1182,6 +1182,58 @@ y = np.array([[[[1., 1., 3.],  # (1, 2, 7, 3)
                 [13., 7., 15.]]]]).astype(np.float32)
 
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
+```
+
+</details>
+<details>
+<summary>with_kernel</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'ConvTranspose', ['x', 'w'], ['y'],
+    name='test',
+    strides=[3, 2],
+    output_shape=[10, 8],
+    kernel_shape=[3, 3],
+    output_padding=[1, 1]
+)
+
+x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
+                [3., 4., 5.],
+                [6., 7., 8.]]]]).astype(np.float32)
+
+W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
+                [1., 1., 1.],
+                [1., 1., 1.]],
+               [[1., 1., 1.],
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [0., 0., 0., 0., 0., 0., 0., 0.]],
+
+               [[0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_convtranspose_with_kernel')
 ```
 
 </details>

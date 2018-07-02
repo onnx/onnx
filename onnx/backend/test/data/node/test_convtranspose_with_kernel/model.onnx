@@ -1,4 +1,4 @@
-backend-test:ß
+backend-test:ð
 w
 x
 wytest"ConvTranspose*
@@ -6,7 +6,7 @@ w
 output_padding@@ *
 output_shape@
 @ *
-strides@@ ConvTransposeZ
+strides@@ test_convtranspose_with_kernelZ
 x
 
 
