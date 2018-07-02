@@ -740,7 +740,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ConvTranspose-1"></a>**ConvTranspose-1**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
-  and computes the output. 
+  and computes the output.
   
   If the pads parameter is provided the shape of the output is calculated via the following equation:
   
@@ -752,6 +752,9 @@ This version of the operator has been available since version 1 of the default O
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
+  Notice although we define parameter pads as the input padding,
+  for ease of calculation, we used following transformation for given input padding pads' before calculation:
+    pads = pads' - k - 1
       
 
 #### Version

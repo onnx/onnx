@@ -1688,7 +1688,7 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 ### <a name="ConvTranspose"></a><a name="convtranspose">**ConvTranspose**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
-  and computes the output. 
+  and computes the output.
   
   If the pads parameter is provided the shape of the output is calculated via the following equation:
   
@@ -1700,6 +1700,9 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
+  Notice although we define parameter pads as the input padding,
+  for ease of calculation, we used following transformation for given input padding pads' before calculation:
+    pads = pads' - k - 1
       
 
 #### Version
@@ -2054,6 +2057,60 @@ y = np.array([[[[1., 1., 3.],  # (1, 2, 7, 3)
                 [13., 7., 15.]]]]).astype(np.float32)
 
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
+```
+
+</details>
+
+
+<details>
+<summary>with_kernel</summary>
+
+```python
+
+node = onnx.helper.make_node(
+    'ConvTranspose', ['x', 'w'], ['y'],
+    name='test',
+    strides=[3, 2],
+    output_shape=[10, 8],
+    kernel_shape=[3, 3],
+    output_padding=[1, 1]
+)
+
+x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
+                [3., 4., 5.],
+                [6., 7., 8.]]]]).astype(np.float32)
+
+W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
+                [1., 1., 1.],
+                [1., 1., 1.]],
+               [[1., 1., 1.],
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [0., 0., 0., 0., 0., 0., 0., 0.]],
+
+               [[0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_convtranspose_with_kernel')
 ```
 
 </details>
