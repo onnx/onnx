@@ -17,15 +17,15 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   func.set_name("FuncMeanVarianceNormalization");
   func.set_doc_string(
       "A MeanVarianceNormalization Function: Perform mean variance normalization "
-      "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>"
-      "<b>INPUT: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/>"
-      "<b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. "
-      "Use [0,2,3] (without C axis for N-D cases) for for calculating means and variances "
+      "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><br/>"
+      "<b>INPUT: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/><br/>"
+      "<b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;<tt>axes: </tt>will be passed to ReducedMean "
+      "Ops. Use [0,2,3] (without C axis for N-D cases) for for calculating means and variances "
       "along channels. Two variables with the same C-coordinate are associated "
       "with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate "
       "global mean and global variance with all variables sharing the same mean/variance.<br/>"
       "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for caculation)<br/>"
-      "<b>OUTPUT: </b>X_MVN(float/float16/double) with shape [N,C,W,H] or the input N-D shape <br/>");
+      "<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with shape [N,C,W,H] or the input N-D shape <br/>");
   func.set_since_version(8);
   func.add_input("X");
   func.add_output("X_MVN");
