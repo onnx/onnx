@@ -18,11 +18,14 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   func.set_doc_string(
       "A MeanVarianceNormalization Function: Perform mean variance normalization "
       "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>"
-      "<b>INPUT: </b>X(float/float16/double) with Shape [N,C,W,H] <br/>"
+      "<b>INPUT: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/>"
       "<b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;axes: will be passed to ReducedMean Ops. "
-      "Use [0,2,3] for no across channel, [0,1,2,3] for across channel caculation.<br/>"
-      "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean ops is set to true for caculation)<br/>"
-      "<b>OUTPUT: </b>X_MVN(float/float16/double) with Shape [N,C,W,H] <br/>");
+      "Use [0,2,3] (without C axis for N-D cases) for for calculating means and variances "
+      "along channels. Two variables with the same C-coordinate are associated "
+      "with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate "
+      "global mean and global variance with all variables sharing the same mean/variance.<br/>"
+      "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for caculation)<br/>"
+      "<b>OUTPUT: </b>X_MVN(float/float16/double) with shape [N,C,W,H] or the input N-D shape <br/>");
   func.set_since_version(8);
   func.add_input("X");
   func.add_output("X_MVN");
@@ -39,7 +42,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   AttributeProto* value_attr = initial_node0->add_attribute();
   value_attr->set_name("value");
   value_attr->set_doc_string(
-      "Value for the constant tensor as power exponent to caculate MVN");
+      "Exponent (default to 2.0) to element-wisely calculate the square of a tensor");
   value_attr->set_type(AttributeProto_AttributeType_TENSOR);
   TensorProto* tensor_proto = value_attr->mutable_t();
   tensor_proto->set_data_type(TensorProto_DataType_FLOAT);
