@@ -21,7 +21,7 @@ static VersionConverter _version_converter;
 Adapter* VersionConverter::adapter_lookup(Node* op,
     const OperatorSetVersion& initial_version,
     const OperatorSetVersion& target_version) {
-  std::string op_name = op->name();
+  std::string op_name = current_opschemas[op].domain() + "/" + op->name();
   // TODO: Find appropriate adapter in adapters map for provided initial and target versions
   if (adapters.find(op_name) != adapters.end()) {
     // TODO: If we're adapting downwards, we just want to find the one downwards

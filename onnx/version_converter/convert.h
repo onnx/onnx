@@ -14,7 +14,6 @@ struct DefaultVersionConverter : BaseVersionConverter {
   // TODO: Change all existing references to VersionConverter
   DefaultVersionConverter() {
     // TODO: Register adapters to the version converter
-    // TODO: Ensure that keys in map are of format "Domain/op_name"
   }
 
   ONNX_NAMESPACE::ModelProto convert_version(
