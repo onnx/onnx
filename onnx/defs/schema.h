@@ -511,6 +511,10 @@ class OpSchema final {
     return since_version_;
   }
 
+  int since_version() const {
+    return since_version_;
+  }
+
   int min_input() const {
     return min_input_;
   }

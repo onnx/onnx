@@ -138,7 +138,7 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
       // Upwards adapter
       // Either adapt from SinceVersion or Incompatible Breaking Change
       std::string since = target_version.domain + std::to_string(
-          current_opschemas[op].SinceVersion());
+          current_opschemas[op].since_version());
       if (adapters[op_name].find(since) != adapters[op_name].end() && adapters[op_name]
           [since].find(target) != adapters[op_name][since].end()) {
         return &*(adapters[op_name][since][target]);
