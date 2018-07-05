@@ -475,6 +475,85 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[1], [1]]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0, 1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
@@ -515,6 +594,85 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[0], [0]]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1, 0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
 
 
 ### <a name="Asin"></a><a name="asin">**Asin**</a>
