@@ -37,7 +37,7 @@ class MVN(Base):
         data_squared = np.power(input_data, 2)
         data_squared_mean = np.mean(data_squared, axis=(0, 2, 3), keepdims=1)
         std = np.sqrt(data_squared_mean - data_mean_squared)
-        expected_output = (input_data - data_mean) / std
+        expected_output = (input_data - data_mean) / (std + 1e-9)
 
         expect(node, inputs=[input_data], outputs=[expected_output],
                name='test_mvn')
