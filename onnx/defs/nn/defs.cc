@@ -639,7 +639,7 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
-and computes the output. 
+and computes the output.
 
 If the pads parameter is provided the shape of the output is calculated via the following equation:
 
@@ -651,7 +651,9 @@ output_shape can also be explicitly specified in which case pads values are auto
   If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
   Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
 
-    )DOC";
+The pads parameter represents the size of padding we need to add at both sides of output tensor;
+And the output_padding parameter represents the size of padding we need to add at the end side of output tensor.
+	)DOC";
     ReplaceAll(doc, "{filter_desc}", filter_desc);
     schema.SetDoc(doc);
     schema.Input(
