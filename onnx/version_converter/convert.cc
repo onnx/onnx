@@ -19,9 +19,9 @@ ONNX_NAMESPACE::ModelProto ConvertVersion(
 static VersionConverter _version_converter;
 
 Adapter* VersionConverter::adapter_lookup(Node* op,
-    const OperatorSetVersion& initial_version,
-    const OperatorSetVersion& target_version) {
-  std::string op_name = current_opschemas[op].domain() + "/" + op->name();
+    const OpSetID& initial_version,
+    const OpSetID& target_version) {
+  std::string op_name = gen_key_string(op->name, initial_version, target_version);
   // TODO: Find appropriate adapter in adapters map for provided initial and target versions
   if (adapters.find(op_name) != adapters.end()) {
     // TODO: If we're adapting downwards, we just want to find the one downwards
@@ -64,6 +64,12 @@ Adapter* VersionConverter::adapter_lookup(Node* op,
     // TODO: Instead return NoAdapterForOp
     return NULL;
   }
+}
+
+std::string VersionConverter::gen_key_string(std::string_op_name, OpSetID
+    initial, OpSetID target) {
+    return op_name + "$" + initial.domain + initial.version + "$" + target.domain +
+      target.version;
 }
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
