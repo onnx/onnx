@@ -78,7 +78,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
     std::unordered_map<std::basic_string<char>, std::unordered_map<std::basic_string<char>, std::map<int, ONNX_NAMESPACE::OpSchema>>>  all_schemas;
 
     for (OpSchema schema : all_opschemas) {
-      all_schemas[schema.Name()][schema.domain()][schema.SinceVersion()] = schema;
+      all_schemas[schema.Name()][schema.domain()][schema.since_version()] = schema;
     }
 
     // Create Map for Current Version
