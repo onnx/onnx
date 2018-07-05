@@ -781,7 +781,7 @@ friend struct Node;
 friend struct Value;
 
 public:
-  std::list <OpSetID> opset_versions;
+  std::vector <OpSetID> opset_versions;
 
 private:
   // only used to keep track of allocated nodes
