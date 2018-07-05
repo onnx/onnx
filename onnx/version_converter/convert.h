@@ -19,6 +19,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
   ONNX_NAMESPACE::ModelProto convert_version(
       const ONNX_NAMESPACE::ModelProto& mp_in,
+      const OpSetID initial_version,
       const OpSetID target_version) {
     std::shared_ptr<ONNX_NAMESPACE::Graph> g(ONNX_NAMESPACE::ImportModelProto(mp_in));
 
@@ -75,10 +76,10 @@ struct DefaultVersionConverter : BaseVersionConverter {
     std::vector<OpSchema> all_opschemas = ONNX_NAMESPACE::OpSchemaRegistry::get_all_schemas_with_history();
 
     // Create Map for All Versions
-    std::unordered_map<std::basic_string<char>, std::unordered_map<std::basic_string<char>, std::map<int, ONNX_NAMESPACE::OpSchema*>>>  all_schemas;
+    std::unordered_map<std::basic_string<char>, std::unordered_map<std::basic_string<char>, std::map<int, ONNX_NAMESPACE::OpSchema>>>  all_schemas;
 
     for (OpSchema schema : all_opschemas) {
-      all_schemas[schema.Name()][schema.domain()][schema.since_version()] = &schema;
+      all_schemas[schema.Name()][schema.domain()][schema.SinceVersion()] = schema;
     }
 
     // Create Map for Current Version
@@ -95,7 +96,6 @@ struct DefaultVersionConverter : BaseVersionConverter {
           }
         }
       }
-      current_opschemas[op] = ONNX_NAMESPACE::OpName_Domain_Version_Schema_Map[*(op->name())][domain][op_opset_version];
     }
 
     // Iterate over all versions to target_version for specified
@@ -107,10 +107,11 @@ struct DefaultVersionConverter : BaseVersionConverter {
     } else {
       next_version = curr_version - 1;
     }
+    std::string domain = initial_domain;
     // Identify index of this domain in g.opset_versions
     int domain_index = 0;
     for (int i = 0; i < g->opset_versions.size(); i++) {
-      if (g->opset_versions[i].domain == "") {
+      if (g->opset_versions[i].domain == domain) {
         domain_index = i;
       }
     }
@@ -161,5 +162,6 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
-    const OperatorSetVersion target_version);
+    const OpSetID initial_version,
+    const OpSetID target_version);
 }}
