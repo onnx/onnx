@@ -18,7 +18,7 @@ std::unordered_map<Node*, OpSchema> current_opschemas;
 struct VersionConverter {
   // Schema for adapters: {<op_name>$<from_domain><from_version>$<to_domain>
   // <to_version>: adapter}
-  std::map<std::string, Adapter*> adapters;
+  std::map<std::string, std::map<std::string, std::map<std::string, Adapter*>>> adapters;
 
   VersionConverter() {
     // TODO: Register adapters to the version converter
@@ -163,10 +163,10 @@ struct VersionConverter {
   void registerAdapter(Adapter* a_ptr, std::string domain) {
     OpSetID iv = a_ptr->initial_version;
     OpSetID tv = a_ptr->target_version;
-    adapters[gen_key_string(a_ptr->name, iv, tv)] = a_ptr;
+    adapters[a_ptr->name][stringify_opsetid(iv)][stringify_opsetid(tv)] = a_ptr;
   }
 
-  std::string gen_key_string(std::string op_name, OpSetID initial, OpSetID target);
+  std::string stringify_opsetid(OpSetID target);
 };
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(

@@ -10,13 +10,13 @@ static VersionConverter _version_converter;
 Adapter* VersionConverter::adapter_lookup(Node* op,
     const OpSetID& initial_version,
     const OpSetID& target_version) {
-  std::string op_name = gen_key_string(op->name, initial_version, target_version);
+  std::string op_name = op->name();
   // TODO: Find appropriate adapter in adapters map for provided initial and target versions
   if (adapters.find(op_name) != adapters.end()) {
     // TODO: If we're adapting downwards, we just want to find the one downwards
     // adapter implemented for initial_version. If we're adapting upwards, we
     // want to actually use the SinceVersion value for the given op.
-    if (target_version < initial_version) {
+    if (target_version.version < initial_version.version) {
       // Downwards adapter
       if (adapters[op_name].find(initial_version) != adapters[op_name].end()) {
         // Either an upwards or a downwards adapter exists
@@ -55,10 +55,8 @@ Adapter* VersionConverter::adapter_lookup(Node* op,
   }
 }
 
-std::string VersionConverter::gen_key_string(std::string_op_name, OpSetID
-    initial, OpSetID target) {
-    return op_name + "$" + initial.domain + initial.version + "$" + target.domain +
-      target.version;
+std::string VersionConverter::stringify_opsetid(OpSetID target) {
+    return target.domain + target.version;
 }
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
