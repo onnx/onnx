@@ -112,7 +112,7 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
     // TODO: If we're adapting downwards, we just want to find the one downwards
     // adapter implemented for initial_version. If we're adapting upwards, we
     // want to actually use the SinceVersion value for the given op.
-    if (target_version < initial_version) {
+    if (target_version.version < initial_version.version) {
       // Downwards adapter
       if (adapters[op_name].find(initial_version) != adapters[op_name].end()) {
         // Either an upwards or a downwards adapter exists
@@ -151,10 +151,8 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
   }
 }
 
-std::string VersionConverter::gen_key_string(std::string_op_name, OpSetID
-    initial, OpSetID target) {
-    return op_name + "$" + initial.domain + initial.version + "$" + target.domain +
-      target.version;
+std::string VersionConverter::stringify_opsetid(OpSetID target) {
+    return target.domain + target.version;
 }
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
