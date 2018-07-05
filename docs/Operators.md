@@ -1927,7 +1927,7 @@ expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_3d')
 
 
 <details>
-<summary>convtranspose_output_shape</summary>
+<summary>convtranspose_attributes</summary>
 
 ```python
 x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
