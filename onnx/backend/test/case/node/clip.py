@@ -89,11 +89,11 @@ class Clip(Base):
                name='test_clip_default_inbounds')
 
         x = np.array([-1.1, 0, 1.1]).astype(np.float32)
-        y = np.array([-1, 0, 1]).astype(np.float32)
+        y = np.array([-1.1, 0, 1.1]).astype(np.float32)
         expect(node, inputs=[x], outputs=[y],
                name='test_clip_default_outbounds')
 
         x = np.array([-1, 0, 1.1]).astype(np.float32)
-        y = np.array([-1, 0, 1]).astype(np.float32)
+        y = np.array([-1, 0, 1.1]).astype(np.float32)
         expect(node, inputs=[x], outputs=[y],
                name='test_clip_default_splitbounds')
