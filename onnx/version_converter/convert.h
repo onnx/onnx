@@ -16,13 +16,12 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 std::unordered_map<Node*, OpSchema> current_opschemas;
 
 struct VersionConverter {
-  // Schema for adapters: {op_name: {from_version: {to_version: adapter}}}
+  // Schema for adapters: {domain/op_name: {from_version: {to_version: adapter}}}
   std::map<std::string, std::map<OperatorSetVersion, std::map<OperatorSetVersion,
-    Adapter>>> adapters;
+    std::unique_ptr<Adapter>>>> adapters;
 
   VersionConverter() {
     // TODO: Register adapters to the version converter
-    // TODO: Ensure that keys in map are of format "Domain/op_name"
   }
 
   virtual ~VersionConverter() = default;
@@ -131,7 +130,7 @@ struct VersionConverter {
             op_domain_map[domain].find(curr_version) !=
             op_domain_map[domain].end()) {
           // Op is specifically defined for this domain and version
-          auto op_adapter = adapter_lookup(op, (OperatorSetVersion) curr_version, (OperatorSetVersion) next_version);
+          auto op_adapter = adapter_lookup(op, curr_version, next_version);
           // If adapter_lookup returns null, no adapter is present.  Error out
           if (op_adapter == NULL) {
             // TODO: Verify that conversion is actually needed (that the operator
@@ -156,15 +155,14 @@ struct VersionConverter {
         g->opset_versions[domain_index].version--;
       }
     }
-    // TODO: Export g as ModelProto
+    // Export g as ModelProto
     ExportModelProto(&mp_out, g);
     return mp_out;
   }
 
-  template<class VersionConverter, class... Args> void registerAdapter(Args&& ...args) {
-    auto adapter = make_unique<VersionConverter>(std::forward<Args>(args)...);
-    adapters[adapter->initial_version][adapter->target_version][adapter->name]
-      = std::move(adapter);
+  void registerAdapter(std::unique_ptr<Adapter> a_ptr, std::string domain) {
+    ((adapters[domain + "/" + a_ptr->name])[a_ptr->initial_version.version])
+      [a_ptr->target_version.version] = std::move(a_ptr);
   }
 };
 

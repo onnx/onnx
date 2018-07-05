@@ -10,10 +10,6 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-enum class API_TYPE : uint8_t {
-  PROTO, IR
-};
-
 struct Adapter {
 
   virtual ~Adapter() noexcept = 0;
