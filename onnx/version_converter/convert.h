@@ -8,6 +8,7 @@
 #include "onnx/proto_utils.h"
 #include "onnx/defs/schema.h"
 #include <utility>
+#include <iostream>
 // TODO: Remove this import once actual adapters are imported
 #include "onnx/version_converter/adapters/adapter.h"
 
@@ -130,7 +131,13 @@ struct VersionConverter {
             op_domain_map[domain].find(curr_version) !=
             op_domain_map[domain].end()) {
           // Op is specifically defined for this domain and version
-          auto op_adapter = adapter_lookup(op, curr_version, next_version);
+          OpSetID curr_id;
+          OpSetID next_id;
+          curr_id.domain = domain;
+          next_id.domain = domain;
+          curr_id.version = curr_version;
+          next_id.version = next_version;
+          auto op_adapter = adapter_lookup(op, curr_id, next_id);
           // If adapter_lookup returns null, no adapter is present.  Error out
           if (op_adapter == NULL) {
             // TODO: Verify that conversion is actually needed (that the operator
@@ -167,6 +174,8 @@ struct VersionConverter {
   }
 
   std::string stringify_opsetid(OpSetID target);
+
+  std::vector<std::string> destringify_opsetid(std::string target);
 };
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(

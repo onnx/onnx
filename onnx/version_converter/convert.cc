@@ -11,6 +11,8 @@ Adapter* VersionConverter::adapter_lookup(Node* op,
     const OpSetID& initial_version,
     const OpSetID& target_version) {
   std::string op_name = op->name();
+  std::string initial = stringify_opsetid(initial_version);
+  std::string target = stringify_opsetid(target_version);
   // TODO: Find appropriate adapter in adapters map for provided initial and target versions
   if (adapters.find(op_name) != adapters.end()) {
     // TODO: If we're adapting downwards, we just want to find the one downwards
@@ -18,12 +20,14 @@ Adapter* VersionConverter::adapter_lookup(Node* op,
     // want to actually use the SinceVersion value for the given op.
     if (target_version.version < initial_version.version) {
       // Downwards adapter
-      if (adapters[op_name].find(initial_version) != adapters[op_name].end()) {
+      if (adapters[op_name].find(initial) != adapters[op_name].end()) {
         // Either an upwards or a downwards adapter exists
         // Check if downwards adapter exists (only one should)
-        const auto target_map = adapters[op_name][initial_version];
+        const auto target_map = adapters[op_name][initial];
         for (auto it = target_map.begin(); it != target_map.end(); ++it) {
-          if (it->first <= target_version) {
+          int new_target;
+          sscanf(destringify_opsetid(it->first)[1].c_str(), "%d", &new_target);
+          if (new_target <= target_version.version) {
             // Adapter found
             return &*(it->second);
           }
@@ -39,10 +43,11 @@ Adapter* VersionConverter::adapter_lookup(Node* op,
     } else {
       // Upwards adapter
       // Either adapt from SinceVersion or Incompatible Breaking Change
-      OperatorSetVersion since_version = current_opschemas[op].SinceVersion();
-      if (adapters[op_name].find(since_version) != adapters[op_name].end() && adapters[op_name]
-          [since_version].find(target_version) != adapters[op_name][since_version].end()) {
-        return &*(adapters[op_name][since_version][target_version]);
+      std::string since = target_version.domain + std::to_string(
+          current_opschemas[op].SinceVersion());
+      if (adapters[op_name].find(since) != adapters[op_name].end() && adapters[op_name]
+          [since].find(target) != adapters[op_name][since].end()) {
+        return &*(adapters[op_name][since][target]);
       } else {
         // TODO: Instead return NoUpwardsAdapter
         return NULL;
@@ -56,7 +61,17 @@ Adapter* VersionConverter::adapter_lookup(Node* op,
 }
 
 std::string VersionConverter::stringify_opsetid(OpSetID target) {
-    return target.domain + target.version;
+    return target.domain + "$" + std::to_string(target.version);
+}
+
+std::vector<std::string> VersionConverter::destringify_opsetid(std::string target) {
+  std::stringstream ss(target);
+  std::string segment;
+  std::vector<std::string> seglist;
+  while (std::getline(ss, segment, '$')) {
+    seglist.push_back(segment);
+  }
+  return seglist;
 }
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
