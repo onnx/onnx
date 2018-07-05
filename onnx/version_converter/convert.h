@@ -16,9 +16,9 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 std::unordered_map<Node*, OpSchema> current_opschemas;
 
 struct VersionConverter {
-  // Schema for adapters: {domain/op_name: {from_version: {to_version: adapter}}}
-  std::map<std::string, std::map<OperatorSetVersion, std::map<OperatorSetVersion,
-    std::unique_ptr<Adapter>>>> adapters;
+  // Schema for adapters: {<op_name>$<from_domain><from_version>$<to_domain>
+  // <to_version>: adapter}
+  std::map<std::string, Adapter*> adapters;
 
   VersionConverter() {
     // TODO: Register adapters to the version converter
@@ -27,8 +27,8 @@ struct VersionConverter {
   virtual ~VersionConverter() = default;
 
   Adapter* adapter_lookup(Node* op,
-      const OperatorSetVersion& initial_version,
-      const OperatorSetVersion& target_verion);
+      const OpSetID& initial_version,
+      const OpSetID& target_verion);
 
   ONNX_NAMESPACE::ModelProto convert_version(
       const ONNX_NAMESPACE::ModelProto& mp_in,
@@ -160,10 +160,13 @@ struct VersionConverter {
     return mp_out;
   }
 
-  void registerAdapter(std::unique_ptr<Adapter> a_ptr, std::string domain) {
-    ((adapters[domain + "/" + a_ptr->name])[a_ptr->initial_version.version])
-      [a_ptr->target_version.version] = std::move(a_ptr);
+  void registerAdapter(Adapter* a_ptr, std::string domain) {
+    OpSetID iv = a_ptr->initial_version;
+    OpSetID tv = a_ptr->target_version;
+    adapters[gen_key_string(a_ptr->name, iv, tv)] = a_ptr;
   }
+
+  std::string gen_key_string(std::string op_name, OpSetID initial, OpSetID target);
 };
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
