@@ -151,6 +151,12 @@ ONNX_NAMESPACE::Adapter adapter_lookup(const std::string op_name,
   }
 }
 
+std::string VersionConverter::gen_key_string(std::string_op_name, OpSetID
+    initial, OpSetID target) {
+    return op_name + "$" + initial.domain + initial.version + "$" + target.domain +
+      target.version;
+}
+
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
     const OpSetID initial_version,
