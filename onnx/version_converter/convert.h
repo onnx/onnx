@@ -125,8 +125,8 @@ struct DefaultVersionConverter : BaseVersionConverter {
           // Op is specifically defined for this domain and version
           OpSetID curr_id;
           OpSetID next_id;
-          curr_id.domain = "";
-          next_id.domain = "";
+          curr_id.domain = domain;
+          next_id.domain = domain;
           curr_id.version = curr_version;
           next_id.version = next_version;
           auto op_adapter = adapter_lookup(op, curr_id, next_id);
