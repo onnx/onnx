@@ -14,12 +14,12 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-std::unordered_map<Node*, OpSchema> current_opschemas;
-
 struct VersionConverter {
   // Schema for adapters: {<op_name>$<from_domain><from_version>$<to_domain>
   // <to_version>: adapter}
   std::map<std::string, std::map<std::string, std::map<std::string, Adapter*>>> adapters;
+
+  std::unordered_map<Node*, OpSchema> current_opschemas;
 
   VersionConverter() {
     // TODO: Register adapters to the version converter
