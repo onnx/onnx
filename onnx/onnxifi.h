@@ -325,7 +325,7 @@ typedef int32_t onnxBackendInfo;
  * Memory synchronization primitives supported for graph inputs and outputs.
  *
  * Possible values are any combination of the following flags:
- *     ONNXIFI_SYNCHRONIZATION_EVENT (always supported)
+ *     ONNXIFI_SYNCHRONIZATION_EVENT    (onnxEvent, always supported)
  *     ONNXIFI_SYNCHRONIZATION_IMPLICIT
  *     or any vendor-specific flags in the high 32 bits of the bit field.
  */
@@ -590,7 +590,7 @@ typedef struct onnxMemoryFence {
    * Type of memory synchronization primitive.
    *
    * Possible values:
-   *      ONNXIFI_SYNCHRONIZATION_DEFAULT  (always supported)
+   *      ONNXIFI_SYNCHRONIZATION_EVENT    (onnxEvent, always supported)
    *      ONNXIFI_SYNCHRONIZATION_IMPLICIT
    */
   onnxEnum type;
@@ -599,7 +599,7 @@ typedef struct onnxMemoryFence {
      * Pointer to a handle for a single-shot ONNXIFI event used as a
      * synchronization primitive. Event for the input fence must be created
      * by the caller to onnxRunGraph. Event for the output fence is created by
-     * implementation of onnxRunGraph, and store into the pointer specified in
+     * implementation of onnxRunGraph, and stored into the pointer specified in
      * the output fence before onnxRunGraph returns.
      */
     onnxEvent* event;
