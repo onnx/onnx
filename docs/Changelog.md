@@ -752,8 +752,10 @@ This version of the operator has been available since version 1 of the default O
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
-  The pads parameter represents the size of padding we need to add at both sides of output tensor;
-  And the output_padding parameter represents the size of padding we need to add at the end side of output tensor.
+  
+  the pads are the number of pixels going to be subtracted in the output shape, while output_padding is going to be added (at only the end side) in the output shape.
+  Also worth noting is the number of pads attribute is 2x of the rank of the output tensor while for output_padding is equal to the rank of the output.
+  
   	
 
 #### Version
