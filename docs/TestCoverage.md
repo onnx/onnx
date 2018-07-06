@@ -1098,7 +1098,6 @@ node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              output_shape=[1, 2, 10, 8])
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
-
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
                              output_padding=[1, 1])
