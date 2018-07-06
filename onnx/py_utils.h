@@ -15,4 +15,13 @@ bool ParseProtoFromPyBytes(Proto* proto, const py::bytes& bytes) {
 
   return ParseProtoFromBytes(proto, buffer, length);
 }
+
+bool ParseOpSetIDFromPyBytes(OpSetID* opsetid, const py::bytes& bytes) {
+  // Get the buffer from Python bytes object
+  char* buffer = nullptr;
+  Py_ssize_t length;
+  PyBytes_AsStringAndSize(bytes.ptr(), &buffer, &length);
+  // TODO: Split char* on "$"
+
+}
 } // namespace ONNX_NAMESPACE
