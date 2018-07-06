@@ -19,8 +19,8 @@ from typing import Text, Sequence
 
 Arguments:
     input (ModelProto): model
-    initial_version (OpSetID): initial opset version
-    target_version (OpSetID): target opset version
+    initial_version (String): initial opset version
+    target_version (String): target opset version
 
 Return:
     return (ModelProto) converted model
@@ -30,7 +30,7 @@ Supported adapters:
 """
 
 
-def optimize(model, initial_version, target_version):  # type: (ModelProto, OpSetID, OpSetID) -> ModelProto
+def convert_version(model, initial_version, target_version):  # type: (ModelProto, OpSetID, OpSetID) -> ModelProto
     if not isinstance(model, ModelProto):
         raise ValueError('VersionConverter only accepts ModelProto, incorrect type: {}'.format(type(model)))
 
