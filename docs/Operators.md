@@ -1688,7 +1688,7 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 ### <a name="ConvTranspose"></a><a name="convtranspose">**ConvTranspose**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
-  and computes the output.
+  and computes the output. 
   
   If the pads parameter is provided the shape of the output is calculated via the following equation:
   
@@ -1700,11 +1700,7 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
     If (auto_pads != SAME_UPPER): pads[start_i] = total_padding[i]/2; pads[end_i] = total_padding[i] - (total_padding[i]/2)
     Else: pads[start_i] = total_padding[i] - (total_padding[i]/2); pads[end_i] = (total_padding[i]/2).
   
-  
-  the pads are the number of pixels going to be subtracted in the output shape, while output_padding is going to be added (at only the end side) in the output shape.
-  Also worth noting is the number of pads attribute is 2x of the rank of the output tensor while for output_padding is equal to the rank of the output.
-  
-  	
+      
 
 #### Version
 
