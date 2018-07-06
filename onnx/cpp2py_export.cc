@@ -8,6 +8,7 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/optimizer/optimize.h"
+#include "onnx/version_converter/convert.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
 
@@ -251,6 +252,22 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         auto const result = optimization::Optimize(std::move(proto), names);
+        std::string out;
+        result.SerializeToString(&out);
+        return py::bytes(out);
+      });
+
+  // Submodule `version_converter`
+  auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
+  version_converter.doc() = "VersionConverter submodule";
+
+  version_converter.def(
+      "convert_version",
+      [](const py::bytes& bytes, const OpSetID& initial_version, const OpSetID& target_version) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        auto const result = version_conversion::ConvertVersion(std::move(proto),
+          initial_version, target_version);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);
