@@ -2083,7 +2083,7 @@ expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_3d')
 
 
 <details>
-<summary>convtranspose_output_padding</summary>
+<summary>convtranspose_attributes</summary>
 
 ```python
 x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
@@ -2096,10 +2096,6 @@ W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
                [[1., 1., 1.],
                 [1., 1., 1.],
                 [1., 1., 1.]]]]).astype(np.float32)
-
-node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
-                             strides=[3, 2],
-                             output_padding=[1, 1])
 
 y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
                 [0., 0., 1., 1., 3., 2., 2., 0.],
@@ -2122,55 +2118,27 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
                 [6., 6., 13., 7., 15., 8., 8., 0.],
                 [6., 6., 13., 7., 15., 8., 8., 0.],
                 [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
-
-expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
-```
-
-</details>
-
-
-<details>
-<summary>convtranspose_output_shape</summary>
-
-```python
-x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
-                [3., 4., 5.],
-                [6., 7., 8.]]]]).astype(np.float32)
-
-W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
-                [1., 1., 1.],
-                [1., 1., 1.]],
-               [[1., 1., 1.],
-                [1., 1., 1.],
-                [1., 1., 1.]]]]).astype(np.float32)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
                              output_shape=[1, 2, 10, 8])
-
-y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [0., 0., 0., 0., 0., 0., 0., 0.]],
-
-               [[0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
-
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
+                             strides=[3, 2],
+                             output_padding=[1, 1])
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
+
+node = onnx.helper.make_node(
+    'ConvTranspose', ['X', 'W'], ['Y'],
+    name='test',
+    strides=[3, 2],
+    output_shape=[10, 8],
+    kernel_shape=[3, 3],
+    output_padding=[1, 1]
+)
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_convtranspose_kernel_shape')
 ```
 
 </details>
