@@ -106,11 +106,10 @@ struct DefaultVersionConverter : BaseVersionConverter {
     } else {
       next_version = curr_version - 1;
     }
-    std::string domain = initial_domain;
     // Identify index of this domain in g.opset_versions
     int domain_index = 0;
     for (int i = 0; i < g->opset_versions.size(); i++) {
-      if (g->opset_versions[i].domain == domain) {
+      if (g->opset_versions[i].domain == "") {
         domain_index = i;
       }
     }
@@ -125,8 +124,8 @@ struct DefaultVersionConverter : BaseVersionConverter {
           // Op is specifically defined for this domain and version
           OpSetID curr_id;
           OpSetID next_id;
-          curr_id.domain = domain;
-          next_id.domain = domain;
+          curr_id.domain = "";
+          next_id.domain = "";
           curr_id.version = curr_version;
           next_id.version = next_version;
           auto op_adapter = adapter_lookup(op, curr_id, next_id);
