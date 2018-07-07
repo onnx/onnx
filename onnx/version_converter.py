@@ -19,7 +19,7 @@ from typing import Text, Sequence
 
 Arguments:
     input (ModelProto): model
-    initial_version (String): initial opset version
+    initial_version (String): initial opset version as $<domain>$<version>
     target_version (String): target opset version
 
 Return:
@@ -30,10 +30,10 @@ Supported adapters:
 """
 
 
-def convert_version(model, initial_version, target_version):  # type: (ModelProto, OpSetID, OpSetID) -> ModelProto
+def convert_version(model, initial_version, target_version):  # type: (ModelProto, String, String) -> ModelProto
     if not isinstance(model, ModelProto):
         raise ValueError('VersionConverter only accepts ModelProto, incorrect type: {}'.format(type(model)))
-
+    print("Converting model")
     model_str = model.SerializeToString()
     converted_model_str = C.convert_version(model_str, initial_version, target_version)
     return onnx.load_from_string(converted_model_str)

@@ -46,10 +46,12 @@ struct VersionConverter {
 
     std::string initial_domain = initial_version.domain;
     std::string target_domain = target_version.domain;
-    if (initial_domain != "" || initial_domain != "ai.onnx" || target_domain !=
-        "" || target_domain != "ai.onnx") {
+    if ((initial_domain != "" && initial_domain != "ai.onnx") || (target_domain !=
+        "" && target_domain != "ai.onnx")) {
       std::cerr << "Warning: default onnx version converter can only convert "
         << " between default domain opset versions ('' or 'ai.onnx')" << std::endl;
+      std::cerr << "Provided initial_domain: " << initial_domain <<
+        ", provided target_domain: " << target_domain << std::endl;
       return mp_in;
     }
 
@@ -68,7 +70,11 @@ struct VersionConverter {
 
     // Check if target_version is valid
     const std::unordered_map<std::string, std::pair<int, int>>& versions_map = OpSchemaRegistry::DomainToVersionRange::Instance().Map();
-    std::pair<int, int> version_range = versions_map.at(target_version.domain);
+    std::string search_domain = target_version.domain;
+    if (target_version.domain == "ai.onnx") {
+      search_domain = "";
+    }
+    std::pair<int, int> version_range = versions_map.at(search_domain);
     if (target_version.version < version_range.first || target_version.version > version_range.second) {
       // Invalid target_version
       std::cerr << "Warning: invalid target_version (must be between "
@@ -94,7 +100,7 @@ struct VersionConverter {
       int op_opset_version = -1;
       // TODO: Check whether this process accidentally always defaults to initial_version
       // TODO: If so, just take the SinceVersion of this schema (which returns the implementation version)
-      auto op_domain_map = all_schemas[op->name()];
+      auto op_domain_map = all_schemas[op->kind().toString()];
       if (op_domain_map.find(initial_domain) != op_domain_map.end()) {
         // If op isn't defined for initial domain, we won't convert it
         for (const auto& version_pair : op_domain_map[initial_domain]) {
@@ -115,26 +121,26 @@ struct VersionConverter {
     } else {
       next_version = curr_version - 1;
     }
-    std::string domain = initial_domain;
     // Identify index of this domain in g.opset_versions
     int domain_index = 0;
     for (int i = 0; i < g->opset_versions.size(); i++) {
-      if (g->opset_versions[i].domain == domain) {
+      if (g->opset_versions[i].domain == "") {
         domain_index = i;
       }
     }
     while (curr_version != target_version.version) {
+      std::cerr << "curr_version: " << curr_version << ", next_version: " << next_version << std::endl;
       // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
       for (Node* op : nodes) {
-        auto op_domain_map = all_schemas[op->name()];
-        if (op_domain_map.find(domain) != op_domain_map.end() &&
-            op_domain_map[domain].find(curr_version) !=
-            op_domain_map[domain].end()) {
+        auto op_domain_map = all_schemas.at(op->kind().toString());
+        if (op_domain_map.find("") != op_domain_map.end() &&
+            op_domain_map[""].find(curr_version) !=
+            op_domain_map[""].end()) {
           // Op is specifically defined for this domain and version
           OpSetID curr_id;
           OpSetID next_id;
-          curr_id.domain = domain;
-          next_id.domain = domain;
+          curr_id.domain = "";
+          next_id.domain = "";
           curr_id.version = curr_version;
           next_id.version = next_version;
           auto op_adapter = adapter_lookup(op, curr_id, next_id);
@@ -142,10 +148,11 @@ struct VersionConverter {
           if (op_adapter == NULL) {
             // TODO: Verify that conversion is actually needed (that the operator
             // isn't already optimal, which should be caught by the above condition)
-            std::cerr << "No adapter is present for " << op->name()
-              << " in domain " << domain << ". Please implement one and try again." << std::endl;
+            std::cerr << "No adapter is present for " << op->kind().toString()
+              << " in default domain. Please implement one and try again." << std::endl;
             return mp_in;
           } else {
+            std::cerr << "Applying adapter" << std::endl;
             // adapt should handle replacing node in graph
             op_adapter->adapt(*g);
           }
@@ -163,6 +170,7 @@ struct VersionConverter {
       }
     }
     // Export g as ModelProto
+    std::cerr << "Finished conversion; returning model";
     ExportModelProto(&mp_out, g);
     return mp_out;
   }

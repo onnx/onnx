@@ -15,12 +15,13 @@ import unittest
 
 class TestVersionConverter(unittest.TestCase):
 
-    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OpSetID, OpSetID) -> ModelProto
+    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OpSetID, OpSetID, int) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test')
+        # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
                 initial_version, target_version)
-        checker.check_model(optimized_model)
-        return optimized_model
+        checker.check_model(converted_model)
+        return converted_model
 
     # fn is a function that takes a single node as argument
     def _visit_all_nodes_recursive(self, graph, fn):  # type: (GraphProto, Callable[[NodeProto], None]) -> None
@@ -33,15 +34,27 @@ class TestVersionConverter(unittest.TestCase):
                     for gr in attr.graphs:
                         self._visit_all_nodes_recursive(gr, fn)
 
-    # Test 1: Backwards Compatible Conversion
-    # TODO: Add BackwardsCompatibleAdapter for add (identify which opset
-    # versions fulfill this, maybe 7 to 6?))
-    def test_backwards_compatible(self):  # type: () -> None
-        nodes = [helper.make_node("Add", ["X"], ["Y"])]
+    # Test 1: Backwards Incompatible Conversion: Add: 8 -> 2
+    def test_backwards_incompatible(self):  # type: () -> None
+        nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph,
-    # Test 2: Backwards Incompatible Conversion
+        converted_model = self._converted(graph, str('$ai.onnx$8'), str('$ai.onnx$2'))
+        # TODO: Assert equality of graph and converted_model
+    # Test 2: Backwards Incompatible Conversion: Add: 8 -> 7
+    def test_backwards_incompatible(self):  # type: () -> None
+        nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, str('$ai.onnx$8'), str('$ai.onnx$7'))
+        # TODO: Assert equality of graph and converted_model
+if __name__ == '__main__':
+    unittest.main()
