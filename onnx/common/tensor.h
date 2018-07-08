@@ -71,8 +71,7 @@ private:
       dim += (int64_t)sizes_.size();
     }
     ONNX_ASSERT(dim >= 0 && (uint64_t)dim < sizes_.size());
-    return std::accumulate(
-        sizes_.begin() + dim, sizes_.end(), 1L, mul);
+    return std::accumulate(sizes_.begin() + dim, sizes_.end(), (int64_t)1, mul);
   }
 
   ONNX_NAMESPACE::TensorProto_DataType elem_type() const {
