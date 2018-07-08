@@ -65,12 +65,12 @@ private:
     return sizes_;
   }
 
-  int64_t size_from_dim(int64_t dim) const {
+  int64_t size_from_dim(int dim) const {
     static std::multiplies<int64_t> mul{};
     if (dim < 0) {
-      dim += (int64_t)sizes_.size();
+      dim += (int)sizes_.size();
     }
-    ONNX_ASSERT(dim >= 0 && (uint64_t)dim < sizes_.size());
+    ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size());
     return std::accumulate(sizes_.begin() + dim, sizes_.end(), (int64_t)1, mul);
   }
 
