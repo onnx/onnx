@@ -17,6 +17,7 @@
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
+#include "onnx/optimizer/passes/fuse_bn_into_conv.h"
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE { namespace optimization {
@@ -28,18 +29,19 @@ struct Optimizer {
 
   Optimizer() {
     // Register the optimization passes to the optimizer.
-    _registerOptimizer<EliminateIdentity>();
-    _registerOptimizer<EliminateNopTranspose>();
-    _registerOptimizer<EliminateUnusedInitializer>();
-    _registerOptimizer<ExtractConstantToInitializer>();
-    _registerOptimizer<FuseConsecutiveSqueezes>();
-    _registerOptimizer<FuseConsecutiveTransposes>();
-    _registerOptimizer<FuseTransposeIntoGemm>();
-    _registerOptimizer<FuseAddBiasIntoConv>();
-    _registerOptimizer<Nop>();
-    _registerOptimizer<SplitInit>();
-    _registerOptimizer<SplitPredict>();
-    _registerOptimizer<LiftLexicalReferences>();
+    registerOptimizer<EliminateIdentity>();
+    registerOptimizer<EliminateNopTranspose>();
+    registerOptimizer<EliminateUnusedInitializer>();
+    registerOptimizer<ExtractConstantToInitializer>();
+    registerOptimizer<FuseConsecutiveSqueezes>();
+    registerOptimizer<FuseConsecutiveTransposes>();
+    registerOptimizer<FuseTransposeIntoGemm>();
+    registerOptimizer<FuseAddBiasIntoConv>();
+    registerOptimizer<Nop>();
+    registerOptimizer<SplitInit>();
+    registerOptimizer<SplitPredict>();
+    registerOptimizer<LiftLexicalReferences>();
+    registerOptimizer<FuseBNIntoConv>();
   }
 
   virtual ~Optimizer() = default;
@@ -80,8 +82,7 @@ struct Optimizer {
     return mp_out;
   }
 
-private:
-  template<class Optimizer, class... Args> void _registerOptimizer(Args&& ...args) {
+  template<class Optimizer, class... Args> void registerOptimizer(Args&& ...args) {
     auto optimizer = make_unique<Optimizer>(std::forward<Args>(args)...);
     passes[optimizer->name] = std::move(optimizer);
   }
