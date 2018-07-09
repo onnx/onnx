@@ -184,10 +184,12 @@ struct VersionConverter {
   std::string stringify_opsetid(OpSetID target);
 
   std::vector<std::string> destringify_opsetid(std::string target);
+
+  OpSetID operatorsetidproto_to_opsetid(ONNX_NAMESPACE::OperatorSetIdProto proto);
 };
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
-    const OpSetID initial_version,
-    const OpSetID target_version);
+    const ONNX_NAMESPACE::OperatorSetIdProto initial_version,
+    const ONNX_NAMESPACE::OperatorSetIdProto target_version);
 }}

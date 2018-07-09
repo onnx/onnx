@@ -770,6 +770,8 @@ protected:
   }
 };
 
+// A struct with the same properties as OperatorSetIdProto, but without protobuf
+// overhead, resulting in a simpler and more readable workflow.
 struct OpSetID {
   std::string domain;
   int64_t version;

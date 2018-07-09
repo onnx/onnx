@@ -306,8 +306,8 @@ std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
   std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
   for (int i = 0; i < mp.opset_import_size(); i++) {
     OpSetID new_opset_version;
-    new_opset_version.domain = mp.opset_import(0).domain();
-    new_opset_version.version = mp.opset_import(0).version();
+    new_opset_version.domain = mp.opset_import(i).domain();
+    new_opset_version.version = mp.opset_import(i).version();
     g->opset_versions.push_back(new_opset_version);
   }
   return g;

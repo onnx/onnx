@@ -266,10 +266,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const py::bytes& bytes, const py::bytes& initial_bytes, const py::bytes& target_bytes) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        OpSetID initial_version;
-        OpSetID target_version;
-        ParseOpSetIDFromPyBytes(&initial_version, initial_bytes);
-        ParseOpSetIDFromPyBytes(&target_version, target_bytes);
+        OperatorSetIdProto initial_version;
+        OperatorSetIdProto target_version;
+        ParseProtoFromPyBytes(&initial_version, initial_bytes);
+        ParseProtoFromPyBytes(&target_version, target_bytes);
         auto const result = version_conversion::ConvertVersion(std::move(proto),
           initial_version, target_version);
         std::string out;
