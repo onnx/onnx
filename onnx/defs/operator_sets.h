@@ -55,8 +55,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, LeakyRelu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Less);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Log);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, LogSoftmax);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Loop);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, LoopIndexTensor);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, LpNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, LpPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, MatMul);
@@ -180,9 +178,6 @@ class OpSet_Onnx_ver1 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Less)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Log)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, LogSoftmax)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Loop)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
-           Onnx, 1, LoopIndexTensor)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 1, LpNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, LpPool)>());
@@ -454,6 +449,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Min);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Sum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, ScanWhile);
 
 // Iterate over schema from ai.onnx version 7
 class OpSet_Onnx_ver8 {
@@ -463,6 +460,8 @@ class OpSet_Onnx_ver8 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Sum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, ScanWhile)>());
   }
 };
 

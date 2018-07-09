@@ -35,196 +35,153 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
 
-static const char* Loop_ver1_doc = R"DOC(
-Generic Looping construct. This loop has multiple termination conditions:
+static const char* scan_loop_ver1_doc = R"DOC(
+ScanLoop can be used to iterate over (specified axes of) one or more scan_input tensors,
+constructing zero or more scan_output tensors. Other tensors can be used to carry a state
+when iterating from one element to another (referred to as loop-carried dependences
+below). All these tensors are required to have the same shape in each iteration of the loop.
 
-1) Trip count. Iteration count specified at runtime. Set by
-   specifying the input M. Optional. Set to empty string to omit.
-   Note that a static trip count (specified at graph construction time) can be
-   specified by passing in a constant node for input M.
-2) Loop termination condition. This is an input to the op that determines
-   whether to run the first iteration and also a loop-carried dependency for
-   the body graph. The body graph must yield a value for the condition variable,
-   whether this input is provided or not.
+The behavior of
+   ScanLoop <scan_axes = [axis_1, ..., axis_m], body = loop-body> (init_1, ..., init_n, scan_1, ..., scan_m)
+is equivalent to the following pseudo-code:
 
-This table summarizes the operating modes of this operator with equivalent
-C-style code:
+	{
+		// initialize state-variables
+		st_1 = init_1; ... st_n = init_n;
+		// initialize scan-output variables: [] denotes an empty tensor
+		scan_out_1 = []; ...; scan_out_k = [];
+		// identify number of iterations: T.shape[i] denotes the size of T's i-th axis/dimension
+		dim_1 = scan_1.shape[axis_1]; ... ; dim_m = scan_m.shape[axis_m];
+		N = min(dim_1, ..., dim_m);
+		// execute loop
+		for (int t = 0; t < N; ++t) {
+			// generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
+			// of rank one less than T obtained by indexing T at position t along axis k.
+			si_1 = scan_1<axis=axis_1>[t]; ... ; si_m = scan_m<axis=axis_m>[t];
+			// execute loop-body
+			st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
+			// accumulate the scan-output elements
+			scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
+		}
+		return st_1, ..., st_n, scan_out_1, ..., scan_out_k
+	}
 
-    Operator inputs defined as (max_trip_count, condition_var).
+*Sample usage: Encoding RNN using a ScanLoop*
+The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
+recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
+be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly refers
+to the names %Wi, %Ri, %Wbi, abd %Rbi defined in the outer graph.
 
-    input ("", ""):
-        for (int i=0; ; ++i) {
-          cond = ... // Note this value is ignored, but is required in the body
-        }
-
-    input ("", cond) // Note this is analogous to a while loop
-        bool cond = ...;
-        for (int i=0; cond; ++i) {
-          cond = ...;
-        }
-
-    input ("", 1) // Note this is analogous to a do-while loop
-        bool cond = true
-        for (int i=0; cond; ++i) {
-          cond = ...;
-        }
-
-    input (trip_count, "") // Note this is analogous to a for loop
-        int trip_count = ...
-        for (int i=0; i < trip_count; ++i) {
-          cond = ...; // ignored
-        }
-
-    input (trip_count, cond)
-        int trip_count = ...;
-        bool cond = ...;
-        for (int i=0; i < trip_count && cond; ++i) {
-          cond = ...;
-        }
-
-
-*Sample usage - cond as well as trip count*
-
-    graph predict-net {
-      %a = Constant[value = <Scalar Tensor [3]>]()
-      %b = Constant[value = <Scalar Tensor [6]>]()
-      %keepgoing = Constant[value = <Scalar Tensor [1]>]()
-      %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
-      %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
-      return
+    graph rnn-encoding {
+      %H_0 = ... 
+      %X = ...
+      %Wi = ...
+      %Ri = ...
+      %Wbi = ...
+      %Rbi = ...
+      %Y_h, %Y = ScanLoop[body = <graph rnn-cell-1>, scan_axes=[0]](%H_0, %X)
+      return %Y, %Y_h
     }
 
-    graph body-net (
-      %i[INT32, scalar]
-      %keepgoing[BOOL, scalar]
-      %b[INT32, scalar]
+    graph rnn-cell-1 (
+      %H_tminus1[FLOAT, tensor]
+      %X_t[FLOAT, tensor]
     ) {
-      %my_local = Add(%a, %b)
-      %b_out = Sub(%a, %b)
-      %keepgoing_out = Greater(%my_local, %b_out)
-      %user_defined_vals = Add(%b, %b)
-      return %keepgoing_out, %b_out, %user_defined_vals
+      %t1 = X_t * (Wi^T)
+      %t2 = H_tminus1*(Ri^T)
+      %t3 = Add(%t1, %t2)
+      %t4 = Add(%t3, %Wbi)
+      %t5 = Add(%t4, %Rbi)
+      %Ht = Tanh(%t5)
+      %Accumulate = Identity(%Ht)
+      return %Ht, %Accumulate
     }
-
-*Sample equivalent C code*
-
-    {
-      /* User-defined code (enclosing scope) */
-      int a = 3, b = 6;
-      bool keepgoing = true; // Analogous to input cond
-      /* End user-defined code */
-
-      /* Implicitly-defined code */
-      const int max_trip_count = 10; // Analogous to input M
-      int user_defined_vals[]; // Imagine this is resizable
-      /* End implicitly-defined code */
-      for (int i=0; i < max_trip_count && keepgoing; ++i) {
-        /* User-defined code (loop body) */
-        int my_local = a + b; // Reading values in the enclosing scope is fine
-        b = a - b; // writes fine if we specify b as a loop-carried dependency
-        keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-        user_defined_vals[i] = b + b;
-        /* End user-defined code */
-      }
-      // my_local = 123; // Can't do this. my_local was defined in the the body
-
-      // These below values are live-out from the loop and therefore accessible
-      b_out; user_defined_vals; keepgoing_out;
-    }
-
-There are several things of note in this code snippet:
-
-1) Values from the enclosing scope (i.e. variable a here) are in scope and can
-   be referenced in the inputs of the loop.
-2) Any variables which you wish to make available in the enclosing scope (i.e.
-   the variables b and keepgoing) must be declared as either loop-carried
-   dependencies (both at the op inputs and output and at the body net input and
-   output) or scan_outputs.
-3) Values created in the body cannot be accessed in the enclosing scope.
-
-Note that the semantics of this op support "diagonal" or "wavefront" execution.
-(See Step 3 here for an example:
-https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
-Frontends should emit multi-layer RNNs as a series of While operators (with
-time being the inner looping dimension), with each successive layer consuming
-the scan_outputs from the previous layer, possibly going through several
-point-wise operators (e.g. dropout, residual connections, linear layer).
-Concretely, the (possibly transformed) scan_outputs are referenced by the
-subsequent layer as a LoopIndexTensor operating on a value in scope, not
-necessarily a loop-carried dependency. Backends can recognize this pattern and
-are permitted to schedule the execution of the multi-layer network in a
-pipelined/"wavefront" fashion.
 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    Loop,
-    1,
+	Scan,
+	8,
+	OpSchema()
+	.SetSupportLevel(SupportType::EXPERIMENTAL)
+	.SetDoc(scan_loop_ver1_doc)
+	.Input(
+		0,
+		"initial_state_and_scan_inputs",
+		"Initial values of the loop's N state variables followed by M scan_inputs",
+		"V",
+		OpSchema::Variadic)
+	.Output(
+		0,
+		"final_state_and_scan_outputs",
+		"Final values of the loop's N state variables followed by K scan_outputs",
+		"V",
+		OpSchema::Variadic)
+	.Attr(
+		"body",
+		"The graph run each iteration. It has N+M inputs: "
+		"(loop state variables..., scan_input_elts...). It has N+K outputs: "
+		"(loop state variables..., scan_output_elts...). Each "
+		"scan_output is created by concatenating the value of the specified "
+		"scan_output_elt value at the end of each iteration of the loop. It is an error"
+		" if the dimensions of these values change across loop iterations.",
+		AttributeProto::GRAPH,
+		true)
+	.Attr(
+		"scan_axes",
+		"A list of M axes. The i-th element of the list specifies the axis "
+		"to be scanned for the i-th scan_input tensor.",
+		AttributeProto::INTS
+	)
+	.TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types"));
+
+static const char* scan_while_loop_ver1_doc = R"DOC(
+ScanWhileLoop extends ScanLoop with a while-condition that allows the loop to
+terminate earlier (before the scan-input tensors are completely scanned).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ScanWhile,
+    8,
     OpSchema()
         .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(Loop_ver1_doc)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " pass empty string to skip.",
-            "I")
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Pass empty string to skip.",
-            "B")
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs",
-            "V",
-            OpSchema::Variadic)
+        .SetDoc(scan_while_loop_ver1_doc)
+	    .Input(
+		    0,
+		   "cond",
+		   "Initial value of loop continuation condition. If this value is true "
+		   "the loop will execute at least one time. If this value is false "
+		   "the loop will execute zero times.",
+		   "bool")
+		.Input(
+			1,
+			"initial_state_and_scan_inputs",
+			"Initial values of the loop's N state variables followed by M scan_inputs",
+			"V",
+			OpSchema::Variadic)
+		.Output(
+			0,
+			"final_state_and_scan_outputs",
+			"Final values of the loop's N state variables followed by K scan_outputs",
+			"V",
+			OpSchema::Variadic)
         .Attr(
             "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
+            "The graph run each iteration. It has N+M inputs: "
+            "(loop state variables..., scan_input_elts...). It has 1+N+K outputs: "
+            "(condition, loop cstate variables..., scan_output_elts...). Each "
             "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
+            "scan_output_elt at the end of each iteration of the loop. It is an error"
             " if the dimensions of these values change across loop iterations.",
             AttributeProto::GRAPH,
             true)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("I", {"int64"}, "Only int64")
-        .TypeConstraint("B", {"bool"}, "Only bool"));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    LoopIndexTensor,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(
-            "This is a special operator only valid inside the loop that supports "
-            "the common case behavior of accessing the correct element of the input"
-            " sequence in an RNN. This operator MUST be directly given the passed-"
-            "in iteration number to the body of a Loop graph. This signals to back-"
-            "ends that this is a direct indexing operation, with no transforms "
-            "applied to the index.")
-        .Input(0, "T", "Tensor to be indexed (has N dimensions)", "T")
-        .Input(
-            1,
-            "loop_idx",
-            "Loop index provided as input to the body graph",
-            "I")
         .Attr(
-            "axis",
-            "Axis on which to index",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Output(0, "O", "Tensor of N - 1 dims that is a sub tensor of T", "T")
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("I", {"int32"}, "Indices"));
+            "scan_axes",
+            "A list of M axes. The i-th element of the list specifies the axis "
+            "to be scanned for the i-th scan_input tensor.",
+            AttributeProto::INTS
+        )
+        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types"));
+
+
 } // namespace ONNX_NAMESPACE
