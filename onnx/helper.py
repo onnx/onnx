@@ -53,9 +53,15 @@ def make_node(
 
 
 def make_operatorsetid(
+<<<<<<< HEAD
         domain,  # type: Text
         version,  # type: int
 ):  # type: (...) -> OperatorSetIdProto
+=======
+        domain,  # type: String
+        version,  # type: Integer
+):
+>>>>>>> Fixed version_converter_test to catch exceptions
     """Construct an OperatorSetIdProto.
 
     Arguments:
