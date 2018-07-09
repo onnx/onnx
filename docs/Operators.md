@@ -1506,6 +1506,28 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -1.0, 1.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+    min=-5.0,
+    max=5.0,
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_inbounds')
+
+x = np.array([-6, 0, 6]).astype(np.float32)
+y = np.array([-5, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_outbounds')
+
+x = np.array([-1, 0, 6]).astype(np.float32)
+y = np.array([-1, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_splitbounds')
 ```
 
 </details>
@@ -1536,6 +1558,16 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -np.inf, 0.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_max')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_inbounds')
 ```
 
 </details>
@@ -10825,8 +10857,7 @@ This version of the operator has been available since version 1 of the default O
 ### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
+  alpha * tanh(beta * x). 
       
 
 #### Version
