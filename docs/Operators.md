@@ -4941,11 +4941,13 @@ This version of the operator has been available since version 8 of the default O
 
 Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
 
-#### Inputs (1 - &#8734;)
+#### Inputs (2 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for max.</dd>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First input tensor</dd>
+<dt><tt>data_1</tt> (variadic) : T</dt>
+<dd>List of tensors including the remaining inputs for max.</dd>
 </dl>
 
 #### Outputs
@@ -5446,11 +5448,13 @@ This version of the operator has been available since version 8 of the default O
 
 Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>, <a href="Changelog.md#Mean-6">Mean-6</a>
 
-#### Inputs (1 - &#8734;)
+#### Inputs (2 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for mean.</dd>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First input tensor</dd>
+<dt><tt>data_1</tt> (variadic) : T</dt>
+<dd>List of tensors including the remaining inputs for mean.</dd>
 </dl>
 
 #### Outputs
@@ -5519,11 +5523,13 @@ This version of the operator has been available since version 8 of the default O
 
 Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
 
-#### Inputs (1 - &#8734;)
+#### Inputs (2 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for min.</dd>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First input tensor</dd>
+<dt><tt>data_1</tt> (variadic) : T</dt>
+<dd>List of tensors including the remaining inputs for min.</dd>
 </dl>
 
 #### Outputs
@@ -9477,11 +9483,13 @@ This version of the operator has been available since version 8 of the default O
 
 Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>, <a href="Changelog.md#Sum-6">Sum-6</a>
 
-#### Inputs (1 - &#8734;)
+#### Inputs (2 - &#8734;)
 
 <dl>
-<dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for sum.</dd>
+<dt><tt>data_0</tt> : T</dt>
+<dd>First input tensor</dd>
+<dt><tt>data_1</tt> (variadic) : T</dt>
+<dd>List of tensors including the remaining inputs for sum.</dd>
 </dl>
 
 #### Outputs
