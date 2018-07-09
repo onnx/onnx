@@ -160,6 +160,6 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
-    const OpSetID initial_version,
-    const OpSetID target_version);
+    const ONNX_NAMESPACE::OperatorSetIdProto initial_version,
+    const ONNX_NAMESPACE::OperatorSetIdProto target_version);
 }}
