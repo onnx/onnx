@@ -155,11 +155,21 @@ std::string VersionConverter::stringify_opsetid(OpSetID target) {
     return target.domain + target.version;
 }
 
+OpSetID VersionConverter::operatorsetidproto_to_opsetid(
+    ONNX_NAMESPACE::OperatorSetIdProto proto) {
+  OpSetID retval;
+  retval.domain = proto.domain();
+  retval.version = proto.version();
+  return retval;
+}
+
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
-    const OpSetID initial_version,
-    const OpSetID target_version) {
-  return _version_converter.convert_version(mp_in, initial_version, target_version);
+    const ONNX_NAMESPACE::OperatorSetIdProto initial_version,
+    const ONNX_NAMESPACE::OperatorSetIdProto target_version) {
+  OpSetID initial_struct = _version_converter.operatorsetidproto_to_opsetid(initial_version);
+  OpSetID target_struct = _version_converter.operatorsetidproto_to_opsetid(target_version);
+  return _version_converter.convert_version(mp_in, initial_struct, target_struct);
 }
 
 }} // namespace ONNX_NAMESPACE::version_conversion
