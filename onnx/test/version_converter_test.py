@@ -36,17 +36,17 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test 1: Backwards Incompatible Conversion: Add: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
-        nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
-        graph = helper.make_graph(
-            nodes,
-            "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph, str('$ai.onnx$8'), str('$ai.onnx$2'))
-        # TODO: Assert equality of graph and converted_model - Run by Lu
-        # TODO: Assert version of converted_model
-        assert converted_model.opset_import[0].version == 8
+        def test():
+            nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                    helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+            converted_model = self._converted(graph, helper.make_operatorsetid(
+                    "ai.onnx", 8), helper.make_operatorsetid("ai.onnx", 2))
+        self.assertRaises(RuntimeError, test)
 
     # Test 2: Backwards Compatible Conversion: Add: 8 -> 7
     def test_backwards_compatible(self):  # type: () -> None
@@ -57,7 +57,8 @@ class TestVersionConverter(unittest.TestCase):
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph, str('$ai.onnx$8'), str('$ai.onnx$7'))
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "ai.onnx", 8), helper.make_operatorsetid("ai.onnx", 7))
         # TODO: Assert equality of graph and converted_model
         assert converted_model.opset_import[0].version == 7
 

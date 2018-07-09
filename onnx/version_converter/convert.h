@@ -48,6 +48,7 @@ struct VersionConverter {
     std::string target_domain = target_version.domain;
     if ((initial_domain != "" && initial_domain != "ai.onnx") || (target_domain !=
         "" && target_domain != "ai.onnx")) {
+      // TODO: Replace with ONNX_ASSERTM?
       std::cerr << "Warning: default onnx version converter can only convert "
         << " between default domain opset versions ('' or 'ai.onnx')" << std::endl;
       std::cerr << "Provided initial_domain: " << initial_domain <<
@@ -77,6 +78,7 @@ struct VersionConverter {
     std::pair<int, int> version_range = versions_map.at(search_domain);
     if (target_version.version < version_range.first || target_version.version > version_range.second) {
       // Invalid target_version
+      // TODO: Replace with ONNX_ASSERTM?
       std::cerr << "Warning: invalid target_version (must be between "
         << version_range.first << " and " << version_range.second << std::endl;
       return mp_in;
@@ -98,8 +100,6 @@ struct VersionConverter {
     for (Node* op : nodes) {
       // Iterate through all OperatorSetVersions, select highest that is leq initial_version
       int op_opset_version = -1;
-      // TODO: Check whether this process accidentally always defaults to initial_version
-      // TODO: If so, just take the SinceVersion of this schema (which returns the implementation version)
       auto op_domain_map = all_schemas[op->kind().toString()];
       if (op_domain_map.find(initial_domain) != op_domain_map.end()) {
         // If op isn't defined for initial domain, we won't convert it
@@ -145,17 +145,14 @@ struct VersionConverter {
           next_id.version = next_version;
           auto op_adapter = adapter_lookup(op, curr_id, next_id);
           // If adapter_lookup returns null, no adapter is present.  Error out
-          if (op_adapter == NULL) {
-            // TODO: Verify that conversion is actually needed (that the operator
-            // isn't already optimal, which should be caught by the above condition)
-            std::cerr << "No adapter is present for " << op->kind().toString()
-              << " in default domain. Please implement one and try again." << std::endl;
-            return mp_in;
-          } else {
-            std::cerr << "Applying adapter" << std::endl;
-            // adapt should handle replacing node in graph
-            op_adapter->adapt(*g);
-          }
+          // TODO: Verify that conversion is actually needed (that the operator
+          // isn't already optimal, which should be caught by the above condition)
+          ONNX_ASSERTM(op_adapter != NULL,
+              "No adapter is present for %s in default domain. Please implement one and try again.",
+              op->kind().toString());
+          std::cerr << "Applying adapter" << std::endl;
+          // adapt should handle replacing node in graph
+          op_adapter->adapt(*g);
         }
       }
       // Update model version

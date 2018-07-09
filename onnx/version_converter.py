@@ -12,7 +12,7 @@ from __future__ import unicode_literals
 
 import onnx
 import onnx.onnx_cpp2py_export.version_converter as C
-from onnx import ModelProto
+from onnx import ModelProto, OperatorSetIdProto
 from typing import Text, Sequence
 
 """Apply the version conversion on the serialized ModelProto.
