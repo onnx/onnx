@@ -494,8 +494,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
-  return [=](OpSchema& schema) {
-    std::string doc = R"DOC(
+  return [=](OpSchema& schema) { std::string doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
 All inputs and outputs must have the same data type.
 {broadcast_doc}
@@ -506,7 +505,13 @@ All inputs and outputs must have the same data type.
     schema.Input(
         0,
         "data_0",
-        "List of tensors for " + std::string(name) + ".",
+        "First input tensor",
+        "T");
+    schema.Input(
+        1,
+        "data_1",
+        "List of tensors including the remaining inputs for "
+        + std::string(name) + ".",
         "T",
         OpSchema::Variadic);
     schema.Output(0, name, "Output tensor.", "T");
