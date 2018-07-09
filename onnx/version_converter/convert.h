@@ -170,7 +170,7 @@ struct VersionConverter {
       }
     }
     // Export g as ModelProto
-    std::cerr << "Finished conversion; returning model";
+    std::cerr << "Finished conversion; returning model\n";
     ExportModelProto(&mp_out, g);
     return mp_out;
   }

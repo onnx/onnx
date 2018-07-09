@@ -44,9 +44,12 @@ class TestVersionConverter(unittest.TestCase):
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, str('$ai.onnx$8'), str('$ai.onnx$2'))
-        # TODO: Assert equality of graph and converted_model
-    # Test 2: Backwards Incompatible Conversion: Add: 8 -> 7
-    def test_backwards_incompatible(self):  # type: () -> None
+        # TODO: Assert equality of graph and converted_model - Run by Lu
+        # TODO: Assert version of converted_model
+        assert converted_model.opset_import[0].version == 8
+
+    # Test 2: Backwards Compatible Conversion: Add: 8 -> 7
+    def test_backwards_compatible(self):  # type: () -> None
         nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -56,5 +59,7 @@ class TestVersionConverter(unittest.TestCase):
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, str('$ai.onnx$8'), str('$ai.onnx$7'))
         # TODO: Assert equality of graph and converted_model
+        assert converted_model.opset_import[0].version == 7
+
 if __name__ == '__main__':
     unittest.main()
