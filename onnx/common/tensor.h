@@ -66,12 +66,11 @@ private:
   }
 
   int64_t size_from_dim(int dim) const {
-    static std::multiplies<int64_t> mul{};
     if (dim < 0) {
       dim += (int)sizes_.size();
     }
     ONNX_ASSERT(dim >= 0 && (size_t)dim < sizes_.size());
-    return std::accumulate(sizes_.begin() + dim, sizes_.end(), (int64_t)1, mul);
+    return std::accumulate(sizes_.begin() + dim, sizes_.end(), (int64_t)1, std::multiplies<int64_t>{});
   }
 
   ONNX_NAMESPACE::TensorProto_DataType elem_type() const {
