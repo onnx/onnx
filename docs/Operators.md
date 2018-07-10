@@ -10624,7 +10624,7 @@ This version of the operator has been available since version 1 of the default O
           user_defined_vals[i] = b + b;
           /* End user-defined code */
         }
-        // my_local = 123; // Can't do this. my_local was defined in the body
+        // my_local = 123; // Can't do this. my_local was defined in the the body
   
         // These below values are live-out from the loop and therefore accessible
         b_out; user_defined_vals; keepgoing_out;
