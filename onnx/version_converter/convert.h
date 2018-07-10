@@ -107,8 +107,8 @@ struct DefaultVersionConverter : BaseVersionConverter {
       next_version = curr_version - (int64_t) 1;
     }
     // Identify index of this domain in g.opset_versions
-    int domain_index = 0;
-    for (int64_t i = 0; i < g->opset_versions.size(); i++) {
+    uint64_t domain_index = 0;
+    for (uint64_t i = 0; i < g->opset_versions.size(); i++) {
       if (g->opset_versions[i].domain == "") {
         domain_index = i;
       }
