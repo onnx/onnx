@@ -84,7 +84,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
     // Create Map for Current Version
     for (Node* op : nodes) {
       // Iterate through all OperatorSetVersions, select highest that is leq initial_version
-      int op_opset_version = -1;
+      int64_t op_opset_version = -1;
       auto op_domain_map = all_schemas[op->kind().toString()];
       if (op_domain_map.find(initial_domain) != op_domain_map.end()) {
         // If op isn't defined for initial domain, we won't convert it
