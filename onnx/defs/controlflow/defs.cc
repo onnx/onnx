@@ -126,7 +126,7 @@ C-style code:
         user_defined_vals[i] = b + b;
         /* End user-defined code */
       }
-      // my_local = 123; // Can't do this. my_local was defined in the the body
+      // my_local = 123; // Can't do this. my_local was defined in the body
 
       // These below values are live-out from the loop and therefore accessible
       b_out; user_defined_vals; keepgoing_out;
