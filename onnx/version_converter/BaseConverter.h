@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
+>>>>>>> Refactored VersionConverter into BaseConverter
 // Version converter interface for ONNX models between different opset versions.
 
 #pragma once
