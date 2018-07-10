@@ -306,7 +306,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="AveragePool-1"></a>**AveragePool-1**</a>
 
-  AveragePool consumes an input tensor X and applies average pooling across the
+  AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -1546,7 +1546,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="GlobalAveragePool-1"></a>**GlobalAveragePool-1**</a>
 
-  GlobalAveragePool consumes an input tensor X and applies average pooling across the
+  GlobalAveragePool consumes an input tensor X and applies average pooling across
    the values in the same channel. This is equivalent to AveragePool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -1577,7 +1577,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="GlobalLpPool-1"></a>**GlobalLpPool-1**</a>
 
-  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
+  GlobalLpPool consumes an input tensor X and applies lp pool pooling across
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -1615,7 +1615,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="GlobalMaxPool-1"></a>**GlobalMaxPool-1**</a>
 
-  GlobalMaxPool consumes an input tensor X and applies max pooling across the
+  GlobalMaxPool consumes an input tensor X and applies max pooling across
    the values in the same channel. This is equivalent to MaxPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -2403,7 +2403,7 @@ This version of the operator has been available since version 1 of the default O
           user_defined_vals[i] = b + b;
           /* End user-defined code */
         }
-        // my_local = 123; // Can't do this. my_local was defined in the the body
+        // my_local = 123; // Can't do this. my_local was defined in the body
   
         // These below values are live-out from the loop and therefore accessible
         b_out; user_defined_vals; keepgoing_out;
@@ -2553,7 +2553,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="LpPool-1"></a>**LpPool-1**</a>
 
-  LpPool consumes an input tensor X and applies Lp pooling across the
+  LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
@@ -2669,7 +2669,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="MaxPool-1"></a>**MaxPool-1**</a>
 
-  MaxPool consumes an input tensor X and applies max pooling across the
+  MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -5123,7 +5123,7 @@ This version of the operator has been available since version 1 of the default O
 ## Version 2 of the default ONNX operator set
 ### <a name="GlobalLpPool-2"></a>**GlobalLpPool-2**</a>
 
-  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
+  GlobalLpPool consumes an input tensor X and applies lp pool pooling across
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -5161,7 +5161,7 @@ This version of the operator has been available since version 2 of the default O
 
 ### <a name="LpPool-2"></a>**LpPool-2**</a>
 
-  LpPool consumes an input tensor X and applies Lp pooling across the
+  LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
@@ -6879,7 +6879,7 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="AveragePool-7"></a>**AveragePool-7**</a>
 
-  AveragePool consumes an input tensor X and applies average pooling across the
+  AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
