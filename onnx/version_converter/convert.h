@@ -78,7 +78,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
     std::unordered_map<std::basic_string<char>, std::unordered_map<std::basic_string<char>, std::map<int64_t, ONNX_NAMESPACE::OpSchema*>>>  all_schemas;
 
     for (OpSchema schema : all_opschemas) {
-      all_schemas[schema.Name()][schema.domain()][schema.since_version()] = &schema;
+      all_schemas[schema.Name()][schema.domain()][(int64_t) schema.since_version()] = &schema;
     }
 
     // Create Map for Current Version
@@ -102,13 +102,13 @@ struct DefaultVersionConverter : BaseVersionConverter {
     int64_t next_version;
     if (target_version.version > initial_version.version) {
       curr_version++;
-      next_version = curr_version + 1;
+      next_version = curr_version + (int64_t) 1;
     } else {
-      next_version = curr_version - 1;
+      next_version = curr_version - (int64_t) 1;
     }
     // Identify index of this domain in g.opset_versions
     int domain_index = 0;
-    for (int i = 0; i < g->opset_versions.size(); i++) {
+    for (int64_t i = 0; i < g->opset_versions.size(); i++) {
       if (g->opset_versions[i].domain == "") {
         domain_index = i;
       }
