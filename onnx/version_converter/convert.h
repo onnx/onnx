@@ -75,7 +75,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
     std::vector<OpSchema> all_opschemas = ONNX_NAMESPACE::OpSchemaRegistry::get_all_schemas_with_history();
 
     // Create Map for All Versions
-    std::unordered_map<std::basic_string<char>, std::unordered_map<std::basic_string<char>, std::map<int, ONNX_NAMESPACE::OpSchema*>>>  all_schemas;
+    std::unordered_map<std::basic_string<char>, std::unordered_map<std::basic_string<char>, std::map<int64_t, ONNX_NAMESPACE::OpSchema*>>>  all_schemas;
 
     for (OpSchema schema : all_opschemas) {
       all_schemas[schema.Name()][schema.domain()][schema.since_version()] = &schema;
@@ -99,7 +99,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
     // Iterate over all versions to target_version for specified
     int64_t curr_version = initial_version.version;
-    int next_version;
+    int64_t next_version;
     if (target_version.version > initial_version.version) {
       curr_version++;
       next_version = curr_version + 1;
