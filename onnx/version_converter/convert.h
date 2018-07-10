@@ -98,7 +98,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
     }
 
     // Iterate over all versions to target_version for specified
-    int curr_version = initial_version.version;
+    int64_t curr_version = initial_version.version;
     int next_version;
     if (target_version.version > initial_version.version) {
       curr_version++;
