@@ -1577,7 +1577,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="GlobalLpPool-1"></a>**GlobalLpPool-1**</a>
 
-  GlobalLpPool consumes an input tensor X and applies lp pool pooling across
+  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -2553,7 +2553,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="LpPool-1"></a>**LpPool-1**</a>
 
-  LpPool consumes an input tensor X and applies Lp pooling across
+  LpPool consumes an input tensor X and applies Lp pooling across the
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
