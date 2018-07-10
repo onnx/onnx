@@ -1,35 +1,20 @@
-// A converter for ONNX models between different opset versions
+// ATTENTION: The code in this file is highly EXPERIMENTAL.
+// Adventurous users should note that the APIs will probably change.
+
+// Default converter for ONNX models between different opset versions
+// in the same domain.
 
 #pragma once
 
-#include "onnx/common/ir.h"
-#include "onnx/common/ir_pb_converter.h"
-#include "onnx/common/stl_backports.h"
-#include "onnx/proto_utils.h"
-#include "onnx/defs/schema.h"
-#include <utility>
-#include <iostream>
-// TODO: Remove this import once actual adapters are imported
-#include "onnx/version_converter/adapters/adapter.h"
+#include "onnx/version_converter/BaseConverter.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct VersionConverter {
-  // Schema for adapters: {<op_name>$<from_domain><from_version>$<to_domain>
-  // <to_version>: adapter}
-  std::map<std::string, std::map<std::string, std::map<std::string, Adapter*>>> adapters;
-
-  std::unordered_map<Node*, OpSchema> current_opschemas;
-
-  VersionConverter() {
+struct DefaultVersionConverter : BaseVersionConverter {
+  // TODO: Change all existing references to VersionConverter
+  DefaultVersionConverter() {
     // TODO: Register adapters to the version converter
   }
-
-  virtual ~VersionConverter() = default;
-
-  Adapter* adapter_lookup(Node* op,
-      const OpSetID& initial_version,
-      const OpSetID& target_verion);
 
   ONNX_NAMESPACE::ModelProto convert_version(
       const ONNX_NAMESPACE::ModelProto& mp_in,
@@ -171,18 +156,6 @@ struct VersionConverter {
     ExportModelProto(&mp_out, g);
     return mp_out;
   }
-
-  void registerAdapter(Adapter* a_ptr, std::string domain) {
-    OpSetID iv = a_ptr->initial_version;
-    OpSetID tv = a_ptr->target_version;
-    adapters[a_ptr->name][stringify_opsetid(iv)][stringify_opsetid(tv)] = a_ptr;
-  }
-
-  std::string stringify_opsetid(OpSetID target);
-
-  std::vector<std::string> destringify_opsetid(std::string target);
-
-  OpSetID operatorsetidproto_to_opsetid(ONNX_NAMESPACE::OperatorSetIdProto proto);
 };
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
