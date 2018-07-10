@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto
+from onnx import checker, helper, ModelProto, TensorProto, GraphProto, NodeProto, OperatorSetIdProto
 from typing import Sequence, Text, Tuple, List, Callable
 from onnx import numpy_helper
 
@@ -15,7 +15,7 @@ import unittest
 
 class TestVersionConverter(unittest.TestCase):
 
-    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OpSetID, OpSetID, int) -> ModelProto
+    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OperatorSetIdProto, OperatorSetIdProto) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test')
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
@@ -36,7 +36,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test 1: Backwards Incompatible Conversion: Add: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
-        def test():
+        def test():  # type: () -> None
             nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
             graph = helper.make_graph(
                 nodes,
