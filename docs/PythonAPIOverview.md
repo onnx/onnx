@@ -177,6 +177,28 @@ print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model
 Runnable IPython notebooks:
 - [shape_inference.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/shape_inference.ipynb)
 
+## Converting Version of an ONNX Model
+```python
+import onnx
+from onnx import version_converter, helper
+
+# Preprocessing: load the model to be converted.
+model_path = 'path/to/the/model.onnx'
+original_model = onnx.load(model_path)
+
+print('The model before conversion:\n{}'.format(original_model))
+
+# A full list of supported adapters can be found here:
+# https://github.com/onnx/onnx/blob/master/onnx/version_converter.py#L21
+initial_version = helper.make_operatorsetid("<domain", <version>)
+target_version = helper.make_operatorsetid("<domain", <version>)
+
+# Apply the optimization on the original model
+converted_model = version_converter.convert_version(original_model, initial_version, target_version)
+
+print('The model after conversion:\n{}'.format(converted_model))
+```
+
 ## Utility Functions
 ### Polishing the Model
 Function `polish_model` runs model checker, optimizer, shape inference engine on the model,
