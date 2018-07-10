@@ -12,6 +12,7 @@
 #include "onnx/defs/schema.h"
 #include <utility>
 #include <iostream>
+#include <stdlib.h>
 // TODO: Remove this import once actual adapters are imported
 #include "onnx/version_converter/adapters/adapter.h"
 
@@ -46,8 +47,7 @@ struct BaseVersionConverter {
           // Check if downwards adapter exists (only one should)
           const auto target_map = adapters[op_name][initial];
           for (auto it = target_map.begin(); it != target_map.end(); ++it) {
-            int new_target;
-            sscanf_s(destringify_opsetid(it->first)[1].c_str(), "%d", &new_target);
+            int new_target = atoi(destringify_opsetid(it->first)[1].c_str());
             if (new_target <= target_version.version) {
               // Adapter found
               return &*(it->second);
