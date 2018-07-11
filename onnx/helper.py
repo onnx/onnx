@@ -55,7 +55,7 @@ def make_node(
 def make_operatorsetid(
         domain,  # type: Text
         version,  # type: int
-        ):  # type: (...) -> OperatorSetIdProto
+):  # type: (...) -> OperatorSetIdProto
     """Construct an OperatorSetIdProto.
 
     Arguments:

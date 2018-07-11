@@ -44,8 +44,8 @@ class TestVersionConverter(unittest.TestCase):
                 [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
                     helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-            converted_model = self._converted(graph, helper.make_operatorsetid(
-                    "ai.onnx", 8), helper.make_operatorsetid("ai.onnx", 2))
+            self._converted(graph, helper.make_operatorsetid(
+                "ai.onnx", 8), helper.make_operatorsetid("ai.onnx", 2))
         self.assertRaises(RuntimeError, test)
 
     # Test 2: Backwards Compatible Conversion: Add: 8 -> 7
@@ -61,6 +61,7 @@ class TestVersionConverter(unittest.TestCase):
             "ai.onnx", 8), helper.make_operatorsetid("ai.onnx", 7))
         # TODO: Assert equality of graph and converted_model
         assert converted_model.opset_import[0].version == 7
+
 
 if __name__ == '__main__':
     unittest.main()
