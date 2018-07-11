@@ -22,7 +22,7 @@ struct Adapter {
     : name(std::move(name)), initial_version(initial_version), target_version(target_version) {
   }
 
-  virtual void adapt(Graph& /*graph*/) {}
+  virtual void adapt(Graph& /*graph*/, Node& node) {}
 };
 
 inline Adapter::~Adapter() noexcept = default;

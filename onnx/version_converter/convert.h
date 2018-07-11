@@ -137,7 +137,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
               op->kind().toString());
           std::cerr << "Applying adapter" << std::endl;
           // adapt should handle replacing node in graph
-          op_adapter->adapt(*g);
+          op_adapter->adapt(*g, *op);
         }
       }
       // Update model version
