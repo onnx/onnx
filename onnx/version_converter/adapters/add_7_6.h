@@ -14,10 +14,12 @@ struct Add_7_6 final : public Adapter {
     : Adapter("Add", make_opsetid("", 7), make_opsetid("", 6)) {
     }
 
-  //void adapt_add_7_6(
+  void adapt_add_7_6(Graph& graph, Node& node) {
+    // Verify that broadcasts are allowed in limited spec of opset version 6
+  }
 
-  void adapt(Graph& graph) override {
-    adapt_add_7_6(graph);
+  void adapt(Graph& graph, Node& node) override {
+    adapt_add_7_6(graph, node);
   }
 
   OpSetID make_opsetid(std::string domain, int version) {
