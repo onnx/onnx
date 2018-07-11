@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/function.h"
-#include "onnx/defs/model_helpers.h"
+#include "onnx/common/model_helpers.h"
 using namespace ONNX_NAMESPACE;
 
 static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {

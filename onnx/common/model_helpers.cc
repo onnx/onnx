@@ -1,7 +1,7 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "onnx/defs/model_helpers.h"
+#include "onnx/common/model_helpers.h"
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"
