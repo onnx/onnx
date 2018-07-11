@@ -25,7 +25,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "along channels. Two variables with the same C-coordinate are associated "
       "with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate "
       "global mean and global variance with all variables sharing the same mean/variance.<br/>"
-      "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for caculation)<br/>"
+      "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for calculation)<br/>"
       "<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with shape [N,C,W,H] or the input N-D shape <br/>");
   func.set_since_version(8);
   func.add_input("X");
@@ -37,7 +37,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       initial_node0,
       "Pow_exponent_0",
       "",
-      "Initialize a Constant tensor to caculate squared products",
+      "Initialize a Constant tensor to calculate squared products",
       "Constant",
       std::vector<std::string>{},
       std::vector<std::string>{"Exponent"});
@@ -73,7 +73,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node0,
       "Reduced_Mean_0",
       "",
-      "Caculate Reduced Mean on input tensor X",
+      "Calculate Reduced Mean on input tensor X",
       "ReduceMean",
       std::vector<std::string>{"X"},
       std::vector<std::string>{"X_RM"});
@@ -87,7 +87,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node1,
       "Pow_0",
       "",
-      "Caculate (EX)^2",
+      "Calculate (EX)^2",
       "Pow",
       std::vector<std::string>{"X_RM", "Exponent"},
       std::vector<std::string>{"EX_squared"});
@@ -97,7 +97,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node2,
       "Pow_1",
       "",
-      "Caculate X^2",
+      "Calculate X^2",
       "Pow",
       std::vector<std::string>{"X", "Exponent"},
       std::vector<std::string>{"X_squared"});
@@ -107,7 +107,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node3,
       "Reduced_Mean_1",
       "",
-      "Caculate E(X^2)",
+      "Calculate E(X^2)",
       "ReduceMean",
       std::vector<std::string>{"X_squared"},
       std::vector<std::string>{"E_Xsquared"});
@@ -121,7 +121,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node4,
       "SUB_0",
       "",
-      "Caculate variance (E(X^2)-(EX)^2)",
+      "Calculate variance (E(X^2)-(EX)^2)",
       "Sub",
       std::vector<std::string>{"E_Xsquared", "EX_squared"},
       std::vector<std::string>{"Variance"});
@@ -131,7 +131,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node5,
       "SQRT_0",
       "",
-      "Caculate standard variance from variance",
+      "Calculate standard variance from variance",
       "Sqrt",
       std::vector<std::string>{"Variance"},
       std::vector<std::string>{"STD"});
@@ -141,7 +141,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node6,
       "SUB_1",
       "",
-      "Caculate X-EX",
+      "Calculate X-EX",
       "Sub",
       std::vector<std::string>{"X", "X_RM"},
       std::vector<std::string>{"X_variance"});
@@ -161,7 +161,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       node8,
       "DIV_0",
       "",
-      "Caculate MVN-ed tensor for output",
+      "Calculate MVN-ed tensor for output",
       "Div",
       std::vector<std::string>{"X_variance", "Processed_STD"},
       std::vector<std::string>{"X_MVN"});
