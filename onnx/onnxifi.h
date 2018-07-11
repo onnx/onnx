@@ -596,13 +596,13 @@ typedef struct onnxMemoryFence {
   onnxEnum type;
   union {
     /**
-     * Pointer to a handle for a single-shot ONNXIFI event used as a
-     * synchronization primitive. Event for the input fence must be created
-     * by the caller to onnxRunGraph. Event for the output fence is created by
-     * implementation of onnxRunGraph, and stored into the pointer specified in
-     * the output fence before onnxRunGraph returns.
+     * Handle for a single-shot ONNXIFI event used as a synchronization
+     * primitive. Event for the input fence must be created by the caller to
+     * onnxRunGraph. Event for the output fence is created by implementation of
+     * onnxRunGraph, and stored into the output memory fence structure before
+     * onnxRunGraph returns.
      */
-    onnxEvent* event;
+    onnxEvent event;
   };
 } onnxMemoryFence;
 
