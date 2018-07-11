@@ -61,7 +61,8 @@ Status FunctionBuilderRegistry::GetFunctions(
     auto version_range =
         OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(
             func_builder.GetDomain());
-    if (function_proto->since_version() > version_range.second) {
+    if (function_proto->since_version() > version_range.second ||
+        function_proto->since_version() < version_range.first) {
       fail_check("Invalid function version in '", function_proto->name(), "'");
     }
     op_set.insert({func_builder.GetDomain(), function_proto->since_version()});

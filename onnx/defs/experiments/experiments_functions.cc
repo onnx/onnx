@@ -1,8 +1,8 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "onnx/defs/function.h"
 #include "onnx/common/model_helpers.h"
+#include "onnx/defs/function.h"
 using namespace ONNX_NAMESPACE;
 
 static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
@@ -21,12 +21,12 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><br/>"
       "<b>INPUT: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/><br/>"
       "<b>ATTRIBUTE: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;<tt>axes: </tt>will be passed to ReducedMean "
-      "Ops. Use [0,2,3] (without C axis for N-D cases) for for calculating means and variances "
+      "Ops. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances "
       "along channels. Two variables with the same C-coordinate are associated "
       "with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate "
       "global mean and global variance with all variables sharing the same mean/variance.<br/>"
       "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for calculation)<br/>"
-      "<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with shape [N,C,W,H] or the input N-D shape <br/>");
+      "<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with the same shape as input X<br/>");
   func.set_since_version(8);
   func.add_input("X");
   func.add_output("X_MVN");
@@ -34,13 +34,13 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
 
   NodeProto* initial_node0 = func.add_node();
   BuildNode(
-      initial_node0,
       "Pow_exponent_0",
       "",
       "Initialize a Constant tensor to calculate squared products",
       "Constant",
       std::vector<std::string>{},
-      std::vector<std::string>{"Exponent"});
+      std::vector<std::string>{"Exponent"},
+      initial_node0);
   AttributeProto* value_attr_0 = initial_node0->add_attribute();
   value_attr_0->set_name("value");
   value_attr_0->set_doc_string(
@@ -52,13 +52,13 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
 
   NodeProto* initial_node1 = func.add_node();
   BuildNode(
-      initial_node1,
       "Div_epsilon_0",
       "",
       "Initialize a Constant tensor as epsilon to avoid division by 0",
       "Constant",
       std::vector<std::string>{},
-      std::vector<std::string>{"Epsilon"});
+      std::vector<std::string>{"Epsilon"},
+      initial_node1);
   AttributeProto* value_attr_1 = initial_node1->add_attribute();
   value_attr_1->set_name("value");
   value_attr_1->set_doc_string(
@@ -70,13 +70,13 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
 
   NodeProto* node0 = func.add_node();
   BuildNode(
-      node0,
       "Reduced_Mean_0",
       "",
       "Calculate Reduced Mean on input tensor X",
       "ReduceMean",
       std::vector<std::string>{"X"},
-      std::vector<std::string>{"X_RM"});
+      std::vector<std::string>{"X_RM"},
+      node0);
   AttributeProto* attr0 = node0->add_attribute();
   attr0->set_ref_attr_name("axes");
   attr0->set_name("axes");
@@ -84,33 +84,33 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
 
   NodeProto* node1 = func.add_node();
   BuildNode(
-      node1,
       "Pow_0",
       "",
       "Calculate (EX)^2",
       "Pow",
       std::vector<std::string>{"X_RM", "Exponent"},
-      std::vector<std::string>{"EX_squared"});
+      std::vector<std::string>{"EX_squared"},
+      node1);
 
   NodeProto* node2 = func.add_node();
   BuildNode(
-      node2,
       "Pow_1",
       "",
       "Calculate X^2",
       "Pow",
       std::vector<std::string>{"X", "Exponent"},
-      std::vector<std::string>{"X_squared"});
+      std::vector<std::string>{"X_squared"},
+      node2);
 
   NodeProto* node3 = func.add_node();
   BuildNode(
-      node3,
       "Reduced_Mean_1",
       "",
       "Calculate E(X^2)",
       "ReduceMean",
       std::vector<std::string>{"X_squared"},
-      std::vector<std::string>{"E_Xsquared"});
+      std::vector<std::string>{"E_Xsquared"},
+      node3);
   AttributeProto* attr1 = node3->add_attribute();
   attr1->set_ref_attr_name("axes");
   attr1->set_name("axes");
@@ -118,53 +118,53 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
 
   NodeProto* node4 = func.add_node();
   BuildNode(
-      node4,
       "SUB_0",
       "",
       "Calculate variance (E(X^2)-(EX)^2)",
       "Sub",
       std::vector<std::string>{"E_Xsquared", "EX_squared"},
-      std::vector<std::string>{"Variance"});
+      std::vector<std::string>{"Variance"},
+      node4);
 
   NodeProto* node5 = func.add_node();
   BuildNode(
-      node5,
       "SQRT_0",
       "",
       "Calculate standard variance from variance",
       "Sqrt",
       std::vector<std::string>{"Variance"},
-      std::vector<std::string>{"STD"});
+      std::vector<std::string>{"STD"},
+      node5);
 
   NodeProto* node6 = func.add_node();
   BuildNode(
-      node6,
       "SUB_1",
       "",
       "Calculate X-EX",
       "Sub",
       std::vector<std::string>{"X", "X_RM"},
-      std::vector<std::string>{"X_variance"});
+      std::vector<std::string>{"X_variance"},
+      node6);
 
   NodeProto* node7 = func.add_node();
   BuildNode(
-      node7,
       "ADD_0",
       "",
       "Add epsilon value to STD to avoid division by 0",
       "Add",
       std::vector<std::string>{"STD", "Epsilon"},
-      std::vector<std::string>{"Processed_STD"});
+      std::vector<std::string>{"Processed_STD"},
+      node7);
 
   NodeProto* node8 = func.add_node();
   BuildNode(
-      node8,
       "DIV_0",
       "",
       "Calculate MVN-ed tensor for output",
       "Div",
       std::vector<std::string>{"X_variance", "Processed_STD"},
-      std::vector<std::string>{"X_MVN"});
+      std::vector<std::string>{"X_MVN"},
+      node8);
 
   return Status::OK();
 }

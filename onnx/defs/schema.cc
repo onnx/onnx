@@ -193,7 +193,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     if (attr_proto.has_ref_attr_name()) {
       if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
         fail_check(
-            "Unmatch attribute type in '", node.name() + " : " + name, "'");
+            "Mismatched attribute type in '", node.name() + " : " + name, "'");
       }
       continue;
     }

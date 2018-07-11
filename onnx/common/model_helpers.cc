@@ -10,13 +10,13 @@ namespace ONNX_NAMESPACE {
 using namespace Common;
 
 Common::Status BuildNode(
-    NodeProto* node,
     const std::string& name,
     const std::string& domain,
     const std::string& doc_string,
     const std::string& op_type,
     std::vector<std::string> const& inputs,
-    std::vector<std::string> const& outputs) {
+    std::vector<std::string> const& outputs,
+    NodeProto* node) {
   if (node == NULL) {
     return Status(
         Common::CHECKER,
