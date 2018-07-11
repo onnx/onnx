@@ -18,7 +18,9 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
 # Set C++11 as standard for the whole project
-set(CMAKE_CXX_STANDARD 11)
+IF(NOT MSVC)
+  set(CMAKE_CXX_STANDARD 11)
+ENDIF(NOT MSVC)
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
@@ -268,6 +270,7 @@ if(BUILD_ONNX_PYTHON)
 
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
+  set_target_properties(onnx_cpp2py_export PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
   target_include_directories(onnx_cpp2py_export PRIVATE "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}" "${PYTHON_INCLUDE_DIR}")
@@ -294,15 +297,31 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
+    IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      SET(MP_FLAG "-Xclang" "-fopenmp")
+      SET(EXTRA_FLAGS   "-Wno-implicit-function-declaration"
+                        "-Wno-undefined-inline"
+                        "-Wno-incompatible-pointer-types"
+                        "-Wno-dllexport-explicit-instantiation-decl"
+                        "-Wno-microsoft-unqualified-friend"
+                        "-Wno-absolute-value"
+                        "-Wno-unused-variable"
+                        "-Wno-writable-strings"
+                        "-Qunused-arguments")
+    ELSE()
+      SET(MP_FLAG "/MP")
+      SET(EXTRA_FLAGS "")
+    ENDIF()
     find_package(PythonInterp ${PY_VERSION} REQUIRED)
     find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
-      /MP
+      ${MP_FLAG}
       /WX
       /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
       /wd4503 # identifier' : decorated name length exceeded, name was truncated
       /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
+      ${EXTRA_FLAGS}
       )
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
@@ -331,19 +350,21 @@ endif()
 
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
-        /MP
+        ${MP_FLAG}
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
+        ${EXTRA_FLAGS}
     )
     target_compile_options(onnx PRIVATE
-        /MP
+        ${MP_FLAG}
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned
         /wd4244 # conversion from 'protobuf::int64' to 'int'
+        ${EXTRA_FLAGS}
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
