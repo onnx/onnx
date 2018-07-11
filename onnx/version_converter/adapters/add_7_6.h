@@ -14,6 +14,12 @@ struct Add_7_6 final : public Adapter {
     : Adapter("Add", make_opsetid("", 7), make_opsetid("", 6)) {
     }
 
+  //void adapt_add_7_6(
+
+  void adapt(Graph& graph) override {
+    adapt_add_7_6(graph);
+  }
+
   OpSetID make_opsetid(std::string domain, int version) {
     OpSetID ret;
     ret.domain = domain;
