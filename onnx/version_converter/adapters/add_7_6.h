@@ -16,6 +16,7 @@ struct Add_7_6 final : public Adapter {
 
   void adapt_add_7_6(Graph& graph, Node& node) {
     // Verify that broadcasts are allowed in limited spec of opset version 6
+    // Multidirectional broadcasting, as defined in Broadcasting.md
   }
 
   void adapt(Graph& graph, Node& node) override {
