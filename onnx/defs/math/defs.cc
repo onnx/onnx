@@ -699,12 +699,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "alpha",
-            "Scalar multiplier for the product of input tensors A * B",
+            "Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
             "beta",
-            "Scalar multiplier for input tensor C",
+            "Scalar multiplier for input tensor C, and the default value is 1.0.",
             AttributeProto::FLOAT,
             1.0f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
