@@ -586,7 +586,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 8);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
     }
 

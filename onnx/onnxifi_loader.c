@@ -9,7 +9,7 @@
 #include <dlfcn.h>
 #endif
 
-#include <onnxifi_loader.h>
+#include "onnx/onnxifi_loader.h"
 
 /* ONNXIFI_LOADER_LOGGING macro enables/disables logging. Its OFF by default. */
 #ifndef ONNXIFI_LOADER_LOGGING
