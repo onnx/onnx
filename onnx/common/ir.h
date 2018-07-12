@@ -804,7 +804,6 @@ class OpSetID final {
       }
     }
 
-
     const std::string& domain() const {
       return domain_;
     }
