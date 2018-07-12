@@ -37,7 +37,7 @@ struct DefaultVersionConverter : BaseVersionConverter {
           // Check if downwards adapter exists (only one should)
           const auto target_map = adapters[op_name][initial];
           for (auto it = target_map.begin(); it != target_map.end(); ++it) {
-            int new_target = (new OpSetID(it->first))->version;
+            int64_t new_target = (new OpSetID(it->first))->version;
             if (new_target <= target_version.version) {
               // Adapter found
               return &*(it->second);
