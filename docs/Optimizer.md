@@ -20,7 +20,7 @@ implementing new ones (or both).
 
 The optimizer may be invoked either via C++ or Python. The Python API
 is described, with example,
-[here](docs/PythonAPIOverview.md#optimizing-an-onnx-model).
+[here](PythonAPIOverview.md#optimizing-an-onnx-model).
 
 The C++ API consists of a single function
 
