@@ -775,6 +775,28 @@ protected:
 struct OpSetID {
   std::string domain;
   int64_t version;
+
+  OpSetID(std::string target) {
+    std::stringstream ss(target);
+    std::string segment;
+    std::vector<std::string> seglist;
+    while (std::getline(ss, segment, '$')) {
+      seglist.push_back(segment);
+    }
+    domain = seglist[0];
+    version = atoi(seglist[1].c_str());
+  }
+
+  OpSetID(ONNX_NAMESPACE::OperatorSetIdProto proto) {
+    domain = proto.domain();
+    version = proto.version();
+  }
+
+  OpSetID();
+
+  std::string toString() const {
+    return "$" + domain + "$" + std::to_string(version);
+  }
 };
 
 struct Graph final {

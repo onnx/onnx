@@ -1,6 +1,3 @@
-# ATTENTION: The code in this file is highly EXPERIMENTAL.
-# Adventurous users should note that the APIs will probably change.
-
 """onnx version converter
 
 This enables users to convert their models between different opsets.
@@ -25,6 +22,9 @@ Arguments:
 Return:
     return (ModelProto) converted model
 
+Raises Exceptions:
+    RuntimeError when some necessary conversion is not supported
+
 Supported adapters:
     --
 """
@@ -32,11 +32,11 @@ Supported adapters:
 
 def convert_version(model, initial_version, target_version):  # type: (ModelProto, OperatorSetIdProto, OperatorSetIdProto) -> ModelProto
     if not isinstance(model, ModelProto):
-        raise ValueError('VersionConverter only accepts ModelProto, incorrect type: {}'.format(type(model)))
-    if not isinstance(initial_version, OperatorSetIdProto) or not isinstance(
-            target_version, OperatorSetIdProto):
-        raise ValueError('VersionConverter only accepts OperatorSetIdProto, incorrect type: {}'.format(type(model)))
-    print("Converting model")
+        raise ValueError('VersionConverter only accepts ModelProto as model, incorrect type: {}'.format(type(model)))
+    if not isinstance(initial_version, OperatorSetIdProto):
+        raise ValueError('VersionConverter only accepts OperatorSetIdProto as initial_version, incorrect type: {}'.format(type(initial_version)))
+    if not isinstance(target_version, OperatorSetIdProto):
+        raise ValueError('VersionConverter only accepts OperatorSetIdProto as target_version, incorrect type: {}'.format(type(target_version)))
     model_str = model.SerializeToString()
     initial_str = initial_version.SerializeToString()
     target_str = target_version.SerializeToString()

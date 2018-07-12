@@ -11,8 +11,8 @@ ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
     const ONNX_NAMESPACE::OperatorSetIdProto initial_version,
     const ONNX_NAMESPACE::OperatorSetIdProto target_version) {
-  OpSetID initial_struct = _version_converter.operatorsetidproto_to_opsetid(initial_version);
-  OpSetID target_struct = _version_converter.operatorsetidproto_to_opsetid(target_version);
-  return _version_converter.convert_version(mp_in, initial_struct, target_struct);
+  OpSetID* initial_struct = new OpSetID(initial_version);
+  OpSetID* target_struct = new OpSetID(target_version);
+  return _version_converter.convert_version(mp_in, *initial_struct, *target_struct);
 }
 }}

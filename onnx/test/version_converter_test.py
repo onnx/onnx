@@ -16,7 +16,7 @@ import unittest
 class TestVersionConverter(unittest.TestCase):
 
     def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OperatorSetIdProto, OperatorSetIdProto) -> ModelProto
-        orig_model = helper.make_model(graph, producer_name='onnx-test')
+        orig_model = helper.make_model(graph, producer_name='onnx-test', opset_imports=[initial_version])
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
                 initial_version, target_version)
@@ -37,29 +37,30 @@ class TestVersionConverter(unittest.TestCase):
     # Test 1: Backwards Incompatible Conversion: Add: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
         def test():  # type: () -> None
-            nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
+            nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
             graph = helper.make_graph(
                 nodes,
                 "test",
-                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
                     helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
             self._converted(graph, helper.make_operatorsetid(
-                "ai.onnx", 8), helper.make_operatorsetid("ai.onnx", 2))
+                "", 8), helper.make_operatorsetid("", 2))
         self.assertRaises(RuntimeError, test)
 
     # Test 2: Backwards Compatible Conversion: Add: 8 -> 7
     def test_backwards_compatible(self):  # type: () -> None
-        nodes = [helper.make_node('Add', ["X", "X2"], ["Y"])]
+        nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
             "test",
-            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
-            "ai.onnx", 8), helper.make_operatorsetid("ai.onnx", 7))
-        # TODO: Assert equality of graph and converted_model
+            "", 8), helper.make_operatorsetid("", 7))
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Add"
         assert converted_model.opset_import[0].version == 7
 
 

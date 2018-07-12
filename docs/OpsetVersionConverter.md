@@ -1,4 +1,4 @@
-# ONNX Version Converter
+# ONNX Model Opset Version Converter
 
 ONNX provides a C++ library for converting ONNX models between different
 opset versions. The library leverages the convenient in-memory
@@ -41,7 +41,7 @@ target_version. For a list of available passes, see
 Implementing Adapters
 
 You can implement a new adapter by subclassing `Adapter`, and registering 
-your new pass with `VersionConverter::registerAdapter()`. Adapters operate 
+your new adapter with `VersionConverter::registerAdapter()`. Adapters operate 
 on an in-memory graph representation defined in [ir.h](onnx/common/ir.h). 
 There are a number of examples in the [adapters](onnx/version_converter/adapters) 
 directory.
