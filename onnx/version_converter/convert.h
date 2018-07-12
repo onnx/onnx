@@ -85,8 +85,10 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
     const char* initial_domain = initial_version.domain.c_str();
     const char* target_domain = target_version.domain.c_str();
-    ONNX_ASSERTM((initial_domain == "" || initial_domain == "ai.onnx") && (target_domain ==
-        "" || target_domain == "ai.onnx"), "Warning: default onnx version converter can only convert "
+    ONNX_ASSERTM((strcmp(initial_domain, "") == 0 || strcmp(initial_domain,
+            "ai.onnx") == 0) && (strcmp(target_domain, "") == 0 || strcmp(
+              target_domain, "ai.onnx") == 0),
+        "Warning: default onnx version converter can only convert "
         " between default domain opset versions ('' or 'ai.onnx')\n"
         "Provided initial_domain: %s"
         ", provided target_domain: %s", initial_domain, target_domain);
