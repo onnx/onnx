@@ -15,12 +15,16 @@ import unittest
 
 class TestVersionConverter(unittest.TestCase):
 
+<<<<<<< HEAD
     def _converted(
             self,
             graph,  # type: GraphProto
             initial_version,  # type: OperatorSetIdProto
             target_version  # type: int
     ):  # type: (...) -> ModelProto
+=======
+    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OperatorSetIdProto, OperatorSetIdProto) -> ModelProto
+>>>>>>> Addressed first round of code review except intermediate refactoring
         orig_model = helper.make_model(graph, producer_name='onnx-test', opset_imports=[initial_version])
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
@@ -31,6 +35,7 @@ class TestVersionConverter(unittest.TestCase):
     # Test 1: Backwards Incompatible Conversion: Reshape: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
         def test():  # type: () -> None
+<<<<<<< HEAD
             nodes = [helper.make_node('Reshape', ["X", "shape"], ["Y"])]
             graph = helper.make_graph(
                 nodes,
@@ -39,6 +44,17 @@ class TestVersionConverter(unittest.TestCase):
                     helper.make_tensor_value_info("shape", TensorProto.FLOAT, (1,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
             self._converted(graph, helper.make_operatorsetid("", 8), 2)
+=======
+            nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
+                    helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+            self._converted(graph, helper.make_operatorsetid(
+                "", 8), helper.make_operatorsetid("", 2))
+>>>>>>> Addressed first round of code review except intermediate refactoring
         self.assertRaises(RuntimeError, test)
 
     # Test 2: Backwards Compatible Conversion: Add: 8 -> 7
@@ -51,7 +67,11 @@ class TestVersionConverter(unittest.TestCase):
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
+<<<<<<< HEAD
             "", 8), 7)
+=======
+            "", 8), helper.make_operatorsetid("", 7))
+>>>>>>> Addressed first round of code review except intermediate refactoring
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
         assert converted_model.opset_import[0].version == 7
