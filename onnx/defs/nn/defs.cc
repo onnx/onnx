@@ -1035,7 +1035,7 @@ y = x  / (sum(abs(x)) + epsilon),
 
 ONNX_OPERATOR_SET_SCHEMA(
     LpNormalization,
-    7,
+    1,
     OpSchema()
         .Input(0, "input", "Input matrix", "T")
         .Output(0, "output", "Matrix after normalization", "T")
