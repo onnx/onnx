@@ -9,9 +9,14 @@ static DefaultVersionConverter _version_converter;
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
-    const ONNX_NAMESPACE::OperatorSetIdProto initial_version,
-    const ONNX_NAMESPACE::OperatorSetIdProto target_version) {
-  OpSetID* initial_struct = new OpSetID(initial_version);
+    const int target_version) {
+  // Get initial_opsetid from mp_in
+  OpSetID* initial_struct;
+  for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
+    if (it->domain() == "" || it->domain() == "ai.onnx") {
+      initial_struct = new OpSetID(*it);
+    }
+  }
   OpSetID* target_struct = new OpSetID(target_version);
   return _version_converter.convert_version(mp_in, *initial_struct, *target_struct);
 }

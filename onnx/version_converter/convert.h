@@ -78,7 +78,6 @@ struct DefaultVersionConverter : BaseVersionConverter {
       const OpSetID initial_version,
       const OpSetID target_version) {
     std::shared_ptr<ONNX_NAMESPACE::Graph> g(ONNX_NAMESPACE::ImportModelProto(mp_in));
-
     ONNX_ASSERTM(g.get() != nullptr,
       "Warning: onnx version converter is unable to parse input model. "
       "(The IR version of the ONNX model may be too old.)");
@@ -113,11 +112,10 @@ struct DefaultVersionConverter : BaseVersionConverter {
       search_domain = "";
     }
     std::pair<int, int> version_range = versions_map.at(search_domain);
-    ONNX_ASSERTM(target_version.version >= version_range.first && target_version.version <= version_range.second,
-      // Invalid target_version
+    ONNX_ASSERTM(target_version.version >= version_range.first && target_version
+        .version <= version_range.second,
       "Warning: invalid target_version (must be between %s and %s",
       version_range.first, version_range.second);
-
     // Compile list of all ops used in the model
     graph_node_list nodes = g->nodes();
 
@@ -199,7 +197,9 @@ struct DefaultVersionConverter : BaseVersionConverter {
       g->opset_versions[domain_index].version += step;
     }
     // Export g as ModelProto
-    std::cerr << "Finished conversion; returning model\n";
+    if (DEBUG) {
+      std::cerr << "Finished conversion; returning model\n";
+    }
     ExportModelProto(&mp_out, g);
     return mp_out;
   }
@@ -207,6 +207,5 @@ struct DefaultVersionConverter : BaseVersionConverter {
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
-    const ONNX_NAMESPACE::OperatorSetIdProto initial_version,
-    const ONNX_NAMESPACE::OperatorSetIdProto target_version);
+    const int target_version);
 }}

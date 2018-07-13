@@ -792,7 +792,16 @@ struct OpSetID {
     version = proto.version();
   }
 
-  OpSetID() {};
+  // Default Domain Constructor
+  OpSetID(int version) {
+    domain = "";
+    this->version = version;
+  }
+
+  OpSetID() {
+    domain = "";
+    version = 0;
+  };
 
   std::string toString() const {
     return "$" + domain + "$" + std::to_string(version);

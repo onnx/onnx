@@ -15,11 +15,11 @@ import unittest
 
 class TestVersionConverter(unittest.TestCase):
 
-    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OperatorSetIdProto, OperatorSetIdProto) -> ModelProto
+    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OperatorSetIdProto, int) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test', opset_imports=[initial_version])
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
-                initial_version, target_version)
+                target_version)
         checker.check_model(converted_model)
         return converted_model
 
@@ -45,7 +45,7 @@ class TestVersionConverter(unittest.TestCase):
                     helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
             self._converted(graph, helper.make_operatorsetid(
-                "", 8), helper.make_operatorsetid("", 2))
+                "", 8), 2)
         self.assertRaises(RuntimeError, test)
 
     # Test 2: Backwards Compatible Conversion: Add: 8 -> 7
@@ -58,7 +58,7 @@ class TestVersionConverter(unittest.TestCase):
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 8), helper.make_operatorsetid("", 7))
+            "", 8), 7)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
         assert converted_model.opset_import[0].version == 7
