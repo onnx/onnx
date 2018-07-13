@@ -4381,12 +4381,10 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <summary>defaults</summary>
 
 ```python
-input = np.array([[[1., 2.], [3., 4.], [5., 6.]]]).astype(np.float32)
-
 input_size = 2
+batch_size = 4
 hidden_size = 3
-weight_scale = 0.1
-number_of_gates = 4
+input  = LSTM_Helper.get_random([1, batch_size, input_size])
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -4395,8 +4393,8 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+R = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
 
 lstm = LSTM_Helper(X=input, W=W, R=R)
 _, Y_h = lstm.step()
@@ -4410,13 +4408,11 @@ expect(node, inputs=[input, W, R], outputs=[Y_h.astype(np.float32)], name='test_
 <summary>initial_bias</summary>
 
 ```python
-input = np.array([[[1., 2., 3.], [4., 5., 6.], [7., 8., 9.]]]).astype(np.float32)
-
 input_size = 3
+batch_size = 3
 hidden_size = 4
-weight_scale = 0.1
 custom_bias = 0.1
-number_of_gates = 4
+input  = LSTM_Helper.get_random([1, batch_size, input_size])
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -4425,12 +4421,12 @@ node = onnx.helper.make_node(
     hidden_size=hidden_size
 )
 
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
+W = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+R = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
 
 # Adding custom bias
-W_B = custom_bias * np.ones((1, number_of_gates * hidden_size)).astype(np.float32)
-R_B = np.zeros((1, number_of_gates * hidden_size)).astype(np.float32)
+W_B = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates*hidden_size])
+R_B = np.zeros((1, LSTM_Helper.number_of_gates * hidden_size)).astype(np.float32)
 B = np.concatenate((W_B, R_B), 1)
 
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B)
@@ -4445,13 +4441,10 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
 <summary>peepholes</summary>
 
 ```python
-input = np.array([[[1., 2., 3., 4.], [5., 6., 7., 8.]]]).astype(np.float32)
-
 input_size = 4
+batch_size = 2
 hidden_size = 3
-weight_scale = 0.1
-number_of_gates = 4
-number_of_peepholes = 3
+input  = np.random.rand(1, batch_size, input_size).astype(np.float32)
 
 node = onnx.helper.make_node(
     'LSTM',
@@ -4461,14 +4454,13 @@ node = onnx.helper.make_node(
 )
 
 # Initializing Inputs
-W = weight_scale * np.ones((1, number_of_gates * hidden_size, input_size)).astype(np.float32)
-R = weight_scale * np.ones((1, number_of_gates * hidden_size, hidden_size)).astype(np.float32)
-B = np.zeros((1, 2 * number_of_gates * hidden_size)).astype(np.float32)
+W = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, input_size])
+R = LSTM_Helper.get_random([1, LSTM_Helper.number_of_gates * hidden_size, hidden_size])
+B = np.zeros((1, 2 * LSTM_Helper.number_of_gates * hidden_size)).astype(np.float32)
 seq_lens = np.repeat(input.shape[0], input.shape[1]).astype(np.int32)
 init_h = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
 init_c = np.zeros((1, input.shape[1], hidden_size)).astype(np.float32)
-P = weight_scale * np.ones((1, number_of_peepholes * hidden_size)).astype(np.float32)
-
+P = LSTM_Helper.get_random([1, LSTM_Helper.number_of_peepholes*hidden_size]);
 lstm = LSTM_Helper(X=input, W=W, R=R, B=B, P=P, initial_c=init_c, initial_h=init_h)
 _, Y_h = lstm.step()
 expect(node, inputs=[input, W, R, B, seq_lens, init_h, init_c, P], outputs=[Y_h.astype(np.float32)],
@@ -5004,28 +4996,27 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Max"></a><a name="max">**Max**</a>
 
-  Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
-  All inputs and outputs must have the same data type.
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  Element-wise max of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for max.</dd>
+<dd>List of tensors for Max.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>max</tt> : T</dt>
-<dd>Output tensor.</dd>
+<dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
 #### Type Constraints
@@ -5509,28 +5500,27 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
 
-  Element-wise mean of each of the input tensors (with Numpy-style broadcasting support).
-  All inputs and outputs must have the same data type.
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  Element-wise mean of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>, <a href="Changelog.md#Mean-6">Mean-6</a>
+Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for mean.</dd>
+<dd>List of tensors for Mean.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>mean</tt> : T</dt>
-<dd>Output tensor.</dd>
+<dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
 #### Type Constraints
@@ -5582,28 +5572,27 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 ### <a name="Min"></a><a name="min">**Min**</a>
 
-  Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
-  All inputs and outputs must have the same data type.
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  Element-wise min of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for min.</dd>
+<dd>List of tensors for Min</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>min</tt> : T</dt>
-<dd>Output tensor.</dd>
+<dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
 #### Type Constraints
@@ -9396,8 +9385,7 @@ expect(node, inputs=[x], outputs=[y],
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
-  If `axes` is not provided, all the single dimensions will be removed from
-  the shape. If an axis is selected with shape entry not equal to one, an error is raised.
+  If an axis is selected with shape entry not equal to one, an error is raised.
 
 #### Version
 
@@ -9406,7 +9394,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
+<dt><tt>axes</tt> : list of ints (required)</dt>
 <dd>List of positive integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
@@ -9540,28 +9528,27 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Sum"></a><a name="sum">**Sum**</a>
 
-  Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).
-  All inputs and outputs must have the same data type.
-  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+  Element-wise sum of each of the input tensors. All inputs and outputs must
+  have the same shape and data type.
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 6 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>, <a href="Changelog.md#Sum-6">Sum-6</a>
+Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for sum.</dd>
+<dd>List of tensors for Sum.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>sum</tt> : T</dt>
-<dd>Output tensor.</dd>
+<dd>Output tensor. Same dimension as inputs.</dd>
 </dl>
 
 #### Type Constraints
