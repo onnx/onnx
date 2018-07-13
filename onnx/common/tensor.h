@@ -3,21 +3,13 @@
 
 #pragma once
 
-#include "onnx/onnx_pb.h"
 #include <cmath>
-#include <numeric>
 #include <functional>
-#include <stdexcept>
-
+#include <numeric>
+#include "onnx/common/assertions.h"
+#include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
-
-class TensorError final : public std::runtime_error {
-  using std::runtime_error::runtime_error;
-};
-
-#define fail_tensor(...) \
-  throw ONNX_NAMESPACE::TensorError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
 struct Tensor final {
 private:
@@ -278,16 +270,13 @@ inline void Tensor::scale_dim(T* ptr, const T* s_ptr) {
 
 #define APPLY_BINARY_FUNCTION(op_name, f)                                  \
   inline void Tensor::op_name(const Tensor& other) {                       \
-    if (other.elem_type() != elem_type_) {                                 \
-      fail_tensor(                                                         \
-          "Tensor types do not match: ",                                   \
-          elem_type_,                                                      \
-          " vs. ",                                                         \
-          other.elem_type());                                              \
-    }                                                                      \
-    if (other.sizes() != sizes_) {                                         \
-      fail_tensor("Tensor sizes do not match.");                           \
-    }                                                                      \
+    TENSOR_ASSERTM(                                                        \
+        other.elem_type() == elem_type_,                                   \
+        "Tensor types do not match: %s != %s",                             \
+        to_string(elem_type_).c_str(),                                     \
+        " vs. ",                                                           \
+        to_string(other.elem_type()).c_str());                             \
+    TENSOR_ASSERTM(other.sizes() == sizes_, "Tensor sizes do not match."); \
     switch (elem_type_) {                                                  \
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {                   \
         bin_func(f<float>(), data<float>(), other.data<float>());          \
@@ -316,11 +305,12 @@ inline void Tensor::scale_dim(T* ptr, const T* s_ptr) {
         break;                                                             \
       }                                                                    \
       default:                                                             \
-        fail_tensor(                                                       \
-            "Operation ",                                                  \
+        TENSOR_ASSERTM(                                                    \
+            false,                                                         \
+            "Operation %s not supported for data type %s",                 \
             #op_name,                                                      \
             " not supported for data type ",                               \
-            elem_type_);                                                   \
+            to_string(elem_type_).c_str());                                \
     }                                                                      \
   }
 
@@ -342,7 +332,10 @@ inline void Tensor::sqrt() {
       break;
     }
     default:
-      fail_tensor("Operation sqrt not supported for data type ", elem_type_);
+      TENSOR_ASSERTM(
+          false,
+          "Operation sqrt not supported for data type %s",
+          to_string(elem_type_).c_str());
   }
 }
 
@@ -366,9 +359,10 @@ inline void Tensor::scale_by_first_dim(const Tensor& other) {
       break;
     }
     default:
-      fail_tensor(
-          "Operation scale_by_first_dim not supported for data type ",
-          elem_type_);
+      TENSOR_ASSERTM(
+          false,
+          "Operation scale_by_first_dim not supported for data type %s",
+          to_string(elem_type_).c_str());
   }
 }
 
