@@ -195,18 +195,18 @@ def display_function(function, versions, domain=""):  # type: (FunctionProto, Li
     # inputs
     s += '\n#### Inputs'
     s += '\n\n'
-    if function.inputs:
+    if function.input:
         s += '<dl>\n'
-        for input in function.inputs:
+        for input in function.input:
             s += '<dt>{}; </dt>\n'.format(input)
         s += '<br/></dl>\n'
 
     # outputs
     s += '\n#### Outputs'
     s += '\n\n'
-    if function.outputs:
+    if function.output:
         s += '<dl>\n'
-        for output in function.outputs:
+        for output in function.output:
             s += '<dt>{}; </dt>\n'.format(output)
         s += '<br/></dl>\n'
 

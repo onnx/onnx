@@ -97,57 +97,6 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .value("COMMON", OpSchema::SupportType::COMMON)
       .value("EXPERIMENTAL", OpSchema::SupportType::EXPERIMENTAL);
 
-  py::class_<FunctionProto> function_proto(defs, "FunctionProto");
-  function_proto.def_property_readonly("name", &FunctionProto::name)
-      .def_property_readonly("doc_string", &FunctionProto::doc_string)
-      .def_property_readonly("since_version", &FunctionProto::since_version)
-      .def_property_readonly(
-          "inputs",
-          [](FunctionProto* fp) -> std::vector<std::string> {
-            std::vector<std::string> _stl_vec;
-            _stl_vec.assign(fp->input().begin(), fp->input().end());
-            return _stl_vec;
-          })
-      .def_property_readonly(
-          "outputs",
-          [](FunctionProto* fp) -> std::vector<std::string> {
-            std::vector<std::string> _stl_vec;
-            _stl_vec.assign(fp->output().begin(), fp->output().end());
-            return _stl_vec;
-          })
-      .def_property_readonly(
-          "attribute",
-          [](FunctionProto* fp) -> std::vector<std::string> {
-            std::vector<std::string> _stl_vec;
-            _stl_vec.assign(fp->attribute().begin(), fp->attribute().end());
-            return _stl_vec;
-          })
-      .def_property_readonly(
-          "nodes", [](FunctionProto* fp) -> std::vector<NodeProto> {
-            std::vector<NodeProto> _stl_vec;
-            _stl_vec.assign(fp->node().begin(), fp->node().end());
-            return _stl_vec;
-          });
-
-  py::class_<NodeProto> node_proto(function_proto, "NodeProto");
-  node_proto.def_property_readonly("name", &NodeProto::name)
-      .def_property_readonly("doc_string", &NodeProto::doc_string)
-      .def_property_readonly("domain", &NodeProto::domain)
-      .def_property_readonly("op_type", &NodeProto::op_type)
-      .def_property_readonly(
-          "inputs",
-          [](NodeProto* np) -> std::vector<std::string> {
-            std::vector<std::string> _stl_vec;
-            _stl_vec.assign(np->input().begin(), np->input().end());
-            return _stl_vec;
-          })
-      .def_property_readonly(
-          "outputs", [](NodeProto* np) -> std::vector<std::string> {
-            std::vector<std::string> _stl_vec;
-            _stl_vec.assign(np->output().begin(), np->output().end());
-            return _stl_vec;
-          });
-
   defs.def(
       "has_schema",
       [](const std::string& op_type, const std::string& domain) -> bool {
@@ -201,26 +150,32 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   defs.def(
       "get_all_functions",
       [](const std::string& domain)
-          -> std::unordered_map<std::string, std::vector<FunctionProto>> {
-        // Eliminate unsupported stl containers and smart pointers for Pybind
-        // and return a dict[Text, [FunctionProto]] datatype to Python API
+          -> std::unordered_map<std::string, std::vector<py::bytes>> {
         std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_ptr_map;
-        std::unordered_map<std::string, std::vector<FunctionProto>> temp_map;
+        std::unordered_map<std::string, std::vector<py::bytes>> temp_map;
         FunctionBuilderRegistry& function_registry =
             FunctionBuilderRegistry::OnnxInstance();
+
         Common::Status status =
             function_registry.GetFunctions(domain, &temp_ptr_map);
         for (auto iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
-             ++iter)
+             ++iter) {
+          std::string bytes;
+          if (!iter->second->SerializeToString(&bytes)) {
+            throw std::runtime_error(
+                "Failed to serilize registered function for '" + iter->first +
+                "'!");
+          }
           if (!temp_map.count(iter->first)) {
-            std::vector<FunctionProto> tmp_vec;
-            tmp_vec.emplace_back(*iter->second);
+            std::vector<py::bytes> tmp_vec;
+            tmp_vec.emplace_back(py::bytes(bytes));
             temp_map.insert(
-                std::unordered_map<std::string, std::vector<FunctionProto>>::
+                std::unordered_map<std::string, std::vector<py::bytes>>::
                     value_type(iter->first, tmp_vec));
           } else {
-            temp_map.at(iter->first).emplace_back(*iter->second);
+            temp_map.at(iter->first).emplace_back(py::bytes(bytes));
           }
+        }
         return temp_map;
       });
 
