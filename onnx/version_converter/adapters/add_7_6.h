@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "onnx/version_converter/adapter.h"
+#include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -17,35 +17,52 @@ struct Add_7_6 final : public Adapter {
     // MathDocGenerator provides differences
     // Main change: encode broadcasting commands as explicit attribute
     ArrayRef<Value*> inputs = node.inputs();
+    ONNX_ASSERTM(inputs.size() == 2, "Add in opset version 6 can only broadcast"
+      " between 2 inputs");
     std::vector<Dimension> A_sizes = inputs[0]->sizes();
     std::vector<Dimension> B_sizes = inputs[1]->sizes();
     // Determine if inputs are of different sizes
-    if (inputs.size() == 2 && !A_sizes.equals(B_sizes)) {
-      // Assert that first input is larger than or equal to the second
-      ONNX_ASSERTM(A_sizes.size() >= B_sizes.size(), "Opset Version
-          6 does not support numpy-style broadcasting: input A must be larger
-          than B");
+    // TODO: Dimension doesn't have equality implemented; may need to do this manually
+    bool equalDims = false;
+    if (A_sizes.size() == B_sizes.size()) {
+      equalDims = true;
+      for (int i = 0; i < A_sizes.size(); i++) {
+        if (A_sizes[i].dim != B_sizes[i].dim) {
+          equalDims = false;
+        }
+      }
+    }
+    if (!equalDims) {
+      // Ensure that first input is larger than or equal to the second
+      if(A_sizes.size() < B_sizes.size()) {
+        // Handle switching input order
+        Value* A = node.replaceInput(0, inputs[1]);
+        node.replaceInput(1, A);
+        A_sizes = B_sizes;
+        B_sizes = inputs[1]->sizes();
+      }
       // Determine what the broadcast dimension is - if necessary
       // Unnecessary if 1) all inputs are 1, 2) B is empty, 3) dimensions match
       // in reverse (assume this is required for model to compile in the first place?)
       int axis = A_sizes.size() - B_sizes.size();
       for (int i = B_sizes.size() - 1; i >= 0; i--) {
-        if (axis >= 0) {
-          if (B_sizes[i] == A_sizes[axis + i] || B_sizes[i] == 1) {
-            continue;
-          } else {
-            // Try decreasing the axis
-            axis--;
-            i++;
-          }
+        ONNX_ASSERTM(axis >= 0, "Inputs are not broadcastable: no positive axis "
+          "found to align dimensions.");
+        if (B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1) {
+          continue;
+        } else {
+          // Try decreasing the axis
+          axis--;
+          i++;
         }
       }
-      // TODO: Assert that final state is well-formed
       if (axis != A_sizes.size() - B_sizes.size()) {
-        // TODO: add axis attribute
+        // Add axis attribute
+        node.i_(kaxis, axis);
       }
+      // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute
-
+      node.i_(kbroadcast, 1);
     }
   }
 
