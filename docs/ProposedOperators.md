@@ -1,5 +1,10 @@
 # Proposed General-Purpose Operators for Data Processing Pipelines
 
+The following document contains an outline of the operators that are proposed for defining general-purpose
+data processing pipelines. Some operators may overlap in definition with existing operators, but are included
+to indicate the full set of types that should be covered. Some may also have slightly narrower definitions than
+some existing, overlapping, operators.
+
 ## Scalar Types
 
 ### Numeric Types
@@ -15,9 +20,17 @@ All standard relational and equality operators.
 
 ## Nullables
 
-    isNull(x: nullable<T>) : boolean
-    getValue(x: nullable<T>) : T
+Testing whether a value is null or not.
 
+    isNull(x: nullable<T>) : boolean
+
+Retrieving the value inside a nullable, providing a default for the case when it's null.
+
+    getValue(x: nullable<T>, default: T) : T
+
+Creating a nullable value, and collections of nullable values.
+
+    nullable<T>()) : nullable<T>
     nullable(value : T) : nullable<T>
     nullableSequence(value : sequence<T>) : sequence<nullable<T>>
     nullableMap(value : map<S,T>) : map<S,nullable<T>>
@@ -78,7 +91,6 @@ operator. S and T are usually the same type, but do not have to be.
 
     fold(input: tensor<T>,   basis: S, tfrm: (S,T)->S) : S
     fold(input: sequence<T>, basis: S, tfrm: (S,T)->S) : S
-    fold(input: map<S,T>,    basis: S, tfrm: (S,T)->S) : S
 
 ### Map
 
