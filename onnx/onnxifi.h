@@ -228,14 +228,18 @@ typedef int32_t onnxBackendInfo;
 /**
  * Marketing name of the backend (excluding the vendor name).
  *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
+ *
  * Value type: char[], e.g.:
  *    "Caffe2"
- *    "Tensor Comprehensions"
+ *    "Glow"
  */
 #define ONNXIFI_BACKEND_NAME 1
 
 /**
  * Name of the backend vendor.
+ *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "Facebook"
@@ -246,6 +250,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Version of the backend software. Exact format is vendor-specific, but MUST be
  * unique for the software release.
+ *
+ * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "1.2.3"
@@ -258,15 +264,19 @@ typedef int32_t onnxBackendInfo;
  * Space-separated list of vendor- or device-specific extensions supported on
  * this backend.
  *
+ * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
+ *
  * Value type: char[], e.g.:
  *    ""
- *    "onnx_async"
- *    "onnx_quant8 onnx_clone_graph fb_maskrcnn"
+ *    "onnx_clone_graph"
+ *    "onnx_clone_graph fb_maskrcnn"
  */
 #define ONNXIFI_BACKEND_EXTENSIONS 4
 
 /**
  * Descriptive name of the device (i.e. CPU, GPU, DSP, or NPU model).
+ *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "nnDuino 123"
