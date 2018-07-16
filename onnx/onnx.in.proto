@@ -543,7 +543,7 @@ message TypeProto {
   }; 
 
   message Record { 
-    // Domain with empty string means the model's domain. 
+    // When missing, the domain is the same as the model's. 
     optional string domain = 1; 
     // The name is required for this version of the IR.
     optional string name = 2; 
@@ -554,7 +554,7 @@ message TypeProto {
   }; 
 
   message Opaque { 
-    // Domain with empty string means ONNX domain. 
+    // When missing, the domain is the same as the model's. 
     optional string domain = 1; 
     // The name is optional but significant when provided. 
     optional string name = 2; 
@@ -634,8 +634,7 @@ message TypeProto {
 // OperatorSets are uniquely identified by a (domain, opset_version) pair.
 message OperatorSetIdProto {
   // The domain of the operator set being identified.
-  // The empty string ("") or absence of this field implies the operator
-  // set that is defined as part of the ONNX specification.
+  // The absence of this field implies the operator set that is defined as part of the ONNX specification.
   // This field MUST be present in this version of the IR when referring to any other operator set.
   optional string domain = 1;
 
