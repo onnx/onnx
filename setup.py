@@ -14,14 +14,12 @@ from collections import namedtuple
 from contextlib import contextmanager
 import glob
 import os
-import re
 import shlex
 import subprocess
 import sys
 import struct
 from textwrap import dedent
 import multiprocessing
-import fileinput
 
 
 TOP_DIR = os.path.realpath(os.path.dirname(__file__))
@@ -88,13 +86,6 @@ def cd(path):
     finally:
         os.chdir(orig_path)
 
-
-def correct_import(script_name, prefix):  # type: (Text, Text) -> None
-    '''
-        This function add package name in importing between generated pb2.py files
-    '''
-    for line in fileinput.input(script_name, inplace=True):
-        print(re.sub(r"^import\s\S+_pb2\sas.+", "from {} {}".format(prefix, line.rstrip()), line.rstrip()))
 
 ################################################################################
 # Customized commands
@@ -210,12 +201,6 @@ class build_py(setuptools.command.build_py.build_py):
     def run(self):
         self.run_command('create_version')
         self.run_command('cmake_build')
-
-        generated_pb2_python_files = \
-            glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*_pb2.py'))
-
-        for file in generated_pb2_python_files:
-            correct_import(file, "onnx")
 
         generated_python_files = \
             glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \

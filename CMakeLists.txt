@@ -361,7 +361,6 @@ if (MSVC)
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned
-        /wd4244 # conversion from 'protobuf::int64' to 'int'
         ${EXTRA_FLAGS}
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
