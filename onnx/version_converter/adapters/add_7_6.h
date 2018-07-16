@@ -40,9 +40,9 @@ struct Add_7_6 final : public Adapter {
           }
         }
       }
-      // Assert that final state is well-formed
+      // TODO: Assert that final state is well-formed
       if (axis != A_sizes.size() - B_sizes.size()) {
-        // Need to add axis attribute
+        // TODO: add axis attribute
       }
       // Add broadcast attribute
 
