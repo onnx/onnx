@@ -1,6 +1,6 @@
 # Type Denotation
 
-Type Denotation is used to describe semantic information around what the inputs and outputs are.    It is stored on the TypeProto message.
+Type Denotation is used to describe semantic information around what the inputs and outputs are. It is stored in the TypeProto message.
 
 ## Motivation
 
