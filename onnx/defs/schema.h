@@ -423,15 +423,16 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& high_precision_numeric_types() {
-    static const std::vector<std::string> high_precision_numeric_types = {
+  static const std::vector<std::string>& numeric_types_for_math_reduction() {
+    static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
         "tensor(uint64)",
         "tensor(int32)",
         "tensor(int64)",
+        "tensor(float16)",
         "tensor(float)",
         "tensor(double)"};
-    return high_precision_numeric_types;
+    return numeric_types_for_math_reduction;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
@@ -585,7 +586,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 8);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
     }
 
@@ -785,8 +786,7 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(name, Onnx, ONNX_DOMAIN, ver, true, impl)
 
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(                       \
-      name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are

@@ -18,7 +18,9 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 
 # Set C++11 as standard for the whole project
-set(CMAKE_CXX_STANDARD 11)
+IF(NOT MSVC)
+  set(CMAKE_CXX_STANDARD 11)
+ENDIF(NOT MSVC)
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
@@ -176,9 +178,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
       COMMENT "Running gen_proto.py on ${INFILE}"
       VERBATIM )
 
-    set(PROTOC_ARGS ${GENERATED_PROTO} -I ${OUTPUT_PROTO_DIR} --cpp_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+    set(PROTOC_ARGS ${GENERATED_PROTO} -I ${CMAKE_CURRENT_BINARY_DIR} --cpp_out ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
     if(BUILD_ONNX_PYTHON)
-      list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+      list(APPEND PROTOC_ARGS --python_out ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
       if(ONNX_GEN_PB_TYPE_STUBS)
         # Haven't figured out how to generate mypy stubs on Windows yet
         if(NOT WIN32)
@@ -188,7 +190,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         else(NOT WIN32)
           set(PROTOC_MYPY_PLUGIN_FILE ${ROOT_DIR}/tools/protoc-gen-mypy.bat)
         endif()
-        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE} --mypy_out ${ONNX_DLLEXPORT_STR}${OUTPUT_PROTO_DIR})
+        list(APPEND PROTOC_ARGS --plugin protoc-gen-mypy=${PROTOC_MYPY_PLUGIN_FILE} --mypy_out ${ONNX_DLLEXPORT_STR}${CMAKE_CURRENT_BINARY_DIR})
       endif()
     endif()
     if (NOT ONNX_PROTOC_EXECUTABLE)
@@ -200,6 +202,7 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         COMMAND ${ONNX_PROTOC_EXECUTABLE}
         ARGS ${PROTOC_ARGS}
         COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_HEADER} -DNAMESPACES=${ONNX_NAMESPACE} -P ${ONNX_PROTO_POST_BUILD_SCRIPT}
+        COMMAND "${CMAKE_COMMAND}" -DFILENAME=${OUTPUT_PB_SRC} -DNAMESPACES=${ONNX_NAMESPACE} -P ${ONNX_PROTO_POST_BUILD_SCRIPT}
         DEPENDS ${GENERATED_PROTO} ${DEPEND}
         COMMENT "Running C++ protocol buffer compiler on ${GENERATED_PROTO}"
         VERBATIM )
@@ -250,10 +253,6 @@ else()
   target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
 endif()
 
-if(MSVC)
-  target_compile_options(onnx_proto PRIVATE /WX-)
-endif()
-
 add_library(onnx ${onnx_src})
 target_include_directories(onnx PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
@@ -269,6 +268,7 @@ if(BUILD_ONNX_PYTHON)
 
   add_library(onnx_cpp2py_export MODULE "${ONNX_ROOT}/onnx/cpp2py_export.cc")
   set_target_properties(onnx_cpp2py_export PROPERTIES PREFIX "")
+  set_target_properties(onnx_cpp2py_export PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
   target_include_directories(onnx_cpp2py_export PRIVATE "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}" "${PYTHON_INCLUDE_DIR}")
@@ -295,14 +295,31 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
+    IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+      SET(MP_FLAG "-Xclang" "-fopenmp")
+      SET(EXTRA_FLAGS   "-Wno-implicit-function-declaration"
+                        "-Wno-undefined-inline"
+                        "-Wno-incompatible-pointer-types"
+                        "-Wno-dllexport-explicit-instantiation-decl"
+                        "-Wno-microsoft-unqualified-friend"
+                        "-Wno-absolute-value"
+                        "-Wno-unused-variable"
+                        "-Wno-writable-strings"
+                        "-Qunused-arguments")
+    ELSE()
+      SET(MP_FLAG "/MP")
+      SET(EXTRA_FLAGS "")
+    ENDIF()
     find_package(PythonInterp ${PY_VERSION} REQUIRED)
     find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export PRIVATE
-      /MP
-      /MX
+      ${MP_FLAG}
+      /WX
       /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
       /wd4503 # identifier' : decorated name length exceeded, name was truncated
+      /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
+      ${EXTRA_FLAGS}
       )
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
   endif()
@@ -318,6 +335,7 @@ if(ONNX_BUILD_BENCHMARKS)
   endif()
 
   add_executable(protobuf-bench tools/protobuf-bench.cc)
+  target_include_directories(protobuf-bench PUBLIC "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}" "${PROTOBUF_INCLUDE_DIRS}")
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
@@ -330,16 +348,20 @@ endif()
 
 if (MSVC)
     target_compile_options(onnx_proto PRIVATE
-        /MP
-        /MX
+        ${MP_FLAG}
+        /WX
+        /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
+        /wd4503 # identifier' : decorated name length exceeded, name was truncated
+        /wd4146 # unary minus operator applied to unsigned type, result still unsigned: include\google\protobuf\wire_format_lite.h
+        ${EXTRA_FLAGS}
     )
     target_compile_options(onnx PRIVATE
-        /MP
-        /MX
+        ${MP_FLAG}
         /WX
         /wd4800 # disable warning type' : forcing value to bool 'true' or 'false' (performance warning)
         /wd4503 # identifier' : decorated name length exceeded, name was truncated
         /wd4146 # unary minus operator applied to unsigned type, result still unsigned
+        ${EXTRA_FLAGS}
     )
     if(${ONNX_USE_MSVC_STATIC_RUNTIME})
       if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
@@ -378,6 +400,16 @@ endif()
 add_library(onnxifi INTERFACE)
 target_include_directories(onnxifi INTERFACE onnx)
 
+# ---[ ONNXIFI loader
+add_library(onnxifi_loader STATIC onnx/onnxifi_loader.c)
+# Users of ONNX backend API would compile it with their toolchain,
+# so it is implemented in standard C89 for maximum compatibility
+set_target_properties(onnxifi_loader PROPERTIES
+  C_STANDARD 90
+  C_EXTENSIONS NO)
+target_link_libraries(onnxifi_loader PUBLIC onnxifi)
+target_include_directories(onnxifi_loader PUBLIC onnx)
+target_include_directories(onnxifi_loader PUBLIC ${ONNX_ROOT})
 
 install(TARGETS onnx onnx_proto
     DESTINATION lib)

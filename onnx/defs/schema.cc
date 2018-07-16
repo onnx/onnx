@@ -188,7 +188,7 @@ void OpSchema::Verify(const NodeProto& node) const {
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
       continue;
     } else {
-      fail_check("Unrecognized attribute: ", name);
+      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
     switch (expected_type) {
@@ -713,7 +713,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       size_t dbg_registered_schema_count =
           GetRegisteredSchemaCount() - dbg_initial_schema_count;
 
-      ONNX_EXPECTM(
+      ONNX_ASSERTM(
           dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
           "%u schema were exposed from operator sets and automatically placed into the static registry.  "
           "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",

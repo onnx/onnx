@@ -52,6 +52,12 @@ function(AddTest)
     target_compile_options(${_UT_TARGET} PRIVATE /MT)
   endif()
 
+  if(MSVC)
+    target_compile_options(${_UT_TARGET} PRIVATE
+      /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
+    )
+  endif()
+  
   set(TEST_ARGS)
   if (ONNX_GENERATE_TEST_REPORTS)
     # generate a report file next to the test program

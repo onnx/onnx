@@ -188,7 +188,9 @@ typedef uint64_t onnxPointer;
  * so this capability requires ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS support.
  *
  * For outputs with data-dependent shapes the shape specified in onnxSetGraphIO
- * call is interpreted as the upper limit.
+ * call is interpreted as the upper limit. The exact numerical shape of the
+ * output can be retrieved by attaching a Shape operator to the tensor with
+ * data-dependent shape and reading its output through ONNXIFI.
  */
 #define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x04
 /**
@@ -226,14 +228,18 @@ typedef int32_t onnxBackendInfo;
 /**
  * Marketing name of the backend (excluding the vendor name).
  *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
+ *
  * Value type: char[], e.g.:
  *    "Caffe2"
- *    "Tensor Comprehensions"
+ *    "Glow"
  */
 #define ONNXIFI_BACKEND_NAME 1
 
 /**
  * Name of the backend vendor.
+ *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "Facebook"
@@ -244,6 +250,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Version of the backend software. Exact format is vendor-specific, but MUST be
  * unique for the software release.
+ *
+ * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "1.2.3"
@@ -256,15 +264,19 @@ typedef int32_t onnxBackendInfo;
  * Space-separated list of vendor- or device-specific extensions supported on
  * this backend.
  *
+ * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
+ *
  * Value type: char[], e.g.:
  *    ""
- *    "onnx_async"
- *    "onnx_quant8 onnx_clone_graph fb_maskrcnn"
+ *    "onnx_clone_graph"
+ *    "onnx_clone_graph fb_maskrcnn"
  */
 #define ONNXIFI_BACKEND_EXTENSIONS 4
 
 /**
  * Descriptive name of the device (i.e. CPU, GPU, DSP, or NPU model).
+ *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "nnDuino 123"
@@ -323,7 +335,7 @@ typedef int32_t onnxBackendInfo;
  * Memory synchronization primitives supported for graph inputs and outputs.
  *
  * Possible values are any combination of the following flags:
- *     ONNXIFI_SYNCHRONIZATION_DEFAULT (always supported)
+ *     ONNXIFI_SYNCHRONIZATION_EVENT    (onnxEvent, always supported)
  *     ONNXIFI_SYNCHRONIZATION_IMPLICIT
  *     or any vendor-specific flags in the high 32 bits of the bit field.
  */
@@ -504,12 +516,17 @@ typedef struct onnxTensorDescriptor {
    * Possible values:
    *     ONNXIFI_DATATYPE_FLOAT16
    *     ONNXIFI_DATATYPE_FLOAT32
+   *     ONNXIFI_DATATYPE_FLOAT64
    *     ONNXIFI_DATATYPE_INT8
    *     ONNXIFI_DATATYPE_INT16
    *     ONNXIFI_DATATYPE_INT32
+   *     ONNXIFI_DATATYPE_INT64
    *     ONNXIFI_DATATYPE_UINT8
    *     ONNXIFI_DATATYPE_UINT16
    *     ONNXIFI_DATATYPE_UINT32
+   *     ONNXIFI_DATATYPE_UINT64
+   *     ONNXIFI_DATATYPE_COMPLEX64
+   *     ONNXIFI_DATATYPE_COMPLEX128
    */
   onnxEnum dataType;
   /**
@@ -583,19 +600,19 @@ typedef struct onnxMemoryFence {
    * Type of memory synchronization primitive.
    *
    * Possible values:
-   *      ONNXIFI_SYNCHRONIZATION_DEFAULT  (always supported)
+   *      ONNXIFI_SYNCHRONIZATION_EVENT    (onnxEvent, always supported)
    *      ONNXIFI_SYNCHRONIZATION_IMPLICIT
    */
   onnxEnum type;
   union {
     /**
-     * Pointer to a handle for a single-shot ONNXIFI event used as a
-     * synchronization primitive. Event for the input fence must be created
-     * by the caller to onnxRunGraph. Event for the output fence is created by
-     * implementation of onnxRunGraph, and store into the pointer specified in
-     * the output fence before onnxRunGraph returns.
+     * Handle for a single-shot ONNXIFI event used as a synchronization
+     * primitive. Event for the input fence must be created by the caller to
+     * onnxRunGraph. Event for the output fence is created by implementation of
+     * onnxRunGraph, and stored into the output memory fence structure before
+     * onnxRunGraph returns.
      */
-    onnxEvent* event;
+    onnxEvent event;
   };
 } onnxMemoryFence;
 
