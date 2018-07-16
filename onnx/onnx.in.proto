@@ -216,13 +216,13 @@ message AttributeProto {
   optional RecordAttribute       record   = 101; // A single record value
   optional NullableAttribute     nullable = 102; // A single nullable value
   optional SparseTensorAttribute sparse   = 103; // A single sparse tensor
-  optional TypeProto             typea    = 104; // A single type
+  optional string                typea    = 104; // A single type
 
   repeated TupleAttribute        tuples    = 105; // List of tuple values
   repeated RecordAttribute       records   = 106; // List of record values
   repeated NullableAttribute     nullables = 107; // List of nullable values
   repeated SparseTensorAttribute sparses   = 108; // List of sparse tensors
-  repeated TypeProto             types     = 109; // List of types
+  repeated string                types     = 109; // List of types
 // #endif
 }
 

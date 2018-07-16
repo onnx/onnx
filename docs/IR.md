@@ -266,7 +266,7 @@ Name|Type|Description|Spec Variant|
 |record|Record|A single record value|ONNX-ML|
 |nullable|Nullable|A single nullable value|ONNX-ML|
 |sparse|SparseTensor|A single sparse tensor|ONNX-ML|
-|type_|TypeProto|A single type|ONNX-ML|
+|type_|string|An attribute representing a type, encoded in a string (see grammar below).|ONNX-ML|
 |tuples|Tuple[]|A list of tuple values|ONNX-ML|
 |records|Record[]|A list of record values|ONNX-ML|
 |nullables|Nullable[]|A list of nullable values|ONNX-ML|
