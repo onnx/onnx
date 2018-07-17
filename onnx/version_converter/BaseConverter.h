@@ -23,9 +23,9 @@ class BaseVersionConverter {
     std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<Adapter>>>> adapters;
 
   public:
-    BaseVersionConverter() {}
+    BaseVersionConverter() = default;
 
-    virtual ~BaseVersionConverter() {};
+    virtual ~BaseVersionConverter() = default;
 
     const Adapter& adapter_lookup(Node* op,
         const OpSetID& initial_version,
@@ -46,9 +46,9 @@ class BaseVersionConverter {
     };
 
     void registerAdapter(Adapter* a_ptr) {
-      OpSetID& iv = a_ptr->initial_version;
-      OpSetID& tv = a_ptr->target_version;
-      adapters[a_ptr->name][iv.toString()][tv.toString()] = std::unique_ptr<Adapter>(a_ptr);
+      const OpSetID& iv = a_ptr->initial_version();
+      const OpSetID& tv = a_ptr->target_version();
+      adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::unique_ptr<Adapter>(a_ptr);
     }
 };
 
