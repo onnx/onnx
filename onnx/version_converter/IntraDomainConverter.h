@@ -128,16 +128,16 @@ struct IntraDomainVersionConverter : BaseVersionConverter {
     const char* target_domain = target_version.domain().c_str();
 
     // Create Map for Current Version
-    for (Node* op : nodes) {
+    for (const Node* op : nodes) {
       // Iterate through all OperatorSetVersions, select highest that is leq initial_version
       int64_t op_opset_version = -1;
-      auto& op_domain_map = all_schemas[op->kind().toString()];
-      if (op_domain_map.find(initial_domain) != op_domain_map.end()) {
+      // auto& op_domain_map = ;
+      if (all_schemas[op->kind().toString()].find(initial_domain) != all_schemas[op->kind().toString()].end()) {
         // If op isn't defined for initial domain, we won't convert it
-        for (const auto& version_pair : op_domain_map[initial_domain]) {
+        for (const auto& version_pair : all_schemas[op->kind().toString()][initial_domain]) {
           if (version_pair.first > op_opset_version && version_pair.first <= initial_version.version()) {
             op_opset_version = version_pair.first;
-            current_opschemas.emplace(op, op_domain_map.at(initial_domain).at(op_opset_version));
+            current_opschemas[op] = all_schemas[op->kind().toString()].at(initial_domain).at(op_opset_version);
           }
         }
       }
@@ -165,7 +165,7 @@ struct IntraDomainVersionConverter : BaseVersionConverter {
           curr_version + step << std::endl;
       }
       // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
-      for (Node* op : nodes) {
+      for (const Node* op : nodes) {
         auto& op_domain_map = all_schemas.at(op->kind().toString());
         if (op_domain_map.find("") != op_domain_map.end() &&
             op_domain_map[""].find(curr_version) !=
