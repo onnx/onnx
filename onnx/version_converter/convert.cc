@@ -187,7 +187,6 @@ ONNX_NAMESPACE::ModelProto ConvertVersion(
     }
   }
   OpSetID target_struct = OpSetID(target_version);
-  // TODO: Make convert_version take references
   return _version_converter.convert_version(mp_in, initial_struct, target_struct);
 }
 
