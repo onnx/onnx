@@ -26,17 +26,17 @@ class IntraDomainVersionConverter : BaseVersionConverter {
       // Find appropriate adapter in adapters map for provided initial and target versions
       // TODO: Consider abstracting elements of this that are specific to
       // DefaultConverter to separate methods here and maintain the procedure in Base Converter
-      auto op_adapters = adapters.find(op_name);
+      const auto& op_adapters = adapters.find(op_name);
       if (op_adapters != adapters.end()) {
         // If we're adapting downwards, we just want to find the one downwards
         // adapter implemented for initial_version. If we're adapting upwards, we
         // want to actually use the SinceVersion value for the given op.
         if (target_version.version() < initial_version.version()) {
           // Downwards adapter
-          if (op_adapters.second.find(initial) != op_adapters.second.end()) {
+          if (op_adapters->second.find(initial) != op_adapters->second.end()) {
             // Either an upwards or a downwards adapter exists
             // Check if downwards adapter exists (only one should)
-            const auto& target_map = op_adapters.second.at(initial);
+            const auto& target_map = op_adapters->second.at(initial);
             for (auto it = target_map.begin(); it != target_map.end(); ++it) {
               int64_t new_target = (OpSetID(it->first)).version();
               if (new_target <= target_version.version()) {
@@ -57,8 +57,8 @@ class IntraDomainVersionConverter : BaseVersionConverter {
           // Either adapt from SinceVersion or Incompatible Breaking Change
           std::string since = target_version.domain() + std::to_string(
               current_opschemas.at(op)->since_version());
-          auto op_adapters = adapters.at(op_name);
-          if (target_adapters.find(since) != op_adapters.end() &&
+          const auto& op_adapters = adapters.at(op_name);
+          if (op_adapters.find(since) != op_adapters.end() &&
             op_adapters.at(since).find(target) != op_adapters
             .at(since).end()) {
             return *(op_adapters.at(since).at(target));
