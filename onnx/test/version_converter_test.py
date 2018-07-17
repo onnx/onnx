@@ -15,7 +15,12 @@ import unittest
 
 class TestVersionConverter(unittest.TestCase):
 
-    def _converted(self, graph, initial_version, target_version):  # type: (GraphProto, OperatorSetIdProto, int) -> ModelProto
+    def _converted(
+            self,
+            graph,  # type: GraphProto
+            initial_version,  # type: OperatorSetIdProto
+            target_version  # type: int
+    ):  # type: (...) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test', opset_imports=[initial_version])
         # print(type(orig_model))
         converted_model = onnx.version_converter.convert_version(orig_model,
@@ -24,7 +29,11 @@ class TestVersionConverter(unittest.TestCase):
         return converted_model
 
     # fn is a function that takes a single node as argument
-    def _visit_all_nodes_recursive(self, graph, fn):  # type: (GraphProto, Callable[[NodeProto], None]) -> None
+    def _visit_all_nodes_recursive(
+            self,
+            graph,  # type: GraphProto
+            fn  # type: Callable[[NodeProto], None]
+    ):  # type: (...) -> None
         for node in graph.node:
             fn(node)
             for attr in node.attribute:

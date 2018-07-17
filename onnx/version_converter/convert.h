@@ -7,30 +7,32 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct DefaultVersionConverter : IntraDomainVersionConverter {
-  bool DEBUG = false;
+class DefaultVersionConverter : IntraDomainVersionConverter {
+  private:
+    bool DEBUG = false;
 
-  DefaultVersionConverter() {
-    // TODO: Register adapters to the version converter
-  }
+  public:
+    DefaultVersionConverter() {
+      // TODO: Register adapters to the version converter
+    }
 
-  ONNX_NAMESPACE::ModelProto convert_version(
-      const ONNX_NAMESPACE::ModelProto& mp_in,
-      const OpSetID& initial_version,
-      const OpSetID& target_version) const {
-    const char* initial_domain = initial_version.domain().c_str();
-    const char* target_domain = target_version.domain().c_str();
-    ONNX_ASSERTM((strcmp(initial_domain, "") == 0 || strcmp(initial_domain,
-            "ai.onnx") == 0) && (strcmp(target_domain, "") == 0 || strcmp(
-              target_domain, "ai.onnx") == 0),
-        "Warning: default onnx version converter can only convert "
-        " between default domain opset versions ('' or 'ai.onnx')\n"
-        "Provided initial_domain: %s"
-        ", provided target_domain: %s", initial_domain, target_domain);
+    ONNX_NAMESPACE::ModelProto convert_version(
+        const ONNX_NAMESPACE::ModelProto& mp_in,
+        const OpSetID& initial_version,
+        const OpSetID& target_version) const {
+      const char* initial_domain = initial_version.domain().c_str();
+      const char* target_domain = target_version.domain().c_str();
+      ONNX_ASSERTM((strcmp(initial_domain, "") == 0 || strcmp(initial_domain,
+              "ai.onnx") == 0) && (strcmp(target_domain, "") == 0 || strcmp(
+                target_domain, "ai.onnx") == 0),
+          "Warning: default onnx version converter can only convert "
+          " between default domain opset versions ('' or 'ai.onnx')\n"
+          "Provided initial_domain: %s"
+          ", provided target_domain: %s", initial_domain, target_domain);
 
-    return IntraDomainVersionConverter::convert_version(mp_in, initial_version,
-        target_version);
-  }
+      return IntraDomainVersionConverter::convert_version(mp_in, initial_version,
+          target_version);
+    }
 };
 
 ONNX_NAMESPACE::ModelProto ConvertVersion(

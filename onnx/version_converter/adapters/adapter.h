@@ -7,9 +7,9 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct Adapter {
+class Adapter {
 
-  virtual ~Adapter() noexcept = 0;
+  virtual ~Adapter() noexcept = default;
 
   std::string name;
   OpSetID initial_version;
@@ -22,7 +22,5 @@ struct Adapter {
 
   virtual void adapt(std::shared_ptr<Graph> /*graph*/, const Node* node) const {}
 };
-
-inline Adapter::~Adapter() noexcept = default;
 
 }} // namespace ONNX_NAMESPACE::version_conversion

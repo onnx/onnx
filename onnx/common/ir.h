@@ -825,9 +825,6 @@ ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
 friend struct Value;
 
-public:
-  std::vector <OpSetID> opset_versions;
-
 private:
   // only used to keep track of allocated nodes
   // actual representation of Graph is done with
@@ -853,6 +850,8 @@ private:
   std::string name_;
   bool has_doc_string_;
   std::string doc_string_;
+
+  std::vector <OpSetID> opset_versions_;
 
 public:
   Graph()
@@ -931,6 +930,11 @@ public:
   const_graph_node_list nodes() const {
     return const_graph_node_list(output_, kNextDirection);
   }
+
+  std::vector<OpSetID>& opset_versions() {
+    return opset_versions_;
+  }
+
   // These invocations of begin() on output of function are OK
   // because graph_node_list is non-owning, so it doesn't matter
   // if it immediately dies after the invocation.
