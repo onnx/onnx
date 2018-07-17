@@ -15,45 +15,42 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
+// TODO: Consider creating interface for this class.
 struct BaseVersionConverter {
   // Schema for adapters: {<op_name>:{<from_domain>$<from_version>:{<to_domain>
   // <to_version>: adapter}}}
-  std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, Adapter*>>> adapters;
+  std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<Adapter>>>> adapters;
 
-  std::unordered_map<Node*, OpSchema*> current_opschemas;
+  std::unordered_map<Node*, const OpSchema*> current_opschemas;
 
   BaseVersionConverter() {}
 
-  ~BaseVersionConverter() {
-    for (auto op : adapters) {
-      for (auto init : op.second) {
-        for (auto target : init.second) {
-          target.second->~Adapter();
-        }
-      }
-    }
-  };
+  virtual ~BaseVersionConverter() {};
 
-  Adapter* adapter_lookup(Node* op,
+  // TODO: Adjust usage of this elsewhere
+  const Adapter& adapter_lookup(Node* op,
       const OpSetID& initial_version,
-      const OpSetID& target_version) {
+      const OpSetID& target_version) const {
     // TODO: Abstract to helper?
     barf("BaseConverter does not include an implementation of adapter_lookup.  "
         "Please use a more specific converter, such as DefaultConverter.");
+    throw "BaseVersionConverter Exception";
   }
 
+  // TODO: Adjust usage elsewhere
   ONNX_NAMESPACE::ModelProto convert_version(
       const ONNX_NAMESPACE::ModelProto& mp_in,
-      const OpSetID initial_version,
-      const OpSetID target_version) {
+      const OpSetID& initial_version,
+      const OpSetID& target_version) const {
     barf("BaseConverter does not include an implementation of convert_version.  "
         "Please use a more specific converter, such as DefaultConverter.");
+    throw "BaseVersionConverter Exception";
   };
 
-  void registerAdapter(Adapter* a_ptr, std::string domain) {
-    OpSetID iv = a_ptr->initial_version;
-    OpSetID tv = a_ptr->target_version;
-    adapters[a_ptr->name][iv.toString()][tv.toString()] = a_ptr;
+  void registerAdapter(Adapter* a_ptr, std::string& domain) {
+    OpSetID& iv = a_ptr->initial_version;
+    OpSetID& tv = a_ptr->target_version;
+    adapters[a_ptr->name][iv.toString()][tv.toString()] = make_unique<Adapter>(a_ptr);
   }
 };
 

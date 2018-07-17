@@ -419,7 +419,7 @@ public:
   bool has_name() {
     return has_name_;
   }
-  const std::string& name() {
+  const std::string& name() const {
     return name_;
   }
   void setName(std::string name) {
@@ -770,42 +770,53 @@ protected:
   }
 };
 
-// A struct with the same properties as OperatorSetIdProto, but without protobuf
+// A class with the same properties as OperatorSetIdProto, but without protobuf
 // overhead, resulting in a simpler and more readable workflow.
-struct OpSetID {
-  std::string domain;
-  int64_t version;
+class OpSetID final {
+  private:
+    std::string domain_;
+    int64_t version_;
 
-  OpSetID(std::string target) {
-    std::stringstream ss(target);
-    std::string segment;
-    std::vector<std::string> seglist;
-    while (std::getline(ss, segment, '$')) {
-      seglist.push_back(segment);
+  public:
+    OpSetID(std::string target) {
+      std::stringstream ss(target);
+      std::string segment;
+      std::vector<std::string> seglist;
+      while (std::getline(ss, segment, '$')) {
+        seglist.push_back(segment);
+      }
+      domain_ = seglist[0];
+      version_ = atoi(seglist[1].c_str());
     }
-    domain = seglist[0];
-    version = atoi(seglist[1].c_str());
-  }
 
-  OpSetID(ONNX_NAMESPACE::OperatorSetIdProto proto) {
-    domain = proto.domain();
-    version = proto.version();
-  }
+    OpSetID(ONNX_NAMESPACE::OperatorSetIdProto proto)
+      :domain_(proto.domain()), version_(proto.version()) {}
 
-  // Default Domain Constructor
-  OpSetID(int version) {
-    domain = "";
-    this->version = version;
-  }
+    // Default Domain Constructor
+    OpSetID(int version)
+      :domain_(""), version_(version) {}
 
-  OpSetID() {
-    domain = "";
-    version = 0;
-  };
+    OpSetID(std::string domain, int version)
+      :domain_(domain), version_(version) {}
 
-  std::string toString() const {
-    return "$" + domain + "$" + std::to_string(version);
-  }
+    OpSetID()
+      :domain_(""), version_(0) {}
+
+    std::string toString() const {
+      return "$" + domain_ + "$" + std::to_string(version_);
+    }
+
+    const std::string& domain() const {
+      return domain_;
+    }
+
+    const int64_t& version() const {
+      return version_;
+    }
+
+    void incrementVersion(int newVal) {
+      version_ += newVal;
+    }
 };
 
 struct Graph final {

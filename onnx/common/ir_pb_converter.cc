@@ -305,9 +305,7 @@ std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
 
   std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
   for (int i = 0; i < mp.opset_import_size(); i++) {
-    OpSetID new_opset_version;
-    new_opset_version.domain = mp.opset_import(i).domain();
-    new_opset_version.version = mp.opset_import(i).version();
+    OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
     g->opset_versions.push_back(new_opset_version);
   }
   return g;
@@ -545,10 +543,10 @@ void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Gra
   encodeGraph(p_g, g);
   // Add new opset_versions
   p_m->clear_opset_import();
-  for (OpSetID opset : g->opset_versions) {
+  for (OpSetID& opset : g->opset_versions) {
     OperatorSetIdProto *opset_version_output = p_m->add_opset_import();
-    opset_version_output->set_domain(opset.domain);
-    opset_version_output->set_version(opset.version);
+    opset_version_output->set_domain(opset.domain());
+    opset_version_output->set_version(opset.version());
   }
 }
 

@@ -1,6 +1,3 @@
-// ATTENTION: The code in this file is highly EXPERIMENTAL.
-// Adventurous users should note that the APIs will probably change.
-
 // Interface for Op Version Adapters
 
 #pragma once
@@ -19,10 +16,11 @@ struct Adapter {
   OpSetID target_version;
 
   explicit Adapter(std::string name, OpSetID initial_version, OpSetID target_version)
-    : name(std::move(name)), initial_version(initial_version), target_version(target_version) {
+    : name(std::move(name)), initial_version(std::move(initial_version)),
+      target_version(std::move(target_version)) {
   }
 
-  virtual void adapt(Graph& /*graph*/, Node& node) {}
+  virtual void adapt(std::shared_ptr<Graph> /*graph*/, Node* node) const {}
 };
 
 inline Adapter::~Adapter() noexcept = default;

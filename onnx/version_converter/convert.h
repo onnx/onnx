@@ -16,10 +16,10 @@ struct DefaultVersionConverter : IntraDomainVersionConverter {
 
   ONNX_NAMESPACE::ModelProto convert_version(
       const ONNX_NAMESPACE::ModelProto& mp_in,
-      const OpSetID initial_version,
-      const OpSetID target_version) {
-    const char* initial_domain = initial_version.domain.c_str();
-    const char* target_domain = target_version.domain.c_str();
+      const OpSetID& initial_version,
+      const OpSetID& target_version) const {
+    const char* initial_domain = initial_version.domain().c_str();
+    const char* target_domain = target_version.domain().c_str();
     ONNX_ASSERTM((strcmp(initial_domain, "") == 0 || strcmp(initial_domain,
             "ai.onnx") == 0) && (strcmp(target_domain, "") == 0 || strcmp(
               target_domain, "ai.onnx") == 0),
