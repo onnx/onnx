@@ -16,6 +16,7 @@ from typing import Text, Sequence, Dict, List, Type, Set, Tuple
 
 SNIPPETS = collect_snippets()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+ONNX_DOMAIN = ""
 ONNX_ML_DOMAIN = 'ai.onnx.ml'
 
 
@@ -169,7 +170,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     return s
 
 
-def display_function(function, versions, domain=""):  # type: (FunctionProto, List[int], Text) -> Text
+def display_function(function, versions, domain=ONNX_DOMAIN):  # type: (FunctionProto, List[int], Text) -> Text
     s = ''
 
     if domain:

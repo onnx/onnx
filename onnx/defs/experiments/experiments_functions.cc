@@ -35,7 +35,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* initial_node0 = func.add_node();
   BuildNode(
       "Pow_exponent_0",
-      "",
+      ONNX_DOMAIN,
       "Initialize a Constant tensor to calculate squared products",
       "Constant",
       std::vector<std::string>{},
@@ -53,7 +53,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* initial_node1 = func.add_node();
   BuildNode(
       "Div_epsilon_0",
-      "",
+      ONNX_DOMAIN,
       "Initialize a Constant tensor as epsilon to avoid division by 0",
       "Constant",
       std::vector<std::string>{},
@@ -71,7 +71,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node0 = func.add_node();
   BuildNode(
       "Reduced_Mean_0",
-      "",
+      ONNX_DOMAIN,
       "Calculate Reduced Mean on input tensor X",
       "ReduceMean",
       std::vector<std::string>{"X"},
@@ -85,7 +85,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node1 = func.add_node();
   BuildNode(
       "Pow_0",
-      "",
+      ONNX_DOMAIN,
       "Calculate (EX)^2",
       "Pow",
       std::vector<std::string>{"X_RM", "Exponent"},
@@ -95,7 +95,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node2 = func.add_node();
   BuildNode(
       "Pow_1",
-      "",
+      ONNX_DOMAIN,
       "Calculate X^2",
       "Pow",
       std::vector<std::string>{"X", "Exponent"},
@@ -105,7 +105,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node3 = func.add_node();
   BuildNode(
       "Reduced_Mean_1",
-      "",
+      ONNX_DOMAIN,
       "Calculate E(X^2)",
       "ReduceMean",
       std::vector<std::string>{"X_squared"},
@@ -119,7 +119,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node4 = func.add_node();
   BuildNode(
       "SUB_0",
-      "",
+      ONNX_DOMAIN,
       "Calculate variance (E(X^2)-(EX)^2)",
       "Sub",
       std::vector<std::string>{"E_Xsquared", "EX_squared"},
@@ -129,7 +129,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node5 = func.add_node();
   BuildNode(
       "SQRT_0",
-      "",
+      ONNX_DOMAIN,
       "Calculate standard variance from variance",
       "Sqrt",
       std::vector<std::string>{"Variance"},
@@ -139,7 +139,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node6 = func.add_node();
   BuildNode(
       "SUB_1",
-      "",
+      ONNX_DOMAIN,
       "Calculate X-EX",
       "Sub",
       std::vector<std::string>{"X", "X_RM"},
@@ -149,7 +149,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node7 = func.add_node();
   BuildNode(
       "ADD_0",
-      "",
+      ONNX_DOMAIN,
       "Add epsilon value to STD to avoid division by 0",
       "Add",
       std::vector<std::string>{"STD", "Epsilon"},
@@ -159,7 +159,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   NodeProto* node8 = func.add_node();
   BuildNode(
       "DIV_0",
-      "",
+      ONNX_DOMAIN,
       "Calculate MVN-ed tensor for output",
       "Div",
       std::vector<std::string>{"X_variance", "Processed_STD"},
@@ -169,4 +169,5 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   return Status::OK();
 }
 
-ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildMVN));
+ONNX_FUNCTION(
+    FunctionBuilder().SetDomain(ONNX_DOMAIN).SetBuildFunction(BuildMVN));
