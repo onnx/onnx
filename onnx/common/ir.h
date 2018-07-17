@@ -790,11 +790,11 @@ class OpSetID final {
       version_ = atoi(seglist[1].c_str());
     }
 
-    explicit OpSetID(const ONNX_NAMESPACE::OperatorSetIdProto& proto)
+    OpSetID(const ONNX_NAMESPACE::OperatorSetIdProto& proto)
       :domain_(proto.domain()), version_(proto.version()) {}
 
     // Default Domain Constructor
-    explicit OpSetID(int version)
+    explicit OpSetID(const int64_t& version)
       :domain_(""), version_(version) {}
 
     explicit OpSetID(const std::string& domain, int version)

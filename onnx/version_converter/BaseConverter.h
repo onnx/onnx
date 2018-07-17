@@ -21,8 +21,6 @@ struct BaseVersionConverter {
   // <to_version>: adapter}}}
   std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<Adapter>>>> adapters;
 
-  std::unordered_map<const Node*, const OpSchema*> current_opschemas;
-
   BaseVersionConverter() {}
 
   virtual ~BaseVersionConverter() {};
@@ -50,7 +48,7 @@ struct BaseVersionConverter {
   void registerAdapter(Adapter* a_ptr, std::string& domain) {
     OpSetID& iv = a_ptr->initial_version;
     OpSetID& tv = a_ptr->target_version;
-    adapters[a_ptr->name][iv.toString()][tv.toString()] = make_unique<Adapter>(a_ptr);
+    adapters[a_ptr->name][iv.toString()][tv.toString()] = std::unique_ptr<Adapter>(a_ptr);
   }
 };
 

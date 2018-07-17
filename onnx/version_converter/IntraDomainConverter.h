@@ -14,9 +14,10 @@ struct IntraDomainVersionConverter : BaseVersionConverter {
     // TODO: Register adapters to the version converter
   }
 
-  const Adapter& adapter_lookup(Node* op,
+  const Adapter& adapter_lookup(const Node* op,
       const OpSetID& initial_version,
-      const OpSetID& target_version) const {
+      const OpSetID& target_version,
+      const std::unordered_map<const Node*, const OpSchema*>& current_opschemas) const {
     const std::string& op_name = op->name();
     const std::string& initial = initial_version.toString();
     const std::string& target = target_version.toString();
@@ -128,16 +129,17 @@ struct IntraDomainVersionConverter : BaseVersionConverter {
     const char* target_domain = target_version.domain().c_str();
 
     // Create Map for Current Version
+    std::unordered_map<const Node*, const OpSchema*> current_opschemas;
     for (const Node* op : nodes) {
       // Iterate through all OperatorSetVersions, select highest that is leq initial_version
       int64_t op_opset_version = -1;
-      // auto& op_domain_map = ;
-      if (all_schemas[op->kind().toString()].find(initial_domain) != all_schemas[op->kind().toString()].end()) {
+      auto& op_domain_map = all_schemas[op->kind().toString()];
+      if (op_domain_map.find(initial_domain) != op_domain_map.end()) {
         // If op isn't defined for initial domain, we won't convert it
-        for (const auto& version_pair : all_schemas[op->kind().toString()][initial_domain]) {
+        for (const auto& version_pair : op_domain_map[initial_domain]) {
           if (version_pair.first > op_opset_version && version_pair.first <= initial_version.version()) {
             op_opset_version = version_pair.first;
-            current_opschemas[op] = all_schemas[op->kind().toString()].at(initial_domain).at(op_opset_version);
+            current_opschemas[op] = op_domain_map.at(initial_domain).at(op_opset_version);
           }
         }
       }
@@ -171,9 +173,9 @@ struct IntraDomainVersionConverter : BaseVersionConverter {
             op_domain_map[""].find(curr_version) !=
             op_domain_map[""].end()) {
           // Op is specifically defined for this domain and version
-          OpSetID curr_id = curr_version;
-          OpSetID next_id = curr_version + step;
-          auto& op_adapter = adapter_lookup(op, curr_id, next_id);
+          OpSetID curr_id(curr_version);
+          OpSetID next_id(curr_version + step);
+          auto& op_adapter = adapter_lookup(op, curr_id, next_id, current_opschemas);
           // If adapter_lookup returns null, no adapter is present.
           // Error thrown by adapter_lookup
           // TODO: Verify that conversion is actually needed (that the operator

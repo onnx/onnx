@@ -20,7 +20,7 @@ struct Adapter {
       target_version(std::move(target_version)) {
   }
 
-  virtual void adapt(std::shared_ptr<Graph> /*graph*/, Node* node) const {}
+  virtual void adapt(std::shared_ptr<Graph> /*graph*/, const Node* node) const {}
 };
 
 inline Adapter::~Adapter() noexcept = default;
