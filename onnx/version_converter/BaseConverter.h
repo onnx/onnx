@@ -21,7 +21,7 @@ struct BaseVersionConverter {
   // <to_version>: adapter}}}
   std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<Adapter>>>> adapters;
 
-  std::unordered_map<Node*, const OpSchema*> current_opschemas;
+  std::unordered_map<const Node*, const OpSchema*> current_opschemas;
 
   BaseVersionConverter() {}
 

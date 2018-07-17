@@ -778,28 +778,29 @@ class OpSetID final {
     int64_t version_;
 
   public:
-    OpSetID(std::string target) {
+    explicit OpSetID(const std::string& target) {
       std::stringstream ss(target);
       std::string segment;
       std::vector<std::string> seglist;
       while (std::getline(ss, segment, '$')) {
         seglist.push_back(segment);
       }
+      ONNX_ASSERTM(seglist.size() == 2, "string must be of format $<domain>$<version>")
       domain_ = seglist[0];
       version_ = atoi(seglist[1].c_str());
     }
 
-    OpSetID(ONNX_NAMESPACE::OperatorSetIdProto proto)
+    explicit OpSetID(const ONNX_NAMESPACE::OperatorSetIdProto& proto)
       :domain_(proto.domain()), version_(proto.version()) {}
 
     // Default Domain Constructor
-    OpSetID(int version)
+    explicit OpSetID(int version)
       :domain_(""), version_(version) {}
 
-    OpSetID(std::string domain, int version)
+    explicit OpSetID(const std::string& domain, int version)
       :domain_(domain), version_(version) {}
 
-    OpSetID()
+    explicit OpSetID()
       :domain_(""), version_(0) {}
 
     std::string toString() const {
