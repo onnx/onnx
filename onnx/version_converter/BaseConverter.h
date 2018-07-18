@@ -31,7 +31,7 @@ class BaseVersionConverter {
         const OpSetID& initial_version,
         const OpSetID& target_version) const {
       // TODO: Abstract to helper?
-      barf("BaseConverter does not include an implementation of adapter_lookup.  "
+      ONNX_ASSERTM(false, "BaseConverter does not include an implementation of adapter_lookup.  "
           "Please use a more specific converter, such as DefaultConverter.");
       throw "BaseVersionConverter Exception";
     }
@@ -40,7 +40,7 @@ class BaseVersionConverter {
         const ONNX_NAMESPACE::ModelProto& mp_in,
         const OpSetID& initial_version,
         const OpSetID& target_version) const {
-      barf("BaseConverter does not include an implementation of convert_version.  "
+      ONNX_ASSERTM(false, "BaseConverter does not include an implementation of convert_version.  "
           "Please use a more specific converter, such as DefaultConverter.");
       throw "BaseVersionConverter Exception";
     };
