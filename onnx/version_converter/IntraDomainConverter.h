@@ -20,7 +20,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
         const OpSetID& initial_version,
         const OpSetID& target_version,
         const std::unordered_map<const Node*, const OpSchema*>& current_opschemas) const {
-      const std::string& op_name = op->name();
+      const std::string& op_name = op->kind().toString();
       const std::string& initial = initial_version.toString();
       const std::string& target = target_version.toString();
       // Find appropriate adapter in adapters map for provided initial and target versions
@@ -37,26 +37,30 @@ class IntraDomainVersionConverter : BaseVersionConverter {
             // Either an upwards or a downwards adapter exists
             // Check if downwards adapter exists (only one should)
             const auto& target_map = op_adapters->second.at(initial);
+            debug("Adapters from " + initial + " for " + op_name);
             for (auto it = target_map.begin(); it != target_map.end(); ++it) {
               int64_t new_target = OpSetID::fromString(it->first).version();
               if (new_target <= target_version.version()) {
-                // Adapter found
+                // Adapter
+                debug(std::to_string(target_version.version()));
                 return *(it->second);
               }
             }
             // If loop terminates, no downwards adapter was found
             // TODO: Instead return OpAlreadyAtOldestVersion
+            debug("OpAlreadyAtOldestVersion");
             throw "OpAlreadyAtOldestVersion";
           } else {
             // No adapters exist from initial_version
             // TODO: Instead return NoAdapterForCurrentVersion
+            debug("NoAdapterForCurrentVersion");
             throw "NoAdapterForCurrentVersion";
           }
         } else {
           // Upwards adapter
           // Either adapt from SinceVersion or Incompatible Breaking Change
-          std::string since = target_version.domain() + std::to_string(
-              current_opschemas.at(op)->since_version());
+          std::string since = OpSetID(target_version.domain(),
+            current_opschemas.at(op)->since_version()).toString();
           const auto& op_adapters = adapters.at(op_name);
           if (op_adapters.find(since) != op_adapters.end() &&
             op_adapters.at(since).find(target) != op_adapters
@@ -64,12 +68,14 @@ class IntraDomainVersionConverter : BaseVersionConverter {
             return *(op_adapters.at(since).at(target));
           } else {
             // TODO: Instead return NoUpwardsAdapter
+            debug("NoUpwardsAdapter");
             throw "NoUpwardsAdapter";
           }
         }
       } else {
         // No adapters exist for the given op
         // TODO: Instead return NoAdapterForOp
+        debug("NoAdapterForOp");
         throw "NoAdapterForOp";
       }
   }
@@ -148,8 +154,8 @@ class IntraDomainVersionConverter : BaseVersionConverter {
       // Iterate over all versions to target_version for specified
       int64_t curr_version = initial_version.version();
       int64_t step;
-      if (target_version.version() > initial_version.version()) {
-        curr_version++;
+      bool up = target_version.version() > initial_version.version();
+      if (up) {
         step = 1;
       } else {
         step = -1;
@@ -162,16 +168,17 @@ class IntraDomainVersionConverter : BaseVersionConverter {
         }
       }
       while (curr_version != target_version.version()) {
-        if (DEBUG) {
-          std::cerr << "curr_version: " << curr_version << ", next_version: " <<
-            curr_version + step << std::endl;
-        }
+        debug("curr_version: " + std::to_string(curr_version) +
+          ", next_version: " + std::to_string(curr_version + step));
         // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
         for (Node* op : nodes) {
           auto& op_domain_map = all_schemas.at(op->kind().toString());
+          // Check if curr_version for down, next_version for up
           if (op_domain_map.find("") != op_domain_map.end() &&
-              op_domain_map[""].find(curr_version) !=
-              op_domain_map[""].end()) {
+              ((op_domain_map[""].find(curr_version) !=
+              op_domain_map[""].end() && !up) ||
+              (op_domain_map[""].find(curr_version + step) !=
+              op_domain_map[""].end() && up))) {
             // Op is specifically defined for this domain and version
             OpSetID curr_id(curr_version);
             OpSetID next_id(curr_version + step);
@@ -180,9 +187,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
             // Error thrown by adapter_lookup
             // TODO: Verify that conversion is actually needed (that the operator
             // isn't already optimal, which should be caught by the above condition)
-            if (DEBUG) {
-              std::cerr << "Applying adapter" << std::endl;
-            }
+            debug("Applying adapter");
             // adapt should handle replacing node in graph
             op_adapter.adapt(g, op);
           }
@@ -192,12 +197,16 @@ class IntraDomainVersionConverter : BaseVersionConverter {
         g->opset_versions()[domain_index].incrementVersion(step);
       }
       // Export g as ModelProto
-      if (DEBUG) {
-        std::cerr << "Finished conversion; returning model\n";
-      }
+      debug("Finished conversion; returning model");
       ONNX_NAMESPACE::ModelProto mp_out = PrepareOutput(mp_in);
       ExportModelProto(&mp_out, g);
       return mp_out;
+    }
+
+    void debug(const std::string& str) const {
+      if (DEBUG) {
+        std::cerr << str << std::endl;
+      }
     }
 };
 
