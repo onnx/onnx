@@ -13,7 +13,7 @@ ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
     const int target_version) {
   // Get initial_opsetid from mp_in
-  OpSetID initial_struct;
+  OpSetID initial_struct(0);
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
     if (it->domain() == "" || it->domain() == "ai.onnx") {
       initial_struct = OpSetID(*it);
