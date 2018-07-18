@@ -69,54 +69,8 @@ class IntraDomainVersionConverter : BaseVersionConverter {
         // No adapters exist for the given op
         // TODO: Instead return NoAdapterForOp
         throw "NoAdapterForOp";
-          // If loop terminates, no downwards adapter was found
-          // TODO: Instead return OpAlreadyAtOldestVersion
-          if (DEBUG) std::cerr << "OpAlreadyAtOldestVersion" << std::endl;
-          return NULL;
-        } else {
-          // No adapters exist from initial_version
-          // TODO: Instead return NoAdapterForCurrentVersion
-          if (DEBUG) std::cerr << "NoAdapterForCurrentVersion" << std::endl;
-          return NULL;
-        }
-      } else {
-        // Upwards adapter
-        // Either adapt from SinceVersion or Incompatible Breaking Change
-        // TODO: Verify that this doesn't end up defaulting to a downwards
-        // adapter on accident.
-        std::string since = target_version.domain + std::to_string(
-            current_opschemas[op]->since_version());
-        if (adapters[op_name].find(since) != adapters[op_name].end() && adapters[op_name]
-            [since].find(target) != adapters[op_name][since].end()) {
-          return &*(adapters[op_name][since][target]);
-        } else {
-          // TODO: Instead return NoUpwardsAdapter
-          if (DEBUG) std::cerr << "NoUpwardsAdapter" << std::endl;
-          return NULL;
-        }
       }
-    } else {
-      // No adapters exist for the given op
-      // TODO: Instead return NoAdapterForOp
-      if (DEBUG) std::cerr << "NoAdapterForOp" << std::endl;
-      return NULL;
-    }
   }
-
-  ONNX_NAMESPACE::ModelProto convert_version(
-      const ONNX_NAMESPACE::ModelProto& mp_in,
-      const OpSetID initial_version,
-      const OpSetID target_version) {
-    ONNX_ASSERTM(strcmp(initial_version.domain.c_str(), target_version.domain
-          .c_str()) == 0, "initial_version and target_version must have the same "
-        "domains");
-    for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()
-        .end(); ++it) {
-      if (it->domain() == initial_version.domain) {
-        ONNX_ASSERTM(initial_version.version == it->version(),
-            "initial_version does not reflect current state of model");
-      }
-    }
 
     ONNX_NAMESPACE::ModelProto convert_version(
         const ONNX_NAMESPACE::ModelProto& mp_in,
@@ -211,7 +165,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
             curr_version + step << std::endl;
         }
         // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
-        for (const Node* op : nodes) {
+        for (Node* op : nodes) {
           auto& op_domain_map = all_schemas.at(op->kind().toString());
           if (op_domain_map.find("") != op_domain_map.end() &&
               op_domain_map[""].find(curr_version) !=

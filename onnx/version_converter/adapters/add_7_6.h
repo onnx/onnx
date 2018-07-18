@@ -8,7 +8,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct Add_7_6 final : public Adapter {
   explicit Add_7_6()
-    : Adapter("Add", make_opsetid("", 7), make_opsetid("", 6)) {
+    : Adapter("Add", OpSetID("", 7), OpSetID("", 6)) {
     }
 
   void adapt_add_7_6(Graph& graph, Node& node) {
@@ -66,15 +66,8 @@ struct Add_7_6 final : public Adapter {
     }
   }
 
-  void adapt(Graph& graph, Node& node) override {
+  void adapt(Graph& graph, Node& node) {
     adapt_add_7_6(graph, node);
-  }
-
-  OpSetID make_opsetid(std::string domain, int version) {
-    OpSetID ret;
-    ret.domain = domain;
-    ret.version = version;
-    return ret;
   }
 };
 

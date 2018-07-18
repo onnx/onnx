@@ -26,7 +26,7 @@ Raises Exceptions:
     RuntimeError when some necessary conversion is not supported
 
 Supported adapters:
-    --
+    --Add from Opset 7 to Opset 6
 """
 
 
