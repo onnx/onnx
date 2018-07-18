@@ -190,11 +190,8 @@ print('The model before conversion:\n{}'.format(original_model))
 
 # A full list of supported adapters can be found here:
 # https://github.com/onnx/onnx/blob/master/onnx/version_converter.py#L21
-initial_version = helper.make_operatorsetid("<domain>", <version>)
-target_version = helper.make_operatorsetid("<domain>", <version>)
-
 # Apply the version conversion on the original model
-converted_model = version_converter.convert_version(original_model, initial_version, target_version)
+converted_model = version_converter.convert_version(original_model, <int target_version>)
 
 print('The model after conversion:\n{}'.format(converted_model))
 ```

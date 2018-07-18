@@ -800,9 +800,6 @@ class OpSetID final {
     explicit OpSetID(const std::string& domain, int version)
       :domain_(domain), version_(version) {}
 
-    explicit OpSetID()
-      :domain_(""), version_(0) {}
-
     std::string toString() const {
       return "$" + domain_ + "$" + std::to_string(version_);
     }
