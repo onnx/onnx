@@ -6,6 +6,7 @@
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/add_7_6.h"
 #include "onnx/version_converter/adapters/add_6_7.h"
+#include "onnx/version_converter/adapters/relu_5_6.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -18,8 +19,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
 
     const Adapter& adapter_lookup(const Node* op,
         const OpSetID& initial_version,
-        const OpSetID& target_version,
-        const std::unordered_map<const Node*, const OpSchema*>& current_opschemas) const {
+        const OpSetID& target_version) const {
       const std::string& op_name = op->kind().toString();
       const std::string& initial = initial_version.toString();
       const std::string& target = target_version.toString();
@@ -59,13 +59,10 @@ class IntraDomainVersionConverter : BaseVersionConverter {
         } else {
           // Upwards adapter
           // Either adapt from SinceVersion or Incompatible Breaking Change
-          std::string since = OpSetID(target_version.domain(),
-            current_opschemas.at(op)->since_version()).toString();
-          const auto& op_adapters = adapters.at(op_name);
-          if (op_adapters.find(since) != op_adapters.end() &&
-            op_adapters.at(since).find(target) != op_adapters
-            .at(since).end()) {
-            return *(op_adapters.at(since).at(target));
+          const auto& since_adapters = op_adapters->second.find(initial);
+          if (since_adapters != op_adapters->second.end() &&
+            since_adapters->second.find(target) != since_adapters->second.end()) {
+            return *(since_adapters->second.at(target));
           } else {
             // TODO: Instead return NoUpwardsAdapter
             debug("NoUpwardsAdapter");
@@ -182,7 +179,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
             // Op is specifically defined for this domain and version
             OpSetID curr_id(curr_version);
             OpSetID next_id(curr_version + step);
-            auto& op_adapter = adapter_lookup(op, curr_id, next_id, current_opschemas);
+            auto& op_adapter = adapter_lookup(op, curr_id, next_id);
             // If adapter_lookup returns null, no adapter is present.
             // Error thrown by adapter_lookup
             // TODO: Verify that conversion is actually needed (that the operator
