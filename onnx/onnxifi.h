@@ -982,6 +982,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                was successfully initialized.
  * @retval ONNXIFI_STATUS_INVALID_ID The function call failed because backendID
  *                                   is not an ONNXIFI backend ID.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        backend pointer is NULL.
  * @retval ONNXIFI_STATUS_INVALID_PARAMETER The function call failed because one
  *                                          of the initialization parameter
  *                                          values is invalid.
@@ -1213,8 +1215,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                        backend is not an ONNXIFI backend
  *                                        handle.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
- *                                        onnxModel or weightDescriptors is
- *                                        NULL.
+ *                                        onnxModel, weightDescriptors, or graph
+ *                                        pointer is NULL.
  * @retval ONNXIFI_STATUS_INVALID_SIZE The function call failed because
  *                                     onnxModelSize is 0.
  * @retval ONNXIFI_STATUS_INVALID_PROTOBUF The function call failed because it
@@ -1470,6 +1472,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the all graph
  *                                inputs and outputs were matched to a memory
  *                                location.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        inputFence or outputFence pointer is
+ *                                        NULL.
  * @retval ONNXIFI_STATUS_INVALID_GRAPH The function call failed because
  *                                      graph is not an ONNXIFI graph handle.
  * @retval ONNXIFI_STATUS_UNIDENTIFIED_NAME The function call failed because
