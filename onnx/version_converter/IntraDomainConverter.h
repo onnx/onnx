@@ -4,6 +4,8 @@
 #pragma once
 
 #include "onnx/version_converter/BaseConverter.h"
+#include "onnx/version_converter/adapters/add_7_6.h"
+#include "onnx/version_converter/adapters/add_6_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 

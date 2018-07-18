@@ -11,13 +11,13 @@ struct Add_6_7 final : public Adapter {
     : Adapter("Add", OpSetID("", 6), OpSetID("", 7)) {
     }
 
-  void adapt_add_6_7(Graph& graph, Node& node) {
+  void adapt_add_6_7(std::shared_ptr<Graph> graph, Node* node) const {
     // Remove axis and broadcast attributes
-    node.removeAttribute(kaxis);
-    node.removeAttribute(kbroadcast);
+    node->removeAttribute(kaxis);
+    node->removeAttribute(kbroadcast);
   }
 
-  void adapt(Graph& graph, Node& node) override {
+  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_add_6_7(graph, node);
   }
 };

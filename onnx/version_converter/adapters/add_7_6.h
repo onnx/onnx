@@ -11,12 +11,12 @@ struct Add_7_6 final : public Adapter {
     : Adapter("Add", OpSetID("", 7), OpSetID("", 6)) {
     }
 
-  void adapt_add_7_6(Graph& graph, Node& node) {
+  void adapt_add_7_6(std::shared_ptr<Graph> graph, Node* node) const {
     // Verify that broadcasts are allowed in limited spec of opset version 6
     // Multidirectional broadcasting, as defined in Broadcasting.md
     // MathDocGenerator provides differences
     // Main change: encode broadcasting commands as explicit attribute
-    ArrayRef<Value*> inputs = node.inputs();
+    ArrayRef<Value*> inputs = node->inputs();
     ONNX_ASSERTM(inputs.size() == 2, "Add in opset version 6 can only broadcast"
       " between 2 inputs");
     std::vector<Dimension> A_sizes = inputs[0]->sizes();
@@ -36,8 +36,8 @@ struct Add_7_6 final : public Adapter {
       // Ensure that first input is larger than or equal to the second
       if(A_sizes.size() < B_sizes.size()) {
         // Handle switching input order
-        Value* A = node.replaceInput(0, inputs[1]);
-        node.replaceInput(1, A);
+        Value* A = node->replaceInput(0, inputs[1]);
+        node->replaceInput(1, A);
         A_sizes = B_sizes;
         B_sizes = inputs[1]->sizes();
       }
@@ -58,15 +58,15 @@ struct Add_7_6 final : public Adapter {
       }
       if (axis != A_sizes.size() - B_sizes.size()) {
         // Add axis attribute
-        node.i_(kaxis, axis);
+        node->i_(kaxis, axis);
       }
       // If conditional is not fulfilled, we have a default broadcast
       // Add broadcast attribute
-      node.i_(kbroadcast, 1);
+      node->i_(kbroadcast, 1);
     }
   }
 
-  void adapt(Graph& graph, Node& node) {
+  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     adapt_add_7_6(graph, node);
   }
 };
