@@ -10,6 +10,7 @@ from collections import defaultdict
 from typing import List, Dict
 
 ONNX_DOMAIN = ""
+ONNX_ML_DOMAIN = 'ai.onnx.ml'
 
 
 has = C.has_schema

@@ -8,16 +8,14 @@ import io
 import os
 from collections import defaultdict
 
-from onnx import defs
-from onnx.defs import OpSchema, FunctionProto
+from onnx import defs, FunctionProto
+from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from typing import Text, Sequence, Dict, List, Type, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
-ONNX_DOMAIN = ""
-ONNX_ML_DOMAIN = 'ai.onnx.ml'
 
 
 if ONNX_ML:

@@ -1,6 +1,7 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
+#include "onnx/common/constants.h"
 #include "onnx/common/model_helpers.h"
 #include "onnx/defs/function.h"
 using namespace ONNX_NAMESPACE;

@@ -158,6 +158,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
         Common::Status status =
             function_registry.GetFunctions(domain, &temp_ptr_map);
+        if (!status.IsOK()) {
+          throw std::runtime_error(
+              "Failed to retrieve function list for domain '" + domain + "'!");
+        }
         for (auto iter = temp_ptr_map.begin(); iter != temp_ptr_map.end();
              ++iter) {
           std::string bytes;
@@ -166,15 +170,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
                 "Failed to serilize registered function for '" + iter->first +
                 "'!");
           }
-          if (!temp_map.count(iter->first)) {
-            std::vector<py::bytes> tmp_vec;
-            tmp_vec.emplace_back(py::bytes(bytes));
-            temp_map.insert(
-                std::unordered_map<std::string, std::vector<py::bytes>>::
-                    value_type(iter->first, tmp_vec));
-          } else {
-            temp_map.at(iter->first).emplace_back(py::bytes(bytes));
-          }
+          temp_map[iter->first].emplace_back(py::bytes(std::move(bytes)));
         }
         return temp_map;
       });

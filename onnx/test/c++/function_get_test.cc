@@ -1,5 +1,6 @@
 #include <iostream>
 #include "gtest/gtest.h"
+#include "onnx/common/constants.h"
 #include "onnx/defs/function.h"
 
 namespace ONNX_NAMESPACE {
