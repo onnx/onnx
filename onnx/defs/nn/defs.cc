@@ -257,6 +257,30 @@ ONNX_OPERATOR_SET_SCHEMA(
         "max",
         "The output of each pooling window is maximum number of elements exclude pad.")));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    8,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator(
+            "MaxPool",
+            "max",
+            "The output of each pooling window is maximum number of elements exclude pad."))
+        .Output(
+            1,
+            "Indices",
+            "Indices tensor from max pooling across the input tensor. "
+            "The dimensions of indices are the same as output tensor. "
+            "The values in indices of are the indices of the selected values during pooling. "
+            "The indices are computed as flatten 1-D tensor, "
+            "and the indices do not consider padding. "
+            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
+            "T",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "I",
+            {"tensor(int64)"},
+            "Constrain index tensor to int64"));
+
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
