@@ -381,8 +381,9 @@ if (MSVC)
       endif()
     endif()
     set(onnx_static_library_flags
-        -IGNORE:4221 # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
-        "/DEF:${ONNX_ROOT}/onnx.def" # Export necessary symbols
+        "-IGNORE:4221 /DEF:${ONNX_ROOT}/onnx.def"
+         # LNK4221: This object file does not define any previously undefined public symbols, so it will not be used by any link operation that consumes this library
+         # /DEF Export necessary symbols
     )
     set_target_properties(onnx PROPERTIES
         STATIC_LIBRARY_FLAGS "${onnx_static_library_flags}")
