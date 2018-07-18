@@ -812,7 +812,7 @@ class OpSetID final {
       return version_;
     }
 
-    void incrementVersion(int newVal) {
+    void incrementVersion(int64_t newVal) {
       version_ += newVal;
     }
 };
