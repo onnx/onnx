@@ -8,7 +8,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct Add_7_6 final : public Adapter {
   explicit Add_7_6()
-    : Adapter("Add", OpSetID("", 7), OpSetID("", 6)) {
+    : Adapter("Add", OpSetID(7), OpSetID(6)) {
     }
 
   void adapt_add_7_6(std::shared_ptr<Graph> graph, Node* node) const {
