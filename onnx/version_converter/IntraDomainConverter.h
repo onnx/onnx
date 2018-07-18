@@ -7,10 +7,11 @@
 #include "onnx/version_converter/adapters/add_7_6.h"
 #include "onnx/version_converter/adapters/add_6_7.h"
 #include "onnx/version_converter/adapters/relu_5_6.h"
+#include "onnx/version_converter/adapters/backwards_compatible.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-class IntraDomainVersionConverter : BaseVersionConverter {
+class IntraDomainVersionConverter : public BaseVersionConverter {
   private:
     bool DEBUG = false;
 

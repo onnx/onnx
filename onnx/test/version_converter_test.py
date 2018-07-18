@@ -112,5 +112,19 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Relu"
         assert converted_model.opset_import[0].version == 7
 
+    # Test Relu Adapter: 7 -> 5
+    def test_relu_6_5(self):  # type: () -> None
+        nodes = [helper.make_node('Relu', ["X"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 7), 5)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Relu"
+        assert converted_model.opset_import[0].version == 5
+
 if __name__ == '__main__':
     unittest.main()
