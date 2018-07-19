@@ -78,7 +78,6 @@ def check_graph(graph, ctx=DEFAULT_CONTEXT):  # type: (GraphProto, C.CheckerCont
     pass
 
 
-@_create_checker(ModelProto)
 def check_model(model):  # type: (ModelProto) -> None
     C.check_model(model.SerializeToString())
 
