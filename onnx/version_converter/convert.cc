@@ -1,6 +1,3 @@
-// ATTENTION: The code in this file is highly EXPERIMENTAL.
-// Adventurous users should note that the APIs will probably change.
-
 #include "onnx/version_converter/convert.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
@@ -22,4 +19,5 @@ ONNX_NAMESPACE::ModelProto ConvertVersion(
   OpSetID target_struct = OpSetID(target_version);
   return _version_converter.convert_version(mp_in, initial_struct, target_struct);
 }
-}}
+
+}} // namespace ONNX_NAMESPACE::version_conversion

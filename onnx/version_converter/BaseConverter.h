@@ -52,4 +52,4 @@ class BaseVersionConverter {
     }
 };
 
-}}
+}} // namespace ONNX_NAMESPACE::version_conversion

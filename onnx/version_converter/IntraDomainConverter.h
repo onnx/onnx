@@ -204,4 +204,4 @@ class IntraDomainVersionConverter : BaseVersionConverter {
 ONNX_NAMESPACE::ModelProto ConvertVersion(
     const ONNX_NAMESPACE::ModelProto& mp_in,
     const int target_version);
-}}
+}} // namespace ONNX_NAMESPACE::version_conversion
