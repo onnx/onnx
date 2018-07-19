@@ -8,6 +8,7 @@
 #include "onnx/version_converter/adapters/add_6_7.h"
 #include "onnx/version_converter/adapters/relu_5_6.h"
 #include "onnx/version_converter/adapters/backwards_compatible.h"
+#include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -32,14 +33,15 @@ class IntraDomainVersionConverter : public BaseVersionConverter {
         // If we're adapting downwards, we just want to find the one downwards
         // adapter implemented for initial_version. If we're adapting upwards, we
         // want to actually use the SinceVersion value for the given op.
-        if (target_version.version() < initial_version.version()) {
+        const auto& target_map = op_adapters->second.find(initial);
+        if (target_map != op_adapters->second.end()) {
           // Downwards adapter
-          if (op_adapters->second.find(initial) != op_adapters->second.end()) {
+          if (target_version.version() < initial_version.version()) {
             // Either an upwards or a downwards adapter exists
             // Check if downwards adapter exists (only one should)
-            const auto& target_map = op_adapters->second.at(initial);
             debug("Adapters from " + initial + " for " + op_name);
-            for (auto it = target_map.begin(); it != target_map.end(); ++it) {
+            for (auto it = target_map->second.begin(); it !=
+              target_map->second.end(); ++it) {
               int64_t new_target = OpSetID::fromString(it->first).version();
               if (new_target <= target_version.version()) {
                 // Adapter
@@ -52,23 +54,19 @@ class IntraDomainVersionConverter : public BaseVersionConverter {
             debug("OpAlreadyAtOldestVersion");
             throw "OpAlreadyAtOldestVersion";
           } else {
-            // No adapters exist from initial_version
-            // TODO: Instead return NoAdapterForCurrentVersion
-            debug("NoAdapterForCurrentVersion");
-            throw "NoAdapterForCurrentVersion";
+            // Upwards Adapter
+            // Either adapt from SinceVersion or Incompatible Breaking Change
+            const auto& adapter_ptr = target_map->second.find(target);
+            if (adapter_ptr != target_map->second.end()) {
+              return *(adapter_ptr->second);
+            } else {
+              debug("NoUpwardsAdapter");
+              throw "NoUpwardsAdapter";
+            }
           }
         } else {
-          // Upwards adapter
-          // Either adapt from SinceVersion or Incompatible Breaking Change
-          const auto& since_adapters = op_adapters->second.find(initial);
-          if (since_adapters != op_adapters->second.end() &&
-            since_adapters->second.find(target) != since_adapters->second.end()) {
-            return *(since_adapters->second.at(target));
-          } else {
-            // TODO: Instead return NoUpwardsAdapter
-            debug("NoUpwardsAdapter");
-            throw "NoUpwardsAdapter";
-          }
+          debug("NoAdapterForCurrentVersion");
+          throw "NoAdapterForCurrentVersion";
         }
       } else {
         // No adapters exist for the given op
@@ -108,7 +106,6 @@ class IntraDomainVersionConverter : public BaseVersionConverter {
       //    target_version.domain) {
       //  return mp_in;
       // }
-
       // Check if target_version is valid
       const std::unordered_map<std::string, std::pair<int, int>>& versions_map = OpSchemaRegistry::DomainToVersionRange::Instance().Map();
       const std::string& search_domain = target_version.domain() == "ai.onnx" ? "" : target_version.domain();
