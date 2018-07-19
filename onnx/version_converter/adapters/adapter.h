@@ -21,17 +21,17 @@ class Adapter {
         target_version_(std::move(target_version)) {
     }
 
-    virtual void adapt(std::shared_ptr<Graph> /*graph*/, const Node* node) const {}
+    virtual void adapt(std::shared_ptr<Graph> /*graph*/, Node* node) const {}
 
-    const std::string& name() {
+    const std::string& name() const {
       return name_;
     }
 
-    const OpSetID& initial_version() {
+    const OpSetID& initial_version() const {
       return initial_version_;
     }
 
-    const OpSetID& target_version() {
+    const OpSetID& target_version() const {
       return target_version_;
     }
 };

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "onnx/version_converter/BaseConverter.h"
+#include "onnx/version_converter/adapters/NoPreviousVersionAdapter.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -22,6 +23,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
   public:
     DefaultVersionConverter() {
       // Register adapters to the version converter
+      registerAdapter(make_unique<Adapter>(NoPreviousVersionAdapter("Cos",
+        OpSetID(7), OpSetID(6))));
     }
 
     ModelProto convert_version(
