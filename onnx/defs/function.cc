@@ -57,6 +57,17 @@ Status FunctionBuilderRegistry::GetFunctions(
     }
 
     CheckerContext ctx;
+    std::unordered_map<std::string, int> op_set;
+    auto version_range =
+        OpSchemaRegistry::DomainToVersionRange::Instance().Map().at(
+            func_builder.GetDomain());
+    if (function_proto->since_version() > version_range.second ||
+        function_proto->since_version() < version_range.first) {
+      fail_check("Invalid function version in '", function_proto->name(), "'");
+    }
+    op_set.insert({func_builder.GetDomain(), (int)function_proto->since_version()});
+    ctx.set_opset_imports(op_set);
+    ctx.set_is_main_graph(false);
     LexicalScopeContext lex_ctx;
     try {
       check_function(*function_proto, ctx, lex_ctx);
@@ -93,5 +104,4 @@ FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
   static FunctionBuilderRegistry func_builder_registry;
   return func_builder_registry;
 }
-
 } // namespace ONNX_NAMESPACE
