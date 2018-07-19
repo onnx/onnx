@@ -31,29 +31,48 @@ class BaseVersionConverter {
     // like to identify the proper registered adapter in the adapters map for
     // a given Node from a certain version to another. It should only be called
     // when the user knows that an adapter should exist for the given context.
-    const Adapter& adapter_lookup(Node* op,
+    const Adapter& adapter_lookup(const Node* op,
         const OpSetID& initial_version,
         const OpSetID& target_version) const {
-      // TODO: Abstract to helper?
-      ONNX_ASSERTM(false, "BaseConverter does not include an implementation of adapter_lookup.  "
-          "Please use a more specific converter, such as DefaultConverter.");
-      throw "BaseVersionConverter Exception";
-    }
+      const std::string& op_name = op->kind().toString();
+      const std::string& initial = initial_version.toString();
+      const std::string& target = target_version.toString();
+      // Find appropriate adapter in adapters map for provided initial and target versions
+      // TODO: Consider abstracting elements of this that are specific to
+      // DefaultConverter to separate methods here and maintain the procedure in Base Converter
+      const auto& op_adapters = adapters.find(op_name);
+      if (op_adapters != adapters.end()) {
+        // If we're adapting downwards, we just want to find the one downwards
+        // adapter implemented for initial_version. If we're adapting upwards, we
+        // want to actually use the SinceVersion value for the given op.
+        const auto& target_map = op_adapters->second.find(initial);
+        if (target_map != op_adapters->second.end()) {
+          // Either adapt from SinceVersion or Incompatible Breaking Change
+          const auto& adapter_ptr = target_map->second.find(target);
+          if (adapter_ptr != target_map->second.end()) {
+            return *(adapter_ptr->second);
+          } else {
+            ONNX_ASSERTM(false, "NoAdapterToTargetVersion");
+          }
+        } else {
+          ONNX_ASSERTM(false, "NoAdapterForCurrentVersion");
+        }
+      } else {
+        // No adapters exist for the given op
+        ONNX_ASSERTM(false, "NoAdapterForOp");
+      }
+  }
 
-    ONNX_NAMESPACE::ModelProto convert_version(
-        const ONNX_NAMESPACE::ModelProto& mp_in,
-        const OpSetID& initial_version,
-        const OpSetID& target_version) const {
-      ONNX_ASSERTM(false, "BaseConverter does not include an implementation of convert_version.  "
-          "Please use a more specific converter, such as DefaultConverter.");
-      throw "BaseVersionConverter Exception";
-    };
+  virtual ModelProto convert_version(
+      const ONNX_NAMESPACE::ModelProto& mp_in,
+      const OpSetID& initial_version,
+      const OpSetID& target_version) const = 0;
 
-    void registerAdapter(std::unique_ptr<Adapter>&& a_ptr) {
-      const OpSetID& iv = a_ptr->initial_version();
-      const OpSetID& tv = a_ptr->target_version();
-      adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);
-    }
+  void registerAdapter(std::unique_ptr<Adapter>&& a_ptr) {
+    const OpSetID& iv = a_ptr->initial_version();
+    const OpSetID& tv = a_ptr->target_version();
+    adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);
+  }
 };
 
 }} // namespace ONNX_NAMESPACE::version_conversion

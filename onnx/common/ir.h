@@ -811,8 +811,12 @@ class OpSetID final {
       return version_;
     }
 
-    void incrementVersion(int64_t newVal) {
-      version_ += newVal;
+    void incrementVersion(int64_t step) {
+      version_ += step;
+    }
+
+    void setVersion(int64_t newVal) {
+      version_ = newVal;
     }
 };
 
