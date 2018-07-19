@@ -177,7 +177,7 @@ print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model
 Runnable IPython notebooks:
 - [shape_inference.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/shape_inference.ipynb)
 
-## Converting Version of an ONNX Model
+## Converting Version of an ONNX Model within Default Domain (""/"ai.onnx")
 ```python
 import onnx
 from onnx import version_converter, helper

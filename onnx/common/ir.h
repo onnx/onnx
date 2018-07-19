@@ -787,7 +787,7 @@ class OpSetID final {
       }
       ONNX_ASSERTM(seglist.size() == 2, "string must be of format $<domain>$<version>")
       domain_ = seglist[0];
-      version_ = atoi(seglist[1].c_str());
+      version_ = std::stoi(seglist[1].c_str());
     }
 
     explicit OpSetID(const ONNX_NAMESPACE::OperatorSetIdProto& proto)
