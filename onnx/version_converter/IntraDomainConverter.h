@@ -38,7 +38,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
             // Check if downwards adapter exists (only one should)
             const auto& target_map = op_adapters->second.at(initial);
             for (auto it = target_map.begin(); it != target_map.end(); ++it) {
-              int64_t new_target = (OpSetID(it->first)).version();
+              int64_t new_target = OpSetID::fromString(it->first).version();
               if (new_target <= target_version.version()) {
                 // Adapter found
                 return *(it->second);
