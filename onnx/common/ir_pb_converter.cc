@@ -551,8 +551,8 @@ void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Gra
 }
 
 // TODO (Optimizer): Should this just be copied instead?
-ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in) {
-  ONNX_NAMESPACE::ModelProto mp_out{};
+ModelProto PrepareOutput(const ModelProto& mp_in) {
+  ModelProto mp_out{};
 
   if (mp_in.has_ir_version()) {
     mp_out.set_ir_version(mp_in.ir_version());
