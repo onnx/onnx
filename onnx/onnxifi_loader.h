@@ -65,11 +65,6 @@ extern "C" {
  *                currently supported value is ONNXIFI_LOADER_FLAG_VERSION_1_0.
  * @param path - optional path to the ONNXIFI library to load.
  *               If this argument is null, the default path is used.
- * @param[in] suffix - optional suffix for names of ONNX Backend API functions.
- *                     E.g. if this argument is "GAMMA", the loader will search
- *                     for "onnxGetNumBackendsGAMMA", "onnxGetBackendInfoGAMMA",
- *                     etc. functions in the loaded library.
- *                     If this argument is null, an empty suffix is used.
  * @param[out] library - the structure representing the dynamic library and
  *                       its API functions. On success, this structure will
  *                       be initialized with valid pointers to implentation.
@@ -84,7 +79,6 @@ ONNXIFI_HIDDEN int ONNXIFI_ABI onnxifi_load(
 #else
   const char* path,
 #endif
-  const char* suffix,
   struct onnxifi_library* library);
 
 /**
