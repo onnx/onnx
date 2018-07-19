@@ -3,8 +3,15 @@
 
 #pragma once
 
+#include "onnx/version_converter/adapters/add_7_6.h"
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
+#include "onnx/version_converter/adapters/add_7_6.h"
+#include "onnx/version_converter/adapters/add_6_7.h"
+#include "onnx/version_converter/adapters/relu_5_6.h"
+#include "onnx/version_converter/adapters/backwards_compatible.h"
+#include "onnx/version_converter/adapters/batch_normalization_6_7.h"
+#include "onnx/version_converter/adapters/batch_normalization_6_5.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -55,6 +62,17 @@ class DefaultVersionConverter : public BaseVersionConverter {
       // Register adapters to the version converter
       const std::vector<OpSchema> all_opschemas =
         OpSchemaRegistry::get_all_schemas_with_history();
+      registerAdapter(make_unique<Adapter>(Add_7_6()));
+      registerAdapter(make_unique<Adapter>(Add_6_7()));
+      registerAdapter(make_unique<Adapter>(Relu_5_6()));
+      registerAdapter(make_unique<Adapter>(
+        BackwardsCompatibleAdapter("Relu", OpSetID(6), OpSetID(5))));
+      registerAdapter(make_unique<Adapter>(
+        BackwardsCompatibleAdapter("BatchNormalization", OpSetID(7), OpSetID(6))));
+      registerAdapter(make_unique<Adapter>(
+        BatchNormalization_6_7()));
+      BaseVersionConverter::registerAdapter(make_unique<Adapter>(
+        BatchNormalization_6_5()));
 
       for (const OpSchema& schema : all_opschemas) {
         all_schemas[schema.Name()][schema.domain()][(int64_t)
