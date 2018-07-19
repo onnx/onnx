@@ -71,7 +71,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         BackwardsCompatibleAdapter("BatchNormalization", OpSetID(7), OpSetID(6))));
       registerAdapter(make_unique<Adapter>(
         BatchNormalization_6_7()));
-      BaseVersionConverter::registerAdapter(make_unique<Adapter>(
+      registerAdapter(std::unique_ptr<Adapter>(new
         BatchNormalization_6_5()));
 
       for (const OpSchema& schema : all_opschemas) {
