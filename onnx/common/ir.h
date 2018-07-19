@@ -807,7 +807,7 @@ class OpSetID final {
       return domain_;
     }
 
-    const int64_t& version() const {
+    const int64_t version() const {
       return version_;
     }
 
