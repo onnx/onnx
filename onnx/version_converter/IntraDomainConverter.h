@@ -12,9 +12,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
     bool DEBUG = false;
 
   public:
-    IntraDomainVersionConverter() {
-      // Register adapters to the version converter
-    }
+    IntraDomainVersionConverter() = default;
 
     const Adapter& adapter_lookup(const Node* op,
         const OpSetID& initial_version,

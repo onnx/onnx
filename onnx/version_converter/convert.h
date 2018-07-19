@@ -10,7 +10,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 class DefaultVersionConverter : IntraDomainVersionConverter {
   public:
     DefaultVersionConverter() {
-      // TODO: Register adapters to the version converter
+      // Register adapters to the version converter
     }
 
     ONNX_NAMESPACE::ModelProto convert_version(

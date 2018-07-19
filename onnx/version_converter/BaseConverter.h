@@ -49,10 +49,10 @@ class BaseVersionConverter {
       throw "BaseVersionConverter Exception";
     };
 
-    void registerAdapter(std::unique_ptr<Adapter> a_ptr) {
+    void registerAdapter(std::unique_ptr<Adapter>&& a_ptr) {
       const OpSetID& iv = a_ptr->initial_version();
       const OpSetID& tv = a_ptr->target_version();
-      adapters[a_ptr->name()][iv.toString()][tv.toString()] = a_ptr;
+      adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);
     }
 };
 
