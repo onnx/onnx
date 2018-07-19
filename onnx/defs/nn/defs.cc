@@ -265,6 +265,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "MaxPool",
             "max",
             "The output of each pooling window is maximum number of elements exclude pad."))
+        .Attr(
+            "storage_order",
+            "The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.",
+            AttributeProto::INT)
         .Output(
             1,
             "Indices",
