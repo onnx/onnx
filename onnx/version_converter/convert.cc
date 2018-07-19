@@ -183,7 +183,8 @@ ONNX_NAMESPACE::ModelProto ConvertVersion(
   OpSetID initial_struct(0);
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
     if (it->domain() == "" || it->domain() == "ai.onnx") {
-      initial_struct = OpSetID(*it);
+      initial_struct.setVersion(it->version());
+      break;
     }
   }
   OpSetID target_struct = OpSetID(target_version);
