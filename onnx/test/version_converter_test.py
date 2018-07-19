@@ -28,21 +28,6 @@ class TestVersionConverter(unittest.TestCase):
         checker.check_model(converted_model)
         return converted_model
 
-    # fn is a function that takes a single node as argument
-    def _visit_all_nodes_recursive(
-            self,
-            graph,  # type: GraphProto
-            fn  # type: Callable[[NodeProto], None]
-    ):  # type: (...) -> None
-        for node in graph.node:
-            fn(node)
-            for attr in node.attribute:
-                if attr.g is not None:
-                    self._visit_all_nodes_recursive(attr.g, fn)
-                if len(attr.graphs):
-                    for gr in attr.graphs:
-                        self._visit_all_nodes_recursive(gr, fn)
-
     # Test 1: Backwards Incompatible Conversion: Add: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
         def test():  # type: () -> None
