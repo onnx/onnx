@@ -13,7 +13,7 @@ class IntraDomainVersionConverter : BaseVersionConverter {
 
   public:
     IntraDomainVersionConverter() {
-      // TODO: Register adapters to the version converter
+      // Register adapters to the version converter
     }
 
     const Adapter& adapter_lookup(const Node* op,
