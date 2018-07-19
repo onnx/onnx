@@ -23,7 +23,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
   public:
     DefaultVersionConverter() {
       // Register adapters to the version converter
-      registerAdapter(make_unique<Adapter>(NoPreviousVersionAdapter("Cos",
+      registerAdapter(std::unique_ptr<Adapter>(new NoPreviousVersionAdapter("Cos",
         OpSetID(7), OpSetID(6))));
     }
 

@@ -66,7 +66,7 @@ class TestVersionConverter(unittest.TestCase):
                 [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
             self._converted(graph, helper.make_operatorsetid("", 8), 6)
-        self.assertRaises(AssertionError, test)
+        self.assertRaises(RuntimeError, test)
 
 
 if __name__ == '__main__':
