@@ -8,9 +8,6 @@
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : IntraDomainVersionConverter {
-  private:
-    bool DEBUG = false;
-
   public:
     DefaultVersionConverter() {
       // TODO: Register adapters to the version converter
