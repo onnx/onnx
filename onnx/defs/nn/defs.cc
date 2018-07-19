@@ -268,7 +268,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "storage_order",
             "The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.",
-            AttributeProto::INT)
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Output(
             1,
             "Indices",

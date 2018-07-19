@@ -5115,7 +5115,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
-<dt><tt>storage_order</tt> : int (required)</dt>
+<dt><tt>storage_order</tt> : int</dt>
 <dd>The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
