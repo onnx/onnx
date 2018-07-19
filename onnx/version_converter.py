@@ -1,7 +1,7 @@
 """onnx version converter
 
-This enables users to convert their models between different opsets within
-the default domain ("" or "ai.onnx").
+This enables users to convert their models between different opsets within the
+default domain ("" or "ai.onnx").
 """
 from __future__ import absolute_import
 from __future__ import division
