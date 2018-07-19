@@ -31,12 +31,12 @@ class TestVersionConverter(unittest.TestCase):
     # Test 1: Backwards Incompatible Conversion: Add: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
         def test():  # type: () -> None
-            nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
+            nodes = [helper.make_node('Reshape', ["X", "shape"], ["Y"])]
             graph = helper.make_graph(
                 nodes,
                 "test",
-                [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
-                    helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                    helper.make_tensor_value_info("shape", TensorProto.FLOAT, (1,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
             self._converted(graph, helper.make_operatorsetid(
                 "", 8), 2)
