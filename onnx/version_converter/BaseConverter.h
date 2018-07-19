@@ -27,6 +27,10 @@ class BaseVersionConverter {
 
     virtual ~BaseVersionConverter() = default;
 
+    // adapter_lookup should be called in convert_version when the user would
+    // like to identify the proper registered adapter in the adapters map for
+    // a given Node from a certain version to another. It should only be called
+    // when the user knows that an adapter should exist for the given context.
     const Adapter& adapter_lookup(Node* op,
         const OpSetID& initial_version,
         const OpSetID& target_version) const {
@@ -45,10 +49,10 @@ class BaseVersionConverter {
       throw "BaseVersionConverter Exception";
     };
 
-    void registerAdapter(Adapter* a_ptr) {
+    void registerAdapter(std::unique_ptr<Adapter> a_ptr) {
       const OpSetID& iv = a_ptr->initial_version();
       const OpSetID& tv = a_ptr->target_version();
-      adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::unique_ptr<Adapter>(a_ptr);
+      adapters[a_ptr->name()][iv.toString()][tv.toString()] = a_ptr;
     }
 };
 
