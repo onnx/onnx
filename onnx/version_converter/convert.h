@@ -128,7 +128,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
             curr_version + step << std::endl;
         }
         // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
-        for (const Node* op : nodes) {
+        for (Node* op : nodes) {
           auto& op_domain_map = all_schemas.at(op->kind().toString());
           if (searchOpDomainMap(op_domain_map, curr_version)) {
             // Op is specifically defined for this domain and version

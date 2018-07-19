@@ -38,8 +38,7 @@ class TestVersionConverter(unittest.TestCase):
                 [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
                     helper.make_tensor_value_info("shape", TensorProto.FLOAT, (1,))],
                 [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-            self._converted(graph, helper.make_operatorsetid(
-                "", 8), 2)
+            self._converted(graph, helper.make_operatorsetid("", 8), 2)
         self.assertRaises(RuntimeError, test)
 
     # Test 2: Backwards Compatible Conversion: Add: 8 -> 7
@@ -56,6 +55,18 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
         assert converted_model.opset_import[0].version == 7
+
+    # Test 3: Non-Existent Op Conversion: Cos: 8 -> 6
+    def test_non_existent_op(self):  # type: () -> None
+        def test():  # type: () -> None
+            nodes = [helper.make_node('Cos', ["X"], ["Y"])]
+            graph = helper.make_graph(
+                nodes,
+                "test",
+                [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+                [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+            self._converted(graph, helper.make_operatorsetid("", 8), 6)
+        self.assertRaises(AssertionError, test)
 
 
 if __name__ == '__main__':
