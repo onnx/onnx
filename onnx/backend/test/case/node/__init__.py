@@ -40,7 +40,7 @@ def expect(node,  # type: onnx.NodeProto
         name=name,
         inputs=inputs_vi,
         outputs=outputs_vi)
-    model = onnx.helper.make_model(graph, producer_name='backend-test')
+    model = onnx.helper.make_model(graph, producer_name='backend-test', domain='ai.testdomain')
 
     _NodeTestCases.append(TestCase(
         name=name,

@@ -241,16 +241,24 @@ class TestHelperNodeFunctions(unittest.TestCase):
         self.assertEqual(model_def.producer_name, 'test')
 
     def test_model_docstring(self):  # type: () -> None
-        graph = helper.make_graph([], "my graph", [], [])
+        graph = helper.make_graph([], "my_graph", [], [])
         model_def = helper.make_model(graph, doc_string='test')
         # models may have their own documentation, but don't have a name
         # their name is the domain-qualified name of the underlying graph.
         self.assertFalse(hasattr(model_def, "name"))
         self.assertEqual(model_def.doc_string, 'test')
 
+    def test_model_domain(self):  # type: () -> None
+        graph = helper.make_graph([], "my_graph", [], [])
+        model_def = helper.make_model(graph, domain='test')
+        # models may have their own documentation, but don't have a name
+        # their name is the domain-qualified name of the underlying graph.
+        self.assertFalse(hasattr(model_def, "name"))
+        self.assertEqual(model_def.domain, 'test')
+
     def test_model_metadata_props(self):  # type: () -> None
-        graph = helper.make_graph([], "my graph", [], [])
-        model_def = helper.make_model(graph, doc_string='test')
+        graph = helper.make_graph([], "my_graph", [], [])
+        model_def = helper.make_model(graph, doc_string='test', domain='ai.mydomain')
         helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})
         checker.check_model(model_def)
         helper.set_model_props(model_def, {'Title': 'my graph', 'Keywords': 'test;graph'})

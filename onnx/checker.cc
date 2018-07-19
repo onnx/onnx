@@ -1,6 +1,7 @@
 #include "onnx/checker.h"
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
+#include "onnx/shape_inference/implementation.h"
 #include "onnx/string_utils.h"
 
 #include <unordered_set>
@@ -8,25 +9,32 @@
 namespace ONNX_NAMESPACE {
 namespace checker {
 
-#define enforce_has_field(proto, field)                                     \
-  do {                                                                      \
-    if (!proto.has_##field()) {                                             \
-      fail_check(                                                           \
-          "Field '", #field, "' of ", #proto, " is required but missing."); \
-    }                                                                       \
+#define enforce_has_field(proto, field) \
+  do {                                  \
+    if (!proto.has_##field()) {         \
+      fail_check(                       \
+          ctx,                          \
+          "Field '",                    \
+          #field,                       \
+          "' of ",                      \
+          #proto,                       \
+          " is required but missing."); \
+    }                                   \
   } while (0)
 
-#define enforce_has_repeated_field(proto, field)                            \
-  do {                                                                      \
-    if (!proto.field##_size()) {                                            \
-      fail_check("Repeated Field '", #field, "' is required but missing."); \
-    }                                                                       \
+#define enforce_has_repeated_field(proto, field)                          \
+  do {                                                                    \
+    if (!proto.field##_size()) {                                          \
+      fail_check(                                                         \
+          ctx, "Repeated Field '", #field, "' is required but missing."); \
+    }                                                                     \
   } while (0)
 
 #define enforce_non_empty_field(proto, field) \
   do {                                        \
     if (proto.field().empty()) {              \
       fail_check(                             \
+          ctx,                                \
           "Field '",                          \
           #field,                             \
           "' of ",                            \
@@ -35,7 +43,91 @@ namespace checker {
     }                                         \
   } while (0)
 
-void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
+bool check_name_syntax(const std::string& name) {
+  if (name.empty()) {
+    return false;
+  }
+
+  bool correct = true;
+
+  // Names should adhere to C identifier syntax.
+  auto iter = name.cbegin();
+
+  char c = *iter;
+  if (!(isalpha(c) || c == '_')) {
+    correct = false;
+  }
+
+  ++iter;
+
+  for (; iter < name.cend(); ++iter) {
+    c = *iter;
+    if (!(isalnum(c) || c == '_')) {
+      correct = false;
+    }
+  }
+
+  return correct;
+}
+
+bool check_domain_syntax(const std::string& name) {
+  if (name.empty()) {
+    return false;
+  }
+
+  bool correct = true;
+
+  // Names should adhere to C identifier syntax.
+  auto iter = name.cbegin();
+
+  char c = *iter;
+  if (!isalpha(c)) {
+    correct = false;
+  }
+
+  ++iter;
+
+  for (; iter < name.cend(); ++iter) {
+    c = *iter;
+    if (!(isalnum(c) || c == '.')) {
+      correct = false;
+    }
+  }
+
+  return correct;
+}
+
+#define enforce_c_identifier(proto, field)       \
+  do {                                           \
+    const auto& str = proto.field();             \
+    if (!check_name_syntax(str)) {               \
+      fail_check(                                \
+          ctx,                                   \
+          "'",                                   \
+          str,                                   \
+          "' is invalid for " #proto,            \
+          ".",                                   \
+          #field,                                \
+          ". It must use C identifier syntax."); \
+    }                                            \
+  } while (0)
+
+#define enforce_domain_name_rules(proto, field)     \
+  do {                                              \
+    const auto& str = proto.field();                \
+    if (!check_domain_syntax(str)) {                \
+      fail_check(                                   \
+          ctx,                                      \
+          "'",                                      \
+          str,                                      \
+          "' is invalid for " #proto,               \
+          ".",                                      \
+          #field,                                   \
+          ". It must be a valid DNS domain name."); \
+    }                                               \
+  } while (0)
+
+void check_value_info(CheckerContext& ctx, const ValueInfoProto& value_info) {
   enforce_non_empty_field(value_info, name);
   enforce_has_field(value_info, type);
   const auto value_case = value_info.type().value_case();
@@ -43,7 +135,46 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
     case TypeProto::kTensorType: {
       const auto& type = value_info.type().tensor_type();
       enforce_has_field(type, elem_type);
-      enforce_has_field(type, shape);
+
+      if (type.has_shape()) {
+
+        for (auto& dim : type.shape().dim()) {
+          const auto dim_case = dim.value_case();
+          switch (dim_case) {
+            case 0:
+              // Special case: treated as a "" (unknown) dimension.
+              break;
+            case TensorShapeProto::Dimension::kDimValue: {
+              if (dim.dim_value() < 0) {
+                fail_check(
+                    ctx,
+                    "Negative dimension size found in the type of '",
+                    value_info.name(),
+                    "': ",
+                    dim.dim_value());
+              }
+            } break;
+            case TensorShapeProto::Dimension::kDimParam: {
+              const auto& dim_param = dim.dim_param();
+              if (!(dim_param.empty() || dim_param == "*" ||
+                    check_name_syntax(dim_param))) {
+                fail_check(
+                    ctx,
+                    "'",
+                    dim.dim_param(),
+                    "' is an invalid dimension parameter name. It must use C identifier syntax.");
+              }
+            } break;
+            default:
+              fail_check(
+                  ctx,
+                  "Unrecognized dimension value case (value_info name: ",
+                  value_info.name(),
+                  "): ",
+                  dim_case);
+          }
+        }
+      }
     } break;
 #ifdef ONNX_ML
     case TypeProto::kSequenceType: {
@@ -58,6 +189,7 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
 #endif
     default:
       fail_check(
+          ctx,
           "Unrecognized type value case (value_info name: ",
           value_info.name(),
           "): ",
@@ -65,10 +197,11 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
   }
 }
 
-void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
+void check_tensor(CheckerContext& ctx, const TensorProto& tensor) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check(
+        ctx,
         "setting data_type field (tensor name: ",
         tensor.name(),
         ") to UNDEFINED is not allowed");
@@ -97,6 +230,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 
   if (num_value_fields != 1) {
     fail_check(
+        ctx,
         "TensorProto (tensor name: ",
         tensor.name(),
         ") should contain one and only one value field.");
@@ -104,6 +238,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
   if (has_raw_data) {
     if (tensor.data_type() == TensorProto::STRING) {
       fail_check(
+          ctx,
           "STRING data (tensor name: ",
           tensor.name(),
           ") should not be stored in raw_data field");
@@ -113,6 +248,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 #define check_field(field)               \
   if (!has_##field) {                    \
     fail_check(                          \
+        ctx,                             \
         "values of data_type '",         \
         tensor.data_type(),              \
         "' should be stored in field '", \
@@ -154,6 +290,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 
       default:
         fail_check(
+            ctx,
             "Unrecognized data_type (tensor name: ",
             tensor.name(),
             "): ",
@@ -167,10 +304,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 // NB: This is a generic "attribute well-formedness" check, it doesn't
 // actually test if an attribute is valid per a schema
 void check_attribute(
+    CheckerContext& ctx,
     const AttributeProto& attr,
-    const CheckerContext& ctx,
     const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(attr, name);
+  enforce_c_identifier(attr, name);
 
   if (ctx.get_ir_version() >= 0x00000002) {
     enforce_has_field(attr, type);
@@ -178,10 +316,34 @@ void check_attribute(
 
   int used_fields = 0;
 
-#define check_type(expected_type)                                              \
-  if (attr.has_type() && attr.type() != expected_type) {                       \
-    fail_check(                                                                \
-        "type field and data field mismatch in attribute ", attr.name(), "."); \
+  if (!attr.has_type()) {
+    fail_check(ctx, "type field not set in attribute ", attr.name(), ".");
+  } else {
+    switch (attr.type()) {
+      case AttributeProto::FLOAT:
+      case AttributeProto::INT:
+      case AttributeProto::STRING:
+      case AttributeProto::TENSOR:
+      case AttributeProto::GRAPH:
+      case AttributeProto::FLOATS:
+      case AttributeProto::INTS:
+      case AttributeProto::STRINGS:
+      case AttributeProto::TENSORS:
+      case AttributeProto::GRAPHS: {
+      } break;
+      default: {
+        fail_check(ctx, "invalid type field in attribute ", attr.name(), ".");
+      } break;
+    }
+  }
+
+#define check_type(expected_type)                           \
+  if (attr.has_type() && attr.type() != expected_type) {    \
+    fail_check(                                             \
+        ctx,                                                \
+        "type field and data field mismatch in attribute ", \
+        attr.name(),                                        \
+        ".");                                               \
   }
 
 #define check_singular_field(field, type) \
@@ -212,8 +374,11 @@ void check_attribute(
 #undef check_repeated_field
 
   if (ctx.is_main_graph()) {
-    if (used_fields != 1) {
+    // 0 is a valid number, because some PB writers won't distinguish empty
+    // values from absent values.
+    if (used_fields > 1) {
       fail_check(
+          ctx,
           "Attribute (name: ",
           attr.name(),
           ") should contain one and only one value field.");
@@ -222,6 +387,7 @@ void check_attribute(
     // It's an attribute of a node in function body.
     if (used_fields != 1 && (used_fields != 0 || !attr.has_ref_attr_name())) {
       fail_check(
+          ctx,
           "Attribute (name: ",
           attr.name(),
           ") should contain one value field or refer to attribute declared in function.");
@@ -229,29 +395,54 @@ void check_attribute(
   }
 
   if (attr.has_t()) {
-    check_tensor(attr.t(), ctx);
+    check_tensor(ctx, attr.t());
   }
 
   if (attr.has_g()) {
-    check_graph(attr.g(), ctx, lex_ctx);
+    check_graph(ctx, attr.g(), lex_ctx);
   }
 
   for (const auto& tensor : attr.tensors()) {
-    check_tensor(tensor, ctx);
+    check_tensor(ctx, tensor);
   }
   for (const auto& graph : attr.graphs()) {
-    check_graph(graph, ctx, lex_ctx);
+    check_graph(ctx, graph, lex_ctx);
   }
 }
 
 void check_node(
+    CheckerContext& ctx,
     const NodeProto& node,
-    const CheckerContext& ctx,
+    const GraphProto& graph,
+    const LexicalScopeContext& lex_ctx) {
+  check_node(ctx, node, lex_ctx);
+
+  // Resolve domain for node
+  auto domain = node.domain();
+
+  const auto& opset_imports = ctx.get_opset_imports();
+  auto dit = opset_imports.find(domain);
+  if (dit == opset_imports.end()) {
+    fail_check(ctx, "No opset import for '" + domain + "'");
+  }
+
+  auto domain_version = dit->second;
+
+  const auto* schema = ctx.get_schema_registry()->GetSchema(
+      node.op_type(), domain_version, domain);
+
+  schema->Verify(ctx, node, &graph);
+}
+
+void check_node(
+    CheckerContext& ctx,
+    const NodeProto& node,
     const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
     fail_check(
+        ctx,
         "NodeProto (name: ",
         node.name(),
         ", type: ",
@@ -259,39 +450,92 @@ void check_node(
         ") has zero input and zero output.");
   }
 
-  // Resolve domain for node
-  const auto& opset_imports = ctx.get_opset_imports();
-  auto dit = opset_imports.find(node.domain());
-  if (dit == opset_imports.end()) {
-    fail_check("No opset import for domain '" + node.domain() + "'");
+  if (node.has_name() && node.name() != "") {
+    enforce_c_identifier(node, name);
   }
+
+  // No need to validate node input syntax -- the error would already have been
+  // reported elsewhere.
+
+  for (auto& out : node.output()) {
+    if (!(check_name_syntax(out) ||
+          out == "")) { // Optional outputs are named ""
+      fail_check(
+          ctx,
+          "'",
+          out,
+          "' is an invalid node output name. It must use C identifier syntax.");
+    }
+  }
+
+  // Resolve domain for node
+  auto domain = node.domain();
+
+  const auto& opset_imports = ctx.get_opset_imports();
+  auto dit = opset_imports.find(domain);
+  if (dit == opset_imports.end()) {
+    fail_check(ctx, "No opset import for '" + domain + "'");
+  }
+
   auto domain_version = dit->second;
 
   for (const auto& attr : node.attribute()) {
-    check_attribute(attr, ctx, lex_ctx);
+    check_attribute(ctx, attr, lex_ctx);
   }
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(
-      node.op_type(), domain_version, node.domain());
-  if (!schema) {
-    fail_check(
-        "No Schema registered for " + node.op_type() +
-        " with domain_version of " + ONNX_NAMESPACE::to_string(domain_version));
-  }
-  schema->Verify(node);
+      node.op_type(), domain_version, domain);
+
+  schema->Verify(ctx, node, nullptr);
 }
 
 void check_graph(
+    CheckerContext& ctx,
     const GraphProto& graph,
-    const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(graph, name);
+  enforce_c_identifier(graph, name);
 
   for (const auto& value_info : graph.input()) {
-    check_value_info(value_info, ctx);
+    check_value_info(ctx, value_info);
+    if (!check_name_syntax(value_info.name())) {
+      fail_check(
+          ctx,
+          "'",
+          value_info.name(),
+          "' is an invalid graph input name. It must use C identifier syntax.");
+    }
   }
   for (const auto& value_info : graph.output()) {
-    check_value_info(value_info, ctx);
+    check_value_info(ctx, value_info);
+    if (!check_name_syntax(value_info.name())) {
+      fail_check(
+          ctx,
+          "'",
+          value_info.name(),
+          "' is an invalid graph output name. It must use C identifier syntax.");
+    }
+  }
+  for (const auto& value_info : graph.value_info()) {
+    check_value_info(ctx, value_info);
+    if (!check_name_syntax(value_info.name())) {
+      fail_check(
+          ctx,
+          "'",
+          value_info.name(),
+          "' is an invalid value name. It must use C identifier syntax.");
+    }
+  }
+
+  std::unordered_set<std::string> node_names{};
+  for (const auto& node : graph.node()) {
+    if (node.has_name() && node.name() != "") {
+      auto count = node_names.count(node.name());
+      if (count > 0) {
+        fail_check(ctx, "Duplicate node name: '", node.name(), "'");
+      }
+      node_names.insert(node.name());
+    }
   }
 
   std::unordered_set<std::string> output_names{};
@@ -301,6 +545,7 @@ void check_graph(
   for (const auto& value_info : graph.input()) {
     if (output_names.count(value_info.name())) {
       fail_check(
+          ctx,
           "Graph must be in single static assignment (SSA) form, however '",
           value_info.name(),
           "' has been used as graph input names multiple times.");
@@ -310,10 +555,14 @@ void check_graph(
   output_names.insert(
       parent_lex.output_names.begin(), parent_lex.output_names.end());
   for (const auto& init : graph.initializer()) {
-    if (!output_names.count(init.name())) {
-      fail_check(init.name() + " in initializer but not in graph input");
+    if (!init.has_name() || init.name() == "") {
+      fail_check(ctx, "Orphaned (no name) initializer value found.");
     }
-    check_tensor(init, ctx);
+    if (!output_names.count(init.name())) {
+      fail_check(ctx, init.name() + " in initializer but not in graph input.");
+    }
+    enforce_c_identifier(init, name);
+    check_tensor(ctx, init);
   }
 
   for (const auto& node : graph.node()) {
@@ -325,6 +574,7 @@ void check_graph(
       }
       if (!output_names.count(input)) {
         fail_check(
+            ctx,
             "Nodes in a graph must be topologically sorted, however input '",
             input,
             "' of node: \n",
@@ -338,7 +588,7 @@ void check_graph(
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
     try {
-      check_node(node, ctx, lex_ctx);
+      check_node(ctx, node, graph, lex_ctx);
     } catch (ValidationError& ex) {
       ex.AppendContext("Bad node spec: " + ProtoDebugString(node));
       throw ex;
@@ -351,6 +601,7 @@ void check_graph(
       }
       if (output_names.count(output)) {
         fail_check(
+            ctx,
             "Graph must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
@@ -361,8 +612,8 @@ void check_graph(
 }
 
 void check_function(
+    CheckerContext& ctx,
     const FunctionProto& function,
-    const CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
@@ -372,6 +623,7 @@ void check_function(
     auto result = output_names.insert(input);
     if (!result.second) {
       fail_check(
+          ctx,
           "function (",
           function.name(),
           ") should not have duplicate inputs specified.");
@@ -382,6 +634,7 @@ void check_function(
     auto result = outputs.insert(output);
     if (!result.second) {
       fail_check(
+          ctx,
           "function (",
           function.name(),
           ") should not have duplicate outputs specified.");
@@ -392,6 +645,7 @@ void check_function(
     auto result = attrs.insert(attr);
     if (!result.second) {
       fail_check(
+          ctx,
           "function (",
           function.name(),
           ") should not have duplicate attributes specified.");
@@ -407,6 +661,7 @@ void check_function(
       }
       if (!output_names.count(input)) {
         fail_check(
+            ctx,
             "Nodes in a function must be topologically sorted, however input '",
             input,
             "' of node: \n",
@@ -417,7 +672,7 @@ void check_function(
 
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
-    check_node(node, ctx, lex_ctx);
+    check_node(ctx, node, lex_ctx);
     // check for SSA form
     for (const auto& output : node.output()) {
       // optional output
@@ -426,6 +681,7 @@ void check_function(
       }
       if (output_names.count(output)) {
         fail_check(
+            ctx,
             "Function must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
@@ -435,44 +691,85 @@ void check_function(
   }
 }
 
-void check_model(const ModelProto& model) {
+void check_model(CheckerContext& ctx, const ModelProto& m) {
+  ModelProto model(m);
+
   if (!model.ir_version()) {
-    fail_check("The model does not have an ir_version set properly.");
+    fail_check(ctx, "The model does not have an ir_version set properly.");
   }
-  if (model.ir_version() > IR_VERSION) {
-    fail_check("Your model ir_version is higher than the checker's.");
+
+  const auto ir_version = model.ir_version();
+
+  if (ir_version < 1) {
+    fail_check(
+        ctx, "Your model's ir_version is invalid or no longer supported.");
   }
+  if (ir_version > IR_VERSION) {
+    fail_check(ctx, "Your model's ir_version is higher than the checker's.");
+  }
+  if (ir_version > 2) {
+    if (model.domain().empty()) {
+      fail_check(ctx, "The model does not have a domain defined.");
+    } else {
+      enforce_domain_name_rules(model, domain);
+    }
+  }
+
   if (model.metadata_props_size() > 1) {
     std::unordered_set<std::string> keys;
     for (const StringStringEntryProto& entry : model.metadata_props()) {
       auto i = keys.insert(entry.key());
       if (!i.second) {
-        fail_check("Your model has duplicate keys in metadata_props.");
+        fail_check(ctx, "Your model has duplicate keys in metadata_props.");
       }
     }
   }
   std::unordered_map<std::string, int> versions;
-  CheckerContext ctx;
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
+
+  auto domain_map = OpSchemaRegistry::DomainToVersionRange::Instance().Map();
+
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
-    opset_imports[opset_import.domain()] =
-        static_cast<int>(opset_import.version());
-  }
-  if (model.ir_version() >= 3) {
-    if (opset_imports.empty())
+    auto domain = opset_import.domain();
+    auto version = static_cast<int>(opset_import.version());
+    auto known_versions = domain_map[domain];
+
+    if (version < known_versions.first || version > known_versions.second) {
       fail_check(
-          "model with IR version >= 3 must specify opset_import for ONNX");
-  } else {
+          ctx,
+          "The import of '",
+          domain == ONNX_DOMAIN ? "ONNX" : domain,
+          "' refers to an unknown version of the operator set.");
+    }
+
+    opset_imports[domain] = version;
+  }
+
+  auto onnx_import = opset_imports.find("");
+  if (onnx_import == opset_imports.end()) {
+    // Add an import of the latest onnx default operator set.
+    auto onnxDomain = domain_map[std::string(ONNX_DOMAIN)];
+    opset_imports[ONNX_DOMAIN] = onnxDomain.second;
+  }
+
+  if (model.ir_version() < 3) {
     if (opset_imports.empty())
       opset_imports[ONNX_DOMAIN] = 1;
     else
-      fail_check(
-          "model with IR version < 3 cannot have opset_import specified");
+      fail_check(ctx, "model with IR version < 3 cannot import operator sets.");
   }
+
+  if (ctx.get_schema_registry() != nullptr) {
+    // Having performed shape and type inference will allow us to do more
+    // in-depth checking of the model, specifically whether node arguments match
+    // the signatures of the operators that are invoked.
+    shape_inference::InferShapes(model);
+  }
+
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
-  check_graph(model.graph(), ctx, lex_ctx);
+  check_graph(ctx, model.graph(), lex_ctx);
 }
 
 #undef fail_check

@@ -205,7 +205,7 @@ They have the following properties:
 Name|Type|Description
 |---|---|---|
 name|string|An optional name of the node, used for diagnostic purposes only.
-input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
+input|string[]|Names of the values used by the node to propagate input values to the node operator. It MUST refer to either a graph input or a node output.
 output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a  value in the graph or refers to a graph output.
 op_type|string|The symbolic identifier of the operator to invoke.
 domain|string|The domain of the operator set that contains the operator named by the op_type.

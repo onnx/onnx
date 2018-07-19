@@ -28,9 +28,8 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...)                           \
-  throw ONNX_NAMESPACE::checker::ValidationError( \
-      ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+#define fail_check(ctx, ...) \
+  ctx.log_error(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
 class CheckerContext final {
  public:
@@ -61,13 +60,33 @@ class CheckerContext final {
     return schema_registry_;
   }
 
+  void log_error(const std::string& error) {
+    if (!error.empty()) {
+      errors_.append(error);
+      errors_.append("\n");
+    }
+  }
+
+  void raise_error() {
+    if (!errors_.empty()) {
+      throw ValidationError(errors_);
+    }
+  }
   explicit CheckerContext() : ir_version_(-1) {}
+
+  CheckerContext(const CheckerContext& src)
+      : ir_version_(src.ir_version_),
+        opset_imports_(src.opset_imports_),
+        is_main_graph_(src.is_main_graph_),
+        schema_registry_(src.schema_registry_),
+        errors_(src.errors_) {}
 
  private:
   int ir_version_;
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
+  std::string errors_;
 };
 
 struct LexicalScopeContext final {
@@ -75,25 +94,30 @@ struct LexicalScopeContext final {
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
-void check_value_info(const ValueInfoProto& value_info, const CheckerContext&);
-void check_tensor(const TensorProto& tensor, const CheckerContext&);
+void check_value_info(CheckerContext& ctx, const ValueInfoProto& value_info);
+void check_tensor(CheckerContext& ctx, const TensorProto& tensor);
 void check_attribute(
+    CheckerContext& ctx,
     const AttributeProto& attr,
-    const CheckerContext&,
     const LexicalScopeContext&);
 void check_node(
+    CheckerContext& ctx,
     const NodeProto& node,
-    const CheckerContext&,
+    const LexicalScopeContext&);
+void check_node(
+    CheckerContext& ctx,
+    const NodeProto& node,
+    const GraphProto& graph,
     const LexicalScopeContext&);
 void check_graph(
+    CheckerContext& ctx,
     const GraphProto& graph,
-    const CheckerContext&,
     const LexicalScopeContext&);
 void check_function(
+    CheckerContext& ctx,
     const FunctionProto& function,
-    const CheckerContext&,
     const LexicalScopeContext&);
 
-void check_model(const ModelProto& model);
+void check_model(CheckerContext& ctx, const ModelProto& model);
 } // namespace checker
 } // namespace ONNX_NAMESPACE

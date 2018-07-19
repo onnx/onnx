@@ -36,6 +36,7 @@ class TestChecker(unittest.TestCase):
         # Explicitly pass the empty string as optional
         node = helper.make_node(
             "ConstantFill", [""], ["Y"], name="test")
+        checker.check_node(node)
 
         # Input of RELU is not optional
         node = helper.make_node(
@@ -54,6 +55,9 @@ class TestChecker(unittest.TestCase):
 
         graph.initializer.extend([self._sample_float_tensor])
 
+        graph.initializer[0].name = ''
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+
         graph.initializer[0].name = 'no-exist'
         self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
@@ -61,14 +65,41 @@ class TestChecker(unittest.TestCase):
         checker.check_graph(graph)
 
     def test_check_graph_optional_input(self):  # type: () -> None
+        node1 = helper.make_node(
+            "ConstantFill", [], ["Y"], name="test1")
+        node2 = helper.make_node(
+            "ConstantFill", [""], ["Z"], name="test2")
+        graph = helper.make_graph(
+            [node1, node2],
+            "test",
+            [],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2]),
+             helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph)
+
+        # Input of RELU is not optional
         node = helper.make_node(
-            "ConstantFill", [""], ["Y"], name="test")
+            "Relu", [""], ["Y"], name="test")
         graph = helper.make_graph(
             [node],
             "test",
             [],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
-        checker.check_graph(graph)
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+
+    def test_check_node_names_unique(self):  # type: () -> None
+        # Two nodes cannot have the same name.
+        node1 = helper.make_node(
+            "ConstantFill", [], ["Y"], name="test")
+        node2 = helper.make_node(
+            "ConstantFill", [""], ["Z"], name="test")
+        graph = helper.make_graph(
+            [node1, node2],
+            "test",
+            [],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2]),
+             helper.make_tensor_value_info("Z", TensorProto.FLOAT, [1, 2])])
+        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
     def test_check_graph_ssa(self):  # type: () -> None
         relu1 = helper.make_node(
@@ -115,7 +146,7 @@ class TestChecker(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
-        model = helper.make_model(graph, producer_name='test')
+        model = helper.make_model(graph, producer_name='test', domain='org.tempuri')
 
         checker.check_model(model)
 
@@ -128,7 +159,7 @@ class TestChecker(unittest.TestCase):
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
         onnx_id = helper.make_opsetid("", 1)
-        model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id])
+        model = helper.make_model(graph, producer_name='test', opset_imports=[onnx_id], domain='org.tempuri')
 
         checker.check_model(model)
 

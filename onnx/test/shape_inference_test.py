@@ -34,7 +34,7 @@ class TestShapeInference(unittest.TestCase):
         return helper.make_graph(nodes, "test", input_value_infos, [], value_info=value_info)
 
     def _inferred(self, graph):  # type: (GraphProto) -> ModelProto
-        orig_model = helper.make_model(graph, producer_name='onnx-test')
+        orig_model = helper.make_model(graph, producer_name='onnx-test', domain='ai.testdomain')
         inferred_model = onnx.shape_inference.infer_shapes(orig_model)
         checker.check_model(inferred_model)
         return inferred_model
@@ -59,7 +59,7 @@ class TestShapeInference(unittest.TestCase):
 
     def test_empty_graph(self):  # type: () -> None
         graph = self._make_graph(
-            ['y'],
+            [('y', TensorProto.FLOAT, (1,2))],
             [], [])
         self._assert_inferred(graph, [])
 
@@ -165,7 +165,7 @@ class TestShapeInference(unittest.TestCase):
     def test_concat_missing_shape(self):  # type: () -> None
         graph = self._make_graph(
             [("x", TensorProto.FLOAT, (2, 4, 3)),
-             "y",
+             ("y", TensorProto.FLOAT, None),
              ("z", TensorProto.FLOAT, (None, None, None))],
             [make_node("Concat", ['x', 'y', 'z'], ['out'], axis=0)],
             [])
@@ -181,11 +181,11 @@ class TestShapeInference(unittest.TestCase):
 
     def test_reshape(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.UINT8, (2, 4, 3)),
+            [('x', TensorProto.FLOAT, (2, 4, 3)),
              ('shape', TensorProto.UNDEFINED, (2,))],
             [make_node("Reshape", ['x', 'shape'], ['y'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, None)])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, None)])
 
     def test_shape(self):  # type: () -> None
         graph = self._make_graph(
@@ -457,7 +457,7 @@ class TestShapeInference(unittest.TestCase):
         self._logical_binary_op('Less', TensorProto.FLOAT)
 
     def test_equal(self):  # type: () -> None
-        self._logical_binary_op('Equal', TensorProto.FLOAT)
+        self._logical_binary_op('Equal', TensorProto.INT64)
 
     def test_logical_not(self):  # type: () -> None
         graph = self._make_graph(
@@ -813,7 +813,7 @@ class TestShapeInference(unittest.TestCase):
     def test_roipool(self):  # type: () -> None
         graph = self._make_graph(
             [("X", TensorProto.FLOAT, (5, 3, 4, 4)),
-            ("rois", TensorProto.INT64, (2, 5))],
+            ("rois", TensorProto.FLOAT, (2, 5))],
             [make_node("MaxRoiPool", ["X", "rois"], ["Y"], pooled_shape=[2, 2])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3, 2, 2))])

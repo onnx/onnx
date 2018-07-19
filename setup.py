@@ -48,6 +48,8 @@ ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 DEBUG = bool(os.getenv('DEBUG'))
 COVERAGE = bool(os.getenv('COVERAGE'))
 
+PROTOBUF_ROOT= os.getenv('PROTOBUF_ROOT')
+
 ################################################################################
 # Version
 ################################################################################
@@ -164,12 +166,17 @@ class cmake_build(setuptools.Command):
                 # build needs to turn off optimizations
                 cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
             if WINDOWS:
+                Windows_config = 'Release'
+                if DEBUG:
+                    Windows_config = 'DEBUG'
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
                     # passing python version to window in order to
                     # find python in cmake
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
                     '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
+                    '-DProtobuf_INCLUDE_DIR={}/src'.format(PROTOBUF_ROOT),
+                    '-DProtobuf_LIBRARIES={}/x64/'.format(PROTOBUF_ROOT)+'{}/libprotobuf.lib'.format(Windows_config),
                 ])
                 if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI

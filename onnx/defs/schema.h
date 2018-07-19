@@ -22,6 +22,10 @@
 #include "onnx/defs/shape_inference.h"
 namespace ONNX_NAMESPACE {
 
+namespace checker {
+class CheckerContext;
+}
+
 class SchemaError final : public std::runtime_error {
  public:
   using std::runtime_error::runtime_error;
@@ -194,7 +198,10 @@ class OpSchema final {
    * @brief Verifies if a NodeProto matches the pattern specified in
    * the schema.
    */
-  void Verify(const NodeProto& node) const;
+  void Verify(
+      checker::CheckerContext& ctx,
+	  const NodeProto& node,
+      const GraphProto* graph = nullptr) const;
 
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
