@@ -67,9 +67,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Adapter>(Relu_5_6()));
       registerAdapter(make_unique<Adapter>(
         BackwardsCompatibleAdapter("Relu", OpSetID(6), OpSetID(5))));
-      registerAdapter(make_unique<Adapter>(
+      registerAdapter(std::unique_ptr<Adapter>(new
         BackwardsCompatibleAdapter("BatchNormalization", OpSetID(7), OpSetID(6))));
-      registerAdapter(make_unique<Adapter>(
+      registerAdapter(std::unique_ptr<Adapter>(new
         BatchNormalization_6_7()));
       registerAdapter(std::unique_ptr<Adapter>(new
         BatchNormalization_6_5()));
