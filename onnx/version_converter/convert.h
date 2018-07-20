@@ -14,7 +14,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     bool searchOpDomainMap(const std::unordered_map<std::string, std::map<
       int64_t, const OpSchema*>>& op_domain_map, int64_t curr_version) const {
-      const auto& version_it = op_domain_map.find("");
+      const auto version_it = op_domain_map.find("");
       return version_it != op_domain_map.end() &&
           version_it->second.find(curr_version) !=
           version_it->second.end();
@@ -23,8 +23,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
   public:
     DefaultVersionConverter() {
       // Register adapters to the version converter
-      registerAdapter(std::unique_ptr<Adapter>(new NoPreviousVersionAdapter("Cos",
-        OpSetID(7), OpSetID(6))));
+      registerAdapter(make_unique<NoPreviousVersionAdapter>("Cos",
+        OpSetID(7), OpSetID(6)));
     }
 
     ModelProto convert_version(
@@ -71,7 +71,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       // Check if target_version is valid
       const std::unordered_map<std::string, std::pair<int, int>>& versions_map = OpSchemaRegistry::DomainToVersionRange::Instance().Map();
-      const std::string& search_domain = target_version.domain() == "ai.onnx" ? "" : target_version.domain();
+      const std::string search_domain = target_version.domain() == "ai.onnx" ? "" : target_version.domain();
       const std::pair<int, int>& version_range = versions_map.at(search_domain);
       ONNX_ASSERTM(target_version.version() >= version_range.first && target_version
           .version() <= version_range.second,

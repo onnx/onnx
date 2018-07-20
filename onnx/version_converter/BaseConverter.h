@@ -34,21 +34,21 @@ class BaseVersionConverter {
     const Adapter& adapter_lookup(const Node* op,
         const OpSetID& initial_version,
         const OpSetID& target_version) const {
-      const std::string& op_name = op->kind().toString();
+      const std::string op_name = op->kind().toString();
       const std::string& initial = initial_version.toString();
       const std::string& target = target_version.toString();
       // Find appropriate adapter in adapters map for provided initial and target versions
       // TODO: Consider abstracting elements of this that are specific to
       // DefaultConverter to separate methods here and maintain the procedure in Base Converter
-      const auto& op_adapters = adapters.find(op_name);
+      const auto op_adapters = adapters.find(op_name);
       if (op_adapters != adapters.end()) {
         // If we're adapting downwards, we just want to find the one downwards
         // adapter implemented for initial_version. If we're adapting upwards, we
         // want to actually use the SinceVersion value for the given op.
-        const auto& target_map = op_adapters->second.find(initial);
+        const auto target_map = op_adapters->second.find(initial);
         if (target_map != op_adapters->second.end()) {
           // Either adapt from SinceVersion or Incompatible Breaking Change
-          const auto& adapter_ptr = target_map->second.find(target);
+          const auto adapter_ptr = target_map->second.find(target);
           if (adapter_ptr != target_map->second.end()) {
             return *(adapter_ptr->second);
           } else {
@@ -68,7 +68,7 @@ class BaseVersionConverter {
       const OpSetID& initial_version,
       const OpSetID& target_version) const = 0;
 
-  void registerAdapter(std::unique_ptr<Adapter>&& a_ptr) {
+  void registerAdapter(std::unique_ptr<Adapter> a_ptr) {
     const OpSetID& iv = a_ptr->initial_version();
     const OpSetID& tv = a_ptr->target_version();
     adapters[a_ptr->name()][iv.toString()][tv.toString()] = std::move(a_ptr);

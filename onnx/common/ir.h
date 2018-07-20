@@ -782,11 +782,11 @@ class OpSetID final {
       :domain_(proto.domain()), version_(proto.version()) {}
 
     // Default Domain Constructor
-    explicit OpSetID(const int64_t& version)
+    explicit OpSetID(const int64_t version)
       :domain_(""), version_(version) {}
 
-    explicit OpSetID(const std::string& domain, int64_t version)
-      :domain_(domain), version_(version) {}
+    explicit OpSetID(const std::string domain, int64_t version)
+      :domain_(std::move(domain)), version_(version) {}
 
     std::string toString() const {
       return "$" + domain_ + "$" + std::to_string(version_);
@@ -796,7 +796,7 @@ class OpSetID final {
       try {
         std::string new_domain = target.substr(0, target.find("$"));
         int new_version = std::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
-        return OpSetID(new_domain, new_version);
+        return OpSetID(std::move(new_domain), new_version);
       } catch (const std::runtime_error& e) {
         ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
       }
