@@ -60,7 +60,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       // TODO: Move to Inter-Domain Converter
       // Get initial model versions
-      // std::vector<OpSetID> initial_versions = g->opset_versions();
+      // std::vector<OpSetID> initial_versions = g->opset_versions_mutable();
 
       // No conversion necessary if Model has single, equivalent opset version
       // if (initial_versions.size() == 1 && initial_versions[0].version ==
@@ -117,8 +117,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       }
       // Identify index of this domain in g.opset_versions
       unsigned int domain_index = 0;
-      for (unsigned int i = 0; i < g->opset_versions().size(); i++) {
-        if (g->opset_versions()[i].domain() == "") {
+      for (unsigned int i = 0; i < g->opset_versions_mutable().size(); i++) {
+        if (g->opset_versions_mutable()[i].domain() == "") {
           domain_index = i;
         }
       }
@@ -144,7 +144,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         }
         // Update model version
         curr_version += step;
-        g->opset_versions()[domain_index].incrementVersion(step);
+        g->opset_versions_mutable()[domain_index].incrementVersion(step);
       }
       // Export g as ModelProto
       if (DEBUG) {

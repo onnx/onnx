@@ -933,7 +933,7 @@ public:
     return const_graph_node_list(output_, kNextDirection);
   }
 
-  std::vector<OpSetID>& opset_versions() {
+  std::vector<OpSetID>& opset_versions_mutable() {
     return opset_versions_;
   }
 
