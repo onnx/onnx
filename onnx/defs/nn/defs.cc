@@ -159,7 +159,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* additionalDescription) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- {name} consumes an input tensor X and applies {opName} pooling across the
+ {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
  subset of the input tensor according to the kernel size and downsampling the
@@ -267,7 +267,7 @@ namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- {name} consumes an input tensor X and applies Lp pooling across the
+ {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
@@ -773,7 +773,7 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
     const char* op) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- Global{op_type} consumes an input tensor X and applies {op} pooling across the
+ Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
     ReplaceAll(doc, "{op_type}", op_type);
@@ -819,7 +819,7 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
     const char* op) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- Global{op_type} consumes an input tensor X and applies {op} pooling across the
+ Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
     ReplaceAll(doc, "{op_type}", op_type);

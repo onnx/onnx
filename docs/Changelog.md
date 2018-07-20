@@ -306,7 +306,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="AveragePool-1"></a>**AveragePool-1**</a>
 
-  AveragePool consumes an input tensor X and applies average pooling across the
+  AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -1461,9 +1461,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Scalar multiplier for the product of input tensors A * B</dd>
+<dd>Scalar multiplier for the product of input tensors A * B, the default value is 1.0.</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Scalar multiplier for input tensor C</dd>
+<dd>Scalar multiplier for input tensor C, the default value is 1.0.</dd>
 <dt><tt>broadcast</tt> : int</dt>
 <dd>Whether C should be broadcasted</dd>
 <dt><tt>transA</tt> : int</dt>
@@ -1539,7 +1539,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="GlobalAveragePool-1"></a>**GlobalAveragePool-1**</a>
 
-  GlobalAveragePool consumes an input tensor X and applies average pooling across the
+  GlobalAveragePool consumes an input tensor X and applies average pooling across
    the values in the same channel. This is equivalent to AveragePool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -1608,7 +1608,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="GlobalMaxPool-1"></a>**GlobalMaxPool-1**</a>
 
-  GlobalMaxPool consumes an input tensor X and applies max pooling across the
+  GlobalMaxPool consumes an input tensor X and applies max pooling across
    the values in the same channel. This is equivalent to MaxPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -2658,7 +2658,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="MaxPool-1"></a>**MaxPool-1**</a>
 
-  MaxPool consumes an input tensor X and applies max pooling across the
+  MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -4147,8 +4147,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ScaledTanh-1"></a>**ScaledTanh-1**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
+  alpha * tanh(beta * x). 
       
 
 #### Version
@@ -4630,7 +4629,8 @@ This version of the operator has been available since version 1 of the default O
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
-  If an axis is selected with shape entry not equal to one, an error is raised.
+  If `axes` is not provided, all the single dimensions will be removed from
+  the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 
 #### Version
 
@@ -4639,7 +4639,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>List of positive integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
@@ -5108,7 +5108,7 @@ This version of the operator has been available since version 1 of the default O
 ## Version 2 of the default ONNX operator set
 ### <a name="GlobalLpPool-2"></a>**GlobalLpPool-2**</a>
 
-  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
+  GlobalLpPool consumes an input tensor X and applies lp pool pooling across
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -5146,7 +5146,7 @@ This version of the operator has been available since version 2 of the default O
 
 ### <a name="LpPool-2"></a>**LpPool-2**</a>
 
-  LpPool consumes an input tensor X and applies Lp pooling across the
+  LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
@@ -5984,9 +5984,9 @@ This version of the operator has been available since version 6 of the default O
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Scalar multiplier for the product of input tensors A * B</dd>
+<dd>Scalar multiplier for the product of input tensors A * B, the default value is 1.0.</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Scalar multiplier for input tensor C</dd>
+<dd>Scalar multiplier for input tensor C, the default value is 1.0.</dd>
 <dt><tt>broadcast</tt> : int</dt>
 <dd>Whether C should be broadcasted</dd>
 <dt><tt>transA</tt> : int</dt>
@@ -6860,7 +6860,7 @@ This version of the operator has been available since version 7 of the default O
 
 ### <a name="AveragePool-7"></a>**AveragePool-7**</a>
 
-  AveragePool consumes an input tensor X and applies average pooling across the
+  AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -7193,7 +7193,7 @@ This version of the operator has been available since version 7 of the default O
   
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
   
-    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh) + Wbh) # when linear_before_reset != 0
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -7276,9 +7276,9 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Scalar multiplier for the product of input tensors A * B</dd>
+<dd>Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Scalar multiplier for input tensor C</dd>
+<dd>Scalar multiplier for input tensor C, and the default value is 1.0.</dd>
 <dt><tt>transA</tt> : int</dt>
 <dd>Whether A should be transposed</dd>
 <dt><tt>transB</tt> : int</dt>
@@ -8080,5 +8080,129 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16)</dt>
 <dd>Constrain input types.</dd>
+</dl>
+
+### <a name="Max-8"></a>**Max-8**</a>
+
+  Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for max.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>max</tt> : T</dt>
+<dd>Output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Mean-8"></a>**Mean-8**</a>
+
+  Element-wise mean of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for mean.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>mean</tt> : T</dt>
+<dd>Output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Min-8"></a>**Min-8**</a>
+
+  Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for min.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>min</tt> : T</dt>
+<dd>Output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="Sum-8"></a>**Sum-8**</a>
+
+  Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs (1 - &#8734;)
+
+<dl>
+<dt><tt>data_0</tt> (variadic) : T</dt>
+<dd>List of tensors for sum.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>sum</tt> : T</dt>
+<dd>Output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
 </dl>
 

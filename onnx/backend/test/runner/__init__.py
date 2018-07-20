@@ -266,6 +266,10 @@ class Runner(object):
             model_pb_path = os.path.join(model_dir, 'model.onnx')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
+            if hasattr(self.backend, 'is_compatible') \
+               and callable(self.backend.is_compatible) \
+               and not self.backend.is_compatible(model):
+                raise unittest.SkipTest('Not compatible with backend')
             prepared_model = self.backend.prepare(model, device)
             assert prepared_model is not None
 

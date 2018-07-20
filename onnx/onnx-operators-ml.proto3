@@ -9,7 +9,7 @@
 syntax = "proto3";
 
 package onnx;
-import "onnx-ml.proto3";
+import "onnx/onnx-ml.proto3";
 
 //
 // This file contains the proto definitions for OperatorSetProto and
