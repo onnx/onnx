@@ -19,6 +19,14 @@ Then, after you have made changes to Python and C++ files:
 - `Python files`: the changes are effective immediately in your installation. You don't need to install these again.
 - `C++ files`: you need to install these again to trigger the native extension build.
 
+## Building on Windows
+
+On Windows, building ONNX requires a little bit more preparation. You will need to install cmake, which will generate the Visual Studio projects and solution that is then used to build both protobuf and ONNX.
+
+You need a recent version of the protobuf C++ libraries are required. Instructions can be found at [this location.](https://github.com/google/protobuf/blob/master/src/README.md) You also need to build the libraries.
+
+Once the protobuf libraries are installed, you should define an environment variable 'PROTOBUF_ROOT' to point at the installation location. Once all that is set up, you should be able to build the Windows version of ONNX. Once the build is done, you should find the build output under '.\.setuptools-cmake-build\{Debug|Release}\.'
+
 ## Folder structure
 
 - `onnx/`: the main folder that all code lies under
