@@ -1,5 +1,7 @@
 # Development
 
+__Note:__ If you are building ONNX on Windows, make sure to read the 'Building on Windows' section below before proceeding.
+
 You will need to install protobuf and numpy to build ONNX. An easy
 way to get these dependencies is via [Anaconda](https://www.anaconda.com/download/):
 
@@ -19,14 +21,6 @@ Then, after you have made changes to Python and C++ files:
 - `Python files`: the changes are effective immediately in your installation. You don't need to install these again.
 - `C++ files`: you need to install these again to trigger the native extension build.
 
-## Building on Windows
-
-On Windows, building ONNX requires a little bit more preparation. You will need to install cmake, which will generate the Visual Studio projects and solution that is then used to build both protobuf and ONNX.
-
-You need a recent version of the protobuf C++ libraries are required. Instructions can be found at [this location.](https://github.com/google/protobuf/blob/master/src/README.md) You also need to build the libraries.
-
-Once the protobuf libraries are installed, you should define an environment variable 'PROTOBUF_ROOT' to point at the installation location. Once all that is set up, you should be able to build the Windows version of ONNX. Once the build is done, you should find the build output under '.\.setuptools-cmake-build\{Debug|Release}\.'
-
 ## Folder structure
 
 - `onnx/`: the main folder that all code lies under
@@ -35,6 +29,52 @@ Once the protobuf libraries are installed, you should define an environment vari
   - `helper.py`: tools for graph operation
   - `defs/`: a subfolder that defines the ONNX operators
   - `test/`: test files
+
+## Building on Windows
+
+On Windows, building ONNX requires a little bit more preparation. You should have Visual Studio 2017 installed, and you will need to install [cmake](https://cmake.org/download/): it will be used to generate the Visual Studio projects that are used to actually build ONNX.
+
+The conda-based installation above works well on Windows, but you will need to pay attention to the `PATH` environment variable. Python is installed with Visual Studio 2017, but there are two distributions -- the regular Python distribution, and Anaconda. In each distribution, 'python.exe' and 'pip.exe' are installed in different folders, so there's a risk for inconsistencies.
+
+Before running any command mentioned above, make sure that both the root installation and the Scripts folder are on the `PATH`, and that it is the Anaconda distribution that comes first.
+
+Assuming that Visual Studio was installed in the default location, it should look something like:
+
+```
+...;C:\Program Files (x86)\Microsoft Visual Studio\Shared\Anaconda3_64;C:\Program Files (x86)\Microsoft Visual Studio\Shared\Anaconda3_64\Scripts;...
+```
+
+Once this is set up consistently, the installation should be smooth.
+
+### Debugging With Visual Studio
+
+Once the developer installation has been run, a Visual Studio solution called `onnx.sln` is available in `.setuptools-cmake-build`, which is a folder created during the installation process. This folder is transient, but useful for development purposes.
+
+Use this solution as you would any other Visual Studio solution -- build, rebuild, clean, etc., but don't count on it sticking around. You can safely remove the entire `.setuptools-cmake-build` folder and redo the `pip install`.
+
+Debugging the C++ code run from Python scripts is straight-forward -- the key is to get the PDB file into the right folder.
+
+To do that, add the following two lines as a post-build event to the `onnx_cpp2py_export` project:
+
+```
+copy "$(TargetPath)" "$(SolutionDir)\..\onnx"
+copy "$(TargetDir)\onnx_cpp2py_export.pdb" "$(SolutionDir)\..\onnx"
+```
+
+Then, use the project property dialog to set the debugging properties of the `onnx_cpp2py_export` project to the following:
+
+|Setting|Value|
+|---|---|
+|`Command`|`C:\Program Files (x86)\Microsoft Visual Studio\Shared\Anaconda3_64\python.exe`|
+|`Command Arguments`|`onnx\test\checker_test.py`  (or whatever script you want to run)|
+|`Working Directory`|the file path to the local ONNX Git repo|
+
+Once this is set up, and `onnx_cpp2py_export` is made the startup project, F5 should just work and any breakpoints set inside the C++ code will be triggered.
+
+Note that it is important that you use the Python interop project to run F5. Otherwise, the build event will not necessarily be triggered and the PDB file won't be updated on each run.
+
+__Note:__ Each time you run `pip install -e .` the project will be regenerated and the build event cleared, so use Visual Studio to update your binaries while you're developing. The debug settings are not affected since they are stored in the `onnx_cpp2py_export.vcxproj.user` file, which cmake doesn't touch.
+
 
 ## Generated operator documentation
 

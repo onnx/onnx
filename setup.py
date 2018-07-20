@@ -48,8 +48,6 @@ ONNX_BUILD_TESTS = bool(os.getenv('ONNX_BUILD_TESTS') == '1')
 DEBUG = bool(os.getenv('DEBUG'))
 COVERAGE = bool(os.getenv('COVERAGE'))
 
-PROTOBUF_ROOT= os.getenv('PROTOBUF_ROOT')
-
 ################################################################################
 # Version
 ################################################################################
@@ -175,8 +173,6 @@ class cmake_build(setuptools.Command):
                     # find python in cmake
                     '-DPY_VERSION={}'.format('{0}.{1}'.format(*sys.version_info[:2])),
                     '-DONNX_USE_MSVC_STATIC_RUNTIME=ON',
-                    '-DProtobuf_INCLUDE_DIR={}/src'.format(PROTOBUF_ROOT),
-                    '-DProtobuf_LIBRARIES={}/x64/'.format(PROTOBUF_ROOT)+'{}/libprotobuf.lib'.format(Windows_config),
                 ])
                 if 8 * struct.calcsize("P") == 64:
                     # Temp fix for CI
