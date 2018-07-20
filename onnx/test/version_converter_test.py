@@ -28,7 +28,7 @@ class TestVersionConverter(unittest.TestCase):
         checker.check_model(converted_model)
         return converted_model
 
-    # Test 1: Backwards Incompatible Conversion: Add: 8 -> 2
+    # Test 1: Backwards Incompatible Conversion: Reshape: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
         def test():  # type: () -> None
             nodes = [helper.make_node('Reshape', ["X", "shape"], ["Y"])]

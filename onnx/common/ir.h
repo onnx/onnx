@@ -778,7 +778,7 @@ class OpSetID final {
     int64_t version_;
 
   public:
-    explicit OpSetID(const ONNX_NAMESPACE::OperatorSetIdProto& proto)
+    explicit OpSetID(const OperatorSetIdProto& proto)
       :domain_(proto.domain()), version_(proto.version()) {}
 
     // Default Domain Constructor
@@ -788,10 +788,12 @@ class OpSetID final {
     explicit OpSetID(const std::string domain, int64_t version)
       :domain_(std::move(domain)), version_(version) {}
 
+    // target must be in the form "<domain>&<version>"
     std::string toString() const {
-      return "$" + domain_ + "$" + std::to_string(version_);
+      return domain_ + "$" + std::to_string(version_);
     }
 
+    // target must be in the form "<domain>&<version>"
     static OpSetID fromString(const std::string& target) {
       try {
         std::string new_domain = target.substr(0, target.find("$"));
