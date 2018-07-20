@@ -7,10 +7,10 @@ namespace ONNX_NAMESPACE { namespace optimization {
 
 static Optimizer _optimizer;
 
-ONNX_NAMESPACE::ModelProto Optimize(
-    const ONNX_NAMESPACE::ModelProto& mp_in,
+ModelProto Optimize(
+    const ModelProto& mp_in,
     const std::vector<std::string>& names) {
   return _optimizer.optimize(mp_in, names);
 }
 
-}}
+}} // namespace ONNX_NAMESPACE:optimization

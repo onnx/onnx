@@ -6,7 +6,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested);
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto & tp) {
   Tensor ret;
@@ -296,7 +296,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   return g;
 }
 
-std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
+std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   if (!mp.has_ir_version()) {
     return nullptr;
   } else if (mp.ir_version() == 1) {
@@ -317,7 +317,7 @@ std::string value_name(Value* n) {
   return n->uniqueName();
 }
 
-void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> & g);
+void encodeGraph(GraphProto * p_g, const std::shared_ptr<Graph> & g);
 
 void encodeTensor(ONNX_NAMESPACE::TensorProto * p, const Tensor & tensor) {
   if (tensor.hasName()) {
@@ -467,7 +467,7 @@ void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   encodeTypeProtoTensorType(tensor_type, n);
 }
 
-void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> & g) {
+void encodeGraph(GraphProto * p_g, const std::shared_ptr<Graph> & g) {
   ONNX_ASSERT(p_g != nullptr);
 
   if (g->has_name()) {
@@ -538,8 +538,8 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
   }
 }
 
-void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Graph>& g) {
-  ONNX_NAMESPACE::GraphProto* p_g = p_m->mutable_graph();
+void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g) {
+  GraphProto* p_g = p_m->mutable_graph();
   encodeGraph(p_g, g);
   // Add new opset_versions
   p_m->clear_opset_import();

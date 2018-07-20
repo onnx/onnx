@@ -64,7 +64,7 @@ class BaseVersionConverter {
   }
 
   virtual ModelProto convert_version(
-      const ONNX_NAMESPACE::ModelProto& mp_in,
+      const ModelProto& mp_in,
       const OpSetID& initial_version,
       const OpSetID& target_version) const = 0;
 

@@ -6,8 +6,8 @@ namespace {
   static DefaultVersionConverter _version_converter;
 }
 
-ONNX_NAMESPACE::ModelProto ConvertVersion(
-    const ONNX_NAMESPACE::ModelProto& mp_in,
+ModelProto ConvertVersion(
+    const ModelProto& mp_in,
     const int target_version) {
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
