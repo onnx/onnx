@@ -27,6 +27,15 @@ def main():  # type: () -> None
         try:
             m = onnx.load(file)
             print('\n==== Validating ' + file + ' ====\n')
+            if m.domain != '':
+                print("Domain: " + m.domain)
+            if m.producer_name != '':
+                print("Producer name: " + m.producer_name)
+            if m.producer_version != '':
+                print("Producer version: " + m.producer_version)
+            for entry in m.metadata_props:
+                print(entry.key + ': ' + entry.value)
+
             onnx.checker.check_model(m)
         except onnx.onnx_cpp2py_export.checker.ValidationError as error:
             print(str(error))

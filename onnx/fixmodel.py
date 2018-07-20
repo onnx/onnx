@@ -39,6 +39,16 @@ def replaceInvalidChars(name):
 
 def examine(model, domain):
 
+    if model.domain != '':
+        print("Domain: " + model.domain)
+    if model.producer_name != '':
+        print("Producer name: " + model.producer_name)
+    if model.producer_version != '':
+        print("Producer version: " + model.producer_version)
+
+    for entry in model.metadata_props:
+        print(entry.key + ': ' + entry.value)
+
     global modified
 
     modified = False
@@ -93,7 +103,7 @@ def main():  # type: () -> None
 
     for file in args.files:
         m = onnx.load(file)
-        print('\n==== Examining ' + file + ' ====\n')
+        print('\n==== Examining ' + file + ' ====')
         outpath = args.output + os.path.sep + file.replace(".onnx", ".new.onnx")
         if examine(m, args.domain):
             onnx.save(m, outpath)
