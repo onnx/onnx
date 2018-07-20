@@ -454,6 +454,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Min);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Sum);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, MaxPool);
 
 // Iterate over schema from ai.onnx version 7
 class OpSet_Onnx_ver8 {
@@ -463,6 +464,7 @@ class OpSet_Onnx_ver8 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Sum)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, MaxPool)>());
   }
 };
 
