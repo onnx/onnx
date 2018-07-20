@@ -3,7 +3,6 @@
 
 #pragma once
 
-// #include "onnx/version_converter/adapters/add_7_6.h"
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/add_7_6.h"
@@ -17,7 +16,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
   private:
-    bool DEBUG = true;
+    bool DEBUG = false;
 
     std::pair<int, int> version_range;
 
@@ -73,6 +72,75 @@ class DefaultVersionConverter : public BaseVersionConverter {
         BatchNormalization_6_7()));
       registerAdapter(std::unique_ptr<Adapter>(new
         BatchNormalization_6_5()));
+      registerAdapter(make_unique<NoPreviousVersionAdapter>("Cos",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<Add_7_6>());
+      registerAdapter(make_unique<Add_6_7>());
+      registerAdapter(make_unique<Relu_5_6>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Relu",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("BatchNormalization",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BatchNormalization_6_7>());
+      registerAdapter(make_unique<BatchNormalization_6_5>());
+    }
+
+    ModelProto convert_version(
+        const ModelProto& mp_in,
+        const OpSetID& initial_version,
+        const OpSetID& target_version) const override {
+      const std::string initial_domain = initial_version.domain();
+      const std::string target_domain = target_version.domain();
+
+      ONNX_ASSERTM((initial_domain == "" || initial_domain == "ai.onnx") &&
+        (target_domain == "" || target_domain == "ai.onnx"),
+          "Warning: default onnx version converter can only convert "
+          " between default domain opset versions ('' or 'ai.onnx')\n"
+          "Provided initial_domain: %s, provided target_domain: %s",
+          initial_domain.c_str(), target_domain.c_str());
+
+      ONNX_ASSERTM(initial_domain == target_domain,
+        "initial_version and target_version must have the same domains");
+      for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()
+          .end(); ++it) {
+        if (it->domain() == initial_version.domain()) {
+          ONNX_ASSERTM(initial_version.version() == it->version(),
+              "initial_version does not reflect current state of model");
+        }
+      }
+
+      std::shared_ptr<Graph> g(ImportModelProto(mp_in));
+      ONNX_ASSERTM(g.get() != nullptr,
+        "Warning: onnx version converter is unable to parse input model. "
+        "(The IR version of the ONNX model may be too old.)");
+
+      // TODO: Move to Inter-Domain Converter
+      // Get initial model versions
+      // std::vector<OpSetID> initial_versions = g->opset_versions_mutable();
+
+      // No conversion necessary if Model has single, equivalent opset version
+      // if (initial_versions.size() == 1 && initial_versions[0].version ==
+      //    target_version.version && initial_versions[0].domain ==
+      //    target_version.domain) {
+      //  return mp_in;
+      // }
+
+      // Check if target_version is valid
+      const std::unordered_map<std::string, std::pair<int, int>>& versions_map = OpSchemaRegistry::DomainToVersionRange::Instance().Map();
+      const std::string search_domain = target_version.domain() == "ai.onnx" ? "" : target_version.domain();
+      const std::pair<int, int>& version_range = versions_map.at(search_domain);
+      ONNX_ASSERTM(target_version.version() >= version_range.first && target_version
+          .version() <= version_range.second,
+        "Warning: invalid target_version (must be between %s and %s",
+        version_range.first, version_range.second);
+      // Compile list of all ops used in the model
+      graph_node_list nodes = g->nodes();
+
+      const std::vector<OpSchema>& all_opschemas = OpSchemaRegistry::get_all_schemas_with_history();
+
+      // Create Map for All Versions of format {op_name: {domain: {version: schema}}}
+      std::unordered_map<std::string, std::unordered_map<std::string, std::map<int64_t, const OpSchema*>>>  all_schemas;
+>>>>>>> Working!
 
       for (const OpSchema& schema : all_opschemas) {
         all_schemas[schema.Name()][schema.domain()][(int64_t)
@@ -94,9 +162,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
             debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + ONNX_NAMESPACE::to_string(min_version));
             registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
               OpSetID(min_version), OpSetID(min_version - 1)));
-          }
         }
       }
+>>>>>>> W
     }
 
     ModelProto convert_version(

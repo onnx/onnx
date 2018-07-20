@@ -12,7 +12,7 @@ struct BatchNormalization_6_7 final : public Adapter {
     }
 
   void adapt_batch_normalization_6_7(std::shared_ptr<Graph> graph, Node* node) const {
-    node->removeAttribute(kis_test);
+    if (node->hasAttribute(kis_test)) node->removeAttribute(kis_test);
   }
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

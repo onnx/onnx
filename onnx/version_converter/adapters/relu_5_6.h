@@ -13,7 +13,7 @@ struct Relu_5_6 final : public Adapter {
 
   void adapt_relu_5_6(std::shared_ptr<Graph> graph, Node* node) const {
     // Remove consumed_inputs (legacy optimization attribute)
-    node->removeAttribute(kconsumed_inputs);
+    if (node->hasAttribute(kconsumed_inputs)) node->removeAttribute(kconsumed_inputs);
   }
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
