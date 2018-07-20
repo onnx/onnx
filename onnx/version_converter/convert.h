@@ -7,11 +7,12 @@
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/add_7_6.h"
 #include "onnx/version_converter/adapters/add_6_7.h"
+#include "onnx/version_converter/adapters/add_6_5.h"
 #include "onnx/version_converter/adapters/relu_5_6.h"
 #include "onnx/version_converter/adapters/backwards_compatible.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
-#include "onnx/version_converter/adapters/batch_normalization_5_6.h"
+#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -77,6 +78,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<Add_7_6>());
       registerAdapter(make_unique<Add_6_7>());
+      registerAdapter(make_unique<Add_6_5>());
       registerAdapter(make_unique<Relu_5_6>());
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
@@ -84,7 +86,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
-      registerAdapter(make_unique<BatchNormalization_5_6>());
+      registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
+        OpSetID(5), OpSetID(6)));
     }
 
     ModelProto convert_version(
