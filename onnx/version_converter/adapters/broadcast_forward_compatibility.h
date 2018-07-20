@@ -1,4 +1,4 @@
-// Adapter for Add in default domain from version 6 to 7
+// Adapter for broadcasting ops in default domain from version 6 to 7
 
 #pragma once
 
@@ -6,13 +6,13 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-class Add_6_7 final : public Adapter {
+class BroadcastForwardCompatibility final : public Adapter {
   public:
-    explicit Add_6_7()
-      : Adapter("Add", OpSetID(6), OpSetID(7)) {
-      }
+    explicit BroadcastForwardCompatibility(const std::string& op_name, const OpSetID&
+      initial, const OpSetID& target): Adapter(std::move(op_name), std::move(
+        initial), std::move(target)) {}
 
-    void adapt_add_6_7(std::shared_ptr<Graph> graph, Node* node)
+    void adapt_broadcast_forward_compatibility(std::shared_ptr<Graph> graph, Node* node)
       const {
       // Remove axis and broadcast attributes
       if (node->hasAttribute(kaxis)) node->removeAttribute(kaxis);
@@ -20,7 +20,7 @@ class Add_6_7 final : public Adapter {
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-      adapt_add_6_7(graph, node);
+      adapt_broadcast_forward_compatibility(graph, node);
     }
 };
 

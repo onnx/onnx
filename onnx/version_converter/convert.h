@@ -5,10 +5,9 @@
 
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
-#include "onnx/version_converter/adapters/add_7_6.h"
-#include "onnx/version_converter/adapters/add_6_7.h"
-#include "onnx/version_converter/adapters/add_6_5.h"
-#include "onnx/version_converter/adapters/relu_5_6.h"
+#include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
+#include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
+#include "onnx/version_converter/adapters/type_restriction.h"
 #include "onnx/version_converter/adapters/backwards_compatible.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
@@ -76,10 +75,20 @@ class DefaultVersionConverter : public BaseVersionConverter {
         BatchNormalization_6_5()));
       registerAdapter(make_unique<NoPreviousVersionAdapter>("Cos",
         OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<Add_7_6>());
-      registerAdapter(make_unique<Add_6_7>());
-      registerAdapter(make_unique<Add_6_5>());
-      registerAdapter(make_unique<Relu_5_6>());
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<TypeRestriction>("Add",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<TypeRestriction>("Mul",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
+        OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("BatchNormalization",
@@ -89,6 +98,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Add",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
         OpSetID(5), OpSetID(6)));
     }
 

@@ -6,13 +6,13 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-class Add_6_5 final : public Adapter {
+class TypeRestriction final : public Adapter {
   public:
-    explicit Add_6_5()
-      : Adapter("Add", OpSetID(6), OpSetID(5)) {
-      }
+    explicit TypeRestriction(const std::string& op_name, const OpSetID&
+      initial, const OpSetID& target): Adapter(std::move(op_name), std::move(
+        initial), std::move(target)) {}
 
-    void adapt_add_6_5(std::shared_ptr<Graph> graph, Node* node)
+    void adapt_type_restriction(std::shared_ptr<Graph> graph, Node* node)
       const {
       // Since consumed_inputs is optional, no need to add it (as in batchnorm)
       // Need to enforce types: unit32, uint64, int32, int64 not allowed
@@ -26,7 +26,7 @@ class Add_6_5 final : public Adapter {
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-      adapt_add_6_5(graph, node);
+      adapt_type_restriction(graph, node);
     }
 
   private:
