@@ -11,6 +11,7 @@
 #include "onnx/version_converter/adapters/backwards_compatible.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
+#include "onnx/version_converter/adapters/batch_normalization_5_6.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -83,6 +84,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
+      registerAdapter(make_unique<BatchNormalization_5_6>());
     }
 
     ModelProto convert_version(

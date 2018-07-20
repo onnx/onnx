@@ -12,7 +12,6 @@ struct BatchNormalization_6_5 final : public Adapter {
     }
 
   void adapt_batch_normalization_6_5(std::shared_ptr<Graph> graph, Node* node) const {
-    // TODO: Do we need to detect in-place calls to generate consumed_inputs?
     node->is_(kconsumed_inputs, {0, 0});
   }
 

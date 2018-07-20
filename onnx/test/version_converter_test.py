@@ -183,5 +183,24 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 5
 
+    # Test BatchNormalization Adapter: 5 -> 7
+    def test_batch_normalization_5_6(self):  # type: () -> None
+        nodes = [helper.make_node('BatchNormalization', ["X", "scale", "B",
+            "mean", "var"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("scale", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("B", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("mean", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("var", TensorProto.FLOAT, (1,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 5), 7)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "BatchNormalization"
+        assert converted_model.opset_import[0].version == 7
+
 if __name__ == '__main__':
     unittest.main()
