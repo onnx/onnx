@@ -19,6 +19,9 @@ import onnx.shape_inference
 
 import argparse
 
+def isempty(str):
+    return str == None or str == ''
+
 def replaceInvalidChars(name):
 
     global modified
@@ -37,15 +40,72 @@ def replaceInvalidChars(name):
 
     return n
 
-def examine(model, domain):
+def examine_tensor(tensor):
+    if not isempty(tensor.name):
+        tensor.name = replaceInvalidChars(tensor.name)
 
-    if model.domain != '':
+def examine_attribute(attr):
+
+    # Note: we don't mess with the attribute name since it corresponds to a
+    # attribute formal parameter name on the node operator, so we can't change it.
+    
+    if attr.type == onnx.AttributeProto.GRAPH:
+        examine_graph(attr.graph)
+    elif attr.type == onnx.AttributeProto.GRAPHS:
+        for graph in attr.graphs:
+            examine_graph(graph)
+    elif attr.type == onnx.AttributeProto.TENSOR:
+        examine_tensor(attr.tensor)
+    elif attr.type == onnx.AttributeProto.TENSORS:
+        for tensor in attr.tensors:
+            examine_tensor(tensor)
+
+def examine_node(node):
+
+    if not isempty(node.name):
+        node.name = replaceInvalidChars(node.name)        
+
+    for vi in range(len(node.input)):
+        if not isempty(node.input[vi]):
+            node.input[vi] = replaceInvalidChars(node.input[vi])        
+    for vi in range(len(node.output)):
+        if not isempty(node.output[vi]):
+            node.output[vi] = replaceInvalidChars(node.output[vi])      
+
+    for attr in node.attribute:
+        examine_attribute(attr)  
+
+def examine_graph(graph):
+
+    graph.name = replaceInvalidChars(graph.name)
+
+    for node in graph.node:
+        examine_node(node)
+
+    for vi in graph.initializer:
+        if not isempty(vi.name):
+            vi.name = replaceInvalidChars(vi.name)
+
+    for vi in graph.value_info:
+        if not isempty(vi.name):
+            vi.name = replaceInvalidChars(vi.name)        
+
+    for vi in graph.input:
+        if not isempty(vi.name):
+            vi.name = replaceInvalidChars(vi.name)        
+
+    for vi in graph.output:
+        if not isempty(vi.name):
+            vi.name = replaceInvalidChars(vi.name)       
+
+def examine_model(model, domain):
+
+    if not isempty(model.domain):
         print("Domain: " + model.domain)
-    if model.producer_name != '':
+    if not isempty(model.producer_name):
         print("Producer name: " + model.producer_name)
-    if model.producer_version != '':
+    if not isempty(model.producer_version):
         print("Producer version: " + model.producer_version)
-
     for entry in model.metadata_props:
         print(entry.key + ': ' + entry.value)
 
@@ -53,38 +113,11 @@ def examine(model, domain):
 
     modified = False
 
-    if model.domain == None or model.domain == '':
+    if isempty(model.domain):
         model.domain = domain
         modified = True
 
-    model.graph.name = replaceInvalidChars(model.graph.name)
-
-    for node in model.graph.node:
-        if node.name != None or node.name != '':
-            node.name = replaceInvalidChars(node.name)        
-
-        for vi in range(len(node.input)):
-            if node.input[vi] != None or node.input[vi] != '':
-                node.input[vi] = replaceInvalidChars(node.input[vi])        
-        for vi in range(len(node.output)):
-            if node.output[vi] != None or node.output[vi] != '':
-                node.output[vi] = replaceInvalidChars(node.output[vi])        
-    
-    for vi in model.graph.initializer:
-        if vi.name != None or vi.name != '':
-            vi.name = replaceInvalidChars(vi.name)
-
-    for vi in model.graph.value_info:
-        if vi.name != None or vi.name != '':
-            vi.name = replaceInvalidChars(vi.name)        
-
-    for vi in model.graph.input:
-        if vi.name != None or vi.name != '':
-            vi.name = replaceInvalidChars(vi.name)        
-
-    for vi in model.graph.output:
-        if vi.name != None or vi.name != '':
-            vi.name = replaceInvalidChars(vi.name)        
+    examine_graph(model.graph)
 
     return modified
 
@@ -105,7 +138,7 @@ def main():  # type: () -> None
         m = onnx.load(file)
         print('\n==== Examining ' + file + ' ====')
         outpath = args.output + os.path.sep + file.replace(".onnx", ".new.onnx")
-        if examine(m, args.domain):
+        if examine_model(m, args.domain):
             onnx.save(m, outpath)
             print('Wrote modified file to: ' + outpath)
         else:
