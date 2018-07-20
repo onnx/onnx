@@ -804,6 +804,7 @@ class OpSetID final {
       }
     }
 
+    // target must be in the form "<domain>&<version>"
     static OpSetID fromString(const std::string& target) {
       try {
         std::string new_domain = target.substr(0, target.find("$"));
