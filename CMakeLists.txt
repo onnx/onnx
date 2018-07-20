@@ -15,7 +15,7 @@ option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
-option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
+option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" ON)
 
 # Set C++11 as standard for the whole project
 IF(NOT MSVC)
