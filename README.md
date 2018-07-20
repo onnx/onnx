@@ -19,7 +19,7 @@ evolve ONNX.
 Start experimenting today:
 * [Getting Started Guide](http://onnx.ai/getting-started)
 * [Supported Frameworks & Tools](http://onnx.ai/supported-tools)
-* [Tutorials on using ONNX converters](./tutorials).
+* [Tutorials on using ONNX converters](https://github.com/onnx/tutorials).
 
 # Learn about ONNX spec
 
@@ -32,7 +32,7 @@ Check ONNX design choices and internals:
 
 # Tools
 * [Netron: a viewer for ONNX models](https://github.com/lutzroeder/Netron)
-* [Net Drawer ONNX vizualizer](./tutorials/blob/master/tutorials/VisualizingAModel.md)
+* [Net Drawer ONNX vizualizer](https://github.com/onnx/tutorials/blob/master/tutorials/VisualizingAModel.md)
 
 # Programming utilities for working with ONNX Graphs
 * [Shape and Type Inference](docs/ShapeInference.md)
@@ -40,13 +40,13 @@ Check ONNX design choices and internals:
 
 # Contribute
 ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.
-You can join [one of the working groups](./onnx/wiki/%5BAnnouncement%5D-ONNX-working-groups-established) and help shape the future of ONNX.
+You can join [one of the working groups](https://github.com/onnx/onnx/wiki/%5BAnnouncement%5D-ONNX-working-groups-established) and help shape the future of ONNX.
 
-Check out our [contribution guide](./onnx/blob/master/docs/CONTRIBUTING.md)
-and [call for contributions](./onnx/issues/426) to get started.
+Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md)
+and [call for contributions](https://github.com/onnx/onnx/issues/426) to get started.
 
 # Discuss
-We encourage you to open [Issues](./onnx/issues), or use Gitter for more real-time discussion:
+We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use Gitter for more real-time discussion:
 [![Join the chat at https://gitter.im/onnx/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/onnx/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 # Follow Us
@@ -87,7 +87,7 @@ pip install onnx
 You can also build and install ONNX locally from source code:
 
 ```
-git clone ./onnx.git
+git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
 python setup.py install
@@ -133,7 +133,7 @@ to run tests.
 
 # Development
 
-Check out [contributor guide](./onnx/blob/master/docs/CONTRIBUTING.md) for instructions.
+Check out [contributor guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md) for instructions.
 
 # License
 
