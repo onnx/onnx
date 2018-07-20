@@ -29,6 +29,14 @@ void convPoolTypeAndShapeInference(
     bool use_dilation,
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType ||
+        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
 
   // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
@@ -144,6 +152,13 @@ void convPoolTypeAndShapeInference(
 
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
+  }
+
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto second_output_shape =
+      ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+    second_output_shape->CopyFrom(*output_shape);
   }
 }
 
