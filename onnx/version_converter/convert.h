@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "onnx/version_converter/adapters/add_7_6.h"
+// #include "onnx/version_converter/adapters/add_7_6.h"
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
 #include "onnx/version_converter/adapters/add_7_6.h"
@@ -17,7 +17,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
   private:
-    bool DEBUG = false;
+    bool DEBUG = true;
 
     std::pair<int, int> version_range;
 

@@ -11,7 +11,7 @@ struct Add_7_6 final : public Adapter {
     : Adapter("Add", OpSetID(7), OpSetID(6)) {
     }
 
-  void adapt_add_7_6(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_add_7_6(std::shared_ptr<Graph> graph, std::shared_ptr<Node> node) const {
     // Verify that broadcasts are allowed in limited spec of opset version 6
     // Multidirectional broadcasting, as defined in Broadcasting.md
     // MathDocGenerator provides differences

@@ -21,7 +21,7 @@ class Adapter {
         target_version_(std::move(target_version)) {
     }
 
-    virtual void adapt(std::shared_ptr<Graph> /*graph*/, Node* node) const = 0;
+    virtual void adapt(std::shared_ptr<Graph> /*graph*/, std::shared_ptr<Node> node) const = 0;
 
     const std::string& name() const {
       return name_;

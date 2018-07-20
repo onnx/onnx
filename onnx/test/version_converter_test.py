@@ -30,6 +30,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test 1: Backwards Incompatible Conversion: Reshape: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
+        print("Backwards Incompatible\n\n\n")
         def test():  # type: () -> None
             nodes = [helper.make_node('Reshape', ["X", "shape"], ["Y"])]
             graph = helper.make_graph(
@@ -43,6 +44,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test 2: Backwards Compatible Conversion (No Adaptations): Add: 8 -> 7
     def test_backwards_compatible(self):  # type: () -> None
+        print("Backwards Compatible\n\n\n")
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -58,6 +60,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test 3: Non-Existent Op Conversion: Cos: 8 -> 6
     def test_non_existent_op(self):  # type: () -> None
+        print("Non-Existent Op\n\n\n")
         def test():  # type: () -> None
             nodes = [helper.make_node('Cos', ["X"], ["Y"])]
             graph = helper.make_graph(
@@ -70,6 +73,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Add Adapter: 8 -> 6
     def test_add_7_6(self):  # type: () -> None
+        print("Add_7_6\n\n\n")
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -85,6 +89,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Add Adapter: 6 -> 8
     def test_add_6_7(self):  # type: () -> None
+        print("Add_6_7\n\n\n")
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
