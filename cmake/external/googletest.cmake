@@ -19,6 +19,7 @@ ExternalProject_Add(googletest
     GIT_REPOSITORY ${googletest_URL}
     GIT_TAG ${googletest_TAG}
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
+    BUILD_BYPRODUCTS ${googletest_STATIC_LIBRARIES}
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --target gtest
     INSTALL_COMMAND ""
