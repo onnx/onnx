@@ -31,20 +31,18 @@ class DefaultVersionConverter : public BaseVersionConverter {
         const ModelProto& mp_in,
         const OpSetID& initial_version,
         const OpSetID& target_version) const override {
-      const char* initial_domain = initial_version.domain().c_str();
-      const char* target_domain = target_version.domain().c_str();
+      const std::string initial_domain = initial_version.domain();
+      const std::string target_domain = target_version.domain();
 
-      ONNX_ASSERTM((strcmp(initial_domain, "") == 0 || strcmp(initial_domain,
-              "ai.onnx") == 0) && (strcmp(target_domain, "") == 0 || strcmp(
-                target_domain, "ai.onnx") == 0),
+      ONNX_ASSERTM((initial_domain == "" || initial_domain == "ai.onnx") &&
+        (target_domain == "" || target_domain == "ai.onnx"),
           "Warning: default onnx version converter can only convert "
           " between default domain opset versions ('' or 'ai.onnx')\n"
-          "Provided initial_domain: %s"
-          ", provided target_domain: %s", initial_domain, target_domain);
+          "Provided initial_domain: %s, provided target_domain: %s",
+          initial_domain.c_str(), target_domain.c_str());
 
-      ONNX_ASSERTM(strcmp(initial_version.domain().c_str(), target_version.domain()
-            .c_str()) == 0, "initial_version and target_version must have the same "
-          "domains");
+      ONNX_ASSERTM(initial_domain == target_domain,
+        "initial_version and target_version must have the same domains");
       for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()
           .end(); ++it) {
         if (it->domain() == initial_version.domain()) {
