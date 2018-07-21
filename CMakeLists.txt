@@ -15,7 +15,7 @@ option(BUILD_ONNX_PYTHON "Build Python binaries" OFF)
 option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
-option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
+option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" ON)
 
 # Set C++11 as standard for the whole project
 IF(NOT MSVC)
@@ -227,7 +227,7 @@ endfunction()
 RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_proto PROTO_SRCS PROTO_HDRS ${ONNX_ROOT} ""
     onnx/onnx.in.proto
 )
-RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 ${ONNX_ROOT} gen_onnx_proto 
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 ${ONNX_ROOT} gen_onnx_proto
     onnx/onnx-operators.in.proto
 )
 list(APPEND PROTO_SRCS ${PROTO_SRCS2})
