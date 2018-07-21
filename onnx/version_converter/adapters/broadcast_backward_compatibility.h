@@ -17,7 +17,8 @@ class BroadcastBackwardCompatibility final : public Adapter {
       // Multidirectional broadcasting, as defined in Broadcasting.md
       // MathDocGenerator provides differences
       // Main change: encode broadcasting commands as explicit attribute
-      ArrayRef<Value*> inputs = node->inputs();
+      // TODO: Check on this reference.
+      const ArrayRef<Value*>& inputs = node->inputs();
       ONNX_ASSERTM(inputs.size() == 2, "Add in opset version 6 can only broadcast"
         " between 2 inputs");
       std::vector<Dimension> A_sizes = inputs[0]->sizes();

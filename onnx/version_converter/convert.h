@@ -14,6 +14,7 @@
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/concat_3_4.h"
 #include "onnx/version_converter/adapters/concat_4_3.h"
+#include "onnx/version_converter/adapters/reshape_5_4.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -105,6 +106,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Concat_3_4>());
       registerAdapter(make_unique<Concat_4_3>());
+      registerAdapter(make_unique<Reshape_5_4>());
     }
 
     ModelProto convert_version(
