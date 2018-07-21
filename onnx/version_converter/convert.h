@@ -12,6 +12,8 @@
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
+#include "onnx/version_converter/adapters/concat_3_4.h"
+#include "onnx/version_converter/adapters/concat_4_3.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -101,6 +103,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
         OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Concat_3_4>());
+      registerAdapter(make_unique<Concat_4_3>());
     }
 
     ModelProto convert_version(

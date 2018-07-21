@@ -6,18 +6,19 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct BatchNormalization_6_5 final : public Adapter {
-  explicit BatchNormalization_6_5()
-    : Adapter("BatchNormalization", OpSetID(6), OpSetID(5)) {
+class BatchNormalization_6_5 final : public Adapter {
+  public:
+    explicit BatchNormalization_6_5()
+      : Adapter("BatchNormalization", OpSetID(6), OpSetID(5)) {
+      }
+
+    void adapt_batch_normalization_6_5(std::shared_ptr<Graph> graph, Node* node) const {
+      node->is_(kconsumed_inputs, {0, 0});
     }
 
-  void adapt_batch_normalization_6_5(std::shared_ptr<Graph> graph, Node* node) const {
-    node->is_(kconsumed_inputs, {0, 0});
-  }
-
-  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-    adapt_batch_normalization_6_5(graph, node);
-  }
+    void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
+      adapt_batch_normalization_6_5(graph, node);
+    }
 };
 
 }} // namespace ONNX_NAMESPACE::version_conversion
