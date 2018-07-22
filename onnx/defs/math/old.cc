@@ -5,7 +5,6 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-
 const char* kBroadcastDoc_old = R"DOC(
 If necessary the right-hand-side argument will be broadcasted to match the
 shape of left-hand-side argument. When broadcasting is specified, the second
@@ -105,7 +104,7 @@ Performs element-wise binary {name} (with limited broadcast support).
     schema.Output(0, "C", "Result, has same dimensions and type as A", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::high_precision_numeric_types(),
+        OpSchema::numeric_types_for_math_reduction(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput);
   };
@@ -589,6 +588,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    PRelu,
+    6,
+    OpSchema()
+        .SetDoc(PRelu_ver1_doc)
+        .Input(0, "X", "Input tensor", "T")
+        .Input(
+            1,
+            "slope",
+            "Slope tensor. If `Slope` is of size 1, the value is shared"
+            "across different channels",
+            "T")
+        .Output(0, "Y", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* Sigmoid_ver1_doc = R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
@@ -794,9 +812,9 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* Gemm_ver1_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
-, input tensor B has dimension (K X N), input tensor C and output tensor Y have
-dimension (M X N).
+Compute Y = alpha * A * B + beta * C, where input tensor A has
+dimension (M X K), input tensor B has dimension (K X N), input tensor C and
+output tensor Y have dimension (M X N).
 If attribute broadcast is non-zero, input tensor C will be broadcasted to match
 the dimension requirement. A will be transposed before doing the computation
 if attribute transA is non-zero, same for B and transB.
@@ -835,20 +853,20 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "alpha",
-            "Scalar multiplier for the product of input tensors A * B",
+            "Scalar multiplier for the product of input tensors A * B, the default value is 1.0.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
             "beta",
-            "Scalar multiplier for input tensor C",
+            "Scalar multiplier for input tensor C, the default value is 1.0.",
             AttributeProto::FLOAT,
             1.0f));
 
 static const char* Gemm_ver6_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
-Compute Y = alpha * A * B + beta * C, where input tensor A has dimension (M X K)
-, input tensor B has dimension (K X N), input tensor C and output tensor Y have
-dimension (M X N).
+Compute Y = alpha * A * B + beta * C, where input tensor A has
+dimension (M X K), input tensor B has dimension (K X N), input tensor C and
+output tensor Y have dimension (M X N).
 If attribute broadcast is non-zero, input tensor C will be broadcasted to match
 the dimension requirement. A will be transposed before doing the computation
 if attribute transA is non-zero, same for B and transB.
@@ -884,12 +902,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "alpha",
-            "Scalar multiplier for the product of input tensors A * B",
+            "Scalar multiplier for the product of input tensors A * B, the default value is 1.0.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
             "beta",
-            "Scalar multiplier for input tensor C",
+            "Scalar multiplier for input tensor C, the default value is 1.0.",
             AttributeProto::FLOAT,
             1.0f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -920,4 +938,81 @@ ONNX_OPERATOR_SET_SCHEMA(
                 ctx.getInputType(2)->tensor_type().shape();
           }
         }));
+
+static const char* Max_ver6_doc = R"DOC(
+Element-wise max of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Max,
+    6,
+    OpSchema()
+        .SetDoc(Max_ver6_doc)
+        .Input(0, "data_0", "List of tensors for Max.", "T", OpSchema::Variadic)
+        .Output(0, "max", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Min_ver6_doc = R"DOC(
+Element-wise min of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Min,
+    6,
+    OpSchema()
+        .SetDoc(Min_ver6_doc)
+        .Input(0, "data_0", "List of tensors for Min", "T", OpSchema::Variadic)
+        .Output(0, "min", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Sum_ver6_doc = R"DOC(
+Element-wise sum of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sum,
+    6,
+    OpSchema()
+        .SetDoc(Sum_ver6_doc)
+        .Input(0, "data_0", "List of tensors for Sum.", "T", OpSchema::Variadic)
+        .Output(0, "sum", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Mean_ver6_doc = R"DOC(
+Element-wise mean of each of the input tensors. All inputs and outputs must
+have the same shape and data type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Mean,
+    6,
+    OpSchema()
+        .SetDoc(Mean_ver6_doc)
+        .Input(
+            0,
+            "data_0",
+            "List of tensors for Mean.",
+            "T",
+            OpSchema::Variadic)
+        .Output(0, "mean", "Output tensor. Same dimension as inputs.", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE

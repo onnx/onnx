@@ -6,7 +6,6 @@
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
-
 std::function<void(OpSchema&)> ReduceDocGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
@@ -33,7 +32,7 @@ False instead of True.)DOC";
     schema.Output(0, "reduced", "Reduced output tensor.", "T");
     schema.TypeConstraint(
         "T",
-        OpSchema::high_precision_numeric_types(),
+        OpSchema::numeric_types_for_math_reduction(),
         "Constrain input and output types to high-precision numeric tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, 0, 0);

@@ -47,16 +47,6 @@ extern "C" {
   #endif
 #endif
 
-#if defined(ONNXIFI_LIBRARY_SUFFIX)
-#define ONNXIFI_SYMBOL_CONCAT_(prefix, suffix) prefix##suffix
-#define ONNXIFI_SYMBOL_CONCAT(prefix, suffix) \
-  ONNXIFI_SYMBOL_CONCAT_(prefix, suffix)
-#define ONNXIFI_SYMBOL_NAME(symbol_name) \
-  ONNXIFI_SYMBOL_CONCAT(symbol_name, ONNXIFI_BACKEND_SUFFIX)
-#else
-#define ONNXIFI_SYMBOL_NAME(symbol_name) symbol_name
-#endif
-
 #include <stddef.h>
 
 #if !defined(ONNXIFI_NO_STDINT_H)
@@ -188,7 +178,9 @@ typedef uint64_t onnxPointer;
  * so this capability requires ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS support.
  *
  * For outputs with data-dependent shapes the shape specified in onnxSetGraphIO
- * call is interpreted as the upper limit.
+ * call is interpreted as the upper limit. The exact numerical shape of the
+ * output can be retrieved by attaching a Shape operator to the tensor with
+ * data-dependent shape and reading its output through ONNXIFI.
  */
 #define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x04
 /**
@@ -226,14 +218,18 @@ typedef int32_t onnxBackendInfo;
 /**
  * Marketing name of the backend (excluding the vendor name).
  *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
+ *
  * Value type: char[], e.g.:
  *    "Caffe2"
- *    "Tensor Comprehensions"
+ *    "Glow"
  */
 #define ONNXIFI_BACKEND_NAME 1
 
 /**
  * Name of the backend vendor.
+ *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "Facebook"
@@ -244,6 +240,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Version of the backend software. Exact format is vendor-specific, but MUST be
  * unique for the software release.
+ *
+ * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "1.2.3"
@@ -256,15 +254,19 @@ typedef int32_t onnxBackendInfo;
  * Space-separated list of vendor- or device-specific extensions supported on
  * this backend.
  *
+ * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
+ *
  * Value type: char[], e.g.:
  *    ""
- *    "onnx_async"
- *    "onnx_quant8 onnx_clone_graph fb_maskrcnn"
+ *    "onnx_clone_graph"
+ *    "onnx_clone_graph fb_maskrcnn"
  */
 #define ONNXIFI_BACKEND_EXTENSIONS 4
 
 /**
  * Descriptive name of the device (i.e. CPU, GPU, DSP, or NPU model).
+ *
+ * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
  *    "nnDuino 123"
@@ -323,7 +325,7 @@ typedef int32_t onnxBackendInfo;
  * Memory synchronization primitives supported for graph inputs and outputs.
  *
  * Possible values are any combination of the following flags:
- *     ONNXIFI_SYNCHRONIZATION_DEFAULT (always supported)
+ *     ONNXIFI_SYNCHRONIZATION_EVENT    (onnxEvent, always supported)
  *     ONNXIFI_SYNCHRONIZATION_IMPLICIT
  *     or any vendor-specific flags in the high 32 bits of the bit field.
  */
@@ -504,12 +506,17 @@ typedef struct onnxTensorDescriptor {
    * Possible values:
    *     ONNXIFI_DATATYPE_FLOAT16
    *     ONNXIFI_DATATYPE_FLOAT32
+   *     ONNXIFI_DATATYPE_FLOAT64
    *     ONNXIFI_DATATYPE_INT8
    *     ONNXIFI_DATATYPE_INT16
    *     ONNXIFI_DATATYPE_INT32
+   *     ONNXIFI_DATATYPE_INT64
    *     ONNXIFI_DATATYPE_UINT8
    *     ONNXIFI_DATATYPE_UINT16
    *     ONNXIFI_DATATYPE_UINT32
+   *     ONNXIFI_DATATYPE_UINT64
+   *     ONNXIFI_DATATYPE_COMPLEX64
+   *     ONNXIFI_DATATYPE_COMPLEX128
    */
   onnxEnum dataType;
   /**
@@ -583,19 +590,19 @@ typedef struct onnxMemoryFence {
    * Type of memory synchronization primitive.
    *
    * Possible values:
-   *      ONNXIFI_SYNCHRONIZATION_DEFAULT  (always supported)
+   *      ONNXIFI_SYNCHRONIZATION_EVENT    (onnxEvent, always supported)
    *      ONNXIFI_SYNCHRONIZATION_IMPLICIT
    */
   onnxEnum type;
   union {
     /**
-     * Pointer to a handle for a single-shot ONNXIFI event used as a
-     * synchronization primitive. Event for the input fence must be created
-     * by the caller to onnxRunGraph. Event for the output fence is created by
-     * implementation of onnxRunGraph, and store into the pointer specified in
-     * the output fence before onnxRunGraph returns.
+     * Handle for a single-shot ONNXIFI event used as a synchronization
+     * primitive. Event for the input fence must be created by the caller to
+     * onnxRunGraph. Event for the output fence is created by implementation of
+     * onnxRunGraph, and stored into the output memory fence structure before
+     * onnxRunGraph returns.
      */
-    onnxEvent* event;
+    onnxEvent event;
   };
 } onnxMemoryFence;
 
@@ -718,7 +725,7 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxGetBackendIDs)(
+  onnxGetBackendIDs(
     onnxBackendID* backendIDs,
     size_t* numBackends);
 
@@ -741,7 +748,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseBackendID)(
+  onnxReleaseBackendID(
     onnxBackendID backendID);
 
 /**
@@ -820,7 +827,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                            uninstalled from the system.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxGetBackendInfo)(
+  onnxGetBackendInfo(
     onnxBackendID backendID,
     onnxBackendInfo infoType,
     void* infoValue,
@@ -939,7 +946,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxGetBackendCompatibility)(
+  onnxGetBackendCompatibility(
     onnxBackendID backendID,
     size_t onnxModelSize,
     const void* onnxModel);
@@ -965,6 +972,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                was successfully initialized.
  * @retval ONNXIFI_STATUS_INVALID_ID The function call failed because backendID
  *                                   is not an ONNXIFI backend ID.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        backend pointer is NULL.
  * @retval ONNXIFI_STATUS_INVALID_PARAMETER The function call failed because one
  *                                          of the initialization parameter
  *                                          values is invalid.
@@ -995,7 +1004,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxInitBackend)(
+  onnxInitBackend(
     onnxBackendID backendID,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
@@ -1019,7 +1028,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseBackend)(
+  onnxReleaseBackend(
     onnxBackend backend);
 
 /**
@@ -1063,7 +1072,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxInitEvent)(
+  onnxInitEvent(
     onnxBackend backend,
     onnxEvent* event);
 
@@ -1088,7 +1097,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxSignalEvent)(
+  onnxSignalEvent(
     onnxEvent event);
 
 /**
@@ -1111,7 +1120,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxWaitEvent)(
+  onnxWaitEvent(
     onnxEvent event);
 
 /**
@@ -1129,7 +1138,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseEvent)(
+  onnxReleaseEvent(
     onnxEvent event);
 
 /**
@@ -1196,8 +1205,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                        backend is not an ONNXIFI backend
  *                                        handle.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
- *                                        onnxModel or weightDescriptors is
- *                                        NULL.
+ *                                        onnxModel, weightDescriptors, or graph
+ *                                        pointer is NULL.
  * @retval ONNXIFI_STATUS_INVALID_SIZE The function call failed because
  *                                     onnxModelSize is 0.
  * @retval ONNXIFI_STATUS_INVALID_PROTOBUF The function call failed because it
@@ -1296,7 +1305,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxInitGraph)(
+  onnxInitGraph(
     onnxBackend backend,
     size_t onnxModelSize,
     const void* onnxModel,
@@ -1407,7 +1416,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxSetGraphIO)(
+  onnxSetGraphIO(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptor* inputDescriptors,
@@ -1453,6 +1462,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the all graph
  *                                inputs and outputs were matched to a memory
  *                                location.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        inputFence or outputFence pointer is
+ *                                        NULL.
  * @retval ONNXIFI_STATUS_INVALID_GRAPH The function call failed because
  *                                      graph is not an ONNXIFI graph handle.
  * @retval ONNXIFI_STATUS_UNIDENTIFIED_NAME The function call failed because
@@ -1485,7 +1497,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxRunGraph)(
+  onnxRunGraph(
     onnxGraph graph,
     const onnxMemoryFence* inputFence,
     onnxMemoryFence* outputFence);
@@ -1508,7 +1520,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseGraph)(
+  onnxReleaseGraph(
     onnxGraph graph);
 
 #ifdef __cplusplus

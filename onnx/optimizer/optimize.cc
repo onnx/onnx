@@ -8,7 +8,7 @@ namespace ONNX_NAMESPACE { namespace optimization {
 ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in) {
   ONNX_NAMESPACE::ModelProto mp_out{};
 
-  if (mp_in.has_producer_name()) {
+  if (mp_in.has_ir_version()) {
     mp_out.set_ir_version(mp_in.ir_version());
   }
   if (mp_in.has_producer_name()) {

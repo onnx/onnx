@@ -19,10 +19,10 @@ set(${UT_NAME}_libs
     ${googletest_STATIC_LIBRARIES}
 )
 
-list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
-list(APPEND ${UT_NAME}_libs onnx_proto)
 add_whole_archive_flag(onnx tmp)
 list(APPEND ${UT_NAME}_libs ${tmp})
+list(APPEND ${UT_NAME}_libs onnx_proto)
+list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src
     "${ONNX_ROOT}/onnx/test/c++/*.cc"
@@ -52,6 +52,12 @@ function(AddTest)
     target_compile_options(${_UT_TARGET} PRIVATE /MT)
   endif()
 
+  if(MSVC)
+    target_compile_options(${_UT_TARGET} PRIVATE
+      /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
+    )
+  endif()
+  
   set(TEST_ARGS)
   if (ONNX_GENERATE_TEST_REPORTS)
     # generate a report file next to the test program
