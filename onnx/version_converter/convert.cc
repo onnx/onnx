@@ -21,4 +21,99 @@ ModelProto ConvertVersion(
   return _version_converter.convert_version(mp_in, initial_struct, target_struct);
 }
 
+ModelProto DefaultVersionConverter::convert_version(
+    const ModelProto& mp_in,
+    const OpSetID& initial_version,
+    const OpSetID& target_version) const {
+  const std::string initial_domain = initial_version.domain();
+  const std::string target_domain = target_version.domain();
+
+  ONNX_ASSERTM((initial_domain == "" || initial_domain == "ai.onnx") &&
+    (target_domain == "" || target_domain == "ai.onnx"),
+      "Warning: default onnx version converter can only convert "
+      " between default domain opset versions ('' or 'ai.onnx')\n");
+
+  ONNX_ASSERTM(initial_domain == target_domain,
+    "initial_version and target_version must have the same domains");
+  for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()
+      .end(); ++it) {
+    if (it->domain() == initial_version.domain()) {
+      ONNX_ASSERTM(initial_version.version() == it->version(),
+          "initial_version does not reflect current state of model");
+    }
+  }
+
+  std::shared_ptr<Graph> g(ImportModelProto(mp_in));
+  ONNX_ASSERTM(g.get() != nullptr,
+    "Warning: onnx version converter is unable to parse input model. "
+    "(The IR version of the ONNX model may be too old.)");
+
+  // TODO: Move to Inter-Domain Converter
+  // Get initial model versions
+  // std::vector<OpSetID> initial_versions = g->opset_versions_mutable();
+
+  // No conversion necessary if Model has single, equivalent opset version
+  // if (initial_versions.size() == 1 && initial_versions[0].version ==
+  //    target_version.version && initial_versions[0].domain ==
+  //    target_version.domain) {
+  //  return mp_in;
+  // }
+
+  // Check if target_version is valid
+  const std::unordered_map<std::string, std::pair<int, int>>& versions_map = OpSchemaRegistry::DomainToVersionRange::Instance().Map();
+  const std::string search_domain = target_version.domain() == "ai.onnx" ? "" : target_version.domain();
+  const std::pair<int, int>& version_range = versions_map.at(search_domain);
+  // TODO: Assert same for initial version
+  ONNX_ASSERTM(target_version.version() >= version_range.first && target_version
+      .version() <= version_range.second,
+    "Warning: invalid target_version (must be between %s and %s",
+    version_range.first, version_range.second);
+  // Compile list of all ops used in the model
+  graph_node_list nodes = g->nodes();
+
+  // Iterate over all versions to target_version for specified
+  int64_t curr_version = initial_version.version();
+  int64_t step;
+  if (target_version.version() > initial_version.version()) {
+    curr_version++;
+    step = 1;
+  } else {
+    step = -1;
+  }
+  // Identify index of this domain in g.opset_versions
+  unsigned int domain_index = 0;
+  for (unsigned int i = 0; i < g->opset_versions_mutable().size(); i++) {
+    if (g->opset_versions_mutable()[i].domain() == "") {
+      domain_index = i;
+    }
+  }
+  while (curr_version != target_version.version()) {
+    debug("curr_version: " + std::to_string(curr_version) + ", next_version: " +
+        std::to_string(curr_version + step));
+    // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
+    for (Node* op : nodes) {
+      auto& op_domain_map = all_schemas.at(op->kind().toString());
+      if (searchOpDomainMap(op_domain_map, curr_version)) {
+        // Op is specifically defined for this domain and version
+        OpSetID curr_id(curr_version);
+        OpSetID next_id(curr_version + step);
+        auto& op_adapter = adapter_lookup(op, curr_id, next_id);
+        // If adapter_lookup returns null, no adapter is present.
+        // Error thrown by adapter_lookup
+        debug("Applying adapter");
+        // adapt should handle replacing node in graph
+        op_adapter.adapt(g, op);
+      }
+    }
+    // Update model version
+    curr_version += step;
+    g->opset_versions_mutable()[domain_index].incrementVersion(step);
+  }
+  // Export g as ModelProto
+  debug("Finished conversion; returning model");
+  ModelProto mp_out = PrepareOutput(mp_in);
+  ExportModelProto(&mp_out, g);
+  return mp_out;
+}
+
 }} // namespace ONNX_NAMESPACE::version_conversion
