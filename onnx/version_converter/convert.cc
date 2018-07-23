@@ -260,7 +260,7 @@ ModelProto DefaultVersionConverter::convert_version(
     // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
     for (Node* op : nodes) {
       auto& op_domain_map = all_schemas.at(op->kind().toString());
-      if (searchOpDomainMap(op_domain_map, curr_version)) {
+      if (searchOpDomainMap(op_domain_map, curr_version, step)) {
         // Op is specifically defined for this domain and version
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
