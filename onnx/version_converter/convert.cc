@@ -92,17 +92,20 @@ ModelProto DefaultVersionConverter::convert_version(
     // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
     for (Node* op : nodes) {
       debug(std::string("Finding schema for ") + std::string(op->kind().toString()));
-      auto& op_domain_map = all_schemas.at(op->kind().toString());
-      if (searchOpDomainMap(op_domain_map, curr_version, step, up)) {
-        // Op is specifically defined for this domain and version
-        OpSetID curr_id(curr_version);
-        OpSetID next_id(curr_version + step);
-        auto& op_adapter = adapter_lookup(op, curr_id, next_id);
-        // If adapter_lookup returns null, no adapter is present.
-        // Error thrown by adapter_lookup
-        debug("Applying adapter");
-        // adapt should handle replacing node in graph
-        op_adapter.adapt(g, op);
+      const std::string& op_name = op->kind().toString();
+      if (op_name != "Undefined") {
+        auto& op_domain_map = all_schemas.at(op_name);
+        if (searchOpDomainMap(op_domain_map, curr_version, step, up)) {
+          // Op is specifically defined for this domain and version
+          OpSetID curr_id(curr_version);
+          OpSetID next_id(curr_version + step);
+          auto& op_adapter = adapter_lookup(op, curr_id, next_id);
+          // If adapter_lookup returns null, no adapter is present.
+          // Error thrown by adapter_lookup
+          if (DEBUG) std::cerr << "Applying adapter" << std::endl;
+          // adapt should handle replacing node in graph
+          op_adapter.adapt(g, op);
+        }
       }
     }
     // Update model version
