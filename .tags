@@ -1,0 +1,236 @@
+ONNX_DISALLOW_COPY_AND_ASSIGN	/Users/akshayc/onnx/onnx/common/ir.h	/^#define ONNX_DISALLOW_COPY_AND_ASSIGN(/;"	macro	line:26
+ONNX_NAMESPACE	/Users/akshayc/onnx/onnx/common/ir.h	/^namespace ONNX_NAMESPACE {$/;"	namespace	line:31
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^class ResourceGuard final {$/;"	class	line:50	namespace:ONNX_NAMESPACE
+destructor_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::function<void()> destructor_;$/;"	member	line:51	class:ONNX_NAMESPACE::final
+released_	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool released_;$/;"	member	line:52	class:ONNX_NAMESPACE::final
+ResourceGuard	/Users/akshayc/onnx/onnx/common/ir.h	/^  ResourceGuard(std::function<void()> destructor)$/;"	function	line:55	class:ONNX_NAMESPACE::final	signature:(std::function<void()> destructor)
+~ResourceGuard	/Users/akshayc/onnx/onnx/common/ir.h	/^  ~ResourceGuard() {$/;"	function	line:59	class:ONNX_NAMESPACE::final	signature:()
+release	/Users/akshayc/onnx/onnx/common/ir.h	/^  void release() {$/;"	function	line:63	class:ONNX_NAMESPACE::final	signature:()
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^struct Dimension final {$/;"	struct	line:69	namespace:ONNX_NAMESPACE
+Dimension	/Users/akshayc/onnx/onnx/common/ir.h	/^  Dimension(std::string param)$/;"	function	line:70	struct:ONNX_NAMESPACE::final	signature:(std::string param)
+Dimension	/Users/akshayc/onnx/onnx/common/ir.h	/^  Dimension(int64_t dim) : is_int(true), dim(dim) {}$/;"	function	line:73	struct:ONNX_NAMESPACE::final	signature:(int64_t dim)
+is_int	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool is_int;$/;"	member	line:75	struct:ONNX_NAMESPACE::final
+dim	/Users/akshayc/onnx/onnx/common/ir.h	/^  int64_t dim;$/;"	member	line:76	struct:ONNX_NAMESPACE::final
+param	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string param;$/;"	member	line:77	struct:ONNX_NAMESPACE::final
+AttributeKind	/Users/akshayc/onnx/onnx/common/ir.h	/^enum class AttributeKind : uint8_t {$/;"	class	line:81	namespace:ONNX_NAMESPACE
+f	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+fs	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+i	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+is	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+s	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+ss	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+t	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+ts	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+g	/Users/akshayc/onnx/onnx/common/ir.h	/^  f, fs, i, is, s, ss, t, ts, g, gs$/;"	member	line:84	class:ONNX_NAMESPACE::AttributeKind
+toString	/Users/akshayc/onnx/onnx/common/ir.h	/^static inline const char * toString(AttributeKind kind) {$/;"	function	line:88	namespace:ONNX_NAMESPACE	signature:(AttributeKind kind)
+AttributeValue	/Users/akshayc/onnx/onnx/common/ir.h	/^struct AttributeValue {$/;"	struct	line:95	namespace:ONNX_NAMESPACE
+AttributeValue	/Users/akshayc/onnx/onnx/common/ir.h	/^  AttributeValue(Symbol name)$/;"	function	line:96	struct:ONNX_NAMESPACE::AttributeValue	signature:(Symbol name)
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^struct ScalarAttributeValue final : public AttributeValue {$/;"	struct	line:107	namespace:ONNX_NAMESPACE
+ScalarAttributeValue	/Users/akshayc/onnx/onnx/common/ir.h	/^  ScalarAttributeValue(Symbol name, ConstructorType value_)$/;"	function	line:110	struct:ONNX_NAMESPACE::final	signature:(Symbol name, ConstructorType value_)
+value	/Users/akshayc/onnx/onnx/common/ir.h	/^  ValueType & value() {$/;"	function	line:112	struct:ONNX_NAMESPACE::final	signature:()
+value_	/Users/akshayc/onnx/onnx/common/ir.h	/^  ValueType value_;$/;"	member	line:121	struct:ONNX_NAMESPACE::final
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^struct VectorAttributeValue final : public AttributeValue {$/;"	struct	line:126	namespace:ONNX_NAMESPACE
+VectorAttributeValue	/Users/akshayc/onnx/onnx/common/ir.h	/^  VectorAttributeValue(Symbol name, ConstructorType value_)$/;"	function	line:129	struct:ONNX_NAMESPACE::final	signature:(Symbol name, ConstructorType value_)
+value	/Users/akshayc/onnx/onnx/common/ir.h	/^  ValueType & value() {$/;"	function	line:131	struct:ONNX_NAMESPACE::final	signature:()
+value_	/Users/akshayc/onnx/onnx/common/ir.h	/^  ValueType value_;$/;"	member	line:140	struct:ONNX_NAMESPACE::final
+Attributes	/Users/akshayc/onnx/onnx/common/ir.h	/^struct Attributes {$/;"	struct	line:161	namespace:ONNX_NAMESPACE
+Attributes	/Users/akshayc/onnx/onnx/common/ir.h	/^  Attributes() {}$/;"	function	line:162	struct:ONNX_NAMESPACE::Attributes	signature:()
+copyAttributes	/Users/akshayc/onnx/onnx/common/ir.h	/^  void copyAttributes(const Attributes & rhs) {$/;"	function	line:163	struct:ONNX_NAMESPACE::Attributes	signature:(const Attributes & rhs)
+hasAttribute	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool hasAttribute(Symbol name) const {$/;"	function	line:170	struct:ONNX_NAMESPACE::Attributes	signature:(Symbol name) const
+kindOf	/Users/akshayc/onnx/onnx/common/ir.h	/^  AttributeKind kindOf(Symbol name) const {$/;"	function	line:173	struct:ONNX_NAMESPACE::Attributes	signature:(Symbol name) const
+removeAttribute	/Users/akshayc/onnx/onnx/common/ir.h	/^  Derived* removeAttribute(Symbol name) {$/;"	function	line:176	struct:ONNX_NAMESPACE::Attributes	signature:(Symbol name)
+hasAttributes	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool hasAttributes() const {$/;"	function	line:180	struct:ONNX_NAMESPACE::Attributes	signature:() const
+attributeNames	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<Symbol> attributeNames() const {$/;"	function	line:184	struct:ONNX_NAMESPACE::Attributes	signature:() const
+CREATE_ACCESSOR	/Users/akshayc/onnx/onnx/common/ir.h	/^  #define CREATE_ACCESSOR(/;"	macro	line:192
+CREATE_ACCESSOR	/Users/akshayc/onnx/onnx/common/ir.h	/^  #undef CREATE_ACCESSOR$/;"	macro	line:210
+This	/Users/akshayc/onnx/onnx/common/ir.h	/^  Derived* This() {$/;"	function	line:213	struct:ONNX_NAMESPACE::Attributes	signature:()
+set	/Users/akshayc/onnx/onnx/common/ir.h	/^  Derived* set(Symbol name, typename T::ConstructorType v) {$/;"	function	line:217	struct:ONNX_NAMESPACE::Attributes	signature:(Symbol name, typename T::ConstructorType v)
+get	/Users/akshayc/onnx/onnx/common/ir.h	/^  typename T::ValueType & get(Symbol name) const {$/;"	function	line:228	struct:ONNX_NAMESPACE::Attributes	signature:(Symbol name) const
+find	/Users/akshayc/onnx/onnx/common/ir.h	/^  iterator find(Symbol name, bool required) {$/;"	function	line:239	struct:ONNX_NAMESPACE::Attributes	signature:(Symbol name, bool required)
+find	/Users/akshayc/onnx/onnx/common/ir.h	/^  const_iterator find(Symbol name, bool required) const {$/;"	function	line:247	struct:ONNX_NAMESPACE::Attributes	signature:(Symbol name, bool required) const
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^struct Use final {$/;"	struct	line:262	namespace:ONNX_NAMESPACE
+Use	/Users/akshayc/onnx/onnx/common/ir.h	/^  Use(Node * user, size_t offset)$/;"	function	line:263	struct:ONNX_NAMESPACE::final	signature:(Node * user, size_t offset)
+user	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * user;$/;"	member	line:265	struct:ONNX_NAMESPACE::final
+offset	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t offset;$/;"	member	line:266	struct:ONNX_NAMESPACE::final
+operator ==	/Users/akshayc/onnx/onnx/common/ir.h	/^static inline bool operator==(const Use & a, const Use & b) {$/;"	function	line:269	namespace:ONNX_NAMESPACE	signature:(const Use & a, const Use & b)
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^struct Value final {$/;"	struct	line:282	namespace:ONNX_NAMESPACE
+node_	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * node_;$/;"	member	line:289	struct:ONNX_NAMESPACE::final
+offset_	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t offset_;$/;"	member	line:290	struct:ONNX_NAMESPACE::final
+unique_	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t unique_ = 0;          \/\/ unique id$/;"	member	line:291	struct:ONNX_NAMESPACE::final
+stage_	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t stage_ = 0;           \/\/ 0-forward, 1-backward, 2-double-backward,...$/;"	member	line:292	struct:ONNX_NAMESPACE::final
+uses_	/Users/akshayc/onnx/onnx/common/ir.h	/^  use_list uses_;$/;"	member	line:293	struct:ONNX_NAMESPACE::final
+has_unique_name_	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_unique_name_;$/;"	member	line:294	struct:ONNX_NAMESPACE::final
+unique_name_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string unique_name_;$/;"	member	line:295	struct:ONNX_NAMESPACE::final
+elem_type_	/Users/akshayc/onnx/onnx/common/ir.h	/^  ONNX_NAMESPACE::TensorProto_DataType elem_type_;$/;"	member	line:296	struct:ONNX_NAMESPACE::final
+sizes_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<Dimension> sizes_;$/;"	member	line:297	struct:ONNX_NAMESPACE::final
+setElemType	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* setElemType(ONNX_NAMESPACE::TensorProto_DataType elem_type) {$/;"	function	line:300	struct:ONNX_NAMESPACE::final	signature:(ONNX_NAMESPACE::TensorProto_DataType elem_type)
+elemType	/Users/akshayc/onnx/onnx/common/ir.h	/^  ONNX_NAMESPACE::TensorProto_DataType elemType() const {$/;"	function	line:304	struct:ONNX_NAMESPACE::final	signature:() const
+setSizes	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* setSizes(std::vector<Dimension> sizes) {$/;"	function	line:307	struct:ONNX_NAMESPACE::final	signature:(std::vector<Dimension> sizes)
+sizes	/Users/akshayc/onnx/onnx/common/ir.h	/^  const std::vector<Dimension>& sizes() const {$/;"	function	line:311	struct:ONNX_NAMESPACE::final	signature:() const
+unique	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t unique() const {$/;"	function	line:314	struct:ONNX_NAMESPACE::final	signature:() const
+has_unique_name	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_unique_name() const {$/;"	function	line:317	struct:ONNX_NAMESPACE::final	signature:() const
+uniqueName	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string uniqueName() const {$/;"	function	line:320	struct:ONNX_NAMESPACE::final	signature:() const
+setUniqueName	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* setUniqueName(std::string name) {$/;"	function	line:325	struct:ONNX_NAMESPACE::final	signature:(std::string name)
+setStage	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* setStage(size_t s) {$/;"	function	line:330	struct:ONNX_NAMESPACE::final	signature:(size_t s)
+stage	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t stage() const {$/;"	function	line:334	struct:ONNX_NAMESPACE::final	signature:() const
+node	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* node() {$/;"	function	line:337	struct:ONNX_NAMESPACE::final	signature:()
+offset	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t offset() const {$/;"	function	line:340	struct:ONNX_NAMESPACE::final	signature:() const
+node	/Users/akshayc/onnx/onnx/common/ir.h	/^  const Node * node() const {$/;"	function	line:343	struct:ONNX_NAMESPACE::final	signature:() const
+uses	/Users/akshayc/onnx/onnx/common/ir.h	/^  const use_list & uses() const {$/;"	function	line:349	struct:ONNX_NAMESPACE::final	signature:() const
+copyMetadata	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* copyMetadata(Value * from) {$/;"	function	line:364	struct:ONNX_NAMESPACE::final	signature:(Value * from)
+Node	/Users/akshayc/onnx/onnx/common/ir.h	/^struct Node : public Attributes<Node> {$/;"	struct	line:376	namespace:ONNX_NAMESPACE
+next_in_graph	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* next_in_graph[2] = { nullptr, nullptr };$/;"	member	line:396	struct:ONNX_NAMESPACE::Node
+next	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* & next() { return next_in_graph[kNextDirection]; }$/;"	function	line:397	struct:ONNX_NAMESPACE::Node	signature:()
+prev	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* & prev() { return next_in_graph[kPrevDirection]; }$/;"	function	line:398	struct:ONNX_NAMESPACE::Node	signature:()
+next	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* const & next() const { return next_in_graph[kNextDirection]; }$/;"	function	line:399	struct:ONNX_NAMESPACE::Node	signature:() const
+prev	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* const & prev() const { return next_in_graph[kPrevDirection]; }$/;"	function	line:400	struct:ONNX_NAMESPACE::Node	signature:() const
+kind_	/Users/akshayc/onnx/onnx/common/ir.h	/^  const NodeKind kind_;$/;"	member	line:402	struct:ONNX_NAMESPACE::Node
+inputs_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<Value*> inputs_;$/;"	member	line:403	struct:ONNX_NAMESPACE::Node
+outputs_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<Value*> outputs_;$/;"	member	line:404	struct:ONNX_NAMESPACE::Node
+graph_	/Users/akshayc/onnx/onnx/common/ir.h	/^  Graph* graph_;$/;"	member	line:405	struct:ONNX_NAMESPACE::Node
+stage_	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t stage_;$/;"	member	line:406	struct:ONNX_NAMESPACE::Node
+has_name_	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_name_;$/;"	member	line:407	struct:ONNX_NAMESPACE::Node
+name_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string name_;$/;"	member	line:408	struct:ONNX_NAMESPACE::Node
+has_doc_string_	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_doc_string_;$/;"	member	line:409	struct:ONNX_NAMESPACE::Node
+doc_string_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string doc_string_;$/;"	member	line:410	struct:ONNX_NAMESPACE::Node
+has_name	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_name() {$/;"	function	line:416	struct:ONNX_NAMESPACE::Node	signature:()
+name	/Users/akshayc/onnx/onnx/common/ir.h	/^  const std::string& name() const {$/;"	function	line:419	struct:ONNX_NAMESPACE::Node	signature:() const
+setName	/Users/akshayc/onnx/onnx/common/ir.h	/^  void setName(std::string name) {$/;"	function	line:422	struct:ONNX_NAMESPACE::Node	signature:(std::string name)
+has_doc_string	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_doc_string() const {$/;"	function	line:426	struct:ONNX_NAMESPACE::Node	signature:() const
+docString	/Users/akshayc/onnx/onnx/common/ir.h	/^  const std::string& docString() {$/;"	function	line:429	struct:ONNX_NAMESPACE::Node	signature:()
+setDocString	/Users/akshayc/onnx/onnx/common/ir.h	/^  void setDocString(std::string doc_string) {$/;"	function	line:432	struct:ONNX_NAMESPACE::Node	signature:(std::string doc_string)
+kind	/Users/akshayc/onnx/onnx/common/ir.h	/^  NodeKind kind() const {$/;"	function	line:436	struct:ONNX_NAMESPACE::Node	signature:() const
+owningGraph	/Users/akshayc/onnx/onnx/common/ir.h	/^  Graph * owningGraph() {$/;"	function	line:439	struct:ONNX_NAMESPACE::Node	signature:()
+owningGraph	/Users/akshayc/onnx/onnx/common/ir.h	/^  const Graph * owningGraph() const {$/;"	function	line:442	struct:ONNX_NAMESPACE::Node	signature:() const
+stage	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t stage() const {$/;"	function	line:445	struct:ONNX_NAMESPACE::Node	signature:() const
+setStage	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* setStage(size_t s) {$/;"	function	line:448	struct:ONNX_NAMESPACE::Node	signature:(size_t s)
+inputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<Value*> inputs() {$/;"	function	line:458	struct:ONNX_NAMESPACE::Node	signature:()
+inputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<const Value*> inputs() const {$/;"	function	line:461	struct:ONNX_NAMESPACE::Node	signature:() const
+outputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<Value*> outputs() {$/;"	function	line:472	struct:ONNX_NAMESPACE::Node	signature:()
+outputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<const Value*> outputs() const {$/;"	function	line:475	struct:ONNX_NAMESPACE::Node	signature:() const
+hasUses	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool hasUses() const {$/;"	function	line:480	struct:ONNX_NAMESPACE::Node	signature:() const
+replaceAllUsesWith	/Users/akshayc/onnx/onnx/common/ir.h	/^  void replaceAllUsesWith(Node * n) {$/;"	function	line:487	struct:ONNX_NAMESPACE::Node	signature:(Node * n)
+input	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value * input() {$/;"	function	line:496	struct:ONNX_NAMESPACE::Node	signature:()
+output	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value * output() {$/;"	function	line:500	struct:ONNX_NAMESPACE::Node	signature:()
+input	/Users/akshayc/onnx/onnx/common/ir.h	/^  const Value * input() const {$/;"	function	line:504	struct:ONNX_NAMESPACE::Node	signature:() const
+input	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value * input(size_t i) {$/;"	function	line:509	struct:ONNX_NAMESPACE::Node	signature:(size_t i)
+input	/Users/akshayc/onnx/onnx/common/ir.h	/^  const Value * input(size_t i) const {$/;"	function	line:512	struct:ONNX_NAMESPACE::Node	signature:(size_t i) const
+addInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* addInput(Value * node) {$/;"	function	line:536	struct:ONNX_NAMESPACE::Node	signature:(Value * node)
+replaceInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value * replaceInput(size_t i, Value * newValue) {$/;"	function	line:549	struct:ONNX_NAMESPACE::Node	signature:(size_t i, Value * newValue)
+replaceInputWith	/Users/akshayc/onnx/onnx/common/ir.h	/^  void replaceInputWith(Value * from, Value * to) {$/;"	function	line:563	struct:ONNX_NAMESPACE::Node	signature:(Value * from, Value * to)
+addOutput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* addOutput() {$/;"	function	line:574	struct:ONNX_NAMESPACE::Node	signature:()
+insertBefore	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* insertBefore(Node * n) {$/;"	function	line:591	struct:ONNX_NAMESPACE::Node	signature:(Node * n)
+insertAfter	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* insertAfter(Node * n) {$/;"	function	line:607	struct:ONNX_NAMESPACE::Node	signature:(Node * n)
+moveAfter	/Users/akshayc/onnx/onnx/common/ir.h	/^  void moveAfter(Node * n) {$/;"	function	line:625	struct:ONNX_NAMESPACE::Node	signature:(Node * n)
+moveBefore	/Users/akshayc/onnx/onnx/common/ir.h	/^  void moveBefore(Node * n) {$/;"	function	line:637	struct:ONNX_NAMESPACE::Node	signature:(Node * n)
+removeInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  void removeInput(size_t i) {$/;"	function	line:650	struct:ONNX_NAMESPACE::Node	signature:(size_t i)
+removeAllInputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  void removeAllInputs() {$/;"	function	line:666	struct:ONNX_NAMESPACE::Node	signature:()
+cast	/Users/akshayc/onnx/onnx/common/ir.h	/^  T* cast() {$/;"	function	line:699	struct:ONNX_NAMESPACE::Node	signature:()
+expect	/Users/akshayc/onnx/onnx/common/ir.h	/^  T* expect() {$/;"	function	line:705	struct:ONNX_NAMESPACE::Node	signature:()
+findUseForInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  use_list::iterator findUseForInput(size_t i) {$/;"	function	line:714	struct:ONNX_NAMESPACE::Node	signature:(size_t i)
+dropInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* dropInput(size_t i) {$/;"	function	line:726	struct:ONNX_NAMESPACE::Node	signature:(size_t i)
+inGraphList	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool inGraphList() const {$/;"	function	line:735	struct:ONNX_NAMESPACE::Node	signature:() const
+removeFromList	/Users/akshayc/onnx/onnx/common/ir.h	/^  void removeFromList() {$/;"	function	line:739	struct:ONNX_NAMESPACE::Node	signature:()
+allocNewInstance	/Users/akshayc/onnx/onnx/common/ir.h	/^  virtual Node * allocNewInstance(Graph * g) {$/;"	function	line:755	struct:ONNX_NAMESPACE::Node	signature:(Graph * g)
+cloneFrom	/Users/akshayc/onnx/onnx/common/ir.h	/^  virtual void cloneFrom(Node * s) {$/;"	function	line:765	struct:ONNX_NAMESPACE::Node	signature:(Node * s)
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^class OpSetID final {$/;"	class	line:772	namespace:ONNX_NAMESPACE
+domain_	/Users/akshayc/onnx/onnx/common/ir.h	/^    std::string domain_;$/;"	member	line:774	class:ONNX_NAMESPACE::final
+version_	/Users/akshayc/onnx/onnx/common/ir.h	/^    int64_t version_;$/;"	member	line:775	class:ONNX_NAMESPACE::final
+OpSetID	/Users/akshayc/onnx/onnx/common/ir.h	/^    explicit OpSetID(const OperatorSetIdProto& proto)$/;"	function	line:778	class:ONNX_NAMESPACE::final	signature:(const OperatorSetIdProto& proto)
+OpSetID	/Users/akshayc/onnx/onnx/common/ir.h	/^    explicit OpSetID(const int64_t version)$/;"	function	line:782	class:ONNX_NAMESPACE::final	signature:(const int64_t version)
+OpSetID	/Users/akshayc/onnx/onnx/common/ir.h	/^    explicit OpSetID(const std::string& domain, int64_t version)$/;"	function	line:785	class:ONNX_NAMESPACE::final	signature:(const std::string& domain, int64_t version)
+toString	/Users/akshayc/onnx/onnx/common/ir.h	/^    std::string toString() const {$/;"	function	line:789	class:ONNX_NAMESPACE::final	signature:() const
+fromString	/Users/akshayc/onnx/onnx/common/ir.h	/^    static OpSetID fromString(const std::string& target) {$/;"	function	line:794	class:ONNX_NAMESPACE::final	signature:(const std::string& target)
+domain	/Users/akshayc/onnx/onnx/common/ir.h	/^    const std::string& domain() const {$/;"	function	line:805	class:ONNX_NAMESPACE::final	signature:() const
+version	/Users/akshayc/onnx/onnx/common/ir.h	/^    const int64_t version() const {$/;"	function	line:809	class:ONNX_NAMESPACE::final	signature:() const
+incrementVersion	/Users/akshayc/onnx/onnx/common/ir.h	/^    void incrementVersion(int64_t step) {$/;"	function	line:813	class:ONNX_NAMESPACE::final	signature:(int64_t step)
+setVersion	/Users/akshayc/onnx/onnx/common/ir.h	/^    void setVersion(int64_t newVal) {$/;"	function	line:817	class:ONNX_NAMESPACE::final	signature:(int64_t newVal)
+final	/Users/akshayc/onnx/onnx/common/ir.h	/^struct Graph final {$/;"	struct	line:822	namespace:ONNX_NAMESPACE
+all_nodes	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::unordered_set<const Node*> all_nodes;$/;"	member	line:832	struct:ONNX_NAMESPACE::final
+all_values	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::unordered_set<const Value*> all_values;$/;"	member	line:833	struct:ONNX_NAMESPACE::final
+next_unique_	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t next_unique_;$/;"	member	line:834	struct:ONNX_NAMESPACE::final
+new_node_stage_	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t new_node_stage_;$/;"	member	line:836	struct:ONNX_NAMESPACE::final
+output_	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * const output_;$/;"	member	line:842	struct:ONNX_NAMESPACE::final
+input_	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * const input_;$/;"	member	line:843	struct:ONNX_NAMESPACE::final
+initializers_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<Tensor> initializers_;$/;"	member	line:845	struct:ONNX_NAMESPACE::final
+initializer_names_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<std::string> initializer_names_;$/;"	member	line:846	struct:ONNX_NAMESPACE::final
+has_name_	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_name_;$/;"	member	line:848	struct:ONNX_NAMESPACE::final
+name_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string name_;$/;"	member	line:849	struct:ONNX_NAMESPACE::final
+has_doc_string_	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_doc_string_;$/;"	member	line:850	struct:ONNX_NAMESPACE::final
+doc_string_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string doc_string_;$/;"	member	line:851	struct:ONNX_NAMESPACE::final
+opset_versions_	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector <OpSetID> opset_versions_;$/;"	member	line:853	struct:ONNX_NAMESPACE::final
+Graph	/Users/akshayc/onnx/onnx/common/ir.h	/^  Graph()$/;"	function	line:856	struct:ONNX_NAMESPACE::final	signature:()
+has_doc_string	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_doc_string() {$/;"	function	line:864	struct:ONNX_NAMESPACE::final	signature:()
+docString	/Users/akshayc/onnx/onnx/common/ir.h	/^  const std::string& docString() {$/;"	function	line:867	struct:ONNX_NAMESPACE::final	signature:()
+setDocString	/Users/akshayc/onnx/onnx/common/ir.h	/^  void setDocString(std::string doc_string) {$/;"	function	line:870	struct:ONNX_NAMESPACE::final	signature:(std::string doc_string)
+addInitializer	/Users/akshayc/onnx/onnx/common/ir.h	/^  void addInitializer(Tensor initializer, std::string name) {$/;"	function	line:875	struct:ONNX_NAMESPACE::final	signature:(Tensor initializer, std::string name)
+eraseInitializer	/Users/akshayc/onnx/onnx/common/ir.h	/^  void eraseInitializer(std::string name) {$/;"	function	line:879	struct:ONNX_NAMESPACE::final	signature:(std::string name)
+clearInitializers	/Users/akshayc/onnx/onnx/common/ir.h	/^  void clearInitializers() {$/;"	function	line:895	struct:ONNX_NAMESPACE::final	signature:()
+initializers	/Users/akshayc/onnx/onnx/common/ir.h	/^  const std::vector<Tensor>& initializers() {$/;"	function	line:899	struct:ONNX_NAMESPACE::final	signature:()
+initializer_names	/Users/akshayc/onnx/onnx/common/ir.h	/^  const std::vector<std::string>& initializer_names() {$/;"	function	line:902	struct:ONNX_NAMESPACE::final	signature:()
+getInitializer	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<Tensor>::const_iterator getInitializer(const std::string& name) {$/;"	function	line:905	struct:ONNX_NAMESPACE::final	signature:(const std::string& name)
+inputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<Value*> inputs() {$/;"	function	line:913	struct:ONNX_NAMESPACE::final	signature:()
+inputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<const Value*> inputs() const {$/;"	function	line:916	struct:ONNX_NAMESPACE::final	signature:() const
+outputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<Value*> outputs() {$/;"	function	line:920	struct:ONNX_NAMESPACE::final	signature:()
+outputs	/Users/akshayc/onnx/onnx/common/ir.h	/^  ArrayRef<const Value*> outputs() const {$/;"	function	line:923	struct:ONNX_NAMESPACE::final	signature:() const
+nodes	/Users/akshayc/onnx/onnx/common/ir.h	/^  graph_node_list nodes() {$/;"	function	line:926	struct:ONNX_NAMESPACE::final	signature:()
+nodes	/Users/akshayc/onnx/onnx/common/ir.h	/^  const_graph_node_list nodes() const {$/;"	function	line:929	struct:ONNX_NAMESPACE::final	signature:() const
+opset_versions_mutable	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::vector<OpSetID>& opset_versions_mutable() {$/;"	function	line:933	struct:ONNX_NAMESPACE::final	signature:()
+begin	/Users/akshayc/onnx/onnx/common/ir.h	/^  graph_node_list_iterator begin() {$/;"	function	line:940	struct:ONNX_NAMESPACE::final	signature:()
+begin	/Users/akshayc/onnx/onnx/common/ir.h	/^  const_graph_node_list_iterator begin() const {$/;"	function	line:943	struct:ONNX_NAMESPACE::final	signature:() const
+end	/Users/akshayc/onnx/onnx/common/ir.h	/^  graph_node_list_iterator end() {$/;"	function	line:946	struct:ONNX_NAMESPACE::final	signature:()
+end	/Users/akshayc/onnx/onnx/common/ir.h	/^  const_graph_node_list_iterator end() const {$/;"	function	line:949	struct:ONNX_NAMESPACE::final	signature:() const
+rbegin	/Users/akshayc/onnx/onnx/common/ir.h	/^  graph_node_list_iterator rbegin() {$/;"	function	line:952	struct:ONNX_NAMESPACE::final	signature:()
+rbegin	/Users/akshayc/onnx/onnx/common/ir.h	/^  const_graph_node_list_iterator rbegin() const {$/;"	function	line:955	struct:ONNX_NAMESPACE::final	signature:() const
+rend	/Users/akshayc/onnx/onnx/common/ir.h	/^  graph_node_list_iterator rend() {$/;"	function	line:958	struct:ONNX_NAMESPACE::final	signature:()
+rend	/Users/akshayc/onnx/onnx/common/ir.h	/^  const_graph_node_list_iterator rend() const {$/;"	function	line:961	struct:ONNX_NAMESPACE::final	signature:() const
+return_node	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * return_node() {$/;"	function	line:964	struct:ONNX_NAMESPACE::final	signature:()
+return_node	/Users/akshayc/onnx/onnx/common/ir.h	/^  const Node * return_node() const {$/;"	function	line:967	struct:ONNX_NAMESPACE::final	signature:() const
+addInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value * addInput() {$/;"	function	line:971	struct:ONNX_NAMESPACE::final	signature:()
+eraseInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  void eraseInput(size_t i) {$/;"	function	line:974	struct:ONNX_NAMESPACE::final	signature:(size_t i)
+advanceStage	/Users/akshayc/onnx/onnx/common/ir.h	/^  void advanceStage() {$/;"	function	line:977	struct:ONNX_NAMESPACE::final	signature:()
+setStage	/Users/akshayc/onnx/onnx/common/ir.h	/^  void setStage(size_t new_stage) {$/;"	function	line:980	struct:ONNX_NAMESPACE::final	signature:(size_t new_stage)
+stage	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t stage() const {$/;"	function	line:983	struct:ONNX_NAMESPACE::final	signature:() const
+setStageTemporary	/Users/akshayc/onnx/onnx/common/ir.h	/^  ResourceGuard setStageTemporary(size_t s) {$/;"	function	line:986	struct:ONNX_NAMESPACE::final	signature:(size_t s)
+registerOutput	/Users/akshayc/onnx/onnx/common/ir.h	/^  size_t registerOutput(Value * n) {$/;"	function	line:992	struct:ONNX_NAMESPACE::final	signature:(Value * n)
+create	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * create(NodeKind kind, size_t num_outputs=1) {$/;"	function	line:997	struct:ONNX_NAMESPACE::final	signature:(NodeKind kind, size_t num_outputs=1)
+create	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * create(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs=1) {$/;"	function	line:1005	struct:ONNX_NAMESPACE::final	signature:(NodeKind kind, ArrayRef<Value*> inputs, size_t num_outputs=1)
+appendNode	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * appendNode(Node * n) {$/;"	function	line:1012	struct:ONNX_NAMESPACE::final	signature:(Node * n)
+prependNode	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node * prependNode(Node * n) {$/;"	function	line:1018	struct:ONNX_NAMESPACE::final	signature:(Node * n)
+addInitializerAndInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* addInitializerAndInput(const Tensor& initializer, std::string name) {$/;"	function	line:1026	struct:ONNX_NAMESPACE::final	signature:(const Tensor& initializer, std::string name)
+addInitializerAndInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Value* addInitializerAndInput(const Tensor &initializer) {$/;"	function	line:1039	struct:ONNX_NAMESPACE::final	signature:(const Tensor &initializer)
+eraseInitializerAndInput	/Users/akshayc/onnx/onnx/common/ir.h	/^  void eraseInitializerAndInput(Value* v) {$/;"	function	line:1046	struct:ONNX_NAMESPACE::final	signature:(Value* v)
+~Graph	/Users/akshayc/onnx/onnx/common/ir.h	/^  ~Graph() {$/;"	function	line:1051	struct:ONNX_NAMESPACE::final	signature:()
+toString	/Users/akshayc/onnx/onnx/common/ir.h	/^  std::string toString() const {$/;"	function	line:1058	struct:ONNX_NAMESPACE::final	signature:() const
+has_name	/Users/akshayc/onnx/onnx/common/ir.h	/^  bool has_name() const {$/;"	function	line:1064	struct:ONNX_NAMESPACE::final	signature:() const
+name	/Users/akshayc/onnx/onnx/common/ir.h	/^  const std::string& name() const {$/;"	function	line:1068	struct:ONNX_NAMESPACE::final	signature:() const
+setName	/Users/akshayc/onnx/onnx/common/ir.h	/^  void setName(std::string name) {$/;"	function	line:1072	struct:ONNX_NAMESPACE::final	signature:(std::string name)
+initOutput	/Users/akshayc/onnx/onnx/common/ir.h	/^  Node* initOutput(Node* p) {$/;"	function	line:1082	struct:ONNX_NAMESPACE::final	signature:(Node* p)
+freeNode	/Users/akshayc/onnx/onnx/common/ir.h	/^  void freeNode(Node * n) {$/;"	function	line:1089	struct:ONNX_NAMESPACE::final	signature:(Node * n)
+freeValue	/Users/akshayc/onnx/onnx/common/ir.h	/^  void freeValue(Value * v) {$/;"	function	line:1095	struct:ONNX_NAMESPACE::final	signature:(Value * v)
+Value	/Users/akshayc/onnx/onnx/common/ir.h	/^inline Value::Value(Node * node_, size_t offset_)$/;"	function	line:1102	class:ONNX_NAMESPACE::Value	signature:(Node * node_, size_t offset_)
+owningGraph	/Users/akshayc/onnx/onnx/common/ir.h	/^inline Graph * Value::owningGraph() {$/;"	function	line:1112	class:ONNX_NAMESPACE::Value	signature:()
+owningGraph	/Users/akshayc/onnx/onnx/common/ir.h	/^inline const Graph * Value::owningGraph() const {$/;"	function	line:1116	class:ONNX_NAMESPACE::Value	signature:() const
+replaceAllUsesWith	/Users/akshayc/onnx/onnx/common/ir.h	/^inline void Value::replaceAllUsesWith(Value * newValue) {$/;"	function	line:1120	class:ONNX_NAMESPACE::Value	signature:(Value * newValue)
+Node	/Users/akshayc/onnx/onnx/common/ir.h	/^inline Node::Node(Graph * graph_, NodeKind kind_) :$/;"	function	line:1129	class:ONNX_NAMESPACE::Node	signature:(Graph * graph_, NodeKind kind_)
+eraseOutput	/Users/akshayc/onnx/onnx/common/ir.h	/^inline void Node::eraseOutput(size_t i) {$/;"	function	line:1138	class:ONNX_NAMESPACE::Node	signature:(size_t i)
+isBefore	/Users/akshayc/onnx/onnx/common/ir.h	/^inline bool Node::isBefore(Node* n) {$/;"	function	line:1149	class:ONNX_NAMESPACE::Node	signature:(Node* n)
+destroy	/Users/akshayc/onnx/onnx/common/ir.h	/^inline void Node::destroy() {$/;"	function	line:1171	class:ONNX_NAMESPACE::Node	signature:()
+iterator	/Users/akshayc/onnx/onnx/common/ir.h	/^inline graph_node_list_iterator Node::iterator() {$/;"	function	line:1182	class:ONNX_NAMESPACE::Node	signature:()
+reverseIterator	/Users/akshayc/onnx/onnx/common/ir.h	/^inline graph_node_list_iterator Node::reverseIterator() {$/;"	function	line:1185	class:ONNX_NAMESPACE::Node	signature:()
+iterator	/Users/akshayc/onnx/onnx/common/ir.h	/^inline const_graph_node_list_iterator Node::iterator() const {$/;"	function	line:1188	class:ONNX_NAMESPACE::Node	signature:() const
+reverseIterator	/Users/akshayc/onnx/onnx/common/ir.h	/^inline const_graph_node_list_iterator Node::reverseIterator() const {$/;"	function	line:1191	class:ONNX_NAMESPACE::Node	signature:() const
+ONNX_NAMESPACE	/Users/akshayc/onnx/onnx/version_converter/convert.cc	/^namespace ONNX_NAMESPACE { namespace version_conversion {$/;"	namespace	line:3	file:
+version_conversion	/Users/akshayc/onnx/onnx/version_converter/convert.cc	/^namespace ONNX_NAMESPACE { namespace version_conversion {$/;"	namespace	line:3	namespace:ONNX_NAMESPACE	file:
+_version_converter	/Users/akshayc/onnx/onnx/version_converter/convert.cc	/^  static DefaultVersionConverter _version_converter;$/;"	member	line:6	namespace:ONNX_NAMESPACE::version_conversion::__anon1	file:
+ConvertVersion	/Users/akshayc/onnx/onnx/version_converter/convert.cc	/^ModelProto ConvertVersion($/;"	function	line:9	namespace:ONNX_NAMESPACE::version_conversion	signature:( const ModelProto& mp_in, const int target_version)
+convert_version	/Users/akshayc/onnx/onnx/version_converter/convert.cc	/^ModelProto DefaultVersionConverter::convert_version($/;"	function	line:24	class:ONNX_NAMESPACE::version_conversion::DefaultVersionConverter	signature:( const ModelProto& mp_in, const OpSetID& initial_version, const OpSetID& target_version) const
+ONNX_NAMESPACE	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^namespace ONNX_NAMESPACE { namespace version_conversion {$/;"	namespace	line:9
+version_conversion	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^namespace ONNX_NAMESPACE { namespace version_conversion {$/;"	namespace	line:9	namespace:ONNX_NAMESPACE
+DefaultVersionConverter	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^class DefaultVersionConverter : public BaseVersionConverter {$/;"	class	line:11	namespace:ONNX_NAMESPACE::version_conversion
+DEBUG	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^    bool DEBUG = false;$/;"	member	line:13	class:ONNX_NAMESPACE::version_conversion::DefaultVersionConverter
+all_schemas	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^    std::unordered_map<std::string, std::unordered_map<std::string, std::map<int64_t, const OpSchema*>>>  all_schemas;$/;"	member	line:16	class:ONNX_NAMESPACE::version_conversion::DefaultVersionConverter
+searchOpDomainMap	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^    bool searchOpDomainMap(const std::unordered_map<std::string, std::map<$/;"	function	line:18	class:ONNX_NAMESPACE::version_conversion::DefaultVersionConverter	signature:(const std::unordered_map<std::string, std::map< int64_t, const OpSchema*>>& op_domain_map, int64_t curr_version) const
+debug	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^    void debug(const std::string& str) const {$/;"	function	line:26	class:ONNX_NAMESPACE::version_conversion::DefaultVersionConverter	signature:(const std::string& str) const
+DefaultVersionConverter	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^    DefaultVersionConverter() {$/;"	function	line:31	class:ONNX_NAMESPACE::version_conversion::DefaultVersionConverter	signature:()
+override	/Users/akshayc/onnx/onnx/version_converter/convert.h	/^        const OpSetID& target_version) const override;$/;"	member	line:45	class:ONNX_NAMESPACE::version_conversion::DefaultVersionConverter
