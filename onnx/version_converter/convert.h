@@ -10,10 +10,9 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
   private:
-    bool DEBUG = false;
+    bool DEBUG = true;
 
-    // Map of All Versions of format {op_name: {domain: {version: schema}}}
-    std::unordered_map<std::string, std::unordered_map<std::string, std::map<int64_t, const OpSchema*>>>  all_schemas;
+    std::pair<int, int> version_range;
 
     bool searchOpDomainMap(const std::unordered_map<std::string, std::map<
       int64_t, const OpSchema*>>& op_domain_map, int64_t curr_version) const {
@@ -29,14 +28,35 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
   public:
     DefaultVersionConverter() {
+      const std::unordered_map<std::string, std::pair<int, int>>& versions_map =
+        OpSchemaRegistry::DomainToVersionRange::Instance().Map();
+      version_range = versions_map.at("");
       // Register adapters to the version converter
-      const std::vector<OpSchema>& all_opschemas = OpSchemaRegistry::get_all_schemas_with_history();
+      const std::vector<OpSchema>& all_opschemas =
+        OpSchemaRegistry::get_all_schemas_with_history();
 
       for (const OpSchema& schema : all_opschemas) {
-        all_schemas[schema.Name()][schema.domain()][(int64_t) schema.since_version()] = &schema;
+        all_schemas[schema.Name()][schema.domain()][(int64_t)
+          schema.since_version()] = &schema;
       }
 
-      // TODO: Iterate through all_schemas to determine NoPreviousVersionAdapters
+      // Iterate through all_schemas to determine NoPreviousVersionAdapters
+      for (auto& op_pair : all_schemas) {
+        const auto default_versions = op_pair.second.find("");
+        if (default_versions != op_pair.second.end()) {
+          int64_t min_version = version_range.second;
+          for (auto& version_pair : default_versions->second) {
+            if (version_pair.first < min_version) {
+              min_version = version_pair.first;
+            }
+          }
+          if (min_version > 1) {
+            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + std::to_string(min_version));
+            registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
+              OpSetID(min_version), OpSetID(min_version - 1)));
+          }
+        }
+      }
     }
 
     ModelProto convert_version(

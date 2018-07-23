@@ -60,9 +60,6 @@ ModelProto DefaultVersionConverter::convert_version(
   // }
 
   // Check if target_version is valid
-  const std::unordered_map<std::string, std::pair<int, int>>& versions_map = OpSchemaRegistry::DomainToVersionRange::Instance().Map();
-  const std::string search_domain = target_version.domain() == "ai.onnx" ? "" : target_version.domain();
-  const std::pair<int, int>& version_range = versions_map.at(search_domain);
   // TODO: Assert same for initial version
   ONNX_ASSERTM(target_version.version() >= version_range.first && target_version
       .version() <= version_range.second,

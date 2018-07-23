@@ -22,6 +22,9 @@ class BaseVersionConverter {
   protected:
     std::unordered_map<std::string, std::unordered_map<std::string, std::unordered_map<std::string, std::unique_ptr<Adapter>>>> adapters;
 
+    // Map of All Versions of format {op_name: {domain: {version: schema}}}
+    std::unordered_map<std::string, std::unordered_map<std::string, std::map<int64_t, const OpSchema*>>>  all_schemas;
+
   public:
     BaseVersionConverter() = default;
 
