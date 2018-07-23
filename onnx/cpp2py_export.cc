@@ -170,7 +170,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ValueInfoProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         checker::CheckerContext ctx(cctx);
-        checker::check_value_info(ctx, proto);
+        checker::check_value_info(proto,ctx);
         ctx.raise_error();
       });
 
@@ -180,7 +180,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         TensorProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         checker::CheckerContext ctx(cctx);
-        checker::check_tensor(ctx, proto);
+        checker::check_tensor(proto,ctx);
         ctx.raise_error();
       });
 
@@ -190,7 +190,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         AttributeProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         checker::CheckerContext ctx(cctx);
-        checker::check_attribute(ctx, proto, checker::LexicalScopeContext());
+        checker::check_attribute(proto, ctx, checker::LexicalScopeContext());
         ctx.raise_error();
       });
 
@@ -201,7 +201,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ParseProtoFromPyBytes(&proto, bytes);
         checker::CheckerContext ctx(cctx);
         checker::LexicalScopeContext lex_ctx;
-        checker::check_node(ctx, proto, lex_ctx);
+        checker::check_node(proto, ctx, lex_ctx);
         ctx.raise_error();
       });
 
@@ -212,7 +212,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         checker::CheckerContext ctx(cctx);
         ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
-        checker::check_graph(ctx, proto, lex_ctx);
+        checker::check_graph(proto, ctx, lex_ctx);
         ctx.raise_error();
       });
 
@@ -220,7 +220,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     ModelProto proto{};
     ParseProtoFromPyBytes(&proto, bytes);
     checker::CheckerContext ctx;
-    checker::check_model(ctx, proto);
+    checker::check_model(proto, ctx);
     ctx.raise_error();
   });
 

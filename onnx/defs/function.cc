@@ -59,7 +59,7 @@ Status FunctionBuilderRegistry::GetFunctions(
     CheckerContext ctx;
     LexicalScopeContext lex_ctx;
     try {
-      check_function(ctx, *function_proto, lex_ctx);
+      check_function(*function_proto, ctx, lex_ctx);
     } catch (ValidationError& ex) {
       return Common::Status(
           Common::CHECKER, Common::INVALID_PROTOBUF, ex.what());

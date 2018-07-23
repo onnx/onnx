@@ -94,30 +94,30 @@ struct LexicalScopeContext final {
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
-void check_value_info(CheckerContext& ctx, const ValueInfoProto& value_info);
-void check_tensor(CheckerContext& ctx, const TensorProto& tensor);
+void check_value_info(const ValueInfoProto& value_info, CheckerContext& ctx);
+void check_tensor(const TensorProto& tensor, CheckerContext& ctx);
 void check_attribute(
-    CheckerContext& ctx,
     const AttributeProto& attr,
+    CheckerContext& ctx,
     const LexicalScopeContext&);
 void check_node(
-    CheckerContext& ctx,
     const NodeProto& node,
+    CheckerContext& ctx,
     const LexicalScopeContext&);
 void check_node(
-    CheckerContext& ctx,
     const NodeProto& node,
     const GraphProto& graph,
+    CheckerContext& ctx,
     const LexicalScopeContext&);
 void check_graph(
-    CheckerContext& ctx,
     const GraphProto& graph,
+    CheckerContext& ctx,
     const LexicalScopeContext&);
 void check_function(
-    CheckerContext& ctx,
     const FunctionProto& function,
+    CheckerContext& ctx,
     const LexicalScopeContext&);
 
-void check_model(CheckerContext& ctx, const ModelProto& model);
+void check_model(const ModelProto& model, CheckerContext& ctx);
 } // namespace checker
 } // namespace ONNX_NAMESPACE

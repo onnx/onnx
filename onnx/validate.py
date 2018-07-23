@@ -1,7 +1,7 @@
-"""onnx checker
+"""onnx validation
 
-This implements graphalities that allows us to check whether a serialized
-proto is legal.
+This tool checks whether the models in a given set of files
+conform to the ONNX specification.
 """
 from __future__ import absolute_import
 from __future__ import division

@@ -127,7 +127,7 @@ bool check_domain_syntax(const std::string& name) {
     }                                               \
   } while (0)
 
-void check_value_info(CheckerContext& ctx, const ValueInfoProto& value_info) {
+void check_value_info(const ValueInfoProto& value_info, CheckerContext& ctx) {
   enforce_non_empty_field(value_info, name);
   enforce_has_field(value_info, type);
   const auto value_case = value_info.type().value_case();
@@ -197,7 +197,7 @@ void check_value_info(CheckerContext& ctx, const ValueInfoProto& value_info) {
   }
 }
 
-void check_tensor(CheckerContext& ctx, const TensorProto& tensor) {
+void check_tensor(const TensorProto& tensor, CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check(
@@ -304,8 +304,8 @@ void check_tensor(CheckerContext& ctx, const TensorProto& tensor) {
 // NB: This is a generic "attribute well-formedness" check, it doesn't
 // actually test if an attribute is valid per a schema
 void check_attribute(
-    CheckerContext& ctx,
     const AttributeProto& attr,
+    CheckerContext& ctx,
     const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(attr, name);
   enforce_c_identifier(attr, name);
@@ -395,27 +395,27 @@ void check_attribute(
   }
 
   if (attr.has_t()) {
-    check_tensor(ctx, attr.t());
+    check_tensor(attr.t(), ctx);
   }
 
   if (attr.has_g()) {
-    check_graph(ctx, attr.g(), lex_ctx);
+    check_graph(attr.g(), ctx, lex_ctx);
   }
 
   for (const auto& tensor : attr.tensors()) {
-    check_tensor(ctx, tensor);
+    check_tensor(tensor, ctx);
   }
   for (const auto& graph : attr.graphs()) {
-    check_graph(ctx, graph, lex_ctx);
+    check_graph(graph, ctx, lex_ctx);
   }
 }
 
 void check_node(
-    CheckerContext& ctx,
     const NodeProto& node,
     const GraphProto& graph,
+    CheckerContext& ctx,
     const LexicalScopeContext& lex_ctx) {
-  check_node(ctx, node, lex_ctx);
+  check_node(node, ctx, lex_ctx);
 
   // Resolve domain for node
   auto domain = node.domain();
@@ -435,8 +435,8 @@ void check_node(
 }
 
 void check_node(
-    CheckerContext& ctx,
     const NodeProto& node,
+    CheckerContext& ctx,
     const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(node, op_type);
 
@@ -480,7 +480,7 @@ void check_node(
   auto domain_version = dit->second;
 
   for (const auto& attr : node.attribute()) {
-    check_attribute(ctx, attr, lex_ctx);
+    check_attribute(attr, ctx, lex_ctx);
   }
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(
@@ -490,14 +490,14 @@ void check_node(
 }
 
 void check_graph(
-    CheckerContext& ctx,
     const GraphProto& graph,
+    CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(graph, name);
   enforce_c_identifier(graph, name);
 
   for (const auto& value_info : graph.input()) {
-    check_value_info(ctx, value_info);
+    check_value_info(value_info, ctx);
     if (!check_name_syntax(value_info.name())) {
       fail_check(
           ctx,
@@ -507,7 +507,7 @@ void check_graph(
     }
   }
   for (const auto& value_info : graph.output()) {
-    check_value_info(ctx, value_info);
+    check_value_info(value_info, ctx);
     if (!check_name_syntax(value_info.name())) {
       fail_check(
           ctx,
@@ -517,7 +517,7 @@ void check_graph(
     }
   }
   for (const auto& value_info : graph.value_info()) {
-    check_value_info(ctx, value_info);
+    check_value_info(value_info, ctx);
     if (!check_name_syntax(value_info.name())) {
       fail_check(
           ctx,
@@ -562,7 +562,7 @@ void check_graph(
       fail_check(ctx, init.name() + " in initializer but not in graph input.");
     }
     enforce_c_identifier(init, name);
-    check_tensor(ctx, init);
+    check_tensor(init, ctx);
   }
 
   for (const auto& node : graph.node()) {
@@ -588,7 +588,7 @@ void check_graph(
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
     try {
-      check_node(ctx, node, graph, lex_ctx);
+      check_node(node, graph, ctx, lex_ctx);
     } catch (ValidationError& ex) {
       ex.AppendContext("Bad node spec: " + ProtoDebugString(node));
       throw ex;
@@ -612,8 +612,8 @@ void check_graph(
 }
 
 void check_function(
-    CheckerContext& ctx,
     const FunctionProto& function,
+    CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
@@ -672,7 +672,7 @@ void check_function(
 
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
-    check_node(ctx, node, lex_ctx);
+    check_node(node, ctx, lex_ctx);
     // check for SSA form
     for (const auto& output : node.output()) {
       // optional output
@@ -691,7 +691,7 @@ void check_function(
   }
 }
 
-void check_model(CheckerContext& ctx, const ModelProto& m) {
+void check_model(const ModelProto& m, CheckerContext& ctx) {
   ModelProto model(m);
 
   if (!model.ir_version()) {
@@ -769,7 +769,7 @@ void check_model(CheckerContext& ctx, const ModelProto& m) {
 
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
-  check_graph(ctx, model.graph(), lex_ctx);
+  check_graph(model.graph(), ctx, lex_ctx);
 }
 
 #undef fail_check
