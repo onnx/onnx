@@ -41,6 +41,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       for (const OpSchema& schema : all_opschemas) {
         all_schemas[schema.Name()][schema.domain()][(int64_t)
           schema.since_version()] = &schema;
+          debug("Schema for " + schema.Name());
       }
 
       // Iterate through all_schemas to determine NoPreviousVersionAdapters

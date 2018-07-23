@@ -71,11 +71,13 @@ ModelProto DefaultVersionConverter::convert_version(
   // Iterate over all versions to target_version for specified
   int64_t curr_version = initial_version.version();
   int64_t step;
+  bool up;
   if (target_version.version() > initial_version.version()) {
-    curr_version++;
     step = 1;
+    up = true;
   } else {
     step = -1;
+    up = false;
   }
   // Identify index of this domain in g.opset_versions
   unsigned int domain_index = 0;
@@ -89,8 +91,9 @@ ModelProto DefaultVersionConverter::convert_version(
         std::to_string(curr_version + step));
     // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
     for (Node* op : nodes) {
+      debug(std::string("Finding schema for ") + std::string(op->kind().toString()));
       auto& op_domain_map = all_schemas.at(op->kind().toString());
-      if (searchOpDomainMap(op_domain_map, curr_version, step)) {
+      if (searchOpDomainMap(op_domain_map, curr_version, step, up)) {
         // Op is specifically defined for this domain and version
         OpSetID curr_id(curr_version);
         OpSetID next_id(curr_version + step);
