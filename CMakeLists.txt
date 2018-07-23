@@ -227,7 +227,7 @@ endfunction()
 RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_proto PROTO_SRCS PROTO_HDRS ${ONNX_ROOT} ""
     onnx/onnx.in.proto
 )
-RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 ${ONNX_ROOT} gen_onnx_proto 
+RELATIVE_PROTOBUF_GENERATE_CPP(gen_onnx_operators_proto PROTO_SRCS2 PROTO_HDRS2 ${ONNX_ROOT} gen_onnx_proto
     onnx/onnx-operators.in.proto
 )
 list(APPEND PROTO_SRCS ${PROTO_SRCS2})
@@ -239,8 +239,8 @@ file(GLOB_RECURSE onnx_src
     "${ONNX_ROOT}/onnx/*.cc"
 )
 file(GLOB_RECURSE onnx_gtests_src
-    "${ONNX_ROOT}/onnx/test/c++/*.h"
-    "${ONNX_ROOT}/onnx/test/c++/*.cc"
+    "${ONNX_ROOT}/onnx/test/cpp/*.h"
+    "${ONNX_ROOT}/onnx/test/cpp/*.cc"
 )
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
@@ -407,9 +407,16 @@ add_library(onnxifi_loader STATIC onnx/onnxifi_loader.c)
 set_target_properties(onnxifi_loader PROPERTIES
   C_STANDARD 90
   C_EXTENSIONS NO)
-target_link_libraries(onnxifi_loader PUBLIC onnxifi)
+target_link_libraries(onnxifi_loader PUBLIC onnxifi ${CMAKE_DL_LIBS})
 target_include_directories(onnxifi_loader PUBLIC onnx)
 target_include_directories(onnxifi_loader PUBLIC ${ONNX_ROOT})
+
+# ---[ ONNXIFI dummy backend
+add_library(onnxifi_dummy SHARED onnx/onnxifi_dummy.c)
+target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
+target_include_directories(onnxifi_dummy PUBLIC onnx)
+target_include_directories(onnxifi_dummy PUBLIC ${ONNX_ROOT})
+target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
 
 install(TARGETS onnx onnx_proto
     DESTINATION lib)
@@ -419,6 +426,8 @@ install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
     FILES_MATCHING
     PATTERN "*.h")
+install(TARGETS onnx onnx_proto onnxifi_dummy
+	DESTINATION lib)
 if(ONNX_BUILD_TESTS)
 	include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
