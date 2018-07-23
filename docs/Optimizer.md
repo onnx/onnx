@@ -33,7 +33,7 @@ ModelProto Optimize(
 which accepts an input `ModelProto` and a list of optimization passes to
 apply, and which returns a new `ModelProto` which is the result of
 applying each of the named passes in sequence to the model. For a list
-of available passes, see [optimize.h](onnx/optimizer/optimize.h).
+of available passes, see [optimize.h](/onnx/optimizer/optimize.h).
 
 ## Implementing Optimization Passes
 
@@ -41,8 +41,8 @@ You can implement a new optimization pass by subclassing
 `OptimizePass`, and registering your new pass with
 `Optimizer::registerOptimizer()`. Optimization passes operate (at your
 option) either directly on the protobuf structs, or on an in-memory
-graph representation defined in [ir.h](onnx/common/ir.h). There are a
-number of examples in the [passes](onnx/optimizer/passes) directory.
+graph representation defined in [ir.h](/onnx/common/ir.h). There are a
+number of examples in the [passes](/onnx/optimizer/passes) directory.
 
 If your pass is at all generally applicable, please consider adding it
 to the core ONNX repository.
