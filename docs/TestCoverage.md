@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 90/95 (94.74%, 5 generators excluded) common operators.
+Node tests have covered 90/98 (91.84%, 5 generators excluded) common operators.
 
 Node tests have covered 1/15 (6.67%, 0 generators excluded) experimental operators.
 
@@ -5540,6 +5540,9 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F494;No Cover Common Operators
+### Conv_Integer (call for test cases)
+
+
 ### GlobalLpPool (call for test cases)
 
 
@@ -5547,6 +5550,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### LpPool (call for test cases)
+
+
+### MatMul_Integer (call for test cases)
 
 
 ### MaxRoiPool (call for test cases)
@@ -5565,6 +5571,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### RandomUniformLike (random generator operator)
+
+
+### ReduceSum_Integer (call for test cases)
 
 
 ### SpaceToDepth (call for test cases)
