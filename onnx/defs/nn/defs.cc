@@ -294,7 +294,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The indices are computed as flatten 1-D tensor, "
             "and the indices do not consider padding. "
             "So the values in indices are in [0, N x C x D1 x ... x Dn).",
-            "T",
+            "I",
             OpSchema::Optional)
         .TypeConstraint(
             "I",
