@@ -15,11 +15,14 @@ class DefaultVersionConverter : public BaseVersionConverter {
     std::pair<int, int> version_range;
 
     bool searchOpDomainMap(const std::unordered_map<std::string, std::map<
-      int64_t, const OpSchema*>>& op_domain_map, int64_t curr_version) const {
+      int64_t, const OpSchema*>>& op_domain_map, int64_t curr_version,
+      int64_t step, bool up) const {
       const auto version_it = op_domain_map.find("");
       return version_it != op_domain_map.end() &&
-          version_it->second.find(curr_version) !=
-          version_it->second.end();
+          ((version_it->second.find(curr_version) !=
+          version_it->second.end() && !up) ||
+          (version_it->second.find(curr_version + step) !=
+          version_it->second.end() && up));
     }
 
     void debug(const std::string& str) const {

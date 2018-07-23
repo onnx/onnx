@@ -10,7 +10,6 @@
 #include <utility>
 #include <iostream>
 #include <stdlib.h>
-// TODO: Remove this import once actual adapters are imported
 #include "onnx/version_converter/adapters/adapter.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
