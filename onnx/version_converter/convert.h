@@ -4,7 +4,7 @@
 #pragma once
 
 #include "onnx/version_converter/BaseConverter.h"
-#include "onnx/version_converter/adapters/NoPreviousVersionAdapter.h"
+#include "onnx/version_converter/adapters/no_previous_version.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
