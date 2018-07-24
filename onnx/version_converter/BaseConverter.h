@@ -37,8 +37,8 @@ class BaseVersionConverter {
         const OpSetID& initial_version,
         const OpSetID& target_version) const {
       const std::string op_name = op->kind().toString();
-      const std::string& initial = initial_version.toString();
-      const std::string& target = target_version.toString();
+      const std::string initial = initial_version.toString();
+      const std::string target = target_version.toString();
       // Find appropriate adapter in adapters map for provided initial and target versions
       // TODO: Consider abstracting elements of this that are specific to
       // DefaultConverter to separate methods here and maintain the procedure in Base Converter

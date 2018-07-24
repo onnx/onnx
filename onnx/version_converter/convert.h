@@ -35,7 +35,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSchemaRegistry::DomainToVersionRange::Instance().Map();
       version_range = versions_map.at("");
       // Register adapters to the version converter
-      const std::vector<OpSchema>& all_opschemas =
+      const std::vector<OpSchema> all_opschemas =
         OpSchemaRegistry::get_all_schemas_with_history();
 
       for (const OpSchema& schema : all_opschemas) {

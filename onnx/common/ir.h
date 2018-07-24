@@ -786,7 +786,7 @@ class OpSetID final {
       :domain_(""), version_(version) {}
 
     explicit OpSetID(const std::string& domain, int64_t version)
-      :domain_(domain), version_(version) {}
+      :domain_(std::move(domain)), version_(version) {}
 
     // target must be in the form "<domain>&<version>"
     std::string toString() const {
@@ -809,7 +809,7 @@ class OpSetID final {
       return domain_;
     }
 
-    const int64_t version() const {
+    int64_t version() const {
       return version_;
     }
 
