@@ -7,8 +7,8 @@
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct RemoveConsumedInputs final : public Adapter {
-  explicit RemoveConsumedInputs(const std::string& op_name, const OpSetID&
-    initial, const OpSetID& target): Adapter(std::move(op_name), std::move(
+  explicit RemoveConsumedInputs(const std::string op_name, const OpSetID
+    initial, const OpSetID target): Adapter(std::move(op_name), std::move(
       initial), std::move(target)) {}
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

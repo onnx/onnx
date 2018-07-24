@@ -8,8 +8,8 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class BroadcastBackwardCompatibility final : public Adapter {
   public:
-    explicit BroadcastBackwardCompatibility(const std::string& op_name, const OpSetID&
-      initial, const OpSetID& target): Adapter(std::move(op_name), std::move(
+    explicit BroadcastBackwardCompatibility(const std::string op_name, const OpSetID
+      initial, const OpSetID target): Adapter(std::move(op_name), std::move(
         initial), std::move(target)) {}
 
     void adapt_broadcast_backward_compatibility(std::shared_ptr<Graph> graph, Node* node) const {

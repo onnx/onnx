@@ -9,8 +9,8 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct BackwardsCompatibleAdapter final : public Adapter {
   // TODO: Should these be &&?
-  explicit BackwardsCompatibleAdapter(const std::string& op_name, const OpSetID&
-    initial, const OpSetID& target): Adapter(std::move(op_name), std::move(
+  explicit BackwardsCompatibleAdapter(const std::string op_name, const OpSetID
+    initial, const OpSetID target): Adapter(std::move(op_name), std::move(
       initial), std::move(target)) {}
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {}
