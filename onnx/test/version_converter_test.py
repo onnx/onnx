@@ -361,5 +361,6 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 6
 
+
 if __name__ == '__main__':
     unittest.main()
