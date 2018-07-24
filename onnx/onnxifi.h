@@ -47,16 +47,6 @@ extern "C" {
   #endif
 #endif
 
-#if defined(ONNXIFI_LIBRARY_SUFFIX)
-#define ONNXIFI_SYMBOL_CONCAT_(prefix, suffix) prefix##suffix
-#define ONNXIFI_SYMBOL_CONCAT(prefix, suffix) \
-  ONNXIFI_SYMBOL_CONCAT_(prefix, suffix)
-#define ONNXIFI_SYMBOL_NAME(symbol_name) \
-  ONNXIFI_SYMBOL_CONCAT(symbol_name, ONNXIFI_BACKEND_SUFFIX)
-#else
-#define ONNXIFI_SYMBOL_NAME(symbol_name) symbol_name
-#endif
-
 #include <stddef.h>
 
 #if !defined(ONNXIFI_NO_STDINT_H)
@@ -735,7 +725,7 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxGetBackendIDs)(
+  onnxGetBackendIDs(
     onnxBackendID* backendIDs,
     size_t* numBackends);
 
@@ -758,7 +748,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseBackendID)(
+  onnxReleaseBackendID(
     onnxBackendID backendID);
 
 /**
@@ -837,7 +827,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                            uninstalled from the system.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxGetBackendInfo)(
+  onnxGetBackendInfo(
     onnxBackendID backendID,
     onnxBackendInfo infoType,
     void* infoValue,
@@ -956,7 +946,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxGetBackendCompatibility)(
+  onnxGetBackendCompatibility(
     onnxBackendID backendID,
     size_t onnxModelSize,
     const void* onnxModel);
@@ -982,6 +972,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                was successfully initialized.
  * @retval ONNXIFI_STATUS_INVALID_ID The function call failed because backendID
  *                                   is not an ONNXIFI backend ID.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        backend pointer is NULL.
  * @retval ONNXIFI_STATUS_INVALID_PARAMETER The function call failed because one
  *                                          of the initialization parameter
  *                                          values is invalid.
@@ -1012,7 +1004,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxInitBackend)(
+  onnxInitBackend(
     onnxBackendID backendID,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
@@ -1036,7 +1028,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseBackend)(
+  onnxReleaseBackend(
     onnxBackend backend);
 
 /**
@@ -1080,7 +1072,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxInitEvent)(
+  onnxInitEvent(
     onnxBackend backend,
     onnxEvent* event);
 
@@ -1105,7 +1097,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxSignalEvent)(
+  onnxSignalEvent(
     onnxEvent event);
 
 /**
@@ -1128,7 +1120,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxWaitEvent)(
+  onnxWaitEvent(
     onnxEvent event);
 
 /**
@@ -1146,7 +1138,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseEvent)(
+  onnxReleaseEvent(
     onnxEvent event);
 
 /**
@@ -1213,8 +1205,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                        backend is not an ONNXIFI backend
  *                                        handle.
  * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
- *                                        onnxModel or weightDescriptors is
- *                                        NULL.
+ *                                        onnxModel, weightDescriptors, or graph
+ *                                        pointer is NULL.
  * @retval ONNXIFI_STATUS_INVALID_SIZE The function call failed because
  *                                     onnxModelSize is 0.
  * @retval ONNXIFI_STATUS_INVALID_PROTOBUF The function call failed because it
@@ -1313,7 +1305,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxInitGraph)(
+  onnxInitGraph(
     onnxBackend backend,
     size_t onnxModelSize,
     const void* onnxModel,
@@ -1424,7 +1416,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxSetGraphIO)(
+  onnxSetGraphIO(
     onnxGraph graph,
     uint32_t inputsCount,
     const onnxTensorDescriptor* inputDescriptors,
@@ -1470,6 +1462,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the all graph
  *                                inputs and outputs were matched to a memory
  *                                location.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because
+ *                                        inputFence or outputFence pointer is
+ *                                        NULL.
  * @retval ONNXIFI_STATUS_INVALID_GRAPH The function call failed because
  *                                      graph is not an ONNXIFI graph handle.
  * @retval ONNXIFI_STATUS_UNIDENTIFIED_NAME The function call failed because
@@ -1502,7 +1497,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxRunGraph)(
+  onnxRunGraph(
     onnxGraph graph,
     const onnxMemoryFence* inputFence,
     onnxMemoryFence* outputFence);
@@ -1525,7 +1520,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       unrecovered internal error.
  */
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
-  ONNXIFI_SYMBOL_NAME(onnxReleaseGraph)(
+  onnxReleaseGraph(
     onnxGraph graph);
 
 #ifdef __cplusplus

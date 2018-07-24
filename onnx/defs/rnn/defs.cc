@@ -300,7 +300,7 @@ Equations (Default: f=Sigmoid, g=Tanh):
 
   - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
 
-  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh) + Wbh) # when linear_before_reset != 0
+  - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
 
   - Ht = (1 - zt) (.) ht + zt (.) Ht-1
 )DOC";

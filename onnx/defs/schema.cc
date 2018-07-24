@@ -298,6 +298,14 @@ void OpSchema::Verify(
           "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
+    if (attr_proto.has_ref_attr_name()) {
+      if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
+        fail_check(ctx,
+            "Mismatched attribute type in '", node.name() + " : " + name, "'");
+      }
+      continue;
+    }
+
     switch (expected_type) {
       case AttributeProto::FLOAT:
         if (!attr_proto.has_f()) {
@@ -355,16 +363,16 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
 }
 
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n)
-                            ->bool {
+  num_inputs_allowed_ =
+      [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n)
-                             ->bool {
+  num_outputs_allowed_ =
+      [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n);
   };
   return *this;
