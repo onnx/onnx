@@ -707,6 +707,10 @@ void check_model(const ModelProto& m, CheckerContext& ctx) {
   if (ir_version > IR_VERSION) {
     fail_check(ctx, "Your model's ir_version is higher than the checker's.");
   }
+
+#if 0
+  // TODO: This check is disabled pending resolution of ONNX issue #1222:
+  // https://github.com/onnx/onnx/issues/1222
   if (ir_version > 2) {
     if (model.domain().empty()) {
       fail_check(ctx, "The model does not have a domain defined.");
@@ -714,6 +718,7 @@ void check_model(const ModelProto& m, CheckerContext& ctx) {
       enforce_domain_name_rules(model, domain);
     }
   }
+#endif
 
   if (model.metadata_props_size() > 1) {
     std::unordered_set<std::string> keys;
