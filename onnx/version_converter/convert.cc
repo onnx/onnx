@@ -262,7 +262,7 @@ ModelProto DefaultVersionConverter::convert_version(
     // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
     for (Node* op : nodes) {
       debug(std::string("Finding schema for ") + std::string(op->kind().toString()));
-      const std::string& op_name = op->kind().toString();
+      const std::string op_name = op->kind().toString();
       if (op_name != "Undefined") {
         auto& op_domain_map = all_schemas.at(op_name);
         if (searchOpDomainMap(op_domain_map, curr_version, step, up)) {
