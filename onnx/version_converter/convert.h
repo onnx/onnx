@@ -20,7 +20,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
   private:
-    bool DEBUG = false;
+    bool DEBUG = true;
 
     std::pair<int, int> version_range;
 
@@ -65,19 +65,25 @@ class DefaultVersionConverter : public BaseVersionConverter {
       // Register adapters to the version converter
       const std::vector<OpSchema> all_opschemas =
         OpSchemaRegistry::get_all_schemas_with_history();
-      registerAdapter(make_unique<Adapter>(Add_7_6()));
-      registerAdapter(make_unique<Adapter>(Add_6_7()));
-      registerAdapter(make_unique<Adapter>(Relu_5_6()));
-      registerAdapter(make_unique<Adapter>(
-        BackwardsCompatibleAdapter("Relu", OpSetID(6), OpSetID(5))));
-      registerAdapter(std::unique_ptr<Adapter>(new
-        BackwardsCompatibleAdapter("BatchNormalization", OpSetID(7), OpSetID(6))));
-      registerAdapter(std::unique_ptr<Adapter>(new
-        BatchNormalization_6_7()));
-      registerAdapter(std::unique_ptr<Adapter>(new
-        BatchNormalization_6_5()));
-      registerAdapter(make_unique<NoPreviousVersionAdapter>("Cos",
-        OpSetID(7), OpSetID(6)));
+
+      // Iterate through all_schemas to determine NoPreviousVersionAdapters
+      for (auto& op_pair : all_schemas) {
+        const auto default_versions = op_pair.second.find("");
+        if (default_versions != op_pair.second.end()) {
+          int64_t min_version = version_range.second;
+          for (auto& version_pair : default_versions->second) {
+            if (version_pair.first < min_version) {
+              min_version = version_pair.first;
+            }
+          }
+          if (min_version > 1) {
+            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + std::to_string(min_version));
+            registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
+              OpSetID(min_version), OpSetID(min_version - 1)));
+          }
+        }
+      }
+
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
