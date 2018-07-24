@@ -8,8 +8,8 @@
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
 struct NoPreviousVersionAdapter final : public Adapter {
-  explicit NoPreviousVersionAdapter(const std::string& op_name, const OpSetID
-    initial, const OpSetID target): Adapter(op_name,
+  explicit NoPreviousVersionAdapter(const std::string op_name, const OpSetID
+    initial, const OpSetID target): Adapter(std::move(op_name),
     std::move(initial), std::move(target)) {}
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
