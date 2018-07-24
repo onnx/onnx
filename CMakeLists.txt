@@ -408,24 +408,49 @@ set_target_properties(onnxifi_loader PROPERTIES
   C_STANDARD 90
   C_EXTENSIONS NO)
 target_link_libraries(onnxifi_loader PUBLIC onnxifi ${CMAKE_DL_LIBS})
+if(${ONNX_USE_MSVC_STATIC_RUNTIME})
+	if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+		target_compile_options(onnxifi_loader PRIVATE /MTd)
+	else()
+		target_compile_options(onnxifi_loader PRIVATE /MT)
+	endif()
+else()
+	if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+		target_compile_options(onnxifi_loader PRIVATE /MDd)
+	else()
+		target_compile_options(onnxifi_loader PRIVATE /MD)
+	endif()
+endif()
 target_include_directories(onnxifi_loader PUBLIC onnx)
 target_include_directories(onnxifi_loader PUBLIC ${ONNX_ROOT})
 
 # ---[ ONNXIFI dummy backend
 add_library(onnxifi_dummy SHARED onnx/onnxifi_dummy.c)
-target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
+target_link_libraries(onnxifi_dummy PUBLIC onnxifi)
 target_include_directories(onnxifi_dummy PUBLIC onnx)
 target_include_directories(onnxifi_dummy PUBLIC ${ONNX_ROOT})
 target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
-
+if(${ONNX_USE_MSVC_STATIC_RUNTIME})
+	if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+		target_compile_options(onnxifi_dummy PRIVATE /MTd)
+	else()
+		target_compile_options(onnxifi_dummy PRIVATE /MT)
+	endif()
+else()
+	if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+		target_compile_options(onnxifi_dummy PRIVATE /MDd)
+	else()
+		target_compile_options(onnxifi_dummy PRIVATE /MD)
+	endif()
+endif()
 install(TARGETS onnx onnx_proto
-    DESTINATION lib)
+	DESTINATION lib)
 install(DIRECTORY ${ONNX_ROOT}/onnx DESTINATION include
-    FILES_MATCHING
-    PATTERN "*.h")
+	FILES_MATCHING
+	PATTERN "*.h")
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx DESTINATION include
-    FILES_MATCHING
-    PATTERN "*.h")
+	FILES_MATCHING
+	PATTERN "*.h")
 install(TARGETS onnx onnx_proto onnxifi_dummy
 	DESTINATION lib)
 if(ONNX_BUILD_TESTS)
