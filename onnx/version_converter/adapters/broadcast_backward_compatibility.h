@@ -46,7 +46,7 @@ class BroadcastBackwardCompatibility final : public Adapter {
         // Unnecessary if 1) all inputs are 1, 2) B is empty, 3) dimensions match
         // in reverse (assume this is required for model to compile in the first place?)
         int axis = (int) A_sizes.size() - (int) B_sizes.size();
-        for (int i = B_sizes.size() - 1; i >= 0; i--) {
+        for (int i = (int) B_sizes.size() - 1; i >= 0; i--) {
           ONNX_ASSERTM(axis >= 0, "Inputs are not broadcastable: no positive axis "
             "found to align dimensions.");
           if (B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1) {
