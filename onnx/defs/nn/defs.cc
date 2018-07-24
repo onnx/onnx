@@ -29,6 +29,14 @@ void convPoolTypeAndShapeInference(
     bool use_dilation,
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType ||
+        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
 
   // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
@@ -145,6 +153,13 @@ void convPoolTypeAndShapeInference(
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
   }
+
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto second_output_shape =
+      ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+    second_output_shape->CopyFrom(*output_shape);
+  }
 }
 
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
@@ -256,6 +271,35 @@ ONNX_OPERATOR_SET_SCHEMA(
         "MaxPool",
         "max",
         "The output of each pooling window is maximum number of elements exclude pad.")));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    8,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator(
+            "MaxPool",
+            "max",
+            "The output of each pooling window is maximum number of elements exclude pad."))
+        .Attr(
+            "storage_order",
+            "The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Output(
+            1,
+            "Indices",
+            "Indices tensor from max pooling across the input tensor. "
+            "The dimensions of indices are the same as output tensor. "
+            "The values in indices of are the indices of the selected values during pooling. "
+            "The indices are computed as flatten 1-D tensor, "
+            "and the indices do not consider padding. "
+            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
+            "T",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "I",
+            {"tensor(int64)"},
+            "Constrain index tensor to int64"));
 
 } // namespace ONNX_NAMESPACE
 
