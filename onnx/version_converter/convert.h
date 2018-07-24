@@ -20,7 +20,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
   private:
-    bool DEBUG = true;
+    bool DEBUG = false;
 
     std::pair<int, int> version_range;
 
@@ -65,6 +65,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
       // Register adapters to the version converter
       const std::vector<OpSchema> all_opschemas =
         OpSchemaRegistry::get_all_schemas_with_history();
+
+      for (const OpSchema& schema : all_opschemas) {
+        all_schemas[schema.Name()][schema.domain()][(int64_t)
+          schema.since_version()] = &schema;
+          debug("Schema for " + schema.Name());
+      }
 
       // Iterate through all_schemas to determine NoPreviousVersionAdapters
       for (auto& op_pair : all_schemas) {
