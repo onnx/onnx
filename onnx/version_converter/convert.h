@@ -15,6 +15,7 @@
 #include "onnx/version_converter/adapters/concat_3_4.h"
 #include "onnx/version_converter/adapters/concat_4_3.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
+#include "onnx/version_converter/adapters/reshape_4_5.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -119,23 +120,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Concat_3_4>());
       registerAdapter(make_unique<Concat_4_3>());
       registerAdapter(make_unique<Reshape_5_4>());
-
-      // Iterate through all_schemas to determine NoPreviousVersionAdapters
-      for (auto& op_pair : all_schemas) {
-        const auto default_versions = op_pair.second.find("");
-        if (default_versions != op_pair.second.end()) {
-          int64_t min_version = version_range.second;
-          for (auto& version_pair : default_versions->second) {
-            if (version_pair.first < min_version) {
-              min_version = version_pair.first;
-            }
-          }
-          if (min_version > 1) {
-            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + ONNX_NAMESPACE::to_string(min_version));
-            registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
-              OpSetID(min_version), OpSetID(min_version - 1)));
-        }
-      }
+      registerAdapter(make_unique<Reshape_4_5>());
     }
 
     ModelProto convert_version(
