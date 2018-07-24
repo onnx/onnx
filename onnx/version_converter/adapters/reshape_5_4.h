@@ -19,7 +19,7 @@ class Reshape_5_4 final : public Adapter {
       ONNX_ASSERTM(!shapeRef.empty(), "Output shape must be provided "
         "as a static input.");
       std::vector<int64_t> shape;
-      for (int i = 0; i < shapeRef.size(); i++) {
+      for (int i = 0; i < (int) shapeRef.size(); i++) {
         shape.emplace_back(shapeRef[i].dim);
       }
       node->removeInput(1);

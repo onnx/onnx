@@ -27,7 +27,7 @@ class BroadcastBackwardCompatibility final : public Adapter {
       bool equalDims = false;
       if (A_sizes.size() == B_sizes.size()) {
         equalDims = true;
-        for (int i = 0; i < A_sizes.size(); i++) {
+        for (int i = 0; i < (int) A_sizes.size(); i++) {
           if (A_sizes[i].dim != B_sizes[i].dim) {
             equalDims = false;
           }
@@ -57,7 +57,7 @@ class BroadcastBackwardCompatibility final : public Adapter {
             i++;
           }
         }
-        if (axis != A_sizes.size() - B_sizes.size()) {
+        if (axis != (int) (A_sizes.size() - B_sizes.size())) {
           // Add axis attribute
           node->i_(kaxis, axis);
         }
