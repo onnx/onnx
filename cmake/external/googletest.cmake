@@ -26,6 +26,5 @@ ExternalProject_Add(googletest
         -DCMAKE_BUILD_TYPE:STRING=Release
         -DBUILD_GMOCK:BOOL=OFF
         -DBUILD_GTEST:BOOL=ON
-		-DBUILD_SHARED_LIBS:BOOL=OFF
         -Dgtest_force_shared_crt:BOOL=OFF
 )
