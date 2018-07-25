@@ -223,9 +223,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     auto vip = gp.input(i);
     auto v = g->addInput();
     v->setElemType(vip.type().tensor_type().elem_type());
-    if (vip.type().tensor_type().has_shape()) {
-      v->setSizes(tensorShapeProtoToDimensions(vip.type().tensor_type().shape()));
-    }
+    v->setSizes(tensorShapeProtoToDimensions(vip.type().tensor_type().shape()));
     v->setUniqueName(vip.name());
     value_by_name_of[vip.name()] = v;
   }
@@ -277,9 +275,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   for (int i = 0; i < gp.output_size(); i++) {
     value_by_name_of[gp.output(i).name()]->setElemType(gp.output(i).type().tensor_type().elem_type());
-    if (gp.output(i).type().tensor_type().has_shape()) {
-      value_by_name_of[gp.output(i).name()]->setSizes(tensorShapeProtoToDimensions(gp.output(i).type().tensor_type().shape()));
-    }
+    value_by_name_of[gp.output(i).name()]->setSizes(tensorShapeProtoToDimensions(gp.output(i).type().tensor_type().shape()));
     g->registerOutput(value_by_name_of[gp.output(i).name()]);
   }
 
