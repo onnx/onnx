@@ -1319,9 +1319,23 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * Set locations for inputs and outputs of an ONNXIFI graph.
  *
  * The caller MUST ensure that the memory buffers specified for input and output
- * tensors remain accessible for the life-time of the ONNXIFI graph. The caller
- * can discard other data data in tensor descriptors, including shape, once the
- * function returns.
+ * tensors remain accessible until all in-flight graph executions which use
+ * specified buffer locations complete AND
+ * - Either a next call to onnxSetGraphIO specifies different buffer locations
+ * - Or the graph is deinitialized via onnxReleaseGraph
+ * The caller can invalidate other data in tensor descriptors, including shape,
+ * once the function returns.
+ *
+ * Calls to onnxRunGraph WILL use input and output locations specified in the
+ * preceeding onnxSetGraphIO on the same graph. Asynchronous graph executions
+ * that were in-flight before onnxSetGraphIO call will continue to use buffer
+ * locations that were current when these graph executions started. An ONNXIFI
+ * implementation MAY block inside onnxSetGraphIO until all in-flight graph
+ * executions that started before the call complete.
+ *
+ * If a call to onnxSetGraphIO fails, it invalidates input and output locations
+ * for the graph, and a subsequent call to onnxRunGraph will fail with
+ * ONNXIFI_STATUS_UNIDENTIFIED_NAME.
  *
  * @param graph - graph handle created by onnxInitGraph.
  * @param inputsCount - number of elements in the inputDescriptors array.
