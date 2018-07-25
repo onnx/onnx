@@ -97,7 +97,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitGraph(
     size_t onnxModelSize,
     const void* onnxModel,
     uint32_t weightCount,
-    const onnxTensorDescriptor* weightDescriptors,
+    const onnxTensorDescriptorV1* weightDescriptors,
     onnxGraph* graph) {
   if (graph == NULL) {
     return ONNXIFI_STATUS_INVALID_POINTER;
@@ -109,16 +109,16 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitGraph(
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxSetGraphIO(
     onnxGraph graph,
     uint32_t inputsCount,
-    const onnxTensorDescriptor* inputDescriptors,
+    const onnxTensorDescriptorV1* inputDescriptors,
     uint32_t outputsCount,
-    const onnxTensorDescriptor* outputDescriptors) {
+    const onnxTensorDescriptorV1* outputDescriptors) {
   return ONNXIFI_STATUS_SUCCESS;
 }
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxRunGraph(
     onnxGraph graph,
-    const onnxMemoryFence* inputFence,
-    onnxMemoryFence* outputFence) {
+    const onnxMemoryFenceV1* inputFence,
+    onnxMemoryFenceV1* outputFence) {
   if (outputFence == NULL) {
     return ONNXIFI_STATUS_INVALID_POINTER;
   }

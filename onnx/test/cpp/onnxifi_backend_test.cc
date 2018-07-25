@@ -75,19 +75,19 @@ namespace ONNX_NAMESPACE
 
 			//Testing onnxInitGraph
 			uint32_t weightCount = 1;
-			onnxTensorDescriptor weightDescriptors;
-			EXPECT_EQ_OSS(dummy_backend.onnxInitGraph(backend, onnxModelSize, &onnxModel, weightCount, &weightDescriptors, &graph));
+                        onnxTensorDescriptorV1 weightDescriptors;
+                        EXPECT_EQ_OSS(dummy_backend.onnxInitGraph(backend, onnxModelSize, &onnxModel, weightCount, &weightDescriptors, &graph));
 
 			//Testing onnxInitGraph
 			uint32_t inputsCount = 1;
-			onnxTensorDescriptor inputDescriptors;
-			uint32_t outputsCount = 1;
-			onnxTensorDescriptor outputDescriptors;
-			EXPECT_EQ_OSS(dummy_backend.onnxSetGraphIO(graph, inputsCount, &inputDescriptors, outputsCount, &outputDescriptors));
+                        onnxTensorDescriptorV1 inputDescriptors;
+                        uint32_t outputsCount = 1;
+                        onnxTensorDescriptorV1 outputDescriptors;
+                        EXPECT_EQ_OSS(dummy_backend.onnxSetGraphIO(graph, inputsCount, &inputDescriptors, outputsCount, &outputDescriptors));
 
 			//Testing onnxRunGraph
-			onnxMemoryFence inputFence, outputFence;
-			EXPECT_EQ_OSS(dummy_backend.onnxRunGraph(graph, &inputFence, &outputFence));
+                        onnxMemoryFenceV1 inputFence, outputFence;
+                        EXPECT_EQ_OSS(dummy_backend.onnxRunGraph(graph, &inputFence, &outputFence));
 			EXPECT_EQ(outputFence.type, ONNXIFI_SYNCHRONIZATION_EVENT);
 
 			//Testing onnxReleaseGraph
