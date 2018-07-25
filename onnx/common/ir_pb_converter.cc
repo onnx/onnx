@@ -285,7 +285,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   for (int i = 0; i < gp.value_info_size(); i++) {
     value_by_name_of[gp.value_info(i).name()]->setElemType(gp.value_info(i).type().tensor_type().elem_type());
-    if (gp.output(i).type().tensor_type().has_shape()) {
+    if (gp.value_info(i).type().tensor_type().has_shape()) {
       value_by_name_of[gp.value_info(i).name()]->setSizes(tensorShapeProtoToDimensions(gp.value_info(i).type().tensor_type().shape()));
     }
   }
