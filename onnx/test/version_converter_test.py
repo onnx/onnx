@@ -497,6 +497,34 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "AveragePool"
         assert converted_model.opset_import[0].version == 1
 
+    # Test Dropout Adapter: 1 -> 8
+    def test_dropout(self):  # type: () -> None
+        nodes = [helper.make_node('Dropout', ["data"], ["output"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("data", TensorProto.FLOAT, (5,5,))],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, (5,5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 1), 8)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Dropout"
+        assert converted_model.opset_import[0].version == 8
+
+    # Test Dropout Adapter: 8 -> 1
+    def test_dropout_down(self):  # type: () -> None
+        nodes = [helper.make_node('Dropout', ["data"], ["output"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("data", TensorProto.FLOAT, (5,5,))],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, (5,5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 8), 1)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Dropout"
+        assert converted_model.opset_import[0].version == 1
+
 
 if __name__ == '__main__':
     unittest.main()

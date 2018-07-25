@@ -19,6 +19,7 @@
 #include "onnx/version_converter/adapters/sum_8_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/averagepool_7_6.h"
+#include "onnx/version_converter/adapters/dropout_6_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -112,6 +113,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+        OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
@@ -134,6 +139,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
         OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
+        OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Concat_3_4>());
       registerAdapter(make_unique<Concat_4_3>());
       registerAdapter(make_unique<Reshape_5_4>());
@@ -141,6 +148,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Sum_8_7>());
       registerAdapter(make_unique<Gemm_7_6>());
       registerAdapter(make_unique<AveragePool_7_6>());
+      registerAdapter(make_unique<Dropout_6_7>());
     }
 
     ModelProto convert_version(

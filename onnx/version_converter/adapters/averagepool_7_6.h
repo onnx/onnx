@@ -12,7 +12,8 @@ class AveragePool_7_6 final : public Adapter {
 
     void adapt_averagepool_7_6(std::shared_ptr<Graph> graph, Node* node) const {
       if (node->hasAttribute(kcount_include_pad))
-        ONNX_ASSERTM(node->i(kcount_include_pad) == 0, "test message");
+        ONNX_ASSERTM(node->i(kcount_include_pad) == 0, "AveragePool in Opset "
+            "Version 6 does not support including pad");
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
