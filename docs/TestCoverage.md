@@ -5609,7 +5609,7 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F494;No Cover Common Operators
-### Conv_Integer (call for test cases)
+### ConvInteger (call for test cases)
 
 
 ### GlobalLpPool (call for test cases)
@@ -5621,7 +5621,7 @@ expect(node, inputs=[x, y], outputs=[z],
 ### LpPool (call for test cases)
 
 
-### MatMul_Integer (call for test cases)
+### MatMulInteger (call for test cases)
 
 
 ### MaxRoiPool (call for test cases)
@@ -5642,7 +5642,7 @@ expect(node, inputs=[x, y], outputs=[z],
 ### RandomUniformLike (random generator operator)
 
 
-### ReduceSum_Integer (call for test cases)
+### ReduceSumInteger (call for test cases)
 
 
 ### SpaceToDepth (call for test cases)

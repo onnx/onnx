@@ -106,8 +106,8 @@ False instead of True.)DOC";
     schema.Output(0, "reduced", "Reduced output tensor.", "tensor(int32)");
     schema.TypeConstraint(
         "T",
-        {"tensor(int8)", "tensor(uint8)", "tensor(int16)", "tensor(uint16)"},
-        "Constrain input types to low-precision numeric tensors.");
+        {"tensor(int8)", "tensor(uint8)"},
+        "Constrain input type to 8-bits integer tensors.");
     schema.TypeAndShapeInferenceFunction(reduceShapeInference);
   };
 }
@@ -128,7 +128,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(ReduceDocGenerator("sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
-	ReduceSum_Integer,
+	ReduceSumInteger,
 	8,
 	OpSchema().FillUsing(LowPrecisionReduceDocGenerator("sum")));
 

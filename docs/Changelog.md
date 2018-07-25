@@ -7996,7 +7996,7 @@ This version of the operator has been available since version 7 of the default O
 </dl>
 
 ## Version 8 of the default ONNX operator set
-### <a name="Conv_Integer-8"></a>**Conv_Integer-8**</a>
+### <a name="ConvInteger-8"></a>**ConvInteger-8**</a>
 
   The integer convolution operator consumes an input tensor, a filter and a padding value, and computes the output. The production MUST never overflow. The accumulation may overflow if and only if in 32 bits.
 
@@ -8029,7 +8029,7 @@ This version of the operator has been available since version 8 of the default O
 <dt><tt>W</tt> : T2</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where is the dimension of the kernel</dd>
 <dt><tt>Z</tt> (optional) : T1</dt>
-<dd>padding value (zero_point normally), which should be a scalar tensor.</dd>
+<dd>padding value (zero_point normally).</dd>
 </dl>
 
 #### Outputs
@@ -8042,13 +8042,13 @@ This version of the operator has been available since version 8 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input X and Z data types as 8-bits integer tensors.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input W data types as 8-bits integer tensors.</dd>
 </dl>
 
-### <a name="MatMul_Integer-8"></a>**MatMul_Integer-8**</a>
+### <a name="MatMulInteger-8"></a>**MatMulInteger-8**</a>
 
   Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html. The production MUST never overflow.
   The accumulation may overflow if and only if in 32 bits.
@@ -8076,10 +8076,10 @@ This version of the operator has been available since version 8 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16)</dt>
-<dd>Constrain input types.</dd>
-<dt><tt>T2</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16)</dt>
-<dd>Constrain input types.</dd>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input A data type to 8-bits integer tensors.</dd>
+<dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input B data type to 8-bits integer tensors.</dd>
 </dl>
 
 ### <a name="Max-8"></a>**Max-8**</a>
@@ -8242,7 +8242,7 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ReduceSum_Integer-8"></a>**ReduceSum_Integer-8**</a>
+### <a name="ReduceSumInteger-8"></a>**ReduceSumInteger-8**</a>
 
   Computes the sum of the low-precision input tensor's element along the provided axes. The resulted
   tensor has the same rank as the input if keepdims equal 1. If keepdims equal 0, then
@@ -8281,8 +8281,8 @@ This version of the operator has been available since version 8 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int8), tensor(uint8), tensor(int16), tensor(uint16)</dt>
-<dd>Constrain input types to low-precision numeric tensors.</dd>
+<dt><tt>T</tt> : tensor(int8), tensor(uint8)</dt>
+<dd>Constrain input type to 8-bits integer tensors.</dd>
 </dl>
 
 ### <a name="Sum-8"></a>**Sum-8**</a>

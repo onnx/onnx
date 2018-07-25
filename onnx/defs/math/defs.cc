@@ -1030,7 +1030,7 @@ Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-
 The accumulation may overflow if and only if in 32 bits.
 )DOC";
 ONNX_OPERATOR_SET_SCHEMA(
-    MatMul_Integer,
+    MatMulInteger,
     8,
     OpSchema()
         .Input(0, "A", "N-dimensional matrix A", "T1")
@@ -1039,24 +1039,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(int8)",
-             "tensor(uint8)",
-             "tensor(int16)",
-             "tensor(uint16)"},
-            "Constrain input types.")
+             "tensor(uint8)"},
+            "Constrain input A data type to 8-bits integer tensors.")
         .TypeConstraint(
             "T2",
             {"tensor(int8)",
-             "tensor(uint8)",
-             "tensor(int16)",
-             "tensor(uint16)"},
-            "Constrain input types.")
+             "tensor(uint8)"},
+            "Constrain input B data type to 8-bits integer tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // int8 * uint8  | uint8 * int8
-          // int8 * int8	 | uint8 * uint8
-          // int16 * uint16 | uint16 * int16
-          // int16 * int16  | uint16 * uint16
-          // TODO: do we need to verify the input type to ensure both inputs
-          // have same bit width?
           malmulShapeInference(ctx);
         })
         .SetDoc(MatMul_Integer_ver8_doc));

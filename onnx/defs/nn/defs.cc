@@ -1226,7 +1226,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 ONNX_OPERATOR_SET_SCHEMA(
-    Conv_Integer,
+    ConvInteger,
     8,
     OpSchema()
         .SetDoc(
@@ -1255,7 +1255,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "Z",
-            "padding value (zero_point normally), which should be a scalar tensor.",
+            "padding value (zero_point normally).",
             "T1",
             OpSchema::Optional)
         .Output(
@@ -1268,21 +1268,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(int8)",
-             "tensor(uint8)",
-             "tensor(int16)",
-             "tensor(uint16)"},
-            "Constrain input and output types to float tensors.")
+             "tensor(uint8)"},
+            "Constrain input X and Z data types as 8-bits integer tensors.")
         .TypeConstraint(
             "T2",
             {"tensor(int8)",
-             "tensor(uint8)",
-             "tensor(int16)",
-             "tensor(uint16)"},
-            "Constrain input and output types to float tensors.")
+             "tensor(uint8)"},
+            "Constrain input W data types as 8-bits integer tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // TODO: do we need to verify the input type to ensure both inputs (X
-          // and W) have same bit width?
-          // TODO: Should we enforce B has the same type as W?
           convPoolShapeInference(ctx, true, false);
         })
         .Attr(
