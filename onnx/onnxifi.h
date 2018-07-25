@@ -66,10 +66,12 @@ typedef unsigned __int64 uint64_t;
 
 /**
  * Opaque ONNXIFI backend ID.
+ *
  * ONNXIFI backend is a combination of software layer and hardware device used
- * to run an ONNX graph. Backend ID is a stable identifier for a backend.
- * Backend ID stays valid even if the hardware device used by the backend
- * disconnects from the system.
+ * to run an ONNX graph. Backend ID uniquely identifies a backend for the life-
+ * time of the process (i.e. no two hardware devices, software layers, or
+ * combinations of both can have the same backend ID). Backend ID stays valid
+ * even if the hardware device used by the backend disconnects from the system.
  */
 typedef void* onnxBackendID;
 /**
