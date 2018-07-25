@@ -22,12 +22,13 @@ class Gemm_7_6 final : public Adapter {
         N = inputs[0]->sizes()[0].dim;
       const auto& C_shape = inputs[2]->sizes();
       int C_M = C_shape[0].dim;
-      std::string error = "C not unidirectionally broadcastable to (M, N)";
       if (C_shape.size() == 2) {
         int C_N = C_shape[1].dim;
-        ONNX_ASSERT((C_M == M || C_M == 1) && (C_N == N || C_N == 1));
+        ONNX_ASSERTM((C_M == M || C_M == 1) && (C_N == N || C_N == 1),
+            "C not unidirectionally broadcastable to (M, N)");
       } else {
-        ONNX_ASSERT(C_M == N || C_M == 1);
+        ONNX_ASSERTM(C_M == N || C_M == 1,
+            "C not unidirectionally broadcastable to (M, N)");
       }
       node->i_(kbroadcast, 1);
     }

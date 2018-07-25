@@ -18,6 +18,7 @@
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/averagepool_7_6.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -121,6 +122,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("BatchNormalization",
         OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("AveragePool",
+        OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
@@ -137,6 +140,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Reshape_5_4>());
       registerAdapter(make_unique<Sum_8_7>());
       registerAdapter(make_unique<Gemm_7_6>());
+      registerAdapter(make_unique<AveragePool_7_6>());
     }
 
     ModelProto convert_version(
