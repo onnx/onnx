@@ -1434,12 +1434,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * called, and doesn't guarantee that the locations for graph outputs hold
  * valid values when the function returns. Instead, two synchronization
  * primitives are used to signal to the backend when inputs are ready to use,
- * and to signal to the caller when outputs are ready to use. The types of
- * supported synchronization primitives are backend-specific, and indicated in
- * information query. Note that none of the
- * synchronization primitives are guaranteed to be supported, and if no
- * synchronization primitive is supported by the backend, this function can't
- * be used.
+ * and to signal to the caller when outputs are ready to use. The only
+ * synchronization primitive that is always available is onnxEvent
+ * (ONNXIFI_SYNCHRONIZATION_EVENT memory fence type). If a backend supports
+ * additional types of synchronization primitives, it must indicate them in
+ * ONNXIFI_BACKEND_SYNCHRONIZATION_TYPES information query.
  *
  * The caller must successfully specify locations of input and output tensors
  * for the graph through onnxSetGraphIO before calling this function.
