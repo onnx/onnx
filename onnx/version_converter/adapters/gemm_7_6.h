@@ -14,10 +14,12 @@ class Gemm_7_6 final : public Adapter {
       const ArrayRef<Value*>& inputs = node->inputs();
       // Determine if C is broadcastable
       // Get M and N
-      int M = inputs[0]->sizes()[1].dim;
-      if (node->i(ktransA) == 0) M = inputs[0]->sizes()[0].dim;
-      int N = inputs[1]->sizes()[0].dim;
-      if (node->i(ktransA) == 0) N = inputs[0]->sizes()[1].dim;
+      int M = inputs[0]->sizes()[0].dim;
+      if (node->hasAttribute(ktransA) && node->i(ktransA) != 0)
+        M = inputs[0]->sizes()[1].dim;
+      int N = inputs[1]->sizes()[1].dim;
+      if (node->hasAttribute(ktransA) && node->i(ktransA) != 0)
+        N = inputs[0]->sizes()[0].dim;
       const auto& C_shape = inputs[2]->sizes();
       int C_M = C_shape[0].dim;
       std::string error = "C not unidirectionally broadcastable to (M, N)";

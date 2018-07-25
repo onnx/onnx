@@ -452,7 +452,7 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Gemm"
         assert converted_model.opset_import[0].version == 8
-'''
+
     # Test Gemm Adapter: 8 -> 1
     def test_gemm_down(self):  # type: () -> None
         nodes = [helper.make_node('Gemm', ["A", "B", "C"], ["Y"])]
@@ -468,7 +468,6 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Gemm"
         assert converted_model.opset_import[0].version == 1
-'''
 
 
 if __name__ == '__main__':
