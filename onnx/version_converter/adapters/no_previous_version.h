@@ -13,7 +13,7 @@ class NoPreviousVersionAdapter final : public Adapter {
       initial, const OpSetID target): Adapter(std::move(op_name),
       std::move(initial), std::move(target)) {}
 
-  void adapt(std::shared_ptr<Graph> graph, std::shared_ptr<Node> node) const override {
+  void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
     ONNX_ASSERTM(false, "No Previous Version of %s exists", name().c_str());
   }
 };
