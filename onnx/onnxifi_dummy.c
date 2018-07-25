@@ -11,7 +11,7 @@
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 onnxGetBackendIDs(onnxBackendID* backendIDs, size_t* numBackends) {
-  *numBackends = 2;
+  *numBackends = 1;
   *backendIDs = 0;
   return ONNXIFI_STATUS_SUCCESS;
 }
