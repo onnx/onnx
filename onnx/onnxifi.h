@@ -476,24 +476,67 @@ typedef int32_t onnxBackendInfo;
  *     ONNXIFI_OPTIMIZATION_LOW_DELAY
  */
 #define ONNXIFI_BACKEND_PROPERTY_OPTIMIZATION 1
+/**
+ * Logging verbosity level for the backend.
+ *
+ * If this property is not specified during initialization, the backend should
+ * assume ONNXIFI_LOG_LEVEL_WARNING logging verbosity level.
+ *
+ * Possible values:
+ *     ONNXIFI_LOG_LEVEL_ERROR
+ *     ONNXIFI_LOG_LEVEL_WARNING
+ *     ONNXIFI_LOG_LEVEL_INFO
+ *     ONNXIFI_LOG_LEVEL_DEBUG
+ */
+#define ONNXIFI_BACKEND_PROPERTY_LOG_LEVEL 2
 
 /**
  * Optimize graph representation and compilation for highest throughput.
  */
 #define ONNXIFI_OPTIMIZATION_HIGH_THROUGHPUT 0
+
 /**
  * Optimize graph representation and compilation for lowest latency.
  */
 #define ONNXIFI_OPTIMIZATION_LOW_LATENCY 1
+
 /**
  * Optimize graph representation and compilation for lowest power consumption.
  */
 #define ONNXIFI_OPTIMIZATION_LOW_POWER 2
+
 /**
  * Optimize graph representation and compilation for lowest delay until first
  * result.
  */
 #define ONNXIFI_OPTIMIZATION_LOW_DELAY 3
+
+/**
+ * Log events which caused a failure in an ONNXIFI function call.
+ */
+#define ONNXIFI_LOG_LEVEL_ERROR 4
+
+/**
+ * Log events in ONNXIFI_LOG_LEVEL_ERROR and events which caused
+ * a performance, accuracy, or quality of service degradation in a backend.
+ * Enabling this logging level SHOULD NOT have a measurable effect on
+ * performance.
+ */
+#define ONNXIFI_LOG_LEVEL_WARNING 3
+
+/**
+ * Log events in ONNXIFI_LOG_LEVEL_WARNING and high-level status information
+ * about operation of a backend. Enabling this logging level MAY cause a small
+ * degradation in performance.
+ */
+#define ONNXIFI_LOG_LEVEL_INFO 2
+
+/**
+ * Log events in ONNXIFI_LOG_LEVEL_INFO and detailed status information about
+ * operations of a backend. Enabling this logging level MAY cause a serious
+ * degradation in performance.
+ */
+#define ONNXIFI_LOG_LEVEL_DEBUG 1
 
 typedef struct onnxTensorDescriptor {
   /**
