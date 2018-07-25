@@ -66,10 +66,12 @@ typedef unsigned __int64 uint64_t;
 
 /**
  * Opaque ONNXIFI backend ID.
+ *
  * ONNXIFI backend is a combination of software layer and hardware device used
- * to run an ONNX graph. Backend ID is a stable identifier for a backend.
- * Backend ID stays valid even if the hardware device used by the backend
- * disconnects from the system.
+ * to run an ONNX graph. Backend ID uniquely identifies a backend for the life-
+ * time of the process (i.e. no two hardware devices, software layers, or
+ * combinations of both can have the same backend ID). Backend ID stays valid
+ * even if the hardware device used by the backend disconnects from the system.
  */
 typedef void* onnxBackendID;
 /**
@@ -1317,9 +1319,23 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * Set locations for inputs and outputs of an ONNXIFI graph.
  *
  * The caller MUST ensure that the memory buffers specified for input and output
- * tensors remain accessible for the life-time of the ONNXIFI graph. The caller
- * can discard other data data in tensor descriptors, including shape, once the
- * function returns.
+ * tensors remain accessible until all in-flight graph executions which use
+ * specified buffer locations complete AND
+ * - Either a next call to onnxSetGraphIO specifies different buffer locations
+ * - Or the graph is deinitialized via onnxReleaseGraph
+ * The caller can invalidate other data in tensor descriptors, including shape,
+ * once the function returns.
+ *
+ * Calls to onnxRunGraph WILL use input and output locations specified in the
+ * preceeding onnxSetGraphIO on the same graph. Asynchronous graph executions
+ * that were in-flight before onnxSetGraphIO call will continue to use buffer
+ * locations that were current when these graph executions started. An ONNXIFI
+ * implementation MAY block inside onnxSetGraphIO until all in-flight graph
+ * executions that started before the call complete.
+ *
+ * If a call to onnxSetGraphIO fails, it invalidates input and output locations
+ * for the graph, and a subsequent call to onnxRunGraph will fail with
+ * ONNXIFI_STATUS_UNIDENTIFIED_NAME.
  *
  * @param graph - graph handle created by onnxInitGraph.
  * @param inputsCount - number of elements in the inputDescriptors array.
@@ -1432,12 +1448,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * called, and doesn't guarantee that the locations for graph outputs hold
  * valid values when the function returns. Instead, two synchronization
  * primitives are used to signal to the backend when inputs are ready to use,
- * and to signal to the caller when outputs are ready to use. The types of
- * supported synchronization primitives are backend-specific, and indicated in
- * information query. Note that none of the
- * synchronization primitives are guaranteed to be supported, and if no
- * synchronization primitive is supported by the backend, this function can't
- * be used.
+ * and to signal to the caller when outputs are ready to use. The only
+ * synchronization primitive that is always available is onnxEvent
+ * (ONNXIFI_SYNCHRONIZATION_EVENT memory fence type). If a backend supports
+ * additional types of synchronization primitives, it must indicate them in
+ * ONNXIFI_BACKEND_SYNCHRONIZATION_TYPES information query.
  *
  * The caller must successfully specify locations of input and output tensors
  * for the graph through onnxSetGraphIO before calling this function.
