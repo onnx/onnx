@@ -294,6 +294,7 @@ private:
   bool has_unique_name_;
   std::string unique_name_;
   ONNX_NAMESPACE::TensorProto_DataType elem_type_;
+  bool has_sizes_;
   std::vector<Dimension> sizes_;
 
 public:
@@ -304,7 +305,9 @@ public:
   ONNX_NAMESPACE::TensorProto_DataType elemType() const {
     return elem_type_;
   }
+  bool has_sizes() const { return has_sizes_; }
   Value* setSizes(std::vector<Dimension> sizes) {
+    has_sizes_ = true;
     sizes_ = std::move(sizes);
     return this;
   }
@@ -1040,13 +1043,11 @@ private:
   }
 };
 
-inline Value::Value(Node * node_, size_t offset_)
-: node_(node_),
-  offset_(offset_),
-  unique_(node_->graph_->next_unique_++),
-  stage_(node_->graph_->new_node_stage_),
-  has_unique_name_(false),
-  elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
+inline Value::Value(Node *node_, size_t offset_)
+    : node_(node_), offset_(offset_), unique_(node_->graph_->next_unique_++),
+      stage_(node_->graph_->new_node_stage_), has_unique_name_(false),
+      elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
+      has_sizes_(false) {
   node_->graph_->all_values.emplace(this);
 }
 
