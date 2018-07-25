@@ -11,6 +11,9 @@
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 onnxGetBackendIDs(onnxBackendID* backendIDs, size_t* numBackends) {
+  if (backendIDs == NULL || numBackends == NULL) {
+    return ONNXIFI_STATUS_INVALID_POINTER;
+  }
   *numBackends = 1;
   *backendIDs = 0;
   return ONNXIFI_STATUS_SUCCESS;
@@ -26,6 +29,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxGetBackendInfo(
     onnxBackendInfo infoType,
     void* infoValue,
     size_t* infoValueSize) {
+  if (infoValueSize == NULL) {
+    return ONNXIFI_STATUS_INVALID_POINTER;
+  }
   if (infoValue != NULL) {
     *infoValueSize = *infoValueSize > 10 ? 10 : *infoValueSize;
     memset(infoValue, 0, *infoValueSize);
@@ -47,6 +53,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitBackend(
     onnxBackendID backendID,
     const uint64_t* auxpropertiesList,
     onnxBackend* backend) {
+  if (backend == NULL) {
+    return ONNXIFI_STATUS_INVALID_POINTER;
+  }
   *backend = NULL;
   return ONNXIFI_STATUS_SUCCESS;
 }
@@ -58,6 +67,9 @@ onnxReleaseBackend(onnxBackend backend) {
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 onnxInitEvent(onnxBackend backend, onnxEvent* event) {
+  if (event == NULL) {
+    return ONNXIFI_STATUS_INVALID_POINTER;
+  }
   *event = NULL;
   return ONNXIFI_STATUS_SUCCESS;
 }
@@ -84,6 +96,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitGraph(
     uint32_t weightCount,
     const onnxTensorDescriptor* weightDescriptors,
     onnxGraph* graph) {
+  if (graph == NULL) {
+    return ONNXIFI_STATUS_INVALID_POINTER;
+  }
   *graph = NULL;
   return ONNXIFI_STATUS_SUCCESS;
 }
@@ -101,6 +116,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxRunGraph(
     onnxGraph graph,
     const onnxMemoryFence* inputFence,
     onnxMemoryFence* outputFence) {
+  if (outputFence == NULL) {
+    return ONNXIFI_STATUS_INVALID_POINTER;
+  }
   outputFence->type = ONNXIFI_SYNCHRONIZATION_EVENT;
   outputFence->event = NULL;
   return ONNXIFI_STATUS_SUCCESS;

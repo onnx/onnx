@@ -31,23 +31,25 @@ namespace ONNX_NAMESPACE
 
 			//Testing onnxGetBackendIDs
 			size_t numBackends = -1;
+
                         EXPECT_EQ_OSS(dummy_backend.onnxGetBackendIDs(
                             &backendID, &numBackends));
-                        EXPECT_EQ(numBackends, 2);
+                        EXPECT_EQ(numBackends, 1);
 
-			//Testing onnxReleaseBackendID
+                        //Testing onnxReleaseBackendID
                         EXPECT_EQ_OSS(
                             dummy_backend.onnxReleaseBackendID(backendID));
 
-                        //Testing onnxGetBackendInfo
-			onnxBackendInfo infoType = 0;
+                        // Testing onnxGetBackendInfo
+                        onnxBackendInfo infoType = 0;
 			char infoValue[11] = "abc";
 			size_t infoValueSize = 3;
+
                         EXPECT_EQ_OSS(dummy_backend.onnxGetBackendInfo(
                             backendID, infoType, infoValue, &infoValueSize));
                         EXPECT_EQ(infoValue[0], 0);
 
-			//Testing onnxGetBackendCompatibility
+                        //Testing onnxGetBackendCompatibility
 			char onnxModel[] = "";
 			size_t onnxModelSize = 0;
 			EXPECT_EQ_OSS(dummy_backend.onnxGetBackendCompatibility(backendID, onnxModelSize, onnxModel));
