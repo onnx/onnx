@@ -281,7 +281,11 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   for (int i = 0; i < gp.value_info_size(); i++) {
     value_by_name_of[gp.value_info(i).name()]->setElemType(gp.value_info(i).type().tensor_type().elem_type());
-    value_by_name_of[gp.value_info(i).name()]->setSizes(tensorShapeProtoToDimensions(gp.value_info(i).type().tensor_type().shape()));
+    if (gp.value_info(i).type().tensor_type().has_shape()) {
+      value_by_name_of[gp.value_info(i).name()]->setSizes(
+          tensorShapeProtoToDimensions(
+              gp.value_info(i).type().tensor_type().shape()));
+    }
   }
 
   for (int i = 0; i < gp.initializer_size(); i++) {
@@ -438,13 +442,15 @@ void addAttribute(ONNX_NAMESPACE::NodeProto * n_p, Node * n, Symbol name) {
 
 void encodeTypeProtoTensorType(ONNX_NAMESPACE::TypeProto_Tensor* tensor_type, Value* n) {
   tensor_type->set_elem_type(n->elemType());
-  ONNX_NAMESPACE::TensorShapeProto* shape = tensor_type->mutable_shape();
-  for (const Dimension& d : n->sizes()) {
-    auto dim = shape->add_dim();
-    if (d.is_int) {
-      dim->set_dim_value(d.dim);
-    } else {
-      dim->set_dim_param(d.param);
+  if (n->has_sizes()) {
+    ONNX_NAMESPACE::TensorShapeProto *shape = tensor_type->mutable_shape();
+    for (const Dimension &d : n->sizes()) {
+      auto dim = shape->add_dim();
+      if (d.is_int) {
+        dim->set_dim_value(d.dim);
+      } else {
+        dim->set_dim_param(d.param);
+      }
     }
   }
 }
