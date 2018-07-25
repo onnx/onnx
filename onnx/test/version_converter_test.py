@@ -437,6 +437,39 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Sum"
         assert converted_model.opset_import[0].version == 6
 
+    # Test Gemm Adapter: 1 -> 8
+    def test_gemm(self):  # type: () -> None
+        nodes = [helper.make_node('Gemm', ["A", "B", "C"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (5,5,)),
+                helper.make_tensor_value_info("B", TensorProto.FLOAT, (5,5,)),
+                helper.make_tensor_value_info("C", TensorProto.FLOAT, (5,5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 1), 8)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Gemm"
+        assert converted_model.opset_import[0].version == 8
+'''
+    # Test Gemm Adapter: 8 -> 1
+    def test_gemm_down(self):  # type: () -> None
+        nodes = [helper.make_node('Gemm', ["A", "B", "C"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (5,5,)),
+                helper.make_tensor_value_info("B", TensorProto.FLOAT, (5,5,)),
+                helper.make_tensor_value_info("C", TensorProto.FLOAT, (5,5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 8), 1)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Gemm"
+        assert converted_model.opset_import[0].version == 1
+'''
+
 
 if __name__ == '__main__':
     unittest.main()
