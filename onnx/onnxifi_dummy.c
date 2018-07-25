@@ -46,6 +46,9 @@ onnxGetBackendCompatibility(
     onnxBackendID backendID,
     size_t onnxModelSize,
     const void* onnxModel) {
+  if (onnxModel == NULL && onnxModelSize != 0){
+	return ONNXIFI_STATUS_INVALID_POINTER;
+  }
   return ONNXIFI_STATUS_SUCCESS;
 }
 
