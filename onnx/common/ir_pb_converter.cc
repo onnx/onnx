@@ -550,7 +550,6 @@ void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g) {
   }
 }
 
-// TODO (Optimizer): Should this just be copied instead?
 ModelProto PrepareOutput(const ModelProto& mp_in) {
   ModelProto mp_out{};
 
@@ -594,6 +593,12 @@ ModelProto PrepareOutput(const ModelProto& mp_in) {
   }
 
   return mp_out;
+}
+
+void assertNonNull(std::shared_ptr<Graph> g) {
+  ONNX_ASSERTM(g.get() != nullptr,
+    "Warning: onnx version converter is unable to parse input model. "
+    "(The IR version of the ONNX model may be too old.)");
 }
 
 } // namespace ONNX_NAMESPACE

@@ -27,14 +27,8 @@ ModelProto DefaultVersionConverter::convert_version(
     const OpSetID& target_version) const {
   const std::string initial_domain = initial_version.domain();
   const std::string target_domain = target_version.domain();
+  assertDefaultDomain(initial_domain, target_domain);
 
-  ONNX_ASSERTM((initial_domain == "" || initial_domain == "ai.onnx") &&
-    (target_domain == "" || target_domain == "ai.onnx"),
-      "Warning: default onnx version converter can only convert "
-      " between default domain opset versions ('' or 'ai.onnx')\n");
-
-  ONNX_ASSERTM(initial_domain == target_domain,
-    "initial_version and target_version must have the same domains");
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import()
       .end(); ++it) {
     if (it->domain() == initial_version.domain()) {
@@ -44,9 +38,7 @@ ModelProto DefaultVersionConverter::convert_version(
   }
 
   std::shared_ptr<Graph> g(ImportModelProto(mp_in));
-  ONNX_ASSERTM(g.get() != nullptr,
-    "Warning: onnx version converter is unable to parse input model. "
-    "(The IR version of the ONNX model may be too old.)");
+  assertNonNull(g);
 
   // TODO: Move to Inter-Domain Converter
   // Get initial model versions
@@ -59,25 +51,20 @@ ModelProto DefaultVersionConverter::convert_version(
   //  return mp_in;
   // }
 
-  // Check if target_version is valid
-  // TODO: Assert same for initial version
-  ONNX_ASSERTM(target_version.version() >= version_range.first && target_version
-      .version() <= version_range.second,
-    "Warning: invalid target_version (must be between %s and %s",
-    version_range.first, version_range.second);
+  // Check if versions are valid
+  assertInVersionRange(initial_version.version());
+  assertInVersionRange(target_version.version());
+
   // Compile list of all ops used in the model
   graph_node_list nodes = g->nodes();
 
   // Iterate over all versions to target_version for specified
   int64_t curr_version = initial_version.version();
   int64_t step;
-  bool up;
   if (target_version.version() > initial_version.version()) {
     step = 1;
-    up = true;
   } else {
     step = -1;
-    up = false;
   }
   // Identify index of this domain in g.opset_versions
   unsigned int domain_index = 0;
@@ -95,7 +82,7 @@ ModelProto DefaultVersionConverter::convert_version(
       const std::string op_name = op->kind().toString();
       if (op_name != "Undefined") {
         auto& op_domain_map = all_schemas.at(op_name);
-        if (searchOpDomainMap(op_domain_map, curr_version, step, up)) {
+        if (searchOpDomainMap(op_domain_map, curr_version, step)) {
           // Op is specifically defined for this domain and version
           OpSetID curr_id(curr_version);
           OpSetID next_id(curr_version + step);

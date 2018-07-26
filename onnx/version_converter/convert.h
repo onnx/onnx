@@ -16,7 +16,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     bool searchOpDomainMap(const std::unordered_map<std::string, std::map<
       int64_t, const OpSchema*>>& op_domain_map, int64_t curr_version,
-      int64_t step, bool up) const {
+      int64_t step) const {
+      bool up = step == 1;
       const auto version_it = op_domain_map.find("");
       return version_it != op_domain_map.end() &&
           ((version_it->second.find(curr_version) !=
@@ -27,6 +28,23 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
     void debug(const std::string& str) const {
       if (DEBUG) std::cerr << str << std::endl;
+    }
+
+    void assertInVersionRange(int64_t version) const {
+      ONNX_ASSERTM(version >= version_range.first && version <=
+          version_range.second,
+          "Warning: invalid version (must be between %s and %s",
+          version_range.first, version_range.second);
+    }
+
+    void assertDefaultDomain(const std::string& initial_domain,
+        const std::string& target_domain) const {
+      ONNX_ASSERTM((initial_domain == "" || initial_domain == "ai.onnx") &&
+          (target_domain == "" || target_domain == "ai.onnx"),
+          "Warning: default onnx version converter can only convert "
+          " between default domain opset versions ('' or 'ai.onnx')\n");
+      ONNX_ASSERTM(initial_domain == target_domain,
+          "initial_version and target_version must have the same domains");
     }
 
   public:
