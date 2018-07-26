@@ -3,7 +3,7 @@
             [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).
             Do not modify directly and instead edit function definitions.*
 ## ai.onnx (default)
-  * <sub>experimental</sub><a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
+  * <sub>experimental</sub> <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
 
 
 
