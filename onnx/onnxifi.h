@@ -221,6 +221,18 @@ typedef uint64_t onnxPointer;
 typedef int32_t onnxBackendInfo;
 
 /**
+ * Major and minor version of ONNXIFI specification implemented by the backend.
+ *
+ * Value type: uint64_t.
+ *      The high 32 bits specify the major version.
+ *      The low 32 bits specify the minor version.
+ *
+ * Possible values:
+ *      UINT64_C(0x0000000100000000) for ONNXIFI 1.0
+ */
+#define ONNXIFI_BACKEND_ONNXIFI_VERSION 0
+
+/**
  * Marketing name of the backend (excluding the vendor name).
  *
  * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
@@ -291,6 +303,35 @@ typedef int32_t onnxBackendInfo;
  *      ONNXIFI_DEVICE_TYPE_HETEROGENEOUS
  */
 #define ONNXIFI_BACKEND_DEVICE_TYPE 6
+
+/**
+ * List of supported ONNX IR versions.
+ *
+ * Value type: char[], e.g.:
+ *    "3" (IR version in ONNX 1.0)
+ *
+ * Possible values: space-separated list of supported ONNX IR versions,
+ *     represented as decimal integers. ONNX IR versions must match values
+ *     in ONNX Version enum.
+ */
+#define ONNXIFI_BACKEND_ONNX_IR_VERSION 7
+
+/**
+ * List of supported operator set domains and maximum supported operator set
+ * version for each domain.
+ *
+ * Value type: char[], e.g.:
+ *    "ai.onnx:1" (only operators in version 1 of default ONNX operator set)
+ *    "ai.onnx:7" (operators up to version 7 of default ONNX operator set)
+ *    "org.pytorch:2 ai.onnx:6 ai.facebook:1"
+ *
+ * Possible values: space-separated list of domain:max_version pairs where
+ *     domain corresponds to OperatorSetIdProto.domain and max_version
+ *     corresponds to the maximum value of OperatorSetIdProto.version supported
+ *     by the backend for this domain. The backend MUST support all previous
+ *     operator set versions as well.
+ */
+#define ONNXIFI_BACKEND_OPSET_VERSION 8
 
 /**
  * Optional features supported by the backend.
