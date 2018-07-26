@@ -869,7 +869,7 @@ class TestOptimizer(unittest.TestCase):
             scale = np.random.randn(3,).astype(np_type) + 2
             b = np.random.randn(3,).astype(np_type) + 2
             mean = np.random.randn(3,).astype(np_type) + 2
-            var = np.random.randn(3,).astype(np_type) + 2
+            var = np.abs(np.random.randn(3,).astype(np_type)) + 2
 
             initializers = [
                 helper.make_tensor(name, tensor_type, npa.shape, npa.tobytes(), raw=True)

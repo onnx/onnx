@@ -29,6 +29,14 @@ void convPoolTypeAndShapeInference(
     bool use_dilation,
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType ||
+        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
 
   // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
@@ -145,6 +153,13 @@ void convPoolTypeAndShapeInference(
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
   }
+
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto second_output_shape =
+      ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+    second_output_shape->CopyFrom(*output_shape);
+  }
 }
 
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
@@ -153,7 +168,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* additionalDescription) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- {name} consumes an input tensor X and applies {opName} pooling across the
+ {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
  subset of the input tensor according to the kernel size and downsampling the
@@ -257,13 +272,42 @@ ONNX_OPERATOR_SET_SCHEMA(
         "max",
         "The output of each pooling window is maximum number of elements exclude pad.")));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    8,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator(
+            "MaxPool",
+            "max",
+            "The output of each pooling window is maximum number of elements exclude pad."))
+        .Attr(
+            "storage_order",
+            "The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Output(
+            1,
+            "Indices",
+            "Indices tensor from max pooling across the input tensor. "
+            "The dimensions of indices are the same as output tensor. "
+            "The values in indices of are the indices of the selected values during pooling. "
+            "The indices are computed as flatten 1-D tensor, "
+            "and the indices do not consider padding. "
+            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
+            "I",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "I",
+            {"tensor(int64)"},
+            "Constrain index tensor to int64"));
+
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- {name} consumes an input tensor X and applies Lp pooling across the
+ {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
@@ -774,7 +818,7 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
     const char* op) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- Global{op_type} consumes an input tensor X and applies {op} pooling across the
+ Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
     ReplaceAll(doc, "{op_type}", op_type);
@@ -820,7 +864,7 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
     const char* op) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- Global{op_type} consumes an input tensor X and applies {op} pooling across the
+ Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
     ReplaceAll(doc, "{op_type}", op_type);

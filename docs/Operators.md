@@ -475,6 +475,85 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[1], [1]]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0, 1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
@@ -515,6 +594,85 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[0], [0]]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1, 0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
 
 
 ### <a name="Asin"></a><a name="asin">**Asin**</a>
@@ -631,7 +789,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
-  AveragePool consumes an input tensor X and applies average pooling across the
+  AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -704,7 +862,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 
 ```python
 """
-iutput_shape: [1, 3, 32]
+input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -732,7 +890,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -760,7 +918,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 28, 28]
+input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -786,6 +944,43 @@ padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_pads_count_include_pad</summary>
+
+```python
+"""
+input_shape: [1, 3, 28, 28]
+output_shape: [1, 3, 30, 30]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[2, 2, 2, 2],
+    count_include_pad=1,
+)
+x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (3, 3)
+strides = (1, 1)
+pad_bottom = 2
+pad_top = 2
+pad_right = 2
+pad_left = 2
+pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=0)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG', count_include_pad=1)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads_count_include_pad')
 ```
 
 </details>
@@ -822,6 +1017,42 @@ y = np.array([[[[7, 7.5, 8, 8.5, 9],
                 [17, 17.5, 18, 18.5, 19]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_pads_count_include_pad</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2],
+    count_include_pad=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[2.5200, 3.6000, 4.8000, 4.0800, 3.2400],
+                [4.5600, 6.4000, 8.4000, 7.0400, 5.5200],
+                [7.2000, 10.0000, 13.0000, 10.8000, 8.4000],
+                [6.9600, 9.6000, 12.4000, 10.2400, 7.9200],
+                [6.1200, 8.4000, 10.8000, 8.8800, 6.8400]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads_count_include_pad')
 ```
 
 </details>
@@ -969,7 +1200,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -998,7 +1229,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32, 32]
+input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -1348,6 +1579,28 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -1.0, 1.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+    min=-5.0,
+    max=5.0,
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_inbounds')
+
+x = np.array([-6, 0, 6]).astype(np.float32)
+y = np.array([-5, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_outbounds')
+
+x = np.array([-1, 0, 6]).astype(np.float32)
+y = np.array([-1, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_splitbounds')
 ```
 
 </details>
@@ -1378,6 +1631,16 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -np.inf, 0.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_max')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_inbounds')
 ```
 
 </details>
@@ -1925,7 +2188,7 @@ expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_3d')
 
 
 <details>
-<summary>convtranspose_output_padding</summary>
+<summary>convtranspose_attributes</summary>
 
 ```python
 x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
@@ -1938,10 +2201,6 @@ W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
                [[1., 1., 1.],
                 [1., 1., 1.],
                 [1., 1., 1.]]]]).astype(np.float32)
-
-node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
-                             strides=[3, 2],
-                             output_padding=[1, 1])
 
 y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
                 [0., 0., 1., 1., 3., 2., 2., 0.],
@@ -1964,55 +2223,27 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
                 [6., 6., 13., 7., 15., 8., 8., 0.],
                 [6., 6., 13., 7., 15., 8., 8., 0.],
                 [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
-
-expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
-```
-
-</details>
-
-
-<details>
-<summary>convtranspose_output_shape</summary>
-
-```python
-x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
-                [3., 4., 5.],
-                [6., 7., 8.]]]]).astype(np.float32)
-
-W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
-                [1., 1., 1.],
-                [1., 1., 1.]],
-               [[1., 1., 1.],
-                [1., 1., 1.],
-                [1., 1., 1.]]]]).astype(np.float32)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
                              output_shape=[1, 2, 10, 8])
-
-y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [0., 0., 0., 0., 0., 0., 0., 0.]],
-
-               [[0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
-
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
+                             strides=[3, 2],
+                             output_padding=[1, 1])
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
+
+node = onnx.helper.make_node(
+    'ConvTranspose', ['X', 'W'], ['Y'],
+    name='test',
+    strides=[3, 2],
+    output_shape=[10, 8],
+    kernel_shape=[3, 3],
+    output_padding=[1, 1]
+)
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_convtranspose_kernel_shape')
 ```
 
 </details>
@@ -2829,7 +3060,7 @@ expect(node, inputs=[x], outputs=[y],
   
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
   
-    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh) + Wbh) # when linear_before_reset != 0
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -3144,9 +3375,9 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Scalar multiplier for the product of input tensors A * B</dd>
+<dd>Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Scalar multiplier for input tensor C</dd>
+<dd>Scalar multiplier for input tensor C, and the default value is 1.0.</dd>
 <dt><tt>transA</tt> : int</dt>
 <dd>Whether A should be transposed</dd>
 <dt><tt>transB</tt> : int</dt>
@@ -3229,7 +3460,7 @@ expect(node, inputs=[a, b, c], outputs=[y],
 
 ### <a name="GlobalAveragePool"></a><a name="globalaveragepool">**GlobalAveragePool**</a>
 
-  GlobalAveragePool consumes an input tensor X and applies average pooling across the
+  GlobalAveragePool consumes an input tensor X and applies average pooling across
    the values in the same channel. This is equivalent to AveragePool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -3305,7 +3536,7 @@ expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
 
 ### <a name="GlobalLpPool"></a><a name="globallppool">**GlobalLpPool**</a>
 
-  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
+  GlobalLpPool consumes an input tensor X and applies lp pool pooling across
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -3346,7 +3577,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 
 ### <a name="GlobalMaxPool"></a><a name="globalmaxpool">**GlobalMaxPool**</a>
 
-  GlobalMaxPool consumes an input tensor X and applies max pooling across the
+  GlobalMaxPool consumes an input tensor X and applies max pooling across
    the values in the same channel. This is equivalent to MaxPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -4653,7 +4884,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="LpPool"></a><a name="lppool">**LpPool**</a>
 
-  LpPool consumes an input tensor X and applies Lp pooling across the
+  LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
@@ -4846,7 +5077,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 ### <a name="MaxPool"></a><a name="maxpool">**MaxPool**</a>
 
-  MaxPool consumes an input tensor X and applies max pooling across the
+  MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -4871,7 +5102,9 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 
 #### Attributes
 
@@ -4882,6 +5115,8 @@ This version of the operator has been available since version 1 of the default O
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dt><tt>storage_order</tt> : int</dt>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
@@ -4893,11 +5128,13 @@ This version of the operator has been available since version 1 of the default O
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
-#### Outputs
+#### Outputs (1 - 2)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+<dt><tt>Indices</tt> (optional) : I</dt>
+<dd>Indices tensor from max pooling across the input tensor. The dimensions of indices are the same as output tensor. The values in indices of are the indices of the selected values during pooling. The indices are computed as flatten 1-D tensor, and the indices do not consider padding. So the values in indices are in [0, N x C x D1 x ... x Dn).</dd>
 </dl>
 
 #### Type Constraints
@@ -4905,6 +5142,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 
@@ -4986,10 +5225,7 @@ x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
-pad_bottom = 2
-pad_top = 2
-pad_right = 2
-pad_left = 2
+pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
 padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -5228,6 +5464,82 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.float32)
+z = np.array([[[
+    [12, 13, 14, 14, 14],
+    [17, 18, 19, 19, 19],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[2, 2],
+    strides=[2, 2],
+    storage_order=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9],
+                [17, 19]]]]).astype(np.float32)
+z = np.array([[[[6, 16],
+                [8, 18]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_strides')
 ```
 
 </details>
@@ -10699,8 +11011,7 @@ This version of the operator has been available since version 1 of the default O
 ### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
+  alpha * tanh(beta * x). 
       
 
 #### Version
