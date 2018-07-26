@@ -22,10 +22,11 @@ set(${UT_NAME}_libs
 add_whole_archive_flag(onnx tmp)
 list(APPEND ${UT_NAME}_libs ${tmp})
 list(APPEND ${UT_NAME}_libs onnx_proto)
+list(APPEND ${UT_NAME}_libs onnxifi_loader)
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src
-    "${ONNX_ROOT}/onnx/test/c++/*.cc"
+    "${ONNX_ROOT}/onnx/test/cpp/*.cc"
 )
 
 function(AddTest)
@@ -49,41 +50,54 @@ function(AddTest)
     target_compile_options(${_UT_TARGET} PRIVATE
         /EHsc   # exception handling - C++ may throw, extern "C" will not
     )
-    target_compile_options(${_UT_TARGET} PRIVATE /MT)
+	if(${ONNX_USE_MSVC_STATIC_RUNTIME})
+		if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+			target_compile_options(${_UT_TARGET} PRIVATE /MTd)
+		else()
+			target_compile_options(${_UT_TARGET} PRIVATE /MT)
+		endif()
+	else()
+		if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+			target_compile_options(${_UT_TARGET} PRIVATE /MDd)
+		else()
+			target_compile_options(${_UT_TARGET} PRIVATE /MD)
+		endif()
+	endif()
+
   endif()
 
   if(MSVC)
-    target_compile_options(${_UT_TARGET} PRIVATE
-      /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
-    )
+	  target_compile_options(${_UT_TARGET} PRIVATE
+		  /wd4146 # unary minus operator applied to unsigned type, result still unsigned from include\google\protobuf\wire_format_lite.h
+		  )
   endif()
-  
+
   set(TEST_ARGS)
   if (ONNX_GENERATE_TEST_REPORTS)
-    # generate a report file next to the test program
-    list(APPEND TEST_ARGS
-      "--gtest_output=xml:$<SHELL_PATH:$<TARGET_FILE:${_UT_TARGET}>.$<CONFIG>.results.xml>")
+	  # generate a report file next to the test program
+	  list(APPEND TEST_ARGS
+		  "--gtest_output=xml:$<SHELL_PATH:$<TARGET_FILE:${_UT_TARGET}>.$<CONFIG>.results.xml>")
   endif()
 
   add_test(NAME ${_UT_TARGET}
-    COMMAND ${_UT_TARGET} ${TEST_ARGS}
-    WORKING_DIRECTORY $<TARGET_FILE_DIR:${_UT_TARGET}>
-  )
+	  COMMAND ${_UT_TARGET} ${TEST_ARGS}
+	  WORKING_DIRECTORY $<TARGET_FILE_DIR:${_UT_TARGET}>
+	  )
 
 endfunction(AddTest)
 
 AddTest(
-    TARGET ${UT_NAME}
-    SOURCES ${${UT_NAME}_src}
-    LIBS ${${UT_NAME}_libs}
-)
+	TARGET ${UT_NAME}
+	SOURCES ${${UT_NAME}_src}
+	LIBS ${${UT_NAME}_libs}
+	)
 
-set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/c++/testdata)
+set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/cpp/testdata)
 set(TEST_DATA_DES $<TARGET_FILE_DIR:${UT_NAME}>/testdata)
 
 # Copy test data from source to destination.
 add_custom_command(
-    TARGET ${UT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${TEST_DATA_SRC}
-            ${TEST_DATA_DES})
+	TARGET ${UT_NAME} POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+	${TEST_DATA_SRC}
+	${TEST_DATA_DES})
