@@ -124,12 +124,14 @@ typedef uint64_t onnxPointer;
 #define ONNXIFI_STATUS_INVALID_NAME 0x010A
 #define ONNXIFI_STATUS_INVALID_SHAPE 0x010B
 #define ONNXIFI_STATUS_INVALID_DATATYPE 0x010C
+#define ONNXIFI_STATUS_INVALID_MEMORY_TYPE 0x010D
 #define ONNXIFI_STATUS_UNSUPPORTED_TAG 0x0201
 #define ONNXIFI_STATUS_UNSUPPORTED_VERSION 0x0202
 #define ONNXIFI_STATUS_UNSUPPORTED_OPERATOR 0x0203
 #define ONNXIFI_STATUS_UNSUPPORTED_PARAMETER 0x0204
 #define ONNXIFI_STATUS_UNSUPPORTED_SHAPE 0x0205
 #define ONNXIFI_STATUS_UNSUPPORTED_DATATYPE 0x0206
+#define ONNXIFI_STATUS_UNSUPPORTED_MEMORY_TYPE 0x0207
 #define ONNXIFI_STATUS_UNIDENTIFIED_NAME 0x0301
 #define ONNXIFI_STATUS_MISMATCHING_SHAPE 0x0302
 #define ONNXIFI_STATUS_MISMATCHING_DATATYPE 0x0303
@@ -1349,6 +1351,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                             weightDescriptors argument,
  *                                             or inferred from the inputs by
  *                                             the backend.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_MEMORY_TYPE The function call failed
+ *                                                because one of the memory
+ *                                                types in weightDescriptors is
+ *                                                different from
+ *                                                ONNXIFI_MEMORY_TYPE_CPU.
  * @retval ONNXIFI_STATUS_MISMATCHING_SHAPE The function call failed because
  *                                          the shapes specified in weight
  *                                          descriptors do not match the shapes
@@ -1451,6 +1458,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                         one of the data types in
  *                                         inputDescriptors or outputDescriptors
  *                                         is unknown to the backend.
+ * @retval ONNXIFI_STATUS_INVALID_MEMORY_TYPE The function call failed because
+ *                                            one of the memory types in
+ *                                            inputDescriptors or
+ *                                            outputDescriptors is unknown to
+ *                                            the backend.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_TAG The function call failed because one
  *                                        of the tags in inputDescriptors or
  *                                        outputDescriptors is unknown to the
@@ -1476,6 +1488,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                          and the problematic tensor shape was
  *                                          provided in the ValueInfoProto as a
  *                                          symbolic variable.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_MEMORY_TYPE The function call failed
+ *                                                because the backend does not
+ *                                                support one of the memory
+ *                                                types in inputDescriptors or
+ *                                                outputDescriptors.
  * @retval ONNXIFI_STATUS_UNIDENTIFIED_NAME The function call failed because one
  *                                          of the ValueInfoProto.name value in
  *                                          ModelProto.graph.input or
