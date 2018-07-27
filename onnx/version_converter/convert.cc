@@ -74,8 +74,8 @@ ModelProto DefaultVersionConverter::convert_version(
     }
   }
   while (curr_version != target_version.version()) {
-    debug("curr_version: " + std::to_string(curr_version) + ", next_version: " +
-        std::to_string(curr_version + step));
+    debug("curr_version: " + ONNX_NAMESPACE::to_string(curr_version) + ", next_version: " +
+        ONNX_NAMESPACE::to_string(curr_version + step));
     // Iterate through and call adapter returned by adapter_lookup for ops from current_version opset
     for (Node* op : nodes) {
       debug(std::string("Finding schema for ") + std::string(op->kind().toString()));

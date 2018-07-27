@@ -790,7 +790,7 @@ class OpSetID final {
 
     // target must be in the form "<domain>&<version>"
     std::string toString() const {
-      return domain_ + "$" + std::to_string(version_);
+      return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
     }
 
     // target must be in the form "<domain>&<version>"
