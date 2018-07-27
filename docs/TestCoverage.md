@@ -5,7 +5,8 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 89/96 (92.71%, 5 generators excluded) common operators.
+
+Node tests have covered 91/96 (94.79%, 5 generators excluded) common operators.
 
 Node tests have covered 1/15 (6.67%, 0 generators excluded) experimental operators.
 
@@ -184,6 +185,156 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### ArgMax
+There are 3 test cases, listed as following:
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[1], [1]]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
+```
+
+</details>
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random')
+```
+
+</details>
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0, 1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random')
+```
+
+</details>
+
+
+### ArgMin
+There are 3 test cases, listed as following:
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[0], [0]]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+```
+
+</details>
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1, 0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
+
+
 ### Asin
 There are 1 test cases, listed as following:
 <details>
@@ -237,13 +388,13 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### AveragePool
-There are 10 test cases, listed as following:
+There are 12 test cases, listed as following:
 <details>
 <summary>averagepool_1d_default</summary>
 
 ```python
 """
-iutput_shape: [1, 3, 32]
+input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -269,7 +420,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -295,7 +446,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 28, 28]
+input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -321,6 +472,41 @@ padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
+```
+
+</details>
+<details>
+<summary>averagepool_2d_pads_count_include_pad</summary>
+
+```python
+"""
+input_shape: [1, 3, 28, 28]
+output_shape: [1, 3, 30, 30]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[2, 2, 2, 2],
+    count_include_pad=1,
+)
+x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (3, 3)
+strides = (1, 1)
+pad_bottom = 2
+pad_top = 2
+pad_right = 2
+pad_left = 2
+pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=0)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG', count_include_pad=1)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads_count_include_pad')
 ```
 
 </details>
@@ -355,6 +541,40 @@ y = np.array([[[[7, 7.5, 8, 8.5, 9],
                 [17, 17.5, 18, 18.5, 19]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads')
+```
+
+</details>
+<details>
+<summary>averagepool_2d_precomputed_pads_count_include_pad</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2],
+    count_include_pad=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[2.5200, 3.6000, 4.8000, 4.0800, 3.2400],
+                [4.5600, 6.4000, 8.4000, 7.0400, 5.5200],
+                [7.2000, 10.0000, 13.0000, 10.8000, 8.4000],
+                [6.9600, 9.6000, 12.4000, 10.2400, 7.9200],
+                [6.1200, 8.4000, 10.8000, 8.8800, 6.8400]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads_count_include_pad')
 ```
 
 </details>
@@ -492,7 +712,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -519,7 +739,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32, 32]
+input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -682,6 +902,28 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -1.0, 1.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+    min=-5.0,
+    max=5.0,
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_inbounds')
+
+x = np.array([-6, 0, 6]).astype(np.float32)
+y = np.array([-5, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_outbounds')
+
+x = np.array([-1, 0, 6]).astype(np.float32)
+y = np.array([-1, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_splitbounds')
 ```
 
 </details>
@@ -710,6 +952,16 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -np.inf, 0.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_max')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_inbounds')
 ```
 
 </details>
@@ -892,7 +1144,7 @@ expect(node_with_asymmetric_padding, inputs=[x, W], outputs=[y_with_asymmetric_p
 
 
 ### ConvTranspose
-There are 6 test cases, listed as following:
+There are 5 test cases, listed as following:
 <details>
 <summary>convtranspose</summary>
 
@@ -1057,7 +1309,7 @@ expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_3d')
 
 </details>
 <details>
-<summary>convtranspose_output_padding</summary>
+<summary>convtranspose_attributes</summary>
 
 ```python
 x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
@@ -1070,10 +1322,6 @@ W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
                [[1., 1., 1.],
                 [1., 1., 1.],
                 [1., 1., 1.]]]]).astype(np.float32)
-
-node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
-                             strides=[3, 2],
-                             output_padding=[1, 1])
 
 y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
                 [0., 0., 1., 1., 3., 2., 2., 0.],
@@ -1096,53 +1344,27 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
                 [6., 6., 13., 7., 15., 8., 8., 0.],
                 [6., 6., 13., 7., 15., 8., 8., 0.],
                 [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
-
-expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
-```
-
-</details>
-<details>
-<summary>convtranspose_output_shape</summary>
-
-```python
-x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
-                [3., 4., 5.],
-                [6., 7., 8.]]]]).astype(np.float32)
-
-W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
-                [1., 1., 1.],
-                [1., 1., 1.]],
-               [[1., 1., 1.],
-                [1., 1., 1.],
-                [1., 1., 1.]]]]).astype(np.float32)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
                              output_shape=[1, 2, 10, 8])
-
-y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [0., 0., 0., 0., 0., 0., 0., 0.]],
-
-               [[0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [0., 0., 1., 1., 3., 2., 2., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [3., 3., 7., 4., 9., 5., 5., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [6., 6., 13., 7., 15., 8., 8., 0.],
-                [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
-
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
+                             strides=[3, 2],
+                             output_padding=[1, 1])
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
+
+node = onnx.helper.make_node(
+    'ConvTranspose', ['X', 'W'], ['Y'],
+    name='test',
+    strides=[3, 2],
+    output_shape=[10, 8],
+    kernel_shape=[3, 3],
+    output_padding=[1, 1]
+)
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_convtranspose_kernel_shape')
 ```
 
 </details>
@@ -2536,7 +2758,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### MaxPool
-There are 10 test cases, listed as following:
+There are 12 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -2609,10 +2831,7 @@ x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
-pad_bottom = 2
-pad_top = 2
-pad_right = 2
-pad_left = 2
+pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
 padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -2837,6 +3056,78 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
+```
+
+</details>
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.float32)
+z = np.array([[[
+    [12, 13, 14, 14, 14],
+    [17, 18, 19, 19, 19],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_pads')
+```
+
+</details>
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[2, 2],
+    strides=[2, 2],
+    storage_order=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9],
+                [17, 19]]]]).astype(np.float32)
+z = np.array([[[[6, 16],
+                [8, 18]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_strides')
 ```
 
 </details>
@@ -5377,12 +5668,6 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F494;No Cover Common Operators
-### ArgMax (call for test cases)
-
-
-### ArgMin (call for test cases)
-
-
 ### GlobalLpPool (call for test cases)
 
 

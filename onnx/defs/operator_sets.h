@@ -450,12 +450,22 @@ class OpSet_Onnx_ver7 {
 
 // Forward declarations for ai.onnx version 8
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Expand);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Min);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Sum);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, MaxPool);
 
-// Iterate over schema from ai.onnx version 8
+// Iterate over schema from ai.onnx version 7
 class OpSet_Onnx_ver8 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Expand)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Min)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Max)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Sum)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, MaxPool)>());
   }
 };
 

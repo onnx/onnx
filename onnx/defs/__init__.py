@@ -3,12 +3,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import onnx
-from onnx import AttributeProto
+from onnx import AttributeProto, FunctionProto
 import onnx.onnx_cpp2py_export.defs as C
 
+from collections import defaultdict
+from typing import List, Dict
 
 ONNX_DOMAIN = ""
+ONNX_ML_DOMAIN = 'ai.onnx.ml'
 
 
 has = C.has_schema
@@ -32,3 +34,14 @@ def _Attribute_default_value(self):  # type: ignore
 
 
 OpSchema.Attribute.default_value = _Attribute_default_value  # type: ignore
+
+
+def get_functions(domain=ONNX_DOMAIN):  # type: ignore
+    function_map = defaultdict(list)  # type: Dict[int, List[FunctionProto]]
+    function_byte_map = C.get_all_functions(domain)  # type: ignore
+    for function_name, raw_functions in function_byte_map.items():
+        for function_bytes in raw_functions:
+            function_proto = FunctionProto()
+            function_proto.ParseFromString(function_bytes)
+            function_map[function_name].append(function_proto)
+    return function_map

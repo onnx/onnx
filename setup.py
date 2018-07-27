@@ -86,6 +86,7 @@ def cd(path):
     finally:
         os.chdir(orig_path)
 
+
 ################################################################################
 # Customized commands
 ################################################################################
@@ -202,8 +203,8 @@ class build_py(setuptools.command.build_py.build_py):
         self.run_command('cmake_build')
 
         generated_python_files = \
-          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
-          glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.py')) + \
+            glob.glob(os.path.join(CMAKE_BUILD_DIR, 'onnx', '*.pyi'))
 
         for src in generated_python_files:
             dst = os.path.join(
