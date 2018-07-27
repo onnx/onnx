@@ -490,7 +490,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
+std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
+    const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
@@ -815,7 +816,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           malmulShapeInference(ctx);
         }));
 
-
 static const char* TopK_ver1_doc = R"DOC(
 Retrieve the top-K elements along a specified axis. Given an input tensor of
 shape [a_1, a_2, ..., a_n, r] and integer argument k, return two outputs:
@@ -1024,7 +1024,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-
 static const char* MatMul_Integer_ver8_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html. The production MUST never overflow.
 The accumulation may overflow if and only if in 32 bits.
@@ -1038,15 +1037,15 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Matrix multiply results from A * B", "tensor(int32)")
         .TypeConstraint(
             "T1",
-            {"tensor(int8)",
-             "tensor(uint8)"},
+            {"tensor(int8)", "tensor(uint8)"},
             "Constrain input A data type to 8-bits integer tensors.")
         .TypeConstraint(
             "T2",
-            {"tensor(int8)",
-             "tensor(uint8)"},
+            {"tensor(int8)", "tensor(uint8)"},
             "Constrain input B data type to 8-bits integer tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
+              TensorProto::INT32);
           malmulShapeInference(ctx);
         })
         .SetDoc(MatMul_Integer_ver8_doc));

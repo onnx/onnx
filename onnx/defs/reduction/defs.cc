@@ -108,7 +108,11 @@ False instead of True.)DOC";
         "T",
         {"tensor(int8)", "tensor(uint8)"},
         "Constrain input type to 8-bits integer tensors.");
-    schema.TypeAndShapeInferenceFunction(reduceShapeInference);
+    schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+      ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
+          TensorProto::INT32);
+      reduceShapeInference(ctx);
+    });
   };
 }
 
@@ -128,9 +132,9 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(ReduceDocGenerator("sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
-	ReduceSumInteger,
-	8,
-	OpSchema().FillUsing(LowPrecisionReduceDocGenerator("sum")));
+    ReduceSumInteger,
+    8,
+    OpSchema().FillUsing(LowPrecisionReduceDocGenerator("sum")));
 
 ONNX_OPERATOR_SET_SCHEMA(
     ReduceSumSquare,

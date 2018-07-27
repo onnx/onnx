@@ -1267,15 +1267,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor(int32)")
         .TypeConstraint(
             "T1",
-            {"tensor(int8)",
-             "tensor(uint8)"},
+            {"tensor(int8)", "tensor(uint8)"},
             "Constrain input X and Z data types as 8-bits integer tensors.")
         .TypeConstraint(
             "T2",
-            {"tensor(int8)",
-             "tensor(uint8)"},
+            {"tensor(int8)", "tensor(uint8)"},
             "Constrain input W data types as 8-bits integer tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
+              TensorProto::INT32);
           convPoolShapeInference(ctx, true, false);
         })
         .Attr(
