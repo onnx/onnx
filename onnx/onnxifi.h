@@ -124,12 +124,14 @@ typedef uint64_t onnxPointer;
 #define ONNXIFI_STATUS_INVALID_NAME 0x010A
 #define ONNXIFI_STATUS_INVALID_SHAPE 0x010B
 #define ONNXIFI_STATUS_INVALID_DATATYPE 0x010C
+#define ONNXIFI_STATUS_INVALID_MEMORY_TYPE 0x010D
 #define ONNXIFI_STATUS_UNSUPPORTED_TAG 0x0201
 #define ONNXIFI_STATUS_UNSUPPORTED_VERSION 0x0202
 #define ONNXIFI_STATUS_UNSUPPORTED_OPERATOR 0x0203
 #define ONNXIFI_STATUS_UNSUPPORTED_PARAMETER 0x0204
 #define ONNXIFI_STATUS_UNSUPPORTED_SHAPE 0x0205
 #define ONNXIFI_STATUS_UNSUPPORTED_DATATYPE 0x0206
+#define ONNXIFI_STATUS_UNSUPPORTED_MEMORY_TYPE 0x0207
 #define ONNXIFI_STATUS_UNIDENTIFIED_NAME 0x0301
 #define ONNXIFI_STATUS_MISMATCHING_SHAPE 0x0302
 #define ONNXIFI_STATUS_MISMATCHING_DATATYPE 0x0303
@@ -219,6 +221,18 @@ typedef uint64_t onnxPointer;
 typedef int32_t onnxBackendInfo;
 
 /**
+ * Major and minor version of ONNXIFI specification implemented by the backend.
+ *
+ * Value type: uint64_t.
+ *      The high 32 bits specify the major version.
+ *      The low 32 bits specify the minor version.
+ *
+ * Possible values:
+ *      UINT64_C(0x0000000100000000) for ONNXIFI 1.0
+ */
+#define ONNXIFI_BACKEND_ONNXIFI_VERSION 0
+
+/**
  * Marketing name of the backend (excluding the vendor name).
  *
  * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
@@ -289,6 +303,35 @@ typedef int32_t onnxBackendInfo;
  *      ONNXIFI_DEVICE_TYPE_HETEROGENEOUS
  */
 #define ONNXIFI_BACKEND_DEVICE_TYPE 6
+
+/**
+ * List of supported ONNX IR versions.
+ *
+ * Value type: char[], e.g.:
+ *    "3" (IR version in ONNX 1.0)
+ *
+ * Possible values: space-separated list of supported ONNX IR versions,
+ *     represented as decimal integers. ONNX IR versions must match values
+ *     in ONNX Version enum.
+ */
+#define ONNXIFI_BACKEND_ONNX_IR_VERSION 7
+
+/**
+ * List of supported operator set domains and maximum supported operator set
+ * version for each domain.
+ *
+ * Value type: char[], e.g.:
+ *    "ai.onnx:1" (only operators in version 1 of default ONNX operator set)
+ *    "ai.onnx:7" (operators up to version 7 of default ONNX operator set)
+ *    "org.pytorch:2 ai.onnx:6 ai.facebook:1"
+ *
+ * Possible values: space-separated list of domain:max_version pairs where
+ *     domain corresponds to OperatorSetIdProto.domain and max_version
+ *     corresponds to the maximum value of OperatorSetIdProto.version supported
+ *     by the backend for this domain. The backend MUST support all previous
+ *     operator set versions as well.
+ */
+#define ONNXIFI_BACKEND_OPSET_VERSION 8
 
 /**
  * Optional features supported by the backend.
@@ -1349,6 +1392,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                             weightDescriptors argument,
  *                                             or inferred from the inputs by
  *                                             the backend.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_MEMORY_TYPE The function call failed
+ *                                                because one of the memory
+ *                                                types in weightDescriptors is
+ *                                                different from
+ *                                                ONNXIFI_MEMORY_TYPE_CPU.
  * @retval ONNXIFI_STATUS_MISMATCHING_SHAPE The function call failed because
  *                                          the shapes specified in weight
  *                                          descriptors do not match the shapes
@@ -1451,6 +1499,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                         one of the data types in
  *                                         inputDescriptors or outputDescriptors
  *                                         is unknown to the backend.
+ * @retval ONNXIFI_STATUS_INVALID_MEMORY_TYPE The function call failed because
+ *                                            one of the memory types in
+ *                                            inputDescriptors or
+ *                                            outputDescriptors is unknown to
+ *                                            the backend.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_TAG The function call failed because one
  *                                        of the tags in inputDescriptors or
  *                                        outputDescriptors is unknown to the
@@ -1476,6 +1529,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                          and the problematic tensor shape was
  *                                          provided in the ValueInfoProto as a
  *                                          symbolic variable.
+ * @retval ONNXIFI_STATUS_UNSUPPORTED_MEMORY_TYPE The function call failed
+ *                                                because the backend does not
+ *                                                support one of the memory
+ *                                                types in inputDescriptors or
+ *                                                outputDescriptors.
  * @retval ONNXIFI_STATUS_UNIDENTIFIED_NAME The function call failed because one
  *                                          of the ValueInfoProto.name value in
  *                                          ModelProto.graph.input or
