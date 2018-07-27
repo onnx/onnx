@@ -12,6 +12,7 @@ import onnx.backend.test
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
+import onnx.version_converter
 from typing import Optional, Text, Any, Tuple, Sequence
 from onnx import NodeProto, ModelProto, TensorProto
 import numpy  # type: ignore
@@ -39,6 +40,9 @@ class DummyBackend(onnx.backend.base.Backend):
 
         # test shape inference
         model = onnx.shape_inference.infer_shapes(model)
+        # test version conversion
+        converted_model = onnx.version_converter.convert_version(model, 1)
+        converted_model = onnx.version_converter.convert_version(converted_model, 8)
         value_infos = {vi.name: vi for vi in itertools.chain(model.graph.value_info, model.graph.output)}
 
         if do_enforce_shape_inference_coverage(model):
