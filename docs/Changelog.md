@@ -8024,44 +8024,6 @@ This version of the operator has been available since version 7 of the default O
 </dl>
 
 ## Version 8 of the default ONNX operator set
-
-### <a name="Expand-8"></a>**Expand-8**</a>
-
-  Broadcast the input tensor following the given shape and the broadcast rule.
-  The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
-  Dimensions are right alignment;
-  Two corresponding dimension must have the same value, or one of them is equal to 1.
-  Also, this operator is similar to numpy.broadcast_to(input, shape),
-  but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
-  It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
-  or the shape.ndim < input.shape.ndim.
-  
-#### Version
-
-This version of the operator has been available since version 8 of the default ONNX operator set.
-
-#### Inputs
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor</dd>
-<dt><tt>shape</tt> : T</dt>
-<dd>A 1-D tensor indicates the shape you want to expand to, following the broadcast rule</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Output tensor</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input and output types to all tensors.</dd>
-</dl>
-
 ### <a name="Max-8"></a>**Max-8**</a>
 
   Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
