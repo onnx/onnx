@@ -1,11 +1,9 @@
 #ifdef _WIN32
 #include <windows.h>
-#include <malloc.h> /* for _alloca */
 #else
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <alloca.h>
 #include <dlfcn.h>
 #endif
 
@@ -20,7 +18,7 @@
 #if defined(__ANDROID__)
 #include <android/log.h>
 /* Tag used for logging on Android */
-#define ONNXIFI_LOADER_ANDROID_LOG_TAG "ONNX-LOADER"
+#define ONNXIFI_LOADER_ANDROID_LOG_TAG "ONNXIFI-LOADER"
 #else
 #include <stdio.h>
 #endif
@@ -51,9 +49,6 @@ static const char onnxifi_function_names[] =
     "onnxRunGraph\0"
     "onnxReleaseGraph\0";
 
-/* Length of the longest function, including terminating null */
-#define ONNXIFI_FUNCTION_NAME_MAX sizeof("onnxGetBackendCompatibility")
-
 int ONNXIFI_ABI onnxifi_load(
   uint32_t flags,
 #ifdef _WIN32
@@ -61,17 +56,10 @@ int ONNXIFI_ABI onnxifi_load(
 #else
   const char* path,
 #endif
-  const char* suffix,
   struct onnxifi_library* onnx)
 {
   size_t i;
   const char* function_name;
-  char* buffer;
-  size_t buffer_length;
-  size_t suffix_length;
-#ifdef _WIN32
-  LPCSTR format_arguments[2];
-#endif
 
   if (onnx == NULL) {
     return 0;
@@ -90,24 +78,13 @@ int ONNXIFI_ABI onnxifi_load(
   if (path == NULL) {
     path = ONNXIFI_LIBRARY_NAME;
   }
-  if (suffix == NULL) {
-    suffix = "";
-  }
-
-#ifdef _WIN32
-  buffer_length = ONNXIFI_FUNCTION_NAME_MAX + lstrlenA(suffix);
-  buffer = (char*) _alloca(buffer_length);
-#else
-  buffer_length = ONNXIFI_FUNCTION_NAME_MAX + strlen(suffix);
-  buffer = (char*) alloca(buffer_length);
-#endif
 
 #ifdef _WIN32
   onnx->handle = (void*) LoadLibraryExW(path, NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 #else
   /* Clear libdl error state */
   dlerror();
-  onnx->handle = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+  onnx->handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
 #endif
   if (onnx->handle == NULL) {
 #if ONNXIFI_LOADER_LOGGING
@@ -134,16 +111,9 @@ int ONNXIFI_ABI onnxifi_load(
   function_name = onnxifi_function_names;
   for (i = 0; i < ONNXIFI_LOADER_FUNCTION_COUNT; i++) {
 #ifdef _WIN32
-    format_arguments[0] = &function_name;
-    format_arguments[1] = &suffix;
-    FormatMessageA(
-      FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
-      "%1%2", 0 /* message id: ignored */, 0 /* language id: default */,
-      buffer, (DWORD) buffer_length, (va_list*) format_arguments);
-    onnx->functions[i] = GetProcAddress((HMODULE) onnx->handle, buffer);
+    onnx->functions[i] = GetProcAddress((HMODULE) onnx->handle, function_name);
 #else
-    snprintf(buffer, buffer_length, "%s%s", function_name, suffix);
-    onnx->functions[i] = dlsym(onnx->handle, buffer);
+    onnx->functions[i] = dlsym(onnx->handle, function_name);
 #endif
 
     if (onnx->functions[i] == NULL) {

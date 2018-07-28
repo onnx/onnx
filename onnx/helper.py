@@ -52,6 +52,22 @@ def make_node(
     return node
 
 
+def make_operatorsetid(
+        domain,  # type: Text
+        version,  # type: int
+):  # type: (...) -> OperatorSetIdProto
+    """Construct an OperatorSetIdProto.
+
+    Arguments:
+        domain (string): The domain of the operator set id
+        version (integer): Version of operator set id
+    """
+    operatorsetid = OperatorSetIdProto()
+    operatorsetid.domain = domain
+    operatorsetid.version = version
+    return operatorsetid
+
+
 def make_graph(
     nodes,  # type: Sequence[NodeProto]
     name,  # type: Text

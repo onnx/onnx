@@ -22,8 +22,6 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
-ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in);
-
 struct Optimizer {
   std::map<std::string, std::unique_ptr<OptimizePass>> passes;
 
@@ -46,10 +44,10 @@ struct Optimizer {
 
   virtual ~Optimizer() = default;
 
-  ONNX_NAMESPACE::ModelProto optimize(
-      const ONNX_NAMESPACE::ModelProto& mp_in,
+  ModelProto optimize(
+      const ModelProto& mp_in,
       const std::vector<std::string>& names) {
-    std::shared_ptr<ONNX_NAMESPACE::Graph> g(ONNX_NAMESPACE::ImportModelProto(mp_in));
+    std::shared_ptr<Graph> g(ImportModelProto(mp_in));
 
     if (g.get() == nullptr) {
       std::cerr << "Warning: onnx optimizer is unable to parse input model. "
@@ -58,7 +56,7 @@ struct Optimizer {
       return mp_in;
     }
 
-    ONNX_NAMESPACE::ModelProto mp_out = PrepareOutput(mp_in);
+    ModelProto mp_out = PrepareOutput(mp_in);
 
     for (const auto& name : names) {
       auto it = passes.find(name);
@@ -69,7 +67,7 @@ struct Optimizer {
           // Operate on ModelProto.
           ExportModelProto(&mp_out, g);
           pass->optimize(mp_out);
-          g = ONNX_NAMESPACE::ImportModelProto(mp_out);
+          g = ImportModelProto(mp_out);
 
         } else {
           // Operate on Graph (IR).
@@ -88,7 +86,7 @@ struct Optimizer {
   }
 };
 
-ONNX_NAMESPACE::ModelProto Optimize(
-    const ONNX_NAMESPACE::ModelProto& mp_in,
+ModelProto Optimize(
+    const ModelProto& mp_in,
     const std::vector<std::string>& names);
-}}
+}} // namespace ONNX_NAMESPACE:optimization
