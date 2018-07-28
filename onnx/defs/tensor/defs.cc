@@ -127,7 +127,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (targetShape[i] == -1) {
               // Check if multiple -1's. If not, set negativeOneDim, marking this
               // dimension to potentially be filled in later.
-              if (!negativeOneDim) {
+              if (negativeOneDim) {
                 fail_shape_inference("Target shape may not have multiple -1 dimensions");
               }
               negativeOneDim = new_dim;
