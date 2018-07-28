@@ -121,7 +121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           bool unresolvedZero = false;
           int64_t outputProduct = 1;
-          for (int i = 0; i < reinterpret_cast<int>(targetShape.size()); ++i)  {
+          for (int i = 0; i < static_cast<int>(targetShape.size()); ++i)  {
             // Add a new dimension to outputShape
             auto* new_dim = outputShape->add_dim();    
             if (targetShape[i] == -1) {
