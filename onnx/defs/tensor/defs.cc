@@ -120,7 +120,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           bool unresolvedZero = false;
-          int64_t outputProduct = 1;
+          int64_t outputProduct = 1;/*
           for (auto i = 0; i < targetShape.size(); ++i)  {
             // Add a new dimension to outputShape
             auto* new_dim = outputShape->add_dim();    
@@ -152,12 +152,12 @@ ONNX_OPERATOR_SET_SCHEMA(
               // Check if value is less than -1; fail if so
               fail_shape_inference("Target shape may not have dimensions less than -1");
             }
-          }
+          }*/
 
           // If negativeOneDim has been set, we attempt to infer its value. This can be done if 
           // all other dimensions have been set (unresolvedZero is false) and complete shape
           // information is present for the data input tensor.
-/*          if (negativeOneDim && !unresolvedZero) {
+          if (negativeOneDim && !unresolvedZero) {
             // First, attempt to compute number of elements in input data tensor, setting flag
             // to false if not possible
             int64_t dataElements = 1;
@@ -178,9 +178,9 @@ ONNX_OPERATOR_SET_SCHEMA(
               if (dataElements % outputProduct != 0) {
                 fail_shape_inference("Dimension could not be inferred: incompatible shapes");
               }
-              negativeOneDim->set_dim_value(dataElements /outputProduct);
+              negativeOneDim->set_dim_value(dataElements/outputProduct);
             }
-          }*/
+          }
         }));
 
 static const char* Shape_ver1_doc = R"DOC(
