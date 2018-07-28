@@ -121,7 +121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           bool unresolvedZero = false;
           int64_t outputProduct = 1;
-          for (auto i = 0; i < targetShape.size(); ++i)  {
+          for (size_t i = 0; i < targetShape.size(); ++i)  {
             // Add a new dimension to outputShape
             auto* new_dim = outputShape->add_dim();    
             if (targetShape[i] == -1) {
@@ -132,7 +132,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               negativeOneDim = new_dim;
             } else if (targetShape[i] == 0) {
-           /*   // Check if data input has a shape, if the index i is within its bounds, and
+              // Check if data input has a shape, if the index i is within its bounds, and
               // the dimension value is present at index i. If these conditions are satisfied,
               // the dimension value can be inferred and set. Otherwise, set unresolvedZero flag.
               if (dataInputTensorType.has_shape() && 
@@ -143,7 +143,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 outputProduct *= dim_value;
               } else {
                 unresolvedZero = true;
-              }*/
+              }
             } else if (targetShape[i] > 0) {
               // Set the dimension value to targetShape[i]
               new_dim->set_dim_value(targetShape[i]);
@@ -165,7 +165,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             if (!dataInputTensorType.has_shape()) {
               dataElementsFlag = false;
             } else {
-              for (auto i = 0; i < dataInputTensorType.shape().dim_size(); ++i)  {
+              for (int i = 0; i < dataInputTensorType.shape().dim_size(); ++i)  {
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                   dataElements *= dataInputTensorType.shape().dim(i).dim_value();
                 } else {
