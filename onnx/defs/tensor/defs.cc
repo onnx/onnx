@@ -136,7 +136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // the dimension value is present at index i. If these conditions are satisfied,
               // the dimension value can be inferred and set. Otherwise, set unresolvedZero flag.
               if (dataInputTensorType.has_shape() && 
-                  i < reinterpret_cast<size_t>(dataInputTensorType.shape().dim_size()) && 
+                  i < static_cast<size_t>(dataInputTensorType.shape().dim_size()) && 
                   dataInputTensorType.shape().dim(i).has_dim_value()) {
                 const auto& dim_value = dataInputTensorType.shape().dim(i).dim_value();
                 new_dim->set_dim_value(dim_value);
