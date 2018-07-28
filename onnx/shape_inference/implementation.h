@@ -10,17 +10,25 @@ namespace shape_inference {
 struct InferenceContextImpl : public InferenceContext {
   InferenceContextImpl(
       const NodeProto& n,
-      const std::unordered_map<std::string, TypeProto*>& valueTypesByName) {
+      const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
+      const std::unordered_map<std::string, const TensorProto*>& initializersByName) {
     for (const auto& attr : n.attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
 
     for (const auto& input : n.input()) {
-      auto iter = valueTypesByName.find(input);
-      if (iter != valueTypesByName.end()) {
-        allInputTypes_.push_back(iter->second);
+      auto valueTypesIter = valueTypesByName.find(input);
+      if (valueTypesIter != valueTypesByName.end()) {
+        allInputTypes_.push_back(valueTypesIter->second);
       } else {
         allInputTypes_.push_back(nullptr);
+      }
+
+      const auto initializerIter = initializersByName.find(input);
+      if (initializerIter != initializersByName.cend()) {
+        allInputInitializers_.push_back(initializerIter->second);
+      } else {
+        allInputInitializers_.push_back(nullptr);
       }
     }
 
@@ -47,6 +55,14 @@ struct InferenceContextImpl : public InferenceContext {
     return allInputTypes_[index];
   }
 
+  const TensorProto* getInputInitializer(size_t index) const override {
+    if (index >= allInputInitializers_.size()) {
+      throw std::runtime_error(
+          "input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return allInputInitializers_[index];
+  }
+
   size_t getNumOutputs() const override {
     return allOutputTypes_.size();
   }
@@ -58,6 +74,7 @@ struct InferenceContextImpl : public InferenceContext {
     }
     return &allOutputTypes_[index];
   }
+  std::vector<const TensorProto*> allInputInitializers_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;

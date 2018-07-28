@@ -90,6 +90,94 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          const TensorProto* targetShapeInitializer = ctx.getInputInitializer(1);
+          if (!targetShapeInitializer)  {
+            return;
+          }
+          // Make targetShape (0 -> same as originalShape, -1 -> inferred).
+          // The targetShape vector represents the specified shape for output.
+          std::vector<int64_t> targetShape;
+          if (targetShapeInitializer->has_raw_data())  {
+            const std::string& bytes = targetShapeInitializer->raw_data();
+            targetShape.insert(targetShape.end(), reinterpret_cast<const int64_t*>(bytes.c_str()), reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+          } else {
+            const auto& data = targetShapeInitializer->int64_data();
+            targetShape.insert(targetShape.end(), data.cbegin(), data.cend());
+          }
+
+          // Iterate through targetShape, adding dimensions in the outputShape TensorProto. 
+          // If the targertShape dimension is -1, we do not set the dimension value in this 
+          // iteration, but we record the Dimension. If targertShape dimension is 0, we attempt to infer the 
+          // dimension value. If it can be inferred, we set inferred dimension value; if not,
+          // we set the unresolvedZero flag. If targetShape dimension is positive,
+          // we set the dimension value in the outputShape. We track the product of 
+          // the dimensions we are setting outputShape in the outputProduct variable.
+          // The outputProduct will potentially be used for inferring a dimension marked -1.
+          auto* outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+          TensorShapeProto::Dimension* negativeOneDim = nullptr;
+          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          bool unresolvedZero = false;
+          int64_t outputProduct = 1;
+          for (auto i = 0; i < targetShape.size(); ++i)  {
+            // Add a new dimension to outputShape
+            auto* new_dim = outputShape->add_dim();    
+            if (targetShape[i] == -1) {
+              // Check if multiple -1's. If not, set negativeOneDim, marking this
+              // dimension to potentially be filled in later.
+              if (!negativeOneDim) {
+                fail_shape_inference("Target shape may not have multiple -1 dimensions");
+              }
+              negativeOneDim = new_dim;
+            } else if (targetShape[i] == 0) {
+              // Check if data input has a shape, if the index i is within its bounds, and
+              // the dimension value is present at index i. If these conditions are satisfied,
+              // the dimension value can be inferred and set. Otherwise, set unresolvedZero flag.
+              if (dataInputTensorType.has_shape() && 
+                  i < dataInputTensorType.shape().dim_size() && 
+                  dataInputTensorType.shape().dim(i).has_dim_value()) {
+                const auto& dim_value = dataInputTensorType.shape().dim(i).dim_value();
+                new_dim->set_dim_value(dim_value);
+                outputProduct *= dim_value;
+              } else {
+                unresolvedZero = true;
+              }
+            } else if (targetShape[i] > 0) {
+              // Set the dimension value to targetShape[i]
+              new_dim->set_dim_value(targetShape[i]);
+              outputProduct *= targetShape[i];
+            } else {
+              // Check if value is less than -1; fail if so
+              fail_shape_inference("Target shape may not have dimensions less than -1");
+            }
+          }
+
+          // If negativeOneDim has been set, we attempt to infer its value. This can be done if 
+          // all other dimensions have been set (unresolvedZero is false) and complete shape
+          // information is present for the data input tensor.
+          if (negativeOneDim && !unresolvedZero) {
+            // First, attempt to compute number of elements in input data tensor, setting flag
+            // to false if not possible
+            int64_t dataElements = 1;
+            bool dataElementsFlag = true;
+            if (!dataInputTensorType.has_shape()) {
+              dataElementsFlag = false;
+            } else {
+              for (auto i = 0; i < dataInputTensorType.shape().dim_size(); ++i)  {
+                if (dataInputTensorType.shape().dim(i).has_dim_value()) {
+                  dataElements *= dataInputTensorType.shape().dim(i).dim_value();
+                } else {
+                  dataElementsFlag = false;
+                  break;
+                }
+              }
+            }
+            if (dataElementsFlag) {
+              if (dataElements % outputProduct != 0) {
+                fail_shape_inference("Dimension could not be inferred: incompatible shapes");
+              }
+              negativeOneDim->set_dim_value(dataElements /outputProduct);
+            }
+          }
         }));
 
 static const char* Shape_ver1_doc = R"DOC(
