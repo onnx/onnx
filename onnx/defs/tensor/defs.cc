@@ -102,7 +102,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             targetShape.insert(targetShape.end(), reinterpret_cast<const int64_t*>(bytes.c_str()), reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
           } else {
             const auto& data = targetShapeInitializer->int64_data();
-            targetShape.insert(targetShape.end(), data.cbegin(), data.cend());
+            targetShape.insert(targetShape.end(), data.begin(), data.end());
           }
 
           // Iterate through targetShape, adding dimensions in the outputShape TensorProto. 
