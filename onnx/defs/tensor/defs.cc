@@ -121,7 +121,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           bool unresolvedZero = false;
           int64_t outputProduct = 1;
-          for (size_t i = 0; i < targetShape.size(); ++i)  {
+          for (int i = 0; i < reinterpret_cast<int>(targetShape.size()); ++i)  {
             // Add a new dimension to outputShape
             auto* new_dim = outputShape->add_dim();    
             if (targetShape[i] == -1) {
@@ -136,7 +136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // the dimension value is present at index i. If these conditions are satisfied,
               // the dimension value can be inferred and set. Otherwise, set unresolvedZero flag.
               if (dataInputTensorType.has_shape() && 
-                  i < static_cast<size_t>(dataInputTensorType.shape().dim_size()) && 
+                  i < dataInputTensorType.shape().dim_size() && 
                   dataInputTensorType.shape().dim(i).has_dim_value()) {
                 const auto& dim_value = dataInputTensorType.shape().dim(i).dim_value();
                 new_dim->set_dim_value(dim_value);
