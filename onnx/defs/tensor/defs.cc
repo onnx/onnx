@@ -89,7 +89,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Type Inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          // Shape Inference if target shape is in initializer
           const TensorProto* targetShapeInitializer = ctx.getInputInitializer(1);
           if (!targetShapeInitializer)  {
             return;
@@ -99,7 +101,8 @@ ONNX_OPERATOR_SET_SCHEMA(
           std::vector<int64_t> targetShape;
           if (targetShapeInitializer->has_raw_data())  {
             const std::string& bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(targetShape.end(), reinterpret_cast<const int64_t*>(bytes.c_str()), reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
+            targetShape.insert(targetShape.end(), reinterpret_cast<const int64_t*>(bytes.c_str()), 
+                               reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
           } else {
             const auto& data = targetShapeInitializer->int64_data();
             targetShape.insert(targetShape.end(), data.begin(), data.end());
@@ -133,7 +136,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               // the dimension value is present at index i. If these conditions are satisfied,
               // the dimension value can be inferred and set. Otherwise, set unresolvedZero flag.
               if (dataInputTensorType.has_shape() && 
-                  i < dataInputTensorType.shape().dim_size() && 
+                  i < reinterpret_cast<size_t>(dataInputTensorType.shape().dim_size()) && 
                   dataInputTensorType.shape().dim(i).has_dim_value()) {
                 const auto& dim_value = dataInputTensorType.shape().dim(i).dim_value();
                 new_dim->set_dim_value(dim_value);
