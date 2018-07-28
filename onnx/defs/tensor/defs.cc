@@ -157,7 +157,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // If negativeOneDim has been set, we attempt to infer its value. This can be done if 
           // all other dimensions have been set (unresolvedZero is false) and complete shape
           // information is present for the data input tensor.
-          if (negativeOneDim && !unresolvedZero) {
+/*          if (negativeOneDim && !unresolvedZero) {
             // First, attempt to compute number of elements in input data tensor, setting flag
             // to false if not possible
             int64_t dataElements = 1;
@@ -180,7 +180,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               negativeOneDim->set_dim_value(dataElements /outputProduct);
             }
-          }
+          }*/
         }));
 
 static const char* Shape_ver1_doc = R"DOC(
