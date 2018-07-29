@@ -13,7 +13,7 @@ std::string to_string(T value) {
   return os.str();
 }
 
-inline int stoi(const string& str) {
+inline int stoi(const std::string& str) {
   std::stringstream ss;
   int n = 0;
   ss << str;
