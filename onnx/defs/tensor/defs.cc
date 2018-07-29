@@ -183,7 +183,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                   inputProduct *=
                       dataInputTensorType.shape().dim(i).dim_value();
-                } else if (i >= unresolvedZeros.size() || !unresolvedZeros[i]) {
+                } else if (i >= static_cast<int>(unresolvedZeros.size()) || !unresolvedZeros[i]) {
                   inputProductValid = false;
                   break;
                 }
