@@ -109,7 +109,16 @@ ONNX_OPERATOR_SET_SCHEMA(
             targetShape.insert(targetShape.end(), data.begin(), data.end());
           }
 
-          // Iterate through targetShape, adding dimensions in the outputShape TensorProto. If the targertShape dimension is -1, we do not set the dimension value in this iteration, but we record the Dimension. If targertShape dimension is 0, we attempt to propagate the dimension value/param. If the value cannot be inferred, we set the flag in the unresolveZeros vector. If targetShape dimension is positive, we set the dimension value in the outputShape. We track the product of the dimensions we are setting outputShape in the outputProduct variable. The outputProduct will potentially be used for inferring a dimension marked -1.
+          // Iterate through targetShape, adding dimensions in the outputShape
+          // TensorProto. If the targertShape dimension is -1, we do not set the
+          // dimension value in this iteration, but we record the Dimension. If
+          // targertShape dimension is 0, we attempt to propagate the dimension
+          // value/param. If the value cannot be inferred, we set the flag in
+          // the unresolveZeros vector. If targetShape dimension is positive, we
+          // set the dimension value in the outputShape. We track the product of
+          // the dimensions we are setting outputShape in the outputProduct
+          // variable. The outputProduct will potentially be used for inferring
+          // a dimension marked -1.
           auto *outputShape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension *negativeOneDim = nullptr;
@@ -120,14 +129,18 @@ ONNX_OPERATOR_SET_SCHEMA(
             // Add a new dimension to outputShape
             auto *new_dim = outputShape->add_dim();
             if (targetShape[i] == -1) {
-              // Check if multiple -1's. If not, set negativeOneDim, marking this dimension to potentially be filled in later.
+              // Check if multiple -1's. If not, set negativeOneDim, marking
+              // this dimension to potentially be filled in later.
               if (negativeOneDim) {
                 fail_shape_inference(
                     "Target shape may not have multiple -1 dimensions");
               }
               negativeOneDim = new_dim;
             } else if (targetShape[i] == 0) {
-              // Check if data input has a shape and if the index i is within its bounds. If these conditions are satisfied, any dimension value/param should be propogated. If dimension value cannot be inferred, set the corresponding  unresolvedZeros flag to true.
+              // Check if data input has a shape and if the index i is within
+              // its bounds. If these conditions are satisfied, any dimension
+              // value/param should be propogated. If dimension value cannot be
+              // inferred, set the corresponding  unresolvedZeros flag to true.
               unresolvedZeros[i] = true;
               if (dataInputTensorType.has_shape() &&
                   i < dataInputTensorType.shape().dim_size()) {
@@ -153,9 +166,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
 
-          // If negativeOneDim has been set, we attempt to infer its value. This can be done if all dimension values for the data input tensor shape are known other than the ones corresponding to unresolvedZeros flags.
+          // If negativeOneDim has been set, we attempt to infer its value. This
+          // can be done if all dimension values for the data input tensor shape
+          // are known other than the ones corresponding to unresolvedZeros
+          // flags.
           if (negativeOneDim) {
-            // First, attempt to compute product of data input shape dimensions that are not marked by unresolvedZeros. If not possible, set the inputProductValid flag to false.
+            // First, attempt to compute product of data input shape dimensions
+            // that are not marked by unresolvedZeros. If not possible, set the
+            // inputProductValid flag to false.
             int64_t inputProduct = 1;
             bool inputProductValid = true;
             if (!dataInputTensorType.has_shape()) {
