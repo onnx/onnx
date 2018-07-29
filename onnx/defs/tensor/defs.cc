@@ -110,16 +110,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           // Iterate through targetShape, adding dimensions in the outputShape TensorProto. 
           // If the targertShape dimension is -1, we do not set the dimension value in this 
-          // iteration, but we record the Dimension. If targertShape dimension is 0, we attempt to infer the 
-          // dimension value. If it can be inferred, we set inferred dimension value; if not,
-          // we set the unresolvedZero flag. If targetShape dimension is positive,
+          // iteration, but we record the Dimension. If targertShape dimension is 0, we 
+          // attempt to propagate the dimension value/param. If the value cannot be inferred,
+          // we set the flag in the unresolveZeros vector. If targetShape dimension is positive,
           // we set the dimension value in the outputShape. We track the product of 
           // the dimensions we are setting outputShape in the outputProduct variable.
           // The outputProduct will potentially be used for inferring a dimension marked -1.
           auto* outputShape = ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           TensorShapeProto::Dimension* negativeOneDim = nullptr;
           const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
-          bool unresolvedZero = false;
+          std::vector<bool> unresolvedZeros(targetShape.size(), false);
           int64_t outputProduct = 1;
           for (int i = 0; i < static_cast<int>(targetShape.size()); ++i)  {
             // Add a new dimension to outputShape
@@ -132,17 +132,22 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
               negativeOneDim = new_dim;
             } else if (targetShape[i] == 0) {
-              // Check if data input has a shape, if the index i is within its bounds, and
-              // the dimension value is present at index i. If these conditions are satisfied,
-              // the dimension value can be inferred and set. Otherwise, set unresolvedZero flag.
+              // Check if data input has a shape and if the index i is within its bounds. If these 
+              // conditions are satisfied, any dimension value/param should be propogated. If 
+              // dimension value cannot be inferred, set the corresponding unresolvedZeros flag
+              // to true.
+              unresolvedZeros[i] = true;
               if (dataInputTensorType.has_shape() && 
-                  i < dataInputTensorType.shape().dim_size() && 
-                  dataInputTensorType.shape().dim(i).has_dim_value()) {
-                const auto& dim_value = dataInputTensorType.shape().dim(i).dim_value();
-                new_dim->set_dim_value(dim_value);
-                outputProduct *= dim_value;
-              } else {
-                unresolvedZero = true;
+                  i < dataInputTensorType.shape().dim_size()) {
+                if (dataInputTensorType.shape().dim(i).has_dim_value()) {
+                  const auto& dim_value = dataInputTensorType.shape().dim(i).dim_value();
+                  new_dim->set_dim_value(dim_value);
+                  outputProduct *= dim_value;
+                  unresolvedZeros[i] = false;
+                } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
+                  const auto& dim_param = dataInputTensorType.shape().dim(i).dim_param();
+                  new_dim->set_dim_param(dim_param);
+                }
               }
             } else if (targetShape[i] > 0) {
               // Set the dimension value to targetShape[i]
@@ -150,35 +155,36 @@ ONNX_OPERATOR_SET_SCHEMA(
               outputProduct *= targetShape[i];
             } else {
               // Check if value is less than -1; fail if so
-              fail_shape_inference("Target shape may not have dimensions less than -1");
+              fail_shape_inference("Dimension value is invalid");
             }
           }
 
           // If negativeOneDim has been set, we attempt to infer its value. This can be done if 
-          // all other dimensions have been set (unresolvedZero is false) and complete shape
-          // information is present for the data input tensor.
-          if (negativeOneDim && !unresolvedZero) {
-            // First, attempt to compute number of elements in input data tensor, setting flag
-            // to false if not possible
-            int64_t dataElements = 1;
-            bool dataElementsFlag = true;
+          // all dimension values for the data input tensor shape are known other than the ones
+          // corresponding to unresolvedZeros flags.
+          if (negativeOneDim) {
+            // First, attempt to compute product of data input shape dimensions that are not marked
+            // by unresolvedZeros. If not possible, set the inputProductValid flag to false.
+            int64_t inputProduct = 1;
+            bool inputProductValid = true;
             if (!dataInputTensorType.has_shape()) {
-              dataElementsFlag = false;
+              inputProductValid = false;
             } else {
               for (int i = 0; i < dataInputTensorType.shape().dim_size(); ++i)  {
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                  dataElements *= dataInputTensorType.shape().dim(i).dim_value();
-                } else {
-                  dataElementsFlag = false;
+                  inputProduct *= dataInputTensorType.shape().dim(i).dim_value();
+                } else if (i >= unresolvedZeros.size() ||
+                           !unresolvedZeros[i]) {
+                  inputProductValid = false;
                   break;
                 }
               }
             }
-            if (dataElementsFlag) {
-              if (dataElements % outputProduct != 0) {
+            if (inputProductValid) {
+              if (inputProduct % outputProduct != 0) {
                 fail_shape_inference("Dimension could not be inferred: incompatible shapes");
               }
-              negativeOneDim->set_dim_value(dataElements/outputProduct);
+              negativeOneDim->set_dim_value(inputProduct / outputProduct);
             }
           }
         }));
