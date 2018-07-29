@@ -20,7 +20,7 @@ class TestShapeInference(unittest.TestCase):
                     initializer=None  # type: Optional[Sequence[TensorProto]]
                     ):  # type: (...) -> GraphProto
         if initializer is None:
-          initializer = []
+            initializer = []
         names_in_initializer = set(x.name for x in initializer)
         input_value_infos = []
         # If the starting values are not also initializers,
@@ -204,7 +204,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Reshape", ['x', 'shape'], ['y'])],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (2,), (3, 8))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (3,8,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
 
     def test_reshape_static_shape_inferred(self):  # type: () -> None
         graph = self._make_graph(
@@ -213,7 +213,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node("Reshape", ['x', 'shape'], ['y'])],
             [],
             initializer=[make_tensor('shape', TensorProto.INT64, (3,), (0, 3, -1))])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 3, 4,))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 3, 4))])
 
     def test_shape(self):  # type: () -> None
         graph = self._make_graph(
