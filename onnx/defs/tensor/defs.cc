@@ -142,8 +142,10 @@ ONNX_OPERATOR_SET_SCHEMA(
               // value/param should be propogated. If dimension value cannot be
               // inferred, set the corresponding  unresolvedZeros flag to true.
               unresolvedZeros[i] = true;
-              if (dataInputTensorType.has_shape() &&
-                  i < dataInputTensorType.shape().dim_size()) {
+              if (dataInputTensorType.has_shape()) {
+                if (i >= dataInputTensorType.shape().dim_size()) {
+                  fail_shape_inference("Invalid position of 0");
+                }
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                   const auto &dim_value =
                       dataInputTensorType.shape().dim(i).dim_value();
@@ -170,7 +172,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // can be done if all dimension values for the data input tensor shape
           // are known other than the ones corresponding to unresolvedZeros
           // flags.
-          if (negativeOneDim) {
+          if (negativeOneDim && outputProduct != 0) {
             // First, attempt to compute product of data input shape dimensions
             // that are not marked by unresolvedZeros. If not possible, set the
             // inputProductValid flag to false.
