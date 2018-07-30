@@ -89,9 +89,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext &ctx) {
           // Type Inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          // Shape Inference if target shape is in initializer
+          // Shape Inference if 2nd input data (the target shape) is available
           const TensorProto *targetShapeInitializer =
-              ctx.getInputInitializer(1);
+              ctx.getInputData(1);
           if (!targetShapeInitializer) {
             return;
           }
