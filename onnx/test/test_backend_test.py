@@ -98,6 +98,4 @@ globals().update(backend_test
                  .test_cases)
 
 if __name__ == '__main__':
-    # For now, disable the backend tests. The models do not pass the model checker.
-    pass
-    #unittest.main()
+    unittest.main()

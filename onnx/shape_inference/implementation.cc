@@ -4,14 +4,15 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 void checkShapesAndTypes(
-	const std::string& value_name,
+    const std::string& value_name,
     const TypeProto_Tensor& inferredType,
     const TypeProto_Tensor& existingType) {
   if (inferredType.elem_type() != TensorProto::UNDEFINED &&
       existingType.elem_type() != TensorProto::UNDEFINED &&
       existingType.elem_type() != inferredType.elem_type()) {
     std::stringstream ss;
-    ss << value_name << ": the inferred elem type differs from existing elem type: ("
+    ss << value_name
+       << ": the inferred elem type differs from existing elem type: ("
        << inferredType.elem_type() << ") vs (" << existingType.elem_type()
        << ")";
     throw std::runtime_error(ss.str());
@@ -152,6 +153,11 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
       }
       const auto& inferredType = ctx.getOutputType(i)->tensor_type();
 
+      // No sense tracking shape and type for optional outputs.
+      if (n.output(i).empty()) {
+        continue;
+      }
+
       // Bail out early if shape inference does nothing useful.
       if (inferredType.elem_type() == TensorProto::UNDEFINED &&
           !inferredType.has_shape()) {
@@ -165,7 +171,8 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
       TypeProto* existingType = nullptr;
       if (iter != valueTypesByName.end()) {
         existingType = iter->second;
-        checkShapesAndTypes(iter->first, inferredType, existingType->tensor_type());
+        checkShapesAndTypes(
+            iter->first, inferredType, existingType->tensor_type());
       } else {
         auto vi = g->add_value_info();
         vi->set_name(n.output(i));

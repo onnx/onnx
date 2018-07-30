@@ -320,7 +320,7 @@ public:
   std::string uniqueName() const {
     if(has_unique_name())
       return unique_name_;
-    return ONNX_NAMESPACE::to_string(unique());
+    return "_gen" + ONNX_NAMESPACE::to_string(unique());
   }
   Value* setUniqueName(std::string name) {
     has_unique_name_ = true;
@@ -978,7 +978,7 @@ public:
   }
 
   Value* addInitializerAndInput(const Tensor &initializer) {
-    return addInitializerAndInput(initializer, ONNX_NAMESPACE::to_string(next_unique_++));
+    return addInitializerAndInput(initializer, "_gen" + ONNX_NAMESPACE::to_string(next_unique_++));
   }
 
 

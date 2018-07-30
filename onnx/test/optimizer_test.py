@@ -265,7 +265,7 @@ class TestOptimizer(unittest.TestCase):
     def test_extract_constant_to_initializer(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         constant = helper.make_node("Constant", [], ["A"],
                                     value=helper.make_tensor(
@@ -374,7 +374,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_add_bias_into_conv_use_weight_shape(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         nodes = [helper.make_node("Conv", ["X", "Y"], ["Z"]),
                  helper.make_node("Add", ["Z", "A"], ["B"])]
         nodes.extend(self._make_fake_loop_op(
@@ -409,7 +409,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_add_bias_into_conv_use_weight_shape_with_tile(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"])
         graph = helper.make_graph(
@@ -434,7 +434,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_add_bias_into_conv_use_conv_shape(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         sub = helper.make_node("Sub", ["M", "N"], ["Y"])
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"])
@@ -463,7 +463,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_add_bias_into_conv_use_move_constant(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         constant = helper.make_node("Constant", [], ["A"],
                                     value=helper.make_tensor(
@@ -495,7 +495,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_add_bias_into_conv_squeeze_1d_bias_no_fuse(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"])
         graph = helper.make_graph(
@@ -518,7 +518,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_add_bias_into_conv_squeeze_3d_bias_no_fuse(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         conv = helper.make_node("Conv", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"])
         graph = helper.make_graph(
@@ -638,7 +638,7 @@ class TestOptimizer(unittest.TestCase):
     def test_preserve_value_info(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
         trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])
@@ -735,7 +735,7 @@ class TestOptimizer(unittest.TestCase):
     def test_fuse_bn_into_conv_simple(self):  # type: () -> None
         # TODO: Check this test -- since shape inference was added to the model validator,
         # the test fails.
-        return
+        # return
         for (tensor_type, np_type) in [(TensorProto.FLOAT, np.float32), (TensorProto.DOUBLE, np.float64)]:
             conv = helper.make_node("Conv", ["X", "W", "B"], ["Y"])
             bn = helper.make_node("BatchNormalization", ["Y", "scale", "b", "mean", "var"], ["Z"])
