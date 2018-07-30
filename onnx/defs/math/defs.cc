@@ -1050,14 +1050,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "shape",
             "A 1-D tensor indicates the shape you want to expand to, following the broadcast rule",
-            "S")
+            "tensor(int64)")
         .Output(0, "output", "Output tensor", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensors.")
-		.TypeConstraint(
-			"S",
-			{"tensor(int64)"},
-			"Constrain shape type of integer tensors."));
+            "Constrain input and output types to all tensors."));
 } // namespace ONNX_NAMESPACE

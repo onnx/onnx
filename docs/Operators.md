@@ -2864,7 +2864,7 @@ This version of the operator has been available since version 8 of the default O
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>Input tensor</dd>
-<dt><tt>shape</tt> : S</dt>
+<dt><tt>shape</tt> : tensor(int64)</dt>
 <dd>A 1-D tensor indicates the shape you want to expand to, following the broadcast rule</dd>
 </dl>
 
@@ -2880,8 +2880,6 @@ This version of the operator has been available since version 8 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
 <dd>Constrain input and output types to all tensors.</dd>
-<dt><tt>S</tt> : tensor(int64)</dt>
-<dd>Constrain shape type of integer tensors.</dd>
 </dl>
 
 
