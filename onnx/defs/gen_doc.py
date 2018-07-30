@@ -8,7 +8,7 @@ import io
 import os
 from collections import defaultdict
 
-from onnx import defs, FunctionProto
+from onnx import defs, FunctionProto, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from typing import Text, Sequence, Dict, List, Type, Set, Tuple
@@ -225,6 +225,11 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
+def function_status_str(status=OperatorStatus.Value("EXPERIMENTAL")):  # type: ignore
+    return \
+        "<sub>experimental</sub> " if status == OperatorStatus.Value('EXPERIMENTAL') else ""  # type: ignore
+
+
 def main(args):  # type: (Type[Args]) -> None
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
@@ -396,15 +401,12 @@ def main(args):  # type: (Type[Args]) -> None
 
             existing_functions = set()  # type: Set[Text]
             for function_name, functions in sorted(all_functions.items()):
-                available_versions = [func.since_version for func in functions]
-                latest_version = sorted(available_versions)[-1]
-
                 for function in sorted(functions, key=lambda s: s.since_version, reverse=True):
                     if function.name in existing_functions:
                         continue
                     existing_functions.add(function.name)
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
-                        "<sub>experimental</sub>" if latest_version == function.since_version else "",
+                        function_status_str(function.status),
                         domain_prefix + function.name, domain_prefix + function.name)
                     fout.write(s)
 
@@ -416,7 +418,7 @@ def main(args):  # type: (Type[Args]) -> None
                 available_versions = [func.since_version for func in functions]
                 function = sorted(functions, key=lambda s: s.since_version, reverse=True)[0]
                 s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
-                    "<sub>experimental</sub> " if latest_version == function.since_version else "",
+                    function_status_str(function.status),
                     domain_prefix + function.name, domain_prefix + function.name.lower(),
                     domain_prefix + function.name)
 

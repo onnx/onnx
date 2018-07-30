@@ -294,6 +294,7 @@ private:
   bool has_unique_name_;
   std::string unique_name_;
   ONNX_NAMESPACE::TensorProto_DataType elem_type_;
+  bool has_sizes_;
   std::vector<Dimension> sizes_;
 
 public:
@@ -304,7 +305,9 @@ public:
   ONNX_NAMESPACE::TensorProto_DataType elemType() const {
     return elem_type_;
   }
+  bool has_sizes() const { return has_sizes_; }
   Value* setSizes(std::vector<Dimension> sizes) {
+    has_sizes_ = true;
     sizes_ = std::move(sizes);
     return this;
   }
@@ -416,7 +419,7 @@ public:
   bool has_name() {
     return has_name_;
   }
-  const std::string& name() {
+  const std::string& name() const {
     return name_;
   }
   void setName(std::string name) {
@@ -767,6 +770,58 @@ protected:
   }
 };
 
+// A class with the same properties as OperatorSetIdProto, but without protobuf
+// overhead, resulting in a simpler and more readable workflow.
+class OpSetID final {
+  private:
+    std::string domain_;
+    int64_t version_;
+
+  public:
+    explicit OpSetID(const OperatorSetIdProto& proto)
+      :domain_(proto.domain()), version_(proto.version()) {}
+
+    // Default Domain Constructor
+    explicit OpSetID(const int64_t version)
+      :domain_(""), version_(version) {}
+
+    explicit OpSetID(const std::string& domain, int64_t version)
+      :domain_(domain), version_(version) {}
+
+    // target must be in the form "<domain>&<version>"
+    std::string toString() const {
+      return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
+    }
+
+    // target must be in the form "<domain>&<version>"
+    static OpSetID fromString(const std::string& target) {
+      try {
+        std::string new_domain = target.substr(0, target.find("$"));
+        int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+        return OpSetID(std::move(new_domain), new_version);
+      } catch (const std::runtime_error& e) {
+        ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
+      }
+    }
+
+
+    const std::string& domain() const {
+      return domain_;
+    }
+
+    int64_t version() const {
+      return version_;
+    }
+
+    void incrementVersion(int64_t step) {
+      version_ += step;
+    }
+
+    void setVersion(int64_t newVal) {
+      version_ = newVal;
+    }
+};
+
 struct Graph final {
 ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
@@ -797,6 +852,8 @@ private:
   std::string name_;
   bool has_doc_string_;
   std::string doc_string_;
+
+  std::vector <OpSetID> opset_versions_;
 
 public:
   Graph()
@@ -875,6 +932,11 @@ public:
   const_graph_node_list nodes() const {
     return const_graph_node_list(output_, kNextDirection);
   }
+
+  std::vector<OpSetID>& opset_versions_mutable() {
+    return opset_versions_;
+  }
+
   // These invocations of begin() on output of function are OK
   // because graph_node_list is non-owning, so it doesn't matter
   // if it immediately dies after the invocation.
@@ -1040,13 +1102,11 @@ private:
   }
 };
 
-inline Value::Value(Node * node_, size_t offset_)
-: node_(node_),
-  offset_(offset_),
-  unique_(node_->graph_->next_unique_++),
-  stage_(node_->graph_->new_node_stage_),
-  has_unique_name_(false),
-  elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED) {
+inline Value::Value(Node *node_, size_t offset_)
+    : node_(node_), offset_(offset_), unique_(node_->graph_->next_unique_++),
+      stage_(node_->graph_->new_node_stage_), has_unique_name_(false),
+      elem_type_(ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED),
+      has_sizes_(false) {
   node_->graph_->all_values.emplace(this);
 }
 
