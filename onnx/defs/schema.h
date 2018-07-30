@@ -485,9 +485,6 @@ class OpSchema final {
     return domain_;
   }
 
-  int since_version() const {
-    return since_version_;
-  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -511,6 +508,10 @@ class OpSchema final {
   }
 
   OperatorSetVersion SinceVersion() const {
+    return since_version_;
+  }
+
+  int since_version() const {
     return since_version_;
   }
 
