@@ -2,10 +2,6 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-namespace {
-  static DefaultVersionConverter _version_converter;
-}
-
 ModelProto ConvertVersion(
     const ModelProto& mp_in,
     const int target_version) {
@@ -18,7 +14,8 @@ ModelProto ConvertVersion(
     }
   }
   OpSetID target_struct = OpSetID(target_version);
-  return _version_converter.convert_version(mp_in, initial_struct, target_struct);
+  DefaultVersionConverter v;
+  return v.convert_version(mp_in, initial_struct, target_struct);
 }
 
 ModelProto DefaultVersionConverter::convert_version(
