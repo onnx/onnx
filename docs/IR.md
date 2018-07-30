@@ -86,9 +86,15 @@ Each model has the following components:
 |doc_string|string|A human-readable documentation for this model. Markdown is allowed.|
 |graph|Graph|The parameterized graph that is evaluated to execute the model.|
 |metadata_props|map<string,string>|Named metadata values; keys should be distinct.|
+|external_models|ExternalModel|A set of model identifiers `(domain,name,version)` for external models referenced within the current model.|ONNX|
 
- Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
- 
+Models MUST specify a domain and use reverse domain names based on the responsible organization's identity, the same convention that is traditionally used for naming Java packages.
+
+#### Model Composition
+
+Models may be treated as custom operators within other models, thus supporting composition of models from models. For such external model references to be resolved, each external model dependency MUST be declared in the 'external_models' set. External models are uniquely identified by their domain, the name of the main graph, and the model version. Such model references MUST form an __acyclic__ graph -- model recursion is NOT supported. An external model may be used more than once by a referring model.
+
+How external models are found and loaded at runtime is implementation-defined.
 
 ### Optional Metadata
 
@@ -133,7 +139,7 @@ The properties of an operator definition are:
 
 Name|Type|Description
 |---|---|---|
-op_type|string|The name of the operator, as used in graph nodes. MUST be unique within the operator set’s domain.
+op_type|string|The name of the operator as used in graph nodes. If MUST be unique within the operator set’s domain.
 since_version|int64|The version of the operator set when this operator was introduced.
 status|OperatorStatus|One of ‘EXPERIMENTAL’ or ‘STABLE.’
 doc_string|string|A human-readable documentation string for this operator. Markdown is allowed.
@@ -196,7 +202,7 @@ Shape|The names of tensor shape variables – scoped to the value information re
 
 ### Nodes
 
-Computation nodes are comprised of a name, the name of an operator that it invokes, a list of named inputs, a list of named outputs, and a list of attributes. 
+Computation nodes are comprised of a name, the name of an operator or external model that it invokes, a list of named inputs, a list of named outputs, and a list of attributes.
 
 Input and outputs are positionally associated with operator inputs and outputs. Attributes are associated with operator attributes by name.
 
@@ -204,13 +210,13 @@ They have the following properties:
 
 Name|Type|Description
 |---|---|---|
-name|string|An optional name of the node, used for diagnostic purposes only.
-input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.
-output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a  value in the graph or refers to a graph output.
-op_type|string|The symbolic identifier of the operator to invoke.
-domain|string|The domain of the operator set that contains the operator named by the op_type.
-attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
-doc_string|string|A human-readable documentation for this value. Markdown is allowed.
+|name|string|An optional name of the node, used for diagnostic purposes only.|
+|input|string[]|Names of the values used by the node to propagate input values to the node operator. It must refer to either a graph input or a node output.|
+|output|string[]|Names of the outputs used by the node to capture data from the operator invoked by the node. It either introduces a  value in the graph or refers to a graph output.|
+|op_type|string|The symbolic identifier of the operator or external model to invoke.|
+|domain|string|The domain of the external model or the operator set.|
+|attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.|
+|doc_string|string|A human-readable documentation for this value. Markdown is allowed.|
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
