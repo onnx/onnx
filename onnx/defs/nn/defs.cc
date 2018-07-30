@@ -1264,7 +1264,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Output data tensor that contains the result of the "
             "convolution. The output dimensions are functions "
             "of the kernel size, stride size, and pad lengths.",
-            "tensor(int32)")
+            "T3")
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
@@ -1273,9 +1273,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(int8)", "tensor(uint8)"},
             "Constrain input W data types as 8-bits integer tensors.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int32)", "tensor(uint32)"},
+            "Constrain output Y data types as 32-bits integer tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-              TensorProto::INT32);
+          auto x_type = ctx.getInputType(0);
+          auto w_type = ctx.getInputType(1);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == x_type || nullptr == w_type || nullptr == y_type ||
+              x_type->value_case() != TypeProto::kTensorType ||
+              w_type->value_case() != TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          if (TensorProto::UINT8 == x_type->tensor_type().elem_type() &&
+              TensorProto::UINT8 == w_type->tensor_type().elem_type()) {
+            y_type->mutable_tensor_type()->set_elem_type(TensorProto::UINT32);
+          } else {
+            y_type->mutable_tensor_type()->set_elem_type(TensorProto::INT32);
+          }
+
           convPoolShapeInference(ctx, true, false);
         })
         .Attr(

@@ -102,15 +102,31 @@ False instead of True.)DOC";
         "Keep the reduced dimension or not, default 1 mean keep reduced dimension.",
         AttributeProto::INT,
         static_cast<int64_t>(1));
-    schema.Input(0, "data", "An input tensor.", "T");
-    schema.Output(0, "reduced", "Reduced output tensor.", "tensor(int32)");
+    schema.Input(0, "data", "An input tensor.", "T1");
+    schema.Output(0, "reduced", "Reduced output tensor.", "T2");
     schema.TypeConstraint(
-        "T",
+        "T1",
         {"tensor(int8)", "tensor(uint8)"},
         "Constrain input type to 8-bits integer tensors.");
+    schema.TypeConstraint(
+        "T2",
+        {"tensor(int32)", "tensor(uint32)"},
+        "Constrain output type to 32-bits integer tensors.");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-      ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-          TensorProto::INT32);
+      auto data_type = ctx.getInputType(0);
+      auto reduced_type = ctx.getOutputType(0);
+      if (nullptr == data_type ||
+          data_type->value_case() != TypeProto::kTensorType ||
+          nullptr == reduced_type) {
+        fail_type_inference(
+            "input 'data' is expected to have tensor type and output type should not be null.");
+      }
+
+      if (data_type->tensor_type().elem_type() == TensorProto::UINT8) {
+        reduced_type->mutable_tensor_type()->set_elem_type(TensorProto::UINT32);
+      } else {
+        reduced_type->mutable_tensor_type()->set_elem_type(TensorProto::INT32);
+      }
       reduceShapeInference(ctx);
     });
   };

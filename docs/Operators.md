@@ -1986,7 +1986,7 @@ This version of the operator has been available since version 8 of the default O
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : tensor(int32)</dt>
+<dt><tt>Y</tt> : T3</dt>
 <dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
 </dl>
 
@@ -1997,6 +1997,8 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input X and Z data types as 8-bits integer tensors.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input W data types as 8-bits integer tensors.</dd>
+<dt><tt>T3</tt> : tensor(int32), tensor(uint32)</dt>
+<dd>Constrain output Y data types as 32-bits integer tensors.</dd>
 </dl>
 
 
@@ -5059,7 +5061,7 @@ This version of the operator has been available since version 8 of the default O
 #### Outputs
 
 <dl>
-<dt><tt>Y</tt> : tensor(int32)</dt>
+<dt><tt>Y</tt> : T3</dt>
 <dd>Matrix multiply results from A * B</dd>
 </dl>
 
@@ -5070,6 +5072,8 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input A data type to 8-bits integer tensors.</dd>
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input B data type to 8-bits integer tensors.</dd>
+<dt><tt>T3</tt> : tensor(int32), tensor(uint32)</dt>
+<dd>Constrain output Y data type to 32-bits integer tensors.</dd>
 </dl>
 
 
@@ -8278,22 +8282,24 @@ This version of the operator has been available since version 8 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>data</tt> : T</dt>
+<dt><tt>data</tt> : T1</dt>
 <dd>An input tensor.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>reduced</tt> : tensor(int32)</dt>
+<dt><tt>reduced</tt> : T2</dt>
 <dd>Reduced output tensor.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(int8), tensor(uint8)</dt>
+<dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input type to 8-bits integer tensors.</dd>
+<dt><tt>T2</tt> : tensor(int32), tensor(uint32)</dt>
+<dd>Constrain output type to 32-bits integer tensors.</dd>
 </dl>
 
 

@@ -1034,7 +1034,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Input(0, "A", "N-dimensional matrix A", "T1")
         .Input(1, "B", "N-dimensional matrix B", "T2")
-        .Output(0, "Y", "Matrix multiply results from A * B", "tensor(int32)")
+        .Output(0, "Y", "Matrix multiply results from A * B", "T3")
         .TypeConstraint(
             "T1",
             {"tensor(int8)", "tensor(uint8)"},
@@ -1043,9 +1043,27 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2",
             {"tensor(int8)", "tensor(uint8)"},
             "Constrain input B data type to 8-bits integer tensors.")
+        .TypeConstraint(
+            "T3",
+            {"tensor(int32)", "tensor(uint32)"},
+            "Constrain output Y data type to 32-bits integer tensors.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-              TensorProto::INT32);
+          auto a_type = ctx.getInputType(0);
+          auto b_type = ctx.getInputType(1);
+          auto y_type = ctx.getOutputType(0);
+          if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
+                  a_type->value_case() != TypeProto::kTensorType ||
+                  b_type->value_case() != TypeProto::kTensorType) {
+            fail_type_inference(
+                "inputs are expected to have tensor type and output type should not be null.");
+          }
+
+          if (TensorProto::UINT8 == a_type->tensor_type().elem_type() &&
+              TensorProto::UINT8 == b_type->tensor_type().elem_type()) {
+            y_type->mutable_tensor_type()->set_elem_type(TensorProto::UINT32);
+          } else {
+            y_type->mutable_tensor_type()->set_elem_type(TensorProto::INT32);
+          }
           malmulShapeInference(ctx);
         })
         .SetDoc(MatMul_Integer_ver8_doc));
