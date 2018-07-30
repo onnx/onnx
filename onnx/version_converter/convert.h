@@ -73,7 +73,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
             }
           }
           if (min_version > 1) {
-            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + std::to_string(min_version));
+            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + ONNX_NAMESPACE::to_string(min_version));
             registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
               OpSetID(min_version), OpSetID(min_version - 1)));
           }
