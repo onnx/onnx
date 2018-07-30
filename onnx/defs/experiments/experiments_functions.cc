@@ -32,6 +32,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   func.add_input("X");
   func.add_output("X_MVN");
   func.add_attribute("axes");
+  func.set_status(OperatorStatus::EXPERIMENTAL);
 
   NodeProto* initial_node0 = func.add_node();
   BuildNode(
