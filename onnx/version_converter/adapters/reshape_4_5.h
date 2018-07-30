@@ -12,21 +12,19 @@ class Reshape_4_5 final : public Adapter {
       : Adapter("Reshape", OpSetID(4), OpSetID(5)) {}
 
     void adapt_reshape_4_5(std::shared_ptr<Graph> graph, Node* node) const {
-      // TODO: Create Input from Attribute
-      // Create Value
-      Value v(node, 1);
-      // Turn shapes attribute into vector<Dimension>
-      std::vector<Dimension> dims;
+      // Create Input from Attribute - add as Initializer
+      // Create tensor for value attribute
+      Tensor t;
+      t.elem_type() = TensorProto_DataType_INT64;
+      auto& data = t.int64s();
+      // Turn shapes attribute into tensor
       for (int64_t shape : node->is(kshape)) {
-        dims.emplace_back(Dimension(shape));
+        data.emplace_back(shape);
       }
-      // Assign shape vector to sizes of Value
-      v.setSizes(dims);
-      // Set name of Value to 'shape'
-      v.setUniqueName("shape");
       // Add value as input to node
-      // Ensure that this doesn't cause a segfault by v going out of scope
-      node->addInput(&v);
+      // Create Value
+      Value* v = graph->addInitializerAndInput(t);
+      node->addInput(v);
       // Remove kshape attribute
       node->removeAttribute(kshape);
     }

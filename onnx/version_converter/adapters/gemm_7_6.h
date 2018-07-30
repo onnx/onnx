@@ -12,25 +12,13 @@ class Gemm_7_6 final : public Adapter {
 
     void adapt_gemm_7_6(std::shared_ptr<Graph> graph, Node* node) const {
       const ArrayRef<Value*>& inputs = node->inputs();
+      ONNX_ASSERTM(inputs.size() == 3, "3 Inputs must be provided to Gemm");
       // Determine if C is broadcastable
-      // Get M and N
-      int64_t M = inputs[0]->sizes()[0].dim;
-      if (node->hasAttribute(ktransA) && node->i(ktransA) != 0)
-        M = inputs[0]->sizes()[1].dim;
-      int64_t N = inputs[1]->sizes()[1].dim;
-      if (node->hasAttribute(ktransA) && node->i(ktransA) != 0)
-        N = inputs[0]->sizes()[0].dim;
       const auto& C_shape = inputs[2]->sizes();
-      int64_t C_M = C_shape[0].dim;
-      if (C_shape.size() == 2) {
-        int64_t C_N = C_shape[1].dim;
-        ONNX_ASSERTM((C_M == M || C_M == 1) && (C_N == N || C_N == 1),
-            "C not unidirectionally broadcastable to (M, N)");
-      } else {
-        ONNX_ASSERTM(C_M == N || C_M == 1,
-            "C not unidirectionally broadcastable to (M, N)");
+      if (C_shape.size() == 1 || (C_shape.size() == 2 && (C_shape[0].dim == 1 ||
+              C_shape[1].dim == 1))) {
+        node->i_(kbroadcast, 1);
       }
-      node->i_(kbroadcast, 1);
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

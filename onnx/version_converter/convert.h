@@ -20,6 +20,7 @@
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/averagepool_7_6.h"
 #include "onnx/version_converter/adapters/dropout_6_7.h"
+#include "onnx/version_converter/adapters/maxpool_8_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -74,7 +75,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       for (const OpSchema& schema : all_opschemas) {
         all_schemas[schema.Name()][schema.domain()][(int64_t)
           schema.since_version()] = &schema;
-          debug("Schema for " + schema.Name());
       }
 
       // Iterate through all_schemas to determine NoPreviousVersionAdapters
@@ -88,7 +88,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
             }
           }
           if (min_version > 1) {
-            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + std::to_string(min_version));
             registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
               OpSetID(min_version), OpSetID(min_version - 1)));
           }
@@ -129,6 +128,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("AveragePool",
         OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("MaxPool",
+        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
@@ -143,12 +144,13 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Concat_3_4>());
       registerAdapter(make_unique<Concat_4_3>());
-      registerAdapter(make_unique<Reshape_5_4>());
+      registerAdapter(make_unique<Reshape_4_5>());
       registerAdapter(make_unique<Reshape_5_4>());
       registerAdapter(make_unique<Sum_8_7>());
       registerAdapter(make_unique<Gemm_7_6>());
       registerAdapter(make_unique<AveragePool_7_6>());
       registerAdapter(make_unique<Dropout_6_7>());
+      registerAdapter(make_unique<MaxPool_8_7>());
     }
 
     ModelProto convert_version(
