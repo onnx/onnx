@@ -26,7 +26,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class DefaultVersionConverter : public BaseVersionConverter {
   private:
-    bool DEBUG = true;
+    bool DEBUG = false;
 
     std::pair<int, int> version_range;
 

@@ -20,7 +20,8 @@ class Sum_8_7 final : public Adapter {
         std::string error = "Sum in OpSet Version 6 does not support broadcasting";
         ONNX_ASSERT(A_sizes.size() == B_sizes.size());
         for (int j = 1; j < (int) A_sizes.size(); j++) {
-          ONNX_ASSERT(A_sizes[j - 1].dim == B_sizes[j].dim);
+          ONNX_ASSERTM(A_sizes[j].dim == B_sizes[j].dim, "A: %d, B: %d",
+              A_sizes[j].dim, B_sizes[j].dim);
         }
       }
     }
