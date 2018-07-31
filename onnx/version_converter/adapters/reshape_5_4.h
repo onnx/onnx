@@ -18,12 +18,23 @@ class Reshape_5_4 final : public Adapter {
       const std::vector<Dimension>& shapeRef = inputs[1]->sizes();
       ONNX_ASSERTM(!shapeRef.empty(), "Output shape must be provided "
         "as a static input.");
-      std::vector<int64_t> shape;
-      for (int i = 0; i < (int) shapeRef.size(); i++) {
-        shape.emplace_back(shapeRef[i].dim);
+      // Get shape from initializer or constant operator, not actual shape
+      // Identify whether we have a Constant Op or an Initializer
+      Node* node_ptr = inputs[1]->node();
+      if (node_ptr->kind() == kConstant) {
+        // Get value attribute of kConstant
+        node->is_(kshape, std::forward<const std::vector<int64_t>>(node_ptr->is(
+                kvalue)));
+      } else {
+        // TODO: Get Value name, find Initializer with same name
+        for (const auto& initializer: graph->initializers()) {
+          if (initializer.name() == inputs[1]->uniqueName()) {
+            node->is_(kshape, std::forward<const std::vector<int64_t>>(
+                  initializer.int64s()));
+          }
+        }
       }
       node->removeInput(1);
-      node->is_(kshape, std::forward<const std::vector<int64_t>>(shape));
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
