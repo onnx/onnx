@@ -96,18 +96,27 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
         OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
-        OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
-        OpSetID(6), OpSetID(7)));
-      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
-        OpSetID(6), OpSetID(7)));
-      registerAdapter(make_unique<BroadcastForwardCompatibility>("Gemm",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<TypeRestriction>("Add",
         OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
+        OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<TypeRestriction>("Mul",
         OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Gemm",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Gemm_7_6>());
       registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Relu",
@@ -116,41 +125,32 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
         OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
-        OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
+      registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
         OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Dropout_6_7>());
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Sum",
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Sum",
         OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Sum_8_7>());
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("BatchNormalization",
         OpSetID(7), OpSetID(6)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("AveragePool",
-        OpSetID(6), OpSetID(7)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("MaxPool",
-        OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
         OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
-        OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
-        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("AveragePool",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<AveragePool_7_6>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("MaxPool",
+        OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<MaxPool_8_7>());
       registerAdapter(make_unique<Concat_3_4>());
       registerAdapter(make_unique<Concat_4_3>());
       registerAdapter(make_unique<Reshape_4_5>());
       registerAdapter(make_unique<Reshape_5_4>());
-      registerAdapter(make_unique<Sum_8_7>());
-      registerAdapter(make_unique<Gemm_7_6>());
-      registerAdapter(make_unique<AveragePool_7_6>());
-      registerAdapter(make_unique<Dropout_6_7>());
-      registerAdapter(make_unique<MaxPool_8_7>());
     }
 
     ModelProto convert_version(
