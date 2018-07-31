@@ -4,7 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import checker, helper, TensorProto, NodeProto, GraphProto, ValueInfoProto, ModelProto
-from onnx.helper import make_node, make_tensor_value_info, make_empty_tensor_value_info
+from onnx.helper import make_node, make_tensor, make_tensor_value_info, make_empty_tensor_value_info
 from typing import Sequence, Union, Text, Tuple, List, Any, Optional
 import onnx.shape_inference
 import unittest
@@ -16,22 +16,32 @@ class TestShapeInference(unittest.TestCase):
     def _make_graph(self,
                     seed_values,  # type: Sequence[Union[Text, Tuple[Text, TensorProto.DataType, Any]]]
                     nodes,  # type: List[NodeProto]
-                    value_info  # type: List[ValueInfoProto]
+                    value_info,  # type: List[ValueInfoProto]
+                    initializer=None  # type: Optional[Sequence[TensorProto]]
                     ):  # type: (...) -> GraphProto
+        if initializer is None:
+            initializer = []
+        names_in_initializer = set(x.name for x in initializer)
         input_value_infos = []
+        # If the starting values are not also initializers,
         # introduce the starting values as the output of reshape,
         # so that the sizes are guaranteed to be unknown
         for seed_value in seed_values:
             if isinstance(seed_value, tuple):
-                name = seed_value[0]
-                value_info.append(make_tensor_value_info(*seed_value))
+                seed_name = seed_value[0]
+                seed_value_info = make_tensor_value_info(*seed_value)
             else:
-                name = seed_value
-                value_info.append(make_empty_tensor_value_info(seed_value))
-            input_value_infos.append(make_tensor_value_info('SEED_' + name, TensorProto.UNDEFINED, ()))
-            input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + name, TensorProto.UNDEFINED, ()))
-            nodes[:0] = [make_node("Reshape", ['SEED_' + name, 'UNKNOWN_SHAPE_' + name], [name])]
-        return helper.make_graph(nodes, "test", input_value_infos, [], value_info=value_info)
+                seed_name = seed_value
+                seed_value_info = make_empty_tensor_value_info(seed_value)
+
+            if seed_name in names_in_initializer:
+                input_value_infos.append(seed_value_info)
+            else:
+                value_info.append(seed_value_info)
+                input_value_infos.append(make_tensor_value_info('SEED_' + seed_name, TensorProto.UNDEFINED, ()))
+                input_value_infos.append(make_tensor_value_info('UNKNOWN_SHAPE_' + seed_name, TensorProto.UNDEFINED, ()))
+                nodes[:0] = [make_node("Reshape", ['SEED_' + seed_name, 'UNKNOWN_SHAPE_' + seed_name], [seed_name])]
+        return helper.make_graph(nodes, "test", input_value_infos, [], initializer=initializer, value_info=value_info)
 
     def _inferred(self, graph):  # type: (GraphProto) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test')
@@ -44,7 +54,6 @@ class TestShapeInference(unittest.TestCase):
         vis = list(x for x in graph.value_info if x.name not in names_in_vis) + vis
         inferred_model = self._inferred(graph)
         inferred_vis = list(inferred_model.graph.value_info)
-
         vis = list(sorted(vis, key=lambda x: x.name))
         inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))
         if vis == inferred_vis:
@@ -179,13 +188,31 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 2, 4))])
 
-    def test_reshape(self):  # type: () -> None
+    def test_reshape_dynamic_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (2, 4, 3)),
              ('shape', TensorProto.UNDEFINED, (2,))],
             [make_node("Reshape", ['x', 'shape'], ['y'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, None)])
+
+    def test_reshape_static_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4, 3)),
+             ('shape', TensorProto.INT64, (2,))],
+            [make_node("Reshape", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (2,), (3, 8))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
+
+    def test_reshape_static_shape_inferred(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4, 3)),
+             ('shape', TensorProto.INT64, (3,))],
+            [make_node("Reshape", ['x', 'shape'], ['y'])],
+            [],
+            initializer=[make_tensor('shape', TensorProto.INT64, (3,), (0, 3, -1))])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 3, 4))])
 
     def test_shape(self):  # type: () -> None
         graph = self._make_graph(
