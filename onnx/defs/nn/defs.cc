@@ -320,7 +320,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         AttributeProto::INTS);
     schema.Attr(
         "strides",
-        "Stride along each axis. If not present, the stride defaults to 0 along each axis.",
+        "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
