@@ -44,8 +44,8 @@ class DummyBackend(onnx.backend.base.Backend):
 
         if do_enforce_test_coverage(model):
             # test version conversion
-            converted_model = onnx.version_converter.convert_version(model, 1)
-            converted_model = onnx.version_converter.convert_version(converted_model, 8)
+            model = onnx.version_converter.convert_version(model, 1)
+            model = onnx.version_converter.convert_version(model, 8)
             for node in model.graph.node:
                 for i, output in enumerate(node.output):
                     if node.op_type == 'Dropout' and i != 0:
