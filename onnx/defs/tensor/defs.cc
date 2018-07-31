@@ -165,7 +165,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               outputProduct *= targetShape[i];
             } else {
               // Check if value is less than -1; fail if so
-              fail_shape_inference("Invalid dimension value: " + std::to_string(targetShape[i]);
+              fail_shape_inference("Invalid dimension value: " + std::to_string(targetShape[i]));
             }
           }
 
