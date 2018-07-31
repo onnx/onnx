@@ -54,7 +54,6 @@ class TestShapeInference(unittest.TestCase):
         vis = list(x for x in graph.value_info if x.name not in names_in_vis) + vis
         inferred_model = self._inferred(graph)
         inferred_vis = list(inferred_model.graph.value_info)
-        print(inferred_vis)
         vis = list(sorted(vis, key=lambda x: x.name))
         inferred_vis = list(sorted(inferred_vis, key=lambda x: x.name))
         if vis == inferred_vis:
