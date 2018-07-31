@@ -3,6 +3,7 @@
 #include "gtest/gtest.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnx/onnxifi.h"
+#include "onnx/onnxifi_dummy.h"
 
 namespace ONNX_NAMESPACE
 {

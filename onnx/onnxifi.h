@@ -15,14 +15,6 @@ extern "C" {
 #define ONNXIFI_ABI
 #endif
 
-#if defined(__APPLE__)
-#define ONNXIFI_DUMMY_LIBRARY "libonnxifi_dummy.dylib"
-#elif defined(_WIN32)
-#define ONNXIFI_DUMMY_LIBRARY L"onnxifi_dummy.dll"
-#else
-#define ONNXIFI_DUMMY_LIBRARY "libonnxifi_dummy.so"
-#endif
-
 #ifndef ONNXIFI_PUBLIC
 #if defined(__ELF__)
 #define ONNXIFI_PUBLIC __attribute__((__visibility__("default")))
