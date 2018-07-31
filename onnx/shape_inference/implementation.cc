@@ -96,6 +96,11 @@ void InferShapes(
     if (vi.has_type())
       valueTypesByName[vi.name()] = vi.mutable_type();
   }
+  
+  std::unordered_map<std::string, const TensorProto*> initializersByName;
+  for (const auto& tp : g->initializer()) {
+    initializersByName[tp.name()] = &tp;
+  }
 
   for (const auto& n : g->node()) {
     // Resolve domain for node
@@ -111,7 +116,7 @@ void InferShapes(
       continue;
     }
 
-    InferenceContextImpl ctx(n, valueTypesByName);
+    InferenceContextImpl ctx(n, valueTypesByName, initializersByName);
     try {
       schema->GetTypeAndShapeInferenceFunction()(ctx);
     } catch (const ONNX_NAMESPACE::InferenceError& ex) {
