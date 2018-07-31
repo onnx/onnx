@@ -729,7 +729,7 @@ static const char* MatMul_ver6_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC";
 
-void malmulShapeInference(InferenceContext& ctx) {
+void matmulShapeInference(InferenceContext& ctx) {
   if (!hasNInputShapes(ctx, 2)) {
     return;
   }
@@ -813,7 +813,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(MatMul_ver6_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          malmulShapeInference(ctx);
+          matmulShapeInference(ctx);
         }));
 
 static const char* TopK_ver1_doc = R"DOC(
@@ -1046,7 +1046,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T3",
             {"tensor(int32)", "tensor(uint32)"},
-            "Constrain output Y data type to 32-bits integer tensors.")
+            "Constrain output Y data type to 32-bits integer tensors."
+			"T3 must be tensor(uint32) when both T1 and T2 are tensor(uint8),"
+			"or must be tensor(int32) when either T1 or T2 is tensor(int8).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(1);
@@ -1064,7 +1066,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           } else {
             y_type->mutable_tensor_type()->set_elem_type(TensorProto::INT32);
           }
-          malmulShapeInference(ctx);
+          matmulShapeInference(ctx);
         })
         .SetDoc(MatMul_Integer_ver8_doc));
 } // namespace ONNX_NAMESPACE

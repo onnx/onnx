@@ -8047,7 +8047,7 @@ This version of the operator has been available since version 8 of the default O
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input W data types as 8-bits integer tensors.</dd>
 <dt><tt>T3</tt> : tensor(int32), tensor(uint32)</dt>
-<dd>Constrain output Y data types as 32-bits integer tensors.</dd>
+<dd>Constrain output Y data types as 32-bits integer tensors.T3 must be tensor(uint32) when both T1 and T2 are tensor(uint8),or must be tensor(int32) when either T1 or T2 is tensor(int8).</dd>
 </dl>
 
 ### <a name="MatMulInteger-8"></a>**MatMulInteger-8**</a>
@@ -8083,7 +8083,7 @@ This version of the operator has been available since version 8 of the default O
 <dt><tt>T2</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input B data type to 8-bits integer tensors.</dd>
 <dt><tt>T3</tt> : tensor(int32), tensor(uint32)</dt>
-<dd>Constrain output Y data type to 32-bits integer tensors.</dd>
+<dd>Constrain output Y data type to 32-bits integer tensors.T3 must be tensor(uint32) when both T1 and T2 are tensor(uint8),or must be tensor(int32) when either T1 or T2 is tensor(int8).</dd>
 </dl>
 
 ### <a name="Max-8"></a>**Max-8**</a>
@@ -8288,7 +8288,7 @@ This version of the operator has been available since version 8 of the default O
 <dt><tt>T1</tt> : tensor(int8), tensor(uint8)</dt>
 <dd>Constrain input type to 8-bits integer tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(uint32)</dt>
-<dd>Constrain output type to 32-bits integer tensors.</dd>
+<dd>Constrain output type to 32-bits integer tensors.T2 must be tensor(uint32) when T1 is tensor(uint8),or must be tensor(int32) when T1 is tensor(int8).</dd>
 </dl>
 
 ### <a name="Sum-8"></a>**Sum-8**</a>
