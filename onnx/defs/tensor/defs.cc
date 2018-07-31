@@ -165,7 +165,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               outputProduct *= targetShape[i];
             } else {
               // Check if value is less than -1; fail if so
-              fail_shape_inference("Dimension value is invalid");
+              fail_shape_inference("Invalid dimension value: " + std::to_string(targetShape[i]);
             }
           }
 
@@ -173,10 +173,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // can be done if all dimension values for the data input tensor shape
           // are known other than the ones corresponding to unresolvedZeros
           // flags.
-          if (negativeOneDim && outputProduct != 0) {
+          if (negativeOneDim &&) {
             // First, attempt to compute product of data input shape dimensions
             // that are not marked by unresolvedZeros. If not possible, set the
             // inputProductValid flag to false.
+            if (!outputProduct) {
+              fail_shape_inference("Invalid Target shape product of 0");
+            }
             int64_t inputProduct = 1;
             bool inputProductValid = true;
             if (!dataInputTensorType.has_shape()) {
