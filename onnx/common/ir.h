@@ -797,17 +797,6 @@ class OpSetID final {
     static OpSetID fromString(const std::string& target) {
       try {
         std::string new_domain = target.substr(0, target.find("$"));
-        int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
-        return OpSetID(std::move(new_domain), new_version);
-      } catch (const std::runtime_error& e) {
-        ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
-      }
-    }
-
-    // target must be in the form "<domain>&<version>"
-    static OpSetID fromString(const std::string& target) {
-      try {
-        std::string new_domain = target.substr(0, target.find("$"));
         int new_version = std::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
         return OpSetID(std::move(new_domain), new_version);
       } catch (const std::runtime_error& e) {
