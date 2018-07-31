@@ -70,8 +70,8 @@ class TestVersionConverter(unittest.TestCase):
             self._converted(graph, helper.make_operatorsetid("", 8), 6)
         self.assertRaises(RuntimeError, test)
 
-    # Test Add Adapter: 8 -> 6
-    def test_add_7_6(self):  # type: () -> None
+    # Test Add Adapter: 8 -> 5
+    def test_add_7_5(self):  # type: () -> None
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -80,43 +80,13 @@ class TestVersionConverter(unittest.TestCase):
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 8), 6)
-        # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "Add"
-        assert converted_model.opset_import[0].version == 6
-
-    # Test Add Adapter: 6 -> 8
-    def test_add_6_7(self):  # type: () -> None
-        nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
-        graph = helper.make_graph(
-            nodes,
-            "test",
-            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 6), 8)
-        # Assert equality of graph and converted_model
-        assert converted_model.graph.node[0].op_type == "Add"
-        assert converted_model.opset_import[0].version == 8
-
-    # Test Add Adapter: 7 -> 5
-    def test_add_6_5(self):  # type: () -> None
-        nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
-        graph = helper.make_graph(
-            nodes,
-            "test",
-            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
-                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
-        converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 7), 5)
+            "", 8), 5)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
         assert converted_model.opset_import[0].version == 5
 
-    # Test Add Adapter: 5 -> 7
-    def test_add_5_6(self):  # type: () -> None
+    # Test Add Adapter: 5 -> 8
+    def test_add_5_7(self):  # type: () -> None
         nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"])]
         graph = helper.make_graph(
             nodes,
@@ -125,10 +95,10 @@ class TestVersionConverter(unittest.TestCase):
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,))],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
-            "", 5), 7)
+            "", 5), 8)
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Add"
-        assert converted_model.opset_import[0].version == 7
+        assert converted_model.opset_import[0].version == 8
 
     # Test Mul Adapter: 8 -> 6
     def test_mul_7_6(self):  # type: () -> None
