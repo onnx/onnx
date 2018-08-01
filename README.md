@@ -37,6 +37,7 @@ Check ONNX design choices and internals:
 # Programming utilities for working with ONNX Graphs
 * [Shape and Type Inference](docs/ShapeInference.md)
 * [Graph Optimization](docs/Optimizer.md)
+* [Opset Version Conversion](docs/OpsetVersionConverter.md)
 
 # Contribute
 ONNX is a community project. We encourage you to join the effort and contribute feedback, ideas, and code.

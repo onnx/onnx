@@ -879,8 +879,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Div-1"></a>**Div-1**</a>
@@ -1443,7 +1443,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
@@ -1808,7 +1808,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -1846,7 +1846,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
@@ -2465,7 +2465,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int64</dt>
 <dd>Only int64</dd>
@@ -2507,7 +2507,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int32</dt>
 <dd>Indices</dd>
@@ -3470,7 +3470,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
@@ -3565,7 +3565,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
@@ -4265,10 +4265,10 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrains output to int64 tensor.</dd>
+<dd>Constrain output to int64 tensor.</dd>
 </dl>
 
 ### <a name="Sigmoid-1"></a>**Sigmoid-1**</a>
@@ -4334,10 +4334,10 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrains output to int64 tensor, which should be a scalar though.</dd>
+<dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 ### <a name="Slice-1"></a>**Slice-1**</a>
@@ -4406,8 +4406,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Softmax-1"></a>**Softmax-1**</a>
@@ -4554,8 +4554,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Split-1"></a>**Split-1**</a>
@@ -4674,8 +4674,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Sub-1"></a>**Sub-1**</a>
@@ -4970,8 +4970,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Unsqueeze-1"></a>**Unsqueeze-1**</a>
@@ -5010,8 +5010,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Upsample-1"></a>**Upsample-1**</a>
@@ -5183,7 +5183,7 @@ This version of the operator has been available since version 2 of the default O
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 0 along each axis.</dd>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -5298,8 +5298,8 @@ This version of the operator has been available since version 2 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ## Version 3 of the default ONNX operator set
@@ -5471,7 +5471,7 @@ This version of the operator has been available since version 4 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
@@ -5508,8 +5508,8 @@ This version of the operator has been available since version 5 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ## Version 6 of the default ONNX operator set
@@ -6714,8 +6714,8 @@ This version of the operator has been available since version 6 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output's types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
@@ -7216,7 +7216,7 @@ This version of the operator has been available since version 7 of the default O
   
     - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
   
-    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh) + Wbh) # when linear_before_reset != 0
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -7983,8 +7983,8 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input/output types to all tensor types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 ### <a name="Xor-7"></a>**Xor-7**</a>
@@ -8053,6 +8053,75 @@ This version of the operator has been available since version 8 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+### <a name="MaxPool-8"></a>**MaxPool-8**</a>
+
+  MaxPool consumes an input tensor X and applies max pooling across
+   the tensor according to kernel sizes, stride sizes, and pad lengths.
+   max pooling consisting of computing the max on all values of a
+   subset of the input tensor according to the kernel size and downsampling the
+   data into the output tensor Y for further processing. The output spatial shape will be following:
+   ```
+   output_spatial_shape[i] = floor((input_spatial_shape[i] + pad_shape[i] - kernel_spatial_shape[i]) / strides_spatial_shape[i] + 1)
+  
+   * pad_shape[i] is sum of pads along axis i
+   ```
+  
+   `auto_pad` is a DEPRECATED attribute. If you are using them currently, the output spatial shape will be following:
+   ```
+   VALID: output_spatial_shape[i] = ceil((input_spatial_shape[i] - kernel_spatial_shape[i] + 1) / strides_spatial_shape[i])
+   SAME_UPPER or SAME_LOWER: output_spatial_shape[i] = ceil(input_spatial_shape[i] / strides_spatial_shape[i])
+   ```
+   And pad shape will be following if `SAME_UPPER` or `SAME_LOWER`:
+   ```
+   pad_shape[i] = (output_spatial_shape[i] - 1) * strides_spatial_shape[i] + kernel_spatial_shape[i] - input_spatial_shape[i]
+   ```
+   The output of each pooling window is maximum number of elements exclude pad.
+   
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>auto_pad</tt> : string</dt>
+<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dt><tt>storage_order</tt> : int</dt>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+</dl>
+
+#### Outputs (1 - 2)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+<dt><tt>Indices</tt> (optional) : I</dt>
+<dd>Indices tensor from max pooling across the input tensor. The dimensions of indices are the same as output tensor. The values in indices of are the indices of the selected values during pooling. The indices are computed as flatten 1-D tensor, and the indices do not consider padding. So the values in indices are in [0, N x C x D1 x ... x Dn).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 ### <a name="Mean-8"></a>**Mean-8**</a>

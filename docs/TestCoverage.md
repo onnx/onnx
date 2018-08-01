@@ -2699,7 +2699,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 
 ### MaxPool
-There are 10 test cases, listed as following:
+There are 12 test cases, listed as following:
 <details>
 <summary>maxpool_1d_default</summary>
 
@@ -2772,10 +2772,7 @@ x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
-pad_bottom = 2
-pad_top = 2
-pad_right = 2
-pad_left = 2
+pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
 padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -3000,6 +2997,78 @@ padded = x
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, [0, 0, 0], 'MAX')
 
 expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
+```
+
+</details>
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.float32)
+z = np.array([[[
+    [12, 13, 14, 14, 14],
+    [17, 18, 19, 19, 19],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_pads')
+```
+
+</details>
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[2, 2],
+    strides=[2, 2],
+    storage_order=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9],
+                [17, 19]]]]).astype(np.float32)
+z = np.array([[[[6, 16],
+                [8, 18]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_strides')
 ```
 
 </details>
