@@ -23,7 +23,7 @@ class ConvInteger(Base):
         W = np.array([[[[1, 1, 1],  # (1, 1, 3, 3) tensor for convolution weights
                         [1, 1, 1],
                         [1, 1, 1]]]]).astype(np.uint8)
-        Z = np.array([1]).astype(np.uint8) # padding value (zero point).
+        Z = np.array([1]).astype(np.uint8)  # padding value (zero point).
         # Convolution with padding
         node_with_padding = onnx.helper.make_node(
             'ConvInteger',
@@ -67,7 +67,7 @@ class ConvInteger(Base):
         W = np.array([[[[1, 1, 1],  # (1, 1, 3, 3) tensor for convolution weights
                         [1, 1, 1],
                         [1, 1, 1]]]]).astype(np.uint8)
-        Z = np.array([1]).astype(np.uint8) # padding value (zero point).
+        Z = np.array([1]).astype(np.uint8)  # padding value (zero point).
         # Convolution with strides=2 and padding
         node_with_padding = onnx.helper.make_node(
             'ConvInteger',
