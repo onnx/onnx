@@ -74,6 +74,7 @@ void convPoolTypeAndShapeInference(
     dilations.assign(n_input_dims, 1);
   }
 
+  std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
       fail_shape_inference("Attribute pads has incorrect size");
