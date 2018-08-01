@@ -767,7 +767,7 @@ void check_model(const ModelProto& m, CheckerContext& ctx) {
       fail_check(ctx, "model with IR version < 3 cannot import operator sets.");
   }
 
-#if 0
+#if 1
   // TODO: enabling shape and type inference will cause a number of optimizer tests to
   // fail. Those will have to be examined by someone who understands them.
   if (ctx.get_schema_registry() != nullptr) {
