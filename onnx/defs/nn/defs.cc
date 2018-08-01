@@ -578,11 +578,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
 
-  int64_t groups = getAttribute(ctx, "group", 1);
-  if (groups != 1) {
-    return; // we don't handle the group case.
-  }
-
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
     return; // we don't handle the dialations.
