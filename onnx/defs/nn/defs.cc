@@ -28,16 +28,6 @@ void convPoolShapeInference(
     InferenceContext& ctx,
     bool use_dilation,
     bool require_kernel_shape) {
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  if (ctx.getNumOutputs() > 1) {
-    // MaxPool with two outputs case.
-    auto output_type = ctx.getOutputType(1);
-    if (output_type->value_case() == TypeProto::kTensorType ||
-        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
-      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
-    }
-  }
-
   // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
     return;
@@ -167,6 +157,14 @@ void convPoolTypeAndShapeInference(
     bool use_dilation,
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType ||
+        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
   convPoolShapeInference(ctx, use_dilation, require_kernel_shape);
 }
 
@@ -1289,7 +1287,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_type_inference(
                 "inputs are expected to have tensor type and output type should not be null.");
           }
-
           if (TensorProto::UINT8 == x_type->tensor_type().elem_type() &&
               TensorProto::UINT8 == w_type->tensor_type().elem_type()) {
             y_type->mutable_tensor_type()->set_elem_type(TensorProto::UINT32);
