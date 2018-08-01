@@ -452,19 +452,22 @@ class OpSchema final {
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
-                                                              "tensor(uint16)",
-                                                              "tensor(uint32)",
-                                                              "tensor(uint64)",
-                                                              "tensor(int8)",
-                                                              "tensor(int16)",
-                                                              "tensor(int32)",
-                                                              "tensor(int64)",
-                                                              "tensor(float16)",
-                                                              "tensor(float)",
-                                                              "tensor(double)",
-                                                              "tensor(string)",
-                                                              "tensor(bool)"};
+    static const std::vector<std::string> all_tensor_types = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)"};
     return all_tensor_types;
   }
 
@@ -478,9 +481,6 @@ class OpSchema final {
     return domain_;
   }
 
-  int since_version() const {
-    return since_version_;
-  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -504,6 +504,10 @@ class OpSchema final {
   }
 
   OperatorSetVersion SinceVersion() const {
+    return since_version_;
+  }
+
+  int since_version() const {
     return since_version_;
   }
 
