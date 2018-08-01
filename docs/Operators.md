@@ -2017,7 +2017,7 @@ x = np.array([[[[0, 1, 2, 3, 4],  # (1, 1, 5, 5) input tensor
 W = np.array([[[[1, 1, 1],  # (1, 1, 3, 3) tensor for convolution weights
                 [1, 1, 1],
                 [1, 1, 1]]]]).astype(np.uint8)
-Z = np.array([1]).astype(np.uint8) # padding value (zero point).
+Z = np.array([1]).astype(np.uint8)
 # Convolution with padding
 node_with_padding = onnx.helper.make_node(
     'ConvInteger',
@@ -2067,7 +2067,7 @@ x = np.array([[[[0, 1, 2, 3, 4],  # (1, 1, 7, 5) input tensor
 W = np.array([[[[1, 1, 1],  # (1, 1, 3, 3) tensor for convolution weights
                 [1, 1, 1],
                 [1, 1, 1]]]]).astype(np.uint8)
-Z = np.array([1]).astype(np.uint8) # padding value (zero point).
+Z = np.array([1]).astype(np.uint8)
 # Convolution with strides=2 and padding
 node_with_padding = onnx.helper.make_node(
     'ConvInteger',
