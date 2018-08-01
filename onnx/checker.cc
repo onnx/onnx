@@ -767,16 +767,12 @@ void check_model(const ModelProto& m, CheckerContext& ctx) {
       fail_check(ctx, "model with IR version < 3 cannot import operator sets.");
   }
 
-#if 1
-  // TODO: enabling shape and type inference will cause a number of optimizer tests to
-  // fail. Those will have to be examined by someone who understands them.
   if (ctx.get_schema_registry() != nullptr) {
     // Having performed shape and type inference will allow us to do more
     // in-depth checking of the model, specifically whether node arguments match
     // the signatures of the operators that are invoked.
     shape_inference::InferShapes(model);
   }
-#endif
 
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
