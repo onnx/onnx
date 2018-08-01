@@ -4,6 +4,7 @@ script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[
 source "${script_path%/*}/setup.sh"
 
 # onnx c++ API tests
+export LD_LIBRARY_PATH="${top_dir}/.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 find .setuptools-cmake-build/ -name "onnx_gtests" -ls -exec {} \;
 
 # onnx python API tests

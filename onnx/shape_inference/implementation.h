@@ -10,17 +10,25 @@ namespace shape_inference {
 struct InferenceContextImpl : public InferenceContext {
   InferenceContextImpl(
       const NodeProto& n,
-      const std::unordered_map<std::string, TypeProto*>& valueTypesByName) {
+      const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
+      const std::unordered_map<std::string, const TensorProto*>& inputDataByName) {
     for (const auto& attr : n.attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
 
     for (const auto& input : n.input()) {
-      auto iter = valueTypesByName.find(input);
-      if (iter != valueTypesByName.end()) {
-        allInputTypes_.push_back(iter->second);
+      auto valueTypesIter = valueTypesByName.find(input);
+      if (valueTypesIter != valueTypesByName.end()) {
+        allInputTypes_.push_back(valueTypesIter->second);
       } else {
         allInputTypes_.push_back(nullptr);
+      }
+
+      const auto inputDataIter = inputDataByName.find(input);
+      if (inputDataIter != inputDataByName.cend()) {
+        allInputData_.push_back(inputDataIter->second);
+      } else {
+        allInputData_.push_back(nullptr);
       }
     }
 
@@ -47,6 +55,14 @@ struct InferenceContextImpl : public InferenceContext {
     return allInputTypes_[index];
   }
 
+  const TensorProto* getInputData(size_t index) const override {
+    if (index >= allInputData_.size()) {
+      throw std::runtime_error(
+          "input " + ONNX_NAMESPACE::to_string(index) + " is out of bounds");
+    }
+    return allInputData_[index];
+  }
+
   size_t getNumOutputs() const override {
     return allOutputTypes_.size();
   }
@@ -58,6 +74,7 @@ struct InferenceContextImpl : public InferenceContext {
     }
     return &allOutputTypes_[index];
   }
+  std::vector<const TensorProto*> allInputData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
