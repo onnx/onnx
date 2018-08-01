@@ -12,7 +12,11 @@ struct BatchNormalization_6_7 final : public Adapter {
     }
 
   void adapt_batch_normalization_6_7(std::shared_ptr<Graph> graph, Node* node) const {
-    if (node->hasAttribute(kis_test)) node->removeAttribute(kis_test);
+    if (node->hasAttribute(kis_test)) {
+      ONNX_ASSERTM(node->i(kis_test) != 0,
+          "ONNX currently only supports inference, not training.");
+      node->removeAttribute(kis_test);
+    }
   }
 
   void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

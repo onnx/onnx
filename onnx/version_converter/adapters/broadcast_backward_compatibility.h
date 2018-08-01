@@ -8,20 +8,20 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class BroadcastBackwardCompatibility final : public Adapter {
   public:
-    explicit BroadcastBackwardCompatibility(const std::string& op_name, const OpSetID
-      initial, const OpSetID target): Adapter(op_name, std::move(
-        initial), std::move(target)) {}
+    explicit BroadcastBackwardCompatibility(const std::string& op_name, const OpSetID&
+      initial, const OpSetID& target): Adapter(op_name, initial, target) {}
 
     void adapt_broadcast_backward_compatibility(std::shared_ptr<Graph> graph, Node* node) const {
       // Verify that broadcasts are allowed in limited spec of opset version 6
       // Multidirectional broadcasting, as defined in Broadcasting.md
       // MathDocGenerator provides differences
       // Main change: encode broadcasting commands as explicit attribute
-      // TODO: Check on this reference.
       const ArrayRef<Value*>& inputs = node->inputs();
       ONNX_ASSERTM(inputs.size() == 2, "Add in opset version 6 can only broadcast"
         " between 2 inputs");
+      ONNX_ASSERTM(inputs[0].has_sizes(), "Shape of A must be statically determined.");
       std::vector<Dimension> A_sizes = inputs[0]->sizes();
+      ONNX_ASSERTM(inputs[1].has_sizes(), "Shape of B must be statically determined.");
       std::vector<Dimension> B_sizes = inputs[1]->sizes();
       // Determine if inputs are of different sizes
       bool equalDims = false;

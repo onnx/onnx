@@ -8,9 +8,8 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 class TypeRestriction : public Adapter {
   public:
-    explicit TypeRestriction(const std::string& op_name, const OpSetID
-      initial, const OpSetID target): Adapter(op_name, std::move(
-        initial), std::move(target)) {}
+    explicit TypeRestriction(const std::string& op_name, const OpSetID&
+      initial, const OpSetID& target): Adapter(op_name, initial, target) {}
 
     void adapt_type_restriction(std::shared_ptr<Graph> graph, Node* node,
       std::vector<TensorProto_DataType> unallowed_types) const {
