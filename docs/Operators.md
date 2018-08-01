@@ -2036,7 +2036,7 @@ expect(node_with_padding, inputs=[x, W, Z], outputs=[y_with_padding],
 
 # Convolution without padding
 node_without_padding = onnx.helper.make_node(
-    'Conv',
+    'ConvInteger',
     inputs=['x', 'W', 'Z'],
     outputs=['y'],
     # Default values for other attributes: strides=[1, 1], dilations=[1, 1], groups=1
@@ -2070,7 +2070,7 @@ W = np.array([[[[1, 1, 1],  # (1, 1, 3, 3) tensor for convolution weights
 Z = np.array([1]).astype(np.uint8) # padding value (zero point).
 # Convolution with strides=2 and padding
 node_with_padding = onnx.helper.make_node(
-    'Conv',
+    'ConvInteger',
     inputs=['x', 'W', 'Z'],
     outputs=['y'],
     kernel_shape=[3, 3],
@@ -2086,7 +2086,7 @@ expect(node_with_padding, inputs=[x, W, Z], outputs=[y_with_padding],
 
 # Convolution with strides=2 and no padding
 node_without_padding = onnx.helper.make_node(
-    'Conv',
+    'ConvInteger',
     inputs=['x', 'W', 'Z'],
     outputs=['y'],
     kernel_shape=[3, 3],
@@ -2101,7 +2101,7 @@ expect(node_without_padding, inputs=[x, W, Z], outputs=[y_without_padding],
 
 # Convolution with strides=2 and padding only along one dimension (the H dimension in NxCxHxW tensor)
 node_with_asymmetric_padding = onnx.helper.make_node(
-    'Conv',
+    'ConvInteger',
     inputs=['x', 'W', 'Z'],
     outputs=['y'],
     kernel_shape=[3, 3],

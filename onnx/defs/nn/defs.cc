@@ -1277,8 +1277,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T3",
             {"tensor(int32)", "tensor(uint32)"},
             "Constrain output Y data types as 32-bits integer tensors."
-			"T3 must be tensor(uint32) when both T1 and T2 are tensor(uint8),"
-			"or must be tensor(int32) when either T1 or T2 is tensor(int8).")
+            "T3 must be tensor(uint32) when both T1 and T2 are tensor(uint8),"
+            "or must be tensor(int32) when either T1 or T2 is tensor(int8).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto x_type = ctx.getInputType(0);
           auto w_type = ctx.getInputType(1);

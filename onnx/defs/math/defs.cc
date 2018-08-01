@@ -1047,15 +1047,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T3",
             {"tensor(int32)", "tensor(uint32)"},
             "Constrain output Y data type to 32-bits integer tensors."
-			"T3 must be tensor(uint32) when both T1 and T2 are tensor(uint8),"
-			"or must be tensor(int32) when either T1 or T2 is tensor(int8).")
+            "T3 must be tensor(uint32) when both T1 and T2 are tensor(uint8),"
+            "or must be tensor(int32) when either T1 or T2 is tensor(int8).")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto a_type = ctx.getInputType(0);
           auto b_type = ctx.getInputType(1);
           auto y_type = ctx.getOutputType(0);
           if (nullptr == a_type || nullptr == b_type || nullptr == y_type ||
-                  a_type->value_case() != TypeProto::kTensorType ||
-                  b_type->value_case() != TypeProto::kTensorType) {
+              a_type->value_case() != TypeProto::kTensorType ||
+              b_type->value_case() != TypeProto::kTensorType) {
             fail_type_inference(
                 "inputs are expected to have tensor type and output type should not be null.");
           }

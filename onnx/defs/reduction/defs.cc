@@ -112,8 +112,8 @@ False instead of True.)DOC";
         "T2",
         {"tensor(int32)", "tensor(uint32)"},
         "Constrain output type to 32-bits integer tensors."
-		"T2 must be tensor(uint32) when T1 is tensor(uint8),"
-		"or must be tensor(int32) when T1 is tensor(int8).");
+        "T2 must be tensor(uint32) when T1 is tensor(uint8),"
+        "or must be tensor(int32) when T1 is tensor(int8).");
     schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
       auto data_type = ctx.getInputType(0);
       auto reduced_type = ctx.getOutputType(0);
