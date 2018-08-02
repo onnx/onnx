@@ -19,9 +19,9 @@ class BroadcastBackwardCompatibility final : public Adapter {
       const ArrayRef<Value*>& inputs = node->inputs();
       ONNX_ASSERTM(inputs.size() == 2, "Add in opset version 6 can only broadcast"
         " between 2 inputs");
-      ONNX_ASSERTM(inputs[0].has_sizes(), "Shape of A must be statically determined.");
+      ONNX_ASSERTM(inputs[0]->has_sizes(), "Shape of A must be statically determined.");
       std::vector<Dimension> A_sizes = inputs[0]->sizes();
-      ONNX_ASSERTM(inputs[1].has_sizes(), "Shape of B must be statically determined.");
+      ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of B must be statically determined.");
       std::vector<Dimension> B_sizes = inputs[1]->sizes();
       // Determine if inputs are of different sizes
       bool equalDims = false;
@@ -41,25 +41,6 @@ class BroadcastBackwardCompatibility final : public Adapter {
           node->replaceInput(1, A);
           A_sizes = B_sizes;
           B_sizes = inputs[1]->sizes();
-        }
-        // Determine what the broadcast dimension is - if necessary
-        // Unnecessary if 1) all inputs are 1, 2) B is empty, 3) dimensions match
-        // in reverse (assume this is required for model to compile in the first place?)
-        int axis = (int) A_sizes.size() - (int) B_sizes.size();
-        for (int i = (int) B_sizes.size() - 1; i >= 0; i--) {
-          ONNX_ASSERTM(axis >= 0, "Inputs are not broadcastable: no positive axis "
-            "found to align dimensions.");
-          if (B_sizes[i].dim == A_sizes[axis + i].dim || B_sizes[i].dim == 1) {
-            continue;
-          } else {
-            // Try decreasing the axis
-            axis--;
-            i++;
-          }
-        }
-        if (axis != (int) (A_sizes.size() - B_sizes.size())) {
-          // Add axis attribute
-          node->i_(kaxis, axis);
         }
         // If conditional is not fulfilled, we have a default broadcast
         // Add broadcast attribute

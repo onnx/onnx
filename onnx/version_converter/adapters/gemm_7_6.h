@@ -14,6 +14,7 @@ class Gemm_7_6 final : public Adapter {
       const ArrayRef<Value*>& inputs = node->inputs();
       ONNX_ASSERTM(inputs.size() == 3, "3 Inputs must be provided to Gemm");
       // Determine if C is broadcastable
+      ONNX_ASSERTM(inputs[2]->has_sizes(), "C's shape must be statically determined");
       const auto& C_shape = inputs[2]->sizes();
       if (C_shape.size() == 1 || (C_shape.size() == 2 && (C_shape[0].dim == 1 ||
               C_shape[1].dim == 1))) {

@@ -20,13 +20,28 @@ class BroadcastForwardCompatibility final : public Adapter {
           const ArrayRef<Value*>& inputs = node->inputs();
           ONNX_ASSERTM(inputs.size() == 2, "Add in opset version 6 can only broadcast"
             " between 2 inputs");
-          ONNX_ASSERTM(inputs[0].has_sizes(), "Shape of A must be statically determined.");
+          ONNX_ASSERTM(inputs[0]->has_sizes(), "Shape of A must be statically determined.");
           std::vector<Dimension> A_sizes = inputs[0]->sizes();
-          ONNX_ASSERTM(inputs[1].has_sizes(), "Shape of B must be statically determined.");
+          ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of B must be statically determined.");
           std::vector<Dimension> B_sizes = inputs[1]->sizes();
-          if (node->i(kaxis) != A_sizes - B_sizes) {
-            // TODO: Add a Reshape node before input B
-
+          if (node->i(kaxis) != (int) (A_sizes.size() - B_sizes.size())) {
+            // Add a Reshape node before input B
+            Node * n = graph->create(kReshape);
+            n->addInput(inputs[1]);
+            // Create intializer for appropriate shape
+            Tensor t;
+            t.elem_type() = TensorProto_DataType_INT64;
+            auto& data = t.int64s();
+            for (Dimension dim : B_sizes) {
+              data.emplace_back(dim.dim);
+            }
+            for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size()); i++) {
+              data.emplace_back(1);
+            }
+            Value* v = graph->addInitializerAndInput(t);
+            n->addInput(v);
+            // Set 2nd input to node to 1st of n and output of n to 2nd input to node
+            node->replaceInput(1, n->output());
           }
         }
         node->removeAttribute(kbroadcast);

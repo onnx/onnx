@@ -31,8 +31,9 @@ class TestVersionConverter(unittest.TestCase):
     # Test 1: Backwards Incompatible Conversion: Reshape: 8 -> 2
     def test_backwards_incompatible(self):  # type: () -> None
         def test():  # type: () -> None
-            nodes = [helper.make_node('Sum', ["W", "Z"], ["shape"]),
-                        helper.make_node('Reshape', ["X", "shape"], ["Y"])]
+            nodes = [helper.make_node('Add', ["W", "Z"], ["shape"]),
+                        helper.make_node('Reshape', ["X", "shape"], ["A"]),
+                        helper.make_node('Add', ["A", "W"], ["Y"])]
             graph = helper.make_graph(
                 nodes,
                 "test",

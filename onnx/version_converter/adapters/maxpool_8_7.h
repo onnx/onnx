@@ -13,7 +13,8 @@ class MaxPool_8_7 final : public Adapter {
 
     void adapt_maxpool_8_7(std::shared_ptr<Graph> graph, Node* node) const {
       const ArrayRef<Value*>& outputs = node->outputs();
-      ONNX_ASSERTM(outputs.size() != 2, "Output cannot include Indices");
+      ONNX_ASSERTM(outputs.size() != 2,
+          "Earlier version of MaxPool cannot include Indices output");
       if (node->hasAttribute(kstorage_order)) node->removeAttribute(kstorage_order);
     }
 
