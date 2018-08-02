@@ -36,7 +36,7 @@ Supported pass names:
 """
 
 
-def list_supported_pass_names():
+def list_supported_pass_names():  # type: () -> Sequence[Text]
     return C.list_supported_pass_names()
 
 
