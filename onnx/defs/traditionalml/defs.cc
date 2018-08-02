@@ -171,7 +171,7 @@ static const char* DictVectorizer_ver1_doc = R"DOC(
     Uses an index mapping to convert a dictionary to an array.<br>
     Given a dictionary, each key is looked up in the vocabulary attribute corresponding to
     the key type. The index into the vocabulary array at which the key is found is then
-    used to index into the output single-dimenstional tensor 'Y' and insert the
+    used to index the output 1-D tensor 'Y' and insert into it the
     the value found in the dictionary 'X'.<br>
     The key type of the input map must correspond to the element type of the defined vocabulary attribute.
     Therefore, the output array will be equal in length to the index mapping vector parameter.
@@ -188,7 +188,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     OpSchema()
         .SetDoc(DictVectorizer_ver1_doc)
         .Input(0, "X", "A dictionary.", "T1")
-        .Output(0, "Y", "A tensor holding values from the input dictionary.", "T2")
+        .Output(0, "Y", "A 1-D tensor holding values from the input dictionary.", "T2")
         .TypeConstraint(
             "T1",
             {"map(string, int64)",
