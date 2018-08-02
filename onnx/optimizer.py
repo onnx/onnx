@@ -33,8 +33,9 @@ Supported pass names:
     -- fuse_consecutive_transposes
     -- fuse_add_bias_into_conv
     -- fuse_transpose_into_gemm
-    -- 
 """
+
+
 def list_supported_pass_names():
     return C.list_supported_pass_names()
 
