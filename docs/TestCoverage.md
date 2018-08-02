@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 90/95 (94.74%, 5 generators excluded) common operators.
+Node tests have covered 91/96 (94.79%, 5 generators excluded) common operators.
 
 Node tests have covered 1/15 (6.67%, 0 generators excluded) experimental operators.
 
@@ -1681,6 +1681,64 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.exp(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_exp')
+```
+
+</details>
+
+
+### Expand
+There are 2 test cases, listed as following:
+<details>
+<summary>dim_changed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+new_shape = [2, 1, 6]
+expanded = data * np.ones(new_shape)
+#print(expanded)
+#[[[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]],
+#
+# [[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]]]
+new_shape = np.array(new_shape)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_changed')
+```
+
+</details>
+<details>
+<summary>dim_unchanged</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+new_shape = [3, 4]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+expanded = np.tile(data, 4)
+#print(expanded)
+#[[1., 1., 1., 1.],
+# [2., 2., 2., 2.],
+# [3., 3., 3., 3.]]
+new_shape = np.array(new_shape)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_unchanged')
 ```
 
 </details>
