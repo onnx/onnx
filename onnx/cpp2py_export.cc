@@ -261,9 +261,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "list_supported_pass_names",
       []() {
         auto const result = optimization::GetAvailablePasses();
-        std::string out;
-        result.SerializeToString(&out);
-        return py::bytes(out);
+        return result;
       });
 
   // Submodule `version_converter`
