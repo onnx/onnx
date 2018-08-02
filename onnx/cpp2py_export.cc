@@ -257,6 +257,15 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         return py::bytes(out);
       });
 
+  optimizer.def(
+      "list_supported_pass_names",
+      []() {
+        auto const result = optimization::GetAvailablePasses();
+        std::string out;
+        result.SerializeToString(&out);
+        return py::bytes(out);
+      });
+
   // Submodule `version_converter`
   auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
   version_converter.doc() = "VersionConverter submodule";
