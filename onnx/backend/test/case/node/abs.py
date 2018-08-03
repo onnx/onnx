@@ -24,3 +24,16 @@ class Abs(Base):
 
         expect(node, inputs=[x], outputs=[y],
                name='test_abs')
+
+    @staticmethod
+    def export_int8():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Abs',
+            inputs=['x'],
+            outputs=['y'],
+        )
+        x = np.int8([-127,-4,0,3,127])
+        y = np.abs(x)
+
+        expect(node, inputs=[x], outputs=[y],
+               name='test_abs_int8')
