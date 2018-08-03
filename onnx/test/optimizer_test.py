@@ -82,6 +82,15 @@ class TestOptimizer(unittest.TestCase):
                     for gr in attr.graphs:
                         self._visit_all_nodes_recursive(gr, fn)
 
+    def test_get_available_passes(self):  # type: () -> None
+        # FIXME does not garantees to be listing all
+        graph = helper.make_graph([], "dummy_graph", [], [])
+        list_of_passes = onnx.optimizer.get_available_passes()
+        assert isinstance(list_of_passes, (list, tuple)) and len(list_of_passes) > 0
+        for pass_name in list_of_passes:
+            # If pass_name is invalid it throws a RuntimeError
+            self._optimized(graph, [pass_name])
+
     def test_eliminate_identity_single_use(self):  # type: () -> None
         nodes = [helper.make_node("Identity", ["X"], ["Y"])]
         nodes.extend(self._make_fake_loop_op(
