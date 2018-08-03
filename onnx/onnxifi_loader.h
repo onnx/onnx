@@ -3,7 +3,7 @@
 
 #include "onnx/onnxifi.h"
 
-#define ONNXIFI_LOADER_FUNCTION_COUNT 14
+#define ONNXIFI_LOADER_FUNCTION_COUNT 15
 
 #define ONNXIFI_LOADER_FLAG_VERSION_MASK 0xFF
 #define ONNXIFI_LOADER_FLAG_VERSION_1_0 0x01
@@ -41,6 +41,7 @@ struct onnxifi_library {
       onnxReleaseBackendFunction onnxReleaseBackend;
       onnxInitEventFunction onnxInitEvent;
       onnxSignalEventFunction onnxSignalEvent;
+      onnxGetEventStateFunction onnxGetEventState;
       onnxWaitEventFunction onnxWaitEvent;
       onnxReleaseEventFunction onnxReleaseEvent;
       onnxInitGraphFunction onnxInitGraph;
