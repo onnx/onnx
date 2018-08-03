@@ -258,7 +258,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       });
 
   optimizer.def(
-      "list_supported_pass_names",
+      "get_available_passes",
       []() {
         auto const result = optimization::GetAvailablePasses();
         return result;

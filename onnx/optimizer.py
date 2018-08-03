@@ -36,8 +36,8 @@ Supported pass names:
 """
 
 
-def list_supported_pass_names():  # type: () -> Sequence[Text]
-    return C.list_supported_pass_names()
+def get_available_passes():  # type: () -> Sequence[Text]
+    return C.get_available_passes()
 
 
 def optimize(model, passes=[]):  # type: (ModelProto, Sequence[Text]) -> ModelProto
