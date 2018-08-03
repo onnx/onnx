@@ -11,6 +11,7 @@ from __future__ import unicode_literals
 import onnx
 from onnx import defs
 from onnx.defs import OpSchema
+import onnx.onnx_cpp2py_export.checker as c_checker
 import onnx.shape_inference
 
 import argparse
@@ -38,7 +39,7 @@ def main():  # type: () -> None
                 print(entry.key + ': ' + entry.value)
 
             onnx.checker.check_model(m)
-        except onnx.onnx_cpp2py_export.checker.ValidationError as error:
+        except c_checker.ValidationError as error:
             print(str(error))
         else:
             print('No errors found.')
