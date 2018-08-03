@@ -86,7 +86,7 @@ class TestOptimizer(unittest.TestCase):
         # FIXME does not garantees to be listing all
         graph = helper.make_graph([], "dummy_graph", [], [])
         list_of_passes = onnx.optimizer.get_available_passes()
-        assert isinstance(list_of_passes, (list, tuple)) and len(list_of_passes) > 0
+        assert isinstance(list_of_passes, (list)) and len(list_of_passes) > 0
         for pass_name in list_of_passes:
             # If pass_name is invalid it throws a RuntimeError
             self._optimized(graph, [pass_name])
