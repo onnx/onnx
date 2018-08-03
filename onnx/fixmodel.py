@@ -19,8 +19,10 @@ import onnx.shape_inference
 
 import argparse
 
+
 def isempty(str):
-    return str == None or str == ''
+    return str is None or str == ''
+
 
 def replaceInvalidChars(name):
 
@@ -33,22 +35,25 @@ def replaceInvalidChars(name):
 
     if name[0].isnumeric():
         n = "_" + n
-    n = n.replace("/","_").replace("-","_")
+    n = n.replace("/", "_").replace("-", "_")
 
     if n != name:
         modified = True
 
     return n
 
+
 def examine_tensor(tensor):
     if not isempty(tensor.name):
         tensor.name = replaceInvalidChars(tensor.name)
 
+
 def examine_attribute(attr):
 
     # Note: we don't mess with the attribute name since it corresponds to a
-    # attribute formal parameter name on the node operator, so we can't change it.
-    
+    # attribute formal parameter name on the node operator,
+    # so we can't change it.
+
     if attr.type == onnx.AttributeProto.GRAPH:
         examine_graph(attr.graph)
     elif attr.type == onnx.AttributeProto.GRAPHS:
@@ -60,20 +65,22 @@ def examine_attribute(attr):
         for tensor in attr.tensors:
             examine_tensor(tensor)
 
+
 def examine_node(node):
 
     if not isempty(node.name):
-        node.name = replaceInvalidChars(node.name)        
+        node.name = replaceInvalidChars(node.name)
 
     for vi in range(len(node.input)):
         if not isempty(node.input[vi]):
-            node.input[vi] = replaceInvalidChars(node.input[vi])        
+            node.input[vi] = replaceInvalidChars(node.input[vi])
     for vi in range(len(node.output)):
         if not isempty(node.output[vi]):
-            node.output[vi] = replaceInvalidChars(node.output[vi])      
+            node.output[vi] = replaceInvalidChars(node.output[vi])
 
     for attr in node.attribute:
-        examine_attribute(attr)  
+        examine_attribute(attr)
+
 
 def examine_graph(graph):
 
@@ -88,15 +95,16 @@ def examine_graph(graph):
 
     for vi in graph.value_info:
         if not isempty(vi.name):
-            vi.name = replaceInvalidChars(vi.name)        
+            vi.name = replaceInvalidChars(vi.name)
 
     for vi in graph.input:
         if not isempty(vi.name):
-            vi.name = replaceInvalidChars(vi.name)        
+            vi.name = replaceInvalidChars(vi.name)
 
     for vi in graph.output:
         if not isempty(vi.name):
-            vi.name = replaceInvalidChars(vi.name)       
+            vi.name = replaceInvalidChars(vi.name)
+
 
 def examine_model(model, domain):
 
@@ -121,6 +129,7 @@ def examine_model(model, domain):
 
     return modified
 
+
 def main():  # type: () -> None
     parser = argparse.ArgumentParser(
         description='Generates .proto file variations from .in.proto')
@@ -137,7 +146,8 @@ def main():  # type: () -> None
     for file in args.files:
         m = onnx.load(file)
         print('\n==== Examining ' + file + ' ====')
-        outpath = args.output + os.path.sep + file.replace(".onnx", ".new.onnx")
+        prefix = args.output + os.path.sep
+        outpath = prefix + file.replace(".onnx", ".new.onnx")
         if examine_model(m, args.domain):
             onnx.save(m, outpath)
             print('Wrote modified file to: ' + outpath)
@@ -145,6 +155,7 @@ def main():  # type: () -> None
             print('No modifications were made.')
 
     print('\n')
+
 
 if __name__ == '__main__':
     main()

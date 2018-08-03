@@ -15,6 +15,7 @@ import onnx.shape_inference
 
 import argparse
 
+
 def main():  # type: () -> None
     parser = argparse.ArgumentParser(
         description='Validates ONNX and ONNX-ML model files.')
@@ -43,6 +44,7 @@ def main():  # type: () -> None
             print('No errors found.')
 
     print('\n')
+
 
 if __name__ == '__main__':
     main()
