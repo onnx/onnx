@@ -2,7 +2,6 @@
  * Dummy implementation of ONNX backend interface for manual test.
  * Prints the name of the called function and backend name on each call.
  */
-
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
