@@ -49,7 +49,9 @@ TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
       backendID, onnxModelSize, onnxModel));
 
   // Testing onnxInitBackend
-  uint64_t auxpropertiesList = 0;
+  const uint64_t backendProperties[] = {
+      ONNXIFI_BACKEND_PROPERTY_NONE
+  };
   EXPECT_EQ_OSS(
       dummy_backend.onnxInitBackend(backendID, &auxpropertiesList, &backend));
 
@@ -71,8 +73,12 @@ TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
   // Testing onnxInitGraph
   uint32_t weightCount = 1;
   onnxTensorDescriptorV1 weightDescriptors;
+  const uint64_t graphProperties[] = {
+      ONNXIFI_GRAPH_PROPERTY_NONE
+  };
   EXPECT_EQ_OSS(dummy_backend.onnxInitGraph(
       backend,
+      graphProperties,
       onnxModelSize,
       &onnxModel,
       weightCount,
