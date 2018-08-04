@@ -53,7 +53,7 @@ TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
       ONNXIFI_BACKEND_PROPERTY_NONE
   };
   EXPECT_EQ_OSS(
-      dummy_backend.onnxInitBackend(backendID, &auxpropertiesList, &backend));
+      dummy_backend.onnxInitBackend(backendID, backendProperties, &backend));
 
   // Testing onnxReleaseBackend
   EXPECT_EQ_OSS(dummy_backend.onnxReleaseBackend(backend));
