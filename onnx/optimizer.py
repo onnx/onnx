@@ -35,6 +35,8 @@ Supported pass names:
     -- fuse_transpose_into_gemm
 """
 
+get_available_passes = C.get_available_passes
+
 
 def optimize(model, passes=[]):  # type: (ModelProto, Sequence[Text]) -> ModelProto
     if len(passes) == 0:
