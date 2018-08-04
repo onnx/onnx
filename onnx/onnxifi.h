@@ -145,6 +145,31 @@ typedef uint64_t onnxPointer;
 #define ONNXIFI_STATUS_BACKEND_UNAVAILABLE 0x0405
 #define ONNXIFI_STATUS_INTERNAL_ERROR 0x0406
 
+/**
+ * State of an ONNXIFI event object.
+ *
+ * Possible values:
+ *     ONNXIFI_EVENT_STATE_INVALID
+ *     ONNXIFI_EVENT_STATE_NONSIGNALLED
+ *     ONNXIFI_EVENT_STATE_SIGNALLED
+ */
+typedef int32_t onnxEventState;
+
+/**
+ * State for an invalid onnxEvent.
+ */
+#define ONNXIFI_EVENT_STATE_INVALID 0
+/**
+ * Non-signalled onnxEvent state.
+ * onnxInitEvent creates events in non-signalled state.
+ */
+#define ONNXIFI_EVENT_STATE_NONSIGNALLED 0x16BD
+/**
+ * Signalled onnxEvent state.
+ * onnxSignalEvent changes event state to signalled.
+ */
+#define ONNXIFI_EVENT_STATE_SIGNALLED 0x3395
+
 /** Special-purpose accelerator for neural network */
 #define ONNXIFI_DEVICE_TYPE_NPU 0x01
 /** Digital signal processor */
@@ -771,6 +796,10 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxSignalEventFunction)(
     onnxEvent event);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
+  (ONNXIFI_ABI* onnxGetEventStateFunction)(
+    onnxEvent event,
+    onnxEventState* state);
+typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxWaitEventFunction)(
     onnxEvent event);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
@@ -1232,6 +1261,37 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
   onnxSignalEvent(
     onnxEvent event);
+
+/**
+ * Query ONNXIFI event state without blocking.
+ *
+ * @param event - event handle created by onnxRunGraph. While it is technically
+ *                possible to use this function to events created by
+ *                onnxInitEvent, this is not the intended use-case.
+ * @param[out] state - pointer to the variable that will store the state of the
+ *                     event. If the function fails, the variable is initialized
+ *                     to ONNXIFI_EVENT_STATE_INVALID.
+ *
+ * @retval ONNXIFI_STATUS_SUCCESS The function call succeeded and the state
+ *                                variable was initialized to either
+ *                                ONNXIFI_EVENT_STATE_SIGNALLED or
+ *                                ONNXIFI_EVENT_STATE_NONSIGNALLED according
+ *                                to the state of the event.
+ * @retval ONNXIFI_STATUS_INVALID_EVENT The function call failed because event
+ *                                      is not an ONNXIFI event handle.
+ * @retval ONNXIFI_STATUS_INVALID_POINTER The function call failed because state
+ *                                        pointer is NULL.
+ * @retval ONNXIFI_STATUS_BACKEND_UNAVAILABLE The function call failed because
+ *                                            the backend was disconnected or
+ *                                            uninstalled from the system.
+ * @retval ONNXIFI_STATUS_INTERNAL_ERROR The function call failed because the
+ *                                       implementation experienced an
+ *                                       unrecovered internal error.
+ */
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+  onnxGetEventState(
+    onnxEvent event,
+    onnxEventState* state);
 
 /**
  * Wait until an ONNXIFI event transitions to signalled state.
