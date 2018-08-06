@@ -68,7 +68,7 @@ class TestShapeInference(unittest.TestCase):
 
     def test_empty_graph(self):  # type: () -> None
         graph = self._make_graph(
-            [('y', TensorProto.FLOAT, (1,2))],
+            [('y', TensorProto.FLOAT, (1, 2))],
             [], [])
         self._assert_inferred(graph, [])
 

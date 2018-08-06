@@ -165,9 +165,6 @@ class cmake_build(setuptools.Command):
                 # build needs to turn off optimizations
                 cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
             if WINDOWS:
-                Windows_config = 'Release'
-                if DEBUG:
-                    Windows_config = 'DEBUG'
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
                     # passing python version to window in order to

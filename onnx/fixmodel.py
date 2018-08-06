@@ -25,11 +25,12 @@ import argparse
 
 modified = False
 
-def isempty(str): # type: (Text) -> bool
+
+def isempty(str):  # type: (Text) -> bool
     return str is None or str == ''
 
 
-def replaceInvalidChars(name): # type: (Text) -> Text
+def replaceInvalidChars(name):  # type: (Text) -> Text
 
     global modified
 
@@ -48,12 +49,12 @@ def replaceInvalidChars(name): # type: (Text) -> Text
     return n
 
 
-def examine_tensor(tensor): # type: (TensorProto) -> None
+def examine_tensor(tensor):  # type: (TensorProto) -> None
     if not isempty(tensor.name):
         tensor.name = replaceInvalidChars(tensor.name)
 
 
-def examine_attribute(attr): # type: (AttributeProto) -> None
+def examine_attribute(attr):  # type: (AttributeProto) -> None
 
     # Note: we don't mess with the attribute name since it corresponds to a
     # attribute formal parameter name on the node operator,
@@ -71,7 +72,7 @@ def examine_attribute(attr): # type: (AttributeProto) -> None
             examine_tensor(tensor)
 
 
-def examine_node(node): # type: (NodeProto) -> None
+def examine_node(node):  # type: (NodeProto) -> None
 
     if not isempty(node.name):
         node.name = replaceInvalidChars(node.name)
@@ -87,7 +88,7 @@ def examine_node(node): # type: (NodeProto) -> None
         examine_attribute(attr)
 
 
-def examine_graph(graph): # type: (GraphProto) -> None
+def examine_graph(graph):  # type: (GraphProto) -> None
 
     graph.name = replaceInvalidChars(graph.name)
 
@@ -111,7 +112,7 @@ def examine_graph(graph): # type: (GraphProto) -> None
             vinfo.name = replaceInvalidChars(vinfo.name)
 
 
-def examine_model(model, domain): # type: (ModelProto, Text) -> bool
+def examine_model(model, domain):  # type: (ModelProto, Text) -> bool
 
     if not isempty(model.domain):
         print("Domain: " + model.domain)
