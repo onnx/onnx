@@ -4,6 +4,7 @@
             Do not modify directly and instead edit operator definitions.*
 
 * ai.onnx (default)
+### Operators: 
   * <a href="#Abs">Abs</a>
   * <a href="#Acos">Acos</a>
   * <a href="#Add">Add</a>
@@ -120,7 +121,13 @@
   * <sub>experimental</sub> <a href="#Scale">Scale</a>
   * <sub>experimental</sub> <a href="#ScaledTanh">ScaledTanh</a>
   * <sub>experimental</sub> <a href="#ThresholdedRelu">ThresholdedRelu</a>
+### Functions: 
+  * <sub>experimental</sub> <a href="#FuncMeanVarianceNormalization">MeanVarianceNormalization</a>
 
+
+
+
+### Operators: 
 ## ai.onnx (default)
 ### <a name="Abs"></a><a name="abs">**Abs**</a>
 
@@ -11239,5 +11246,15 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### Functions: 
+### <sub>experimental</sub> <a name="FuncMeanVarianceNormalization"></a><a name="funcmeanvariancenormalization">**MeanVarianceNormalization**</a>
+
+  A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><br/><b>Inputs: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/><br/><b>Attributes: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;<tt>axes: </tt>will be passed to ReducedMean Ops. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances along channels. Two variables with the same C-coordinate are associated with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate global mean and global variance with all variables sharing the same mean/variance.<br/>&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for calculation)<br/><br/><b>Outputs: </b>X_MVN(float/float16/double) with the same shape as input X<br/>
+
+#### Version
+
+This version of the function has been available since version 8 of the default ONNX operator set.
 
 
