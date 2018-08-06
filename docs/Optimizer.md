@@ -32,7 +32,7 @@ ModelProto Optimize(
 const std::vector<std::string> GetAvailablePasses();
 ```
 
-`GetAvailablePasses()` return a list of available passes.
+`GetAvailablePasses()` returns a list of available passes.
 
 `Optimize()` accepts an input `ModelProto` and a list of optimization passes to
 apply, and returns a new `ModelProto` which is the result of
