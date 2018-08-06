@@ -12,89 +12,97 @@
 #define ONNXIFI_DUMMY_LIBRARY "libonnxifi_dummy.so"
 #endif
 
+namespace ONNX_NAMESPACE {
+namespace Test {
+TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
+#define EXPECT_EQ_OSS(X) EXPECT_EQ(X, ONNXIFI_STATUS_SUCCESS)
+  onnxifi_library dummy_backend;
+  EXPECT_TRUE(onnxifi_load(1, ONNXIFI_DUMMY_LIBRARY, &dummy_backend));
 
-namespace ONNX_NAMESPACE
-{
-	namespace Test
-	{
-		TEST(OnnxifiLoadTest, OnnxifiDummyBackend)
-		{
+  onnxBackendID backendID;
+  onnxBackend backend;
+  onnxEvent event;
+  onnxGraph graph;
 
-			#define EXPECT_EQ_OSS(X) EXPECT_EQ(X, ONNXIFI_STATUS_SUCCESS)
-			onnxifi_library dummy_backend;
-			EXPECT_TRUE(onnxifi_load(1, ONNXIFI_DUMMY_LIBRARY,  &dummy_backend));
+  // Testing onnxGetBackendIDs
+  size_t numBackends = -1;
 
-			onnxBackendID backendID;
-			onnxBackend backend;
-			onnxEvent event;
-			onnxGraph graph;
+  EXPECT_EQ_OSS(dummy_backend.onnxGetBackendIDs(&backendID, &numBackends));
+  EXPECT_EQ(numBackends, 1);
 
-			//Testing onnxGetBackendIDs
-			size_t numBackends = -1;
+  // Testing onnxReleaseBackendID
+  EXPECT_EQ_OSS(dummy_backend.onnxReleaseBackendID(backendID));
 
-                        EXPECT_EQ_OSS(dummy_backend.onnxGetBackendIDs(
-                            &backendID, &numBackends));
-                        EXPECT_EQ(numBackends, 1);
+  // Testing onnxGetBackendInfo
+  onnxBackendInfo infoType = 0;
+  char infoValue[11] = "abc";
+  size_t infoValueSize = 3;
 
-                        //Testing onnxReleaseBackendID
-                        EXPECT_EQ_OSS(
-                            dummy_backend.onnxReleaseBackendID(backendID));
+  EXPECT_EQ_OSS(dummy_backend.onnxGetBackendInfo(
+      backendID, infoType, infoValue, &infoValueSize));
+  EXPECT_EQ(infoValue[0], 0);
 
-                        // Testing onnxGetBackendInfo
-                        onnxBackendInfo infoType = 0;
-			char infoValue[11] = "abc";
-			size_t infoValueSize = 3;
+  // Testing onnxGetBackendCompatibility
+  char onnxModel[] = "";
+  size_t onnxModelSize = 0;
+  EXPECT_EQ_OSS(dummy_backend.onnxGetBackendCompatibility(
+      backendID, onnxModelSize, onnxModel));
 
-                        EXPECT_EQ_OSS(dummy_backend.onnxGetBackendInfo(
-                            backendID, infoType, infoValue, &infoValueSize));
-                        EXPECT_EQ(infoValue[0], 0);
+  // Testing onnxInitBackend
+  const uint64_t backendProperties[] = {
+      ONNXIFI_BACKEND_PROPERTY_NONE
+  };
+  EXPECT_EQ_OSS(
+      dummy_backend.onnxInitBackend(backendID, backendProperties, &backend));
 
-                        //Testing onnxGetBackendCompatibility
-			char onnxModel[] = "";
-			size_t onnxModelSize = 0;
-			EXPECT_EQ_OSS(dummy_backend.onnxGetBackendCompatibility(backendID, onnxModelSize, onnxModel));
+  // Testing onnxReleaseBackend
+  EXPECT_EQ_OSS(dummy_backend.onnxReleaseBackend(backend));
 
-			//Testing onnxInitBackend
-			uint64_t auxpropertiesList = 0;
-			EXPECT_EQ_OSS(dummy_backend.onnxInitBackend(backendID, &auxpropertiesList, &backend));
+  // Testing onnxInitEvent
+  EXPECT_EQ_OSS(dummy_backend.onnxInitEvent(backend, &event));
 
-			//Testing onnxReleaseBackend
-			EXPECT_EQ_OSS(dummy_backend.onnxReleaseBackend(backend));
+  // Testing onnxSignalEvent
+  EXPECT_EQ_OSS(dummy_backend.onnxSignalEvent(event));
 
-			//Testing onnxInitEvent
-			EXPECT_EQ_OSS(dummy_backend.onnxInitEvent(backend, &event));
+  // Testing onnxWaitEvent
+  EXPECT_EQ_OSS(dummy_backend.onnxWaitEvent(event));
 
-			//Testing onnxSignalEvent
-			EXPECT_EQ_OSS(dummy_backend.onnxSignalEvent(event));
+  // Testing onnxReleaseEvent
+  EXPECT_EQ_OSS(dummy_backend.onnxReleaseEvent(event));
 
-			//Testing onnxWaitEvent
-			EXPECT_EQ_OSS(dummy_backend.onnxWaitEvent(event));
+  // Testing onnxInitGraph
+  uint32_t weightCount = 1;
+  onnxTensorDescriptorV1 weightDescriptors;
+  const uint64_t graphProperties[] = {
+      ONNXIFI_GRAPH_PROPERTY_NONE
+  };
+  EXPECT_EQ_OSS(dummy_backend.onnxInitGraph(
+      backend,
+      graphProperties,
+      onnxModelSize,
+      &onnxModel,
+      weightCount,
+      &weightDescriptors,
+      &graph));
 
-			//Testing onnxReleaseEvent
-			EXPECT_EQ_OSS(dummy_backend.onnxReleaseEvent(event));
+  // Testing onnxInitGraph
+  uint32_t inputsCount = 1;
+  onnxTensorDescriptorV1 inputDescriptors;
+  uint32_t outputsCount = 1;
+  onnxTensorDescriptorV1 outputDescriptors;
+  EXPECT_EQ_OSS(dummy_backend.onnxSetGraphIO(
+      graph, inputsCount, &inputDescriptors, outputsCount, &outputDescriptors));
 
-			//Testing onnxInitGraph
-			uint32_t weightCount = 1;
-                        onnxTensorDescriptorV1 weightDescriptors;
-                        EXPECT_EQ_OSS(dummy_backend.onnxInitGraph(backend, onnxModelSize, &onnxModel, weightCount, &weightDescriptors, &graph));
+  // Testing onnxRunGraph
+  onnxMemoryFenceV1 inputFence, outputFence;
+  EXPECT_EQ_OSS(dummy_backend.onnxRunGraph(graph, &inputFence, &outputFence));
+  EXPECT_EQ(outputFence.type, ONNXIFI_SYNCHRONIZATION_EVENT);
 
-			//Testing onnxInitGraph
-			uint32_t inputsCount = 1;
-                        onnxTensorDescriptorV1 inputDescriptors;
-                        uint32_t outputsCount = 1;
-                        onnxTensorDescriptorV1 outputDescriptors;
-                        EXPECT_EQ_OSS(dummy_backend.onnxSetGraphIO(graph, inputsCount, &inputDescriptors, outputsCount, &outputDescriptors));
-
-			//Testing onnxRunGraph
-                        onnxMemoryFenceV1 inputFence, outputFence;
-                        EXPECT_EQ_OSS(dummy_backend.onnxRunGraph(graph, &inputFence, &outputFence));
-			EXPECT_EQ(outputFence.type, ONNXIFI_SYNCHRONIZATION_EVENT);
-
-			//Testing onnxReleaseGraph
-			EXPECT_EQ_OSS(dummy_backend.onnxReleaseGraph(graph));
+  // Testing onnxReleaseGraph
+  EXPECT_EQ_OSS(dummy_backend.onnxReleaseGraph(graph));
 
 #undef EXPECT_EQ_OSS
-                }
-
-	}
 }
+
+} // namespace Test
+} // namespace ONNX_NAMESPACE
