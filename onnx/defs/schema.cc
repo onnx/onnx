@@ -338,7 +338,7 @@ void OpSchema::Verify(
       case AttributeProto::TENSORS:
       case AttributeProto::GRAPHS:
         // There's no check to be made here -- it is perfectly valid for a
-		// sequence-typed attribute to have zero elements.
+		    // sequence-typed attribute to have zero elements.
         break;
       default:
         fail_check(ctx,"Attribute '", name, " has unknown type");
