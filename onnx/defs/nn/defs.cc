@@ -462,58 +462,113 @@ ONNX_OPERATOR_SET_SCHEMA(
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
-std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc) {
+std::function<void(OpSchema&)> ConvOpSchemaGenerator(const char* filter_desc, bool quantized) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The convolution operator consumes an input tensor and {filter_desc}, and
 computes the output.)DOC";
     ReplaceAll(doc, "{filter_desc}", filter_desc);
     schema.SetDoc(doc);
-    schema.Input(
-        0,
-        "X",
-        "Input data tensor from previous layer; "
-        "has size (N x C x H x W), where N is the batch size, "
-        "C is the number of channels, and H and W are the "
-        "height and width. Note that this is for the 2D image. "
-        "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
-        "Optionally, if dimension denotation is "
-        "in effect, the operation expects input data tensor "
-        "to arrive with the dimension denotation of [DATA_BATCH, "
-        "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
-        "T");
-    schema.Input(
-        1,
-        "W",
-        "The weight tensor that will be used in the "
-        "convolutions; has size (M x C x kH x kW), where C "
-        "is the number of channels, and kH and kW are the "
-        "height and width of the kernel, and M is the number "
-        "of feature maps. For more than 2 dimensions, the "
-        "kernel shape will be (M x C x k1 x k2 x ... x kn), "
-        "where (k1 x k2 x ... kn) is the dimension of the kernel. "
-        "Optionally, if dimension denotation is in effect, "
-        "the operation expects the weight tensor to arrive "
-        "with the dimension denotation of [FILTER_IN_CHANNEL, "
-        "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].",
-        "T");
-    schema.Input(
-        2,
-        "B",
-        "Optional 1D bias to be added to the convolution, has size of M.",
-        "T",
-        OpSchema::Optional);
-    schema.Output(
-        0,
-        "Y",
-        "Output data tensor that contains the result of the "
-        "convolution. The output dimensions are functions "
-        "of the kernel size, stride size, and pad lengths.",
-        "T");
-    schema.TypeConstraint(
-        "T",
-        {"tensor(float16)", "tensor(float)", "tensor(double)"},
-        "Constrain input and output types to float tensors.");
+    if (quantized) {
+      schema.Input(
+          0,
+          "X",
+          "Input data tensor from previous layer; "
+          "has size (N x C x H x W), where N is the batch size, "
+          "C is the number of channels, and H and W are the "
+          "height and width. Note that this is for the 2D image. "
+          "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
+          "Optionally, if dimension denotation is "
+          "in effect, the operation expects input data tensor "
+          "to arrive with the dimension denotation of [DATA_BATCH, "
+          "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+          "T1");
+      schema.Input(
+          1,
+          "W",
+          "The weight tensor that will be used in the "
+          "convolutions; has size (M x C x kH x kW), where C "
+          "is the number of channels, and kH and kW are the "
+          "height and width of the kernel, and M is the number "
+          "of feature maps. For more than 2 dimensions, the "
+          "kernel shape will be (M x C x k1 x k2 x ... x kn), "
+          "where (k1 x k2 x ... kn) is the dimension of the kernel. "
+          "Optionally, if dimension denotation is in effect, "
+          "the operation expects the weight tensor to arrive "
+          "with the dimension denotation of [FILTER_IN_CHANNEL, "
+          "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].",
+          "T1");
+      schema.Input(
+          2,
+          "B",
+          "Optional 1D bias to be added to the convolution, has size of M.",
+          "T2",
+          OpSchema::Optional);
+      schema.Output(
+          0,
+          "Y",
+          "Output data tensor that contains the result of the "
+          "convolution. The output dimensions are functions "
+          "of the kernel size, stride size, and pad lengths.",
+          "T1");
+      schema.TypeConstraint(
+          "T1",
+          {"tensor(quint8)"},
+          "Constrain input, filter, and output types to quantized 8-bit "
+          "unsigned integer tensors with zero point and scale, or an "
+          "equivalent representation.");
+      schema.TypeConstraint(
+          "T2",
+          {"tensor(qint32)"},
+          "Constrain bias type to quantized 32-bit signed quantized integer "
+          "tensor with scale, or an equivalent representation.");
+    } else {
+      schema.Input(
+          0,
+          "X",
+          "Input data tensor from previous layer; "
+          "has size (N x C x H x W), where N is the batch size, "
+          "C is the number of channels, and H and W are the "
+          "height and width. Note that this is for the 2D image. "
+          "Otherwise the size is (N x C x D1 x D2 ... x Dn). "
+          "Optionally, if dimension denotation is "
+          "in effect, the operation expects input data tensor "
+          "to arrive with the dimension denotation of [DATA_BATCH, "
+          "DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+          "T");
+      schema.Input(
+          1,
+          "W",
+          "The weight tensor that will be used in the "
+          "convolutions; has size (M x C x kH x kW), where C "
+          "is the number of channels, and kH and kW are the "
+          "height and width of the kernel, and M is the number "
+          "of feature maps. For more than 2 dimensions, the "
+          "kernel shape will be (M x C x k1 x k2 x ... x kn), "
+          "where (k1 x k2 x ... kn) is the dimension of the kernel. "
+          "Optionally, if dimension denotation is in effect, "
+          "the operation expects the weight tensor to arrive "
+          "with the dimension denotation of [FILTER_IN_CHANNEL, "
+          "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].",
+          "T");
+      schema.Input(
+          2,
+          "B",
+          "Optional 1D bias to be added to the convolution, has size of M.",
+          "T",
+          OpSchema::Optional);
+      schema.Output(
+          0,
+          "Y",
+          "Output data tensor that contains the result of the "
+          "convolution. The output dimensions are functions "
+          "of the kernel size, stride size, and pad lengths.",
+          "T");
+      schema.TypeConstraint(
+          "T",
+          {"tensor(float16)", "tensor(float)", "tensor(double)"},
+          "Constrain input and output types to float tensors.");
+    }
     schema.Attr(
         "kernel_shape",
         "The shape of the convolution kernel. If not present, should be inferred from input W.",
@@ -529,11 +584,13 @@ computes the output.)DOC";
         "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
         AttributeProto::INTS,
         OPTIONAL);
-    schema.Attr(
-        "auto_pad",
-        auto_pad_doc,
-        AttributeProto::STRING,
-        std::string("NOTSET"));
+    if (!quantized) {
+      schema.Attr(
+          "auto_pad",
+          auto_pad_doc,
+          AttributeProto::STRING,
+          std::string("NOTSET"));
+    }
     schema.Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL);
     schema.Attr(
         "group",
@@ -549,7 +606,12 @@ computes the output.)DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     Conv,
     1,
-    OpSchema().FillUsing(ConvOpSchemaGenerator("a filter")));
+    OpSchema().FillUsing(ConvOpSchemaGenerator("a filter", false)));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    QConv,
+    8,
+    OpSchema().FillUsing(ConvOpSchemaGenerator("a filter", true)));
 
 } // namespace ONNX_NAMESPACE
 

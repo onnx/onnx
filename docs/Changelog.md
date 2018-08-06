@@ -8224,6 +8224,57 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="QConv-8"></a>**QConv-8**</a>
+
+  The convolution operator consumes an input tensor and a filter, and
+  computes the output.
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dilations</tt> : list of ints</dt>
+<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
+<dt><tt>group</tt> : int</dt>
+<dd>number of groups input channels and output channels are divided into, default is 1.</dd>
+<dt><tt>kernel_shape</tt> : list of ints</dt>
+<dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor from previous layer; has size (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and width. Note that this is for the 2D image. Otherwise the size is (N x C x D1 x D2 ... x Dn). Optionally, if dimension denotation is in effect, the operation expects input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>W</tt> : T1</dt>
+<dd>The weight tensor that will be used in the convolutions; has size (M x C x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the kernel shape will be (M x C x k1 x k2 x ... x kn), where (k1 x k2 x ... kn) is the dimension of the kernel. Optionally, if dimension denotation is in effect, the operation expects the weight tensor to arrive with the dimension denotation of [FILTER_IN_CHANNEL, FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].</dd>
+<dt><tt>B</tt> (optional) : T2</dt>
+<dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Output data tensor that contains the result of the convolution. The output dimensions are functions of the kernel size, stride size, and pad lengths.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(quint8)</dt>
+<dd>Constrain input, filter, and output types to quantized 8-bit unsigned integer tensors with zero point and scale, or an equivalent representation.</dd>
+<dt><tt>T2</tt> : tensor(qint32)</dt>
+<dd>Constrain bias type to quantized 32-bit signed quantized integer tensor with scale, or an equivalent representation.</dd>
+</dl>
+
 ### <a name="Sum-8"></a>**Sum-8**</a>
 
   Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).

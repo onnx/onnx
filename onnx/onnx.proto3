@@ -297,6 +297,68 @@ message TensorProto {
     UINT64 = 13;
     COMPLEX64 = 14;     // complex with float32 real and imaginary components
     COMPLEX128 = 15;    // complex with float64 real and imaginary components
+
+    // Quantized tensor with UINT8 elements, scalar UINT8 zero point and
+    // scalar FLOAT scale. Zero point and scale are static scalar quantization
+    // parameters shared by all elements of a tensor. Elements of a quantized
+    // tensor have real-valued representation r[i] = (q[i] - zero_point) * scale
+    // where q[i] is an element of a quantized tensor and r[i] is its
+    // real-valued representation.
+    //
+    // A compliant ONNX implementation can use an equivalent representation of
+    // quantized tensors, e.g. as 9-bit signed integer elements + FLOAT scale,
+    // or as FLOAT16 elements. If a floating-point representation is used,
+    // an ONNX implementation must guarantee that all quantized elements are
+    // within [-zero_point * scale, (255 - zero_point) * scale] range.
+    QUINT8 = 16;
+    // Quantized tensor with UINT16 elements, scalar UINT16 zero point and
+    // scalar FLOAT scale. Zero point and scale are static scalar quantization
+    // parameters shared by all elements of a tensor. Elements of a quantized
+    // tensor have real-valued representation r[i] = (q[i] - zero_point) * scale
+    // where q[i] is an element of a quantized tensor and r[i] is its
+    // real-valued representation.
+    //
+    // A compliant ONNX implementation can use an equivalent representation of
+    // quantized tensors, e.g. as 17-bit signed integer elements + FLOAT scale,
+    // or as FLOAT16 elements. If a floating-point representation is used,
+    // an ONNX implementation must guarantee that all quantized elements are
+    // within [-zero_point * scale, (65535 - zero_point) * scale] range.
+    QUINT16 = 17;
+    // Quantized tensor with INT8 elements and scalar FLOAT scale. Scale is a
+    // static scalar quantization parameter shared by all elements of a tensor.
+    // Elements of a quantized tensor have real-valued representation
+    // r[i] = q[i] * scale where q[i] is an element of a quantized tensor and
+    // r[i] is its real-valued representation.
+    //
+    // A compliant ONNX implementation can use an equivalent representation of
+    // quantized tensors, e.g. as FLOAT16 elements. If a floating-point
+    // representation is used, an ONNX implementation must guarantee that all
+    // quantized elements are within [-128 * scale, 127 * scale] range.
+    QINT8 = 18;
+    // Quantized tensor with INT16 elements and scalar FLOAT scale. Scale is a
+    // static scalar quantization parameter shared by all elements of a tensor.
+    // Elements of a quantized tensor have real-valued representation
+    // r[i] = q[i] * scale where q[i] is an element of a quantized tensor and
+    // r[i] is its real-valued representation.
+    //
+    // A compliant ONNX implementation can use an equivalent representation of
+    // quantized tensors, e.g. as FLOAT16 elements. If a floating-point
+    // representation is used, an ONNX implementation must guarantee that all
+    // quantized elements are within [-32768 * scale, 32767 * scale] range.
+    QINT16 = 19;
+    // Quantized tensor with INT32 elements and scalar FLOAT scale. Scale is a
+    // static scalar quantization parameter shared by all elements of a tensor.
+    // Elements of a quantized tensor have real-valued representation
+    // r[i] = q[i] * scale where q[i] is an element of a quantized tensor and
+    // r[i] is its real-valued representation.
+    //
+    // A compliant ONNX implementation can use an equivalent representation of
+    // quantized tensors, e.g. as FLOAT16 elements. If a floating-point
+    // representation is used, an ONNX implementation must guarantee that all
+    // quantized elements are within [-2147483648 * scale, 2147483647 * scale]
+    // range.
+    QINT32 = 20;
+
     // Future extensions go here.
   }
 
@@ -404,6 +466,22 @@ message TensorShapeProto {
   repeated Dimension dim = 1;
 }
 
+// Quantization parameters
+message QuantizationProto {
+  // This field MUST be present if and only if data type is QUINT8 or QUINT16.
+  // Zero point quantization parameter for quantized tensors. See description
+  // of quantized types for interpretation of this parameter.
+  // The value of this field must be in [0, 255] range for QUINT8 type, and
+  // within [0, 65535] range for QUINT16 type.
+  int32 zero_point = 2;
+  // This field MUST be present if and only if data type is QUINT8, QUINT16,
+  // QINT8, QINT16, or QINT32.
+  // Scale quantization parameter for quantized tensors. See description of
+  // quantized types for interpretation of this parameter.
+  // The value of this field must be in [2**14 ~= 6.10352e−5, 256] range.
+  float scale = 3;
+}
+
 // Types
 //
 // The standard ONNX data types.
@@ -414,6 +492,10 @@ message TypeProto {
     // This field MUST be present for this version of the IR.
     TensorProto.DataType elem_type = 1;
     TensorShapeProto shape = 2;
+    // This field MUST be present if and only if data type is QUINT8, QUINT16,
+    // QINT8, QINT16, or QINT32.
+    // Quantization parameters for tensors using static quantization.
+    QuantizationProto quantization = 3;
   }
 
 

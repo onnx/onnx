@@ -396,6 +396,11 @@ TypesWrapper::TypesWrapper() {
       TensorProto_DataType_COMPLEX128;
   type_str_to_tensor_data_type_["string"] = TensorProto_DataType_STRING;
   type_str_to_tensor_data_type_["bool"] = TensorProto_DataType_BOOL;
+  type_str_to_tensor_data_type_["quint8"] = TensorProto_DataType_QUINT8;
+  type_str_to_tensor_data_type_["quint16"] = TensorProto_DataType_QUINT16;
+  type_str_to_tensor_data_type_["qint8"] = TensorProto_DataType_QINT8;
+  type_str_to_tensor_data_type_["qint16"] = TensorProto_DataType_QINT16;
+  type_str_to_tensor_data_type_["qint32"] = TensorProto_DataType_QINT32;
 
   for (auto& str_type_pair : type_str_to_tensor_data_type_) {
     tensor_data_type_to_type_str_[str_type_pair.second] = str_type_pair.first;
