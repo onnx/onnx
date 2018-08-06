@@ -256,7 +256,6 @@ def main(args):  # type: (Type[Args]) -> None
                         s += '\n'
                     fout.write(s)
 
-
     with io.open(args.output, 'w', newline='') as fout:
         fout.write('## Operator/Function Schemas\n')
         fout.write(
@@ -370,7 +369,6 @@ def main(args):  # type: (Type[Args]) -> None
                 s += display_function(function, available_versions, domain_prefix)
                 s += '\n\n'
                 fout.write(s)
-
 
 
 if __name__ == '__main__':
