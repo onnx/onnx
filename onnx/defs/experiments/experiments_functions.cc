@@ -17,17 +17,33 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   func_proto->reset(new FunctionProto);
   auto& func = **func_proto;
   func.set_name("MeanVarianceNormalization");
-  func.set_doc_string(
+  std::string doc_string =
       "A MeanVarianceNormalization Function: Perform mean variance normalization "
-      "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><br/>"
-      "<b>Inputs: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/><br/>"
-      "<b>Attributes: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;<tt>axes: </tt>will be passed to ReducedMean "
-      "Ops. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances "
-      "along channels. Two variables with the same C-coordinate are associated "
-      "with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate "
-      "global mean and global variance with all variables sharing the same mean/variance.<br/>"
-      "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for calculation)<br/>"
-      "<br/><b>Outputs: </b>X_MVN(float/float16/double) with the same shape as input X<br/>");
+      "on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>\n";
+  doc_string += FunctionDocHelper(
+      "Inputs",
+      {std::vector<std::string>{
+          "X", "(float/float16/double)", "with shape [N,C,W,H] or N-D shape"}});
+  doc_string += FunctionDocHelper(
+      "Attributes",
+      {std::vector<std::string>{
+           "axes",
+           "(ints)",
+           "will be passed to ReducedMean "
+           "Ops. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances "
+           "along channels. Two variables with the same C-coordinate are associated "
+           "with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate "
+           "global mean and global variance with all variables sharing the same mean/variance."},
+       std::vector<std::string>{
+           "",
+           "",
+           "The KeepDims attribute in ReducedMean is set to true for calculation"}});
+  doc_string += FunctionDocHelper(
+      "Outputs",
+      {std::vector<std::string>{"X_MVN",
+                                "(float/float16/double)",
+                                "with the same shape as input X"}});
+  func.set_doc_string(doc_string);
   func.set_since_version(8);
   func.add_input("X");
   func.add_output("X_MVN");

@@ -57,6 +57,10 @@ class FunctionBuilderRegistry {
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
+std::string FunctionDocHelper(
+    const std::string& field_name,
+    const std::vector<std::vector<std::string>>& docs_elements);
+
 // Example to register a function.
 // Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {
 //  if (nullptr == func_proto) {

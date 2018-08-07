@@ -65,7 +65,8 @@ Status FunctionBuilderRegistry::GetFunctions(
         function_proto->since_version() < version_range.first) {
       fail_check("Invalid function version in '", function_proto->name(), "'");
     }
-    op_set.insert({func_builder.GetDomain(), (int)function_proto->since_version()});
+    op_set.insert(
+        {func_builder.GetDomain(), (int)function_proto->since_version()});
     ctx.set_opset_imports(op_set);
     ctx.set_is_main_graph(false);
     LexicalScopeContext lex_ctx;
@@ -104,4 +105,23 @@ FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
   static FunctionBuilderRegistry func_builder_registry;
   return func_builder_registry;
 }
+
+std::string FunctionDocHelper(
+    const std::string& field_name,
+    const std::vector<std::vector<std::string>>& docs_elements) {
+  std::string formatted_s = "#### ";
+  formatted_s += field_name;
+  formatted_s += "\n\n ";
+  formatted_s += "<dl>\n";
+
+  for (auto& p : docs_elements) {
+    formatted_s = formatted_s + "<dt><tt>" + p[0] + "</tt>";
+    formatted_s = formatted_s + p[1] + "</dt>\n";
+    formatted_s = formatted_s + "<dd>" + p[2] + "</dd>\n";
+  }
+
+  formatted_s += "</dl>\n\n";
+  return formatted_s;
+}
+
 } // namespace ONNX_NAMESPACE

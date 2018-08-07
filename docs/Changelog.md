@@ -8260,7 +8260,30 @@ This version of the operator has been available since version 8 of the default O
 ## Version 8 of domain ai.onnx (default)
 ### <a name="FuncMeanVarianceNormalization-8"></a>**FuncMeanVarianceNormalization-8**</a>
 
-  A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/><br/><b>Inputs: </b>X(float/float16/double) with shape [N,C,W,H] or N-D shape <br/><br/><b>Attributes: </b><br/>&nbsp;&nbsp;&nbsp;&nbsp;<tt>axes: </tt>will be passed to ReducedMean Ops. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances along channels. Two variables with the same C-coordinate are associated with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate global mean and global variance with all variables sharing the same mean/variance.<br/>&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for calculation)<br/><br/><b>Outputs: </b>X_MVN(float/float16/double) with the same shape as input X<br/>
+  A MeanVarianceNormalization Function: Perform mean variance normalization on the input tensor X using formula: <br/> ``` (X-EX)/sqrt(E(X-EX)^2) ``` <br/>
+  #### Inputs
+  
+   <dl>
+  <dt><tt>X</tt>(float/float16/double)</dt>
+  <dd>with shape [N,C,W,H] or N-D shape</dd>
+  </dl>
+  
+  #### Attributes
+  
+   <dl>
+  <dt><tt>axes</tt>(ints)</dt>
+  <dd>will be passed to ReducedMean Ops. Use [0,2,3] (without C axis for N-D cases) for calculating means and variances along channels. Two variables with the same C-coordinate are associated with the same mean and variance. Use [0,1,2,3] (with C axis) to calculate global mean and global variance with all variables sharing the same mean/variance.</dd>
+  <dt><tt></tt></dt>
+  <dd>The KeepDims attribute in ReducedMean is set to true for calculation</dd>
+  </dl>
+  
+  #### Outputs
+  
+   <dl>
+  <dt><tt>X_MVN</tt>(float/float16/double)</dt>
+  <dd>with the same shape as input X</dd>
+  </dl>
+  
 
 #### Version
 
