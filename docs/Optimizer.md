@@ -25,11 +25,11 @@ is described, with example,
 The C++ API consists of two functions
 
 ```
+const std::vector<std::string> GetAvailablePasses();
+
 ModelProto Optimize(
     const ModelProto& mp_in,
     const std::vector<std::string>& names);
-
-const std::vector<std::string> GetAvailablePasses();
 ```
 
 `GetAvailablePasses()` returns a list of available passes.
