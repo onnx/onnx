@@ -86,11 +86,11 @@ struct Optimizer {
   }
 };
 
+const std::vector<std::string> GetAvailablePasses();
+
 ModelProto Optimize(
     const ModelProto& mp_in,
     const std::vector<std::string>& names);
-
-const std::vector<std::string> GetAvailablePasses();
 
 } // namespace optimization
 } // namespace ONNX_NAMESPACE
