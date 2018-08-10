@@ -11,7 +11,7 @@ if(NOT CMAKE_BUILD_TYPE)
       "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage."
     FORCE)
 endif()
-cmake_policy(SET CMP0063 NEW)
+#cmake_policy(SET CMP0063 NEW)
 
 # Project
 project(onnx C CXX)
