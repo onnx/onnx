@@ -11205,7 +11205,7 @@ This version of the operator has been available since version 1 of the default O
           // accumulate the outputs for this batch:
           bst_1[batch] = st_1; ..., bst_n[batch] = st_n;
           // Note scan-outputs will have size max_sequence_length, but only first N values will be meaningful.
-          b_scan_out_1[batch] = scan_out_1; ...; b_scan_out_k[batch];
+          b_scan_out_1[batch] = scan_out_1; ...; b_scan_out_k[batch] = scan_out_k;
       }
       return bst_1, ..., bst_n, b_scan_out_1, ..., b_scan_out_k;
   
