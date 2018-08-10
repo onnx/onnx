@@ -8224,6 +8224,140 @@ This version of the operator has been available since version 8 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="Scan-8"></a>**Scan-8**</a>
+
+  Scan can be used to iterate over (specified axes of) one or more scan_input tensors,
+  constructing zero or more scan_output tensors. Other tensors can be used to carry a state
+  when iterating from one element to another (similar to hidden-state in RNNs, also referred
+  to as loop-carried dependences in the context of loops). All these tensors are required to
+  have the same shape in each iteration of the loop. Using more than one scan_input, a behavior
+  similar to zip is obtained.
+  
+  Note that because of the ONNX restriction that only the last parameter of an operator can
+  be variadic, the initial-states and scan-inputs are listed together as one input parameter.
+  Similarly, the final-states and scan-outputs are listed together as one output parameter.
+  The length M of the scan_axes attribute is sufficient to distinguish which inputs and
+  outputs are which.
+  
+  The behavior of
+      Scan <
+          scan_axes = [axis_1, ..., axis_m],
+          body = loop-body
+      > (sequence_lengths, init_1, ..., init_n, scan_1, ..., scan_m)
+  is equivalent to the following pseudo-code:
+  
+      // T.shape[0] denotes the batch-size of T
+      // The batch-size of scan_1, ..., scan_m are all required to be equal
+  	batch_size = scan_1.shape[0];
+  
+      // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
+      // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
+      max_sequence_length = scan_1.shape[axis_1];
+  
+      for (int batch = 0; batch < batch_size; ++batch) {
+  		// initialize state-variables
+  		st_1 = init_1; ... st_n = init_n;
+  		// initialize scan-output variables: [] denotes an empty tensor
+  		scan_out_1 = []; ...; scan_out_k = [];
+  		// identify number of iterations:
+          N = (sequence_lengths specified) ? sequence_lengths[batch] : max_sequence_length;
+  
+  		// execute loop
+  		for (int t = 0; t < N; ++t) {
+  			// generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
+  			// of rank one less than T obtained by indexing T at position t along axis k.
+  			si_1 = (scan_1<axis=0>[batch])<axis=axis_1>[t];
+              ... ;
+              si_m = (scan_m<axis=0>[batch])<axis=axis_m>[t];
+  			// execute loop-body
+  			st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
+  			// accumulate the scan-output elements
+  			scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
+  		}
+          // accumulate the outputs for this batch:
+  		bst_1[batch] = st_1; ..., bst_n[batch] = st_n;
+          // Note scan-outputs will have size max_sequence_length, but only first N values will be meaningful.
+          b_scan_out_1[batch] = scan_out_1; ...; b_scan_out_k[batch];
+  	}
+      return bst_1, ..., bst_n, b_scan_out_1, ..., b_scan_out_k;
+  
+  The optional attribute directions can be used to scan a tensor in the reverse direction.
+  If this attribute is omitted, all tensors are scanned in the forward direction.
+  A bidirectional scan be performed by specifying the same tensor input twice in the
+  scan_inputs, once with a forward direction, and once with a backward direction.
+  
+  *Sample usage: Encoding RNN using a Scan*
+  The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
+  recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
+  be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly refers
+  to the names %Wi, %Ri, %Wbi, abd %Rbi defined in the outer graph.
+  
+      graph rnn-encoding {
+        %H_0 = ... 
+        %X = ...
+        %Wi = ...
+        %Ri = ...
+        %Wbi = ...
+        %Rbi = ...
+        %Y_h, %Y = Scan[body = <graph rnn-cell-1>, scan_axes=[0]]("", %H_0, %X)
+        return %Y, %Y_h
+      }
+  
+      graph rnn-cell-1 (
+        %H_tminus1[FLOAT, tensor]
+        %X_t[FLOAT, tensor]
+      ) {
+        %t1 = X_t * (Wi^T)
+        %t2 = H_tminus1*(Ri^T)
+        %t3 = Add(%t1, %t2)
+        %t4 = Add(%t3, %Wbi)
+        %t5 = Add(%t4, %Rbi)
+        %Ht = Tanh(%t5)
+        %Accumulate = Identity(%Ht)
+        return %Ht, %Accumulate
+      }
+  
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>body</tt> : graph (required)</dt>
+<dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
+<dt><tt>directions</tt> : list of strings</dt>
+<dd>An optional list of M directions. The i-th element of the list specifies the direction (forward or reverse) to be scanned for the i-th scan_input tensor. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_axes</tt> : list of ints (required)</dt>
+<dd>A list of M axes. The i-th element of the list specifies the axis to be scanned for the i-th scan_input tensor.</dd>
+</dl>
+
+#### Inputs (2 - &#8734;)
+
+<dl>
+<dt><tt>sequence_lens</tt> (optional) : I</dt>
+<dd>Optional tensor specifying lengths of the sequences in a batch.</dd>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic) : V</dt>
+<dd>Initial values of the loop's N state variables followed by M scan_inputs</dd>
+</dl>
+
+#### Outputs (1 - &#8734;)
+
+<dl>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic) : V</dt>
+<dd>Final values of the loop's N state variables followed by K scan_outputs</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Int64 tensor</dd>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>All Tensor types</dd>
+</dl>
+
 ### <a name="Sum-8"></a>**Sum-8**</a>
 
   Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).
