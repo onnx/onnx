@@ -37,28 +37,28 @@ class ExpandDynamicShape(Base):
         x = np.ones(input_shape, dtype=np.float32)
 
         #1st testcase
-        shape = np.array([3, 1])
+        shape = np.array([3, 1], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
         model = onnx.helper.make_model(graph, producer_name='backend-test')
         expect(model, inputs=[x, shape], outputs=[y], name="test_expand_shape_model1")
 
         #2nd testcase
-        shape = np.array([1, 3])
+        shape = np.array([1, 3], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
         model = onnx.helper.make_model(graph, producer_name='backend-test')
         expect(model, inputs=[x, shape], outputs=[y], name="test_expand_shape_model2")
 
         #3rd testcase
-        shape = np.array([3, 1, 3])
+        shape = np.array([3, 1, 3], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
         model = onnx.helper.make_model(graph, producer_name='backend-test')
         expect(model, inputs=[x, shape], outputs=[y], name="test_expand_shape_model3")
 
         #4th testcase
-        shape = np.array([3, 3, 1, 3])
+        shape = np.array([3, 3, 1, 3], dtype=np.int64)
         y = x * np.ones(shape, dtype=np.float32)
         graph = make_graph(node, input_shape, shape.shape, y.shape)
         model = onnx.helper.make_model(graph, producer_name='backend-test')
