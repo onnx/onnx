@@ -128,6 +128,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxRunGraph(
 }
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+onnxGetEventState(onnxEvent event, onnxEventState* state) {
+  return ONNXIFI_STATUS_SUCCESS;
+}
+
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 onnxReleaseGraph(onnxGraph graph) {
   return ONNXIFI_STATUS_SUCCESS;
 }
