@@ -13,7 +13,8 @@ const char* pads_doc_old =
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute.";
 const char* auto_pad_doc_old =
-    "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
