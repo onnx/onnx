@@ -55,6 +55,7 @@ class DummyBackend(onnx.backend.base.Backend):
                     assert tt.elem_type != TensorProto.UNDEFINED
                     for dim in tt.shape.dim:
                         assert dim.WhichOneof('value') == 'dim_value'
+            del model
 
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
