@@ -8227,11 +8227,38 @@ This version of the operator has been available since version 8 of the default O
 ### <a name="Scan-8"></a>**Scan-8**</a>
 
   Scan can be used to iterate over (specified axes of) one or more scan_input tensors,
-  constructing zero or more scan_output tensors. Other tensors can be used to carry a state
+  constructing zero or more scan_output tensors. It combines ideas from general recurrences,
+  functional programming constructs such as scan, fold, map, and zip and is intended to enable
+  generalizations of RNN-like constructs for sequence-to-sequence processing.
+  Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
   to as loop-carried dependences in the context of loops). All these tensors are required to
-  have the same shape in each iteration of the loop. Using more than one scan_input, a behavior
-  similar to zip is obtained.
+  have the same shape in each iteration of the loop (a restriction imposed to enable efficient
+  memory allocation). Many common usages involve a single scan_input tensor (where functionality
+  similar to scan, fold and map can be obtained). When more than one scan_input is used,
+  a behavior similar to zip is obtained.
+  
+  The attribute body must be a graph, specifying the computation to be performed in
+  every iteration. It takes as input the current values of the state_variables and
+  the current iterated element of the scan_inputs. It must return the (updated) values
+  of the state_variables and zero or more scan_output_element tensors. The values of the
+  scan_output_element tensors are concatenated over all the iterations to produce the
+  scan_output values of the scan construct (similar to the concatenated intermediate
+  hidden-state values of RNN-like constructs).
+  
+  The scan operation returns the final values of the state_variables as well as the
+  scan_outputs.
+  
+  The operation supports batching, and the batch-axis is required to be 0.
+  The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
+  allow variable length sequences. For variable length input sequences, the scan_outputs
+  will consist of a sequence of same length as the input, padded to the required
+  (maximum) output length.
+  
+  The optional attribute directions can be used to scan a sequence in the reverse direction.
+  If this attribute is omitted, all sequences are scanned in the forward direction.
+  A bidirectional scan be performed by specifying the same tensor input twice in the
+  scan_inputs, once with a forward direction, and once with a backward direction.
   
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -8283,24 +8310,18 @@ This version of the operator has been available since version 8 of the default O
       }
       return bst_1, ..., bst_n, b_scan_out_1, ..., b_scan_out_k;
   
-  The optional attribute directions can be used to scan a tensor in the reverse direction.
-  If this attribute is omitted, all tensors are scanned in the forward direction.
-  A bidirectional scan be performed by specifying the same tensor input twice in the
-  scan_inputs, once with a forward direction, and once with a backward direction.
+  
   
   *Sample usage: Encoding RNN using a Scan*
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
-  be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly refers
-  to the names %Wi, %Ri, %Wbi, abd %Rbi defined in the outer graph.
+  be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
+  %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
+  values are computed in the outer graph, they need to passed in as extra state_variables.
   
       graph rnn-encoding {
         %H_0 = ... 
         %X = ...
-        %Wi = ...
-        %Ri = ...
-        %Wbi = ...
-        %Rbi = ...
         %Y_h, %Y = Scan[body = <graph rnn-cell-1>, scan_axes=[0]]("", %H_0, %X)
         return %Y, %Y_h
       }
@@ -8309,6 +8330,10 @@ This version of the operator has been available since version 8 of the default O
         %H_tminus1[FLOAT, tensor]
         %X_t[FLOAT, tensor]
       ) {
+        %Wi = ...
+        %Ri = ...
+        %Wbi = ...
+        %Rbi = ...
         %t1 = X_t * (Wi^T)
         %t2 = H_tminus1*(Ri^T)
         %t3 = Add(%t1, %t2)
