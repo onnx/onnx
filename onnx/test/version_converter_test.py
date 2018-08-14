@@ -229,6 +229,44 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 8
 
+    # Test Concat Adapter: 3 -> 5
+    def test_concat_3_5(self):  # type: () -> None
+        nodes = [helper.make_node('Concat', ["X1", "X2", "X3",
+            "X4", "X5"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("X3", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("X4", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("X5", TensorProto.FLOAT, (1,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 3), 5)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Concat"
+        assert converted_model.opset_import[0].version == 5
+
+    # Test Concat Adapter: 5 -> 3
+    def test_concat_5_3(self):  # type: () -> None
+        nodes = [helper.make_node('Concat', ["X1", "X2", "X3",
+            "X4", "X5"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("X3", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("X4", TensorProto.FLOAT, (1,)),
+                helper.make_tensor_value_info("X5", TensorProto.FLOAT, (1,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 5), 3)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Concat"
+        assert converted_model.opset_import[0].version == 3
+
 
 if __name__ == '__main__':
     unittest.main()
