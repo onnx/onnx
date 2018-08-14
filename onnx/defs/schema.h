@@ -437,17 +437,17 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_numeric_types() {
     static const std::vector<std::string> all_numeric_types = {
-        +"tensor(uint8)",
-        +"tensor(uint16)",
-        +"tensor(uint32)",
-        +"tensor(uint64)",
-        +"tensor(int8)",
-        +"tensor(int16)",
-        +"tensor(int32)",
-        +"tensor(int64)",
-        +"tensor(float16)",
-        +"tensor(float)",
-        +"tensor(double)"};
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)"};
     return all_numeric_types;
   }
 
