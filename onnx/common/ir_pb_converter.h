@@ -22,7 +22,7 @@ class ConvertError final : public std::runtime_error {
   }
 
   void AppendContext(const std::string& context) {
-    expanded_message_ = ONNX_NAMESPACE::MakeString(
+    expanded_message_ = MakeString(
         std::runtime_error::what(), "\n\n==> Context: ", context);
   }
 
@@ -31,10 +31,13 @@ class ConvertError final : public std::runtime_error {
 };
 
 #define fail_convert(...) \
-  throw ONNX_NAMESPACE::ConvertError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+  throw ConvertError(MakeString(__VA_ARGS__));
 
-void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Graph>& g);
+void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g);
 
-std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp);
+std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp);
 
+ModelProto PrepareOutput(const ModelProto& mp_in);
+
+void assertNonNull(std::shared_ptr<Graph> g);
 } // namespace ONNX_NAMESPACE

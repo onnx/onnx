@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from .onnx_pb import *  # noqa
+from .onnx_operators_pb import * # noqa
 from .version import version as __version__  # noqa
 
 # Import common subpackages so they're available when you 'import onnx'

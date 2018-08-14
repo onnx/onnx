@@ -9,41 +9,45 @@
 #include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
-#include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
+#include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
+#include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
+#include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
+#include "onnx/optimizer/passes/fuse_bn_into_conv.h"
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE { namespace optimization {
-
-ONNX_NAMESPACE::ModelProto PrepareOutput(const ONNX_NAMESPACE::ModelProto& mp_in);
 
 struct Optimizer {
   std::map<std::string, std::unique_ptr<OptimizePass>> passes;
 
   Optimizer() {
     // Register the optimization passes to the optimizer.
-    _registerOptimizer<EliminateIdentity>();
-    _registerOptimizer<EliminateNopTranspose>();
-    _registerOptimizer<EliminateUnusedInitializer>();
-    _registerOptimizer<FuseConsecutiveTransposes>();
-    _registerOptimizer<FuseTransposeIntoGemm>();
-    _registerOptimizer<FuseAddBiasIntoConv>();
-    _registerOptimizer<Nop>();
-    _registerOptimizer<SplitInit>();
-    _registerOptimizer<SplitPredict>();
-    _registerOptimizer<LiftLexicalReferences>();
+    registerOptimizer<EliminateIdentity>();
+    registerOptimizer<EliminateNopTranspose>();
+    registerOptimizer<EliminateUnusedInitializer>();
+    registerOptimizer<ExtractConstantToInitializer>();
+    registerOptimizer<FuseConsecutiveSqueezes>();
+    registerOptimizer<FuseConsecutiveTransposes>();
+    registerOptimizer<FuseTransposeIntoGemm>();
+    registerOptimizer<FuseAddBiasIntoConv>();
+    registerOptimizer<Nop>();
+    registerOptimizer<SplitInit>();
+    registerOptimizer<SplitPredict>();
+    registerOptimizer<LiftLexicalReferences>();
+    registerOptimizer<FuseBNIntoConv>();
   }
 
   virtual ~Optimizer() = default;
 
-  ONNX_NAMESPACE::ModelProto optimize(
-      const ONNX_NAMESPACE::ModelProto& mp_in,
+  ModelProto optimize(
+      const ModelProto& mp_in,
       const std::vector<std::string>& names) {
-    std::shared_ptr<ONNX_NAMESPACE::Graph> g(ONNX_NAMESPACE::ImportModelProto(mp_in));
+    std::shared_ptr<Graph> g(ImportModelProto(mp_in));
 
     if (g.get() == nullptr) {
       std::cerr << "Warning: onnx optimizer is unable to parse input model. "
@@ -52,7 +56,7 @@ struct Optimizer {
       return mp_in;
     }
 
-    ONNX_NAMESPACE::ModelProto mp_out = PrepareOutput(mp_in);
+    ModelProto mp_out = PrepareOutput(mp_in);
 
     for (const auto& name : names) {
       auto it = passes.find(name);
@@ -63,7 +67,7 @@ struct Optimizer {
           // Operate on ModelProto.
           ExportModelProto(&mp_out, g);
           pass->optimize(mp_out);
-          g = ONNX_NAMESPACE::ImportModelProto(mp_out);
+          g = ImportModelProto(mp_out);
 
         } else {
           // Operate on Graph (IR).
@@ -76,14 +80,17 @@ struct Optimizer {
     return mp_out;
   }
 
-private:
-  template<class Optimizer, class... Args> void _registerOptimizer(Args&& ...args) {
+  template<class Optimizer, class... Args> void registerOptimizer(Args&& ...args) {
     auto optimizer = make_unique<Optimizer>(std::forward<Args>(args)...);
     passes[optimizer->name] = std::move(optimizer);
   }
 };
 
-ONNX_NAMESPACE::ModelProto Optimize(
-    const ONNX_NAMESPACE::ModelProto& mp_in,
+const std::vector<std::string> GetAvailablePasses();
+
+ModelProto Optimize(
+    const ModelProto& mp_in,
     const std::vector<std::string>& names);
-}}
+
+} // namespace optimization
+} // namespace ONNX_NAMESPACE

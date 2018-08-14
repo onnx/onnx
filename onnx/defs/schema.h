@@ -423,15 +423,16 @@ class OpSchema final {
   // Convenience members for types
 
   // All high-precision numeric types.
-  static const std::vector<std::string>& high_precision_numeric_types() {
-    static const std::vector<std::string> high_precision_numeric_types = {
+  static const std::vector<std::string>& numeric_types_for_math_reduction() {
+    static const std::vector<std::string> numeric_types_for_math_reduction = {
         "tensor(uint32)",
         "tensor(uint64)",
         "tensor(int32)",
         "tensor(int64)",
+        "tensor(float16)",
         "tensor(float)",
         "tensor(double)"};
-    return high_precision_numeric_types;
+    return numeric_types_for_math_reduction;
   }
 
   static const std::vector<std::string>& all_numeric_types() {
@@ -451,19 +452,22 @@ class OpSchema final {
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
-                                                              "tensor(uint16)",
-                                                              "tensor(uint32)",
-                                                              "tensor(uint64)",
-                                                              "tensor(int8)",
-                                                              "tensor(int16)",
-                                                              "tensor(int32)",
-                                                              "tensor(int64)",
-                                                              "tensor(float16)",
-                                                              "tensor(float)",
-                                                              "tensor(double)",
-                                                              "tensor(string)",
-                                                              "tensor(bool)"};
+    static const std::vector<std::string> all_tensor_types = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)"};
     return all_tensor_types;
   }
 
@@ -477,9 +481,6 @@ class OpSchema final {
     return domain_;
   }
 
-  int since_version() const {
-    return since_version_;
-  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -502,7 +503,11 @@ class OpSchema final {
     return name_;
   }
 
-  const OperatorSetVersion SinceVersion() const {
+  OperatorSetVersion SinceVersion() const {
+    return since_version_;
+  }
+
+  int since_version() const {
     return since_version_;
   }
 
@@ -585,7 +590,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // Increase the highest version when you make BC-breaking changes to the
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
-      map_[ONNX_DOMAIN] = std::make_pair(1, 7);
+      map_[ONNX_DOMAIN] = std::make_pair(1, 8);
       map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
     }
 
@@ -785,8 +790,7 @@ OpSchema GetOpSchema();
   ONNX_OPERATOR_SET_SCHEMA_EX(name, Onnx, ONNX_DOMAIN, ver, true, impl)
 
 #define ONNX_ML_OPERATOR_SET_SCHEMA(name, ver, impl) \
-  ONNX_OPERATOR_SET_SCHEMA_EX(                       \
-      name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
+  ONNX_OPERATOR_SET_SCHEMA_EX(name, OnnxML, AI_ONNX_ML_DOMAIN, ver, true, impl)
 
 // Defines specialization of GetOpSchema for a class whose name is determined
 // based on a convention using name, domain, and version.  Operator schema are
@@ -841,6 +845,12 @@ class DbgOperatorSetTracker {
 // Helper function
 size_t ReplaceAll(std::string& s, const char* from, const char* to);
 
+#ifdef __GNUC__
+#define ONNX_UNUSED __attribute__((__unused__))
+#else
+#define ONNX_UNUSED
+#endif
+
 // Legacy macros to register schema at static initialization
 #define ONNX_OPERATOR_SCHEMA(name) \
   ONNX_OPERATOR_SCHEMA_UNIQ_HELPER(__COUNTER__, name)
@@ -848,7 +858,7 @@ size_t ReplaceAll(std::string& s, const char* from, const char* to);
   ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)
 #define ONNX_OPERATOR_SCHEMA_UNIQ(Counter, name)                 \
   static ONNX_NAMESPACE::OpSchemaRegistry::OpSchemaRegisterOnce( \
-      op_schema_register_once##name##Counter) =                  \
+      op_schema_register_once##name##Counter) ONNX_UNUSED =      \
       OpSchema(#name, __FILE__, __LINE__)
 
 // Helper function

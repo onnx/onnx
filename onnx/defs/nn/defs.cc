@@ -14,7 +14,8 @@ const char* pads_doc =
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.";
 const char* auto_pad_doc =
-    "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
@@ -29,13 +30,22 @@ void convPoolTypeAndShapeInference(
     bool use_dilation,
     bool require_kernel_shape) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto output_type = ctx.getOutputType(1);
+    if (output_type->value_case() == TypeProto::kTensorType ||
+        output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+      output_type->mutable_tensor_type()->set_elem_type(TensorProto::INT64);
+    }
+  }
 
-  // we need at least one input to have a shape for this inference.
+  // we need the first input shape for this inference.
   if (!hasNInputShapes(ctx, 1)) {
     return;
   }
 
-  // if no kernel shape is required, then we need two inputs.
+  // if kernel shape is an input (and not attribute)
+  // we need the shape of the second input.
   if (!require_kernel_shape && !hasNInputShapes(ctx, 2)) {
     return;
   }
@@ -63,11 +73,6 @@ void convPoolTypeAndShapeInference(
     }
   } else {
     dilations.assign(n_input_dims, 1);
-  }
-
-  int64_t groups = getAttribute(ctx, "group", 1);
-  if (groups != 1) {
-    return; // we don't handle the group case.
   }
 
   std::vector<int64_t> pads;
@@ -114,8 +119,11 @@ void convPoolTypeAndShapeInference(
     *output_shape->add_dim() = input_shape.dim(1);
   } else {
     *output_shape->add_dim() = input_shape.dim(0);
-    *output_shape->add_dim() =
-        ctx.getInputType(1)->tensor_type().shape().dim(0);
+    auto& second_input_shape = getInputShape(ctx, 1);
+    if (second_input_shape.dim_size() < 1) {
+      fail_shape_inference("Second input tensor has wrong dimension");
+    }
+    *output_shape->add_dim() = second_input_shape.dim(0);
   }
 
   int kernel_shape_size = static_cast<int>(kernel_shape.size());
@@ -141,6 +149,13 @@ void convPoolTypeAndShapeInference(
     // add in the initial position
     newdim->set_dim_value(1 + strided_kernel_positions);
   }
+
+  if (ctx.getNumOutputs() > 1) {
+    // MaxPool with two outputs case.
+    auto second_output_shape =
+      ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+    second_output_shape->CopyFrom(*output_shape);
+  }
 }
 
 std::function<void(OpSchema&)> PoolOpSchemaGenerator(
@@ -149,7 +164,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
     const char* additionalDescription) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- {name} consumes an input tensor X and applies {opName} pooling across the
+ {name} consumes an input tensor X and applies {opName} pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  {opName} pooling consisting of computing the {opName} on all values of a
  subset of the input tensor according to the kernel size and downsampling the
@@ -253,13 +268,42 @@ ONNX_OPERATOR_SET_SCHEMA(
         "max",
         "The output of each pooling window is maximum number of elements exclude pad.")));
 
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxPool,
+    8,
+    OpSchema()
+        .FillUsing(PoolOpSchemaGenerator(
+            "MaxPool",
+            "max",
+            "The output of each pooling window is maximum number of elements exclude pad."))
+        .Attr(
+            "storage_order",
+            "The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Output(
+            1,
+            "Indices",
+            "Indices tensor from max pooling across the input tensor. "
+            "The dimensions of indices are the same as output tensor. "
+            "The values in indices of are the indices of the selected values during pooling. "
+            "The indices are computed as flatten 1-D tensor, "
+            "and the indices do not consider padding. "
+            "So the values in indices are in [0, N x C x D1 x ... x Dn).",
+            "I",
+            OpSchema::Optional)
+        .TypeConstraint(
+            "I",
+            {"tensor(int64)"},
+            "Constrain index tensor to int64"));
+
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {
 std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- {name} consumes an input tensor X and applies Lp pooling across the
+ {name} consumes an input tensor X and applies Lp pooling across
  the tensor according to kernel sizes, stride sizes, and pad lengths.
  Lp pooling consisting of computing the Lp norm on all values of a subset
  of the input tensor according to the kernel size and downsampling the
@@ -272,7 +316,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         AttributeProto::INTS);
     schema.Attr(
         "strides",
-        "Stride along each axis. If not present, the stride defaults to 0 along each axis.",
+        "Stride along each axis. If not present, the stride defaults to 1 along each axis.",
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
@@ -333,6 +377,13 @@ void roiPoolTypeShapeInference(InferenceContext& ctx) {
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   auto rios_shape = ctx.getInputType(1)->tensor_type().shape();
+
+  if (input_shape.dim_size() < 2) {
+    fail_shape_inference("Input tensor must have at least 2 dimensions");
+  }
+  if (rios_shape.dim_size() != 2) {
+    fail_shape_inference("RoIs tensor must have 2 dimensions");
+  }
 
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
@@ -522,11 +573,6 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   // first dim is the batch axis and the next is the number of channels.
   size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
-
-  int64_t groups = getAttribute(ctx, "group", 1);
-  if (groups != 1) {
-    return; // we don't handle the group case.
-  }
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
@@ -763,7 +809,7 @@ std::function<void(OpSchema&)> GlobalPoolingOpSchemaGenerator(
     const char* op) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- Global{op_type} consumes an input tensor X and applies {op} pooling across the
+ Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
     ReplaceAll(doc, "{op_type}", op_type);
@@ -809,7 +855,7 @@ std::function<void(OpSchema&)> GlobalLpPoolingOpSchemaGenerator(
     const char* op) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
- Global{op_type} consumes an input tensor X and applies {op} pooling across the
+ Global{op_type} consumes an input tensor X and applies {op} pooling across
  the values in the same channel. This is equivalent to {op_type} with kernel size
  equal to the spatial dimension of input tensor.)DOC";
     ReplaceAll(doc, "{op_type}", op_type);
@@ -1122,10 +1168,10 @@ Local Response Normalization proposed in the [AlexNet paper](https://papers.nips
 It normalizes over local input regions.
 The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
 of shape (N x C x D1 x D2, ..., Dk), its region is
-{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+{X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
 
 square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
 
 Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 )DOC";

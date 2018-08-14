@@ -52,7 +52,7 @@ class RNN_Helper():
         h_list = []
         H_t = self.H_0
         for x in np.split(self.X, self.X.shape[0], axis=0):
-            H = self.f(np.dot(x, np.transpose(self.W)) + np.dot(H_t, self.R) + np.add(
+            H = self.f(np.dot(x, np.transpose(self.W)) + np.dot(H_t, np.transpose(self.R)) + np.add(
                 *np.split(self.B, 2)))
             h_list.append(H)
             H_t = H

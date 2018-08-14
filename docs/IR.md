@@ -282,7 +282,7 @@ With respect to supported types, the __ONNX__ definition recognizes only tensors
 
 The following data types are supported by ONNX for inputs and outputs of graphs and nodes as well as the the initializers of a graph.
 
-Primitive numeric, string, and Boolean types MUST be used as elements of tensors. Maps and sequences MUST contain tensors as values.
+Primitive numeric, string, and Boolean types MUST be used as elements of tensors.
 
 ### Tensor Element Types
 

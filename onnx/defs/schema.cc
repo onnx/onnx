@@ -140,20 +140,19 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
     if (out_idx >= static_cast<int>(outputs_.size())) {
-        if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
-            // The last output formal parameter should be variadic.
-            break;
-        }
-        else {
-            fail_check(
-                "Node (",
-                node.name(),
-                ") has more outputs (",
-                node.output_size(),
-                ") than declared (",
-                outputs_.size(),
-                ") in op definition.");
-        }
+      if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
+        // The last output formal parameter should be variadic.
+        break;
+      } else {
+        fail_check(
+            "Node (",
+            node.name(),
+            ") has more outputs (",
+            node.output_size(),
+            ") than declared (",
+            outputs_.size(),
+            ") in op definition.");
+      }
     }
 
     if (node.output(out_idx).empty() &&
@@ -188,7 +187,15 @@ void OpSchema::Verify(const NodeProto& node) const {
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
       continue;
     } else {
-      fail_check("Unrecognized attribute: ", name);
+      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
+    }
+
+    if (attr_proto.has_ref_attr_name()) {
+      if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
+        fail_check(
+            "Mismatched attribute type in '", node.name() + " : " + name, "'");
+      }
+      continue;
     }
 
     switch (expected_type) {
@@ -269,20 +276,23 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
 }
 
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
-  num_inputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
+  num_inputs_allowed_ =
+      [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
     return allowed_input_nums.count(n);
   };
   return *this;
 }
 
 OpSchema& OpSchema::NumOutputs(std::set<int> allowed_output_nums) {
-  num_outputs_allowed_ = [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
+  num_outputs_allowed_ =
+      [MOVE_CAPTURE_IF_CPP14(allowed_output_nums)](int n) -> bool {
     return allowed_output_nums.count(n);
   };
   return *this;
 }
 
-OpSchema& OpSchema::TypeAndShapeInferenceFunction(InferenceFunction inferenceFunction) {
+OpSchema& OpSchema::TypeAndShapeInferenceFunction(
+    InferenceFunction inferenceFunction) {
   tensor_inference_function_ = inferenceFunction;
   return *this;
 }
@@ -464,7 +474,11 @@ OpSchema& OpSchema::Input(
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
-  inputs_[n] = FormalParameter(std::move(name), std::move(description), std::move(type_str), param_option);
+  inputs_[n] = FormalParameter(
+      std::move(name),
+      std::move(description),
+      std::move(type_str),
+      param_option);
   return *this;
 }
 
@@ -491,7 +505,11 @@ OpSchema& OpSchema::Output(
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
-  outputs_[n] = FormalParameter(std::move(name), std::move(description), std::move(type_str), param_option);
+  outputs_[n] = FormalParameter(
+      std::move(name),
+      std::move(description),
+      std::move(type_str),
+      param_option);
   return *this;
 }
 
@@ -523,8 +541,8 @@ OpSchema& OpSchema::TypeConstraint(
   }
   type_constraints_.insert(
       std::make_pair(type_str, std::make_pair(d, description)));
-  type_constraint_params_.push_back(
-      TypeConstraintParam(std::move(type_str), std::move(constraints), std::move(description)));
+  type_constraint_params_.push_back(TypeConstraintParam(
+      std::move(type_str), std::move(constraints), std::move(description)));
   return *this;
 }
 
@@ -713,7 +731,7 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
       size_t dbg_registered_schema_count =
           GetRegisteredSchemaCount() - dbg_initial_schema_count;
 
-      ONNX_EXPECTM(
+      ONNX_ASSERTM(
           dbg_registered_schema_count == ONNX_DBG_GET_COUNT_IN_OPSETS(),
           "%u schema were exposed from operator sets and automatically placed into the static registry.  "
           "%u were expected based on calls to registration macros. Operator set functions may need to be updated.",

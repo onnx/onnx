@@ -4,6 +4,7 @@ script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[
 source "${script_path%/*}/setup.sh"
 
 # onnx c++ API tests
+export LD_LIBRARY_PATH="${top_dir}/.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 find .setuptools-cmake-build/ -name "onnx_gtests" -ls -exec {} \;
 
 # onnx python API tests
@@ -35,6 +36,7 @@ git diff --exit-code
 # check auto-gen files up-to-date
 python onnx/defs/gen_doc.py
 python onnx/gen_proto.py
+python onnx/backend/test/stat_coverage.py
 backend-test-tools generate-data
 git status
 git diff --exit-code

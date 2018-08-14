@@ -28,6 +28,7 @@
   * <a href="#Elu">Elu</a>
   * <a href="#Equal">Equal</a>
   * <a href="#Exp">Exp</a>
+  * <a href="#Expand">Expand</a>
   * <a href="#Flatten">Flatten</a>
   * <a href="#Floor">Floor</a>
   * <a href="#GRU">GRU</a>
@@ -263,7 +264,7 @@ Other versions of this operator: <a href="Changelog.md#Add-1">Add-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -475,6 +476,85 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[1], [1]]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmax_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_default_axis_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0], [1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMax',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[0, 1]]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmax_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmax_no_keepdims_random')
+```
+
+</details>
+
+
 ### <a name="ArgMin"></a><a name="argmin">**ArgMin**</a>
 
   Computes the indices of the min elements of the input tensor's element along the 
@@ -515,6 +595,85 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to all numeric tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>default_axes_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    keepdims=keepdims)
+
+# result: [[0], [0]]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [1, 3, 4]
+result = argmin_use_numpy(data, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_default_axis_random')
+```
+
+</details>
+
+
+<details>
+<summary>keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 1
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1], [0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 1, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_keepdims_random')
+```
+
+</details>
+
+
+<details>
+<summary>no_keepdims</summary>
+
+```python
+data = np.array([[2, 1], [3, 10]], dtype=np.float32)
+axis = 1
+keepdims = 0
+node = onnx.helper.make_node(
+    'ArgMin',
+    inputs=['data'],
+    outputs=['result'],
+    axis=axis,
+    keepdims=keepdims)
+# result: [[1, 0]]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_example')
+
+data = np.random.uniform(-10, 10, [2, 3, 4]).astype(np.float32)
+# result's shape: [2, 4]
+result = argmin_use_numpy(data, axis=axis, keepdims=keepdims)
+expect(node, inputs=[data], outputs=[result], name='test_argmin_no_keepdims_random')
+```
+
+</details>
 
 
 ### <a name="Asin"></a><a name="asin">**Asin**</a>
@@ -631,7 +790,7 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="AveragePool"></a><a name="averagepool">**AveragePool**</a>
 
-  AveragePool consumes an input tensor X and applies average pooling across the
+  AveragePool consumes an input tensor X and applies average pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    average pooling consisting of computing the average on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -664,7 +823,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>count_include_pad</tt> : int</dt>
 <dd>Whether include pad pixels when calculating values for the edges.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
@@ -704,7 +863,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 
 ```python
 """
-iutput_shape: [1, 3, 32]
+input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -732,7 +891,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_1d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -760,7 +919,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 28, 28]
+input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -786,6 +945,43 @@ padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)
 y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG')
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_pads_count_include_pad</summary>
+
+```python
+"""
+input_shape: [1, 3, 28, 28]
+output_shape: [1, 3, 30, 30]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[3, 3],
+    pads=[2, 2, 2, 2],
+    count_include_pad=1,
+)
+x = np.random.randn(1, 3, 28, 28).astype(np.float32)
+x_shape = np.shape(x)
+kernel_shape = (3, 3)
+strides = (1, 1)
+pad_bottom = 2
+pad_top = 2
+pad_right = 2
+pad_left = 2
+pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
+out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
+padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
+                constant_values=0)
+y = pool(padded, x_shape, kernel_shape, strides, out_shape, pad_shape, 'AVG', count_include_pad=1)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_pads_count_include_pad')
 ```
 
 </details>
@@ -822,6 +1018,42 @@ y = np.array([[[[7, 7.5, 8, 8.5, 9],
                 [17, 17.5, 18, 18.5, 19]]]]).astype(np.float32)
 
 expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>averagepool_2d_precomputed_pads_count_include_pad</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'AveragePool',
+    inputs=['x'],
+    outputs=['y'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2],
+    count_include_pad=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[2.5200, 3.6000, 4.8000, 4.0800, 3.2400],
+                [4.5600, 6.4000, 8.4000, 7.0400, 5.5200],
+                [7.2000, 10.0000, 13.0000, 10.8000, 8.4000],
+                [6.9600, 9.6000, 12.4000, 10.2400, 7.9200],
+                [6.1200, 8.4000, 10.8000, 8.8800, 6.8400]]]]).astype(np.float32)
+
+expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_pads_count_include_pad')
 ```
 
 </details>
@@ -969,7 +1201,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_upper')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -998,7 +1230,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_strides')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32, 32]
+input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -1084,6 +1316,63 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>batchnormalization</summary>
+
+```python
+def _batchnorm_test_mode(x, s, bias, mean, var, epsilon=1e-5):  # type: ignore
+    dims_x = len(x.shape)
+    dim_ones = (1,) * (dims_x - 2)
+    s = s.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    mean = mean.reshape(-1, *dim_ones)
+    var = var.reshape(-1, *dim_ones)
+    return s * (x - mean) / np.sqrt(var + epsilon) + bias
+
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+mean = np.array([0, 3]).astype(np.float32)
+var = np.array([1, 1.5]).astype(np.float32)
+y = _batchnorm_test_mode(x, s, bias, mean, var).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y'],
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
+       name='test_batchnorm_example')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+mean = np.random.randn(3).astype(np.float32)
+var = np.random.rand(3).astype(np.float32)
+epsilon = 1e-2
+y = _batchnorm_test_mode(x, s, bias, mean, var, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'BatchNormalization',
+    inputs=['x', 's', 'bias', 'mean', 'var'],
+    outputs=['y'],
+    epsilon=epsilon,
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
+       name='test_batchnorm_epsilon')
+```
+
+</details>
 
 
 ### <a name="Cast"></a><a name="cast">**Cast**</a>
@@ -1291,6 +1580,28 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -1.0, 1.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+    min=-5.0,
+    max=5.0,
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_inbounds')
+
+x = np.array([-6, 0, 6]).astype(np.float32)
+y = np.array([-5, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_outbounds')
+
+x = np.array([-1, 0, 6]).astype(np.float32)
+y = np.array([-1, 0, 5]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_splitbounds')
 ```
 
 </details>
@@ -1321,6 +1632,16 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.clip(x, -np.inf, 0.0)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_max')
+node = onnx.helper.make_node(
+    'Clip',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.array([-1, 0, 1]).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_clip_default_inbounds')
 ```
 
 </details>
@@ -1360,7 +1681,7 @@ Other versions of this operator: <a href="Changelog.md#Concat-1">Concat-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain output types to any tensor type.</dd>
 </dl>
 
@@ -1470,7 +1791,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int</dt>
@@ -1653,7 +1974,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int</dt>
@@ -1694,6 +2015,280 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>convtranspose</summary>
+
+```python
+x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
+                [3., 4., 5.],
+                [6., 7., 8.]]]]).astype(np.float32)
+
+W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
+                [1., 1., 1.],
+                [1., 1., 1.]],
+               [[1., 1., 1.],
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"])
+
+y = np.array([[[[0., 1., 3., 3., 2.],  # (1, 2, 5, 5)
+                [3., 8., 15., 12., 7.],
+                [9., 21., 36., 27., 15.],
+                [9., 20., 33., 24., 13.],
+                [6., 13., 21., 15., 8.]],
+
+               [[0., 1., 3., 3., 2.],
+                [3., 8., 15., 12., 7.],
+                [9., 21., 36., 27., 15.],
+                [9., 20., 33., 24., 13.],
+                [6., 13., 21., 15., 8.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose')
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_1d</summary>
+
+```python
+x = np.array([[[0., 1., 2.]]]).astype(np.float32)  # (1, 1, 3)
+
+W = np.array([[[1., 1., 1.],  # (1, 2, 3)
+               [1., 1., 1.]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"])
+
+y = np.array([[[0., 1., 3., 3., 2.],  # (1, 2, 5)
+               [0., 1., 3., 3., 2.]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_1d')
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_3d</summary>
+
+```python
+x = np.array([[[[[0., 1., 2., 3., 4.],  # (1, 1, 3, 4, 5)
+                 [5., 6., 7., 8., 9.],
+                 [10., 11., 12., 13., 14.],
+                 [15., 16., 17., 18., 19.]],
+                [[20., 21., 22., 23., 24.],
+                 [25., 26., 27., 28., 29.],
+                 [30., 31., 32., 33., 34.],
+                 [35., 36., 37., 38., 39.]],
+                [[40., 41., 42., 43., 44.],
+                 [45., 46., 47., 48., 49.],
+                 [50., 51., 52., 53., 54.],
+                 [55., 56., 57., 58., 59.]]]]]).astype(np.float32)
+
+W = np.array([[[[[1., 1., 1.],  # (1, 2, 3, 3, 3)
+                 [1., 1., 1.],
+                 [1., 1., 1.]],
+                [[1., 1., 1.],
+                 [1., 1., 1.],
+                 [1., 1., 1.]],
+                [[1., 1., 1.],
+                 [1., 1., 1.],
+                 [1., 1., 1.]]],
+               [[[1., 1., 1.],
+                 [1., 1., 1.],
+                 [1., 1., 1.]],
+                [[1., 1., 1.],
+                 [1., 1., 1.],
+                 [1., 1., 1.]],
+                [[1., 1., 1.],
+                 [1., 1., 1.],
+                 [1., 1., 1.]]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"])
+
+y = np.array([[[[[0., 1., 3., 6., 9., 7., 4.],  # (1, 2, 5, 6, 7)
+                 [5., 12., 21., 27., 33., 24., 13.],
+                 [15., 33., 54., 63., 72., 51., 27.],
+                 [30., 63., 99., 108., 117., 81., 42.],
+                 [25., 52., 81., 87., 93., 64., 33.],
+                 [15., 31., 48., 51., 54., 37., 19.]],
+
+                [[20., 42., 66., 72., 78., 54., 28.],
+                 [50., 104., 162., 174., 186., 128., 66.],
+                 [90., 186., 288., 306., 324., 222., 114.],
+                 [120., 246., 378., 396., 414., 282., 144.],
+                 [90., 184., 282., 294., 306., 208., 106.],
+                 [50., 102., 156., 162., 168., 114., 58.]],
+
+                [[60., 123., 189., 198., 207., 141., 72.],
+                 [135., 276., 423., 441., 459., 312., 159.],
+                 [225., 459., 702., 729., 756., 513., 261.],
+                 [270., 549., 837., 864., 891., 603., 306.],
+                 [195., 396., 603., 621., 639., 432., 219.],
+                 [105., 213., 324., 333., 342., 231., 117.]],
+
+                [[60., 122., 186., 192., 198., 134., 68.],
+                 [130., 264., 402., 414., 426., 288., 146.],
+                 [210., 426., 648., 666., 684., 462., 234.],
+                 [240., 486., 738., 756., 774., 522., 264.],
+                 [170., 344., 522., 534., 546., 368., 186.],
+                 [90., 182., 276., 282., 288., 194., 98.]],
+
+                [[40., 81., 123., 126., 129., 87., 44.],
+                 [85., 172., 261., 267., 273., 184., 93.],
+                 [135., 273., 414., 423., 432., 291., 147.],
+                 [150., 303., 459., 468., 477., 321., 162.],
+                 [105., 212., 321., 327., 333., 224., 113.],
+                 [55., 111., 168., 171., 174., 117., 59.]]],
+
+               [[[0., 1., 3., 6., 9., 7., 4.],
+                 [5., 12., 21., 27., 33., 24., 13.],
+                 [15., 33., 54., 63., 72., 51., 27.],
+                 [30., 63., 99., 108., 117., 81., 42.],
+                 [25., 52., 81., 87., 93., 64., 33.],
+                 [15., 31., 48., 51., 54., 37., 19.]],
+
+                [[20., 42., 66., 72., 78., 54., 28.],
+                 [50., 104., 162., 174., 186., 128., 66.],
+                 [90., 186., 288., 306., 324., 222., 114.],
+                 [120., 246., 378., 396., 414., 282., 144.],
+                 [90., 184., 282., 294., 306., 208., 106.],
+                 [50., 102., 156., 162., 168., 114., 58.]],
+
+                [[60., 123., 189., 198., 207., 141., 72.],
+                 [135., 276., 423., 441., 459., 312., 159.],
+                 [225., 459., 702., 729., 756., 513., 261.],
+                 [270., 549., 837., 864., 891., 603., 306.],
+                 [195., 396., 603., 621., 639., 432., 219.],
+                 [105., 213., 324., 333., 342., 231., 117.]],
+
+                [[60., 122., 186., 192., 198., 134., 68.],
+                 [130., 264., 402., 414., 426., 288., 146.],
+                 [210., 426., 648., 666., 684., 462., 234.],
+                 [240., 486., 738., 756., 774., 522., 264.],
+                 [170., 344., 522., 534., 546., 368., 186.],
+                 [90., 182., 276., 282., 288., 194., 98.]],
+
+                [[40., 81., 123., 126., 129., 87., 44.],
+                 [85., 172., 261., 267., 273., 184., 93.],
+                 [135., 273., 414., 423., 432., 291., 147.],
+                 [150., 303., 459., 468., 477., 321., 162.],
+                 [105., 212., 321., 327., 333., 224., 113.],
+                 [55., 111., 168., 171., 174., 117., 59.]]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_3d')
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_attributes</summary>
+
+```python
+x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
+                [3., 4., 5.],
+                [6., 7., 8.]]]]).astype(np.float32)
+
+W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
+                [1., 1., 1.],
+                [1., 1., 1.]],
+               [[1., 1., 1.],
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [0., 0., 0., 0., 0., 0., 0., 0.]],
+
+               [[0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [0., 0., 1., 1., 3., 2., 2., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [3., 3., 7., 4., 9., 5., 5., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [6., 6., 13., 7., 15., 8., 8., 0.],
+                [0., 0., 0., 0., 0., 0., 0., 0.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
+                             strides=[3, 2],
+                             output_shape=[1, 2, 10, 8])
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
+                             strides=[3, 2],
+                             output_padding=[1, 1])
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pad')
+
+node = onnx.helper.make_node(
+    'ConvTranspose', ['X', 'W'], ['Y'],
+    name='test',
+    strides=[3, 2],
+    output_shape=[10, 8],
+    kernel_shape=[3, 3],
+    output_padding=[1, 1]
+)
+expect(node, inputs=[x, W], outputs=[y],
+       name='test_convtranspose_kernel_shape')
+```
+
+</details>
+
+
+<details>
+<summary>convtranspose_pads</summary>
+
+```python
+x = np.array([[[[0., 1., 2.],  # (1, 1, 3, 3)
+                [3., 4., 5.],
+                [6., 7., 8.]]]]).astype(np.float32)
+
+W = np.array([[[[1., 1., 1.],  # (1, 2, 3, 3)
+                [1., 1., 1.],
+                [1., 1., 1.]],
+               [[1., 1., 1.],
+                [1., 1., 1.],
+                [1., 1., 1.]]]]).astype(np.float32)
+
+node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
+                             strides=[3, 2],
+                             pads=[1, 2, 1, 2])
+
+y = np.array([[[[1., 1., 3.],  # (1, 2, 7, 3)
+                [1., 1., 3.],
+                [7., 4., 9.],
+                [7., 4., 9.],
+                [7., 4., 9.],
+                [13., 7., 15.],
+                [13., 7., 15.]],
+
+               [[1., 1., 3.],
+                [1., 1., 3.],
+                [7., 4., 9.],
+                [7., 4., 9.],
+                [7., 4., 9.],
+                [13., 7., 15.],
+                [13., 7., 15.]]]]).astype(np.float32)
+
+expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_pads')
+```
+
+</details>
 
 
 ### <a name="Cos"></a><a name="cos">**Cos**</a>
@@ -1787,8 +2382,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -1881,7 +2476,7 @@ Other versions of this operator: <a href="Changelog.md#Div-1">Div-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -1978,6 +2573,47 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_default')
+```
+
+</details>
+
+
+<details>
+<summary>random</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Dropout',
+    inputs=['x'],
+    outputs=['y'],
+    ratio=.2,
+)
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = x
+expect(node, inputs=[x], outputs=[y],
+       name='test_dropout_random')
+```
+
+</details>
 
 
 ### <a name="Elu"></a><a name="elu">**Elu**</a>
@@ -2208,6 +2844,105 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Expand"></a><a name="expand">**Expand**</a>
+
+  Broadcast the input tensor following the given shape and the broadcast rule.
+  The broadcast rule is similar to numpy.array(input) * numpy.ones(shape):
+  Dimensions are right alignment;
+  Two corresponding dimension must have the same value, or one of them is equal to 1.
+  Also, this operator is similar to numpy.broadcast_to(input, shape),
+  but the major difference is numpy.broadcast_to() does not allow shape to be smaller than input.size().
+  It is possible that the output.shape is not equal to shape, when some dimensions in shape is equal to 1,
+  or the shape.ndim < input.shape.ndim.
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>shape</tt> : tensor(int64)</dt>
+<dd>A 1-D tensor indicates the shape you want to expand to, following the broadcast rule</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>dim_changed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+new_shape = [2, 1, 6]
+expanded = data * np.ones(new_shape)
+#print(expanded)
+#[[[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]],
+#
+# [[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]]]
+new_shape = np.array(new_shape)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_changed')
+```
+
+</details>
+
+
+<details>
+<summary>dim_unchanged</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+new_shape = [3, 4]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+expanded = np.tile(data, 4)
+#print(expanded)
+#[[1., 1., 1., 1.],
+# [2., 2., 2., 2.],
+# [3., 3., 3., 3.]]
+new_shape = np.array(new_shape)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_unchanged')
+```
+
+</details>
+
+
 ### <a name="Flatten"></a><a name="flatten">**Flatten**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -2419,13 +3154,13 @@ expect(node, inputs=[x], outputs=[y],
   
   Equations (Default: f=Sigmoid, g=Tanh):
   
-    - zt = f(Xt*(Wz^T) + Ht-1*Rz + Wbz + Rbz)
+    - zt = f(Xt*(Wz^T) + Ht-1*(Rz^T) + Wbz + Rbz)
   
-    - rt = f(Xt*(Wr^T) + Ht-1*Rr + Wbr + Rbr)
+    - rt = f(Xt*(Wr^T) + Ht-1*(Rr^T) + Wbr + Rbr)
   
-    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*Rh + Rbh + Wbh) # default, when linear_before_reset = 0
+    - ht = g(Xt*(Wh^T) + (rt (.) Ht-1)*(Rh^T) + Rbh + Wbh) # default, when linear_before_reset = 0
   
-    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*Rh + Rbh) + Wbh) # when linear_before_reset != 0
+    - ht = g(Xt*(Wh^T) + (rt (.) (Ht-1*(Rh^T) + Rbh)) + Wbh) # when linear_before_reset != 0
   
     - Ht = (1 - zt) (.) ht + zt (.) Ht-1
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -2664,7 +3399,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
@@ -2740,9 +3475,9 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 
 <dl>
 <dt><tt>alpha</tt> : float</dt>
-<dd>Scalar multiplier for the product of input tensors A * B</dd>
+<dd>Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.</dd>
 <dt><tt>beta</tt> : float</dt>
-<dd>Scalar multiplier for input tensor C</dd>
+<dd>Scalar multiplier for input tensor C, and the default value is 1.0.</dd>
 <dt><tt>transA</tt> : int</dt>
 <dd>Whether A should be transposed</dd>
 <dt><tt>transB</tt> : int</dt>
@@ -2825,7 +3560,7 @@ expect(node, inputs=[a, b, c], outputs=[y],
 
 ### <a name="GlobalAveragePool"></a><a name="globalaveragepool">**GlobalAveragePool**</a>
 
-  GlobalAveragePool consumes an input tensor X and applies average pooling across the
+  GlobalAveragePool consumes an input tensor X and applies average pooling across
    the values in the same channel. This is equivalent to AveragePool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -2901,7 +3636,7 @@ expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool_precomputed')
 
 ### <a name="GlobalLpPool"></a><a name="globallppool">**GlobalLpPool**</a>
 
-  GlobalLpPool consumes an input tensor X and applies lp pool pooling across the
+  GlobalLpPool consumes an input tensor X and applies lp pool pooling across
    the values in the same channel. This is equivalent to LpPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -2942,7 +3677,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 
 ### <a name="GlobalMaxPool"></a><a name="globalmaxpool">**GlobalMaxPool**</a>
 
-  GlobalMaxPool consumes an input tensor X and applies max pooling across the
+  GlobalMaxPool consumes an input tensor X and applies max pooling across
    the values in the same channel. This is equivalent to MaxPool with kernel size
    equal to the spatial dimension of input tensor.
 
@@ -3343,7 +4078,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
@@ -3420,16 +4155,70 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 </dl>
 
 
+#### Examples
+
+<details>
+<summary>instancenormalization</summary>
+
+```python
+def _instancenorm_test_mode(x, s, bias, epsilon=1e-5):  # type: ignore
+    dims_x = len(x.shape)
+    axis = tuple(range(2, dims_x))
+    mean = np.mean(x, axis=axis, keepdims=True)
+    var = np.var(x, axis=axis, keepdims=True)
+    dim_ones = (1,) * (dims_x - 2)
+    s = s.reshape(-1, *dim_ones)
+    bias = bias.reshape(-1, *dim_ones)
+    return s * (x - mean) / np.sqrt(var + epsilon) + bias
+
+# input size: (1, 2, 1, 3)
+x = np.array([[[[-1, 0, 1]], [[2, 3, 4]]]]).astype(np.float32)
+s = np.array([1.0, 1.5]).astype(np.float32)
+bias = np.array([0, 1]).astype(np.float32)
+y = _instancenorm_test_mode(x, s, bias).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'InstanceNormalization',
+    inputs=['x', 's', 'bias'],
+    outputs=['y'],
+)
+
+# output size: (1, 2, 1, 3)
+expect(node, inputs=[x, s, bias], outputs=[y],
+       name='test_instancenorm_example')
+
+# input size: (2, 3, 4, 5)
+x = np.random.randn(2, 3, 4, 5).astype(np.float32)
+s = np.random.randn(3).astype(np.float32)
+bias = np.random.randn(3).astype(np.float32)
+epsilon = 1e-2
+y = _instancenorm_test_mode(x, s, bias, epsilon).astype(np.float32)
+
+node = onnx.helper.make_node(
+    'InstanceNormalization',
+    inputs=['x', 's', 'bias'],
+    outputs=['y'],
+    epsilon=epsilon,
+)
+
+# output size: (2, 3, 4, 5)
+expect(node, inputs=[x, s, bias], outputs=[y],
+       name='test_instancenorm_epsilon')
+```
+
+</details>
+
+
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
   Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
   It normalizes over local input regions.
   The local region is defined across the channels. For an element X[n, c, d1, ..., dk] in a tensor
   of shape (N x C x D1 x D2, ..., Dk), its region is
-  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1)}.
+  {X[n, i, d1, ..., dk] | max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2))}.
   
   square_sum[n, c, d1, ..., dk] = sum(X[n, i, d1, ..., dk] ^ 2),
-  where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2) - 1).
+  where max(0, c - floor((size - 1) / 2)) <= i <= min(C - 1, c + ceil((size - 1) / 2)).
   
   Y[n, c, d1, ..., dk] = X[n, c, d1, ..., dk] / (bias + alpha / size * square_sum[n, c, d1, ..., dk] ) ^ beta
 
@@ -3470,6 +4259,69 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output  types to float tensors.</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>default</summary>
+
+```python
+alpha = 0.0001
+beta = 0.75
+bias = 1.0
+nsize = 3
+node = onnx.helper.make_node(
+    'LRN',
+    inputs=['x'],
+    outputs=['y'],
+    size=3
+)
+x = np.random.randn(5, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+for n, c, h, w in np.ndindex(x.shape):
+    square_sum[n, c, h, w] = sum(x[n,
+                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(5, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                                   h,
+                                   w] ** 2)
+y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
+expect(node, inputs=[x], outputs=[y],
+       name='test_lrn_default')
+```
+
+</details>
+
+
+<details>
+<summary>lrn</summary>
+
+```python
+alpha = 0.0002
+beta = 0.5
+bias = 2.0
+nsize = 3
+node = onnx.helper.make_node(
+    'LRN',
+    inputs=['x'],
+    outputs=['y'],
+    alpha=alpha,
+    beta=beta,
+    bias=bias,
+    size=nsize
+)
+x = np.random.randn(5, 5, 5, 5).astype(np.float32)
+square_sum = np.zeros((5, 5, 5, 5)).astype(np.float32)
+for n, c, h, w in np.ndindex(x.shape):
+    square_sum[n, c, h, w] = sum(x[n,
+                                   max(0, c - int(math.floor((nsize - 1) / 2))):min(5, c + int(math.ceil((nsize - 1) / 2)) + 1),
+                                   h,
+                                   w] ** 2)
+y = x / ((bias + (alpha / nsize) * square_sum) ** beta)
+expect(node, inputs=[x], outputs=[y],
+       name='test_lrn')
+```
+
+</details>
 
 
 ### <a name="LSTM"></a><a name="lstm">**LSTM**</a>
@@ -3543,15 +4395,15 @@ This version of the operator has been available since version 1 of the default O
   
   Equations (Default: f=Sigmoid, g=Tanh, h=Tanh):
   
-    - it = f(Xt*(Wi^T) + Ht-1*Ri + Pi (.) Ct-1 + Wbi + Rbi)
+    - it = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Pi (.) Ct-1 + Wbi + Rbi)
   
-    - ft = f(Xt*(Wf^T) + Ht-1*Rf + Pf (.) Ct-1 + Wbf + Rbf)
+    - ft = f(Xt*(Wf^T) + Ht-1*(Rf^T) + Pf (.) Ct-1 + Wbf + Rbf)
   
-    - ct = g(Xt*(Wc^T) + Ht-1*Rc + Wbc + Rbc)
+    - ct = g(Xt*(Wc^T) + Ht-1*(Rc^T) + Wbc + Rbc)
   
     - Ct = ft (.) Ct-1 + it (.) ct
   
-    - ot = f(Xt*(Wo^T) + Ht-1*Ro + Po (.) Ct + Wbo + Rbo)
+    - ot = f(Xt*(Wo^T) + Ht-1*(Ro^T) + Po (.) Ct + Wbo + Rbo)
   
     - Ht = ot (.) h(Ct)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
@@ -4132,7 +4984,7 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="LpPool"></a><a name="lppool">**LpPool**</a>
 
-  LpPool consumes an input tensor X and applies Lp pooling across the
+  LpPool consumes an input tensor X and applies Lp pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    Lp pooling consisting of computing the Lp norm on all values of a subset
    of the input tensor according to the kernel size and downsampling the
@@ -4148,7 +5000,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int</dt>
@@ -4156,7 +5008,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 0 along each axis.</dd>
+<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -4252,27 +5104,28 @@ expect(node, inputs=[a, b], outputs=[c],
 
 ### <a name="Max"></a><a name="max">**Max**</a>
 
-  Element-wise max of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise max of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>
+Other versions of this operator: <a href="Changelog.md#Max-1">Max-1</a>, <a href="Changelog.md#Max-6">Max-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Max.</dd>
+<dd>List of tensors for max.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>max</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4324,7 +5177,7 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 ### <a name="MaxPool"></a><a name="maxpool">**MaxPool**</a>
 
-  MaxPool consumes an input tensor X and applies max pooling across the
+  MaxPool consumes an input tensor X and applies max pooling across
    the tensor according to kernel sizes, stride sizes, and pad lengths.
    max pooling consisting of computing the max on all values of a
    subset of the input tensor according to the kernel size and downsampling the
@@ -4349,17 +5202,21 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dt><tt>storage_order</tt> : int</dt>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
 <dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
 </dl>
@@ -4371,11 +5228,13 @@ This version of the operator has been available since version 1 of the default O
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
 </dl>
 
-#### Outputs
+#### Outputs (1 - 2)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
 <dd>Output data tensor from average or max pooling across the input tensor. Dimensions will vary based on various kernel, stride, and pad sizes. Floor value of the dimension is used</dd>
+<dt><tt>Indices</tt> (optional) : I</dt>
+<dd>Indices tensor from max pooling across the input tensor. The dimensions of indices are the same as output tensor. The values in indices of are the indices of the selected values during pooling. The indices are computed as flatten 1-D tensor, and the indices do not consider padding. So the values in indices are in [0, N x C x D1 x ... x Dn).</dd>
 </dl>
 
 #### Type Constraints
@@ -4383,6 +5242,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
 </dl>
 
 
@@ -4464,10 +5325,7 @@ x = np.random.randn(1, 3, 28, 28).astype(np.float32)
 x_shape = np.shape(x)
 kernel_shape = (3, 3)
 strides = (1, 1)
-pad_bottom = 2
-pad_top = 2
-pad_right = 2
-pad_left = 2
+pad_bottom = pad_top = pad_right = pad_left = 2
 pad_shape = [pad_top + pad_bottom, pad_left + pad_right]
 out_shape = get_output_shape('VALID', np.add(x_shape[2:], pad_shape), kernel_shape, strides)
 padded = np.pad(x, ((0, 0), (0, 0), (pad_top, pad_bottom), (pad_left, pad_right)), mode='constant',
@@ -4711,6 +5569,82 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_3d_default')
 </details>
 
 
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_pads</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 5, 5]
+pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[5, 5],
+    pads=[2, 2, 2, 2]
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[
+    [13, 14, 15, 15, 15],
+    [18, 19, 20, 20, 20],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25],
+    [23, 24, 25, 25, 25]]]]).astype(np.float32)
+z = np.array([[[
+    [12, 13, 14, 14, 14],
+    [17, 18, 19, 19, 19],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24],
+    [22, 23, 24, 24, 24]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_pads')
+```
+
+</details>
+
+
+<details>
+<summary>maxpool_with_argmax_2d_precomputed_strides</summary>
+
+```python
+"""
+input_shape: [1, 1, 5, 5]
+output_shape: [1, 1, 2, 2]
+"""
+node = onnx.helper.make_node(
+    'MaxPool',
+    inputs=['x'],
+    outputs=['y', 'z'],
+    kernel_shape=[2, 2],
+    strides=[2, 2],
+    storage_order=1
+)
+x = np.array([[[
+    [1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10],
+    [11, 12, 13, 14, 15],
+    [16, 17, 18, 19, 20],
+    [21, 22, 23, 24, 25],
+]]]).astype(np.float32)
+y = np.array([[[[7, 9],
+                [17, 19]]]]).astype(np.float32)
+z = np.array([[[[6, 16],
+                [8, 18]]]]).astype(np.int64)
+
+expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_precomputed_strides')
+```
+
+</details>
+
+
 ### <a name="MaxRoiPool"></a><a name="maxroipool">**MaxRoiPool**</a>
 
   ROI max pool consumes an input tensor X and region of interests (RoIs) to
@@ -4756,27 +5690,28 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
 
-  Element-wise mean of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise mean of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>
+Other versions of this operator: <a href="Changelog.md#Mean-1">Mean-1</a>, <a href="Changelog.md#Mean-6">Mean-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Mean.</dd>
+<dd>List of tensors for mean.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>mean</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4828,27 +5763,28 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 
 ### <a name="Min"></a><a name="min">**Min**</a>
 
-  Element-wise min of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise min of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>
+Other versions of this operator: <a href="Changelog.md#Min-1">Min-1</a>, <a href="Changelog.md#Min-6">Min-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Min</dd>
+<dd>List of tensors for min.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>min</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -4929,7 +5865,7 @@ Other versions of this operator: <a href="Changelog.md#Mul-1">Mul-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -5281,9 +6217,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 7 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>
+Other versions of this operator: <a href="Changelog.md#PRelu-1">PRelu-1</a>, <a href="Changelog.md#PRelu-6">PRelu-6</a>
 
 #### Inputs
 
@@ -5624,7 +6560,7 @@ expect(node, inputs=[x, y], outputs=[z],
   
   Equations (Default: f=Tanh):
   
-    - Ht = f(Xt*(Wi^T) + Ht-1*Ri + Wbi + Rbi)
+    - Ht = f(Xt*(Wi^T) + Ht-1*(Ri^T) + Wbi + Rbi)
   This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
@@ -5875,7 +6811,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
@@ -5972,7 +6908,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain output types to float tensors.</dd>
@@ -6078,7 +7014,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -6237,7 +7173,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -6405,7 +7341,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -6501,7 +7437,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -6668,7 +7604,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -6812,7 +7748,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -6957,7 +7893,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -7101,7 +8037,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -7243,7 +8179,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -7388,7 +8324,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -7583,8 +8519,8 @@ Other versions of this operator: <a href="Changelog.md#Reshape-1">Reshape-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -7738,10 +8674,10 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrains output to int64 tensor.</dd>
+<dd>Constrain output to int64 tensor.</dd>
 </dl>
 
 
@@ -7919,10 +8855,10 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Input tensor can be of arbitrary type.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
-<dd>Constrains output to int64 tensor, which should be a scalar though.</dd>
+<dd>Constrain output to int64 tensor, which should be a scalar though.</dd>
 </dl>
 
 
@@ -8023,8 +8959,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -8430,8 +9366,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -8473,8 +9409,8 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -8641,7 +9577,8 @@ expect(node, inputs=[x], outputs=[y],
 
   Remove single-dimensional entries from the shape of a tensor.
   Takes a  parameter `axes` with a list of axes to squeeze.
-  If an axis is selected with shape entry not equal to one, an error is raised.
+  If `axes` is not provided, all the single dimensions will be removed from
+  the shape. If an axis is selected with shape entry not equal to one, an error is raised.
 
 #### Version
 
@@ -8650,7 +9587,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints (required)</dt>
+<dt><tt>axes</tt> : list of ints</dt>
 <dd>List of positive integers, indicate the dimensions to squeeze.</dd>
 </dl>
 
@@ -8671,8 +9608,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -8729,7 +9666,7 @@ Other versions of this operator: <a href="Changelog.md#Sub-1">Sub-1</a>, <a href
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint32), tensor(uint64), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to high-precision numeric tensors.</dd>
 </dl>
 
@@ -8784,27 +9721,28 @@ expect(node, inputs=[x, y], outputs=[z],
 
 ### <a name="Sum"></a><a name="sum">**Sum**</a>
 
-  Element-wise sum of each of the input tensors. All inputs and outputs must
-  have the same shape and data type.
+  Element-wise sum of each of the input tensors (with Numpy-style broadcasting support).
+  All inputs and outputs must have the same data type.
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 8 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>
+Other versions of this operator: <a href="Changelog.md#Sum-1">Sum-1</a>, <a href="Changelog.md#Sum-6">Sum-6</a>
 
 #### Inputs (1 - &#8734;)
 
 <dl>
 <dt><tt>data_0</tt> (variadic) : T</dt>
-<dd>List of tensors for Sum.</dd>
+<dd>List of tensors for sum.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>sum</tt> : T</dt>
-<dd>Output tensor. Same dimension as inputs.</dd>
+<dd>Output tensor.</dd>
 </dl>
 
 #### Type Constraints
@@ -8999,8 +9937,8 @@ Other versions of this operator: <a href="Changelog.md#Tile-1">Tile-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output's types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 <dt><tt>T1</tt> : tensor(int64)</dt>
 <dd>Constrain repeat's type to int64 tensors.</dd>
 </dl>
@@ -9187,8 +10125,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -9274,8 +10212,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input and output types to any tensor type.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -9337,8 +10275,8 @@ This version of the operator has been available since version 7 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
-<dd>Constrain input/output types to all tensor types.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -9801,7 +10739,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>B</tt> : tensor(bool)</dt>
 <dd>Only bool</dd>
@@ -10002,7 +10940,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int64</dt>
 <dd>Only int64</dd>
@@ -10045,7 +10983,7 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 <dt><tt>I</tt> : int32</dt>
 <dd>Indices</dd>
@@ -10173,8 +11111,7 @@ This version of the operator has been available since version 1 of the default O
 ### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). This operation can be done in an in-place fashion too,
-  by providing the same input and output blobs.
+  alpha * tanh(beta * x). 
       
 
 #### Version
@@ -10299,99 +11236,6 @@ y[y == alpha] = 0
 
 expect(node, inputs=[x], outputs=[y],
        name='test_thresholdedrelu')
-```
-
-</details>
-
-
-### <sub>experimental</sub> <a name="Upsample"></a><a name="upsample">**Upsample**</a>
-
-  Upsample the input tensor.
-  The width and height of the output tensor are:
-    output_width = floor(input_width * width_scale),
-    output_height = floor(input_height * height_scale).
-  Example:
-    Given `data` tensor, width_scale, height_scale, mode,
-    Upsample the input 4-D tensor in nearest mode:
-    data = [[[
-        [1, 2],
-        [3, 4]
-    ]]]
-    width_scale = 2
-    height_scale = 2
-    mode = "nearest"
-    output = [[[
-        [1, 1, 2, 2],
-        [1, 1, 2, 2],
-        [3, 3, 4, 4],
-        [3, 3, 4, 4]
-    ]]]
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>height_scale</tt> : float (required)</dt>
-<dd>The scale along height dimension. It takes value greater than or equal to 1.</dd>
-<dt><tt>mode</tt> : string</dt>
-<dd>Two interpolation modes: nearest(default), bilinear</dd>
-<dt><tt>width_scale</tt> : float (required)</dt>
-<dd>The scale along width dimension. It takes value greater than or equal to 1.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>4-D tensor, [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>4-D tensor after resizing, [N,C,H,W]</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain output types to bool, int32, int64, float16, float, double tensors.</dd>
-</dl>
-
-
-#### Examples
-
-<details>
-<summary>nearest</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
-    mode='nearest',
-)
-
-data = np.array([[[
-    [1, 2],
-    [3, 4],
-]]], dtype=np.float32)
-
-output = np.array([[[
-    [1, 1, 1, 2, 2, 2],
-    [1, 1, 1, 2, 2, 2],
-    [3, 3, 3, 4, 4, 4],
-    [3, 3, 3, 4, 4, 4],
-]]], dtype=np.float32)
-
-expect(node, inputs=[data], outputs=[output],
-       name='test_upsample_nearest')
 ```
 
 </details>
