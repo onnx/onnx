@@ -2,7 +2,6 @@
  * Dummy implementation of ONNX backend interface for manual test.
  * Prints the name of the called function and backend name on each call.
  */
-
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -54,7 +53,7 @@ onnxGetBackendCompatibility(
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitBackend(
     onnxBackendID backendID,
-    const uint64_t* auxpropertiesList,
+    const uint64_t* auxPropertiesList,
     onnxBackend* backend) {
   if (backend == NULL) {
     return ONNXIFI_STATUS_INVALID_POINTER;
@@ -94,6 +93,7 @@ onnxReleaseEvent(onnxEvent event) {
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxInitGraph(
     onnxBackend backend,
+    const uint64_t* auxPropertiesList,
     size_t onnxModelSize,
     const void* onnxModel,
     uint32_t weightCount,
@@ -124,6 +124,11 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI onnxRunGraph(
   }
   outputFence->type = ONNXIFI_SYNCHRONIZATION_EVENT;
   outputFence->event = NULL;
+  return ONNXIFI_STATUS_SUCCESS;
+}
+
+ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+onnxGetEventState(onnxEvent event, onnxEventState* state) {
   return ONNXIFI_STATUS_SUCCESS;
 }
 

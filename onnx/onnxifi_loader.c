@@ -42,6 +42,7 @@ static const char onnxifi_function_names[] =
     "onnxReleaseBackend\0"
     "onnxInitEvent\0"
     "onnxSignalEvent\0"
+    "onnxGetEventState\0"
     "onnxWaitEvent\0"
     "onnxReleaseEvent\0"
     "onnxInitGraph\0"
