@@ -5,6 +5,12 @@
 
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
+#include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
+#include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
+#include "onnx/version_converter/adapters/type_restriction.h"
+#include "onnx/version_converter/adapters/backwards_compatible.h"
+#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
+#include "onnx/version_converter/adapters/gemm_7_6.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -59,7 +65,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       for (const OpSchema& schema : all_opschemas) {
         all_schemas[schema.Name()][schema.domain()][(int64_t)
           schema.since_version()] = &schema;
-          debug("Schema for " + schema.Name());
       }
 
       // Iterate through all_schemas to determine NoPreviousVersionAdapters
@@ -73,12 +78,35 @@ class DefaultVersionConverter : public BaseVersionConverter {
             }
           }
           if (min_version > 1) {
-            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + ONNX_NAMESPACE::to_string(min_version));
             registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
               OpSetID(min_version), OpSetID(min_version - 1)));
           }
         }
       }
+
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<TypeRestriction>("Add",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<TypeRestriction>("Mul",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Gemm",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Gemm_7_6>());
     }
 
     ModelProto convert_version(

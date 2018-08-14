@@ -136,7 +136,9 @@ _(body) \
 _(then_branch) \
 _(else_branch) \
 _(Captured) \
-_(__control_inputs)
+_(__control_inputs) \
+_(count_include_pad) \
+_(storage_order)
 
 enum BuiltinSymbol {
   #define DEFINE_SYMBOL(s) \

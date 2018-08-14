@@ -12,6 +12,7 @@ import onnx.backend.test
 from onnx.backend.base import Device, DeviceType
 from onnx.backend.test.runner import BackendIsNotSupposedToImplementIt
 import onnx.shape_inference
+import onnx.version_converter
 from typing import Optional, Text, Any, Tuple, Sequence
 from onnx import NodeProto, ModelProto, TensorProto
 import numpy  # type: ignore
@@ -41,7 +42,10 @@ class DummyBackend(onnx.backend.base.Backend):
         model = onnx.shape_inference.infer_shapes(model)
         value_infos = {vi.name: vi for vi in itertools.chain(model.graph.value_info, model.graph.output)}
 
-        if do_enforce_shape_inference_coverage(model):
+        if do_enforce_test_coverage_whitelist(model):
+            # test version conversion
+            # model = onnx.version_converter.convert_version(model, 1)
+            # model = onnx.version_converter.convert_version(model, 8)
             for node in model.graph.node:
                 for i, output in enumerate(node.output):
                     if node.op_type == 'Dropout' and i != 0:
@@ -75,13 +79,13 @@ class DummyBackend(onnx.backend.base.Backend):
         return False
 
 
-shape_coverage_whitelist = set(
+test_coverage_whitelist = set(
     ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
      'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
 
 
-def do_enforce_shape_inference_coverage(model):  # type: (ModelProto) -> bool
-    if model.graph.name not in shape_coverage_whitelist:
+def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
+    if model.graph.name not in test_coverage_whitelist:
         return False
     for node in model.graph.node:
         if node.op_type in set(['RNN', 'LSTM', 'GRU']):
