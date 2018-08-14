@@ -15,6 +15,8 @@
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
 #include "onnx/version_converter/adapters/concat_3_4.h"
+#include "onnx/version_converter/adapters/reshape_5_4.h"
+#include "onnx/version_converter/adapters/reshape_4_5.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -132,6 +134,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         TensorProto_DataType_STRING, TensorProto_DataType_BOOL};
       registerAdapter(make_unique<TypeRestriction>("Concat", OpSetID(4),
             OpSetID(3), concat_unallowed_types));
+      registerAdapter(make_unique<Reshape_4_5>());
+      registerAdapter(make_unique<Reshape_5_4>());
     }
 
     ModelProto convert_version(

@@ -267,6 +267,36 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Concat"
         assert converted_model.opset_import[0].version == 3
 
+    # Test Reshape Adapter: 6 -> 4
+    def test_reshape_6_4(self):  # type: () -> None
+        nodes = [helper.make_node('Reshape', ["X", "shape"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("shape", TensorProto.FLOAT, (1,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 6), 4)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Reshape"
+        assert converted_model.opset_import[0].version == 4
+
+    # Test Reshape Adapter: 4 -> 6
+    def test_reshape_4_6(self):  # type: () -> None
+        nodes = [helper.make_node('Reshape', ["X", "shape"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("shape", TensorProto.FLOAT, (1,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 5), 6)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Reshape"
+        assert converted_model.opset_import[0].version == 6
+
 
 if __name__ == '__main__':
     unittest.main()
