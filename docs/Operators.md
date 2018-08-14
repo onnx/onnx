@@ -11176,10 +11176,16 @@ This version of the operator has been available since version 1 of the default O
   scan_outputs.
   
   The operation supports batching, and the batch-axis is required to be 0.
+  When multiple scan_input tensors are used, they must all have the same batch-size,
+  and they must all have the same maximum-sequence-length (the dimensionality of the
+  sequence axis or scan axis).
+  
   The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
-  allow variable length sequences. For variable length input sequences, the scan_outputs
-  will consist of a sequence of same length as the input, padded to the required
-  (maximum) output length.
+  allow variable length sequences of length <= the maximum-sequence-length. If this
+  input is not specified, all sequences are assumed to be of length equal to
+  maximum-sequence-length. For variable length input sequences, the scan_outputs
+  will consist of a sequence of same length as the input, padded to the
+  maximum-sequence-length.
   
   The optional attribute directions can be used to scan a sequence in the reverse direction.
   If this attribute is omitted, all sequences are scanned in the forward direction.
@@ -11243,7 +11249,7 @@ This version of the operator has been available since version 1 of the default O
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
   %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
-  values are computed in the outer graph, they need to passed in as extra state_variables.
+  values are computed in the outer graph, they need to be passed in as extra state_variables.
   
       graph rnn-encoding {
         %H_0 = ... 
@@ -11290,7 +11296,7 @@ This version of the operator has been available since version 8 of the default O
 
 <dl>
 <dt><tt>sequence_lens</tt> (optional) : I</dt>
-<dd>Optional tensor specifying lengths of the sequences in a batch.</dd>
+<dd>Optional tensor specifying lengths of the sequences in a batch. If this input is not specified, all sequences are assumed to be of the maximum sequence length (the dimension of the sequence axis of the scan_input tensors).</dd>
 <dt><tt>initial_state_and_scan_inputs</tt> (variadic) : V</dt>
 <dd>Initial values of the loop's N state variables followed by M scan_inputs</dd>
 </dl>

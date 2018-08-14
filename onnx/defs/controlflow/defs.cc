@@ -253,10 +253,16 @@ The scan operation returns the final values of the state_variables as well as th
 scan_outputs.
 
 The operation supports batching, and the batch-axis is required to be 0.
+When multiple scan_input tensors are used, they must all have the same batch-size,
+and they must all have the same maximum-sequence-length (the dimensionality of the
+sequence axis or scan axis).
+
 The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
-allow variable length sequences. For variable length input sequences, the scan_outputs
-will consist of a sequence of same length as the input, padded to the required
-(maximum) output length.
+allow variable length sequences of length <= the maximum-sequence-length. If this
+input is not specified, all sequences are assumed to be of length equal to
+maximum-sequence-length. For variable length input sequences, the scan_outputs
+will consist of a sequence of same length as the input, padded to the
+maximum-sequence-length.
 
 The optional attribute directions can be used to scan a sequence in the reverse direction.
 If this attribute is omitted, all sequences are scanned in the forward direction.
@@ -320,7 +326,7 @@ The following example shows how a simple RNN over an input tensor %X, with weigh
 recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
 be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
 %Wi, %Ri, %Wbi, and %Rbi (typically constants or initializers in the body graph). If these
-values are computed in the outer graph, they need to passed in as extra state_variables.
+values are computed in the outer graph, they need to be passed in as extra state_variables.
 
     graph rnn-encoding {
       %H_0 = ... 
@@ -358,7 +364,10 @@ ONNX_OPERATOR_SET_SCHEMA(
     .Input(
 		0,
 		"sequence_lens",
-		"Optional tensor specifying lengths of the sequences in a batch.",
+		"Optional tensor specifying lengths of the sequences in a batch. "
+        "If this input is not specified, all sequences are assumed to be of "
+        "the maximum sequence length (the dimension of the sequence axis of "
+        "the scan_input tensors).",
 		"I",
 		OpSchema::Optional)
 	.Input(
