@@ -495,7 +495,9 @@ computes the output.)DOC";
         "Optionally, if dimension denotation is in effect, "
         "the operation expects the weight tensor to arrive "
         "with the dimension denotation of [FILTER_IN_CHANNEL, "
-        "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].",
+        "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
+        "Note that X.shape[1] should be equal to W.shape[1] * group "
+        "(assuming zero based indices for the shape array).",
         "T");
     schema.Input(
         2,
@@ -706,7 +708,9 @@ output_shape can also be explicitly specified in which case pads values are auto
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
         "weight shape will be (C x M x k1 x k2 x ... x kn), "
-        "where (k1 x k2 x ... x kn) is the dimension of the kernel",
+        "where (k1 x k2 x ... x kn) is the dimension of the kernel. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
         "T");
     schema.Input(
         2,
@@ -719,7 +723,9 @@ output_shape can also be explicitly specified in which case pads values are auto
         "Y",
         "Output data tensor that contains the result of the convolution. The "
         "output dimensions are functions of the kernel size, stride size, "
-        "and pad lengths.",
+        "pad lengths and group count. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
         "T");
     schema.TypeConstraint(
         "T",
