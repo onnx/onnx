@@ -19,20 +19,46 @@ class Reshape_5_4 final : public Adapter {
       Node* node_ptr = inputs[1]->node();
       if (node_ptr->kind() == kConstant) {
         // Get value attribute of kConstant
-        node->is_(kshape, std::forward<const std::vector<int64_t>>(node_ptr->is(
-                kvalue)));
+        const std::vector<int64_t>& int64s = node_ptr->t(kvalue).int64s();
+        if (int64s.empty()) {
+          // Also handle raw data
+          int64_t* raw = (int64_t*) node_ptr->t(kvalue).raw().c_str();
+          node->is_(kshape, std::vector<int64_t>(raw, raw + (sizeof(raw)/sizeof(
+                    raw[0]))));
+        } else {
+          node->is_(kshape, std::forward<const std::vector<int64_t>>(int64s));
+        }
+        // If Constant node isn't used anywhere else, remove it
+        Value* const_val = inputs[1];
+        node->removeInput(1);
+        if (const_val->uses().size() == 1) {
+          node_ptr->destroy();
+        }
       } else {
         // Get Value name, find Initializer with same name
         for (const auto& initializer: graph->initializers()) {
           if (initializer.name() == inputs[1]->uniqueName()) {
             node->is_(kshape, std::forward<const std::vector<int64_t>>(
                   initializer.int64s()));
+            node->removeInput(1);
+            // Remove initializer
+            // TODO: Iterate through all inputs to detect whether others are the same
+            bool otherUses = false;
+            for (Node* node : graph->nodes()) {
+              for (Value* input : node->inputs()) {
+                if (input->uniqueName() == initializer.name()) {
+                  otherUses = true;
+                  break;
+                }
+              }
+              if (otherUses) break;
+            }
+            if (!otherUses) graph->eraseInitializer(initializer.name());
           }
         }
-        ONNX_ASSERTM(node-hasAttribute(kshape),
-            "No initializer or constant input to Reshape node found");
       }
-      node->removeInput(1);
+      ONNX_ASSERTM(node->hasAttribute(kshape),
+          "No initializer or constant input to Reshape node found");
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
