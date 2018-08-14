@@ -228,7 +228,6 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 8
-<<<<<<< HEAD
 
     # Test Concat Adapter: 3 -> 5
     def test_concat_3_5(self):  # type: () -> None
@@ -268,8 +267,6 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Concat"
         assert converted_model.opset_import[0].version == 3
 
-=======
->>>>>>> Batchnorm adapters
 
 if __name__ == '__main__':
     unittest.main()
