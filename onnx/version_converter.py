@@ -30,6 +30,16 @@ Supported adapters:
     --Add from Opset 6 to Opset 5
     --Add from Opset 6 to Opset 7
     --Add from Opset 5 to Opset 6
+    --Mul from Opset 6 to Opset 7
+    --Mul from Opset 7 to Opset 6
+    --Mul from Opset 6 to Opset 5
+    --Mul from Opset 5 to Opset 6
+    --Gemm from Opset 7 to Opset 6
+    --Gemm from Opset 6 to Opset 5
+    --Gemm from Opset 6 to Opset 7
+    --Gemm from Opset 5 to Opset 6
+
+Unsupported adapters:
     --Relu from Opset 6 to Opset 5
     --Relu from Opset 5 to Opset 6
     --BatchNorm from Opset 7 to Opset 6
@@ -46,18 +56,12 @@ Supported adapters:
     --Sum from Opset 8 to Opset 7
     --Sum from Opset 6 to Opset 5
     --Sum from Opset 5 to Opset 6
-    --Gemm from Opset 7 to Opset 6
-    --Gemm from Opset 6 to Opset 5
-    --Gemm from Opset 6 to Opset 7
-    --Gemm from Opset 5 to Opset 6
     --AveragePool from Opset 7 to Opset 6
     --AveragePool from Opset 6 to Opset 7
     --Dropout from Opset 7 to Opset 6
     --Dropout from Opset 6 to Opset 5
     --Dropout from Opset 6 to Opset 7
     --Dropout from Opset 5 to Opset 6
-
-Unsupported adapters:
     --Min from Opset 8 to Opset 7
     --Min from Opset 7 to Opset 8
     --Min from Opset 6 to Opset 5
@@ -88,10 +92,6 @@ Unsupported adapters:
     --PRelu from Opset 5 to Opset 6
     --Or from Opset 6 to Opset 7
     --Or from Opset 7 to Opset 6
-    --Mul from Opset 6 to Opset 7
-    --Mul from Opset 7 to Opset 6
-    --Mul from Opset 6 to Opset 5
-    --Mul from Opset 5 to Opset 6
     --Less from Opset 6 to Opset 7
     --Less from Opset 7 to Opset 6
     --LSTM from Opset 6 to Opset 7
