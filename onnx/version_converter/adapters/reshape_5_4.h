@@ -42,7 +42,7 @@ class Reshape_5_4 final : public Adapter {
                   initializer.int64s()));
             node->removeInput(1);
             // Remove initializer
-            // TODO: Iterate through all inputs to detect whether others are the same
+            // Iterate through all inputs to detect whether others are the same
             bool otherUses = false;
             for (Node* node : graph->nodes()) {
               for (Value* input : node->inputs()) {
@@ -54,6 +54,7 @@ class Reshape_5_4 final : public Adapter {
               if (otherUses) break;
             }
             if (!otherUses) graph->eraseInitializer(initializer.name());
+            break;
           }
         }
       }
