@@ -98,6 +98,10 @@ TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
   EXPECT_EQ_OSS(dummy_backend.onnxRunGraph(graph, &inputFence, &outputFence));
   EXPECT_EQ(outputFence.type, ONNXIFI_SYNCHRONIZATION_EVENT);
 
+  // Testing onnxGetEventState
+  onnxEventState state;
+  EXPECT_EQ_OSS(dummy_backend.onnxGetEventState(event, &state));
+
   // Testing onnxReleaseGraph
   EXPECT_EQ_OSS(dummy_backend.onnxReleaseGraph(graph));
 
