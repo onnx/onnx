@@ -229,5 +229,6 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "BatchNormalization"
         assert converted_model.opset_import[0].version == 8
 
+
 if __name__ == '__main__':
     unittest.main()
