@@ -515,6 +515,10 @@ class OpSchema final {
     return since_version_;
   }
 
+  OperatorSetVersion UntilVersion() const {
+    return until_version_;
+  }
+
   int since_version() const {
     return since_version_;
   }
@@ -565,6 +569,7 @@ class OpSchema final {
   int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
   OperatorSetVersion since_version_ = 1;
+  OperatorSetVersion until_version_ = 1; // Calculated once sets are loaded
   bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
