@@ -36,3 +36,28 @@ class Upsample(Base):
 
         expect(node, inputs=[data], outputs=[output],
                name='test_upsample_nearest')
+
+    @staticmethod
+    def export_linear():  # type: () -> None
+        node = onnx.helper.make_node(
+            'Upsample',
+            inputs=['x'],
+            outputs=['y'],
+            scales=[1.0, 1.0, 2.0, 2.0],
+            mode='linear',
+        )
+
+        data = np.array([[[
+            [1, 2],
+            [3, 4],
+        ]]], dtype=np.float32)
+
+        output = np.array([[[
+            [1.00, 1.25, 1.75, 2.00],
+            [1.50, 1.75, 2.25, 2.50],
+            [2.50, 2.75, 3.25, 3.50],
+            [3.00, 3.25, 3.75, 4.00],
+        ]]], dtype=np.float32)
+
+        expect(node, inputs=[data], outputs=[output],
+               name='test_upsample_linear')
