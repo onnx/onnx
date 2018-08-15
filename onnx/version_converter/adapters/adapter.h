@@ -14,7 +14,7 @@ class Adapter {
     OpSetID target_version_;
 
   protected:
-    bool c2_broadcastable(int axis,
+    bool c2_broadcastable(long int axis,
         const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) const {
       return axis != (int) (input1_sizes.size() - input2_sizes.size());
