@@ -823,7 +823,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>count_include_pad</tt> : int</dt>
 <dd>Whether include pad pixels when calculating values for the edges.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
@@ -1791,7 +1791,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int</dt>
@@ -1974,7 +1974,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
 <dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
 <dt><tt>group</tt> : int</dt>
@@ -2895,11 +2895,11 @@ node = onnx.helper.make_node(
     outputs=['expanded'],
 )
 shape = [3, 1]
-data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 #print(data)
 #[[1.], [2.], [3.]]
 new_shape = [2, 1, 6]
-expanded = data * np.ones(new_shape)
+expanded = data * np.ones(new_shape, dtype=np.float32)
 #print(expanded)
 #[[[1., 1., 1., 1., 1., 1.],
 #  [2., 2., 2., 2., 2., 2.],
@@ -2908,7 +2908,7 @@ expanded = data * np.ones(new_shape)
 # [[1., 1., 1., 1., 1., 1.],
 #  [2., 2., 2., 2., 2., 2.],
 #  [3., 3., 3., 3., 3., 3.]]]
-new_shape = np.array(new_shape)
+new_shape = np.array(new_shape, dtype=np.int64)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_changed')
 ```
@@ -2927,7 +2927,7 @@ node = onnx.helper.make_node(
 )
 shape = [3, 1]
 new_shape = [3, 4]
-data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 #print(data)
 #[[1.], [2.], [3.]]
 expanded = np.tile(data, 4)
@@ -2935,7 +2935,7 @@ expanded = np.tile(data, 4)
 #[[1., 1., 1., 1.],
 # [2., 2., 2., 2.],
 # [3., 3., 3., 3.]]
-new_shape = np.array(new_shape)
+new_shape = np.array(new_shape, dtype=np.int64)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_unchanged')
 ```
@@ -5000,7 +5000,7 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int</dt>
@@ -5210,7 +5210,7 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 
 <dl>
 <dt><tt>auto_pad</tt> : string</dt>
-<dd>auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
+<dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
