@@ -18,6 +18,9 @@
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
 #include "onnx/version_converter/adapters/sum_8_7.h"
+#include "onnx/version_converter/adapters/averagepool_7_6.h"
+#include "onnx/version_converter/adapters/dropout_6_7.h"
+#include "onnx/version_converter/adapters/maxpool_8_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -144,6 +147,19 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Sum_8_7>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Dropout_6_7>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("AveragePool",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<AveragePool_7_6>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("MaxPool",
+        OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<MaxPool_8_7>());
     }
 
     ModelProto convert_version(
