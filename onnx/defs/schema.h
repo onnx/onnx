@@ -215,6 +215,14 @@ class OpSchema final {
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
+   * Marks this op as deprecated since this version
+   */
+  OpSchema& Deprecated() {
+    deprecated_ = true;
+    return *this;
+  }
+
+  /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
   OpSchema& NumInputs(std::set<int> allowed_input_nums);
@@ -557,6 +565,7 @@ class OpSchema final {
   int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
   OperatorSetVersion since_version_ = 1;
+  bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
