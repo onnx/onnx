@@ -23,20 +23,8 @@ class BroadcastBackwardCompatibility final : public Adapter {
       std::vector<Dimension> A_sizes = inputs[0]->sizes();
       ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of second input is not available.");
       std::vector<Dimension> B_sizes = inputs[1]->sizes();
-      // Determine if inputs are of different sizes
-      bool equalDims = false;
-      if (A_sizes.size() == B_sizes.size()) {
-        equalDims = true;
-        for (int i = 0; i < (int) A_sizes.size(); i++) {
-          if (A_sizes[i].dim != B_sizes[i].dim) {
-            equalDims = false;
-          }
-        }
-      }
-      if (!equalDims) {
-        // Ensure that first input is larger than or equal to the second
-        ONNX_ASSERTM(numpy_broadcastable(A_sizes, B_sizes),
-            "First input shape must be larger than or equal to second input shape");
+      // Ensure that first input is larger than or equal to the second
+      if(numpy_unibroadcastable(A_sizes, B_sizes)) {
         // If conditional is not fulfilled, we have a default broadcast
         // Add broadcast attribute
         node->i_(kbroadcast, 1);

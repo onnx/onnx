@@ -16,16 +16,16 @@ class BroadcastForwardCompatibility final : public Adapter {
       // Remove axis and broadcast attributes
       // Assess whether axis requires reshaping
       if (node->hasAttribute(kbroadcast)) {
+        const ArrayRef<Value*>& inputs = node->inputs();
+        ONNX_ASSERTM(inputs.size() == 2, "%s in opset version 6 can only broadcast"
+          " between 2 inputs", name().c_str());
+        ONNX_ASSERTM(inputs[0]->has_sizes(), "Shape of first input not available.");
+        std::vector<Dimension> A_sizes = inputs[0]->sizes();
+        ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of second input not available.");
+        std::vector<Dimension> B_sizes = inputs[1]->sizes();
+        // Also assert that broadcasting syntax are correct if axis is not present
         if (node->hasAttribute(kaxis)) {
-          const ArrayRef<Value*>& inputs = node->inputs();
-          ONNX_ASSERTM(inputs.size() == 2, "%s in opset version 6 can only broadcast"
-            " between 2 inputs", name().c_str());
-          ONNX_ASSERTM(inputs[0]->has_sizes(), "Shape of first input not available.");
-          std::vector<Dimension> A_sizes = inputs[0]->sizes();
-          ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of second input not available.");
-          std::vector<Dimension> B_sizes = inputs[1]->sizes();
-          // TODO: Assert that broadcasting semantics are properly fulfilled
-          if (c2_broadcastable(node->i(kaxis), A_sizes, B_sizes)) {
+          if (!onnx_opset7_broadcastable(node->i(kaxis), A_sizes, B_sizes)) {
             // Add a Reshape node before input B
             Node * n = graph->create(kReshape);
             n->addInput(inputs[1]);
@@ -45,11 +45,17 @@ class BroadcastForwardCompatibility final : public Adapter {
             node->replaceInput(1, n->output());
             // Move n before node
             node->moveBefore(n);
+          } else {
+            onnx_opset7_broadcastable(A_sizes.size() - B_sizes.size(), A_sizes,
+                B_sizes);
           }
         }
         node->removeAttribute(kbroadcast);
       }
       if (node->hasAttribute(kaxis)) node->removeAttribute(kaxis);
+      // Assert multi_broadcastable on inputs
+      const ArrayRef<Value*>& inputs = node->inputs();
+      numpy_multibroadcastable(inputs[0]->sizes(), inputs[1]->sizes());
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

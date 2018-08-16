@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "onnx/common/ir.h"
 #include "onnx/onnx_pb.h"
+#include "onnx/version_converter/helper.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -12,27 +12,6 @@ class Adapter {
     std::string name_;
     OpSetID initial_version_;
     OpSetID target_version_;
-
-  protected:
-    bool c2_broadcastable(int64_t axis,
-        const std::vector<Dimension>& input1_sizes,
-        const std::vector<Dimension>& input2_sizes) const {
-      return axis != (int) (input1_sizes.size() - input2_sizes.size());
-    }
-
-    bool numpy_broadcastable(const std::vector<Dimension>& input1_sizes,
-        const std::vector<Dimension>& input2_sizes) const {
-      for (int j = 1; j < (int) input1_sizes.size(); j++) {
-        ONNX_ASSERTM(input1_sizes[j].dim == input2_sizes[j].dim, "A: %d, B: %d",
-            input1_sizes[j].dim, input2_sizes[j].dim);
-      }
-      return input1_sizes.size() >= input2_sizes.size();
-    }
-
-    bool numpy_unibroadcastable(const std::vector<Dimension>& input_sizes) const {
-      return input_sizes.size() == 1 || (input_sizes.size() == 2 &&
-          (input_sizes[0].dim == 1 || input_sizes[1].dim == 1));
-    }
 
   public:
     virtual ~Adapter() noexcept = default;
