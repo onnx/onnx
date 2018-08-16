@@ -7,7 +7,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
         const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Assert that broadcasting semantics are correct
-      for (int i = 0; i < input2_sizes.size(); i++) {
+      for (int i = 0; i < (int) input2_sizes.size(); i++) {
         ONNX_ASSERTM(input2_sizes[i].dim == input1_sizes[axis + i].dim ||
             input2_sizes[i].dim == 1, "Dimension %d of input 2 does not match "
             "dimension %d of input 1 or the value 1", i, axis + i);
