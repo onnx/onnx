@@ -25,10 +25,10 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
       bool broadcast = false;
       int axis = (int) (input1_sizes.size() - input2_sizes.size());
       for (int i = 0; i < (int) input2_sizes.size(); i++) {
-        ONNX_ASSERTM(input2_sizes[i].dim == input1_sizes[axis].dim ||
+        ONNX_ASSERTM(input2_sizes[i].dim == input1_sizes[axis + i].dim ||
             input2_sizes[i].dim == 1, "Dimension %d of input 2 does not match "
             "dimension %d of input 1 or the value 1", i, axis + i);
-        if (input2_sizes[i].dim != input1_sizes[axis].dim) broadcast = true;
+        if (input2_sizes[i].dim != input1_sizes[axis + i].dim) broadcast = true;
       }
       // Return true if broadcasting is required
       return input1_sizes.size() > input2_sizes.size() || broadcast;
