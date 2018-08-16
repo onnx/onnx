@@ -359,7 +359,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 	Scan,
 	8,
 	OpSchema()
-	.SetSupportLevel(SupportType::EXPERIMENTAL)
 	.SetDoc(scan_ver1_doc)
     .Input(
 		0,
