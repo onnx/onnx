@@ -11,6 +11,7 @@
 #include "onnx/version_converter/adapters/backwards_compatible.h"
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/gemm_6_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -100,13 +101,12 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
         OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<BroadcastForwardCompatibility>("Gemm",
-        OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Gemm_7_6>());
+      registerAdapter(make_unique<Gemm_6_7>());
     }
 
     ModelProto convert_version(
