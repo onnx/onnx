@@ -490,15 +490,15 @@ computes the output.)DOC";
         "is the number of channels, and kH and kW are the "
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
-        "kernel shape will be (M x C x k1 x k2 x ... x kn), "
+        "kernel shape will be (M x C/group x k1 x k2 x ... x kn), "
         "where (k1 x k2 x ... kn) is the dimension of the kernel. "
         "Optionally, if dimension denotation is in effect, "
         "the operation expects the weight tensor to arrive "
-        "with the dimension denotation of [FILTER_IN_CHANNEL, "
-        "FILTER_OUT_CHANNEL/group, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
-        "Note that X.shape[1] should be equal to W.shape[1] * group "
+        "with the dimension denotation of [FILTER_OUT_CHANNEL, "
+        "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
+        "X.shape[1] == (W.shape[1] * group) == C "
         "(assuming zero based indices for the shape array). "
-        "Or in other words FILTER_OUT_CHANNEL should be equal to DATA_CHANNEL. ",
+        "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
         "T");
     schema.Input(
         2,
@@ -704,11 +704,11 @@ output_shape can also be explicitly specified in which case pads values are auto
         1,
         "W",
         "The weight tensor that will be used in the "
-        "convolutions; has size (C x M x kH x kW), where C "
+        "convolutions; has size (C x M/group x kH x kW), where C "
         "is the number of channels, and kH and kW are the "
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
-        "weight shape will be (C x M x k1 x k2 x ... x kn), "
+        "weight shape will be (C x M/group x k1 x k2 x ... x kn), "
         "where (k1 x k2 x ... x kn) is the dimension of the kernel. "
         "The number of channels in the output should be equal to W.shape[1] * group "
         "(assuming zero based indices of the shape array)",
