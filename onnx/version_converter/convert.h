@@ -11,12 +11,9 @@
 #include "onnx/version_converter/adapters/compatible.h"
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
-<<<<<<< HEAD
 #include "onnx/version_converter/adapters/gemm_6_7.h"
-=======
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
->>>>>>> Batchnorm adapters
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
