@@ -124,13 +124,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
         OpSetID(5), OpSetID(6)));
-<<<<<<< HEAD
-    }
-=======
       registerAdapter(make_unique<Concat_3_4>());
       registerAdapter(make_unique<Concat_4_3>());
-  }
->>>>>>> Concat adapters
+    }
 
     ModelProto convert_version(
         const ModelProto& mp_in,
