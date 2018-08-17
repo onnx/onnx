@@ -7,13 +7,13 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
         const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Assert that broadcasting semantics are correct
-      for (int i = 0; i < (int) input2_sizes.size(); i++) {
+      for (int64_t i = 0; i < input2_sizes.size(); i++) {
         ONNX_ASSERTM(input2_sizes[i].dim == input1_sizes[axis + i].dim ||
             input2_sizes[i].dim == 1, "Dimension %d of input 2 does not match "
             "dimension %d of input 1 or the value 1", i, axis + i);
       }
       // Return false if a Reshape is necessary for forward compatibility
-      return axis != (int) (input1_sizes.size() - input2_sizes.size());
+      return axis != input1_sizes.size() - input2_sizes.size();
     }
 
     bool numpy_unibroadcastable(const std::vector<Dimension>& input1_sizes,
