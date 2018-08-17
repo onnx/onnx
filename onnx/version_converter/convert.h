@@ -137,9 +137,9 @@ class DefaultVersionConverter : public BaseVersionConverter {
             OpSetID(3), concat_unallowed_types));
       registerAdapter(make_unique<Reshape_4_5>());
       registerAdapter(make_unique<Reshape_5_4>());
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Sum",
+      registerAdapter(make_unique<CompatibleAdapter>("Sum",
         OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Sum",
+      registerAdapter(make_unique<CompatibleAdapter>("Sum",
         OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
         OpSetID(5), OpSetID(6)));
