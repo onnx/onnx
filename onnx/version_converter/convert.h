@@ -147,17 +147,17 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Sum_8_7>());
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+      registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+      registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Dropout_6_7>());
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("AveragePool",
+      registerAdapter(make_unique<CompatibleAdapter>("AveragePool",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<AveragePool_7_6>());
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("MaxPool",
+      registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<MaxPool_8_7>());
     }
