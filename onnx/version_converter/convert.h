@@ -116,7 +116,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<CompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("BatchNormalization",
+      registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
