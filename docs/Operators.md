@@ -3370,7 +3370,6 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
     ]
 
   Note that for index specified by indices, if an out of bound index is encoutered, on CPU, an error is reported, on GPU, a default value 0 is set in the corresponding output.
-
     
 #### Version
 
