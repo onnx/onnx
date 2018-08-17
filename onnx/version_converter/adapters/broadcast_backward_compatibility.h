@@ -24,6 +24,9 @@ class BroadcastBackwardCompatibility final : public Adapter {
       ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of second input is not available.");
       std::vector<Dimension> B_sizes = inputs[1]->sizes();
       // Ensure that first input is larger than or equal to the second
+      // numpy_unibroadcastable here is considered to be equivalent to opset1_broadcastable
+      // This is because backwards conversion does not allow for an axis that is not
+      // suffix matching
       if(numpy_unibroadcastable(A_sizes, B_sizes)) {
         // If conditional is not fulfilled, we have a default broadcast
         // Add broadcast attribute
