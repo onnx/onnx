@@ -112,7 +112,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Gemm_6_7>());
       registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
         OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Relu",
+      registerAdapter(make_unique<CompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
     }
 
