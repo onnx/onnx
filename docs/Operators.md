@@ -3369,6 +3369,9 @@ expect(node, inputs=[input, W, R, B], outputs=[Y_h.astype(np.float32)], name='te
         ],
     ]
 
+  Note that for index specified by indices, if an out of bound index is encoutered, on CPU, an error is reported, on GPU, a default value 0 is set in the corresponding output.
+
+    
 #### Version
 
 This version of the operator has been available since version 1 of the default ONNX operator set.
