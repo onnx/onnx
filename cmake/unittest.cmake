@@ -1,5 +1,6 @@
 set(UT_NAME ${PROJECT_NAME}_gtests)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
+set(DRIVER_NAME onnxifi_test_driver_gtests)
 
 include(${ONNX_ROOT}/cmake/Utils.cmake)
 
@@ -29,6 +30,7 @@ list(APPEND ${UT_NAME}_libs onnxifi_loader)
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
+file(GLOB_RECURSE ${DRIVER_NAME}_src "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
 
 function(AddTest)
   cmake_parse_arguments(_UT "" "TARGET" "LIBS;SOURCES" ${ARGN})
@@ -86,6 +88,7 @@ function(AddTest)
 endfunction(AddTest)
 
 addtest(TARGET ${UT_NAME} SOURCES ${${UT_NAME}_src} LIBS ${${UT_NAME}_libs})
+addtest(TARGET ${DRIVER_NAME} SOURCE ${${DRIVER_NAME}_src} LIBS ${${UT_NAME}_libs})
 
 set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/cpp/testdata)
 set(TEST_DATA_DES $<TARGET_FILE_DIR:${UT_NAME}>/testdata)
