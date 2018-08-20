@@ -85,12 +85,15 @@ class DefaultVersionConverter : public BaseVersionConverter {
         }
       }
 
+      std::vector<TensorProto_DataType> broadcast_unallowed_types = {
+        TensorProto_DataType_INT32, TensorProto_DataType_INT64,
+        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64};
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<TypeRestriction>("Add",
-        OpSetID(6), OpSetID(5)));
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
       registerAdapter(make_unique<RemoveConsumedInputs>("Add",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
@@ -98,7 +101,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
         OpSetID(6), OpSetID(7)));
       registerAdapter(make_unique<TypeRestriction>("Mul",
-        OpSetID(6), OpSetID(5)));
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
       registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<CompatibleAdapter>("Gemm",
