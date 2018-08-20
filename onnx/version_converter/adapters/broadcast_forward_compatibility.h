@@ -31,11 +31,11 @@ class BroadcastForwardCompatibility final : public Adapter {
             // Add a Reshape node before input B
             Node * n = graph->create(kUnsqueeze);
             n->addInput(inputs[1]);
-            std::vector<long int> axes;
+            std::vector<int64_t> axes;
             for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size()); i++) {
               axes.emplace_back(B_sizes.size() + i);
             }
-            n->is_(kaxes, std::forward<const std::vector<long int>>(axes));
+            n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
             // Set 2nd input to node to 1st of n and output of n to 2nd input to node
             node->replaceInput(1, n->output());
             // Move n before node
