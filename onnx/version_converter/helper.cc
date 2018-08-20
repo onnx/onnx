@@ -3,7 +3,7 @@
 #include "onnx/version_converter/helper.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
-    bool onnx_opset7_broadcastable(int64_t axis,
+    bool onnx_opset7_requires_broadcasting(int64_t axis,
         const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Assert that broadcasting semantics are correct

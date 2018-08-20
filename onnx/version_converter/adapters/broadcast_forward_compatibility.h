@@ -27,7 +27,7 @@ class BroadcastForwardCompatibility final : public Adapter {
         assertNotParams(B_sizes);
         // Also assert that broadcasting syntax are correct if axis is not present
         if (node->hasAttribute(kaxis)) {
-          if (!onnx_opset7_broadcastable(node->i(kaxis), A_sizes, B_sizes)) {
+          if (!onnx_opset7_requires_broadcasting(node->i(kaxis), A_sizes, B_sizes)) {
             // Add a Reshape node before input B
             Node * n = graph->create(kUnsqueeze);
             n->addInput(inputs[1]);
@@ -41,7 +41,7 @@ class BroadcastForwardCompatibility final : public Adapter {
             // Move n before node
             node->moveBefore(n);
           } else {
-            onnx_opset7_broadcastable(A_sizes.size() - B_sizes.size(), A_sizes,
+            onnx_opset7_requires_broadcasting(A_sizes.size() - B_sizes.size(), A_sizes,
                 B_sizes);
           }
         }
