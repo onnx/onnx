@@ -27,6 +27,7 @@ add_whole_archive_flag(onnx tmp)
 list(APPEND ${UT_NAME}_libs ${tmp})
 list(APPEND ${UT_NAME}_libs onnx_proto)
 list(APPEND ${UT_NAME}_libs onnxifi_loader)
+list(APPEND ${UT_NAME}_libs onnxifi)
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
@@ -88,7 +89,7 @@ function(AddTest)
 endfunction(AddTest)
 
 addtest(TARGET ${UT_NAME} SOURCES ${${UT_NAME}_src} LIBS ${${UT_NAME}_libs})
-addtest(TARGET ${DRIVER_NAME} SOURCE ${${DRIVER_NAME}_src} LIBS ${${UT_NAME}_libs})
+addtest(TARGET ${DRIVER_NAME} SOURCES ${${DRIVER_NAME}_src} LIBS ${${UT_NAME}_libs})
 
 set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/cpp/testdata)
 set(TEST_DATA_DES $<TARGET_FILE_DIR:${UT_NAME}>/testdata)

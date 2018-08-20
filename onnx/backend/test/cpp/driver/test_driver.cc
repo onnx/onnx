@@ -1,4 +1,4 @@
-#include <ifstream>
+#include <fstream>
 
 #include "onnx/onnxifi_loader.h"
 #include "test_driver.h"
@@ -13,41 +13,42 @@
 #define ERRNO_DIR_END 0
 
 bool fileExist(const std::string& filename){
-	#ifdef _WIN32
-	return std::filesystem::exists(filename);
-	#else
-	return std::experimental::filesystem::exists(filename);
-	#endif
+	FILE *fp;
+	if ((fp = fopen(filename.c_str(), "r")) != NULL){
+		fclose(fp);
+		return true;
+	}
+	return false;
 }
 
-bool TestDriver::setDefaultDir(const std::string &s){
-	_default_dir = s;
+void TestDriver::setDefaultDir(const std::string &s){
+	default_dir_ = s;
 }
 
 //load single test case in case_dir to _testcases
 int TestDriver::fetchSingleTestCase(char* case_dir){
-	std::string model_name = str(case_dir) + "model.onnx";
+	std::string model_name = case_dir;
+   model_name += "model.onnx";
 	if (fileExist(model_name)){
 		TestCase test_case;
-		test_case.model_name = model_name;
-		test_case.model_dir = str(case_dir);
+		test_case.model_filename_ = model_name;
+		test_case.model_dirname_ = case_dir;
 		int case_count = 0;
 		for (;;case_count++){
 
 			std::vector<std::string> input_filenames, output_filenames;
 			std::string input_name, output_name;
-			std::string case_dirname = str(case_dir) + "/test_data_set_" + std::itoa(case_count)
+			std::string case_dirname = case_dir;
+			case_dirname += "/test_data_set_" + std::to_string(case_count);
 
-			//input_name = data_dirname + "/input_" + std::itoa(data_count) + ".pb";
-			output_name = data_dirname + "/output_" + "0" + ".pb";
-
+			output_name = case_dirname + "/output_" + "0" + ".pb";
 			if (!fileExist(output_name)){
 				break;
 			}
 
 			for (int data_count = 0; ; data_count++){
-				input_name = data_dirname + "/input_" + std::itoa(data_count) + ".pb";
-				output_name = data_dirname + "/output_" + std::itoa(data_count) + ".pb";
+				input_name = case_dirname + "/input_" + std::to_string(data_count) + ".pb";
+				output_name = case_dirname + "/output_" + std::to_string(data_count) + ".pb";
 				if (!fileExist(input_name) && !fileExist(input_name)){
 					break;
 				}
@@ -61,17 +62,21 @@ int TestDriver::fetchSingleTestCase(char* case_dir){
 			TestData test_data(input_filenames, output_filenames);
 			test_case.test_data_.push_back(test_data);
 		}
-		_testcases.push_back(test_case);
+		testcases_.push_back(test_case);
 	}
 	return 0;
 }
 
 //load all test data in target_dir to _testcases
-int TestDriver::fetchAllTestCases(const char* target_dir){
-	DIR* directory = opendir(target_dir);
+int TestDriver::fetchAllTestCases(const std::string& _target_dir){
+	std::string target_dir = _target_dir;
+	if (target_dir == ""){
+		target_dir = default_dir_;
+	}
+	DIR* directory = opendir(target_dir.c_str());
 	if (directory == NULL){
 		fprintf(stderr, "Error: cannot open directory %s when loading test data: %s\n",
-			target_dir, strerr(errno));
+			target_dir.c_str(), strerror(errno));
 		return -1;
 	}
 
@@ -81,7 +86,7 @@ int TestDriver::fetchAllTestCases(const char* target_dir){
 		if (entry == NULL){
 			if (errno != ERRNO_DIR_END){
 				fprintf(stderr, "Error: cannot read directory %s when loading test data: s\n",
-					target_dir, strerr(errno));
+					target_dir.c_str(), strerror(errno));
 				return -1;
 			} else{
 				break;
@@ -131,7 +136,7 @@ ProtoTestCase loadSingleTestCase(const TestCase& t){
 			std::string input_data = "";
 			loadSingleFile(input_file, input_data);
 			proto_test_data.raw_inputs_.push_back(input_data);
-			TensorProto input_proto;
+			onnx::TensorProto input_proto;
 			ParseProtoFromPyBytes(&input_proto, input_data);
 			proto_test_data.inputs_.pushback(input_proto);
 		}
@@ -139,7 +144,7 @@ ProtoTestCase loadSingleTestCase(const TestCase& t){
 			std::string output_data = "";
 			loadSingleFile(output_file, output_data);
 			proto_test_data.raw_outputs_.push_back(output_data);
-			TensorProto output_proto;
+			onnx::TensorProto output_proto;
 			ParseProtoFromPyBytes(&output_proto, out_data);
 			proto_test_data.outputs_.pushback(output_proto);
 		}
@@ -161,7 +166,7 @@ vector<ProtoTestCase> loadAllTestCases(const vector<TestCase>& t){
 }
 
 //Need to be migrated to util in the future
-onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(const TensorProto& proto_tensor){
+onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(const onnx::TensorProto& proto_tensor){
 	onnxTensorDescriptorV1 onnx_tensor;
 	onnx_tensor.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
 	onnx_tensor.name = proto_tensor.name;
