@@ -14,4 +14,6 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
     void numpy_multibroadcastable(const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes);
+
+    void assertNotParams(const std::vector<Dimension>& sizes);
 }}

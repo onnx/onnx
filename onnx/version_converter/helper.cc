@@ -61,4 +61,10 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
             "dimension %d of input %d, and neither's value is 1", i, B, axis + i, A);
       }
     }
+
+    void assertNotParams(const std::vector<Dimension>& sizes) {
+      for (const Dimension& dim : sizes) {
+        ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str());
+      }
+    }
 }}

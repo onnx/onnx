@@ -21,26 +21,21 @@ class BroadcastForwardCompatibility final : public Adapter {
           " between 2 inputs", name().c_str());
         ONNX_ASSERTM(inputs[0]->has_sizes(), "Shape of first input not available.");
         std::vector<Dimension> A_sizes = inputs[0]->sizes();
+        assertNotParams(A_sizes);
         ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of second input not available.");
         std::vector<Dimension> B_sizes = inputs[1]->sizes();
+        assertNotParams(B_sizes);
         // Also assert that broadcasting syntax are correct if axis is not present
         if (node->hasAttribute(kaxis)) {
           if (!onnx_opset7_broadcastable(node->i(kaxis), A_sizes, B_sizes)) {
             // Add a Reshape node before input B
-            Node * n = graph->create(kReshape);
+            Node * n = graph->create(kUnsqueeze);
             n->addInput(inputs[1]);
-            // Create intializer for appropriate shape
-            Tensor t;
-            t.elem_type() = TensorProto_DataType_INT64;
-            auto& data = t.int64s();
-            for (Dimension dim : B_sizes) {
-              data.emplace_back(dim.dim);
-            }
+            std::vector<long int> axes;
             for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size()); i++) {
-              data.emplace_back(1);
+              axes.emplace_back(B_sizes.size() + i);
             }
-            Value* v = graph->addInitializerAndInput(t);
-            n->addInput(v);
+            n->is_(kaxes, std::forward<const std::vector<long int>>(axes));
             // Set 2nd input to node to 1st of n and output of n to 2nd input to node
             node->replaceInput(1, n->output());
             // Move n before node

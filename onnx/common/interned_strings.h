@@ -138,7 +138,8 @@ _(else_branch) \
 _(Captured) \
 _(__control_inputs) \
 _(count_include_pad) \
-_(storage_order)
+_(storage_order) \
+_(Unsqueeze)
 
 enum BuiltinSymbol {
   #define DEFINE_SYMBOL(s) \

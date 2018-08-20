@@ -1,5 +1,5 @@
-// Adapter indicating backwards compatibility of op between opsets with
-// separate definitions
+// Adapter indicating compatibility of op between opsets with separate
+// definitions
 
 #pragma once
 
