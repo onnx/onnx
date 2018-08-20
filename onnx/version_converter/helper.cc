@@ -7,10 +7,10 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
         const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Assert that broadcasting semantics are correct
-      for (int64_t i = 0; i < (int) input2_sizes.size(); i++) {
-        ONNX_ASSERTM(input2_sizes[i].dim == input1_sizes[axis + i].dim ||
+      for (int i = 0; i < (int) input2_sizes.size(); i++) {
+        ONNX_ASSERTM(input2_sizes[i].dim == input1_sizes[(int) axis + i].dim ||
             input2_sizes[i].dim == 1, "Dimension %d of input 2 does not match "
-            "dimension %d of input 1 or the value 1", i, axis + i);
+            "dimension %d of input 1 or the value 1", i, (int) axis + i);
       }
       // Return false if a Reshape is necessary for forward compatibility
       return axis != (int) (input1_sizes.size() - input2_sizes.size());
@@ -37,10 +37,28 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
     void numpy_multibroadcastable(const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Generalize above for multibroadcastable case
+      const std::vector<Dimension>* A_ptr;
+      const std::vector<Dimension>* B_ptr;
+      int A;
+      int B;
       if (input1_sizes.size() < input2_sizes.size()) {
-        numpy_unibroadcastable(input2_sizes, input1_sizes);
+        A_ptr = &input2_sizes;
+        B_ptr = &input1_sizes;
+        A = 2;
+        B = 1;
       } else {
-        numpy_unibroadcastable(input1_sizes, input2_sizes);
+        A_ptr = &input1_sizes;
+        B_ptr = &input2_sizes;
+        A = 1;
+        B = 2;
+      }
+      const std::vector<Dimension>& A_sizes = *A_ptr;
+      const std::vector<Dimension>& B_sizes = *B_ptr;
+      int axis = (int) (A_sizes.size() - B_sizes.size());
+      for (int i = 0; i < (int) B_sizes.size(); i++) {
+        ONNX_ASSERTM(B_sizes[i].dim == A_sizes[axis + i].dim ||
+            B_sizes[i].dim == 1 || A_sizes[axis + i].dim == 1, "Dimension %d of input %d does not match "
+            "dimension %d of input %d, and neither's value is 1", i, B, axis + i, A);
       }
     }
 }}
