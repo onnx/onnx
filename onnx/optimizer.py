@@ -28,6 +28,7 @@ Supported pass names:
     -- nop
     -- eliminate_identity
     -- eliminate_nop_transpose
+    -- eliminate_nop_pad
     -- eliminate_unused_initializer
     -- fuse_consecutive_squeezes
     -- fuse_consecutive_transposes
@@ -41,6 +42,7 @@ get_available_passes = C.get_available_passes
 def optimize(model, passes=[]):  # type: (ModelProto, Sequence[Text]) -> ModelProto
     if len(passes) == 0:
         passes = ['eliminate_nop_transpose',
+                  'eliminate_nop_pad',
                   'fuse_consecutive_transposes',
                   'fuse_transpose_into_gemm']
     if not isinstance(model, ModelProto):
