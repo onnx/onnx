@@ -1144,6 +1144,7 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
   graph_(graph_),
   stage_(graph_->new_node_stage_),
   has_name_(false),
+  has_domain_(false),
   has_doc_string_(false) {
   graph_->all_nodes.emplace(this);
 }
