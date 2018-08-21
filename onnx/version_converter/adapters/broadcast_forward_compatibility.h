@@ -17,14 +17,9 @@ class BroadcastForwardCompatibility final : public Adapter {
       // Assess whether axis requires reshaping
       if (node->hasAttribute(kbroadcast)) {
         const ArrayRef<Value*>& inputs = node->inputs();
-        ONNX_ASSERTM(inputs.size() == 2, "%s in opset version 6 can only broadcast"
-          " between 2 inputs", name().c_str());
-        ONNX_ASSERTM(inputs[0]->has_sizes(), "Shape of first input not available.");
+        assertInputsAvailable(inputs, name().c_str(), 2);
         std::vector<Dimension> A_sizes = inputs[0]->sizes();
-        assertNotParams(A_sizes);
-        ONNX_ASSERTM(inputs[1]->has_sizes(), "Shape of second input not available.");
         std::vector<Dimension> B_sizes = inputs[1]->sizes();
-        assertNotParams(B_sizes);
         // Also assert that broadcasting syntax are correct if axis is not present
         if (node->hasAttribute(kaxis)) {
           if (!onnx_opset7_requires_broadcasting(node->i(kaxis), A_sizes, B_sizes)) {

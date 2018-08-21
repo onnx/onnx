@@ -16,4 +16,6 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
         const std::vector<Dimension>& input2_sizes);
 
     void assertNotParams(const std::vector<Dimension>& sizes);
+
+    void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, int num_inputs);
 }}

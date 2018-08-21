@@ -67,4 +67,13 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
         ONNX_ASSERTM(dim.is_int, "%s Dimension is a param instead of an int.", dim.param.c_str());
       }
     }
+
+    void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, int num_inputs) {
+      ONNX_ASSERTM(inputs.size() == num_inputs, "%s in opset version 6 can only broadcast"
+        " between %d inputs", name, num_inputs);
+      for (int i = 0; i < num_inputs; i++) {
+        ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs);
+        assertNotParams(inputs[i]->sizes());
+      }
+    }
 }}
