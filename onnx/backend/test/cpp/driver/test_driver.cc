@@ -1,7 +1,4 @@
 #include <fstream>
-
-#include "onnx/onnxifi_loader.h"
-#include "onnx/proto_utils.h"
 #include "test_driver.h"
 
 #ifdef _WIN32

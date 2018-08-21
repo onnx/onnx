@@ -5,6 +5,7 @@
 #include <cstdio>
 
 #include "onnx/onnx_pb.h"
+#include "onnx/proto_utils.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnxifi.h"
 struct TestData{
@@ -73,4 +74,4 @@ std::vector<ProtoTestCase> loadAllTestCases(const std::string& location);
 std::vector<ProtoTestCase> loadAllTestCases(const std::vector<TestCase>& t);
 
 //Need to be migrated to util in the future
-onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(onnx::TensorProto proto);
+onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(const onnx::TensorProto& proto_tensor);

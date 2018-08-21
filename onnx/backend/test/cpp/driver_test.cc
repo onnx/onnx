@@ -3,10 +3,8 @@
 #include "driver/test_driver.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnx/onnxifi.h"
-#include "onnx/proto_utils.h"
-#include "onnx/onnx_pb.h"
 
-class ONNXCppUnitTest
+class ONNXCppDriverTest
 	: public testing::TestWithParam<ProtoTestCase>{
   protected:
 	  std::vector<ProtoTestData> protos_;
@@ -75,7 +73,7 @@ class ONNXCppUnitTest
 			//EXPECT_EQ(lib.onnxInitEvent(backend, inputFence), ONNXIFI_STATUS_SUCCESS);
 			EXPECT_EQ(lib.onnxRunGraph(graph, &inputFence, &outputFence),
 					ONNXIFI_STATUS_SUCCESS);
-			EXPECT_EQ(onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
+			EXPECT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
 			for (int i = 0; i < output_descriptor.size(); i++){
 				auto output_size = getDescriptorSize(&output_descriptor[i]);
 				for (int j = 0; j < output_size; j++){
@@ -87,13 +85,12 @@ class ONNXCppUnitTest
 		EXPECT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
 	}
 };
-TEST_P(ONNXCppUnitTest, ONNXCppUnitTestDriver){
+TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 	onnxifi_library lib;
 	EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
 
 	onnxBackendID backendID;
 	onnxBackend backend;
-	onnxGraph graph;
 
 	size_t numBackends;
 	lib.onnxGetBackendIDs(&backendID, &numBackends);
@@ -108,6 +105,6 @@ TEST_P(ONNXCppUnitTest, ONNXCppUnitTestDriver){
 }
 auto all_test_cases = loadAllTestCases("/************* Write Me *************/");
 INSTANTIATE_TEST_CASE_P(
-	ONNXCppTest,
-	ONNXCppUnitTest,
+	ONNXCppAllTest,
+	ONNXCppDriverTest,
 	testing::ValuesIn(all_test_cases));
