@@ -8,6 +8,7 @@
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
+#include "onnx/optimizer/passes/eliminate_nop_pad.h"
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
 #include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
@@ -29,6 +30,7 @@ struct Optimizer {
     // Register the optimization passes to the optimizer.
     registerOptimizer<EliminateIdentity>();
     registerOptimizer<EliminateNopTranspose>();
+    registerOptimizer<EliminateNopPad>();
     registerOptimizer<EliminateUnusedInitializer>();
     registerOptimizer<ExtractConstantToInitializer>();
     registerOptimizer<FuseConsecutiveSqueezes>();
