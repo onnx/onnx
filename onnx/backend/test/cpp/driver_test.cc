@@ -3,53 +3,60 @@
 #include "driver/test_driver.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnx/onnxifi.h"
+#include "onnx/proto_utils.h"
+#include "onnx/onnx_pb.h"
 
 class ONNXCppUnitTest
 	: public testing::TestWithParam<ProtoTestCase>{
   protected:
-	  std::vector<std::string> Y_by_cal;
-	  std::vector<std::string> X_;
-	  std::vector<std::string> Y_;
-	  std::string model_;
-	  void SetUp override {
+	  std::vector<ProtoTestData> protos_;
+	  onnx::ModelProto model_;
+	  void SetUp() override {
 		ProtoTestCase t = GetParam();
-	    X_ = t.inputs_;
-		Y_ = t.outputs_;
+		protos_ = t.proto_test_data_;
 		model_ = t.model_;
 	  }
-	  void RunAndVerify(onnxifi_library lib, onnxBackend backend){
+	  uint64_t getDescriptorSize(onnxTensorDescriptorV1 *t){
+		uint64_t d_size = 1;
+		if (t->dimensions == 0) return 0;
+		for (int i = 0; i < t->dimensions; i++){
+			d_size *= t->shape[i];
+		}
+		return d_size;
+	  }
+	  void RunAndVerify(onnxifi_library& lib, onnxBackend& backend){
 
 		onnxGraph graph;
-		uint32_t weightCount = X_.model_.graph.intializer_size();
+		uint32_t weightCount = model_.graph().initializer_size();
 		onnxTensorDescriptorV1 weightDescriptors =
-			ProtoToOnnxTensorDescriptor(X_.model_.graph.initializer(0));
+			ProtoToOnnxTensorDescriptor(model_.graph().initializer(0));
 
 		EXPECT_EQ(lib.onnxInitGraph(
 				backend,
 				NULL,
-				X_.model_.size(),
-				X_.model_.data(),
+				sizeof(model_),
+				&model_,
 				weightCount,
-				weightDescriptors,
+				&weightDescriptors,
 				&graph),
 			ONNXIFI_STATUS_SUCCESS);
 
-		for (auto proto_test_data : X_.proto_test_data_){
+		for (auto proto_test_data : protos_){
 
-			vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor, result_descriptor;
-			for (auto input : proto_test_data.inputs){
+			std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor, result_descriptor;
+			for (auto input : proto_test_data.inputs_){
 				input_descriptor.push_back(ProtoToOnnxTensorDescriptor(input));
 			}
-			for (auto output : proto_test_data.outputs){
+			for (auto output : proto_test_data.outputs_){
 				output_descriptor.push_back(ProtoToOnnxTensorDescriptor(output));
 				onnxTensorDescriptorV1 result;
 				result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
 				result.name = "result";
-				result.dataType = output.data_type;
+				result.dataType = output.data_type();
 				result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
-				result.dimension = output.dims.size();
-				result.shape = output.dims.data();
-				result.buffer = (onnxPointer) new char[sizeof(output.raw_data_size())]
+				result.dimensions = output.dims().size();
+				result.shape = (unsigned long long*)output.dims().data();
+				result.buffer = (onnxPointer) new char[sizeof(output.raw_data().size())];
 				result_descriptor.push_back(result);
 			}
 			EXPECT_EQ(lib.onnxSetGraphIO(graph,
@@ -59,25 +66,27 @@ class ONNXCppUnitTest
 										result_descriptor.data()),
 					ONNXIFI_STATUS_SUCCESS);
 
-			onnxEvent inputFence, outputFence;
+			onnxMemoryFenceV1 inputFence, outputFence;
 			inputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
 			outputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
 			inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
 			outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
 
-			EXPECT_EQ(lib.onnxInitEvent(backend, &inputFence), ONNXIFI_STATUS_SUCCESS);
+			//EXPECT_EQ(lib.onnxInitEvent(backend, inputFence), ONNXIFI_STATUS_SUCCESS);
 			EXPECT_EQ(lib.onnxRunGraph(graph, &inputFence, &outputFence),
 					ONNXIFI_STATUS_SUCCESS);
 			EXPECT_EQ(onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
 			for (int i = 0; i < output_descriptor.size(); i++){
-				for (int j = 0; j < output_descriptor[i].raw_data_size(); j++){
-					EXPECT_EQ(output_descriptor[i].raw_data[j], result_descriptor[i].raw_data[j]);
+				auto output_size = getDescriptorSize(&output_descriptor[i]);
+				for (int j = 0; j < output_size; j++){
+					//size might be a problem!
+					EXPECT_EQ(((char *)output_descriptor[i].buffer)[j], ((char *)result_descriptor[i].buffer)[j]);
 				}
 			}
 		}
 		EXPECT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
 	}
-}
+};
 TEST_P(ONNXCppUnitTest, ONNXCppUnitTestDriver){
 	onnxifi_library lib;
 	EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
@@ -90,15 +99,15 @@ TEST_P(ONNXCppUnitTest, ONNXCppUnitTestDriver){
 	lib.onnxGetBackendIDs(&backendID, &numBackends);
 ////////////////Might be a problem////////////////
 	const uint64_t backendProperties[] = {
-		ONNXIFI_BACKEND_PROPERTY_NONE;
+		ONNXIFI_BACKEND_PROPERTY_NONE
 	};
 	lib.onnxInitBackend(backendID, backendProperties, &backend);
-	RunAndVerify();
+	RunAndVerify(lib, backend);
 	lib.onnxReleaseBackend(backend);
 	lib.onnxReleaseBackendID(backendID);
 }
-
+auto all_test_cases = loadAllTestCases("/************* Write Me *************/");
 INSTANTIATE_TEST_CASE_P(
 	ONNXCppTest,
 	ONNXCppUnitTest,
-	serializeAllTestCases("/******** Write Me **********/"));
+	testing::ValuesIn(all_test_cases));

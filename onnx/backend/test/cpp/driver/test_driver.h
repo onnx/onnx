@@ -4,7 +4,8 @@
 #include <cstdlib>
 #include <cstdio>
 
-#include "onnx/onnx.pb.h"
+#include "onnx/onnx_pb.h"
+#include "onnx/onnxifi_loader.h"
 #include "onnxifi.h"
 struct TestData{
 	std::vector<std::string> input_filenames_;
@@ -50,10 +51,11 @@ struct ProtoTestCase{
 
 class TestDriver{
 
-	std::vector<TestCase> testcases_;
 	std::string default_dir_;
 
 	void setDefaultDir(const std::string& s);
+	public:
+	std::vector<TestCase> testcases_;
 	TestDriver(const std::string default_dir = "."){
 		default_dir_ = default_dir_;
 		testcases_.clear();
