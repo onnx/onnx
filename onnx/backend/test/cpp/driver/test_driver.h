@@ -8,6 +8,9 @@
 #include "onnx/proto_utils.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnxifi.h"
+
+#include "gtest/gtest.h"
+
 struct TestData{
 	std::vector<std::string> input_filenames_;
 	std::vector<std::string> output_filenames_;
@@ -63,10 +66,10 @@ class TestDriver{
 	}
 
 	int fetchAllTestCases(const std::string& _target_dir);
-	int fetchSingleTestCase(char* case_dir);
+        int fetchSingleTestCase(const std::string& case_dir);
 };
 
-std::vector<TestCase> getTestCase(const std::string& location);
+std::vector<TestCase> getTestCase();
 
 void loadSingleFile(const std::string& filename, std::string& filedata);
 ProtoTestCase loadSingleTestCase(const TestCase& t);

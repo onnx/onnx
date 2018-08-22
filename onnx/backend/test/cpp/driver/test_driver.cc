@@ -24,45 +24,46 @@ void TestDriver::setDefaultDir(const std::string &s){
 }
 
 //load single test case in case_dir to _testcases
-int TestDriver::fetchSingleTestCase(char* case_dir){
-	std::string model_name = case_dir;
-   model_name += "model.onnx";
-	if (fileExist(model_name)){
-		TestCase test_case;
-		test_case.model_filename_ = model_name;
-		test_case.model_dirname_ = case_dir;
-		int case_count = 0;
-		for (;;case_count++){
+int TestDriver::fetchSingleTestCase(const std::string& case_dir) {
+  std::string model_name = case_dir;
+  model_name += "model.onnx";
+  if (fileExist(model_name)) {
+    TestCase test_case;
+    test_case.model_filename_ = model_name;
+    test_case.model_dirname_ = case_dir;
+    int case_count = 0;
+    for (;; case_count++) {
+      std::vector<std::string> input_filenames, output_filenames;
+      std::string input_name, output_name;
+      std::string case_dirname = case_dir;
+      case_dirname += "test_data_set_" + std::to_string(case_count);
 
-			std::vector<std::string> input_filenames, output_filenames;
-			std::string input_name, output_name;
-			std::string case_dirname = case_dir;
-			case_dirname += "/test_data_set_" + std::to_string(case_count);
+      output_name = case_dirname + "/output_" + "0" + ".pb";
+      if (!fileExist(output_name)) {
+        break;
+      }
 
-			output_name = case_dirname + "/output_" + "0" + ".pb";
-			if (!fileExist(output_name)){
-				break;
-			}
-
-			for (int data_count = 0; ; data_count++){
-				input_name = case_dirname + "/input_" + std::to_string(data_count) + ".pb";
-				output_name = case_dirname + "/output_" + std::to_string(data_count) + ".pb";
-				if (!fileExist(input_name) && !fileExist(input_name)){
-					break;
-				}
-				if (fileExist(input_name)){
-					input_filenames.push_back(input_name);
-				}
-				if (fileExist(output_name)){
-					output_filenames.push_back(output_name);
-				}
-			}
-			TestData test_data(input_filenames, output_filenames);
-			test_case.test_data_.push_back(test_data);
-		}
-		testcases_.push_back(test_case);
-	}
-	return 0;
+      for (int data_count = 0;; data_count++) {
+        input_name =
+            case_dirname + "/input_" + std::to_string(data_count) + ".pb";
+        output_name =
+            case_dirname + "/output_" + std::to_string(data_count) + ".pb";
+        if (!fileExist(input_name) && !fileExist(input_name)) {
+          break;
+        }
+        if (fileExist(input_name)) {
+          input_filenames.push_back(input_name);
+        }
+        if (fileExist(output_name)) {
+          output_filenames.push_back(output_name);
+        }
+      }
+      TestData test_data(input_filenames, output_filenames);
+      test_case.test_data_.push_back(test_data);
+    }
+    testcases_.push_back(test_case);
+  }
+  return 0;
 }
 
 //load all test data in target_dir to _testcases
@@ -90,8 +91,10 @@ int TestDriver::fetchAllTestCases(const std::string& _target_dir){
 				break;
 			}
 		}
-		fetchSingleTestCase(entry->d_name);
-	}
+                std::string entry_dname = entry->d_name;
+                entry_dname = _target_dir + '/' + entry_dname + "/";
+                fetchSingleTestCase(entry_dname);
+        }
 cleanup:
 	if (directory != NULL){
 		if (closedir(directory) != 0){
