@@ -255,7 +255,7 @@ scan_outputs.
 The operation supports batching, and the batch-axis is required to be 0.
 When multiple scan_input tensors are used, they must all have the same batch-size,
 and they must all have the same maximum-sequence-length (the dimensionality of the
-sequence axis or scan axis).
+sequence axis or scan axis). The sequence axis or scan axis is required to be 1.
 
 The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
 allow variable length sequences of length <= the maximum-sequence-length. If this
@@ -272,13 +272,14 @@ scan_inputs, once with a forward direction, and once with a backward direction.
 Note that because of the ONNX restriction that only the last parameter of an operator can
 be variadic, the initial-states and scan-inputs are listed together as one input parameter.
 Similarly, the final-states and scan-outputs are listed together as one output parameter.
-The length M of the scan_axes attribute is sufficient to distinguish which inputs and
-outputs are which.
+The optional attribute num_scan_inputs indicates the number M of scan-inputs. If this
+attribute as well as the directions attribute are omitted, the number M of scan-inputs is
+assumed to be 1.
 
 The behavior of
 
     Scan <
-        scan_axes = [axis_1, ..., axis_m],
+        num_scan_inputs = m,
         body = loop-body
     > (sequence_lengths, init_1, ..., init_n, scan_1, ..., scan_m)
 
@@ -288,9 +289,9 @@ is equivalent to the following pseudo-code:
     // The batch-size of scan_1, ..., scan_m are all required to be equal
     batch_size = scan_1.shape[0];
 
-    // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
-    // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
-    max_sequence_length = scan_1.shape[axis_1];
+    // scan_i.shape[1] denotes the (max) sequence-length of scan_i
+    // scan_i.shape[1] is required to be equal to scan_j.shape[1] for all i,j.
+    max_sequence_length = scan_1.shape[1];
 
     for (int batch = 0; batch < batch_size; ++batch) {
         // initialize state-variables
@@ -304,9 +305,9 @@ is equivalent to the following pseudo-code:
         for (int t = 0; t < N; ++t) {
             // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
             // of rank one less than T obtained by indexing T at position t along axis k.
-            si_1 = (scan_1<axis=0>[batch])<axis=axis_1>[t];
+            si_1 = (scan_1<axis=0>[batch])<axis=1>[t];
             ... ;
-            si_m = (scan_m<axis=0>[batch])<axis=axis_m>[t];
+            si_m = (scan_m<axis=0>[batch])<axis=1>[t];
             // execute loop-body
             st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
             // accumulate the scan-output elements
@@ -315,6 +316,7 @@ is equivalent to the following pseudo-code:
         // accumulate the outputs for this batch:
         bst_1[batch] = st_1; ..., bst_n[batch] = st_n;
         // Note scan-outputs will have size max_sequence_length, but only first N values will be meaningful.
+        // The remaining values have an undefined value.
         b_scan_out_1[batch] = scan_out_1; ...; b_scan_out_k[batch] = scan_out_k;
     }
     return bst_1, ..., bst_n, b_scan_out_1, ..., b_scan_out_k;
@@ -331,7 +333,7 @@ values are computed in the outer graph, they need to be passed in as extra state
     graph rnn-encoding {
       %H_0 = ... 
       %X = ...
-      %Y_h, %Y = Scan[body = <graph rnn-cell-1>, scan_axes=[0]]("", %H_0, %X)
+      %Y_h, %Y = Scan[body = <graph rnn-cell-1>]("", %H_0, %X)
       return %Y, %Y_h
     }
 
@@ -392,11 +394,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 		AttributeProto::GRAPH,
 		true)
 	.Attr(
-		"scan_axes",
-		"A list of M axes. The i-th element of the list specifies the axis "
-		"to be scanned for the i-th scan_input tensor.",
-		AttributeProto::INTS,
-        true
+		"num_scan_inputs",
+		"An optional attribute specifying the number of scan_inputs M. "
+        "If neither this attribute nor the directions attribute is specified, the "
+        "number of scan_inputs M is assumed to be 1.",
+		AttributeProto::INT,
+        false
 	)
     .Attr(
 		"directions",
