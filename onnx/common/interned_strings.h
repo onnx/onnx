@@ -40,6 +40,7 @@ _(Tile) \
 _(SubConstant) \
 _(Scale) \
 _(Transpose) \
+_(Pad) \
 _(Reshape) \
 _(split) \
 _(chunk) \
