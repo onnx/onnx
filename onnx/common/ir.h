@@ -409,6 +409,8 @@ private:
   size_t stage_;
   bool has_name_;
   std::string name_;
+  bool has_domain_;
+  std::string domain_;
   bool has_doc_string_;
   std::string doc_string_;
 
@@ -425,6 +427,16 @@ public:
   void setName(std::string name) {
     has_name_ = true;
     name_ = std::move(name);
+  }
+  bool has_domain() {
+    return has_domain_;
+  }
+  const std::string& domain() const {
+    return domain_;
+  }
+  void setDomain(std::string domain) {
+    has_domain_ = true;
+    domain_ = std::move(domain);
   }
   bool has_doc_string() const {
     return has_doc_string_;
@@ -1132,6 +1144,7 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
   graph_(graph_),
   stage_(graph_->new_node_stage_),
   has_name_(false),
+  has_domain_(false),
   has_doc_string_(false) {
   graph_->all_nodes.emplace(this);
 }
