@@ -32,7 +32,6 @@ list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
 file(GLOB_RECURSE ${DRIVER_NAME}_src "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
-list(REMOVE_ITEM ${DRIVER_NAME}_src "${ONNX_ROOT}/onnx/backend/test/cpp/sample.cc")
 
 function(AddTest)
   cmake_parse_arguments(_UT "" "TARGET" "LIBS;SOURCES" ${ARGN})
