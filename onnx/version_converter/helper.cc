@@ -71,7 +71,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
     void assertInputsAvailable(const ArrayRef<Value*>& inputs, const char* name, uint64_t num_inputs) {
       ONNX_ASSERTM(inputs.size() == num_inputs, "%s in opset version 6 can only broadcast"
         " between %d inputs", name, num_inputs);
-      for (int i = 0; i < num_inputs; i++) {
+      for (int i = 0; i < (int) num_inputs; i++) {
         ONNX_ASSERTM(inputs[i]->has_sizes(), "Shape of input %d is not available.", num_inputs);
         assertNotParams(inputs[i]->sizes());
       }
