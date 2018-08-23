@@ -27,14 +27,17 @@ class BroadcastForwardCompatibility final : public Adapter {
             Node * n = graph->create(kUnsqueeze);
             n->addInput(inputs[1]);
             std::vector<int64_t> axes;
+            std::vector<Dimension> new_sizes = B_sizes;
             for (int i = 0; i < (int) (A_sizes.size() - B_sizes.size()); i++) {
               axes.emplace_back(B_sizes.size() + i);
+              new_sizes.emplace_back(Dimension(1));
             }
             n->is_(kaxes, std::forward<const std::vector<int64_t>>(axes));
-            // Set 2nd input to node to 1st of n and output of n to 2nd input to node
-            node->replaceInput(1, n->output());
             // Move n before node
-            node->moveBefore(n);
+            n->insertBefore(node);
+            // Set 2nd input to node to 1st of n and output of n to 2nd input to node
+            n->output()->setSizes(new_sizes);
+            node->replaceInput(1, n->output());
           }
         }
         node->removeAttribute(kbroadcast);
