@@ -103,7 +103,6 @@ else()
   set(ONNX_NAMESPACE "onnx")
   set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=onnx")
 endif()
-add_definitions(${MY_ONNX_NAMESPACE})
 
 if(ONNX_ML)
   add_definitions("-DONNX_ML=1")
@@ -276,11 +275,14 @@ if(TARGET protobuf::libprotobuf)
 else()
   target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
 endif()
+target_compile_options(onnx_proto PUBLIC ${MY_ONNX_NAMESPACE})
 
 add_library(onnx ${onnx_src})
 target_include_directories(onnx
                            PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
+# interface compile options of onnx_proto will also take effect here, but I think setting it explicitly is better.
+target_compile_options(onnx PUBLIC ${MY_ONNX_NAMESPACE})
 
 if(BUILD_ONNX_PYTHON)
   if("${PY_EXT_SUFFIX}" STREQUAL "")
