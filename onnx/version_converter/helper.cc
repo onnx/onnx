@@ -3,19 +3,6 @@
 #include "onnx/version_converter/helper.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
-    bool onnx_opset7_requires_broadcasting(int64_t axis,
-        const std::vector<Dimension>& input1_sizes,
-        const std::vector<Dimension>& input2_sizes) {
-      // Assert that broadcasting semantics are correct
-      for (int i = 0; i < (int) input2_sizes.size(); i++) {
-        ONNX_ASSERTM(input2_sizes[i].dim == input1_sizes[(int) axis + i].dim ||
-            input2_sizes[i].dim == 1, "Dimension %d of input 2 does not match "
-            "dimension %d of input 1 or the value 1", i, (int) axis + i);
-      }
-      // Return false if a Reshape is necessary for forward compatibility
-      return axis != (int) (input1_sizes.size() - input2_sizes.size());
-    }
-
     bool numpy_unibroadcastable(const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Assert that equal of input1 larger

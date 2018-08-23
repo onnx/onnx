@@ -18,8 +18,8 @@ class BroadcastBackwardCompatibility final : public Adapter {
       // Main change: encode broadcasting commands as explicit attribute
       const ArrayRef<Value*>& inputs = node->inputs();
       assertInputsAvailable(inputs, name().c_str(), 2);
-      std::vector<Dimension> A_sizes = inputs[0]->sizes();
-      std::vector<Dimension> B_sizes = inputs[1]->sizes();
+      const std::vector<Dimension>& A_sizes = inputs[0]->sizes();
+      const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
       // Ensure that first input is larger than or equal to the second
       // numpy_unibroadcastable here is considered to be equivalent to opset1_broadcastable
       // This is because backwards conversion does not allow for an axis that is not

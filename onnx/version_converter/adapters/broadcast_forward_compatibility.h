@@ -18,11 +18,11 @@ class BroadcastForwardCompatibility final : public Adapter {
       if (node->hasAttribute(kbroadcast)) {
         const ArrayRef<Value*>& inputs = node->inputs();
         assertInputsAvailable(inputs, name().c_str(), 2);
-        std::vector<Dimension> A_sizes = inputs[0]->sizes();
-        std::vector<Dimension> B_sizes = inputs[1]->sizes();
+        const std::vector<Dimension>& A_sizes = inputs[0]->sizes();
+        const std::vector<Dimension>& B_sizes = inputs[1]->sizes();
         // Also assert that broadcasting syntax are correct if axis is not present
         if (node->hasAttribute(kaxis)) {
-          if (!onnx_opset7_requires_broadcasting(node->i(kaxis), A_sizes, B_sizes)) {
+          if (node->i(kaxis) != (int) (A_sizes.size() - B_sizes.size())) {
             // Add a Reshape node before input B
             Node * n = graph->create(kUnsqueeze);
             n->addInput(inputs[1]);
@@ -35,9 +35,6 @@ class BroadcastForwardCompatibility final : public Adapter {
             node->replaceInput(1, n->output());
             // Move n before node
             node->moveBefore(n);
-          } else {
-            onnx_opset7_requires_broadcasting(A_sizes.size() - B_sizes.size(), A_sizes,
-                B_sizes);
           }
         }
         node->removeAttribute(kbroadcast);
