@@ -2,8 +2,7 @@
 #include "onnx/checker.h"
 #include "onnx/onnxifi.h"
 #include "onnx/onnxifi_loader.h"
-#define ONNXIFI_BACKEND_USED false
-
+const bool ONNXIFI_BACKEND_USED = false;
 class ONNXCppDriverTest
 	: public testing::TestWithParam<ProtoTestCase>{
   protected:
@@ -16,7 +15,6 @@ class ONNXCppDriverTest
 	  }
 	  uint64_t getDescriptorSize(onnxTensorDescriptorV1 *t){
 		uint64_t d_size = 1;
-		if (t->dimensions == 0) return 0;
 		for (int i = 0; i < t->dimensions; i++){
 			d_size *= t->shape[i];
 		}
@@ -73,7 +71,7 @@ class ONNXCppDriverTest
                   result.dataType = output.data_type();
                   result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
                   result.dimensions = output.dims().size();
-                  result.shape = (unsigned long long*)output.dims().data();
+                  result.shape = (uint64_t*) output.dims().data();
                   result.buffer =
                       (onnxPointer) new char[sizeof(output.raw_data().size())];
                   result_descriptor.push_back(result);

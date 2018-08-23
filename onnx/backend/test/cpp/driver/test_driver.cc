@@ -80,10 +80,10 @@ int TestDriver::fetchAllTestCases(const std::string& _target_dir){
 	}
 
 	while (true){
-		errno = ERRNO_DIR_END;
+		errno = 0;
 		struct dirent* entry = readdir(directory);
 		if (entry == NULL){
-			if (errno != ERRNO_DIR_END){
+			if (errno != 0){
 				fprintf(stderr, "Error: cannot read directory %s when loading test data: %s\n",
 					target_dir.c_str(), strerror(errno));
 				return -1;
