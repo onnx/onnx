@@ -30,7 +30,12 @@ class Gemm_7_6 final : public Adapter {
       } else {
         MN.emplace_back(B_shape[1]);
       }
-      if (assert_numpy_unibroadcastable_and_require_broadcast(MN, C_shape)) {
+      int req_broadcast = check_numpy_unibroadcastable_and_require_broadcast(MN,
+          C_shape);
+      ONNX_ASSERTM(req_broadcast != -1, "%s being converted from %d to %d does "
+          "not have broadcastable inputs.", name().c_str(), initial_version()
+          .version(), target_version().version());
+      if (req_broadcast == 1) {
         node->i_(kbroadcast, 1);
       }
     }

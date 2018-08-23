@@ -18,7 +18,6 @@ class Gemm_6_7 final : public Adapter {
       // Determine if C is broadcastable
       const auto& C_shape = inputs[2]->sizes();
       // Create (M, N) to input to numpy_unibroadcastable
-      // TODO: Reconcile fact that shapes aren't determined for 1st 2 inputs
       std::vector<Dimension> MN;
       if (node->hasAttribute(ktransA) && node->i(ktransA) == 1) {
         MN.emplace_back(A_shape[1]);
@@ -30,7 +29,9 @@ class Gemm_6_7 final : public Adapter {
       } else {
         MN.emplace_back(B_shape[1]);
       }
-      assert_numpy_unibroadcastable_and_require_broadcast(MN, C_shape);
+      ONNX_ASSERTM(check_numpy_unibroadcastable_and_require_broadcast(MN,
+            C_shape) != -1, "Gemm being converted from 6 to 7 does not have "
+          "broadcastable inputs.");
       if (node->hasAttribute(kbroadcast)) node->removeAttribute(kbroadcast);
     }
 

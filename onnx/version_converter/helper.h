@@ -5,7 +5,7 @@
 #include "onnx/common/ir.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
-    bool assert_numpy_unibroadcastable_and_require_broadcast(
+    int check_numpy_unibroadcastable_and_require_broadcast(
         const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes);
 
