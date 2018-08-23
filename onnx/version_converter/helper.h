@@ -5,10 +5,11 @@
 #include "onnx/common/ir.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
-    bool numpy_unibroadcastable(const std::vector<Dimension>& input1_sizes,
+    bool assert_numpy_unibroadcastable_and_require_broadcast(
+        const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes);
 
-    void numpy_multibroadcastable(const std::vector<Dimension>& input1_sizes,
+    void assert_numpy_multibroadcastable(const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes);
 
     void assertNotParams(const std::vector<Dimension>& sizes);

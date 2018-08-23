@@ -24,7 +24,7 @@ class BroadcastBackwardCompatibility final : public Adapter {
       // numpy_unibroadcastable here is considered to be equivalent to opset1_broadcastable
       // This is because backwards conversion does not allow for an axis that is not
       // suffix matching
-      if(numpy_unibroadcastable(A_sizes, B_sizes)) {
+      if(assert_numpy_unibroadcastable_and_require_broadcast(A_sizes, B_sizes)) {
         // If conditional is not fulfilled, we have a default broadcast
         // Add broadcast attribute
         node->i_(kbroadcast, 1);

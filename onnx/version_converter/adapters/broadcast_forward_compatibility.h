@@ -45,7 +45,7 @@ class BroadcastForwardCompatibility final : public Adapter {
       if (node->hasAttribute(kaxis)) node->removeAttribute(kaxis);
       // Assert multi_broadcastable on inputs
       const ArrayRef<Value*>& inputs = node->inputs();
-      numpy_multibroadcastable(inputs[0]->sizes(), inputs[1]->sizes());
+      assert_numpy_multibroadcastable(inputs[0]->sizes(), inputs[1]->sizes());
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {

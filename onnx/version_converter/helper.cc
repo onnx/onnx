@@ -3,7 +3,8 @@
 #include "onnx/version_converter/helper.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
-    bool numpy_unibroadcastable(const std::vector<Dimension>& input1_sizes,
+    bool assert_numpy_unibroadcastable_and_require_broadcast(
+        const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Assert that equal of input1 larger
       ONNX_ASSERTM(input1_sizes.size() >= input2_sizes.size(),
@@ -21,7 +22,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
       return input1_sizes.size() > input2_sizes.size() || broadcast;
     }
 
-    void numpy_multibroadcastable(const std::vector<Dimension>& input1_sizes,
+    void assert_numpy_multibroadcastable(const std::vector<Dimension>& input1_sizes,
         const std::vector<Dimension>& input2_sizes) {
       // Generalize above for multibroadcastable case
       const std::vector<Dimension>* A_ptr;

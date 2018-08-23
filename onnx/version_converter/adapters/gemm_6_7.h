@@ -30,7 +30,7 @@ class Gemm_6_7 final : public Adapter {
       } else {
         MN.emplace_back(B_shape[1]);
       }
-      numpy_unibroadcastable(MN, C_shape);
+      assert_numpy_unibroadcastable_and_require_broadcast(MN, C_shape);
       if (node->hasAttribute(kbroadcast)) node->removeAttribute(kbroadcast);
     }
 
