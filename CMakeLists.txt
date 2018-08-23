@@ -305,14 +305,18 @@ if(BUILD_ONNX_PYTHON)
                                      "${PYTHON_INCLUDE_DIR}")
 
   # pybind11 is a header only lib
-  find_package(pybind11)
+  find_package(pybind11 2.2)
   if(pybind11_FOUND)
     target_include_directories(onnx_cpp2py_export
                                PRIVATE ${pybind11_INCLUDE_DIRS})
   else()
-    target_include_directories(
-      onnx_cpp2py_export
-      PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+    if(EXISTS ${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h)
+      target_include_directories(
+        onnx_cpp2py_export
+        PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+    else()
+      message(FATAL_ERROR "cannot find pybind")
+    endif()
   endif()
 
   if(APPLE)
