@@ -62,7 +62,6 @@ class TestDriver{
 	std::vector<TestCase> testcases_;
 	TestDriver(const std::string default_dir = "."){
 		default_dir_ = default_dir_;
-		testcases_.clear();
 	}
 
 	int fetchAllTestCases(const std::string& _target_dir);
