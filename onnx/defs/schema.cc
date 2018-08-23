@@ -275,6 +275,11 @@ OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   return *this;
 }
 
+OpSchema& OpSchema::Deprecate() {
+  deprecated_ = true;
+  return *this;
+}
+
 OpSchema& OpSchema::NumInputs(std::set<int> allowed_input_nums) {
   num_inputs_allowed_ =
       [MOVE_CAPTURE_IF_CPP14(allowed_input_nums)](int n) -> bool {
