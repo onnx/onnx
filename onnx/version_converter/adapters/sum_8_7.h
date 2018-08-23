@@ -17,7 +17,7 @@ class Sum_8_7 final : public Adapter {
       for (int i = 1; i < (int) inputs.size(); i++) {
         std::vector<Dimension> A_sizes = inputs[i - 1]->sizes();
         std::vector<Dimension> B_sizes = inputs[i]->sizes();
-        numpy_multibroadcastable(A_sizes, B_sizes);
+        assert_numpy_multibroadcastable(A_sizes, B_sizes);
       }
     }
 
