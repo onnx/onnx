@@ -5,6 +5,22 @@
 
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
+#include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
+#include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
+#include "onnx/version_converter/adapters/type_restriction.h"
+#include "onnx/version_converter/adapters/backwards_compatible.h"
+#include "onnx/version_converter/adapters/batch_normalization_6_7.h"
+#include "onnx/version_converter/adapters/batch_normalization_6_5.h"
+#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
+#include "onnx/version_converter/adapters/concat_3_4.h"
+#include "onnx/version_converter/adapters/concat_4_3.h"
+#include "onnx/version_converter/adapters/reshape_5_4.h"
+#include "onnx/version_converter/adapters/reshape_4_5.h"
+#include "onnx/version_converter/adapters/sum_8_7.h"
+#include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/averagepool_7_6.h"
+#include "onnx/version_converter/adapters/dropout_6_7.h"
+#include "onnx/version_converter/adapters/maxpool_8_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -59,7 +75,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       for (const OpSchema& schema : all_opschemas) {
         all_schemas[schema.Name()][schema.domain()][(int64_t)
           schema.since_version()] = &schema;
-          debug("Schema for " + schema.Name());
       }
 
       // Iterate through all_schemas to determine NoPreviousVersionAdapters
@@ -73,12 +88,69 @@ class DefaultVersionConverter : public BaseVersionConverter {
             }
           }
           if (min_version > 1) {
-            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + ONNX_NAMESPACE::to_string(min_version));
             registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
               OpSetID(min_version), OpSetID(min_version - 1)));
           }
         }
       }
+
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<TypeRestriction>("Add",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<TypeRestriction>("Mul",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Gemm",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Gemm",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Gemm_7_6>());
+      registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Relu",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Dropout",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Dropout_6_7>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Sum",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("Sum",
+        OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Sum",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Sum_8_7>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("BatchNormalization",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BatchNormalization_6_7>());
+      registerAdapter(make_unique<BatchNormalization_6_5>());
+      registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("AveragePool",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<AveragePool_7_6>());
+      registerAdapter(make_unique<BackwardsCompatibleAdapter>("MaxPool",
+        OpSetID(7), OpSetID(8)));
+      registerAdapter(make_unique<MaxPool_8_7>());
+      registerAdapter(make_unique<Concat_3_4>());
+      registerAdapter(make_unique<Concat_4_3>());
+      registerAdapter(make_unique<Reshape_4_5>());
+      registerAdapter(make_unique<Reshape_5_4>());
     }
 
     ModelProto convert_version(
