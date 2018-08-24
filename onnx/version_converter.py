@@ -56,12 +56,16 @@ Unsupported adapters:
     --Sum from Opset 8 to Opset 7
     --Sum from Opset 6 to Opset 5
     --Sum from Opset 5 to Opset 6
+    --MaxPool from Opset 8 to Opset 7
+    --MaxPool from Opset 7 to Opset 8
     --AveragePool from Opset 7 to Opset 6
     --AveragePool from Opset 6 to Opset 7
     --Dropout from Opset 7 to Opset 6
     --Dropout from Opset 6 to Opset 5
     --Dropout from Opset 6 to Opset 7
     --Dropout from Opset 5 to Opset 6
+
+Unsupported adapters:
     --Min from Opset 8 to Opset 7
     --Min from Opset 7 to Opset 8
     --Min from Opset 6 to Opset 5
