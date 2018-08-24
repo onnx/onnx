@@ -8360,8 +8360,8 @@ This version of the operator has been available since version 8 of the default O
 <dl>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
-<dt><tt>directions</tt> : list of strings</dt>
-<dd>An optional list of M directions. The i-th element of the list specifies the direction (forward or reverse) to be scanned for the i-th scan_input tensor. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>directions</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
 </dl>

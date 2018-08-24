@@ -398,10 +398,11 @@ ONNX_OPERATOR_SET_SCHEMA(
 		true)
 	.Attr(
 		"directions",
-		"An optional list of M directions. The i-th element of the list specifies the direction "
-		"(forward or reverse) to be scanned for the i-th scan_input tensor. "
+		"An optional list of M flags. The i-th element of the list specifies the direction "
+		"to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
+		"indicates reverse direction. "
 		"If omitted, all scan_input tensors will be scanned in the forward direction.",
-		AttributeProto::STRINGS,
+		AttributeProto::INTS,
 		false)
 	.TypeConstraint("I", { "tensor(int64)" }, "Int64 tensor")
 	.TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types"));
