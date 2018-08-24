@@ -300,6 +300,8 @@ if(BUILD_ONNX_PYTHON)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  # Setting compile flags about namespace explicitly
+  target_compile_options(onnx_cpp2py_export PUBLIC ${MY_ONNX_NAMESPACE})
   target_include_directories(onnx_cpp2py_export
                              PRIVATE "${ONNX_ROOT}"
                                      "${CMAKE_CURRENT_BINARY_DIR}"
