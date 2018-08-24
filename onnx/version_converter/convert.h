@@ -5,6 +5,13 @@
 
 #include "onnx/version_converter/BaseConverter.h"
 #include "onnx/version_converter/adapters/no_previous_version.h"
+#include "onnx/version_converter/adapters/broadcast_backward_compatibility.h"
+#include "onnx/version_converter/adapters/broadcast_forward_compatibility.h"
+#include "onnx/version_converter/adapters/type_restriction.h"
+#include "onnx/version_converter/adapters/compatible.h"
+#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
+#include "onnx/version_converter/adapters/gemm_7_6.h"
+#include "onnx/version_converter/adapters/gemm_6_7.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -33,7 +40,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     void assertInVersionRange(int64_t version) const {
       ONNX_ASSERTM(version >= version_range.first && version <=
           version_range.second,
-          "Warning: invalid version (must be between %s and %s",
+          "Warning: invalid version (must be between %s and %s)",
           version_range.first, version_range.second);
     }
 
@@ -59,7 +66,6 @@ class DefaultVersionConverter : public BaseVersionConverter {
       for (const OpSchema& schema : all_opschemas) {
         all_schemas[schema.Name()][schema.domain()][(int64_t)
           schema.since_version()] = &schema;
-          debug("Schema for " + schema.Name());
       }
 
       // Iterate through all_schemas to determine NoPreviousVersionAdapters
@@ -73,12 +79,41 @@ class DefaultVersionConverter : public BaseVersionConverter {
             }
           }
           if (min_version > 1) {
-            debug("Creating NoPreviousVersionAdapter for " + op_pair.first + " from " + ONNX_NAMESPACE::to_string(min_version));
             registerAdapter(make_unique<NoPreviousVersionAdapter>(op_pair.first,
               OpSetID(min_version), OpSetID(min_version - 1)));
           }
         }
       }
+
+      std::vector<TensorProto_DataType> broadcast_unallowed_types = {
+        TensorProto_DataType_INT32, TensorProto_DataType_INT64,
+        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64};
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Add",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Add",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<TypeRestriction>("Add",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Add",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastBackwardCompatibility>("Mul",
+        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BroadcastForwardCompatibility>("Mul",
+        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<TypeRestriction>("Mul",
+        OpSetID(6), OpSetID(5), broadcast_unallowed_types));
+      registerAdapter(make_unique<RemoveConsumedInputs>("Mul",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+        OpSetID(6), OpSetID(5)));
+      registerAdapter(make_unique<CompatibleAdapter>("Gemm",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Gemm_7_6>());
+      registerAdapter(make_unique<Gemm_6_7>());
+      registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("Relu",
+        OpSetID(6), OpSetID(5)));
     }
 
     ModelProto convert_version(
