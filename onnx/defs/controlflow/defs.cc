@@ -272,9 +272,7 @@ scan_inputs, once with a forward direction, and once with a backward direction.
 Note that because of the ONNX restriction that only the last parameter of an operator can
 be variadic, the initial-states and scan-inputs are listed together as one input parameter.
 Similarly, the final-states and scan-outputs are listed together as one output parameter.
-The optional attribute num_scan_inputs indicates the number M of scan-inputs. If this
-attribute as well as the directions attribute are omitted, the number M of scan-inputs is
-assumed to be 1.
+The attribute num_scan_inputs indicates the number M of scan-inputs.
 
 The behavior of
 
@@ -333,7 +331,7 @@ values are computed in the outer graph, they need to be passed in as extra state
     graph rnn-encoding {
       %H_0 = ... 
       %X = ...
-      %Y_h, %Y = Scan[body = <graph rnn-cell-1>]("", %H_0, %X)
+      %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1]("", %H_0, %X)
       return %Y, %Y_h
     }
 
