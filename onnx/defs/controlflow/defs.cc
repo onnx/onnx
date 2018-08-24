@@ -362,13 +362,13 @@ ONNX_OPERATOR_SET_SCHEMA(
 	8,
 	OpSchema()
 	.SetDoc(scan_ver1_doc)
-    .Input(
+	.Input(
 		0,
 		"sequence_lens",
 		"Optional tensor specifying lengths of the sequences in a batch. "
-        "If this input is not specified, all sequences are assumed to be of "
-        "the maximum sequence length (the dimension of the sequence axis of "
-        "the scan_input tensors).",
+		"If this input is not specified, all sequences are assumed to be of "
+		"the maximum sequence length (the dimension of the sequence axis of "
+		"the scan_input tensors).",
 		"I",
 		OpSchema::Optional)
 	.Input(
@@ -395,21 +395,17 @@ ONNX_OPERATOR_SET_SCHEMA(
 		true)
 	.Attr(
 		"num_scan_inputs",
-		"An optional attribute specifying the number of scan_inputs M. "
-        "If neither this attribute nor the directions attribute is specified, the "
-        "number of scan_inputs M is assumed to be 1.",
+		"An attribute specifying the number of scan_inputs M. ",
 		AttributeProto::INT,
-        false
-	)
-    .Attr(
+		true)
+	.Attr(
 		"directions",
 		"An optional list of M directions. The i-th element of the list specifies the direction "
 		"(forward or reverse) to be scanned for the i-th scan_input tensor. "
-        "If omitted, all scan_input tensors will be scanned in the forward direction.",
+		"If omitted, all scan_input tensors will be scanned in the forward direction.",
 		AttributeProto::STRINGS,
-        false
-	)
-    .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
+		false)
+	.TypeConstraint("I", { "tensor(int64)" }, "Int64 tensor")
 	.TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types"));
 
 } // namespace ONNX_NAMESPACE
