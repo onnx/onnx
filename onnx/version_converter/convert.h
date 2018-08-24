@@ -12,8 +12,9 @@
 #include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 #include "onnx/version_converter/adapters/gemm_7_6.h"
 #include "onnx/version_converter/adapters/gemm_6_7.h"
-#include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
+#include "onnx/version_converter/adapters/batch_normalization_6_7.h"
+#include "onnx/version_converter/adapters/batch_normalization_7_6.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -116,8 +117,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<CompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<CompatibleAdapter>("BatchNormalization",
-        OpSetID(7), OpSetID(6)));
+      registerAdapter(make_unique<BatchNormalization_7_6>());
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
