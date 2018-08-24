@@ -38,10 +38,10 @@ Supported adapters:
     --Gemm from Opset 6 to Opset 5
     --Gemm from Opset 6 to Opset 7
     --Gemm from Opset 5 to Opset 6
-
-Unsupported adapters:
     --Relu from Opset 6 to Opset 5
     --Relu from Opset 5 to Opset 6
+
+Unsupported adapters:
     --BatchNorm from Opset 7 to Opset 6
     --BatchNorm from Opset 6 to Opset 7
     --BatchNorm from Opset 6 to Opset 5
