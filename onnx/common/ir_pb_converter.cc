@@ -252,6 +252,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     if (np.has_name()) {
       n->setName(np.name());
     }
+    if (np.has_domain()) {
+      n->setDomain(np.domain());
+    }
   }
 
   for (auto n : g->nodes()) {
@@ -504,18 +507,17 @@ void encodeGraph(GraphProto * p_g, const std::shared_ptr<Graph> & g) {
     }
     for(auto output : node->outputs()) {
       p_n->add_output(value_name(output));
-
       // only save it if
       //  - it has actual information worth saving
       //  - it's not already saved in the graph outputs value info
       if (graph_outputs.find(output) != graph_outputs.end()) {
         continue;
       }
-      if (output->elemType() == ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED &&
+      if (output->elemType() == TensorProto_DataType_UNDEFINED &&
           output->sizes().empty()) {
         continue;
       }
-      ONNX_NAMESPACE::ValueInfoProto* v = p_g->add_value_info();
+      ValueInfoProto* v = p_g->add_value_info();
       encodeValueInfo(v, output);
     }
     p_n->set_op_type(node->kind().toString());
@@ -527,6 +529,9 @@ void encodeGraph(GraphProto * p_g, const std::shared_ptr<Graph> & g) {
     }
     if (node->has_name()) {
       p_n->set_name(node->name());
+    }
+    if (node->has_domain()) {
+      p_n->set_domain(node->domain());
     }
   }
 
