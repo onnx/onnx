@@ -94,6 +94,8 @@ git submodule update --init --recursive
 python setup.py install
 ```
 
+You can run the commands above in a virtual environment such as virtualenv if you are not logged in as root.
+
 Note: When installing in a non-Anaconda environment, make sure to install the Protobuf compiler before running the pip installation of onnx. For example, on Ubuntu:
 
 ```
