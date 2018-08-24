@@ -217,7 +217,7 @@ class TestShapeInference(unittest.TestCase):
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5))],
-            [make_node("Upsample", ['x'], ['y'], scales = [1.0, 1.1, 1.3, 1.9])],
+            [make_node("Upsample", ['x'], ['y'], scales=[1.0, 1.1, 1.3, 1.9])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
 
