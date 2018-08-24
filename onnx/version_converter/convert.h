@@ -15,6 +15,9 @@
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_7_6.h"
+#include "onnx/version_converter/adapters/concat_3_4.h"
+#include "onnx/version_converter/adapters/reshape_5_4.h"
+#include "onnx/version_converter/adapters/reshape_4_5.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
@@ -122,6 +125,17 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
         OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<Concat_3_4>());
+      std::vector<TensorProto_DataType> concat_unallowed_types = {
+        TensorProto_DataType_INT32, TensorProto_DataType_INT64,
+        TensorProto_DataType_UINT32, TensorProto_DataType_UINT64,
+        TensorProto_DataType_UINT8, TensorProto_DataType_UINT16,
+        TensorProto_DataType_INT8, TensorProto_DataType_INT16,
+        TensorProto_DataType_STRING, TensorProto_DataType_BOOL};
+      registerAdapter(make_unique<TypeRestriction>("Concat", OpSetID(4),
+            OpSetID(3), concat_unallowed_types));
+      registerAdapter(make_unique<Reshape_4_5>());
+      registerAdapter(make_unique<Reshape_5_4>());
     }
 
     ModelProto convert_version(
