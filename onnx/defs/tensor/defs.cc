@@ -1095,8 +1095,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference(
                 "Upsample: Input dims != attribute 'scales' dims");
           for (int i=0; i<input_shape.dim_size(); ++i) {
-           output_shape->mutable_dim(i)->set_dim_value(
-               std::floor(input_shape.dim(i).dim_value() * scale_attr->floats(i)));
+            float dim_value = static_cast<float>(input_shape.dim(i).dim_value());
+            output_shape->mutable_dim(i)->set_dim_value(
+                static_cast<int64_t>(std::floor(dim_value * scale_attr->floats(i))));
           }
         }));
 
