@@ -1840,7 +1840,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>outputs</tt> (variadic) : V</dt>
-<dd>Values that are live-out to the enclosing scope.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same shape and same data type.</dd>
 </dl>
 
 #### Type Constraints

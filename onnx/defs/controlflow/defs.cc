@@ -14,7 +14,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             0,
             "outputs",
-            "Values that are live-out to the enclosing scope.",
+            "Values that are live-out to the enclosing scope. The return values in "
+            "the `then_branch` and `else_branch` must be of the same shape and same "
+            "data type.",
             "V",
             OpSchema::Variadic)
         .Attr(
@@ -22,15 +24,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Graph to run if condition is true. Has N outputs: values you wish to "
             "be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH,
-            true)
+            AttributeProto::GRAPH)
         .Attr(
             "else_branch",
             "Graph to run if condition is false. Has N outputs: values you wish to"
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH,
-            true)
+            AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
 
@@ -187,8 +187,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "scan_output is created by concatenating the value of the specified "
             "output value at the end of each iteration of the loop. It is an error"
             " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
+            AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"int64"}, "Only int64")
         .TypeConstraint("B", {"bool"}, "Only bool"));
