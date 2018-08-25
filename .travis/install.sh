@@ -5,5 +5,13 @@ source "${script_path%/*}/setup.sh"
 
 export ONNX_BUILD_TESTS=1
 pip install protobuf numpy
-time CMAKE_ARGS="-DONNX_WERROR=ON" ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI python  setup.py bdist_wheel --universal --dist-dir .
+
+export CMAKE_ARGS="-DONNX_WERROR=ON"
+if [[ -z "USE_LITE_PROTO" ]]; then
+    export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+fi
+
+export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+
+time python setup.py bdist_wheel --universal --dist-dir .
 find . -maxdepth 1 -name "*.whl" -ls -exec pip install {} \;
