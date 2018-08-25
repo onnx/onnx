@@ -293,7 +293,7 @@ else()
   if(TARGET protobuf::libprotobuf)
     target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
   else()
-    target_link_libraries(onnx_proto PUBLIC ${Protobuf_LIBRARIES})
+    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
   endif()
 endif()
 
