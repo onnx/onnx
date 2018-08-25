@@ -24,6 +24,8 @@ option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 
+set(ONNX_NAMESPACE "onnx" CACHE STRING "onnx namespace")
+
 # Set C++11 as standard for the whole project
 if(NOT MSVC)
   set(CMAKE_CXX_STANDARD 11)
@@ -100,17 +102,6 @@ endif()
 
 # Build the libraries with -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if(ONNX_NAMESPACE)
-  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=${ONNX_NAMESPACE}")
-else()
-  set(ONNX_NAMESPACE "onnx")
-  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=onnx")
-endif()
-
-if(ONNX_USE_LITE_PROTO)
-  add_definitions("-DONNX_USE_LITE_PROTO=1")
-endif()
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
@@ -291,19 +282,13 @@ else()
     target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
   endif()
 endif()
-target_compile_definitions(onnx_proto PUBLIC ${MY_ONNX_NAMESPACE})
+add_onnx_global_defines(onnx_proto)
 
 add_library(onnx ${onnx_src})
 target_include_directories(onnx
                            PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
-# interface compile options of onnx_proto will also take effect here, but I think setting it explicitly is better.
-target_compile_definitions(onnx PUBLIC ${MY_ONNX_NAMESPACE})
-
-if(ONNX_ML)
-  target_compile_definitions(onnx_proto PUBLIC ONNX_ML=1)
-  target_compile_definitions(onnx PUBLIC ONNX_ML=1)
-endif()
+add_onnx_global_defines(onnx)
 
 if(BUILD_ONNX_PYTHON)
   if("${PY_EXT_SUFFIX}" STREQUAL "")
@@ -321,8 +306,6 @@ if(BUILD_ONNX_PYTHON)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-  # Setting compile flags about namespace explicitly
-  target_compile_definitions(onnx_cpp2py_export PUBLIC ${MY_ONNX_NAMESPACE})
   target_include_directories(onnx_cpp2py_export
                              PRIVATE "${ONNX_ROOT}"
                                      "${CMAKE_CURRENT_BINARY_DIR}"
@@ -396,9 +379,7 @@ if(BUILD_ONNX_PYTHON)
                                            # uf\wire_format_lite.h
                                    ${EXTRA_FLAGS})
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
-  endif()
-  if (ONNX_ML)
-    target_compile_definitions(onnx_cpp2py_export PUBLIC ONNX_ML=1)
+    add_onnx_global_defines(onnx_cpp2py_export)
   endif()
 endif()
 
