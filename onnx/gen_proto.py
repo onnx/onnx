@@ -121,7 +121,7 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
     return os.path.join(pardir, f)
 
 
-def convert(stem, package_name, output, do_onnx_ml=False, lite=False):  # type: (Text, Text, Text, bool) -> None
+def convert(stem, package_name, output, do_onnx_ml=False, lite=False):  # type: (Text, Text, Text, bool, bool) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
     if do_onnx_ml:
