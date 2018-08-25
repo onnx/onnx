@@ -9,13 +9,14 @@ ONNX_OPERATOR_SET_SCHEMA(
     If,
     1,
     OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
         .SetDoc("If conditional")
         .Input(0, "cond", "Condition for the if", "B")
         .Output(
             0,
             "outputs",
-            "Values that are live-out to the enclosing scope.",
+            "Values that are live-out to the enclosing scope. The return values in "
+            "the `then_branch` and `else_branch` must be of the same shape and same "
+            "data type.",
             "V",
             OpSchema::Variadic)
         .Attr(
@@ -23,15 +24,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Graph to run if condition is true. Has N outputs: values you wish to "
             "be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH,
-            true)
+            AttributeProto::GRAPH)
         .Attr(
             "else_branch",
             "Graph to run if condition is false. Has N outputs: values you wish to"
             " be live-out to the enclosing scope. The number of outputs must match"
             " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH,
-            true)
+            AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
 
@@ -149,19 +148,12 @@ Frontends should emit multi-layer RNNs as a series of While operators (with
 time being the inner looping dimension), with each successive layer consuming
 the scan_outputs from the previous layer, possibly going through several
 point-wise operators (e.g. dropout, residual connections, linear layer).
-Concretely, the (possibly transformed) scan_outputs are referenced by the
-subsequent layer as a LoopIndexTensor operating on a value in scope, not
-necessarily a loop-carried dependency. Backends can recognize this pattern and
-are permitted to schedule the execution of the multi-layer network in a
-pipelined/"wavefront" fashion.
-
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Loop,
     1,
     OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
         .SetDoc(Loop_ver1_doc)
         .Input(
             0,
@@ -194,37 +186,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(condition, loop carried dependencies..., scan_outputs...). Each "
             "scan_output is created by concatenating the value of the specified "
             "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
-            AttributeProto::GRAPH,
-            true)
+            " if the dimensions or data type of these scan_outputs change across loop"
+            " iterations.",
+            AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"int64"}, "Only int64")
         .TypeConstraint("B", {"bool"}, "Only bool"));
-
-ONNX_OPERATOR_SET_SCHEMA(
-    LoopIndexTensor,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(
-            "This is a special operator only valid inside the loop that supports "
-            "the common case behavior of accessing the correct element of the input"
-            " sequence in an RNN. This operator MUST be directly given the passed-"
-            "in iteration number to the body of a Loop graph. This signals to back-"
-            "ends that this is a direct indexing operation, with no transforms "
-            "applied to the index.")
-        .Input(0, "T", "Tensor to be indexed (has N dimensions)", "T")
-        .Input(
-            1,
-            "loop_idx",
-            "Loop index provided as input to the body graph",
-            "I")
-        .Attr(
-            "axis",
-            "Axis on which to index",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Output(0, "O", "Tensor of N - 1 dims that is a sub tensor of T", "T")
-        .TypeConstraint("T", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("I", {"int32"}, "Indices"));
 } // namespace ONNX_NAMESPACE
