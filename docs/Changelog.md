@@ -2435,7 +2435,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>body</tt> : graph (required)</dt>
-<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
 </dl>
 
 #### Inputs (3 - &#8734;)

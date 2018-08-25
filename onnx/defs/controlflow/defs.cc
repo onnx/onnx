@@ -186,7 +186,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(condition, loop carried dependencies..., scan_outputs...). Each "
             "scan_output is created by concatenating the value of the specified "
             "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions of these values change across loop iterations.",
+            " if the dimensions or data type of these scan_outputs change across loop"
+            " iterations.",
             AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"int64"}, "Only int64")
