@@ -19,6 +19,8 @@ autogen_header = """\
 """
 
 LITE_OPTION = '''
+
+// For using protobuf-lite
 option optimize_for = LITE_RUNTIME;
 
 '''
