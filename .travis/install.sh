@@ -7,7 +7,7 @@ export ONNX_BUILD_TESTS=1
 pip install protobuf numpy
 
 export CMAKE_ARGS="-DONNX_WERROR=ON"
-if [[ -z "USE_LITE_PROTO" ]]; then
+if [[ -n "USE_LITE_PROTO" ]]; then
     export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
 fi
 
