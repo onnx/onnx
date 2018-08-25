@@ -22,6 +22,7 @@ option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
+option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 
 # Set C++11 as standard for the whole project
 if(NOT MSVC)
@@ -47,7 +48,7 @@ if(ONNX_BUILD_TESTS)
   include(googletest)
 endif()
 
-if(TARGET protobuf::libprotobuf)
+if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
   # Sometimes we need to use protoc compiled for host architecture while linking
   # libprotobuf against target architecture. See https://github.com/caffe2/caffe
   # 2/blob/96f35ad75480b25c1a23d6e9e97bccae9f7a7f9c/cmake/ProtoBuf.cmake#L92-L99
@@ -75,18 +76,21 @@ else()
                            ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
     get_filename_component(_PROTOBUF_INSTALL_PREFIX
                            ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
-    find_library(Protobuf_LIBRARY
-                 NAMES protobuf
-                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-                 NO_DEFAULT_PATH)
     find_library(Protobuf_PROTOC_LIBRARY
                  NAMES protoc
                  PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
                  NO_DEFAULT_PATH)
-    find_library(Protobuf_LITE_LIBRARY
-                 NAMES protobuf-lite
-                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-                 NO_DEFAULT_PATH)
+    if(ONNX_USE_LITE_PROTO)
+      find_library(Protobuf_LITE_LIBRARY
+        NAMES protobuf-lite
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        NO_DEFAULT_PATH)
+    else(ONNX_USE_LITE_PROTO)
+      find_library(Protobuf_LIBRARY
+        NAMES protobuf
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        NO_DEFAULT_PATH)
+    endif(ONNX_USE_LITE_PROTO)
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
@@ -107,6 +111,10 @@ add_definitions(${MY_ONNX_NAMESPACE})
 
 if(ONNX_ML)
   add_definitions("-DONNX_ML=1")
+endif()
+
+if(ONNX_USE_LITE_PROTO)
+  add_definitions("-DONNX_USE_LITE_PROTO=1")
 endif()
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
@@ -180,6 +188,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         "${FILE_WE}")
     if(ONNX_ML)
       list(APPEND GEN_PROTO_ARGS -m)
+    endif()
+    if(ONNX_USE_LITE_PROTO)
+      list(APPEND GEN_PROTO_ARGS -l)
     endif()
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
                        COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
@@ -271,10 +282,19 @@ add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto
                            PUBLIC "${CMAKE_CURRENT_BINARY_DIR}"
                                   "${PROTOBUF_INCLUDE_DIRS}")
-if(TARGET protobuf::libprotobuf)
-  target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
+
+if(ONNX_USE_LITE_PROTO)
+  if(TARGET protobuf::libprotobuf-lite)
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite)
+  else()
+    target_link_libraries(onnx_proto PUBLIC ${Protobuf_LITE_LIBRARIES})
+  endif()
 else()
-  target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+  if(TARGET protobuf::libprotobuf)
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
+  else()
+    target_link_libraries(onnx_proto PUBLIC ${Protobuf_LIBRARIES})
+  endif()
 endif()
 
 add_library(onnx ${onnx_src})
