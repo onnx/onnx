@@ -40,7 +40,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
     void assertInVersionRange(int64_t version) const {
       ONNX_ASSERTM(version >= version_range.first && version <=
           version_range.second,
-          "Warning: invalid version (must be between %s and %s",
+          "Warning: invalid version (must be between %s and %s)",
           version_range.first, version_range.second);
     }
 
@@ -110,6 +110,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<Gemm_7_6>());
       registerAdapter(make_unique<Gemm_6_7>());
+      registerAdapter(make_unique<RemoveConsumedInputs>("Relu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("Relu",
+        OpSetID(6), OpSetID(5)));
     }
 
     ModelProto convert_version(

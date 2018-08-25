@@ -101,6 +101,22 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Add"
         assert converted_model.opset_import[0].version == 8
 
+    # Test Add Adapter: 5 -> 8, requiring insertion of an Unsqueeze node
+    def test_add_5_8_with_unsqueeze(self):  # type: () -> None
+        nodes = [helper.make_node('Add', ["X1", "X2"], ["Y"], axis=0, broadcast=1)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5, 2)),
+                helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 5), 8)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Unsqueeze"
+        assert converted_model.graph.node[1].op_type == "Add"
+        assert converted_model.opset_import[0].version == 8
+
     # Test Mul Adapter: 8 -> 5
     def test_mul_8_5(self):  # type: () -> None
         nodes = [helper.make_node('Mul', ["X1", "X2"], ["Y"])]
@@ -162,6 +178,34 @@ class TestVersionConverter(unittest.TestCase):
         # Assert equality of graph and converted_model
         assert converted_model.graph.node[0].op_type == "Gemm"
         assert converted_model.opset_import[0].version == 1
+
+    # Test Relu Adapter: 5 -> 7
+    def test_relu_5_7(self):  # type: () -> None
+        nodes = [helper.make_node('Relu', ["X"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 5), 7)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Relu"
+        assert converted_model.opset_import[0].version == 7
+
+    # Test Relu Adapter: 7 -> 5
+    def test_relu_7_5(self):  # type: () -> None
+        nodes = [helper.make_node('Relu', ["X"], ["Y"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 7), 5)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Relu"
+        assert converted_model.opset_import[0].version == 5
 
 
 if __name__ == '__main__':
