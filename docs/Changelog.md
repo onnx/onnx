@@ -1840,7 +1840,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>outputs</tt> (variadic) : V</dt>
-<dd>Values that are live-out to the enclosing scope.</dd>
+<dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same shape and same data type.</dd>
 </dl>
 
 #### Type Constraints
@@ -2426,12 +2426,6 @@ This version of the operator has been available since version 1 of the default O
   time being the inner looping dimension), with each successive layer consuming
   the scan_outputs from the previous layer, possibly going through several
   point-wise operators (e.g. dropout, residual connections, linear layer).
-  Concretely, the (possibly transformed) scan_outputs are referenced by the
-  subsequent layer as a LoopIndexTensor operating on a value in scope, not
-  necessarily a loop-carried dependency. Backends can recognize this pattern and
-  are permitted to schedule the execution of the multi-layer network in a
-  pipelined/"wavefront" fashion.
-  
 
 #### Version
 
@@ -2441,7 +2435,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>body</tt> : graph (required)</dt>
-<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
+<dd>The graph run each iteration. It has 2+N inputs: (iteration_num, condition, loop carried dependencies...). It has 1+N+K outputs: (condition, loop carried dependencies..., scan_outputs...). Each scan_output is created by concatenating the value of the specified output value at the end of each iteration of the loop. It is an error if the dimensions or data type of these scan_outputs change across loop iterations.</dd>
 </dl>
 
 #### Inputs (3 - &#8734;)
@@ -2471,46 +2465,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Only int64</dd>
 <dt><tt>B</tt> : bool</dt>
 <dd>Only bool</dd>
-</dl>
-
-### <a name="LoopIndexTensor-1"></a>**LoopIndexTensor-1**</a>
-
-  This is a special operator only valid inside the loop that supports the common case behavior of accessing the correct element of the input sequence in an RNN. This operator MUST be directly given the passed-in iteration number to the body of a Loop graph. This signals to back-ends that this is a direct indexing operation, with no transforms applied to the index.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>axis</tt> : int</dt>
-<dd>Axis on which to index</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>T</tt> : T</dt>
-<dd>Tensor to be indexed (has N dimensions)</dd>
-<dt><tt>loop_idx</tt> : I</dt>
-<dd>Loop index provided as input to the body graph</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>O</tt> : T</dt>
-<dd>Tensor of N - 1 dims that is a sub tensor of T</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>All Tensor types</dd>
-<dt><tt>I</tt> : int32</dt>
-<dd>Indices</dd>
 </dl>
 
 ### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
