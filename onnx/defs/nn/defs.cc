@@ -1062,7 +1062,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateShapeAndTypeFromFirstInput(ctx);
         }));
 
-static const char* LpNormalization_ver7_doc = R"DOC(
+static const char* LpNormalization_ver1_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
 
 For p=2,
@@ -1085,7 +1085,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
-        .SetDoc(LpNormalization_ver7_doc)
+        .SetDoc(LpNormalization_ver1_doc)
 		.Attr(
 			"epsilon",
 		    "The epsilon value to use to avoid division by zero, default is 1e-10f.",

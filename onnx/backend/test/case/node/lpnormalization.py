@@ -18,9 +18,9 @@ class LRN(Base):
             'LpNormalization',
             inputs=['x'],
             outputs=['y'],
-            epsilon = 1e-5,
-            axis = 0,
-            p = 2
+            epsilon=1e-5,
+            axis=0,
+            p=2
         )
         x = np.random.randn(3, 4, 5).astype(np.float32)
         l2_norm_axis_0 = np.sqrt(np.sum(x**2, axis=0, keepdims=True)) + 1e-5
@@ -34,9 +34,9 @@ class LRN(Base):
             'LpNormalization',
             inputs=['x'],
             outputs=['y'],
-            epsilon = 1e-5,
-            axis = 1,
-            p = 2
+            epsilon=1e-5,
+            axis=1,
+            p=2
         )
         x = np.random.randn(3, 4, 5).astype(np.float32)
         l2_norm_axis_1 = np.sqrt(np.sum(x**2, axis=1, keepdims=True)) + 1e-5
@@ -50,9 +50,9 @@ class LRN(Base):
             'LpNormalization',
             inputs=['x'],
             outputs=['y'],
-            epsilon = 1e-5,
-            axis = -1,
-            p = 2
+            epsilon=1e-5,
+            axis=-1,
+            p=2
         )
         x = np.random.randn(3, 4, 5).astype(np.float32)
         l2_norm_axis_last = np.sqrt(np.sum(x**2, axis=-1, keepdims=True)) + 1e-5
@@ -66,9 +66,9 @@ class LRN(Base):
             'LpNormalization',
             inputs=['x'],
             outputs=['y'],
-            epsilon = 1e-5,
-            axis = 0,
-            p = 1
+            epsilon=1e-5,
+            axis=0,
+            p=1
         )
         x = np.random.rand(3, 4, 5).astype(np.float32)
         l1_norm_axis_0 = np.sum(abs(x), axis=0, keepdims=True) + 1e-5
@@ -82,9 +82,9 @@ class LRN(Base):
             'LpNormalization',
             inputs=['x'],
             outputs=['y'],
-            epsilon = 1e-5,
-            axis = 1,
-            p = 1
+            epsilon=1e-5,
+            axis=1,
+            p=1
         )
         x = np.random.rand(3, 4, 5).astype(np.float32)
         l1_norm_axis_1 = np.sum(abs(x), axis=1, keepdims=True) + 1e-5
@@ -98,9 +98,9 @@ class LRN(Base):
             'LpNormalization',
             inputs=['x'],
             outputs=['y'],
-            epsilon = 1e-5,
-            axis = -1,
-            p = 1
+            epsilon=1e-5,
+            axis=-1,
+            p=1
         )
         x = np.random.rand(3, 4, 5).astype(np.float32)
         l1_norm_axis_last = np.sum(abs(x), axis=-1, keepdims=True) + 1e-5
