@@ -1064,6 +1064,15 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* LpNormalization_ver1_doc = R"DOC(
 Given a matrix, apply Lp-normalization along the provided axis.
+
+For p=2,
+
+y = x  / (sqrt(sum(x ** 2)) + epsilon),
+
+For p=1,
+
+y = x  / (sum(abs(x)) + epsilon),
+
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1077,7 +1086,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .SetDoc(LpNormalization_ver1_doc)
-        .Attr(
+		.Attr(
+			"epsilon",
+		    "The epsilon value to use to avoid division by zero, default is 1e-10f.",
+		    AttributeProto::FLOAT,
+		    1e-10f)
+		.Attr(
             "axis",
             "(int64, default -1) the axis on which to apply normalization, -1 mean last axis.",
             AttributeProto::INT,
