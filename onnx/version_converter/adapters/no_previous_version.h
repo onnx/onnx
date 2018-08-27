@@ -7,10 +7,11 @@
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-struct NoPreviousVersionAdapter final : public Adapter {
-  explicit NoPreviousVersionAdapter(const std::string& op_name, const OpSetID
-    initial, const OpSetID target): Adapter(op_name,
-    std::move(initial), std::move(target)) {}
+class NoPreviousVersionAdapter final : public Adapter {
+  public:
+    explicit NoPreviousVersionAdapter(const std::string& op_name, const OpSetID&
+      initial, const OpSetID& target): Adapter(op_name,
+      initial, target) {}
 
   void adapt(std::shared_ptr<Graph>, Node*) const override {
     ONNX_ASSERTM(false, "No Previous Version of %s exists", name().c_str());
