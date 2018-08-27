@@ -31,7 +31,7 @@ class Reshape_5_4 final : public Adapter {
         }
         // If Constant node isn't used anywhere else, remove it
         node->removeInput(1);
-        if (const_val->uses().size() <= 1) {
+        if (const_val->uses().size() < 1) {
           node_ptr->destroy();
         }
       } else {
@@ -42,7 +42,7 @@ class Reshape_5_4 final : public Adapter {
                   initializer.int64s()));
 	    node->removeInput(1);
             // Remove initializer
-            if (const_val->uses().size() <= 1) graph->eraseInitializerAndInput(const_val);
+            if (const_val->uses().size() < 1) graph->eraseInitializerAndInput(const_val);
             break;
           }
         }
