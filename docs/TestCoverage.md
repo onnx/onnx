@@ -5,9 +5,9 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 91/96 (94.79%, 5 generators excluded) common operators.
+Node tests have covered 91/99 (91.92%, 5 generators excluded) common operators.
 
-Node tests have covered 1/15 (6.67%, 0 generators excluded) experimental operators.
+Node tests have covered 1/12 (8.33%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -5670,6 +5670,12 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GlobalLpPool (call for test cases)
 
 
+### If (call for test cases)
+
+
+### Loop (call for test cases)
+
+
 ### LpNormalization (call for test cases)
 
 
@@ -5692,6 +5698,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### RandomUniformLike (random generator operator)
+
+
+### Scan (call for test cases)
 
 
 ### SpaceToDepth (call for test cases)
@@ -5772,16 +5781,7 @@ expect(node, inputs=[x], outputs=[y],
 ### GivenTensorFill (call for test cases)
 
 
-### If (call for test cases)
-
-
 ### ImageScaler (call for test cases)
-
-
-### Loop (call for test cases)
-
-
-### LoopIndexTensor (call for test cases)
 
 
 ### MeanVarianceNormalization (call for test cases)
