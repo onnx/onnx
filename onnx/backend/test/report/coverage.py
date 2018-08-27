@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from collections import defaultdict
 import os
 import csv
+import datetime
 
 from tabulate import tabulate  # type: ignore
 
@@ -133,7 +134,6 @@ class Coverage(object):
             headers=['Operator', 'Attributes\n(name: #values)'],
             tablefmt='plain'))
         if os.environ.get(str('CSVDIR')) is not None:
-            print("Writing csv file")
             for schema in _all_schemas:
                 all_ops.append(schema.name)
                 if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
@@ -176,3 +176,7 @@ class Coverage(object):
                 model_writer.writerow(["Summary", "{}/{} model tests passed"
                     .format(len(self.models['passed']),
                         len(self.models['loaded']) + len(self.models['passed']))])
+            with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
+                    'metadata.csv'), 'w') as metadata_file:  # type: ignore
+                metadata_writer = csv.writer(metadata_file)
+                metadata_writer.writerow(["Latest Update", datetime.datetime.now().isoformat(" ")])
