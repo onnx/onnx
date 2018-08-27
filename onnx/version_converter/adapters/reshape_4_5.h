@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "onnx/version_converter/adapters/adapter.h"
+#include "onnx/version_converter/adapters/remove_consumed_inputs.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
 
-class Reshape_4_5 final : public Adapter {
+class Reshape_4_5 final : public RemoveConsumedInputs {
   public:
     explicit Reshape_4_5()
-      : Adapter("Reshape", OpSetID(4), OpSetID(5)) {}
+      : RemoveConsumedInputs("Reshape", OpSetID(4), OpSetID(5)) {}
 
     void adapt_reshape_4_5(std::shared_ptr<Graph> graph, Node* node) const {
       // Create Input from Attribute - add as Initializer
@@ -30,7 +30,8 @@ class Reshape_4_5 final : public Adapter {
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
-      adapt_reshape_4_5(graph, node);
+      	RemoveConsumedInputs::adapt(graph, node);
+	adapt_reshape_4_5(graph, node);
     }
 };
 
