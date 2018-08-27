@@ -3,14 +3,13 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import math
 import numpy as np  # type: ignore
 import onnx
 from ..base import Base
 from . import expect
 
 
-class LRN(Base):
+class LpNormalization(Base):
 
     @staticmethod
     def export_l2normalization_axis_0():  # type: () -> None
