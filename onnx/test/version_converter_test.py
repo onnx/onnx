@@ -297,8 +297,7 @@ class TestVersionConverter(unittest.TestCase):
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 6), 4)
         # Assert equality of graph and converted_model
-        # TODO: Switch back to node[0]
-        assert converted_model.graph.node[1].op_type == "Reshape"
+        assert converted_model.graph.node[0].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 4
 
     # Test Reshape Adapter: 4 -> 6

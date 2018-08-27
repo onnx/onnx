@@ -16,7 +16,8 @@ class Reshape_5_4 final : public Adapter {
       const ArrayRef<Value*>& inputs = node->inputs();
       // Get shape from initializer or constant operator, not actual shape
       // Identify whether we have a Constant Op or an Initializer
-      Node* node_ptr = inputs[1]->node();
+      Value* const_val = inputs[1];
+      Node* node_ptr = const_val->node();
       if (node_ptr->kind() == kConstant) {
         // Get value attribute of kConstant
         const std::vector<int64_t>& int64s = node_ptr->t(kvalue).int64s();
@@ -29,9 +30,8 @@ class Reshape_5_4 final : public Adapter {
           node->is_(kshape, std::forward<const std::vector<int64_t>>(int64s));
         }
         // If Constant node isn't used anywhere else, remove it
-        Value* const_val = inputs[1];
         node->removeInput(1);
-        if (const_val->uses().size() == 1) {
+        if (const_val->uses().size() <= 1) {
           node_ptr->destroy();
         }
       } else {
@@ -40,20 +40,9 @@ class Reshape_5_4 final : public Adapter {
           if (initializer.name() == inputs[1]->uniqueName()) {
             node->is_(kshape, std::forward<const std::vector<int64_t>>(
                   initializer.int64s()));
-            node->removeInput(1);
+	    node->removeInput(1);
             // Remove initializer
-            // Iterate through all inputs to detect whether others are the same
-            bool otherUses = false;
-            for (Node* node : graph->nodes()) {
-              for (Value* input : node->inputs()) {
-                if (input->uniqueName() == initializer.name()) {
-                  otherUses = true;
-                  break;
-                }
-              }
-              if (otherUses) break;
-            }
-            if (!otherUses) graph->eraseInitializer(initializer.name());
+            if (const_val->uses().size() <= 1) graph->eraseInitializerAndInput(const_val);
             break;
           }
         }
