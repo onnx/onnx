@@ -63,7 +63,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Max);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, MaxRoiPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Mean);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, MeanVarianceNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Min);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Mul);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Neg);
@@ -188,8 +187,6 @@ class OpSet_Onnx_ver1 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, MaxPool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, MaxRoiPool)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Mean)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
-           Onnx, 1, MeanVarianceNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Min)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Mul)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Neg)>());
