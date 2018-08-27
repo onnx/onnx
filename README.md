@@ -91,7 +91,7 @@ You can also build and install ONNX locally from source code:
 git clone https://github.com/onnx/onnx.git
 cd onnx
 git submodule update --init --recursive
-python setup.py install
+sudo python setup.py install
 ```
 
 Note: When installing in a non-Anaconda environment, make sure to install the Protobuf compiler before running the pip installation of onnx. For example, on Ubuntu:
