@@ -50,6 +50,8 @@ Unsupported adapters:
 Unsupported adapters:
     --Concat from Opset 4 to Opset 3
     --Concat from Opset 3 to Opset 4
+
+Unsupported adapters:
     --MaxPool from Opset 8 to Opset 7
     --MaxPool from Opset 7 to Opset 8
     --Reshape from Opset 5 to Opset 4
