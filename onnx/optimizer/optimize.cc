@@ -5,6 +5,7 @@
 
 namespace ONNX_NAMESPACE { namespace optimization {
 
+// TODO: Remove this static reference
 static Optimizer _optimizer;
 
 ModelProto Optimize(
