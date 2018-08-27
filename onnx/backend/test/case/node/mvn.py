@@ -15,7 +15,7 @@ class MVN(Base):
     @staticmethod
     def export():  # type: () -> None
         node = onnx.helper.make_node(
-            'FuncMeanVarianceNormalization',
+            'MeanVarianceNormalization',
             inputs=['X'],
             outputs=['Y'],
             axes=[0, 2, 3]
