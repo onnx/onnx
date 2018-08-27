@@ -8,7 +8,7 @@ import io
 import os
 from collections import defaultdict
 
-from onnx import defs, OperatorStatus
+from onnx import defs, FunctionProto, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from typing import Text, Sequence, Dict, List, Type, Set, Tuple
