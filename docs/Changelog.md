@@ -2470,6 +2470,15 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="LpNormalization-1"></a>**LpNormalization-1**</a>
 
   Given a matrix, apply Lp-normalization along the provided axis.
+  
+  For p=2,
+  
+  y = x  / (sqrt(sum(x ** 2)) + epsilon),
+  
+  For p=1,
+  
+  y = x  / (sum(abs(x)) + epsilon).
+  
 
 #### Version
 
@@ -2480,6 +2489,8 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>axis</tt> : int</dt>
 <dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
+<dt><tt>epsilon</tt> : float</dt>
+<dd>The epsilon value to use to avoid division by zero, default is 1e-10f.</dd>
 <dt><tt>p</tt> : int</dt>
 <dd>(int64, default 2) the order of the normalization, only 1 or 2 are supported.</dd>
 </dl>
