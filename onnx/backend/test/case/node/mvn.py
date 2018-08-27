@@ -17,8 +17,7 @@ class MVN(Base):
         node = onnx.helper.make_node(
             'MeanVarianceNormalization',
             inputs=['X'],
-            outputs=['Y'],
-            axes=[0, 2, 3]
+            outputs=['Y']
         )
 
         input_data = np.array([[[[0.8439683], [0.5665144], [0.05836735]],
