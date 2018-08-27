@@ -9,7 +9,7 @@ import os
 from tabulate import tabulate  # type: ignore
 
 import onnx
-from onnx import defs, helper
+from onnx import defs, helper, GraphProto
 from typing import Optional, Text, Set, Dict, IO
 
 _all_schemas = defs.get_all_schemas()
