@@ -77,7 +77,9 @@ bool check_domain_syntax(const std::string& name) {
 
   bool correct = true;
 
-  // Names should adhere to C identifier syntax.
+  // Domains should consist of a series of identifiers, separated by '.'.
+  // Each domain component should start with a letter and then consist
+  // of only letters and digits.
   auto iter = name.cbegin();
 
   char c = *iter;
@@ -97,7 +99,7 @@ bool check_domain_syntax(const std::string& name) {
   return correct;
 }
 
-#define enforce_c_identifier(proto, field)       \
+#define enforce_name_syntax(proto, field)       \
   do {                                           \
     const auto& str = proto.field();             \
     if (!check_name_syntax(str)) {               \
@@ -142,7 +144,7 @@ void check_value_info(const ValueInfoProto& value_info, CheckerContext& ctx) {
           const auto dim_case = dim.value_case();
           switch (dim_case) {
             case 0:
-              // Special case: treated as a "" (unknown) dimension.
+              // Treat as missing dimensions.
               break;
             case TensorShapeProto::Dimension::kDimValue: {
               if (dim.dim_value() < 0) {
@@ -308,7 +310,7 @@ void check_attribute(
     CheckerContext& ctx,
     const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(attr, name);
-  enforce_c_identifier(attr, name);
+  enforce_name_syntax(attr, name);
 
   if (ctx.get_ir_version() >= 0x00000002) {
     enforce_has_field(attr, type);
@@ -420,10 +422,16 @@ void check_node(
   // Resolve domain for node
   auto domain = node.domain();
 
+  if (!domain.empty()) {
+    if (!check_domain_syntax(domain)) {
+      fail_check(ctx, "Invalid domain name ('" + domain + "') used in a node.");
+    }
+  }
+
   const auto& opset_imports = ctx.get_opset_imports();
   auto dit = opset_imports.find(domain);
   if (dit == opset_imports.end()) {
-    fail_check(ctx, "No opset import for '" + domain + "'");
+    fail_check(ctx, "No opset import was found for '" + domain + "'");
   }
 
   auto domain_version = dit->second;
@@ -451,7 +459,7 @@ void check_node(
   }
 
   if (node.has_name() && node.name() != "") {
-    enforce_c_identifier(node, name);
+    enforce_name_syntax(node, name);
   }
 
   // No need to validate node input syntax -- the error would already have been
@@ -496,7 +504,7 @@ void check_graph(
     CheckerContext& ctx,
     const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(graph, name);
-  enforce_c_identifier(graph, name);
+  enforce_name_syntax(graph, name);
 
   for (const auto& value_info : graph.input()) {
     check_value_info(value_info, ctx);
@@ -563,7 +571,7 @@ void check_graph(
     if (!output_names.count(init.name())) {
       fail_check(ctx, init.name() + " in initializer but not in graph input.");
     }
-    enforce_c_identifier(init, name);
+    enforce_name_syntax(init, name);
     check_tensor(init, ctx);
   }
 

@@ -319,8 +319,8 @@ void OpSchema::Verify(
         break;
       case AttributeProto::STRING:
         // There's no check to be made here -- some PB writers will leave 
-		// the field empty for empty strings, so we can't tell whether it's
-		// bad or empty.
+		    // the field empty for empty strings, so we can't tell whether it's
+		    // bad or empty.
         break;
       case AttributeProto::TENSOR:
         if (!attr_proto.has_t()) {
