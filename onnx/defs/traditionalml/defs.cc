@@ -18,7 +18,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "Y",
-            "The indices, which must be at least one and no more than the number of dimensions of 'X'.",
+            "The indices, based on 0 as the first index of any dimension.",
             "tensor(int64)")
         .Output(0, "Z", "Selected output data as an array", "T")
         .TypeConstraint(
