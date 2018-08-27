@@ -19,7 +19,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dt><tt>X</tt> : T</dt>
 <dd>Data to be selected</dd>
 <dt><tt>Y</tt> : tensor(int64)</dt>
-<dd>The indices, which must be at least one and no more than the number of dimensions of 'X'.</dd>
+<dd>The indices, based on 0 as the first index of any dimension.</dd>
 </dl>
 
 #### Outputs
@@ -172,8 +172,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
   Uses an index mapping to convert a dictionary to an array.<br>
       Given a dictionary, each key is looked up in the vocabulary attribute corresponding to
       the key type. The index into the vocabulary array at which the key is found is then
-      used to index into the output single-dimenstional tensor 'Y' and insert the
-      the value found in the dictionary 'X'.<br>
+      used to index the output 1-D tensor 'Y' and insert into it the value found in the dictionary 'X'.<br>
       The key type of the input map must correspond to the element type of the defined vocabulary attribute.
       Therefore, the output array will be equal in length to the index mapping vector parameter.
       All keys in the input dictionary must be present in the index mapping vector.
@@ -207,7 +206,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>Y</tt> : T2</dt>
-<dd>A tensor holding values from the input dictionary.</dd>
+<dd>A 1-D tensor holding values from the input dictionary.</dd>
 </dl>
 
 #### Type Constraints
