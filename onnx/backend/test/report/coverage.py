@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 import os
+import csv
 
 from tabulate import tabulate  # type: ignore
 
@@ -13,6 +14,10 @@ from onnx import defs, helper, GraphProto
 from typing import Optional, Text, Set, Dict, IO
 
 _all_schemas = defs.get_all_schemas()
+
+model_coverage_whitelist = set(
+    ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
+     'resnet50', 'shufflenet', 'squeezenet_old', 'vgg19', 'zfnet'])
 
 
 class AttrCoverage(object):
@@ -73,7 +78,10 @@ class Coverage(object):
             'loaded': defaultdict(NodeCoverage),
             'passed': defaultdict(NodeCoverage),
         }  # type: Dict[Text, Dict[Text, NodeCoverage]]
-        self.models = defaultdict(ModelCoverage)  # type: Dict[Text, ModelCoverage]
+        self.models = {
+            'loaded': defaultdict(ModelCoverage),
+            'passed': defaultdict(ModelCoverage),
+        }  # type: Dict[Text, Dict[Text, ModelCoverage]]
 
     def add_node(self, node, bucket):  # type: (onnx.NodeProto, Text) -> None
         self.buckets[bucket][node.op_type].add(node)
@@ -84,7 +92,9 @@ class Coverage(object):
 
     def add_model(self, model, bucket):  # type: (onnx.ModelProto, Text) -> None
         self.add_graph(model.graph, bucket)
-        self.models[model.graph.name].add(model)
+        # Only add model if name does not start with test
+        if model.graph.name in model_coverage_whitelist:
+            self.models[bucket][model.graph.name].add(model)
 
     def add_proto(self, proto, bucket):  # type: (onnx.ModelProto, Text) -> None
         assert isinstance(proto, onnx.ModelProto)
@@ -99,6 +109,9 @@ class Coverage(object):
         writer.write('------------------------------------\n')
 
         rows = []
+        passed = []
+        all_ops = []
+        experimental = []
         for op_cov in self.buckets['passed'].values():
             covered_attrs = [
                 '{}: {}'.format(attr_cov.name, len(attr_cov.values))
@@ -114,7 +127,52 @@ class Coverage(object):
             else:
                 attrs_column = 'No attributes'
             rows.append([op_cov.op_type, attrs_column])
+            passed.append(op_cov.op_type)
         writer.write(tabulate(
             rows,
             headers=['Operator', 'Attributes\n(name: #values)'],
             tablefmt='plain'))
+        if os.environ.get(str('CSVDIR')) is not None:
+            print("Writing csv file")
+            for schema in _all_schemas:
+                all_ops.append(schema.name)
+                if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
+                    experimental.append(schema.name)
+            all_ops.sort()
+            with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
+                    os.environ.get('BACKEND') + '_nodes.csv'), 'w') as nodes_file:  # type: ignore
+                node_writer = csv.writer(nodes_file)
+                for node in all_ops:
+                    node_name = node
+                    if node in experimental:
+                        node_name = node + ' (Experimental)'
+                    if node in passed:
+                        # u"\U0001F49A"
+                        node_writer.writerow([node_name, "Passed!"])
+                    else:
+                        # u"\U0001F494"
+                        node_writer.writerow([node_name, "Failed!"])
+                node_writer.writerow(["Summary", "{}/{} node tests passed"
+                    .format(len(passed), len(all_ops))])
+            with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
+                    os.environ.get('BACKEND') + '_models.csv'), 'w') as models_file:  # type: ignore
+                model_writer = csv.writer(models_file)
+                # Consider both buckets
+                for bucket in self.models:
+                    for model in self.models[bucket]:
+                        # Both analyze and run the model on the backend
+                        num_covered = 0
+                        for node in self.models[bucket][model].node_coverages:
+                            if node in passed:
+                                num_covered += 1
+                        # TODO: Identify if there are models that are being
+                        # skipped/not loaded, but that are in other frameworks
+                        msg = "Passed!"
+                        if bucket == 'loaded':
+                            msg = "Failed!"
+                        model_writer.writerow([model, "{}/{} nodes covered: {}"
+                            .format(num_covered, len(self.models[bucket][model]
+                                .node_coverages), msg)])
+                model_writer.writerow(["Summary", "{}/{} model tests passed"
+                    .format(len(self.models['passed']),
+                        len(self.models['loaded']) + len(self.models['passed']))])
