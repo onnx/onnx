@@ -7,7 +7,8 @@
 ## Version 1 of the 'ai.onnx.ml' operator set
 ### <a name="ai.onnx.ml.ArrayFeatureExtractor-1"></a>**ai.onnx.ml.ArrayFeatureExtractor-1**</a>
 
-  Select elements of the input tensor based on the indices passed.
+  Select elements of the input tensor based on the indices passed.<br>
+      The indices are applied to the last axes of the tensor.
 
 #### Version
 
@@ -162,7 +163,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
-<dd>The input must be a tensor of strings or integers.</dd>
+<dd>The input must be a tensor of strings or integers, either [N,C] or [C].</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
 <dd>The output is a tensor of strings or integers. Its shape will be the same as the input shape.</dd>
 </dl>
@@ -221,6 +222,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 ### <a name="ai.onnx.ml.FeatureVectorizer-1"></a>**ai.onnx.ml.FeatureVectorizer-1**</a>
 
   Concatenates input tensors into one continuous output.<br>
+      All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
       Inputs are copied to the output maintaining the order of the input arguments.<br>
       All inputs must be integers or floats, while the output will be all floating point values.
 
@@ -302,7 +304,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>The input type must be a tensor of a numeric type. The output type will be of the same tensor type.</dd>
+<dd>The input type must be a tensor of a numeric type, either [N,C] or [C]. The output type will be of the same tensor type and shape.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.LabelEncoder-1"></a>**ai.onnx.ml.LabelEncoder-1**</a>
@@ -351,9 +353,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(string), tensor(int64)</dt>
-<dd>The input type must be a tensor of integers or strings.</dd>
+<dd>The input type must be a tensor of integers or strings, of any shape.</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output type will be a tensor of strings or integers.</dd>
+<dd>The output type will be a tensor of strings or integers, and will have the same shape as the input.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.LinearClassifier-1"></a>**ai.onnx.ml.LinearClassifier-1**</a>
@@ -401,7 +403,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>The input must be a tensor of a numeric type.</dd>
+<dd>The input must be a tensor of a numeric type, and of of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
 <dd>The output will be a tensor of strings or integers.</dd>
 </dl>
@@ -462,6 +464,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       L1:  Y = X / sum(X)<br>
       L2:  Y = sqrt(X^2 / sum(X^2)}<br>
       In all modes, if the divisor is zero, Y == X.
+  <br>
+      For batches, that is, [N,C] tensors, normalization is done along the C axis. In other words, each row
+      of the batch is normalized independently.
 
 #### Version
 
@@ -478,7 +483,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Data to be encoded.</dd>
+<dd>Data to be encoded, a tensor of shape [N,C] or [C]</dd>
 </dl>
 
 #### Outputs
@@ -597,9 +602,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T1</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>The input must be a tensor of a numeric type.</dd>
+<dd>The input must be a tensor of a numeric type, either [C] or [N,C].</dd>
 <dt><tt>T2</tt> : tensor(string), tensor(int64)</dt>
-<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.</dd>
+<dd>The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used. Its size will match the bactch size of the input.</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.SVMRegressor-1"></a>**ai.onnx.ml.SVMRegressor-1**</a>
@@ -649,7 +654,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 
 <dl>
 <dt><tt>T</tt> : tensor(float), tensor(double), tensor(int64), tensor(int32)</dt>
-<dd>The input type must be a tensor of a numeric type.</dd>
+<dd>The input type must be a tensor of a numeric type, either [C] or [N,C].</dd>
 </dl>
 
 ### <a name="ai.onnx.ml.Scaler-1"></a>**ai.onnx.ml.Scaler-1**</a>

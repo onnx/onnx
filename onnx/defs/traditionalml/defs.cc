@@ -6,7 +6,8 @@
 #ifdef ONNX_ML
 namespace ONNX_NAMESPACE {
 static const char* ArrayFeatureExtractor_ver1_doc = R"DOC(
-    Select elements of the input tensor based on the indices passed.
+    Select elements of the input tensor based on the indices passed.<br>
+    The indices are applied to the last axes of the tensor.
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
@@ -132,7 +133,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(string)", "tensor(int64)"},
-            "The input must be a tensor of strings or integers.")
+            "The input must be a tensor of strings or integers, either [N,C] or [C].")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
@@ -226,6 +227,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
 static const char* FeatureVectorizer_ver1_doc = R"DOC(
     Concatenates input tensors into one continuous output.<br>
+    All input shapes are 2-D and are concatenated along the second dimention. 1-D tensors are treated as [1,C].
     Inputs are copied to the output maintaining the order of the input arguments.<br>
     All inputs must be integers or floats, while the output will be all floating point values.
 )DOC";
@@ -278,7 +280,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "The input type must be a tensor of a numeric type. The output type will be of the same tensor type.")
+            "The input type must be a tensor of a numeric type, either [N,C] or [C]. The output type will be of the same tensor type and shape.")
         .Attr(
             "imputed_value_floats",
             "Value(s) to change to",
@@ -323,11 +325,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(string)", "tensor(int64)"},
-            "The input type must be a tensor of integers or strings.")
+            "The input type must be a tensor of integers or strings, of any shape.")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers.")
+            "The output type will be a tensor of strings or integers, and will have the same shape as the input.")
         .Attr(
             "classes_strings",
             "A list of labels.",
@@ -375,7 +377,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "The input must be a tensor of a numeric type.")
+            "The input must be a tensor of a numeric type, and of of shape [N,C] or [C]. In the latter case, it will be treated as [1,C]")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
@@ -475,6 +477,9 @@ static const char* Normalizer_ver1_doc = R"DOC(
     L1:  Y = X / sum(X)<br>
     L2:  Y = sqrt(X^2 / sum(X^2)}<br>
     In all modes, if the divisor is zero, Y == X.
+<br>
+    For batches, that is, [N,C] tensors, normalization is done along the C axis. In other words, each row
+    of the batch is normalized independently.
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
@@ -482,7 +487,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .SetDoc(Normalizer_ver1_doc)
-        .Input(0, "X", "Data to be encoded.", "T")
+        .Input(0, "X", "Data to be encoded, a tensor of shape [N,C] or [C]", "T")
         .Output(0, "Y", "Encoded output data", "tensor(float)")
         .TypeConstraint(
             "T",
@@ -590,11 +595,11 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "The input must be a tensor of a numeric type.")
+            "The input must be a tensor of a numeric type, either [C] or [N,C].")
         .TypeConstraint(
             "T2",
             {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used.")
+            "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used. Its size will match the bactch size of the input.")
         .Attr(
             "kernel_type",
             "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'",
@@ -668,7 +673,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
              "tensor(double)",
              "tensor(int64)",
              "tensor(int32)"},
-            "The input type must be a tensor of a numeric type.")
+            "The input type must be a tensor of a numeric type, either [C] or [N,C].")
         .Attr(
             "kernel_type",
             "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'",
