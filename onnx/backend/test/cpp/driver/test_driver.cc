@@ -1,6 +1,9 @@
-#include <fstream>
 #include "test_driver.h"
+#include <cstdio>
+#include <cstdlib>
+#include <fstream>
 
+#include <sys/stat.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -8,17 +11,14 @@
 #include <errno.h>
 #endif
 
-#define ERRNO_DIR_END 0
-
 namespace onnx {
 namespace testing {
 bool FileExists(const std::string& filename) {
-  FILE* fp;
-  if ((fp = fopen(filename.c_str(), "r")) != NULL) {
-    fclose(fp);
-    return true;
+  struct stat stats;
+  if (lstat(filename.c_str(), &stats) != 0 || !S_ISREG(stats.st_mode)) {
+    return false;
   }
-  return false;
+  return true;
 }
 
 void TestDriver::SetDefaultDir(const std::string& s) {
@@ -47,13 +47,15 @@ int TestDriver::FetchSingleTestCase(const std::string& case_dir) {
       for (int data_count = 0;; data_count++) {
         input_name = case_dirname + "/input_" + to_string(data_count) + ".pb";
         output_name = case_dirname + "/output_" + to_string(data_count) + ".pb";
-        if (!FileExists(input_name) && !FileExists(input_name)) {
+        const bool input_exists = FileExists(input_name);
+        const bool output_exists = FileExists(output_name);
+        if (!output_exists && !input_exists) {
           break;
         }
-        if (FileExists(input_name)) {
+        if (input_exists) {
           input_filenames.emplace_back(std::move(input_name));
         }
-        if (FileExists(output_name)) {
+        if (output_exists) {
           output_filenames.emplace_back(std::move(output_name));
         }
       }
@@ -74,34 +76,46 @@ int TestDriver::FetchAllTestCases(const std::string& target) {
   if (target_dir[target_dir.size() - 1] == '/') {
     target_dir.erase(target_dir.size() - 1, 1);
   }
-  DIR* directory = opendir(target_dir.c_str());
-  if (directory == NULL) {
-    std::cerr << "Error: cannot open directory " << target_dir
-              << " when loading test data: " << strerror(errno) << std::endl;
-    return -1;
-  }
-
-  while (true) {
-    errno = 0;
-    struct dirent* entry = readdir(directory);
-    if (entry == NULL) {
-      if (errno != 0) {
-        std::cerr << "Error: cannot read directory " << target_dir
-                  << " when loading test data: " << strerror(errno)
+  DIR* directory;
+  try {
+    directory = opendir(target_dir.c_str());
+    if (directory == NULL) {
+      std::cerr << "Error: cannot open directory " << target_dir
+                << " when fetching test data: " << strerror(errno) << std::endl;
+      return -1;
+    }
+    while (true) {
+      errno = 0;
+      struct dirent* entry = readdir(directory);
+      if (entry == NULL) {
+        if (errno != 0) {
+          std::cerr << "Error: cannot read directory " << target_dir
+                    << " when fetching test data: " << strerror(errno)
+                    << std::endl;
+          return -1;
+        } else {
+          break;
+        }
+      }
+      std::string entry_dname = entry->d_name;
+      entry_dname = target_dir + '/' + entry_dname + "/";
+      FetchSingleTestCase(entry_dname);
+    }
+  } catch (const std::exception& e) {
+    if (directory != NULL) {
+      if (closedir(directory) != 0) {
+        std::cerr << "Warning: failed to close directory " << target_dir
+                  << " when fetching test data: " << strerror(errno)
                   << std::endl;
-        return -1;
-      } else {
-        break;
       }
     }
-    std::string entry_dname = entry->d_name;
-    entry_dname = target_dir + '/' + entry_dname + "/";
-    FetchSingleTestCase(entry_dname);
+    std::cerr << "Error: exception occured: " << e.what() << std::endl;
+    throw e;
   }
   if (directory != NULL) {
     if (closedir(directory) != 0) {
       std::cerr << "Warning: failed to close directory " << target_dir
-                << " when loading test data: " << strerror(errno) << std::endl;
+                << " when fetching test data: " << strerror(errno) << std::endl;
       return -1;
     }
   }
@@ -115,13 +129,16 @@ std::vector<TestCase> GetTestCase(const std::string& location) {
 }
 
 void LoadSingleFile(const std::string& filename, std::string& filedata) {
-  std::ifstream f(filename, std::ifstream::in);
-  if (f.is_open()) {
-    std::string s(std::istream_iterator<char>(f), {});
-    ;
-    filedata = s;
+  FILE* fp;
+  if ((fp = fopen(filename.c_str(), "r")) != NULL) {
+    while (!feof(fp)) {
+      filedata += fgetc(fp);
+    }
+    fclose(fp);
+  } else {
+    std::cerr << "Warning: failed to open file: " << filename << std::endl;
   }
-  f.close();
+  return;
 }
 
 ProtoTestCase LoadSingleTestCase(const TestCase& t) {
@@ -133,7 +150,7 @@ ProtoTestCase LoadSingleTestCase(const TestCase& t) {
     ProtoTestData proto_test_data;
 
     for (auto& input_file : test_data.input_filenames_) {
-      std::string input_data = "";
+      std::string input_data;
       LoadSingleFile(input_file, input_data);
       onnx::TensorProto input_proto;
       ParseProtoFromBytes(&input_proto, input_data.c_str(), input_data.size());
