@@ -39,8 +39,8 @@ Supported pass names:
 get_available_passes = C.get_available_passes
 
 
-def optimize(model, passes=[]):  # type: (ModelProto, Sequence[Text]) -> ModelProto
-    if len(passes) == 0:
+def optimize(model, passes=None):  # type: (ModelProto, Sequence[Text]) -> ModelProto
+    if passes is None:
         passes = ['eliminate_nop_transpose',
                   'eliminate_nop_pad',
                   'fuse_consecutive_transposes',
