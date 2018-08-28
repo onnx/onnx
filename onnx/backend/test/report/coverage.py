@@ -142,6 +142,7 @@ class Coverage(object):
             with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     os.environ.get('BACKEND') + '_nodes.csv'), 'w') as nodes_file:  # type: ignore
                 node_writer = csv.writer(nodes_file)
+                node_writer.writerow(["Op", os.environ.get('BACKEND')])
                 for node in all_ops:
                     node_name = node
                     if node in experimental:
@@ -157,6 +158,7 @@ class Coverage(object):
             with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     os.environ.get('BACKEND') + '_models.csv'), 'w') as models_file:  # type: ignore
                 model_writer = csv.writer(models_file)
+                model_writer.writerow(["Model", os.environ.get('BACKEND')])
                 # Consider both buckets
                 num_models = 0
                 for bucket in self.models:
