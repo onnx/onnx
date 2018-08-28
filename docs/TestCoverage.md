@@ -5,9 +5,9 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 90/95 (94.74%, 5 generators excluded) common operators.
+Node tests have covered 91/99 (91.92%, 5 generators excluded) common operators.
 
-Node tests have covered 1/15 (6.67%, 0 generators excluded) experimental operators.
+Node tests have covered 1/12 (8.33%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -1681,6 +1681,64 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.exp(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_exp')
+```
+
+</details>
+
+
+### Expand
+There are 2 test cases, listed as following:
+<details>
+<summary>dim_changed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+new_shape = [2, 1, 6]
+expanded = data * np.ones(new_shape, dtype=np.float32)
+#print(expanded)
+#[[[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]],
+#
+# [[1., 1., 1., 1., 1., 1.],
+#  [2., 2., 2., 2., 2., 2.],
+#  [3., 3., 3., 3., 3., 3.]]]
+new_shape = np.array(new_shape, dtype=np.int64)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_changed')
+```
+
+</details>
+<details>
+<summary>dim_unchanged</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Expand',
+    inputs=['data', 'new_shape'],
+    outputs=['expanded'],
+)
+shape = [3, 1]
+new_shape = [3, 4]
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
+#print(data)
+#[[1.], [2.], [3.]]
+expanded = np.tile(data, 4)
+#print(expanded)
+#[[1., 1., 1., 1.],
+# [2., 2., 2., 2.],
+# [3., 3., 3., 3.]]
+new_shape = np.array(new_shape, dtype=np.int64)
+expect(node, inputs=[data, new_shape], outputs=[expanded],
+       name='test_expand_dim_unchanged')
 ```
 
 </details>
@@ -5612,6 +5670,12 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GlobalLpPool (call for test cases)
 
 
+### If (call for test cases)
+
+
+### Loop (call for test cases)
+
+
 ### LpNormalization (call for test cases)
 
 
@@ -5634,6 +5698,9 @@ expect(node, inputs=[x, y], outputs=[z],
 
 
 ### RandomUniformLike (random generator operator)
+
+
+### Scan (call for test cases)
 
 
 ### SpaceToDepth (call for test cases)
@@ -5714,16 +5781,7 @@ expect(node, inputs=[x], outputs=[y],
 ### GivenTensorFill (call for test cases)
 
 
-### If (call for test cases)
-
-
 ### ImageScaler (call for test cases)
-
-
-### Loop (call for test cases)
-
-
-### LoopIndexTensor (call for test cases)
 
 
 ### MeanVarianceNormalization (call for test cases)

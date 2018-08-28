@@ -11,6 +11,7 @@ if(NOT CMAKE_BUILD_TYPE)
       "Choose the type of build from: Debug Release RelWithDebInfo MinSizeRel Coverage."
     FORCE)
 endif()
+cmake_policy(SET CMP0063 NEW)
 
 # Project
 project(onnx C CXX)
@@ -21,6 +22,9 @@ option(ONNX_GEN_PB_TYPE_STUBS "Generate protobuf python type stubs" ON)
 option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
+option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
+
+set(ONNX_NAMESPACE "onnx" CACHE STRING "onnx namespace")
 
 # Set C++11 as standard for the whole project
 if(NOT MSVC)
@@ -46,7 +50,7 @@ if(ONNX_BUILD_TESTS)
   include(googletest)
 endif()
 
-if(TARGET protobuf::libprotobuf)
+if((ONNX_USE_LITE_PROTO AND TARGET protobuf::libprotobuf-lite) OR ((NOT ONNX_USE_LITE_PROTO) AND TARGET protobuf::libprotobuf))
   # Sometimes we need to use protoc compiled for host architecture while linking
   # libprotobuf against target architecture. See https://github.com/caffe2/caffe
   # 2/blob/96f35ad75480b25c1a23d6e9e97bccae9f7a7f9c/cmake/ProtoBuf.cmake#L92-L99
@@ -74,18 +78,21 @@ else()
                            ${Protobuf_PROTOC_EXECUTABLE} DIRECTORY)
     get_filename_component(_PROTOBUF_INSTALL_PREFIX
                            ${_PROTOBUF_INSTALL_PREFIX}/.. REALPATH)
-    find_library(Protobuf_LIBRARY
-                 NAMES protobuf
-                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-                 NO_DEFAULT_PATH)
     find_library(Protobuf_PROTOC_LIBRARY
                  NAMES protoc
                  PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
                  NO_DEFAULT_PATH)
-    find_library(Protobuf_LITE_LIBRARY
-                 NAMES protobuf-lite
-                 PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
-                 NO_DEFAULT_PATH)
+    if(ONNX_USE_LITE_PROTO)
+      find_library(Protobuf_LITE_LIBRARY
+        NAMES protobuf-lite
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        NO_DEFAULT_PATH)
+    else(ONNX_USE_LITE_PROTO)
+      find_library(Protobuf_LIBRARY
+        NAMES protobuf
+        PATHS ${_PROTOBUF_INSTALL_PREFIX}/lib
+        NO_DEFAULT_PATH)
+    endif(ONNX_USE_LITE_PROTO)
     find_path(Protobuf_INCLUDE_DIR google/protobuf/service.h
               PATHS ${_PROTOBUF_INSTALL_PREFIX}/include
               NO_DEFAULT_PATH)
@@ -95,18 +102,6 @@ endif()
 
 # Build the libraries with -fPIC
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-if(ONNX_NAMESPACE)
-  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=${ONNX_NAMESPACE}")
-else()
-  set(ONNX_NAMESPACE "onnx")
-  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=onnx")
-endif()
-add_definitions(${MY_ONNX_NAMESPACE})
-
-if(ONNX_ML)
-  add_definitions("-DONNX_ML=1")
-endif()
 
 # function(RELATIVE_PROTOBUF_GENERATE_CPP SRCS HDRS ROOT_DIR) from https://githu
 # b.com/tensorflow/tensorflow/blob/d2c3b873c6f8ff999a2e4ee707a84ff00d9c15a5/tens
@@ -179,6 +174,9 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
         "${FILE_WE}")
     if(ONNX_ML)
       list(APPEND GEN_PROTO_ARGS -m)
+    endif()
+    if(ONNX_USE_LITE_PROTO)
+      list(APPEND GEN_PROTO_ARGS -l)
     endif()
     add_custom_command(OUTPUT "${GENERATED_PROTO}"
                        COMMAND "${_python_exe}" "${GEN_PROTO_PY}"
@@ -270,16 +268,27 @@ add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(onnx_proto
                            PUBLIC "${CMAKE_CURRENT_BINARY_DIR}"
                                   "${PROTOBUF_INCLUDE_DIRS}")
-if(TARGET protobuf::libprotobuf)
-  target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
+
+if(ONNX_USE_LITE_PROTO)
+  if(TARGET protobuf::libprotobuf-lite)
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf-lite)
+  else()
+    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LITE_LIBRARIES})
+  endif()
 else()
-  target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+  if(TARGET protobuf::libprotobuf)
+    target_link_libraries(onnx_proto PUBLIC protobuf::libprotobuf)
+  else()
+    target_link_libraries(onnx_proto PUBLIC ${PROTOBUF_LIBRARIES})
+  endif()
 endif()
+add_onnx_global_defines(onnx_proto)
 
 add_library(onnx ${onnx_src})
 target_include_directories(onnx
                            PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(onnx PUBLIC onnx_proto)
+add_onnx_global_defines(onnx)
 
 if(BUILD_ONNX_PYTHON)
   if("${PY_EXT_SUFFIX}" STREQUAL "")
@@ -304,14 +313,18 @@ if(BUILD_ONNX_PYTHON)
                                      "${PYTHON_INCLUDE_DIR}")
 
   # pybind11 is a header only lib
-  find_package(pybind11)
+  find_package(pybind11 2.2)
   if(pybind11_FOUND)
     target_include_directories(onnx_cpp2py_export
                                PRIVATE ${pybind11_INCLUDE_DIRS})
   else()
-    target_include_directories(
-      onnx_cpp2py_export
-      PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+    if(EXISTS ${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h)
+      target_include_directories(
+        onnx_cpp2py_export
+        PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+    else()
+      message(FATAL_ERROR "cannot find pybind")
+    endif()
   endif()
 
   if(APPLE)
@@ -366,6 +379,7 @@ if(BUILD_ONNX_PYTHON)
                                            # uf\wire_format_lite.h
                                    ${EXTRA_FLAGS})
     target_compile_options(onnx_cpp2py_export PRIVATE /MT)
+    add_onnx_global_defines(onnx_cpp2py_export)
   endif()
 endif()
 

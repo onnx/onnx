@@ -40,6 +40,7 @@ _(Tile) \
 _(SubConstant) \
 _(Scale) \
 _(Transpose) \
+_(Pad) \
 _(Reshape) \
 _(split) \
 _(chunk) \
@@ -135,7 +136,10 @@ _(body) \
 _(then_branch) \
 _(else_branch) \
 _(Captured) \
-_(__control_inputs)
+_(__control_inputs) \
+_(count_include_pad) \
+_(storage_order) \
+_(Unsqueeze)
 
 enum BuiltinSymbol {
   #define DEFINE_SYMBOL(s) \
