@@ -179,4 +179,4 @@ class Coverage(object):
             with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'metadata.csv'), 'w') as metadata_file:  # type: ignore
                 metadata_writer = csv.writer(metadata_file)
-                metadata_writer.writerow(["Latest Update", datetime.datetime.now().isoformat(" ")])
+                metadata_writer.writerow(["Latest Update", datetime.datetime.now().isoformat(' ')])
