@@ -1,4 +1,5 @@
 #include "onnx/checker.h"
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
@@ -274,11 +275,24 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
-    fail_check(
-        "No Schema registered for " + node.op_type() +
-        " with domain_version of " + ONNX_NAMESPACE::to_string(domain_version));
+    GraphProto g;
+    NodeProto temp_node = node;
+    NodeProto* ptemp_node = g.add_node();
+    ptemp_node->CopyFrom(temp_node);
+    try {
+      DecomposeGraph(g, node.domain());
+      for (const NodeProto& node : g.node()) {
+        check_node(node, ctx, lex_ctx);
+      }
+    } catch (std::runtime_error e) {
+      fail_check(
+          "No Schema registered for " + node.op_type() +
+          " with domain_version of " +
+          ONNX_NAMESPACE::to_string(domain_version));
+    }
+  } else {
+    schema->Verify(node);
   }
-  schema->Verify(node);
 }
 
 void check_graph(
