@@ -1087,6 +1087,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .SetDoc(Upsample_ver7_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
           propagateShapeAndTypeFromFirstInput(ctx);
           auto& input_shape = getInputShape(ctx, 0);
           auto* output_shape = getOutputShape(ctx, 0);
