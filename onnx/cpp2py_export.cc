@@ -269,6 +269,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const py::bytes& bytes, const py::int_ target) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
+        shape_inference::InferShapes(proto);
         auto const result = version_conversion::ConvertVersion(std::move(proto),
           target);
         std::string out;
