@@ -13,7 +13,7 @@ from __future__ import unicode_literals
 import onnx
 import onnx.onnx_cpp2py_export.optimizer as C
 from onnx import ModelProto
-from typing import Text, Sequence
+from typing import Text, Sequence, Optional
 
 """Apply the optimization on the serialized ModelProto.
 
@@ -39,7 +39,7 @@ Supported pass names:
 get_available_passes = C.get_available_passes
 
 
-def optimize(model, passes=None):  # type: (ModelProto, Sequence[Text]) -> ModelProto
+def optimize(model, passes=None):  # type: (ModelProto, Optional[Sequence[Text]]) -> ModelProto
     if passes is None:
         passes = ['eliminate_nop_transpose',
                   'eliminate_nop_pad',
