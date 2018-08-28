@@ -158,6 +158,7 @@ class Coverage(object):
                     os.environ.get('BACKEND') + '_models.csv'), 'w') as models_file:  # type: ignore
                 model_writer = csv.writer(models_file)
                 # Consider both buckets
+                num_models = 0
                 for bucket in self.models:
                     for model in self.models[bucket]:
                         # Both analyze and run the model on the backend
@@ -169,13 +170,16 @@ class Coverage(object):
                         # skipped/not loaded, but that are in other frameworks
                         msg = "Passed!"
                         if bucket == 'loaded':
+                            if model in self.models['passed']:
+                                continue
                             msg = "Failed!"
+                        num_models += 1
                         model_writer.writerow([model, "{}/{} nodes covered: {}"
                             .format(num_covered, len(self.models[bucket][model]
                                 .node_coverages), msg)])
                 model_writer.writerow(["Summary", "{}/{} model tests passed"
                     .format(len(self.models['passed']),
-                        len(self.models['loaded']) + len(self.models['passed']))])
+                        num_models)])
             with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'metadata.csv'), 'w') as metadata_file:  # type: ignore
                 metadata_writer = csv.writer(metadata_file)
