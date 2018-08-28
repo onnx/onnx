@@ -36,12 +36,12 @@ matrix:
       env: PYTHON_VERSION=python3 ONNX_ML=1
     - os: linux
       sudo: required
-      env: PYTHON_VERSION=python2 LITE=1
+      env: PYTHON_VERSION=python2 ONNX_ML=1 LITE=1
       language: python
       python: "2.7"
     - os: osx
       osx_image: xcode9.3
-      env: PYTHON_VERSION=python2 LITE=1
+      env: PYTHON_VERSION=python2 ONNX_ML=1 LITE=1
 
 env:
   global:
