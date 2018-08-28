@@ -92,7 +92,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
     # since version
     s += '\n#### Version\n'
-    s += '\nThis version of the operator has been available since version {}'.format(schema.since_version)
+    s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
     s += ' of {}.\n'.format(display_domain(schema.domain))
     if len(versions) > 1:
         # TODO: link to the Changelog.md
@@ -256,7 +256,7 @@ def main(args):  # type: (Type[Args]) -> None
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
                     name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
                                                    schema.since_version)
-                    s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
+                    s += ('### <a name="{}"></a>**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
 
@@ -358,7 +358,7 @@ def main(args):  # type: (Type[Args]) -> None
             for _, namemap in supportmap:
                 for op_type, schema, versions in namemap:
                     # op_type
-                    s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
+                    s = ('### {}<a name="{}"></a><a name="{}">**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, op_type),
                         format_name_with_domain(domain, op_type.lower()),

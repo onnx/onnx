@@ -79,6 +79,10 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
+  if (deprecated_) {
+    fail_check("Using a deprecated operator.");
+  }
+
   // Check the number of inputs.
   if (node.input_size() < min_input_ || node.input_size() > max_input_) {
     fail_check(

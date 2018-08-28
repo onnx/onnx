@@ -215,7 +215,7 @@ class OpSchema final {
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
-   * Marks this op as deprecated as of it's version. This will cause the 
+   * Marks this op as deprecated as of it's since_version. This will cause the
    * Schema() lookup functions to return nullptr when the version is in the
    * deprecated range.
    */
@@ -520,6 +520,10 @@ class OpSchema final {
     return since_version_;
   }
 
+  bool deprecated() const {
+    return deprecated_;
+  }
+
   int min_input() const {
     return min_input_;
   }
@@ -697,11 +701,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       const std::string& domain = ONNX_DOMAIN) {
     auto& m = map();
     if (m.count(key) && m[key].count(domain)) {
-      const OpSchema& schema=m[key][domain].rbegin()->second;
-      // If it's deprecated there is no latest version
-      if (schema.Deprecated())
-        return nullptr;
-      return &schema;
+      return &m[key][domain].rbegin()->second;
     } else {
       return nullptr;
     }
@@ -726,10 +726,6 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         // The <pos> version is greater than specified version.
         pos--;
       }
-
-      // This version is deprecated, so return nullptr
-      if (pos->second.Deprecated())
-        return nullptr;
 
       // Schema with exact version as specified one exists.
       return &(pos->second);
