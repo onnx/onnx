@@ -14,7 +14,7 @@
 #include "onnx/version_converter/adapters/gemm_6_7.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_5.h"
 #include "onnx/version_converter/adapters/batch_normalization_6_7.h"
-#include "onnx/version_converter/adapters/batch_normalization_7_6.h"
+#include "onnx/version_converter/adapters/set_is_test.h"
 #include "onnx/version_converter/adapters/concat_3_4.h"
 #include "onnx/version_converter/adapters/reshape_5_4.h"
 #include "onnx/version_converter/adapters/reshape_4_5.h"
@@ -124,7 +124,8 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(5), OpSetID(6)));
       registerAdapter(make_unique<CompatibleAdapter>("Relu",
         OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<BatchNormalization_7_6>());
+      registerAdapter(make_unique<SetIsTest>("BatchNormalization",
+        OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<BatchNormalization_6_7>());
       registerAdapter(make_unique<BatchNormalization_6_5>());
       registerAdapter(make_unique<RemoveConsumedInputs>("BatchNormalization",
@@ -149,7 +150,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<Sum_8_7>());
       registerAdapter(make_unique<CompatibleAdapter>("Dropout",
         OpSetID(6), OpSetID(5)));
-      registerAdapter(make_unique<CompatibleAdapter>("Dropout",
+      registerAdapter(make_unique<SetIsTest>("Dropout",
         OpSetID(7), OpSetID(6)));
       registerAdapter(make_unique<RemoveConsumedInputs>("Dropout",
         OpSetID(5), OpSetID(6)));
