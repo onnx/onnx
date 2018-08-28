@@ -382,7 +382,7 @@ class TestVersionConverter(unittest.TestCase):
 
     # Test Dropout Adapter: 1 -> 8
     def test_dropout_up(self):  # type: () -> None
-        nodes = [helper.make_node('Dropout', ["data"], ["output"])]
+        nodes = [helper.make_node('Dropout', ["data"], ["output"], is_test=1)]
         graph = helper.make_graph(
             nodes,
             "test",
