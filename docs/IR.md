@@ -65,7 +65,7 @@ More details on conventions and best practices for versioning of IR, operator se
 
 ONNX specifies the portable, serialized format of a computation graph. It does not have to be the form a framework chooses to use and manipulate the computation internally. For example, an implementation may represent the model differently in memory if it is more efficient to manipulate during optimization passes.
 
-An implementation MAY extend ONNX is by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support. The mechanism for this is adding operator sets to the opset_import property in a model that depends on the extension operators.
+An implementation MAY extend ONNX by adding operators expressing semantics beyond the standard set of operators that all implementations MUST support. The mechanism for this is adding operator sets to the opset_import property in a model that depends on the extension operators.
 
 ### Models
 

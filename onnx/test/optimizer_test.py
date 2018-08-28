@@ -172,6 +172,35 @@ class TestOptimizer(unittest.TestCase):
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Transpose"
 
+    def test_nop_pad(self):  # type: () -> None
+        nodes = [helper.make_node("Pad", ["X"], ["Y"], pads=[0, 0])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 3))])
+        assert len(graph.node) == 1
+        optimized_model = self._optimized(graph, ["eliminate_nop_pad"])
+
+        def check_pad(node):  # type: (NodeProto) -> None
+            assert node.op_type != "Pad"
+        self._visit_all_nodes_recursive(optimized_model.graph, check_pad)
+        assert len(optimized_model.graph.output) == 1
+        assert optimized_model.graph.output[0].name == "X"
+        assert len(optimized_model.graph.node) == 0
+
+    def test_nop_pad_default(self):  # type: () -> None
+        trans = helper.make_node("Pad", ["X"], ["Y"], pads=[0, 1])
+        graph = helper.make_graph(
+            [trans],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (2, 4))])
+        optimized_model = self._optimized(graph, ["eliminate_nop_pad"])
+
+        assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Pad"
+
     def test_eliminate_unused_initializer(self):  # type: () -> None
         add = helper.make_node("Add", ["X", "Y"], ["Z"])
         graph = helper.make_graph(
