@@ -254,6 +254,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Major and minor version of ONNXIFI specification implemented by the backend.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * Value type: uint64_t.
  *      The high 32 bits specify the major version.
  *      The low 32 bits specify the minor version.
@@ -266,6 +268,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Marketing name of the backend (excluding the vendor name).
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
@@ -276,6 +280,8 @@ typedef int32_t onnxBackendInfo;
 
 /**
  * Name of the backend vendor.
+ *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
  *
  * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
@@ -288,6 +294,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Version of the backend software. Exact format is vendor-specific, but MUST be
  * unique for the software release.
+ *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
  *
  * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
  *
@@ -302,6 +310,8 @@ typedef int32_t onnxBackendInfo;
  * Space-separated list of vendor- or device-specific extensions supported on
  * this backend.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * This string MUST be in US-ASCII encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
@@ -314,6 +324,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Descriptive name of the device (i.e. CPU, GPU, DSP, or NPU model).
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * This string MUST be in UTF-8 encoding and NOT locale-sensitive.
  *
  * Value type: char[], e.g.:
@@ -323,6 +335,8 @@ typedef int32_t onnxBackendInfo;
 
 /**
  * Type of the device.
+ *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
  *
  * Value type: onnxEnum.
  * Possible values:
@@ -338,6 +352,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * List of supported ONNX IR versions.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * Value type: char[], e.g.:
  *    "3" (IR version in ONNX 1.0)
  *
@@ -350,6 +366,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * List of supported operator set domains and maximum supported operator set
  * version for each domain.
+ *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
  *
  * Value type: char[], e.g.:
  *    "ai.onnx:1" (only operators in version 1 of default ONNX operator set)
@@ -367,6 +385,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Optional features supported by the backend.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * Value type: onnxBitfield.
  * Possible values: any combination of the following flags:
  *      ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS
@@ -378,6 +398,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Auxiliary initialization properties supported by the backend.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * Value type: onnxBitfield.
  * Possible values: any combination of vendor-specific flags in high 32 bits of
  * the bit field.
@@ -386,6 +408,8 @@ typedef int32_t onnxBackendInfo;
 
 /**
  * Memory types supported for graph inputs and outputs.
+ *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
  *
  * Value type: onnxBitfield.
  * Possible values are any combination of the following flags:
@@ -401,6 +425,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Auxiliary initialization properties supported by graphs on the backend.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * Value type: onnxBitfield.
  * Possible values: any combination of vendor-specific flags in high 32 bits of
  * the bit field.
@@ -409,6 +435,8 @@ typedef int32_t onnxBackendInfo;
 
 /**
  * Memory synchronization primitives supported for graph inputs and outputs.
+ *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
  *
  * Possible values are any combination of the following flags:
  *     ONNXIFI_SYNCHRONIZATION_EVENT    (onnxEvent, always supported)
@@ -420,12 +448,16 @@ typedef int32_t onnxBackendInfo;
 /**
  * Maximum amount of memory, in bytes, available to the use by the backend.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * Value type: uint64_t.
  */
 #define ONNXIFI_BACKEND_MEMORY_SIZE 20
 
 /**
  * Maximum size of network parameters, in bytes.
+ *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
  *
  * Value type: uint64_t.
  */
@@ -434,6 +466,8 @@ typedef int32_t onnxBackendInfo;
 /**
  * Maximum number of independent network graphs supported by the backend.
  *
+ * Since ONNXIFI 1.0, backends MUST support this information query.
+ *
  * Value type: uint64_t.
  */
 #define ONNXIFI_BACKEND_MAX_GRAPH_COUNT 22
@@ -441,6 +475,9 @@ typedef int32_t onnxBackendInfo;
 /**
  * Number of FP32 multiply-accumulate operations per second delivered by the
  * backend.
+ *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
  *
  * Value type: uint64_t.
  * If the backend does not support FP32 computation, the value MUST be 0.
@@ -451,6 +488,9 @@ typedef int32_t onnxBackendInfo;
  * Number of FP16 multiply-accumulate operations per second delivered by the
  * backend.
  *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
+ *
  * Value type: uint64_t.
  * If the backend does not support FP16 computation, the value MUST be 0.
  */
@@ -460,6 +500,9 @@ typedef int32_t onnxBackendInfo;
  * Bandwidth, in bytes per second, of the global memory specific to the backend
  * device.
  *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
+ *
  * Value type: uint64_t.
  */
 #define ONNXIFI_BACKEND_MEMORY_BANDWIDTH 35
@@ -467,6 +510,9 @@ typedef int32_t onnxBackendInfo;
 /**
  * Bandwidth, in bytes per second, of transferring data from cacheable
  * CPU-allocated memory to the backend device.
+ *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
  *
  * Value type: uint64_t.
  */
@@ -476,12 +522,18 @@ typedef int32_t onnxBackendInfo;
  * Bandwidth, in bytes per second, of transferring data to cacheable
  * CPU-allocated memory from the backend device.
  *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
+ *
  * Value type: uint64_t.
  */
 #define ONNXIFI_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH 37
 
 /**
  * PCI bus ID of the backend device.
+ *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
  *
  * Value type: uint64_t.
  */
@@ -490,12 +542,18 @@ typedef int32_t onnxBackendInfo;
 /**
  * PCI device ID of the backend device.
  *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
+ *
  * Value type: uint64_t.
  */
 #define ONNXIFI_BACKEND_PCI_DEVICE_ID 41
 
 /**
  * PCI domain/function ID of the backend device.
+ *
+ * Since ONNXIFI 1.0, backends are recommended, but not required to support this
+ * information query.
  *
  * Value type: uint64_t.
  */
@@ -507,12 +565,18 @@ typedef int32_t onnxBackendInfo;
  * This is the value that would be returned by ID3D12Device::GetAdapterLuid()
  * for the hardware device used by the backend.
  *
+ * Since ONNXIFI 1.0, DXGI-based backends are recommended, but not required to
+ * support this information query.
+ *
  * Value type: LUID (8 bytes).
  */
 #define ONNXIFI_BACKEND_DIRECTX_ID 43
 
 /**
  * CUDA index of the backend device.
+ *
+ * Since ONNXIFI 1.0, CUDA-based backends are recommended, but not required to
+ * support this information query.
  *
  * Value type: uint64_t.
  */
@@ -940,27 +1004,37 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * (e.g. one ONNXIFI backend for each GPU in the system, or one ONNXIFI backend
  * for GPU and another for CPU, both implemented in the same software).
  *
- * The content and data type of information provided by this function depends
- * infoType value as specified below:
+ * The content, data type, and availability of information provided by this
+ * function depends on infoType value as specified below:
  *
- *         infoType value                                 data type
- *     ONNXIFI_BACKEND_NAME                                 char[]
- *     ONNXIFI_BACKEND_VENDOR                               char[]
- *     ONNXIFI_BACKEND_VERSION                              char[]
- *     ONNXIFI_BACKEND_EXTENSIONS                           char[]
- *     ONNXIFI_BACKEND_DEVICE                               char[]
- *     ONNXIFI_BACKEND_DEVICE_TYPE                         onnxEnum
- *     ONNXIFI_BACKEND_CAPABILITIES                      onnxBitfield
- *     ONNXIFI_BACKEND_INIT_PROPERTIES                   onnxBitfield
- *     ONNXIFI_BACKEND_MEMORY_TYPES                      onnxBitfield
- *     ONNXIFI_BACKEND_MEMORY_SIZE                         uint64_t
- *     ONNXIFI_BACKEND_MAX_GRAPH_SIZE                      uint64_t
- *     ONNXIFI_BACKEND_MAX_GRAPH_COUNT                     uint64_t
- *     ONNXIFI_BACKEND_MACS_FP32                           uint64_t
- *     ONNXIFI_BACKEND_MACS_FP16                           uint64_t
- *     ONNXIFI_BACKEND_MEMORY_BANDWIDTH                    uint64_t
- *     ONNXIFI_BACKEND_CPU_MEMORY_READ_BANDWIDTH           uint64_t
- *     ONNXIFI_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH          uint64_t
+ *         infoType value                           data type      support
+ *     ONNXIFI_BACKEND_ONNXIFI_VERSION               uint64_t     required
+ *     ONNXIFI_BACKEND_NAME                           char[]      required
+ *     ONNXIFI_BACKEND_VENDOR                         char[]      required
+ *     ONNXIFI_BACKEND_VERSION                        char[]      required
+ *     ONNXIFI_BACKEND_EXTENSIONS                     char[]      required
+ *     ONNXIFI_BACKEND_DEVICE                         char[]      required
+ *     ONNXIFI_BACKEND_DEVICE_TYPE                   onnxEnum     required
+ *     ONNXIFI_BACKEND_ONNX_IR_VERSION                char[]      required
+ *     ONNXIFI_BACKEND_OPSET_VERSION                  char[]      required
+ *     ONNXIFI_BACKEND_CAPABILITIES                onnxBitfield   required
+ *     ONNXIFI_BACKEND_INIT_PROPERTIES             onnxBitfield   required
+ *     ONNXIFI_BACKEND_MEMORY_TYPES                onnxBitfield   required
+ *     ONNXIFI_BACKEND_GRAPH_INIT_PROPERTIES       onnxBitfield   required
+ *     ONNXIFI_BACKEND_SYNCHRONIZATION_TYPES       onnxBitfield   required
+ *     ONNXIFI_BACKEND_MEMORY_SIZE                   uint64_t     required
+ *     ONNXIFI_BACKEND_MAX_GRAPH_SIZE                uint64_t     required
+ *     ONNXIFI_BACKEND_MAX_GRAPH_COUNT               uint64_t     required
+ *     ONNXIFI_BACKEND_MACS_FP32                     uint64_t     optional
+ *     ONNXIFI_BACKEND_MACS_FP16                     uint64_t     optional
+ *     ONNXIFI_BACKEND_MEMORY_BANDWIDTH              uint64_t     optional
+ *     ONNXIFI_BACKEND_CPU_MEMORY_READ_BANDWIDTH     uint64_t     optional
+ *     ONNXIFI_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH    uint64_t     optional
+ *     ONNXIFI_BACKEND_PCI_BUS_ID                    uint64_t     optional
+ *     ONNXIFI_BACKEND_PCI_DEVICE_ID                 uint64_t     optional
+ *     ONNXIFI_BACKEND_PCI_DOMAIN_ID                 uint64_t     optional
+ *     ONNXIFI_BACKEND_DIRECTX_ID                      LUID       optional
+ *     ONNXIFI_BACKEND_CUDA_INDEX                    uint64_t     optional
  *
  * @param backendID - ID of the backend to query.
  * @param infoType - type of the backend information to query. Must be one of
