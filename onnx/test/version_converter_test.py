@@ -109,7 +109,7 @@ class TestVersionConverter(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X1", TensorProto.FLOAT, (5, 2)),
                 helper.make_tensor_value_info("X2", TensorProto.FLOAT, (5,))],
-            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5,2))])
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 2))])
         converted_model = self._converted(graph, helper.make_operatorsetid(
             "", 5), 8)
         # Assert equality of graph and converted_model
