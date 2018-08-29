@@ -100,6 +100,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
                                            v.since_version) for v in versions[:-1]))
 
+    # If this schema is deprecated, don't display any of the following sections
+    if schema.deprecated:
+        return s
+
     # attributes
     if schema.attributes:
         s += '\n#### Attributes\n\n'
