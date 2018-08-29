@@ -314,6 +314,128 @@ class TestVersionConverter(unittest.TestCase):
         assert converted_model.graph.node[0].op_type == "Reshape"
         assert converted_model.opset_import[0].version == 6
 
+    # Test Sum Adapter: 5 -> 8
+    def test_sum_5_8(self):  # type: () -> None
+        nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
+            "data_3", "data_4"], ["sum"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("data_0", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_2", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_3", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_4", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 5), 7)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Sum"
+        assert converted_model.opset_import[0].version == 7
+
+    # Test Sum Adapter: 8 -> 5
+    def test_sum_8_5(self):  # type: () -> None
+        nodes = [helper.make_node('Sum', ["data_0", "data_1", "data_2",
+            "data_3", "data_4"], ["sum"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("data_0", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_1", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_2", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_3", TensorProto.FLOAT, (5,)),
+                helper.make_tensor_value_info("data_4", TensorProto.FLOAT, (5,))],
+            [helper.make_tensor_value_info("sum", TensorProto.FLOAT, (5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 8), 5)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Sum"
+        assert converted_model.opset_import[0].version == 5
+
+    # Test AveragePool Adapter: 1 -> 8
+    def test_averagepool_up(self):  # type: () -> None
+        nodes = [helper.make_node('AveragePool', ["X"], ["Y"], kernel_shape=[1, 1])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 1), 8)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "AveragePool"
+        assert converted_model.opset_import[0].version == 8
+
+    # Test AveragePool Adapter: 8 -> 1
+    def test_averagepool_down(self):  # type: () -> None
+        nodes = [helper.make_node('AveragePool', ["X"], ["Y"], kernel_shape=[1, 1])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 8), 1)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "AveragePool"
+        assert converted_model.opset_import[0].version == 1
+
+    # Test Dropout Adapter: 1 -> 8
+    def test_dropout_up(self):  # type: () -> None
+        nodes = [helper.make_node('Dropout', ["data"], ["output"], is_test=1)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("data", TensorProto.FLOAT, (5, 5,))],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, (5, 5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 1), 8)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Dropout"
+        assert converted_model.opset_import[0].version == 8
+
+    # Test Dropout Adapter: 8 -> 1
+    def test_dropout_down(self):  # type: () -> None
+        nodes = [helper.make_node('Dropout', ["data"], ["output"])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("data", TensorProto.FLOAT, (5, 5,))],
+            [helper.make_tensor_value_info("output", TensorProto.FLOAT, (5, 5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 8), 1)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "Dropout"
+        assert converted_model.opset_import[0].version == 1
+
+    # Test MaxPool Adapter: 1 -> 8
+    def test_maxpool_up(self):  # type: () -> None
+        nodes = [helper.make_node('MaxPool', ["X"], ["Y"], kernel_shape=[1, 1])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 1), 8)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "MaxPool"
+        assert converted_model.opset_import[0].version == 8
+
+    # Test MaxPool Adapter: 8 -> 1
+    def test_maxpool_down(self):  # type: () -> None
+        nodes = [helper.make_node('MaxPool', ["X"], ["Y"], kernel_shape=[1, 1])]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (5, 5,))],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, (5, 5,))])
+        converted_model = self._converted(graph, helper.make_operatorsetid(
+            "", 8), 1)
+        # Assert equality of graph and converted_model
+        assert converted_model.graph.node[0].op_type == "MaxPool"
+        assert converted_model.opset_import[0].version == 1
+
 
 if __name__ == '__main__':
     unittest.main()
