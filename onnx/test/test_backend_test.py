@@ -87,7 +87,7 @@ test_coverage_whitelist = set(
 # In order to run these models, set the LOCAL_TEST environment variable to "True"
 test_coverage_whitelist_local = set(
     ['bvlc_googlenet', 'bvlc_reference_caffenet',
-        'bvlc_reference_rcnn_ilsvrc13'])
+        'bvlc_reference_rcnn_ilsvrc13', 'emotion_ferplus'])
 
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
