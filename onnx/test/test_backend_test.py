@@ -81,12 +81,19 @@ class DummyBackend(onnx.backend.base.Backend):
 
 
 test_coverage_whitelist = set(
-    ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
-     'resnet50', 'shufflenet', 'SingleRelu', 'squeezenet_old', 'vgg19', 'zfnet'])
+    ['bvlc_alexnet', 'densenet121', 'inception_v1',
+        'inception_v2', 'resnet50', 'shufflenet', 'SingleRelu',
+        'squeezenet_old', 'vgg19', 'zfnet'])
+# In order to run these models, set the LOCAL_TEST environment variable to "True"
+test_coverage_whitelist_local = set(
+    ['bvlc_googlenet', 'bvlc_reference_caffenet',
+        'bvlc_reference_rcnn_ilsvrc13'])
 
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
     if model.graph.name not in test_coverage_whitelist:
+        if os.environ.get('LOCAL_TEST') == 'True':
+            return True
         return False
     for node in model.graph.node:
         if node.op_type in set(['RNN', 'LSTM', 'GRU']):
