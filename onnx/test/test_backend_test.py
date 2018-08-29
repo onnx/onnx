@@ -48,6 +48,7 @@ class DummyBackend(onnx.backend.base.Backend):
                 model = onnx.version_converter.convert_version(model, 1)
                 model = onnx.version_converter.convert_version(model, 8)
             if model.graph.name not in test_shape_inference_blacklist:
+                print("Name: ", model.graph.name)
                 for node in model.graph.node:
                     for i, output in enumerate(node.output):
                         if node.op_type == 'Dropout' and i != 0:
@@ -89,9 +90,9 @@ test_coverage_whitelist = set(
 test_coverage_whitelist_local = set(
     ['bvlc_googlenet', 'bvlc_reference_caffenet',
         'bvlc_reference_rcnn_ilsvrc13', 'emotion_ferplus', 'mnist',
-        'tiny_yolov2'])
+        '15fb3d9ea39f4068ad44a49de20faedc'])
 test_shape_inference_blacklist = set(
-    ['tiny_yolov2'])
+    ['15fb3d9ea39f4068ad44a49de20faedc'])
 
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
