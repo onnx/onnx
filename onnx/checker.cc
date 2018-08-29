@@ -281,14 +281,14 @@ void check_node(
     ptemp_node->CopyFrom(temp_node);
     try {
       DecomposeGraph(g, node.domain());
-      for (const NodeProto& node : g.node()) {
-        check_node(node, ctx, lex_ctx);
-      }
     } catch (std::runtime_error e) {
       fail_check(
           "No Schema registered for " + node.op_type() +
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
+    }
+    for (const NodeProto& node : g.node()) {
+      check_node(node, ctx, lex_ctx);
     }
   } else {
     schema->Verify(node);

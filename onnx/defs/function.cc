@@ -116,8 +116,11 @@ std::string RenameTensorNode(
 void FunctionExpandHelper(
     const FunctionProto& func,
     const NodeProto& node,
+    size_t fn_counter,
     GraphProto& g) {
-  std::string node_name = node.name();
+  // Create a temporary unique node prefix for tensor names
+  std::string node_name = node.has_name() ?  node.name() : func.name() + 
+    std::to_string(fn_counter);
   int version = (int)func.since_version();
   std::unordered_map<std::string, std::string> input_names_map;
   std::unordered_map<std::string, std::string> output_names_map;
@@ -184,6 +187,7 @@ Status DecomposeGraph(
       FunctionBuilderRegistry::OnnxInstance();
   Common::Status status =
       function_registry.GetFunctions(domain, &pfunction_map);
+  std::unordered_map<std::string, size_t> fcounter_map;
 
   new_g.clear_node();
   std::unordered_set<std::string> function_set(
@@ -199,8 +203,10 @@ Status DecomposeGraph(
       throw std::runtime_error(
           "Failed to recognize op/function '" + node.op_type() + "'!");
     } else {
+      size_t fn_counter = fcounter_map.count(node.op_type()) ? ++fcounter_map[node.op_type()] :
+        fcounter_map[node.op_type()] = 0;
       FunctionExpandHelper(
-          *(pfunction_map.find(node.op_type())->second), node, new_g);
+          *(pfunction_map.find(node.op_type())->second), node, fn_counter, new_g);
     }
   }
   g.CopyFrom(new_g);
