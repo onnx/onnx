@@ -33,7 +33,10 @@ endif(NOT MSVC)
 
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 
-set(CMAKE_MODULE_PATH "")
+# Read ONNX version
+file(READ "${PROJECT_SOURCE_DIR}/VERSION_NUMBER" ONNX_VERSION)
+string(STRIP "${ONNX_VERSION}" ONNX_VERSION)
+
 list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
 
 if(NOT MSVC)
@@ -265,9 +268,11 @@ list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
 
 add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
-target_include_directories(onnx_proto
-                           PUBLIC "${CMAKE_CURRENT_BINARY_DIR}"
-                                  "${PROTOBUF_INCLUDE_DIRS}")
+target_include_directories(onnx_proto PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:include>
+  ${PROTOBUF_INCLUDE_DIRS})
+
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
@@ -285,8 +290,10 @@ endif()
 add_onnx_global_defines(onnx_proto)
 
 add_library(onnx ${onnx_src})
-target_include_directories(onnx
-                           PUBLIC ${ONNX_ROOT} "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(onnx PUBLIC
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:include>)
 target_link_libraries(onnx PUBLIC onnx_proto)
 add_onnx_global_defines(onnx)
 
@@ -306,22 +313,21 @@ if(BUILD_ONNX_PYTHON)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-  target_include_directories(onnx_cpp2py_export
-                             PRIVATE "${ONNX_ROOT}"
-                                     "${CMAKE_CURRENT_BINARY_DIR}"
-                                     "${PROTOBUF_INCLUDE_DIRS}"
-                                     "${PYTHON_INCLUDE_DIR}")
+  target_include_directories(onnx_cpp2py_export PRIVATE
+                             $<BUILD_INTERFACE:${ONNX_ROOT}>
+                             $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+                             $<INSTALL_INTERFACE:include>
+                             ${PYTHON_INCLUDE_DIR})
 
   # pybind11 is a header only lib
   find_package(pybind11 2.2)
   if(pybind11_FOUND)
-    target_include_directories(onnx_cpp2py_export
-                               PRIVATE ${pybind11_INCLUDE_DIRS})
+    target_include_directories(onnx_cpp2py_export PUBLIC
+      ${pybind11_INCLUDE_DIRS})
   else()
     if(EXISTS ${ONNX_ROOT}/third_party/pybind11/include/pybind11/pybind11.h)
-      target_include_directories(
-        onnx_cpp2py_export
-        PRIVATE ${ONNX_ROOT}/third_party/pybind11/include)
+      target_include_directories(onnx_cpp2py_export PUBLIC
+        ${ONNX_ROOT}/third_party/pybind11/include)
     else()
       message(FATAL_ERROR "cannot find pybind")
     endif()
@@ -396,9 +402,11 @@ if(ONNX_BUILD_BENCHMARKS)
   endif()
 
   add_executable(protobuf-bench tools/protobuf-bench.cc)
-  target_include_directories(protobuf-bench
-                             PUBLIC "${ONNX_ROOT}" "${CMAKE_CURRENT_BINARY_DIR}"
-                                    "${PROTOBUF_INCLUDE_DIRS}")
+  target_include_directories(protobuf-bench PUBLIC
+    $<BUILD_INTERFACE:${ONNX_ROOT}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<INSTALL_INTERFACE:include>
+    ${PROTOBUF_INCLUDE_DIRS})
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
@@ -458,10 +466,15 @@ endif()
 
 # ---[ ONNX Interface for Framework Integratin (ONNXIFI)
 add_library(onnxifi INTERFACE)
-target_include_directories(onnxifi INTERFACE onnx)
+target_include_directories(onnxifi INTERFACE
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<INSTALL_INTERFACE:include>)
 
 # ---[ ONNXIFI loader
 add_library(onnxifi_loader STATIC onnx/onnxifi_loader.c)
+target_include_directories(onnxifi_loader PUBLIC
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<INSTALL_INTERFACE:include>)
 # Users of ONNX backend API would compile it with their toolchain, so it is
 # implemented in standard C89 for maximum compatibility
 set_target_properties(onnxifi_loader
@@ -473,19 +486,44 @@ target_link_libraries(onnxifi_loader PUBLIC onnxifi ${CMAKE_DL_LIBS})
 if(MSVC)
   add_msvc_runtime_flag(onnxifi_loader)
 endif()
-target_include_directories(onnxifi_loader PUBLIC onnx)
-target_include_directories(onnxifi_loader PUBLIC ${ONNX_ROOT})
+
+# ---[ ONNXIFI wrapper
+add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
+target_include_directories(onnxifi_wrapper PRIVATE
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<INSTALL_INTERFACE:include>)
+set_target_properties(onnxifi_wrapper PROPERTIES
+  C_STANDARD 99
+  C_EXTENSIONS NO
+  OUTPUT_NAME "onnxifi"
+  POSITION_INDEPENDENT_CODE YES)
+target_link_libraries(onnxifi_wrapper PRIVATE onnxifi_loader onnxifi)
+if(DEFINED ONNXIFI_SEARCH_DIR)
+  target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_SEARCH_DIR=\"${ONNXIFI_SEARCH_DIR}\"")
+endif()
+if(WIN32)
+  if(MSVC)
+    target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__declspec(dllexport)")
+  else()
+    target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__attribute__((__dllexport__))")
+  endif()
+endif()
+if(APPLE)
+  # By default CMake would use .so suffix on Mac
+  set_target_properties(onnxifi_wrapper PROPERTIES SUFFIX ".dylib")
+endif()
 
 # ---[ ONNXIFI dummy backend
 add_library(onnxifi_dummy SHARED onnx/onnxifi_dummy.c)
+target_include_directories(onnxifi_dummy PRIVATE
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<INSTALL_INTERFACE:include>)
 target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
-target_include_directories(onnxifi_dummy PUBLIC onnx)
-target_include_directories(onnxifi_dummy PUBLIC ${ONNX_ROOT})
 target_compile_definitions(onnxifi_dummy PRIVATE ONNXIFI_BUILD_LIBRARY=TRUE)
 if(MSVC)
   add_msvc_runtime_flag(onnxifi_dummy)
 endif()
-install(TARGETS onnx onnx_proto DESTINATION lib)
+
 install(DIRECTORY ${ONNX_ROOT}/onnx
         DESTINATION include
         FILES_MATCHING
@@ -494,7 +532,29 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/onnx
         DESTINATION include
         FILES_MATCHING
         PATTERN "*.h")
-install(TARGETS onnx onnx_proto onnxifi_dummy DESTINATION lib)
+
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cmake/ONNXConfigVersion.cmake.in
+  ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
+  @ONLY)
+configure_file(
+  ${PROJECT_SOURCE_DIR}/cmake/ONNXConfig.cmake.in
+  ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
+  @ONLY)
+install(FILES
+  ${PROJECT_BINARY_DIR}/ONNXConfigVersion.cmake
+  ${PROJECT_BINARY_DIR}/ONNXConfig.cmake
+  DESTINATION share/cmake/ONNX
+  COMPONENT dev)
+install(EXPORT ONNXTargets DESTINATION share/cmake/ONNX)
+install(TARGETS
+  onnx onnx_proto
+  onnxifi onnxifi_dummy onnxifi_loader onnxifi_wrapper
+  EXPORT ONNXTargets DESTINATION lib)
+
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
+
+include(cmake/summary.cmake)
+onnx_print_configuration_summary()
