@@ -156,13 +156,15 @@ class Coverage(object):
                         existing_nodes[op] = row
             if os.path.isfile(models_path):
                 with open(models_path, 'r') as models_file:
-                    reader = csv.DictReader(nodes_file)
+                    reader = csv.DictReader(models_file)
                     for row in reader:
                         op = row['Op']
                         del row['Op']
                         existing_nodes[op] = row
             backend = os.environ.get('BACKEND')
             with open(nodes_path, 'w') as nodes_file:
+                if 'Op' not in frameworks:
+                    frameworks.append('Op')
                 if backend not in frameworks:
                     frameworks.append(backend)
                 node_writer = csv.DictWriter(nodes_file, fieldnames=frameworks)
@@ -179,8 +181,8 @@ class Coverage(object):
                         existing_nodes[node_name][backend] = "Failed!"
                 if "Summary" not in existing_nodes:
                     existing_nodes["Summary"] = OrderedDict()
-                existing_nodes["Summary"][backend] = "{}/{} node tests passed"
-                    .format(len(passed), len(all_ops))
+                existing_nodes["Summary"][backend] = \
+                    "{}/{} node tests passed".format(len(passed), len(all_ops))
                 for node in existing_nodes:
                     existing_nodes[node]['Op'] = node
                     node_writer.writerow(existing_nodes[node])
@@ -207,12 +209,12 @@ class Coverage(object):
                         num_models += 1
                         if model not in existing_models:
                             existing_models[model] = OrderedDict()
-                        existing_models[model][backend] = "{}/{} nodes covered: {}"
+                        existing_models[model][backend] = "{}/{} nodes covered: {}" \
                             .format(num_covered, len(self.models[bucket][model]
                                 .node_coverages), msg)
                 if "Summary" not in existing_models:
                     existing_models["Summary"] = OrderedDict()
-                existing_models["Summary"][backend] = "{}/{} model tests passed"
+                existing_models["Summary"][backend] = "{}/{} model tests passed" \
                     .format(len(self.models['passed']), num_models)
                 for model in existing_models:
                     existing_models[model]['Model'] = model
