@@ -313,7 +313,7 @@ if(BUILD_ONNX_PYTHON)
   set_target_properties(onnx_cpp2py_export PROPERTIES SUFFIX ${PY_EXT_SUFFIX})
   set_target_properties(onnx_cpp2py_export
                         PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
-  target_include_directories(onnx_cpp2py_export PUBLIC
+  target_include_directories(onnx_cpp2py_export PRIVATE
                              $<BUILD_INTERFACE:${ONNX_ROOT}>
                              $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
                              $<INSTALL_INTERFACE:include>
