@@ -20,8 +20,8 @@
   #include <errno.h>
 #endif
 
-#include <onnxifi.h>
-#include <onnxifi_loader.h>
+#include <onnx/onnxifi.h>
+#include <onnx/onnxifi_loader.h>
 
 #if defined(_WIN32)
 #define ONNXIFI_FILENAME_WILDCARD L"\\onnxifi-*.dll"
