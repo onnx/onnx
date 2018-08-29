@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 import os
 import csv
 import datetime
@@ -143,32 +143,51 @@ class Coverage(object):
                     'nodes.csv')  # type: ignore
             models_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'models.csv')  # type: ignore
-            existing_nodes = dict()
-            existing_models = dict()
+            existing_nodes = OrderedDict()
+            existing_models = OrderedDict()
+            frameworks = []
             if os.path.isfile(nodes_path):
                 with open(nodes_path, 'r') as nodes_file:
-                    pass
+                    reader = csv.DictReader(nodes_file)
+                    frameworks = reader.fieldnames
+                    for row in reader:
+                        op = row['Op']
+                        del row['Op']
+                        existing_nodes[op] = row
             if os.path.isfile(models_path):
                 with open(models_path, 'r') as models_file:
-                    pass
+                    reader = csv.DictReader(nodes_file)
+                    for row in reader:
+                        op = row['Op']
+                        del row['Op']
+                        existing_nodes[op] = row
+            backend = os.environ.get('BACKEND')
             with open(nodes_path, 'w') as nodes_file:
-                node_writer = csv.writer(nodes_file)
-                node_writer.writerow(["Op", os.environ.get('BACKEND')])
+                if backend not in frameworks:
+                    frameworks.append(backend)
+                node_writer = csv.DictWriter(nodes_file, fieldnames=frameworks)
+                node_writer.writeheader()
                 for node in all_ops:
                     node_name = node
                     if node in experimental:
                         node_name = node + ' (Experimental)'
+                    if node_name not in existing_nodes:
+                        existing_nodes[node_name] = OrderedDict()
                     if node in passed:
-                        # u"\U0001F49A"
-                        node_writer.writerow([node_name, "Passed!"])
+                        existing_nodes[node_name][backend] = "Passed!"
                     else:
-                        # u"\U0001F494"
-                        node_writer.writerow([node_name, "Failed!"])
-                node_writer.writerow(["Summary", "{}/{} node tests passed"
-                    .format(len(passed), len(all_ops))])
+                        existing_nodes[node_name][backend] = "Failed!"
+                if "Summary" not in existing_nodes:
+                    existing_nodes["Summary"] = OrderedDict()
+                existing_nodes["Summary"][backend] = "{}/{} node tests passed"
+                    .format(len(passed), len(all_ops))
+                for node in existing_nodes:
+                    existing_nodes[node]['Op'] = node
+                    node_writer.writerow(existing_nodes[node])
             with open(models_path, 'w') as models_file:
-                model_writer = csv.writer(models_file)
-                model_writer.writerow(["Model", os.environ.get('BACKEND')])
+                frameworks[0] = "Model"
+                model_writer = csv.DictWriter(models_file, fieldnames=frameworks)
+                model_writer.writeheader()
                 # Consider both buckets
                 num_models = 0
                 for bucket in self.models:
@@ -186,12 +205,18 @@ class Coverage(object):
                                 continue
                             msg = "Failed!"
                         num_models += 1
-                        model_writer.writerow([model, "{}/{} nodes covered: {}"
+                        if model not in existing_models:
+                            existing_models[model] = OrderedDict()
+                        existing_models[model][backend] = "{}/{} nodes covered: {}"
                             .format(num_covered, len(self.models[bucket][model]
-                                .node_coverages), msg)])
-                model_writer.writerow(["Summary", "{}/{} model tests passed"
-                    .format(len(self.models['passed']),
-                        num_models)])
+                                .node_coverages), msg)
+                if "Summary" not in existing_models:
+                    existing_models["Summary"] = OrderedDict()
+                existing_models["Summary"][backend] = "{}/{} model tests passed"
+                    .format(len(self.models['passed']), num_models)
+                for model in existing_models:
+                    existing_models[model]['Model'] = model
+                    model_writer.writerow(existing_models[model])
             with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'metadata.csv'), 'w') as metadata_file:  # type: ignore
                 metadata_writer = csv.writer(metadata_file)
