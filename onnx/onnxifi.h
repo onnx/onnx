@@ -1015,12 +1015,13 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
     size_t* infoValueSize);
 
 /**
- * Query if an ONNX model graph is compatible with the backend.
+ * Query if an ONNX node (operator) is compatible with the backend.
  *
- * Model graph is passed as a serialized ModelProto message, where types and
- * dimensions of all inputs (including static weights) and outputs are specified
- * through ModelProto.graph.input and ModelProto.graph.output messages. If the
- * backend supports ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS, some of the shape
+ * ONNX node is passed as a serialized ModelProto message containing only a
+ * single NodeProto in ModelProto.graph.node, with types and dimensions of all
+ * inputs (including static weights) and outputs are specified through
+ * ModelProto.graph.input and ModelProto.graph.output messages. If the backend
+ * supports ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS, some of the shape
  * dimensions can be symbolic. In this case, their validation should be deferred
  * until graph inputs and outputs are specified in onnxSetGraphIO.
  *
@@ -1028,12 +1029,6 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * not include the static weights (ModelProto.graph.initializer is empty), and
  * the backend implementation MUST NOT rely on the weights to determine if the
  * graph is supported.
- *
- * An important use-case is a ModelProto containing only a single NodeProto in
- * ModelProto.graph.node, which happens when a high-level framework checks
- * operators one-by-one to find a connected subgraph that can be offloaded to
- * the backend. Backend implementations SHOULD optimize performance for this
- * use-case.
  *
  * @param backend - ID of the backend to query.
  * @param onnxModelSize - size of the serialized ONNX ModelProto message,
@@ -1066,7 +1061,9 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * @retval ONNXIFI_STATUS_INVALID_MODEL The function call failed because the
  *                                      parsed ModelProto message does not
  *                                      satisfy ONNX requirements and
- *                                      constraints.
+ *                                      constraints, or contains more or less
+ *                                      than one NodeProto in
+ *                                      ModelProto.graph.node.
  * @retval ONNXIFI_STATUS_UNSUPPORTED_VERSION The function call failed because
  *                                            the ONNX IR version or operator
  *                                            version is not supported by the
