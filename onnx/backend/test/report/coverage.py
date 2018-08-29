@@ -139,8 +139,19 @@ class Coverage(object):
                 if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                     experimental.append(schema.name)
             all_ops.sort()
-            with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
-                    os.environ.get('BACKEND') + '_nodes.csv'), 'w') as nodes_file:  # type: ignore
+            nodes_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
+                    'nodes.csv')  # type: ignore
+            models_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
+                    'models.csv')  # type: ignore
+            existing_nodes = dict()
+            existing_models = dict()
+            if os.path.isfile(nodes_path):
+                with open(nodes_path, 'r') as nodes_file:
+                    pass
+            if os.path.isfile(models_path):
+                with open(models_path, 'r') as models_file:
+                    pass
+            with open(nodes_path, 'w') as nodes_file:
                 node_writer = csv.writer(nodes_file)
                 node_writer.writerow(["Op", os.environ.get('BACKEND')])
                 for node in all_ops:
@@ -155,8 +166,7 @@ class Coverage(object):
                         node_writer.writerow([node_name, "Failed!"])
                 node_writer.writerow(["Summary", "{}/{} node tests passed"
                     .format(len(passed), len(all_ops))])
-            with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
-                    os.environ.get('BACKEND') + '_models.csv'), 'w') as models_file:  # type: ignore
+            with open(models_path, 'w') as models_file:
                 model_writer = csv.writer(models_file)
                 model_writer.writerow(["Model", os.environ.get('BACKEND')])
                 # Consider both buckets
