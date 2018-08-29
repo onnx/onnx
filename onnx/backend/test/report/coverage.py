@@ -150,6 +150,7 @@ class Coverage(object):
                 with open(nodes_path, 'r') as nodes_file:
                     reader = csv.DictReader(nodes_file)
                     frameworks = reader.fieldnames
+                    print(frameworks)
                     for row in reader:
                         op = row['Op']
                         del row['Op']
