@@ -6,7 +6,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "onnxifi.h"
+#include "onnx/onnxifi.h"
 
 ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
 onnxGetBackendIDs(onnxBackendID* backendIDs, size_t* numBackends) {
