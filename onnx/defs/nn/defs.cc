@@ -14,7 +14,8 @@ const char* pads_doc =
     "the end of axis `i`. This attribute cannot be used simultaneously with "
     "auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.";
 const char* auto_pad_doc =
-    "auto_pad must be either SAME_UPPER, SAME_LOWER or VALID. Where "
+    "auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where "
+    "default value is NOTSET, which means explicit padding is used. "
     "SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input."
     "In case of odd number add the extra padding at the end for SAME_UPPER and at the "
     "beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is "
@@ -485,16 +486,19 @@ computes the output.)DOC";
         1,
         "W",
         "The weight tensor that will be used in the "
-        "convolutions; has size (M x C x kH x kW), where C "
+        "convolutions; has size (M x C/group x kH x kW), where C "
         "is the number of channels, and kH and kW are the "
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
-        "kernel shape will be (M x C x k1 x k2 x ... x kn), "
+        "kernel shape will be (M x C/group x k1 x k2 x ... x kn), "
         "where (k1 x k2 x ... kn) is the dimension of the kernel. "
         "Optionally, if dimension denotation is in effect, "
         "the operation expects the weight tensor to arrive "
-        "with the dimension denotation of [FILTER_IN_CHANNEL, "
-        "FILTER_OUT_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...].",
+        "with the dimension denotation of [FILTER_OUT_CHANNEL, "
+        "FILTER_IN_CHANNEL, FILTER_SPATIAL, FILTER_SPATIAL ...]. "
+        "X.shape[1] == (W.shape[1] * group) == C "
+        "(assuming zero based indices for the shape array). "
+        "Or in other words FILTER_IN_CHANNEL should be equal to DATA_CHANNEL. ",
         "T");
     schema.Input(
         2,
@@ -700,12 +704,14 @@ output_shape can also be explicitly specified in which case pads values are auto
         1,
         "W",
         "The weight tensor that will be used in the "
-        "convolutions; has size (C x M x kH x kW), where C "
+        "convolutions; has size (C x M/group x kH x kW), where C "
         "is the number of channels, and kH and kW are the "
         "height and width of the kernel, and M is the number "
         "of feature maps. For more than 2 dimensions, the "
-        "weight shape will be (C x M x k1 x k2 x ... x kn), "
-        "where (k1 x k2 x ... x kn) is the dimension of the kernel",
+        "weight shape will be (C x M/group x k1 x k2 x ... x kn), "
+        "where (k1 x k2 x ... x kn) is the dimension of the kernel. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
         "T");
     schema.Input(
         2,
@@ -718,7 +724,9 @@ output_shape can also be explicitly specified in which case pads values are auto
         "Y",
         "Output data tensor that contains the result of the convolution. The "
         "output dimensions are functions of the kernel size, stride size, "
-        "and pad lengths.",
+        "pad lengths and group count. "
+        "The number of channels in the output should be equal to W.shape[1] * group "
+        "(assuming zero based indices of the shape array)",
         "T");
     schema.TypeConstraint(
         "T",

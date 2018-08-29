@@ -22,18 +22,21 @@ The optimizer may be invoked either via C++ or Python. The Python API
 is described, with example,
 [here](PythonAPIOverview.md#optimizing-an-onnx-model).
 
-The C++ API consists of a single function
+The C++ API consists of two functions
 
 ```
+const std::vector<std::string> GetAvailablePasses();
+
 ModelProto Optimize(
     const ModelProto& mp_in,
     const std::vector<std::string>& names);
 ```
 
-which accepts an input `ModelProto` and a list of optimization passes to
-apply, and which returns a new `ModelProto` which is the result of
-applying each of the named passes in sequence to the model. For a list
-of available passes, see [optimize.h](/onnx/optimizer/optimize.h).
+`GetAvailablePasses()` returns a list of available passes.
+
+`Optimize()` accepts an input `ModelProto` and a list of optimization passes to
+apply, and returns a new `ModelProto` which is the result of
+applying each of the named passes in sequence to the model.
 
 ## Implementing Optimization Passes
 

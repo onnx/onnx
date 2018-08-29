@@ -13,10 +13,10 @@ matrix:
       language: python
       python: "3.6"
     - os: osx
-      osx_image: xcode9.3beta
+      osx_image: xcode9.3
       env: PYTHON_VERSION=python2
     - os: osx
-      osx_image: xcode9.3beta
+      osx_image: xcode9.3
       env: PYTHON_VERSION=python3
     - os: linux
       sudo: required
@@ -29,11 +29,19 @@ matrix:
       language: python
       python: "3.6"
     - os: osx
-      osx_image: xcode9.3beta
+      osx_image: xcode9.3
       env: PYTHON_VERSION=python2 ONNX_ML=1
     - os: osx
-      osx_image: xcode9.3beta
+      osx_image: xcode9.3
       env: PYTHON_VERSION=python3 ONNX_ML=1
+    - os: linux
+      sudo: required
+      env: PYTHON_VERSION=python2 ONNX_ML=1 LITE=1
+      language: python
+      python: "2.7"
+    - os: osx
+      osx_image: xcode9.3
+      env: PYTHON_VERSION=python2 ONNX_ML=1 LITE=1
 
 env:
   global:
