@@ -472,7 +472,7 @@ target_include_directories(onnxifi INTERFACE
 
 # ---[ ONNXIFI loader
 add_library(onnxifi_loader STATIC onnx/onnxifi_loader.c)
-target_include_directories(onnxifi_loader INTERFACE
+target_include_directories(onnxifi_loader PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<INSTALL_INTERFACE:include>)
 # Users of ONNX backend API would compile it with their toolchain, so it is
@@ -489,6 +489,9 @@ endif()
 
 # ---[ ONNXIFI wrapper
 add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
+target_include_directories(onnxifi_wrapper PRIVATE
+  $<BUILD_INTERFACE:${ONNX_ROOT}>
+  $<INSTALL_INTERFACE:include>)
 set_target_properties(onnxifi_wrapper PROPERTIES
   C_STANDARD 99
   C_EXTENSIONS NO
@@ -544,7 +547,10 @@ install(FILES
   DESTINATION share/cmake/ONNX
   COMPONENT dev)
 install(EXPORT ONNXTargets DESTINATION share/cmake/ONNX)
-install(TARGETS onnx onnx_proto onnxifi onnxifi_dummy EXPORT ONNXTargets DESTINATION lib)
+install(TARGETS
+  onnx onnx_proto
+  onnxifi onnxifi_dummy onnxifi_loader onnxifi_wrapper
+  EXPORT ONNXTargets DESTINATION lib)
 
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
