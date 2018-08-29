@@ -4,6 +4,7 @@
 #include "onnx/defs/schema.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver6_doc = R"DOC(
