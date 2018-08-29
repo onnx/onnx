@@ -193,16 +193,7 @@ class OpSchema final {
   const char* doc() const {
     return doc_.empty() ? nullptr : doc_.c_str();
   }
-
-  /**
-   * @brief Verifies if a NodeProto matches the pattern specified in
-   * the schema.
-   */
-  void Verify(
-      checker::CheckerContext& ctx,
-	  const NodeProto& node,
-      const GraphProto* graph = nullptr) const;
-
+  
   // Functions to set the property of the operator schemas.
   // Sets the number of inputs, either a fixed number or a min and a max.
 
@@ -529,6 +520,17 @@ class OpSchema final {
   }
   int max_output() const {
     return max_output_;
+  }
+
+  const std::function<bool(int)>& num_inputs_allowed() const { 
+    return num_inputs_allowed_; 
+  };
+  const std::function<bool(int)>& num_outputs_allowed() const { 
+    return num_outputs_allowed_; 
+  };
+
+  bool allows_unchecked_attributes() const {
+    return allows_unchecked_attributes_;
   }
 
   bool has_type_and_shape_inference_function() const {

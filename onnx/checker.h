@@ -109,6 +109,11 @@ void check_node(
     const GraphProto& graph,
     CheckerContext& ctx,
     const LexicalScopeContext&);
+void check_operator_schema(
+    const OpSchema &schema,
+	  const NodeProto& node,
+    const GraphProto* graph,
+    checker::CheckerContext& ctx);
 void check_graph(
     const GraphProto& graph,
     CheckerContext& ctx,

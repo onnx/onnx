@@ -99,7 +99,7 @@ bool check_domain_syntax(const std::string& name) {
   return correct;
 }
 
-#define enforce_name_syntax(proto, field)       \
+#define enforce_name_syntax(proto, field)        \
   do {                                           \
     const auto& str = proto.field();             \
     if (!check_name_syntax(str)) {               \
@@ -139,7 +139,6 @@ void check_value_info(const ValueInfoProto& value_info, CheckerContext& ctx) {
       enforce_has_field(type, elem_type);
 
       if (type.has_shape()) {
-
         for (auto& dim : type.shape().dim()) {
           const auto dim_case = dim.value_case();
           switch (dim_case) {
@@ -439,7 +438,9 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, domain);
 
-  schema->Verify(ctx, node, &graph);
+  if (schema != nullptr) {
+    check_operator_schema(*schema, node, &graph, ctx);
+  }
 }
 
 void check_node(
@@ -496,7 +497,9 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, domain);
 
-  schema->Verify(ctx, node, nullptr);
+  if (schema != nullptr) {
+    check_operator_schema(*schema, node, nullptr, ctx);
+  }
 }
 
 void check_graph(
@@ -785,6 +788,314 @@ void check_model(const ModelProto& m, CheckerContext& ctx) {
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
   check_graph(model.graph(), ctx, lex_ctx);
+}
+
+const ValueInfoProto* findValueInfo(
+    const std::string& name,
+    const GraphProto& graph) {
+  for (const auto& value_info : graph.value_info()) {
+    if (value_info.name() == name) {
+      return &value_info;
+    }
+  }
+  for (const auto& value_info : graph.input()) {
+    if (value_info.name() == name) {
+      return &value_info;
+    }
+  }
+  for (const auto& value_info : graph.output()) {
+    if (value_info.name() == name) {
+      return &value_info;
+    }
+  }
+  return nullptr;
+}
+
+bool checkShapesAndTypes(
+    const TypeProto_Tensor& inferredType,
+    const TypeProto_Tensor& existingType) {
+  if (inferredType.elem_type() != TensorProto::UNDEFINED &&
+      existingType.elem_type() != TensorProto::UNDEFINED &&
+      existingType.elem_type() != inferredType.elem_type()) {
+    return false;
+  }
+
+  if (!inferredType.has_shape() || !existingType.has_shape()) {
+    return true;
+  }
+
+  if (inferredType.shape().dim_size() != existingType.shape().dim_size()) {
+    return false;
+  }
+
+  for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
+    const auto& inferredDim = inferredType.shape().dim(i);
+    const auto& existingDim = existingType.shape().dim(i);
+    if (inferredDim.has_dim_value() && existingDim.has_dim_value() &&
+        inferredDim.dim_value() != existingDim.dim_value()) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void check_operator_schema(
+    const OpSchema& schema,
+    const NodeProto& node,
+    const GraphProto* graph,
+    checker::CheckerContext& ctx) {
+  // Check the number of inputs.
+
+  auto node_name = node.name();
+  if (!node_name.empty()) {
+    node_name.append(": ");
+  }
+  if (node.input_size() < schema.min_input() ||
+      node.input_size() > schema.max_input()) {
+    fail_check(
+        ctx,
+        node_name,
+        "Input size ",
+        node.input_size(),
+        " not in range [min=",
+        schema.min_input(),
+        ", max=",
+        schema.max_input(),
+        "].");
+  }
+
+  if (!schema.num_inputs_allowed()(node.input_size())) {
+    fail_check(
+        ctx,
+        node_name,
+        "Input size ",
+        node.input_size(),
+        " not in allowed input sizes.");
+  }
+
+  // Check the number of outputs.
+  if (node.output_size() < schema.min_output() ||
+      node.output_size() > schema.max_output()) {
+    fail_check(
+        ctx,
+        node_name,
+        "Output size ",
+        node.output_size(),
+        " not in range [min=",
+        schema.min_output(),
+        ", max=",
+        schema.max_output(),
+        "].");
+  }
+
+  if (!schema.num_outputs_allowed()(node.output_size())) {
+    fail_check(
+        ctx,
+        node_name,
+        "Output size ",
+        node.output_size(),
+        " not in allowed output sizes.");
+  }
+
+  auto& inputs = schema.inputs();
+
+  // Check the values of inputs / outputs
+  int last_idx = 0;
+  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
+    if (in_idx >= static_cast<int>(inputs.size())) {
+      if (inputs.size() > 0 &&
+          OpSchema::Variadic == inputs.back().GetOption()) {
+        // The last input formal parameter should be variadic.
+        break;
+      } else {
+        fail_check(
+            ctx,
+            node_name,
+            "The node has more inputs (",
+            node.input_size(),
+            ") than declared (",
+            inputs.size(),
+            ") in op definition.");
+      }
+    } else {
+      last_idx = in_idx;
+    }
+
+    if (graph != nullptr) {
+      auto value_info = findValueInfo(node.input(in_idx), *graph);
+
+      if (value_info != nullptr) {
+        auto input_name = value_info->name();
+        auto input_type = value_info->type();
+
+        bool matched = false;
+
+        for (auto& type : inputs[last_idx].GetTypes()) {
+          auto proto = Utils::DataTypeUtils::ToTypeProto(type);
+          if (checkShapesAndTypes(
+                  input_type.tensor_type(), proto.tensor_type())) {
+            matched = true;
+            break;
+          }
+        }
+
+        if (!matched) {
+          fail_check(
+              ctx,
+              node_name,
+              "The type of '",
+              input_name,
+              "': ",
+              Utils::DataTypeUtils::ToString(input_type),
+              "' does not match what '",
+              node.op_type(),
+              "' requires.");
+        }
+      }
+    }
+
+    // TODO: Validate that attributes of the node satisfy the operator
+    // constraints from a type perspective.
+
+    if (node.input(in_idx).empty() &&
+        (OpSchema::Single == inputs[in_idx].GetOption())) {
+      fail_check(
+          ctx,
+          node_name,
+          "Input ",
+          in_idx,
+          " is marked single but has an empty string in the graph.");
+    }
+  }
+
+  auto& outputs = schema.outputs();
+
+  for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
+    if (out_idx >= static_cast<int>(outputs.size())) {
+      if (outputs.size() > 0 &&
+          OpSchema::Variadic == outputs.back().GetOption()) {
+        // The last output formal parameter should be variadic.
+        break;
+      } else {
+        fail_check(
+            ctx,
+            node_name,
+            "The node has more outputs (",
+            node.output_size(),
+            ") than declared (",
+            outputs.size(),
+            ") in op definition.");
+      }
+    }
+
+    if (node.output(out_idx).empty() &&
+        (OpSchema::Single == outputs[out_idx].GetOption())) {
+      fail_check(
+          ctx,
+          node_name,
+          "Output ",
+          out_idx,
+          " is marked single but has an empty string in the graph.");
+    }
+  }
+
+  // An internal symbol is defined as starting with two underscores. Attributes
+  // with names meeting this condition are considered implementation details
+  // and should be ignored for the purpose of schema checking.
+  auto isInternalSymbol = [](const std::string& sym) -> bool {
+    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
+  };
+
+  auto& attributes = schema.attributes();
+  // Check attributes
+  std::unordered_set<std::string> seen_attr_names{};
+  for (const auto& attr_proto : node.attribute()) {
+    const auto& name = attr_proto.name();
+
+    if (!seen_attr_names.insert(name).second) {
+      fail_check(ctx, "Attribute '", name, "' appeared multiple times.");
+    };
+
+    const auto& search = attributes.find(name);
+    AttributeProto::AttributeType expected_type;
+    if (search != attributes.end()) {
+      expected_type = search->second.type;
+    } else if (schema.allows_unchecked_attributes() || isInternalSymbol(name)) {
+      continue;
+    } else {
+      fail_check(
+          ctx,
+          "Unrecognized attribute: ",
+          name,
+          " for operator ",
+          node.op_type());
+    }
+
+    if (attr_proto.has_ref_attr_name()) {
+      if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
+        fail_check(
+            ctx,
+            "Mismatched attribute type in '",
+            node.name() + " : " + name,
+            "'");
+      }
+      continue;
+    }
+
+    switch (expected_type) {
+      case AttributeProto::FLOAT:
+        if (!attr_proto.has_f()) {
+          fail_check(
+              ctx, "Attribute '", name, "' is expected to have field 'f'");
+        }
+        break;
+      case AttributeProto::INT:
+        if (!attr_proto.has_i()) {
+          fail_check(
+              ctx, "Attribute '", name, "' is expected to have field 'i'");
+        }
+        break;
+      case AttributeProto::STRING:
+        // There's no check to be made here -- some PB writers will leave
+        // the field empty for empty strings, so we can't tell whether it's
+        // bad or empty.
+        break;
+      case AttributeProto::TENSOR:
+        if (!attr_proto.has_t()) {
+          fail_check(
+              ctx, "Attribute '", name, "' is expected to have field 't'");
+        }
+        break;
+      case AttributeProto::GRAPH:
+        if (!attr_proto.has_g()) {
+          fail_check(
+              ctx, "Attribute '", name, "' is expected to have field 'g'");
+        }
+        break;
+      case AttributeProto::FLOATS:
+      case AttributeProto::INTS:
+      case AttributeProto::STRINGS:
+      case AttributeProto::TENSORS:
+      case AttributeProto::GRAPHS:
+        // There's no check to be made here -- it is perfectly valid for a
+        // sequence-typed attribute to have zero elements.
+        break;
+      default:
+        fail_check(ctx, "Attribute '", name, " has unknown type");
+    }
+  }
+  for (const auto& pair : attributes) {
+    const auto& attr = pair.second;
+    if (!attr.required) {
+      continue;
+    }
+    if (!seen_attr_names.count(attr.name)) {
+      fail_check(ctx, "Required attribute '", attr.name, "' is missing.");
+    }
+  }
+
+  // Phew. All verifications passed.
 }
 
 #undef fail_check
