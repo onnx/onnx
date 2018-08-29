@@ -512,7 +512,7 @@ endif()
 
 # ---[ ONNXIFI dummy backend
 add_library(onnxifi_dummy SHARED onnx/onnxifi_dummy.c)
-target_include_directories(onnxifi_dummy INTERFACE
+target_include_directories(onnxifi_dummy PRIVATE
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<INSTALL_INTERFACE:include>)
 target_link_libraries(onnxifi_dummy PUBLIC onnxifi ${CMAKE_DL_LIBS})
