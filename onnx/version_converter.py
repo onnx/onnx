@@ -60,6 +60,8 @@ Supported adapters:
     --Dropout from Opset 6 to Opset 5
     --Dropout from Opset 6 to Opset 7
     --Dropout from Opset 5 to Opset 6
+    --LeakyRelu from opset 6 to opset 5
+    --LeakyRelu from opset 5 to opset 6
 
 Unsupported adapters:
     --Min from Opset 8 to Opset 7
@@ -126,8 +128,6 @@ Unsupported adapters:
     --Neg from opset 5 to opset 6
     --Log from opset 6 to opset 5
     --Log from opset 5 to opset 6
-    --LeakyRelu from opset 6 to opset 5
-    --LeakyRelu from opset 5 to opset 6
     --InstanceNormalization from opset 6 to opset 5
     --InstanceNormalization from opset 5 to opset 6
     --HardSigmoid from opset 6 to opset 5

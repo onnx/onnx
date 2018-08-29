@@ -47,15 +47,16 @@ class DummyBackend(onnx.backend.base.Backend):
             if model.graph.name not in ['vgg19', 'inception_v2', 'shufflenet']:
                 model = onnx.version_converter.convert_version(model, 1)
                 model = onnx.version_converter.convert_version(model, 8)
-            for node in model.graph.node:
-                for i, output in enumerate(node.output):
-                    if node.op_type == 'Dropout' and i != 0:
-                        continue
-                    assert output in value_infos
-                    tt = value_infos[output].type.tensor_type
-                    assert tt.elem_type != TensorProto.UNDEFINED
-                    for dim in tt.shape.dim:
-                        assert dim.WhichOneof('value') == 'dim_value'
+            if model.graph.name not in test_shape_inference_blacklist:
+                for node in model.graph.node:
+                    for i, output in enumerate(node.output):
+                        if node.op_type == 'Dropout' and i != 0:
+                            continue
+                        assert output in value_infos
+                        tt = value_infos[output].type.tensor_type
+                        assert tt.elem_type != TensorProto.UNDEFINED
+                        for dim in tt.shape.dim:
+                            assert dim.WhichOneof('value') == 'dim_value'
 
         raise BackendIsNotSupposedToImplementIt(
             "This is the dummy backend test that doesn't verify the results but does run the checker")
@@ -87,7 +88,10 @@ test_coverage_whitelist = set(
 # In order to run these models, set the LOCAL_TEST environment variable to "True"
 test_coverage_whitelist_local = set(
     ['bvlc_googlenet', 'bvlc_reference_caffenet',
-        'bvlc_reference_rcnn_ilsvrc13', 'emotion_ferplus', 'mnist'])
+        'bvlc_reference_rcnn_ilsvrc13', 'emotion_ferplus', 'mnist',
+        'tiny_yolov2'])
+test_shape_inference_blacklist = set(
+    ['tiny_yolov2'])
 
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool

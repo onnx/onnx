@@ -161,6 +161,10 @@ class DefaultVersionConverter : public BaseVersionConverter {
       registerAdapter(make_unique<CompatibleAdapter>("MaxPool",
         OpSetID(7), OpSetID(8)));
       registerAdapter(make_unique<MaxPool_8_7>());
+      registerAdapter(make_unique<RemoveConsumedInputs>("LeakyRelu",
+        OpSetID(5), OpSetID(6)));
+      registerAdapter(make_unique<CompatibleAdapter>("LeakyRelu",
+        OpSetID(6), OpSetID(5)));
     }
 
     ModelProto convert_version(
