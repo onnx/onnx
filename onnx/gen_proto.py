@@ -18,6 +18,13 @@ autogen_header = """\
 
 """
 
+LITE_OPTION = '''
+
+// For using protobuf-lite
+option optimize_for = LITE_RUNTIME;
+
+'''
+
 DEFAULT_PACKAGE_NAME = "onnx"
 
 IF_ONNX_ML_REGEX = re.compile(r'\s*//\s*#if\s+ONNX-ML\s*$')
@@ -114,7 +121,7 @@ def qualify(f, pardir=os.path.realpath(os.path.dirname(__file__))):  # type: (Te
     return os.path.join(pardir, f)
 
 
-def convert(stem, package_name, output, do_onnx_ml=False):  # type: (Text, Text, Text, bool) -> None
+def convert(stem, package_name, output, do_onnx_ml=False, lite=False):  # type: (Text, Text, Text, bool, bool) -> None
     proto_in = qualify("{}.in.proto".format(stem))
     need_rename = (package_name != DEFAULT_PACKAGE_NAME)
     if do_onnx_ml:
@@ -131,10 +138,14 @@ def convert(stem, package_name, output, do_onnx_ml=False):  # type: (Text, Text,
         with io.open(proto, 'w', newline='') as fout:
             fout.write(autogen_header)
             fout.write(translate(source, proto=2, onnx_ml=do_onnx_ml, package_name=package_name))
+            if lite:
+                fout.write(LITE_OPTION)
         print("Writing {}".format(proto3))
         with io.open(proto3, 'w', newline='') as fout:
             fout.write(autogen_header)
             fout.write(translate(source, proto=3, onnx_ml=do_onnx_ml, package_name=package_name))
+            if lite:
+                fout.write(LITE_OPTION)
         if need_rename:
             if do_onnx_ml:
                 proto_header = qualify("{}-ml.pb.h".format(stem), pardir=output)
@@ -177,6 +188,8 @@ def main():  # type: () -> None
                         help='package name in the generated proto files'
                         ' (default: %(default)s)')
     parser.add_argument('-m', '--ml', action='store_true', help='ML mode')
+    parser.add_argument('-l', '--lite', action='store_true',
+                        help='generate lite proto to use with protobuf-lite')
     parser.add_argument('-o', '--output',
                         default=os.path.realpath(os.path.dirname(__file__)),
                         help='output directory (default: %(default)s)')
@@ -192,7 +205,8 @@ def main():  # type: () -> None
         convert(stem,
                 package_name=args.package,
                 output=args.output,
-                do_onnx_ml=args.ml)
+                do_onnx_ml=args.ml,
+                lite=args.lite)
 
 
 if __name__ == '__main__':
