@@ -43,11 +43,6 @@ class DummyBackend(onnx.backend.base.Backend):
         value_infos = {vi.name: vi for vi in itertools.chain(model.graph.value_info, model.graph.output)}
 
         if do_enforce_test_coverage_whitelist(model):
-            # test version conversion
-            if model.graph.name not in ['vgg19', 'inception_v2', 'shufflenet']:
-                converted_model = onnx.version_converter.convert_version(model, 1)
-                converted_model = onnx.version_converter.convert_version(converted_model, 8)
-                del converted_model
             if model.graph.name not in test_shape_inference_blacklist:
                 for node in model.graph.node:
                     for i, output in enumerate(node.output):
