@@ -2,8 +2,8 @@
 #include <string>
 
 #include "onnx/onnx_pb.h"
+#include "onnx/onnxifi.h"
 #include "onnx/proto_utils.h"
-#include "onnxifi.h"
 
 namespace onnx {
 namespace testing {

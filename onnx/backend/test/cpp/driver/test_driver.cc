@@ -134,11 +134,12 @@ void LoadSingleFile(const std::string& filename, std::string& filedata) {
   FILE* fp;
   if ((fp = fopen(filename.c_str(), "r")) != NULL) {
     try {
-      std::string buffer;
-      while (!feof(fp)) {
-        buffer += fgetc(fp);
-      }
-      filedata += buffer;
+      int fsize;
+      char buff[1024] = {0};
+      do {
+        fsize = fread(buff, sizeof(char), 1024, fp);
+        filedata += std::string(buff, buff + fsize);
+      } while (fsize == 1024);
     } catch (const std::exception& e) {
       fclose(fp);
       throw e;
