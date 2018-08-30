@@ -199,25 +199,53 @@ typedef int32_t onnxEventState;
  */
 #define ONNXIFI_CAPABILITY_THREAD_SAFE 0x01
 /**
- * The backend supports ONNX graphs with symbolic variables in shape names
- * (using TensorShapeProto.dim_param for ModelProto.graph.input.type.shape or
- * ModelProto.graph.output.type.shape).
+ * The backend supports ONNX graphs with symbolic variables in the outer
+ * shape dimension (batch size), using TensorShapeProto.dim_param for
+ * ModelProto.graph.input.type.shape or ModelProto.graph.output.type.shape.
+ *
+ * The exact numerical value of the  of all input and output tensors must be specified
+ * in the onnxSetGraphIO call(s).
+ */
+#define ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE 0x02
+/**
+ * The backend supports ONNX graphs with symbolic variables in the all
+ * shape dimensions, using TensorShapeProto.dim_param for
+ * ModelProto.graph.input.type.shape or ModelProto.graph.output.type.shape.
+ *
+ * Backends with this capability also MUST support
+ * ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE capability.
  *
  * The exact numerical shape of all input and output tensors must be specified
  * in the onnxSetGraphIO call(s).
  */
-#define ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS 0x02
+#define ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS 0x04
+/**
+ * The backend supports ONNX graphs with data-dependent outer shape dimension
+ * (batch size) of graph outputs. The ONNX graph would specify unknown outer
+ * shape dimension (batch size) using symbolic variables, so this capability
+ * requires ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE support.
+ *
+ * For outputs with data-dependent outer shape dimension (batch size) the value
+ * specified in onnxSetGraphIO call is interpreted as the upper limit. The exact
+ * numerical batch size of the output can be retrieved by attaching a Shape
+ * operator to the tensor with data-dependent shape and reading its output
+ * through ONNXIFI.
+ */
+#define ONNXIFI_CAPABILITY_VARIABLE_BATCH_SIZE 0x08
 /**
  * The backend supports ONNX graphs with data-dependent output shapes.
  * The ONNX graph would specify unknown output shapes using symbolic variables,
  * so this capability requires ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS support.
+ *
+ * Backends with this capability also MUST support
+ * ONNXIFI_CAPABILITY_VARIABLE_BATCH_SIZE capability.
  *
  * For outputs with data-dependent shapes the shape specified in onnxSetGraphIO
  * call is interpreted as the upper limit. The exact numerical shape of the
  * output can be retrieved by attaching a Shape operator to the tensor with
  * data-dependent shape and reading its output through ONNXIFI.
  */
-#define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x04
+#define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x10
 /**
  * The backend uses a hot-pluggable device, and can be disconnected at any time.
  *
@@ -225,22 +253,27 @@ typedef int32_t onnxEventState;
  * with the backend, or objects created on the backend, will fail with
  * ONNXIFI_STATUS_BACKEND_UNAVAILABLE status code.
  */
-#define ONNXIFI_CAPABILITY_HOT_PLUGGABLE 0x08
+#define ONNXIFI_CAPABILITY_HOT_PLUGGABLE 0x20
 
 /**
  * Type of the backend information.
  *
  * Possible values:
+ *     ONNXIFI_BACKEND_ONNXIFI_VERSION
  *     ONNXIFI_BACKEND_NAME
  *     ONNXIFI_BACKEND_VENDOR
  *     ONNXIFI_BACKEND_VERSION
  *     ONNXIFI_BACKEND_EXTENSIONS
  *     ONNXIFI_BACKEND_DEVICE
  *     ONNXIFI_BACKEND_DEVICE_TYPE
+ *     ONNXIFI_BACKEND_ONNX_IR_VERSION
+ *     ONNXIFI_BACKEND_OPSET_VERSION
  *     ONNXIFI_BACKEND_CAPABILITIES
  *     ONNXIFI_BACKEND_INIT_PROPERTIES
  *     ONNXIFI_BACKEND_MEMORY_TYPES
  *     ONNXIFI_BACKEND_GRAPH_INIT_PROPERTIES
+ *     ONNXIFI_BACKEND_SYNCHRONIZATION_TYPES
+ *     ONNXIFI_BACKEND_MEMORY_SIZE
  *     ONNXIFI_BACKEND_MAX_GRAPH_SIZE
  *     ONNXIFI_BACKEND_MAX_GRAPH_COUNT
  *     ONNXIFI_BACKEND_MACS_FP32
@@ -248,6 +281,13 @@ typedef int32_t onnxEventState;
  *     ONNXIFI_BACKEND_MEMORY_BANDWIDTH
  *     ONNXIFI_BACKEND_CPU_MEMORY_READ_BANDWIDTH
  *     ONNXIFI_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH
+ *     ONNXIFI_BACKEND_PCI_BUS_ID
+ *     ONNXIFI_BACKEND_PCI_DEVICE_ID
+ *     ONNXIFI_BACKEND_PCI_DOMAIN_ID
+ *     ONNXIFI_BACKEND_DIRECTX_ID
+ *     ONNXIFI_BACKEND_CUDA_INDEX
+ *     ONNXIFI_BACKEND_OPENCL_PLATFORM_ID
+ *     ONNXIFI_BACKEND_OPENCL_DEVICE_ID
  */
 typedef int32_t onnxBackendInfo;
 
@@ -389,8 +429,12 @@ typedef int32_t onnxBackendInfo;
  *
  * Value type: onnxBitfield.
  * Possible values: any combination of the following flags:
+ *      ONNXIFI_CAPABILITY_THREAD_SAFE
+ *      ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE
  *      ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS
+ *      ONNXIFI_CAPABILITY_VARIABLE_BATCH_SIZE
  *      ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS
+ *      ONNXIFI_CAPABILITY_HOT_PLUGGABLE
  *      or any vendor-specific flags in the high 32 bits of the bit field.
  */
 #define ONNXIFI_BACKEND_CAPABILITIES 10
@@ -415,8 +459,8 @@ typedef int32_t onnxBackendInfo;
  * Possible values are any combination of the following flags:
  *     ONNXIFI_MEMORY_TYPE_CPU (always supported)
  *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER
- *     ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT
- *     ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT
+ *     ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER
+ *     ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D
  *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE
  *     or any vendor-specific flags in the high 32 bits of the bit field.
  */
@@ -582,6 +626,32 @@ typedef int32_t onnxBackendInfo;
  */
 #define ONNXIFI_BACKEND_CUDA_INDEX 44
 
+/**
+ * OpenCL platform ID for the backend device.
+ * This platform ID is guaranteed to remain valid for the lifetime of ONNXIFI
+ * objects related to the same ONNXIFI backend (backend ID, backend, graph,
+ * event).
+ *
+ * Since ONNXIFI 1.0, OpenCL-based backends are recommended, but not required to
+ * support this information query.
+ *
+ * Value type: cl_platform_id.
+ */
+#define ONNXIFI_BACKEND_OPENCL_PLATFORM_ID 45
+
+/**
+ * OpenCL device ID for the backend device.
+ * This device ID is guaranteed to remain valid for the lifetime of ONNXIFI
+ * objects related to the same ONNXIFI backend (backend ID, backend, graph,
+ * event).
+ *
+ * Since ONNXIFI 1.0, OpenCL-based backends are recommended, but not required to
+ * support this information query.
+ *
+ * Value type: cl_device_id.
+ */
+#define ONNXIFI_BACKEND_OPENCL_DEVICE_ID 46
+
 /* Note: the data type values match ONNX TensorProto.DataType enum */
 #define ONNXIFI_DATATYPE_UNDEFINED 0
 #define ONNXIFI_DATATYPE_FLOAT16 10
@@ -602,10 +672,10 @@ typedef int32_t onnxBackendInfo;
 #define ONNXIFI_MEMORY_TYPE_CPU 0
 /** CUDA memory buffer (allocated via cudaMalloc/cuMalloc).  */
 #define ONNXIFI_MEMORY_TYPE_CUDA_BUFFER 1
-/** OpenCL cl_mem object (buffer, sub-buffer, or 1D/2D/3D image). */
-#define ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT 2
-/** OpenGL ES 2.0+ object (1D/2D/3D texture or SSBO). */
-#define ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT 4
+/** OpenCL cl_mem object for a buffer or sub-buffer. */
+#define ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER 2
+/** OpenGL ES 2.0+ 2D Texture. */
+#define ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D 4
 /** Direct3D resource. */
 #define ONNXIFI_MEMORY_TYPE_D3D_RESOURCE 8
 
@@ -637,6 +707,32 @@ typedef int32_t onnxBackendInfo;
  *     ONNXIFI_LOG_LEVEL_DEBUG
  */
 #define ONNXIFI_BACKEND_PROPERTY_LOG_LEVEL 2
+/**
+ * CUDA stream to be used by the backend.
+ * CUDA stream must be created on the CUDA device used by the ONNXIFI backend.
+ * Users can query which CUDA device is used by the ONNXIFI backend by calling
+ * onnxGetBackendInfo with ONNXIFI_BACKEND_CUDA_INDEX info type.
+ *
+ * If this property is not specified during initialization, the backend can
+ * create a new CUDA stream for the device, or use a default CUDA stream.
+ *
+ * Possible values: cudaStream_t or CUstream object, cast to uint64_t.
+ */
+#define ONNXIFI_BACKEND_CUDA_STREAM 4
+/**
+ * OpenCL context to be used by the backend.
+ * The context must be created with the OpenCL device ID and the OpenCL platform
+ * ID used by the ONNXIFI backend. Users can query which OpenCL device ID and
+ * OpenCL platform ID are used by the ONNXIFI backend by calling
+ * onnxGetBackendInfo with ONNXIFI_BACKEND_OPENCL_PLATFORM_ID
+ * and ONNXIFI_BACKEND_OPENCL_DEVICE_ID info types.
+ *
+ * If this property is not specified during initialization, the backend will
+ * create a new OpenCL context for the device.
+ *
+ * Possible values: cl_context object, cast to uint64_t.
+ */
+#define ONNXIFI_BACKEND_OPENCL_CONTEXT 8
 
 /**
  * Terminates the list of auxiliary graph initialization properties passed to
@@ -749,11 +845,11 @@ typedef struct onnxTensorDescriptorV1 {
    * allocated on the same device as the backend.
    *
    * Possible values:
-   *     ONNXIFI_MEMORY_TYPE_CPU             (always supported)
-   *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER     (support is optional)
-   *     ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT   (support is optional)
-   *     ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT (support is optional)
-   *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE    (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_CPU                 (always supported)
+   *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER         (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER       (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE        (support is optional)
    */
   onnxEnum memoryType;
   /**
@@ -774,13 +870,14 @@ typedef struct onnxTensorDescriptorV1 {
    *   - ONNXIFI_MEMORY_TYPE_CUDA_BUFFER: buffer is a valid pointer to CUDA
    *     device memory, allocated via cudaMalloc or cuMalloc. CUDA device memory
    *     must be allocated on the same device as the backend.
-   *   - ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT: buffer is a cl_mem handle for an
-   *     OpenCL buffer, sub-buffer, or 1D/2D/3D image. cl_mem object must be
-   *     allocated on the same device as the backend.
-   *   - ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT: buffer is a name of 1D/2D/3D
-   *     texture (created by glGenTextures) or SSBO (created by glGenBuffers).
-   *     The texture or SSBO must be allocated on the same device as the
-   *     backend.
+   *   - ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER: buffer is a cl_mem handle for an
+   *     OpenCL buffer or a sub-buffer. cl_mem object must be allocated on the
+   *     same OpenCL context as the backend. The context must be specified via
+   *     ONNXIFI_BACKEND_OPENCL_CONTEXT initialization property to
+   *     onnxInitBackend.
+   *   - ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D: buffer is a name of a 2D
+   *     texture created by glGenTextures. The texture must be allocated on the
+   *     same device as the backend.
    *   - ONNXIFI_MEMORY_TYPE_D3D_RESOURCE: TBD
    */
   onnxPointer buffer;
@@ -1035,6 +1132,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *     ONNXIFI_BACKEND_PCI_DOMAIN_ID                 uint64_t     optional
  *     ONNXIFI_BACKEND_DIRECTX_ID                      LUID       optional
  *     ONNXIFI_BACKEND_CUDA_INDEX                    uint64_t     optional
+ *     ONNXIFI_BACKEND_OPENCL_PLATFORM_ID         cl_platform_id  optional
+ *     ONNXIFI_BACKEND_OPENCL_DEVICE_ID            cl_device_id   optional
  *
  * @param backendID - ID of the backend to query.
  * @param infoType - type of the backend information to query. Must be one of
@@ -1095,8 +1194,10 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * dimensions of all inputs (including static weights) and outputs are specified
  * through ModelProto.graph.input and ModelProto.graph.output messages. If the
  * backend supports ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS, some of the shape
- * dimensions can be symbolic. In this case, their validation should be deferred
- * until graph inputs and outputs are specified in onnxSetGraphIO.
+ * dimensions can be symbolic. If the backend supports
+ * ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE, the outer shape dimension can be
+ * symbolic. In these cases, the validation of symbolic dimension should be
+ * deferred until graph inputs and outputs are specified in onnxSetGraphIO.
  *
  * Commonly, the serialized ModelProto message passed to this function would
  * not include the static weights (ModelProto.graph.initializer is empty), and
@@ -1434,8 +1535,10 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * dimensions of all inputs (including static weights) and outputs are specified
  * through ModelProto.graph.input and ModelProto.graph.output messages. If the
  * backend supports ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS, some of the shape
- * dimensions can be symbolic. In this case, their validation should be deferred
- * until a later call to onnxSetGraphIO.
+ * dimensions can be symbolic. If the backend supports
+ * ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE, the outer shape dimension can be
+ * symbolic. In these cases, their validation should be deferred until a later
+ * call to onnxSetGraphIO.
  *
  * Values of all static weights of the graph must be specified either in
  * ModelProto.graph.initializer, or through the weightDescriptors parameters,
