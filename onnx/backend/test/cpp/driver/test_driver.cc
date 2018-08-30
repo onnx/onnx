@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <fstream>
 
+#include <fcntl.h>
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -128,23 +129,31 @@ std::vector<TestCase> GetTestCase(const std::string& location) {
   return test_driver.testcases_;
 }
 
+// TODO: fix the reading by using faster fread
 void LoadSingleFile(const std::string& filename, std::string& filedata) {
   FILE* fp;
   if ((fp = fopen(filename.c_str(), "r")) != NULL) {
-    while (!feof(fp)) {
-      filedata += fgetc(fp);
+    try {
+      std::string buffer;
+      while (!feof(fp)) {
+        buffer += fgetc(fp);
+      }
+      filedata += buffer;
+    } catch (const std::exception& e) {
+      fclose(fp);
+      throw e;
     }
     fclose(fp);
   } else {
     std::cerr << "Warning: failed to open file: " << filename << std::endl;
   }
-  return;
 }
 
 ProtoTestCase LoadSingleTestCase(const TestCase& t) {
   ProtoTestCase st;
-  LoadSingleFile(t.model_filename_, st.raw_model_);
-  ParseProtoFromBytes(&st.model_, st.raw_model_.c_str(), st.raw_model_.size());
+  std::string raw_model;
+  LoadSingleFile(t.model_filename_, raw_model);
+  ParseProtoFromBytes(&st.model_, raw_model.c_str(), raw_model.size());
 
   for (auto& test_data : t.test_data_) {
     ProtoTestData proto_test_data;
@@ -154,7 +163,6 @@ ProtoTestCase LoadSingleTestCase(const TestCase& t) {
       LoadSingleFile(input_file, input_data);
       onnx::TensorProto input_proto;
       ParseProtoFromBytes(&input_proto, input_data.c_str(), input_data.size());
-      proto_test_data.raw_inputs_.emplace_back(std::move(input_data));
       proto_test_data.inputs_.emplace_back(std::move(input_proto));
     }
     for (auto& output_file : test_data.output_filenames_) {
@@ -163,7 +171,6 @@ ProtoTestCase LoadSingleTestCase(const TestCase& t) {
       onnx::TensorProto output_proto;
       ParseProtoFromBytes(
           &output_proto, output_data.c_str(), output_data.size());
-      proto_test_data.raw_outputs_.emplace_back(std::move(output_data));
       proto_test_data.outputs_.emplace_back(std::move(output_proto));
     }
   }

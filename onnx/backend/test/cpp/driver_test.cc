@@ -3,6 +3,16 @@
 #include "onnx/onnxifi.h"
 #include "onnx/onnxifi_loader.h"
 const bool ONNXIFI_BACKEND_USED = false;
+const float ONNXIFI_TESTDATA_EPS = 1e-5;
+template <typename T>
+class CompareOnnxifiData {
+ public:
+  bool IsEqual(void* P, void* Q) {
+    T x = *((T*)P), y = *((T*)Q);
+    return ((x - y) > -ONNXIFI_TESTDATA_EPS) &&
+        ((x - y) < ONNXIFI_TESTDATA_EPS);
+  }
+};
 class ONNXCppDriverTest
     : public testing::TestWithParam<onnx::testing::ProtoTestCase> {
  protected:
@@ -13,12 +23,98 @@ class ONNXCppDriverTest
     protos_ = t.proto_test_data_;
     model_ = t.model_;
   }
-  uint64_t GetDescriptorSize(onnxTensorDescriptorV1* t) {
+  uint64_t GetDescriptorSize(const onnxTensorDescriptorV1* t) {
     uint64_t d_size = 1;
     for (int i = 0; i < t->dimensions; i++) {
       d_size *= t->shape[i];
     }
     return d_size;
+  }
+  bool IsDescriptorEqual(
+      const onnxTensorDescriptorV1& x,
+      const onnxTensorDescriptorV1& y) {
+    if (x.dataType != y.dataType || x.dimensions != y.dimensions) {
+      return false;
+    }
+    const int dims = x.dimensions;
+    for (int i = 0; i < dims; i++) {
+      if (x.shape[i] != y.shape[i]) {
+        return false;
+      }
+    }
+    const uint64_t d_size = GetDescriptorSize(&x);
+    void* p1 = (void*)x.buffer;
+    void* p2 = (void*)y.buffer;
+    bool is_equal = true;
+    for (uint64_t i = 0; i < d_size; i++) {
+      int offset = 1;
+      switch (x.dataType) {
+        case ONNXIFI_DATATYPE_UNDEFINED:
+        case ONNXIFI_DATATYPE_INT8:
+          CompareOnnxifiData<char> compare_int8;
+          is_equal &= compare_int8.IsEqual(p1, p2);
+          offset = 1;
+          break;
+        case ONNXIFI_DATATYPE_UINT8:
+          CompareOnnxifiData<unsigned char> compare_uint8;
+          is_equal &= compare_uint8.IsEqual(p1, p2);
+          offset = 1;
+          break;
+        case ONNXIFI_DATATYPE_FLOAT16:
+          // no support now
+          break;
+        case ONNXIFI_DATATYPE_INT16:
+          CompareOnnxifiData<short> compare_int16;
+          is_equal &= compare_int16.IsEqual(p1, p2);
+          offset = 2;
+          break;
+        case ONNXIFI_DATATYPE_UINT16:
+          CompareOnnxifiData<unsigned short> compare_uint16;
+          is_equal &= compare_uint16.IsEqual(p1, p2);
+          offset = 2;
+          break;
+        case ONNXIFI_DATATYPE_FLOAT32:
+          CompareOnnxifiData<float> compare_float32;
+          is_equal &= compare_float32.IsEqual(p1, p2);
+          offset = 4;
+          break;
+        case ONNXIFI_DATATYPE_INT32:
+          CompareOnnxifiData<int> compare_int32;
+          is_equal &= compare_int32.IsEqual(p1, p2);
+          offset = 4;
+          break;
+        case ONNXIFI_DATATYPE_UINT32:
+          CompareOnnxifiData<unsigned int> compare_uint32;
+          is_equal &= compare_uint32.IsEqual(p1, p2);
+          offset = 4;
+          break;
+        case ONNXIFI_DATATYPE_FLOAT64:
+          CompareOnnxifiData<long double> compare_float64;
+          is_equal &= compare_float64.IsEqual(p1, p2);
+          offset = 8;
+          break;
+        case ONNXIFI_DATATYPE_INT64:
+          CompareOnnxifiData<long long> compare_int64;
+          is_equal &= compare_int64.IsEqual(p1, p2);
+          offset = 8;
+          break;
+        case ONNXIFI_DATATYPE_UINT64:
+          CompareOnnxifiData<unsigned long long> compare_uint64;
+          is_equal &= compare_uint64.IsEqual(p1, p2);
+          offset = 8;
+          break;
+        case ONNXIFI_DATATYPE_COMPLEX64:
+        case ONNXIFI_DATATYPE_COMPLEX128:
+          // no support now
+          break;
+      }
+      p1 = (char*)p1 + offset;
+      p2 = (char*)p2 + offset;
+      if (!is_equal) {
+        return false;
+      }
+    }
+    return true;
   }
   void RunAndVerify(onnxifi_library& lib, onnxBackend& backend) {
     // Check Model
@@ -77,7 +173,7 @@ class ONNXCppDriverTest
           result.shape = shape_values.data();
           std::vector<uint8_t> raw_data(output.raw_data().size(), 0);
           result.buffer = (onnxPointer)raw_data.data();
-          result_descriptor.push_back(result);
+          result_descriptor.emplace_back(std::move(result));
         }
         EXPECT_EQ(
             lib.onnxSetGraphIO(
@@ -94,8 +190,6 @@ class ONNXCppDriverTest
         inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
         outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
 
-        // EXPECT_EQ(lib.onnxInitEvent(backend, inputFence),
-        // ONNXIFI_STATUS_SUCCESS);
         EXPECT_EQ(
             lib.onnxRunGraph(graph, &inputFence, &outputFence),
             ONNXIFI_STATUS_SUCCESS);
@@ -103,10 +197,10 @@ class ONNXCppDriverTest
         for (int i = 0; i < output_descriptor.size(); i++) {
           auto output_size = GetDescriptorSize(&output_descriptor[i]);
           for (int j = 0; j < output_size; j++) {
-            // size might be a problem!
             EXPECT_EQ(
-                ((char*)output_descriptor[i].buffer)[j],
-                ((char*)result_descriptor[i].buffer)[j]);
+                IsDescriptorEqual(output_descriptor[i], result_descriptor[i]),
+                true);
+            ;
           }
         }
       }
