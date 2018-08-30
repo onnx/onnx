@@ -188,6 +188,20 @@ class TestChecker(unittest.TestCase):
         checker.check_graph(graph)
         #self.assertRaises(checker.ValidationError, checker.check_graph, graph)
 
+    @property
+    def _sample_0_elem_tensor(self):  # type: () -> TensorProto
+        np_array = np.random.randn(0, 3).astype(np.float32)
+        return helper.make_tensor(
+            name='test',
+            data_type=TensorProto.FLOAT,
+            dims=(0, 3),
+            vals=np_array.reshape(0).tolist()
+        )
+
+    def test_check_tensor_zero_elem(self):  # type: () -> None
+        tensor = self._sample_0_elem_tensor
+        checker.check_tensor(tensor)
+
 
 if __name__ == '__main__':
     unittest.main()
