@@ -171,6 +171,8 @@ class Coverage(object):
                 node_writer = csv.DictWriter(nodes_file, fieldnames=frameworks)
                 node_writer.writeheader()
                 for node in all_ops:
+                    if node.domain != '' and node.domain != 'ai.onnx':
+                        continue
                     node_name = node
                     if node in experimental:
                         node_name = node + ' (Experimental)'
