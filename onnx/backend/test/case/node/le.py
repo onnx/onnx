@@ -29,7 +29,7 @@ class LE(Base):
     @staticmethod
     def export_equal_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
-            'NE',
+            'LE',
             inputs=['x', 'y'],
             outputs=['z'],
         )

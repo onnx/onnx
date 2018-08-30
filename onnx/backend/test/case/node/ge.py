@@ -15,7 +15,7 @@ class GE(Base):
     @staticmethod
     def export():  # type: () -> None
         node = onnx.helper.make_node(
-            'LE',
+            'GE',
             inputs=['x', 'y'],
             outputs=['z'],
         )
@@ -29,7 +29,7 @@ class GE(Base):
     @staticmethod
     def export_equal_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
-            'NE',
+            'GE',
             inputs=['x', 'y'],
             outputs=['z'],
         )
