@@ -135,7 +135,7 @@ class Coverage(object):
             tablefmt='plain'))
         if os.environ.get(str('CSVDIR')) is not None:
             for schema in _all_schemas:
-                if node.domain == '' or node.domain == 'ai.onnx':
+                if schema.domain == '' or schema.domain == 'ai.onnx':
                     all_ops.append(schema.name)
                     if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                         experimental.append(schema.name)
