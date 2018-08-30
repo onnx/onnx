@@ -62,6 +62,14 @@ Supported adapters:
     --Dropout from Opset 5 to Opset 6
     --LeakyRelu from opset 6 to opset 5
     --LeakyRelu from opset 5 to opset 6
+    --Sub from Opset 6 to Opset 7
+    --Sub from Opset 7 to Opset 6
+    --Sub from Opset 6 to Opset 5
+    --Sub from Opset 5 to Opset 6
+    --PRelu from Opset 6 to Opset 7
+    --PRelu from Opset 7 to Opset 6
+    --PRelu from Opset 6 to Opset 5
+    --PRelu from Opset 5 to Opset 6
 
 Unsupported adapters:
     --Min from Opset 8 to Opset 7
@@ -80,18 +88,10 @@ Unsupported adapters:
     --Xor from Opset 7 to Opset 6
     --Upsample from Opset 6 to Opset 7
     --Upsample from Opset 7 to Opset 6
-    --Sub from Opset 6 to Opset 7
-    --Sub from Opset 7 to Opset 6
-    --Sub from Opset 6 to Opset 5
-    --Sub from Opset 5 to Opset 6
     --RNN from Opset 6 to Opset 7
     --RNN from Opset 7 to Opset 6
     --Pow from Opset 6 to Opset 7
     --Pow from Opset 7 to Opset 6
-    --PRelu from Opset 6 to Opset 7
-    --PRelu from Opset 7 to Opset 6
-    --PRelu from Opset 6 to Opset 5
-    --PRelu from Opset 5 to Opset 6
     --Or from Opset 6 to Opset 7
     --Or from Opset 7 to Opset 6
     --Less from Opset 6 to Opset 7
