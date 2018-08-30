@@ -199,25 +199,53 @@ typedef int32_t onnxEventState;
  */
 #define ONNXIFI_CAPABILITY_THREAD_SAFE 0x01
 /**
- * The backend supports ONNX graphs with symbolic variables in shape names
- * (using TensorShapeProto.dim_param for ModelProto.graph.input.type.shape or
- * ModelProto.graph.output.type.shape).
+ * The backend supports ONNX graphs with symbolic variables in the outer
+ * shape dimension (batch size), using TensorShapeProto.dim_param for
+ * ModelProto.graph.input.type.shape or ModelProto.graph.output.type.shape.
+ *
+ * The exact numerical value of the  of all input and output tensors must be specified
+ * in the onnxSetGraphIO call(s).
+ */
+#define ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE 0x02
+/**
+ * The backend supports ONNX graphs with symbolic variables in the all
+ * shape dimensions, using TensorShapeProto.dim_param for
+ * ModelProto.graph.input.type.shape or ModelProto.graph.output.type.shape.
+ *
+ * Backends with this capability also MUST support
+ * ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE capability.
  *
  * The exact numerical shape of all input and output tensors must be specified
  * in the onnxSetGraphIO call(s).
  */
-#define ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS 0x02
+#define ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS 0x04
+/**
+ * The backend supports ONNX graphs with data-dependent outer shape dimension
+ * (batch size) of graph outputs. The ONNX graph would specify unknown outer
+ * shape dimension (batch size) using symbolic variables, so this capability
+ * requires ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE support.
+ *
+ * For outputs with data-dependent outer shape dimension (batch size) the value
+ * specified in onnxSetGraphIO call is interpreted as the upper limit. The exact
+ * numerical batch size of the output can be retrieved by attaching a Shape
+ * operator to the tensor with data-dependent shape and reading its output
+ * through ONNXIFI.
+ */
+#define ONNXIFI_CAPABILITY_VARIABLE_BATCH_SIZE 0x08
 /**
  * The backend supports ONNX graphs with data-dependent output shapes.
  * The ONNX graph would specify unknown output shapes using symbolic variables,
  * so this capability requires ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS support.
+ *
+ * Backends with this capability also MUST support
+ * ONNXIFI_CAPABILITY_VARIABLE_BATCH_SIZE capability.
  *
  * For outputs with data-dependent shapes the shape specified in onnxSetGraphIO
  * call is interpreted as the upper limit. The exact numerical shape of the
  * output can be retrieved by attaching a Shape operator to the tensor with
  * data-dependent shape and reading its output through ONNXIFI.
  */
-#define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x04
+#define ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS 0x10
 /**
  * The backend uses a hot-pluggable device, and can be disconnected at any time.
  *
@@ -225,7 +253,7 @@ typedef int32_t onnxEventState;
  * with the backend, or objects created on the backend, will fail with
  * ONNXIFI_STATUS_BACKEND_UNAVAILABLE status code.
  */
-#define ONNXIFI_CAPABILITY_HOT_PLUGGABLE 0x08
+#define ONNXIFI_CAPABILITY_HOT_PLUGGABLE 0x20
 
 /**
  * Type of the backend information.
@@ -389,8 +417,12 @@ typedef int32_t onnxBackendInfo;
  *
  * Value type: onnxBitfield.
  * Possible values: any combination of the following flags:
+ *      ONNXIFI_CAPABILITY_THREAD_SAFE
+ *      ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE
  *      ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS
+ *      ONNXIFI_CAPABILITY_VARIABLE_BATCH_SIZE
  *      ONNXIFI_CAPABILITY_VARIABLE_SIZE_OUTPUTS
+ *      ONNXIFI_CAPABILITY_HOT_PLUGGABLE
  *      or any vendor-specific flags in the high 32 bits of the bit field.
  */
 #define ONNXIFI_BACKEND_CAPABILITIES 10
@@ -1095,8 +1127,10 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * dimensions of all inputs (including static weights) and outputs are specified
  * through ModelProto.graph.input and ModelProto.graph.output messages. If the
  * backend supports ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS, some of the shape
- * dimensions can be symbolic. In this case, their validation should be deferred
- * until graph inputs and outputs are specified in onnxSetGraphIO.
+ * dimensions can be symbolic. If the backend supports
+ * ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE, the outer shape dimension can be
+ * symbolic. In these cases, the validation of symbolic dimension should be
+ * deferred until graph inputs and outputs are specified in onnxSetGraphIO.
  *
  * Commonly, the serialized ModelProto message passed to this function would
  * not include the static weights (ModelProto.graph.initializer is empty), and
@@ -1434,8 +1468,10 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  * dimensions of all inputs (including static weights) and outputs are specified
  * through ModelProto.graph.input and ModelProto.graph.output messages. If the
  * backend supports ONNXIFI_CAPABILITY_SYMBOLIC_SIZE_TENSORS, some of the shape
- * dimensions can be symbolic. In this case, their validation should be deferred
- * until a later call to onnxSetGraphIO.
+ * dimensions can be symbolic. If the backend supports
+ * ONNXIFI_CAPABILITY_SYMBOLIC_BATCH_SIZE, the outer shape dimension can be
+ * symbolic. In these cases, their validation should be deferred until a later
+ * call to onnxSetGraphIO.
  *
  * Values of all static weights of the graph must be specified either in
  * ModelProto.graph.initializer, or through the weightDescriptors parameters,
