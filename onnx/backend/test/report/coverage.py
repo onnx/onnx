@@ -135,9 +135,10 @@ class Coverage(object):
             tablefmt='plain'))
         if os.environ.get(str('CSVDIR')) is not None:
             for schema in _all_schemas:
-                all_ops.append(schema.name)
-                if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
-                    experimental.append(schema.name)
+                if node.domain == '' or node.domain == 'ai.onnx':
+                    all_ops.append(schema.name)
+                    if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
+                        experimental.append(schema.name)
             all_ops.sort()
             nodes_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'nodes.csv')  # type: ignore
@@ -171,8 +172,6 @@ class Coverage(object):
                 node_writer = csv.DictWriter(nodes_file, fieldnames=frameworks)
                 node_writer.writeheader()
                 for node in all_ops:
-                    if node.domain != '' and node.domain != 'ai.onnx':
-                        continue
                     node_name = node
                     if node in experimental:
                         node_name = node + ' (Experimental)'
