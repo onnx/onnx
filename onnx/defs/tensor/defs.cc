@@ -4,6 +4,7 @@
 #include "onnx/defs/schema.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver6_doc = R"DOC(
@@ -1085,7 +1086,25 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
-        .SetDoc(Upsample_ver7_doc));
+        .SetDoc(Upsample_ver7_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto& input_shape = getInputShape(ctx, 0);
+          auto* output_shape = getOutputShape(ctx, 0);
+          auto* scale_attr = ctx.getAttribute("scales");
+          if (input_shape.dim_size() != scale_attr->floats_size()) {
+            fail_shape_inference(
+                "Upsample: Input dims != attribute 'scales' dims");
+          }
+          for (int i=0; i<input_shape.dim_size(); ++i) {
+            float dim_value = static_cast<float>(input_shape.dim(i).dim_value());
+            output_shape->add_dim()->set_dim_value(
+                static_cast<int64_t>(std::floor(dim_value * scale_attr->floats(i))));
+          }
+        }));
 
 ONNX_OPERATOR_SET_SCHEMA(
     Identity,
