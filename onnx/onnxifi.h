@@ -459,8 +459,8 @@ typedef int32_t onnxBackendInfo;
  * Possible values are any combination of the following flags:
  *     ONNXIFI_MEMORY_TYPE_CPU (always supported)
  *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER
- *     ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT
- *     ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT
+ *     ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER
+ *     ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D
  *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE
  *     or any vendor-specific flags in the high 32 bits of the bit field.
  */
@@ -672,10 +672,10 @@ typedef int32_t onnxBackendInfo;
 #define ONNXIFI_MEMORY_TYPE_CPU 0
 /** CUDA memory buffer (allocated via cudaMalloc/cuMalloc).  */
 #define ONNXIFI_MEMORY_TYPE_CUDA_BUFFER 1
-/** OpenCL cl_mem object (buffer, sub-buffer, or 1D/2D/3D image). */
-#define ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT 2
-/** OpenGL ES 2.0+ object (1D/2D/3D texture or SSBO). */
-#define ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT 4
+/** OpenCL cl_mem object for a buffer or sub-buffer. */
+#define ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER 2
+/** OpenGL ES 2.0+ 2D Texture. */
+#define ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D 4
 /** Direct3D resource. */
 #define ONNXIFI_MEMORY_TYPE_D3D_RESOURCE 8
 
@@ -707,6 +707,32 @@ typedef int32_t onnxBackendInfo;
  *     ONNXIFI_LOG_LEVEL_DEBUG
  */
 #define ONNXIFI_BACKEND_PROPERTY_LOG_LEVEL 2
+/**
+ * CUDA stream to be used by the backend.
+ * CUDA stream must be created on the CUDA device used by the ONNXIFI backend.
+ * Users can query which CUDA device is used by the ONNXIFI backend by calling
+ * onnxGetBackendInfo with ONNXIFI_BACKEND_CUDA_INDEX info type.
+ *
+ * If this property is not specified during initialization, the backend can
+ * create a new CUDA stream for the device, or use a default CUDA stream.
+ *
+ * Possible values: cudaStream_t or CUstream object, cast to uint64_t.
+ */
+#define ONNXIFI_BACKEND_CUDA_STREAM 4
+/**
+ * OpenCL context to be used by the backend.
+ * The context must be created with the OpenCL device ID and the OpenCL platform
+ * ID used by the ONNXIFI backend. Users can query which OpenCL device ID and
+ * OpenCL platform ID are used by the ONNXIFI backend by calling
+ * onnxGetBackendInfo with ONNXIFI_BACKEND_OPENCL_PLATFORM_ID
+ * and ONNXIFI_BACKEND_OPENCL_DEVICE_ID info types.
+ *
+ * If this property is not specified during initialization, the backend will
+ * create a new OpenCL context for the device.
+ *
+ * Possible values: cl_context object, cast to uint64_t.
+ */
+#define ONNXIFI_BACKEND_OPENCL_CONTEXT 8
 
 /**
  * Terminates the list of auxiliary graph initialization properties passed to
@@ -819,11 +845,11 @@ typedef struct onnxTensorDescriptorV1 {
    * allocated on the same device as the backend.
    *
    * Possible values:
-   *     ONNXIFI_MEMORY_TYPE_CPU             (always supported)
-   *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER     (support is optional)
-   *     ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT   (support is optional)
-   *     ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT (support is optional)
-   *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE    (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_CPU                 (always supported)
+   *     ONNXIFI_MEMORY_TYPE_CUDA_BUFFER         (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER       (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D (support is optional)
+   *     ONNXIFI_MEMORY_TYPE_D3D_RESOURCE        (support is optional)
    */
   onnxEnum memoryType;
   /**
@@ -844,13 +870,14 @@ typedef struct onnxTensorDescriptorV1 {
    *   - ONNXIFI_MEMORY_TYPE_CUDA_BUFFER: buffer is a valid pointer to CUDA
    *     device memory, allocated via cudaMalloc or cuMalloc. CUDA device memory
    *     must be allocated on the same device as the backend.
-   *   - ONNXIFI_MEMORY_TYPE_OPENCL_OBJECT: buffer is a cl_mem handle for an
-   *     OpenCL buffer, sub-buffer, or 1D/2D/3D image. cl_mem object must be
-   *     allocated on the same device as the backend.
-   *   - ONNXIFI_MEMORY_TYPE_OPENGLES_OBJECT: buffer is a name of 1D/2D/3D
-   *     texture (created by glGenTextures) or SSBO (created by glGenBuffers).
-   *     The texture or SSBO must be allocated on the same device as the
-   *     backend.
+   *   - ONNXIFI_MEMORY_TYPE_OPENCL_BUFFER: buffer is a cl_mem handle for an
+   *     OpenCL buffer or a sub-buffer. cl_mem object must be allocated on the
+   *     same OpenCL context as the backend. The context must be specified via
+   *     ONNXIFI_BACKEND_OPENCL_CONTEXT initialization property to
+   *     onnxInitBackend.
+   *   - ONNXIFI_MEMORY_TYPE_OPENGLES_TEXTURE_2D: buffer is a name of a 2D
+   *     texture created by glGenTextures. The texture must be allocated on the
+   *     same device as the backend.
    *   - ONNXIFI_MEMORY_TYPE_D3D_RESOURCE: TBD
    */
   onnxPointer buffer;
