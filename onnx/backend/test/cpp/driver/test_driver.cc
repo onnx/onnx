@@ -26,7 +26,6 @@ void TestDriver::SetDefaultDir(const std::string& s) {
   default_dir_ = s;
 }
 
-//load single test case in case_dir to _testcases
 int TestDriver::FetchSingleTestCase(const std::string& case_dir) {
   std::string model_name = case_dir;
   model_name += "model.onnx";
@@ -111,7 +110,7 @@ int TestDriver::FetchAllTestCases(const std::string& target) {
       }
     }
     std::cerr << "Error: exception occured: " << e.what() << std::endl;
-    throw e;
+    throw;
   }
   if (directory != NULL) {
     if (closedir(directory) != 0) {
@@ -142,7 +141,7 @@ void LoadSingleFile(const std::string& filename, std::string& filedata) {
       } while (fsize == 1024);
     } catch (const std::exception& e) {
       fclose(fp);
-      throw e;
+      throw;
     }
     fclose(fp);
   } else {
@@ -185,7 +184,7 @@ std::vector<ProtoTestCase> LoadAllTestCases(const std::string& location) {
 
 std::vector<ProtoTestCase> LoadAllTestCases(const std::vector<TestCase>& t) {
   std::vector<ProtoTestCase> st;
-  for (auto i : t) {
+  for (const auto& i : t) {
     st.push_back(LoadSingleTestCase(i));
   }
   return st;

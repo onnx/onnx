@@ -76,11 +76,23 @@ class TestDriver {
  public:
   void SetDefaultDir(const std::string& s);
   std::vector<TestCase> testcases_;
-  TestDriver(const std::string default_dir = ".") {
+  TestDriver(const std::string& default_dir = ".") {
     default_dir_ = default_dir_;
   }
 
   int FetchAllTestCases(const std::string& target_dir);
+  /**
+   *	Fetch one test case from repo case_dir.
+   *	The structure of case_dir should include following contents.
+   *
+   *	Regular file: model.onnx, store the protobuf of the model.
+   *	Repo(s): test_data_set_X: store the input&output data.
+   *
+   *	Each repo in test_data_set_X should include following contents.
+   *
+   *	Regular file(s): input_X.pb, store one input tensor.
+   *	Reuglar file(s): output_X.pb, stroe one output tensor.
+   */
   int FetchSingleTestCase(const std::string& case_dir);
 };
 
