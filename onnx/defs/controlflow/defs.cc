@@ -194,7 +194,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"bool"}, "Only bool"));
 
 static const char* scan_ver1_doc = R"DOC(
-Scan can be used to iterate over (specified axes of) one or more scan_input tensors,
+Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip and is intended to enable
 generalizations of RNN-like constructs for sequence-to-sequence processing.
