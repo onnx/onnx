@@ -63,7 +63,7 @@ Status FunctionBuilderRegistry::GetFunctions(
             func_builder.GetDomain());
     if (function_proto->since_version() > version_range.second ||
         function_proto->since_version() < version_range.first) {
-      fail_check("Invalid function version in '", function_proto->name(), "'");
+      fail_check(ctx, "Invalid function version in '", function_proto->name(), "'");
     }
     op_set.insert({func_builder.GetDomain(), (int)function_proto->since_version()});
     ctx.set_opset_imports(op_set);

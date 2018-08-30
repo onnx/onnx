@@ -40,17 +40,17 @@ class DataTypeUtils final {
 
   static const TypeProto& ToTypeProto(const DataType& data_type);
 
+  static std::string ToString(
+      const TypeProto& type_proto,
+      const std::string& left = "",
+      const std::string& right = "");
+
  private:
   static void FromString(const std::string& type_str, TypeProto& type_proto);
 
   static void FromDataTypeString(
       const std::string& type_str,
       TensorProto::DataType& tensor_data_type);
-
-  static std::string ToString(
-      const TypeProto& type_proto,
-      const std::string& left = "",
-      const std::string& right = "");
 
   static std::string ToDataTypeString(
       const TensorProto::DataType& tensor_data_type);

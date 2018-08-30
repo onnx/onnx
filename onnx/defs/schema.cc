@@ -1,11 +1,11 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "onnx/defs/schema.h"
 #include <stdexcept>
 #include <unordered_set>
 #include "onnx/checker.h"
 #include "onnx/defs/operator_sets.h"
+#include "onnx/defs/schema.h"
 
 #ifdef ONNX_ML
 #include "onnx/defs/operator_sets-ml.h"
@@ -13,6 +13,7 @@
 
 #include "onnx/common/assertions.h"
 #include "onnx/common/stl_backports.h"
+#include "onnx/defs/data_type_utils.h"
 
 namespace ONNX_NAMESPACE {
 
@@ -76,198 +77,6 @@ OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
   static OpSchemaRegistry instance;
   return &instance;
-}
-
-void OpSchema::Verify(const NodeProto& node) const {
-  // Check the number of inputs.
-  if (node.input_size() < min_input_ || node.input_size() > max_input_) {
-    fail_check(
-        "Input size ",
-        node.input_size(),
-        " not in range [min=",
-        min_input_,
-        ", max=",
-        max_input_,
-        "].");
-  }
-
-  if (!num_inputs_allowed_(node.input_size())) {
-    fail_check(
-        "Input size ", node.input_size(), " not in allowed input sizes.");
-  }
-
-  // Check the number of outputs.
-  if (node.output_size() < min_output_ || node.output_size() > max_output_) {
-    fail_check(
-        "Output size ",
-        node.output_size(),
-        " not in range [min=",
-        min_output_,
-        ", max=",
-        max_output_,
-        "].");
-  }
-
-  if (!num_outputs_allowed_(node.output_size())) {
-    fail_check(
-        "Output size ", node.output_size(), " not in allowed output sizes.");
-  }
-
-  // Check the values of inputs / outputs
-  for (int in_idx = 0; in_idx < node.input_size(); ++in_idx) {
-    if (in_idx >= static_cast<int>(inputs_.size())) {
-      if (inputs_.size() > 0 && Variadic == inputs_.back().GetOption()) {
-        // The last input formal parameter should be variadic.
-        break;
-      } else {
-        fail_check(
-            "Node (",
-            node.name(),
-            ") has more inputs (",
-            node.input_size(),
-            ") than declared (",
-            inputs_.size(),
-            ") in op definition.");
-      }
-    }
-    if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
-      fail_check(
-          "Input ",
-          in_idx,
-          " is marked single but has an empty string in the graph");
-    }
-  }
-
-  for (int out_idx = 0; out_idx < node.output_size(); ++out_idx) {
-    if (out_idx >= static_cast<int>(outputs_.size())) {
-      if (outputs_.size() > 0 && Variadic == outputs_.back().GetOption()) {
-        // The last output formal parameter should be variadic.
-        break;
-      } else {
-        fail_check(
-            "Node (",
-            node.name(),
-            ") has more outputs (",
-            node.output_size(),
-            ") than declared (",
-            outputs_.size(),
-            ") in op definition.");
-      }
-    }
-
-    if (node.output(out_idx).empty() &&
-        (Single == outputs_[out_idx].GetOption())) {
-      fail_check(
-          "Output ",
-          out_idx,
-          " is marked single but has an empty string in the graph");
-    }
-  }
-
-  // An internal symbol is defined as starting with two underscores. Attributes
-  // with names meeting this condition are considered implementation details
-  // and should be ignored for the purpose of schema checking.
-  auto isInternalSymbol = [](const std::string& sym) -> bool {
-    return sym.length() >= 2 && sym[0] == '_' && sym[1] == '_';
-  };
-
-  // Check attributes
-  std::unordered_set<std::string> seen_attr_names{};
-  for (const auto& attr_proto : node.attribute()) {
-    const auto& name = attr_proto.name();
-
-    if (!seen_attr_names.insert(name).second) {
-      fail_check("Attribute '", name, "' appeared multiple times.");
-    };
-
-    const auto& search = attributes_.find(name);
-    AttributeProto::AttributeType expected_type;
-    if (search != attributes_.end()) {
-      expected_type = search->second.type;
-    } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
-      continue;
-    } else {
-      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
-    }
-
-    if (attr_proto.has_ref_attr_name()) {
-      if (!attr_proto.has_type() || attr_proto.type() != expected_type) {
-        fail_check(
-            "Mismatched attribute type in '", node.name() + " : " + name, "'");
-      }
-      continue;
-    }
-
-    switch (expected_type) {
-      case AttributeProto::FLOAT:
-        if (!attr_proto.has_f()) {
-          fail_check("Attribute '", name, "' is expected to have field 'f'");
-        }
-        break;
-      case AttributeProto::INT:
-        if (!attr_proto.has_i()) {
-          fail_check("Attribute '", name, "' is expected to have field 'i'");
-        }
-        break;
-      case AttributeProto::STRING:
-        if (!attr_proto.has_s()) {
-          fail_check("Attribute '", name, "' is expected to have field 's'");
-        }
-        break;
-      case AttributeProto::TENSOR:
-        if (!attr_proto.has_t()) {
-          fail_check("Attribute '", name, "' is expected to have field 't'");
-        }
-        break;
-      case AttributeProto::GRAPH:
-        if (!attr_proto.has_g()) {
-          fail_check("Attribute '", name, "' is expected to have field 'g'");
-        }
-        break;
-      case AttributeProto::FLOATS:
-        if (!attr_proto.floats_size()) {
-          fail_check(
-              "Attribute '", name, "' is expected to have field 'floats'");
-        }
-        break;
-      case AttributeProto::INTS:
-        if (!attr_proto.ints_size()) {
-          fail_check("Attribute '", name, "' is expected to have field 'ints'");
-        }
-        break;
-      case AttributeProto::STRINGS:
-        if (!attr_proto.strings_size()) {
-          fail_check(
-              "Attribute '", name, "' is expected to have field 'strings'");
-        }
-        break;
-      case AttributeProto::TENSORS:
-        if (!attr_proto.tensors_size()) {
-          fail_check(
-              "Attribute '", name, "' is expected to have field 'tensors'");
-        }
-        break;
-      case AttributeProto::GRAPHS:
-        if (!attr_proto.graphs_size()) {
-          fail_check(
-              "Attribute '", name, "' is expected to have field 'graphs'");
-        }
-        break;
-      default:
-        fail_check("Attribute '", name, " has unknown expected type");
-    }
-  }
-  for (const auto& pair : attributes_) {
-    const auto& attr = pair.second;
-    if (!attr.required) {
-      continue;
-    }
-    if (!seen_attr_names.count(attr.name)) {
-      fail_check("Required attribute '", attr.name, "' is missing.");
-    }
-  }
-
-  // Phew. All verifications passed.
 }
 
 OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
@@ -716,8 +525,8 @@ OpName_Domain_Version_Schema_Map& OpSchemaRegistry::map() {
   class SchemasRegisterer {
    public:
     SchemasRegisterer() {
-      // In debug builds, the number of schema registered in this constructor
-      // is compared against the number of calls to schema registration macros.
+    // In debug builds, the number of schema registered in this constructor
+    // is compared against the number of calls to schema registration macros.
 #ifndef NDEBUG
       size_t dbg_initial_schema_count = GetRegisteredSchemaCount();
 #endif

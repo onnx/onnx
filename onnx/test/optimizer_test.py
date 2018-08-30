@@ -16,7 +16,7 @@ import unittest
 class TestOptimizer(unittest.TestCase):
 
     def _optimized(self, graph, opts):  # type: (GraphProto, Sequence[Text]) -> ModelProto
-        orig_model = helper.make_model(graph, producer_name='onnx-test')
+        orig_model = helper.make_model(graph, producer_name='onnx-test', domain='ai.testdomain')
         optimized_model = onnx.optimizer.optimize(orig_model, opts)
         checker.check_model(optimized_model)
         return optimized_model
@@ -27,7 +27,7 @@ class TestOptimizer(unittest.TestCase):
                            input_types,  # type: Sequence[Tuple[TensorProto.DataType, Sequence[int], Text]]
                            output_types  # type: Sequence[Tuple[TensorProto.DataType, Sequence[int], Text]]
                            ):  # type: (...) -> List[NodeProto]
-        zero = helper.make_tensor("trip_count_value", TensorProto.INT32, (), [10])
+        zero = helper.make_tensor("trip_count_value", TensorProto.INT64, (), [10])
         true = helper.make_tensor("condition", TensorProto.BOOL, (), [True])
         # lcd is a dummy loop-carried dependency that only exists because
         # right now the schema checker is broken and assumes a variadic
@@ -684,7 +684,7 @@ class TestOptimizer(unittest.TestCase):
         )
         graph = helper.make_graph(
             [node],
-            'test-optimize-split',
+            'test_optimize_split',
             [],
             [helper.make_tensor_value_info('X', TensorProto.FLOAT, (1,))])
 

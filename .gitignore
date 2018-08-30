@@ -10,6 +10,8 @@
 *.so
 *.dylib
 *.pyd
+*.dll
+*.pdb
 
 # Compiled Static libraries
 *.lai

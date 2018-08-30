@@ -17,7 +17,7 @@ class TestUtilityFunctions(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
             [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
-        model_def = helper.make_model(graph_def, producer_name='test')
+        model_def = helper.make_model(graph_def, producer_name='test', domain='ai.testdomain')
         polished_def = onnx.utils.polish_model(model_def)
         self.assertEqual(polished_def.producer_name, 'test')
         self.assertEqual(len(polished_def.graph.node), 1)

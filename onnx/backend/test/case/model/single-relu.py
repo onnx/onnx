@@ -24,7 +24,7 @@ class SingleRelu(Base):
                 'x', onnx.TensorProto.FLOAT, [1, 2])],
             outputs=[onnx.helper.make_tensor_value_info(
                 'y', onnx.TensorProto.FLOAT, [1, 2])])
-        model = onnx.helper.make_model(graph, producer_name='backend-test')
+        model = onnx.helper.make_model(graph, producer_name='backend-test', domain='ai.testdomain')
 
         x = np.random.randn(1, 2).astype(np.float32)
         y = np.maximum(x, 0)
