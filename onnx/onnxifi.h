@@ -259,16 +259,21 @@ typedef int32_t onnxEventState;
  * Type of the backend information.
  *
  * Possible values:
+ *     ONNXIFI_BACKEND_ONNXIFI_VERSION
  *     ONNXIFI_BACKEND_NAME
  *     ONNXIFI_BACKEND_VENDOR
  *     ONNXIFI_BACKEND_VERSION
  *     ONNXIFI_BACKEND_EXTENSIONS
  *     ONNXIFI_BACKEND_DEVICE
  *     ONNXIFI_BACKEND_DEVICE_TYPE
+ *     ONNXIFI_BACKEND_ONNX_IR_VERSION
+ *     ONNXIFI_BACKEND_OPSET_VERSION
  *     ONNXIFI_BACKEND_CAPABILITIES
  *     ONNXIFI_BACKEND_INIT_PROPERTIES
  *     ONNXIFI_BACKEND_MEMORY_TYPES
  *     ONNXIFI_BACKEND_GRAPH_INIT_PROPERTIES
+ *     ONNXIFI_BACKEND_SYNCHRONIZATION_TYPES
+ *     ONNXIFI_BACKEND_MEMORY_SIZE
  *     ONNXIFI_BACKEND_MAX_GRAPH_SIZE
  *     ONNXIFI_BACKEND_MAX_GRAPH_COUNT
  *     ONNXIFI_BACKEND_MACS_FP32
@@ -276,6 +281,13 @@ typedef int32_t onnxEventState;
  *     ONNXIFI_BACKEND_MEMORY_BANDWIDTH
  *     ONNXIFI_BACKEND_CPU_MEMORY_READ_BANDWIDTH
  *     ONNXIFI_BACKEND_CPU_MEMORY_WRITE_BANDWIDTH
+ *     ONNXIFI_BACKEND_PCI_BUS_ID
+ *     ONNXIFI_BACKEND_PCI_DEVICE_ID
+ *     ONNXIFI_BACKEND_PCI_DOMAIN_ID
+ *     ONNXIFI_BACKEND_DIRECTX_ID
+ *     ONNXIFI_BACKEND_CUDA_INDEX
+ *     ONNXIFI_BACKEND_OPENCL_PLATFORM_ID
+ *     ONNXIFI_BACKEND_OPENCL_DEVICE_ID
  */
 typedef int32_t onnxBackendInfo;
 
@@ -613,6 +625,32 @@ typedef int32_t onnxBackendInfo;
  * Value type: uint64_t.
  */
 #define ONNXIFI_BACKEND_CUDA_INDEX 44
+
+/**
+ * OpenCL platform ID for the backend device.
+ * This platform ID is guaranteed to remain valid for the lifetime of ONNXIFI
+ * objects related to the same ONNXIFI backend (backend ID, backend, graph,
+ * event).
+ *
+ * Since ONNXIFI 1.0, OpenCL-based backends are recommended, but not required to
+ * support this information query.
+ *
+ * Value type: cl_platform_id.
+ */
+#define ONNXIFI_BACKEND_OPENCL_PLATFORM_ID 45
+
+/**
+ * OpenCL device ID for the backend device.
+ * This device ID is guaranteed to remain valid for the lifetime of ONNXIFI
+ * objects related to the same ONNXIFI backend (backend ID, backend, graph,
+ * event).
+ *
+ * Since ONNXIFI 1.0, OpenCL-based backends are recommended, but not required to
+ * support this information query.
+ *
+ * Value type: cl_device_id.
+ */
+#define ONNXIFI_BACKEND_OPENCL_DEVICE_ID 46
 
 /* Note: the data type values match ONNX TensorProto.DataType enum */
 #define ONNXIFI_DATATYPE_UNDEFINED 0
@@ -1067,6 +1105,8 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *     ONNXIFI_BACKEND_PCI_DOMAIN_ID                 uint64_t     optional
  *     ONNXIFI_BACKEND_DIRECTX_ID                      LUID       optional
  *     ONNXIFI_BACKEND_CUDA_INDEX                    uint64_t     optional
+ *     ONNXIFI_BACKEND_OPENCL_PLATFORM_ID         cl_platform_id  optional
+ *     ONNXIFI_BACKEND_OPENCL_DEVICE_ID            cl_device_id   optional
  *
  * @param backendID - ID of the backend to query.
  * @param infoType - type of the backend information to query. Must be one of
