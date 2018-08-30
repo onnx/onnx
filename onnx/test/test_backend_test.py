@@ -45,10 +45,10 @@ class DummyBackend(onnx.backend.base.Backend):
         if do_enforce_test_coverage_whitelist(model):
             # test version conversion
             if model.graph.name not in ['vgg19', 'inception_v2', 'shufflenet']:
-                model = onnx.version_converter.convert_version(model, 1)
-                model = onnx.version_converter.convert_version(model, 8)
+                converted_model = onnx.version_converter.convert_version(model, 1)
+                converted_model = onnx.version_converter.convert_version(converted_model, 8)
+                del converted_model
             if model.graph.name not in test_shape_inference_blacklist:
-                print("Name: ", model.graph.name)
                 for node in model.graph.node:
                     for i, output in enumerate(node.output):
                         if node.op_type == 'Dropout' and i != 0:
@@ -90,9 +90,9 @@ test_coverage_whitelist = set(
 test_coverage_whitelist_local = set(
     ['bvlc_googlenet', 'bvlc_reference_caffenet',
         'bvlc_reference_rcnn_ilsvrc13', 'emotion_ferplus', 'mnist',
-        '15fb3d9ea39f4068ad44a49de20faedc'])
+        '15fb3d9ea39f4068ad44a49de20faedc', 'mxnet_converted_model'])
 test_shape_inference_blacklist = set(
-    ['15fb3d9ea39f4068ad44a49de20faedc'])
+    ['15fb3d9ea39f4068ad44a49de20faedc', 'mxnet_converted_model'])
 
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool

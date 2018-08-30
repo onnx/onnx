@@ -16,7 +16,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
             input2_sizes[i].dim != 1) return -1;
         if (input2_sizes[i].dim != input1_sizes[axis + i].dim) broadcast = true;
       }
-      // Return true if broadcasting is required
+      // Return 1 if broadcasting is required
       if (input1_sizes.size() > input2_sizes.size() || broadcast) return 1;
       else return 0;
     }
