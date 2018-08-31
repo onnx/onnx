@@ -300,7 +300,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             fail_shape_inference("Required attribute axis is missing");
           }
           int axis = static_cast<int>(axisAttr->i());
-          if (axis < 0) {
+          if (axis < 0 || rank <= axis) {
             return; // TODO: check if negative axis must be supported
           }
 
