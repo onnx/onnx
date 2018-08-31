@@ -12,7 +12,7 @@ from tabulate import tabulate  # type: ignore
 
 import onnx
 from onnx import defs, helper, GraphProto
-from typing import Optional, Text, Set, Dict, IO
+from typing import Optional, Text, Set, Dict, IO, List
 
 _all_schemas = defs.get_all_schemas()
 
@@ -144,9 +144,9 @@ class Coverage(object):
                     'nodes.csv')  # type: ignore
             models_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'models.csv')  # type: ignore
-            existing_nodes = OrderedDict()
-            existing_models = OrderedDict()
-            frameworks = []
+            existing_nodes = OrderedDict()  # type: OrderedDict
+            existing_models = OrderedDict()  # type: OrderedDict
+            frameworks = []  # type: List
             if os.path.isfile(nodes_path):
                 with open(nodes_path, 'r') as nodes_file:
                     reader = csv.DictReader(nodes_file)
@@ -168,7 +168,7 @@ class Coverage(object):
                 if 'Op' not in frameworks:
                     frameworks.append('Op')
                 if backend not in frameworks:
-                    frameworks.append(backend)
+                    frameworks.append(str(backend))
                 else:
                     other_frameworks.remove(backend)
                 node_writer = csv.DictWriter(nodes_file, fieldnames=frameworks)
@@ -186,7 +186,7 @@ class Coverage(object):
                         existing_nodes[node_name][backend] = "Passed!"
                     else:
                         existing_nodes[node_name][backend] = "Failed!"
-                summaries = OrderedDict()
+                summaries = OrderedDict()  # type: OrderedDict
                 if "Summary" in existing_nodes:
                     summaries = existing_nodes["Summary"]
                     del existing_nodes["Summary"]
