@@ -26,7 +26,7 @@ void TestDriver::SetDefaultDir(const std::string& s) {
   default_dir_ = s;
 }
 
-int TestDriver::FetchSingleTestCase(const std::string& case_dir) {
+void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
   std::string model_name = case_dir;
   model_name += "model.onnx";
   if (FileExists(model_name)) {
@@ -64,11 +64,10 @@ int TestDriver::FetchSingleTestCase(const std::string& case_dir) {
     }
     testcases_.emplace_back(std::move(test_case));
   }
-  return 0;
 }
 
 //load all test data in target_dir to _testcases
-int TestDriver::FetchAllTestCases(const std::string& target) {
+bool TestDriver::FetchAllTestCases(const std::string& target) {
   std::string target_dir = target;
   if (target_dir == "") {
     target_dir = default_dir_;
@@ -82,7 +81,7 @@ int TestDriver::FetchAllTestCases(const std::string& target) {
     if (directory == NULL) {
       std::cerr << "Error: cannot open directory " << target_dir
                 << " when fetching test data: " << strerror(errno) << std::endl;
-      return -1;
+      return false;
     }
     while (true) {
       errno = 0;
@@ -116,10 +115,10 @@ int TestDriver::FetchAllTestCases(const std::string& target) {
     if (closedir(directory) != 0) {
       std::cerr << "Warning: failed to close directory " << target_dir
                 << " when fetching test data: " << strerror(errno) << std::endl;
-      return -1;
+      return false;
     }
   }
-  return 0;
+  return true;
 }
 
 std::vector<TestCase> GetTestCase(const std::string& location) {

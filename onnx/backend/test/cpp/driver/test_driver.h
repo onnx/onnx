@@ -79,8 +79,11 @@ class TestDriver {
   TestDriver(const std::string& default_dir = ".") {
     default_dir_ = default_dir_;
   }
-
-  int FetchAllTestCases(const std::string& target_dir);
+  /**
+   *	Fetch all test cases in target.
+   *	Return true if success, and false if failed.
+   */
+  bool FetchAllTestCases(const std::string& target_dir);
   /**
    *	Fetch one test case from repo case_dir.
    *	The structure of case_dir should include following contents.
@@ -91,9 +94,9 @@ class TestDriver {
    *	Each repo in test_data_set_X should include following contents.
    *
    *	Regular file(s): input_X.pb, store one input tensor.
-   *	Reuglar file(s): output_X.pb, stroe one output tensor.
+   *	Reuglar file(s): output_X.pb, store one output tensor.
    */
-  int FetchSingleTestCase(const std::string& case_dir);
+  void FetchSingleTestCase(const std::string& case_dir);
 };
 
 std::vector<TestCase> GetTestCase();
