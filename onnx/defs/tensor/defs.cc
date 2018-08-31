@@ -507,6 +507,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             return;
           }
 
+          for (size_t i = 0; i < ends.size(); ++ i) {
+            if (ends[i] <= 0) {
+              return;
+            }
+          }
+
           ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
           for (size_t i = 0, j = 0; (int64_t)i <
