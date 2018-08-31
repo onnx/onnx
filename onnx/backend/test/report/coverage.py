@@ -160,15 +160,18 @@ class Coverage(object):
                 with open(models_path, 'r') as models_file:
                     reader = csv.DictReader(models_file)
                     for row in reader:
-                        op = row['Op']
-                        del row['Op']
-                        existing_nodes[op] = row
+                        model = row['Model']
+                        del row['Model']
+                        existing_nodes[model] = row
             backend = os.environ.get('BACKEND')
+            other_frameworks = frameworks[1:]
             with open(nodes_path, 'w') as nodes_file:
                 if 'Op' not in frameworks:
                     frameworks.append('Op')
                 if backend not in frameworks:
                     frameworks.append(backend)
+                else:
+                    other_frameworks.remove(backend)
                 node_writer = csv.DictWriter(nodes_file, fieldnames=frameworks)
                 node_writer.writeheader()
                 for node in all_ops:
@@ -176,18 +179,25 @@ class Coverage(object):
                     if node in experimental:
                         node_name = node + ' (Experimental)'
                     if node_name not in existing_nodes:
+                        # Also add Skipped for other nodes
                         existing_nodes[node_name] = OrderedDict()
+                        for other_framework in other_frameworks:
+                            existing_nodes[node_name][other_framework] = "Skipped!"
                     if node in passed:
                         existing_nodes[node_name][backend] = "Passed!"
                     else:
                         existing_nodes[node_name][backend] = "Failed!"
-                if "Summary" not in existing_nodes:
-                    existing_nodes["Summary"] = OrderedDict()
-                existing_nodes["Summary"][backend] = \
+                summaries = OrderedDict()
+                if "Summary" in existing_nodes:
+                    summaries = existing_nodes["Summary"]
+                    del existing_nodes["Summary"]
+                summaries[backend] = \
                     "{}/{} node tests passed".format(len(passed), len(all_ops))
+                summaries['Op'] = 'Summary'
                 for node in existing_nodes:
                     existing_nodes[node]['Op'] = node
                     node_writer.writerow(existing_nodes[node])
+                node_writer.writerow(summaries)
             with open(models_path, 'w') as models_file:
                 frameworks[0] = "Model"
                 model_writer = csv.DictWriter(models_file, fieldnames=frameworks)
@@ -210,17 +220,24 @@ class Coverage(object):
                             msg = "Failed!"
                         num_models += 1
                         if model not in existing_models:
+                            # TODO: Also add Skipped for other models
                             existing_models[model] = OrderedDict()
+                            for other_framework in other_frameworks:
+                                existing_nodes[model][other_framework] = "Skipped!"
                         existing_models[model][backend] = "{}/{} nodes covered: {}" \
                             .format(num_covered, len(self.models[bucket][model]
                                 .node_coverages), msg)
-                if "Summary" not in existing_models:
-                    existing_models["Summary"] = OrderedDict()
-                existing_models["Summary"][backend] = "{}/{} model tests passed" \
+                summaries = OrderedDict()
+                if "Summary" in existing_models:
+                    summaries = existing_models["Summary"]
+                    del existing_models["Summary"]
+                summaries[backend] = "{}/{} model tests passed" \
                     .format(len(self.models['passed']), num_models)
+                summaries['Model'] = 'Summary'
                 for model in existing_models:
                     existing_models[model]['Model'] = model
                     model_writer.writerow(existing_models[model])
+                model_writer.writerow(summaries)
             with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'metadata.csv'), 'w') as metadata_file:  # type: ignore
                 metadata_writer = csv.writer(metadata_file)
