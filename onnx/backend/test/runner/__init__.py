@@ -266,8 +266,6 @@ class Runner(object):
             else:
                 model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.onnx')
-            if model_test.model_name == 'resnet100':
-                model_pb_path = os.path.join(model_dir, 'resnet100.onnx')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
             if hasattr(self.backend, 'is_compatible') \
