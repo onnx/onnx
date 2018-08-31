@@ -4,9 +4,16 @@
 
 import onnx
 import sys
+import argparse
 
-if len(sys.argv) == 2:
-    model = onnx.load(sys.argv[1])
+
+def uniqueOps(model):
     print(set([n.op_type for n in model.graph.node]))
-else:
-    print("Please provide a single path to an ONNX model as an arg")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Calculate stats on ONNX models')
+    parser.add_argument('path', type=str, help='a path to an ONNX model')
+    args = parser.parse_args()
+    model = onnx.load(args.path)
+    uniqueOps(model)
