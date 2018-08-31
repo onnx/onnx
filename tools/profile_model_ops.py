@@ -8,3 +8,5 @@ import sys
 if len(sys.argv) == 2:
     model = onnx.load(sys.argv[1])
     print(set([n.op_type for n in model.graph.node]))
+else:
+    print("Please provide a single path to an ONNX model as an arg")
