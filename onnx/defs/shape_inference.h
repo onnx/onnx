@@ -388,7 +388,9 @@ inline void multidirectionalBroadcastShapeInference(
       resultShape.add_dim()->set_dim_value(dim_value);
     } else if (num_symbolic_dims == 1) {
       *resultShape.add_dim() = symbolic_dim;
-	}
+    } else {
+      resultShape.add_dim();
+    }
   }
 }
 
