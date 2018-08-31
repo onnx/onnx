@@ -151,7 +151,6 @@ class Coverage(object):
                 with open(nodes_path, 'r') as nodes_file:
                     reader = csv.DictReader(nodes_file)
                     frameworks = reader.fieldnames
-                    print(frameworks)
                     for row in reader:
                         op = row['Op']
                         del row['Op']
@@ -162,7 +161,7 @@ class Coverage(object):
                     for row in reader:
                         model = row['Model']
                         del row['Model']
-                        existing_nodes[model] = row
+                        existing_models[model] = row
             backend = os.environ.get('BACKEND')
             other_frameworks = frameworks[1:]
             with open(nodes_path, 'w') as nodes_file:
@@ -220,10 +219,10 @@ class Coverage(object):
                             msg = "Failed!"
                         num_models += 1
                         if model not in existing_models:
-                            # TODO: Also add Skipped for other models
+                            # Also add Skipped for other models
                             existing_models[model] = OrderedDict()
                             for other_framework in other_frameworks:
-                                existing_nodes[model][other_framework] = "Skipped!"
+                                existing_models[model][other_framework] = "Skipped!"
                         existing_models[model][backend] = "{}/{} nodes covered: {}" \
                             .format(num_covered, len(self.models[bucket][model]
                                 .node_coverages), msg)
