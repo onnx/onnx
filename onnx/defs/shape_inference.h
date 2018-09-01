@@ -384,29 +384,30 @@ inline void multidirectionalBroadcastShapeInference(
       }
     }
 
-	// Adding an unknown dim firstly.
-	auto dim = resultShape.add_dim();
+    // Adding an unknown dim firstly.
+    auto dim = resultShape.add_dim();
     if (dim_value != 1 || num_symbolic_dims == 0) {
-	  // Setting dim value in below cases,
-	  // 1. there's >1 dim_value, in this case, even there're symbolic dims,
-	  //    we optimistically assume all symbolic dims will have the same dim_value.
-	  // 2. dim_value is 1 and there's no symbolic dim.
-	  dim->set_dim_value(dim_value);
+      // Setting dim value in below cases,
+      // 1. there's >1 dim_value, in this case, even there're symbolic dims,
+      //    we optimistically assume all symbolic dims will have the same
+      //    dim_value.
+      // 2. dim_value is 1 and there's no symbolic dim.
+      dim->set_dim_value(dim_value);
     } else if (num_symbolic_dims == 1) {
-	  // Setting symbolic dim.
+      // Setting symbolic dim.
       *dim = symbolic_dim;
-	}
+    }
   }
 }
 
 inline void bidirectionalBroadcastShapeInference(
-	const TensorShapeProto& shapeL,
-	const TensorShapeProto& shapeR,
-	TensorShapeProto& resultShape) {
-	std::vector<const TensorShapeProto*> shapes;
-	shapes.push_back(&shapeL);
-	shapes.push_back(&shapeR);
-	multidirectionalBroadcastShapeInference(shapes, resultShape);
+    const TensorShapeProto& shapeL,
+    const TensorShapeProto& shapeR,
+    TensorShapeProto& resultShape) {
+  std::vector<const TensorShapeProto*> shapes;
+  shapes.push_back(&shapeL);
+  shapes.push_back(&shapeR);
+  multidirectionalBroadcastShapeInference(shapes, resultShape);
 }
 
 } // namespace ONNX_NAMESPACE
