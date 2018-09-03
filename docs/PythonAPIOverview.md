@@ -127,8 +127,14 @@ original_model = onnx.load(model_path)
 
 print('The model before optimization:\n{}'.format(original_model))
 
-# A full list of supported optimization passes can be found here:
-# https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L27
+# A full list of supported optimization passes can be found using get_available_passes()
+all_passes = optimizer.get_available_passes()
+print("Available optimization passes:")
+for p in all_passes:
+    print(p)
+print()
+
+# Pick one pass as example
 passes = ['fuse_consecutive_transposes']
 
 # Apply the optimization on the original model
@@ -137,7 +143,7 @@ optimized_model = optimizer.optimize(original_model, passes)
 print('The model after optimization:\n{}'.format(optimized_model))
 
 # One can also apply the default passes on the (serialized) model
-# Check the default passes here: https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L41
+# Check the default passes here: https://github.com/onnx/onnx/blob/master/onnx/optimizer.py#L43
 optimized_model = optimizer.optimize(original_model)
 ```
 Runnable IPython notebooks:
@@ -176,6 +182,25 @@ print('After shape inference, the shape info of Y is:\n{}'.format(inferred_model
 ```
 Runnable IPython notebooks:
 - [shape_inference.ipynb](https://github.com/onnx/onnx/tree/master/onnx/examples/shape_inference.ipynb)
+
+## Converting Version of an ONNX Model within Default Domain (""/"ai.onnx")
+```python
+import onnx
+from onnx import version_converter, helper
+
+# Preprocessing: load the model to be converted.
+model_path = 'path/to/the/model.onnx'
+original_model = onnx.load(model_path)
+
+print('The model before conversion:\n{}'.format(original_model))
+
+# A full list of supported adapters can be found here:
+# https://github.com/onnx/onnx/blob/master/onnx/version_converter.py#L21
+# Apply the version conversion on the original model
+converted_model = version_converter.convert_version(original_model, <int target_version>)
+
+print('The model after conversion:\n{}'.format(converted_model))
+```
 
 ## Utility Functions
 ### Polishing the Model

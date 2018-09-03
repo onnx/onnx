@@ -215,6 +215,15 @@ class OpSchema final {
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
+   * Marks this op as deprecated as of it's since_version. This will cause the
+   * Schema() lookup functions to return nullptr when the version is in the
+   * deprecated range.
+   */
+  OpSchema& Deprecate();
+
+  bool Deprecated() const { return deprecated_; }
+
+  /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
   OpSchema& NumInputs(std::set<int> allowed_input_nums);
@@ -437,34 +446,37 @@ class OpSchema final {
 
   static const std::vector<std::string>& all_numeric_types() {
     static const std::vector<std::string> all_numeric_types = {
-        +"tensor(uint8)",
-        +"tensor(uint16)",
-        +"tensor(uint32)",
-        +"tensor(uint64)",
-        +"tensor(int8)",
-        +"tensor(int16)",
-        +"tensor(int32)",
-        +"tensor(int64)",
-        +"tensor(float16)",
-        +"tensor(float)",
-        +"tensor(double)"};
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)"};
     return all_numeric_types;
   }
 
   static const std::vector<std::string>& all_tensor_types() {
-    static const std::vector<std::string> all_tensor_types = {"tensor(uint8)",
-                                                              "tensor(uint16)",
-                                                              "tensor(uint32)",
-                                                              "tensor(uint64)",
-                                                              "tensor(int8)",
-                                                              "tensor(int16)",
-                                                              "tensor(int32)",
-                                                              "tensor(int64)",
-                                                              "tensor(float16)",
-                                                              "tensor(float)",
-                                                              "tensor(double)",
-                                                              "tensor(string)",
-                                                              "tensor(bool)"};
+    static const std::vector<std::string> all_tensor_types = {
+        "tensor(uint8)",
+        "tensor(uint16)",
+        "tensor(uint32)",
+        "tensor(uint64)",
+        "tensor(int8)",
+        "tensor(int16)",
+        "tensor(int32)",
+        "tensor(int64)",
+        "tensor(float16)",
+        "tensor(float)",
+        "tensor(double)",
+        "tensor(string)",
+        "tensor(bool)",
+        "tensor(complex64)",
+        "tensor(complex128)"};
     return all_tensor_types;
   }
 
@@ -478,9 +490,6 @@ class OpSchema final {
     return domain_;
   }
 
-  int since_version() const {
-    return since_version_;
-  }
   const std::map<std::string, Attribute>& attributes() const {
     return attributes_;
   }
@@ -505,6 +514,14 @@ class OpSchema final {
 
   OperatorSetVersion SinceVersion() const {
     return since_version_;
+  }
+
+  int since_version() const {
+    return since_version_;
+  }
+
+  bool deprecated() const {
+    return deprecated_;
   }
 
   int min_input() const {
@@ -553,6 +570,7 @@ class OpSchema final {
   int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
   OperatorSetVersion since_version_ = 1;
+  bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
@@ -707,8 +725,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         // All versions are less than specified version, or,
         // The <pos> version is greater than specified version.
         pos--;
-        return &(pos->second);
       }
+
       // Schema with exact version as specified one exists.
       return &(pos->second);
     } else {

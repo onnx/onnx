@@ -8,7 +8,7 @@ import io
 import os
 from collections import defaultdict
 
-from onnx import defs, FunctionProto
+from onnx import defs, FunctionProto, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from typing import Text, Sequence, Dict, List, Type, Set, Tuple
@@ -92,13 +92,17 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
     # since version
     s += '\n#### Version\n'
-    s += '\nThis version of the operator has been available since version {}'.format(schema.since_version)
+    s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
     s += ' of {}.\n'.format(display_domain(schema.domain))
     if len(versions) > 1:
         # TODO: link to the Changelog.md
         s += '\nOther versions of this operator: {}\n'.format(
             ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
                                            v.since_version) for v in versions[:-1]))
+
+    # If this schema is deprecated, don't display any of the following sections
+    if schema.deprecated:
+        return s
 
     # attributes
     if schema.attributes:
@@ -225,6 +229,11 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
+def function_status_str(status=OperatorStatus.Value("EXPERIMENTAL")):  # type: ignore
+    return \
+        "<sub>experimental</sub> " if status == OperatorStatus.Value('EXPERIMENTAL') else ""  # type: ignore
+
+
 def main(args):  # type: (Type[Args]) -> None
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
@@ -251,7 +260,7 @@ def main(args):  # type: (Type[Args]) -> None
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
                     name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
                                                    schema.since_version)
-                    s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
+                    s += ('### <a name="{}"></a>**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
 
@@ -353,7 +362,7 @@ def main(args):  # type: (Type[Args]) -> None
             for _, namemap in supportmap:
                 for op_type, schema, versions in namemap:
                     # op_type
-                    s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
+                    s = ('### {}<a name="{}"></a><a name="{}">**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, op_type),
                         format_name_with_domain(domain, op_type.lower()),
@@ -396,15 +405,12 @@ def main(args):  # type: (Type[Args]) -> None
 
             existing_functions = set()  # type: Set[Text]
             for function_name, functions in sorted(all_functions.items()):
-                available_versions = [func.since_version for func in functions]
-                latest_version = sorted(available_versions)[-1]
-
                 for function in sorted(functions, key=lambda s: s.since_version, reverse=True):
                     if function.name in existing_functions:
                         continue
                     existing_functions.add(function.name)
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
-                        "<sub>experimental</sub>" if latest_version == function.since_version else "",
+                        function_status_str(function.status),
                         domain_prefix + function.name, domain_prefix + function.name)
                     fout.write(s)
 
@@ -416,7 +422,7 @@ def main(args):  # type: (Type[Args]) -> None
                 available_versions = [func.since_version for func in functions]
                 function = sorted(functions, key=lambda s: s.since_version, reverse=True)[0]
                 s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
-                    "<sub>experimental</sub> " if latest_version == function.since_version else "",
+                    function_status_str(function.status),
                     domain_prefix + function.name, domain_prefix + function.name.lower(),
                     domain_prefix + function.name)
 

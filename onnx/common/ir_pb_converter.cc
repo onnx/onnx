@@ -6,7 +6,7 @@
 namespace ONNX_NAMESPACE {
 
 // Part 1: convert ONNX Protobuf to IR
-std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, bool nested);
+std::unique_ptr<Graph> graphProtoToGraph(const GraphProto& gp, bool nested);
 
 Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto & tp) {
   Tensor ret;
@@ -209,7 +209,7 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
 
   {
     // ONNX represents optional arguments in two ways
-    //  - they are simply not privided
+    //  - they are simply not provided
     //  - OR the empty string is passed as the input name
     // This is to handle that second case, which needs a dummy node to
     // be representable in the graph IR.
@@ -251,6 +251,9 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
     }
     if (np.has_name()) {
       n->setName(np.name());
+    }
+    if (np.has_domain()) {
+      n->setDomain(np.domain());
     }
   }
 
@@ -296,14 +299,19 @@ std::unique_ptr<Graph> graphProtoToGraph(const ONNX_NAMESPACE::GraphProto& gp, b
   return g;
 }
 
-std::unique_ptr<Graph> ImportModelProto(const ONNX_NAMESPACE::ModelProto& mp) {
+std::unique_ptr<Graph> ImportModelProto(const ModelProto& mp) {
   if (!mp.has_ir_version()) {
     return nullptr;
   } else if (mp.ir_version() == 1) {
     return nullptr;
   }
 
-  return graphProtoToGraph(mp.graph(), false);
+  std::unique_ptr<Graph> g(graphProtoToGraph(mp.graph(), false));
+  for (int i = 0; i < mp.opset_import_size(); i++) {
+    OpSetID new_opset_version(mp.opset_import(i).domain(), mp.opset_import(i).version());
+    g->opset_versions_mutable().emplace_back(std::move(new_opset_version));
+  }
+  return g;
 }
 
 
@@ -312,7 +320,7 @@ std::string value_name(Value* n) {
   return n->uniqueName();
 }
 
-void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> & g);
+void encodeGraph(GraphProto * p_g, const std::shared_ptr<Graph> & g);
 
 void encodeTensor(ONNX_NAMESPACE::TensorProto * p, const Tensor & tensor) {
   if (tensor.hasName()) {
@@ -462,7 +470,7 @@ void encodeValueInfo(ONNX_NAMESPACE::ValueInfoProto* v, Value* n) {
   encodeTypeProtoTensorType(tensor_type, n);
 }
 
-void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> & g) {
+void encodeGraph(GraphProto * p_g, const std::shared_ptr<Graph> & g) {
   ONNX_ASSERT(p_g != nullptr);
 
   if (g->has_name()) {
@@ -499,18 +507,17 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
     }
     for(auto output : node->outputs()) {
       p_n->add_output(value_name(output));
-
       // only save it if
       //  - it has actual information worth saving
       //  - it's not already saved in the graph outputs value info
       if (graph_outputs.find(output) != graph_outputs.end()) {
         continue;
       }
-      if (output->elemType() == ONNX_NAMESPACE::TensorProto_DataType_UNDEFINED &&
+      if (output->elemType() == TensorProto_DataType_UNDEFINED &&
           output->sizes().empty()) {
         continue;
       }
-      ONNX_NAMESPACE::ValueInfoProto* v = p_g->add_value_info();
+      ValueInfoProto* v = p_g->add_value_info();
       encodeValueInfo(v, output);
     }
     p_n->set_op_type(node->kind().toString());
@@ -523,6 +530,9 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
     if (node->has_name()) {
       p_n->set_name(node->name());
     }
+    if (node->has_domain()) {
+      p_n->set_domain(node->domain());
+    }
   }
 
   auto num_initializers = g->initializers().size();
@@ -533,9 +543,67 @@ void encodeGraph(ONNX_NAMESPACE::GraphProto * p_g, const std::shared_ptr<Graph> 
   }
 }
 
-void ExportModelProto(ONNX_NAMESPACE::ModelProto* p_m, const std::shared_ptr<Graph>& g) {
-  ONNX_NAMESPACE::GraphProto* p_g = p_m->mutable_graph();
+void ExportModelProto(ModelProto* p_m, const std::shared_ptr<Graph>& g) {
+  GraphProto* p_g = p_m->mutable_graph();
   encodeGraph(p_g, g);
+  // Add new opset_versions
+  p_m->clear_opset_import();
+  for (const OpSetID& opset : g->opset_versions_mutable()) {
+    OperatorSetIdProto *opset_version_output = p_m->add_opset_import();
+    opset_version_output->set_domain(opset.domain());
+    opset_version_output->set_version(opset.version());
+  }
+}
+
+ModelProto PrepareOutput(const ModelProto& mp_in) {
+  ModelProto mp_out{};
+
+  if (mp_in.has_ir_version()) {
+    mp_out.set_ir_version(mp_in.ir_version());
+  }
+  if (mp_in.has_producer_name()) {
+    mp_out.set_producer_name(mp_in.producer_name());
+  }
+  if (mp_in.has_producer_version()) {
+    mp_out.set_producer_version(mp_in.producer_version());
+  }
+  if (mp_in.has_domain()) {
+    mp_out.set_domain(mp_in.domain());
+  }
+  if (mp_in.has_model_version()) {
+    mp_out.set_model_version(mp_in.model_version());
+  }
+  if (mp_in.has_doc_string()) {
+    mp_out.set_doc_string(mp_in.doc_string());
+  }
+  for (int i = 0; i < mp_in.opset_import_size(); i++) {
+    auto& oi_in = mp_in.opset_import(i);
+    auto* oi_out = mp_out.add_opset_import();
+    if (oi_in.has_domain()) {
+      oi_out->set_domain(oi_in.domain());
+    }
+    if (oi_in.has_version()) {
+      oi_out->set_version(oi_in.version());
+    }
+  }
+  for (int i = 0; i < mp_in.metadata_props_size(); i++) {
+    auto& pp_in = mp_in.metadata_props(i);
+    auto* pp_out = mp_out.add_metadata_props();
+    if (pp_in.has_key()) {
+      pp_out->set_key(pp_in.key());
+    }
+    if (pp_in.has_value()) {
+      pp_out->set_value(pp_in.value());
+    }
+  }
+
+  return mp_out;
+}
+
+void assertNonNull(std::shared_ptr<Graph> g) {
+  ONNX_ASSERTM(g.get() != nullptr,
+    "Warning: onnx version converter is unable to parse input model. "
+    "(The IR version of the ONNX model may be too old.)");
 }
 
 } // namespace ONNX_NAMESPACE

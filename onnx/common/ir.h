@@ -409,6 +409,8 @@ private:
   size_t stage_;
   bool has_name_;
   std::string name_;
+  bool has_domain_;
+  std::string domain_;
   bool has_doc_string_;
   std::string doc_string_;
 
@@ -419,12 +421,22 @@ public:
   bool has_name() {
     return has_name_;
   }
-  const std::string& name() {
+  const std::string& name() const {
     return name_;
   }
   void setName(std::string name) {
     has_name_ = true;
     name_ = std::move(name);
+  }
+  bool has_domain() {
+    return has_domain_;
+  }
+  const std::string& domain() const {
+    return domain_;
+  }
+  void setDomain(std::string domain) {
+    has_domain_ = true;
+    domain_ = std::move(domain);
   }
   bool has_doc_string() const {
     return has_doc_string_;
@@ -770,6 +782,57 @@ protected:
   }
 };
 
+// A class with the same properties as OperatorSetIdProto, but without protobuf
+// overhead, resulting in a simpler and more readable workflow.
+class OpSetID final {
+  private:
+    std::string domain_;
+    int64_t version_;
+
+  public:
+    explicit OpSetID(const OperatorSetIdProto& proto)
+      :domain_(proto.domain()), version_(proto.version()) {}
+
+    // Default Domain Constructor
+    explicit OpSetID(const int64_t version)
+      :domain_(""), version_(version) {}
+
+    explicit OpSetID(const std::string& domain, int64_t version)
+      :domain_(domain), version_(version) {}
+
+    // target must be in the form "<domain>&<version>"
+    std::string toString() const {
+      return domain_ + "$" + ONNX_NAMESPACE::to_string(version_);
+    }
+
+    // target must be in the form "<domain>&<version>"
+    static OpSetID fromString(const std::string& target) {
+      try {
+        std::string new_domain = target.substr(0, target.find("$"));
+        int new_version = ONNX_NAMESPACE::stoi(target.substr(target.find("$") + 1, target.length()).c_str());
+        return OpSetID(std::move(new_domain), new_version);
+      } catch (const std::runtime_error& e) {
+        ONNX_ASSERTM(false, "Error in fromString: %s", e.what());
+      }
+    }
+
+    const std::string& domain() const {
+      return domain_;
+    }
+
+    int64_t version() const {
+      return version_;
+    }
+
+    void incrementVersion(int64_t step) {
+      version_ += step;
+    }
+
+    void setVersion(int64_t newVal) {
+      version_ = newVal;
+    }
+};
+
 struct Graph final {
 ONNX_DISALLOW_COPY_AND_ASSIGN(Graph);
 friend struct Node;
@@ -800,6 +863,8 @@ private:
   std::string name_;
   bool has_doc_string_;
   std::string doc_string_;
+
+  std::vector <OpSetID> opset_versions_;
 
 public:
   Graph()
@@ -878,6 +943,11 @@ public:
   const_graph_node_list nodes() const {
     return const_graph_node_list(output_, kNextDirection);
   }
+
+  std::vector<OpSetID>& opset_versions_mutable() {
+    return opset_versions_;
+  }
+
   // These invocations of begin() on output of function are OK
   // because graph_node_list is non-owning, so it doesn't matter
   // if it immediately dies after the invocation.
@@ -1073,6 +1143,7 @@ inline Node::Node(Graph * graph_, NodeKind kind_) :
   graph_(graph_),
   stage_(graph_->new_node_stage_),
   has_name_(false),
+  has_domain_(false),
   has_doc_string_(false) {
   graph_->all_nodes.emplace(this);
 }

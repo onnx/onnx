@@ -42,6 +42,7 @@ struct InferenceContext {
   virtual const AttributeProto* getAttribute(const std::string& name) const = 0;
   virtual size_t getNumInputs() const = 0;
   virtual const TypeProto* getInputType(size_t index) const = 0;
+  virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual ~InferenceContext() {}
@@ -387,7 +388,9 @@ inline void multidirectionalBroadcastShapeInference(
       resultShape.add_dim()->set_dim_value(dim_value);
     } else if (num_symbolic_dims == 1) {
       *resultShape.add_dim() = symbolic_dim;
-	}
+    } else {
+      resultShape.add_dim();
+    }
   }
 }
 
