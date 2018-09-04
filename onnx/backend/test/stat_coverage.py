@@ -136,6 +136,7 @@ def gen_model_test_coverage(schemas, f, ml):
         model_dir = Runner._prepare_model_data(rt)
         model_paths.append(os.path.join(model_dir, 'model.onnx'))
     model_paths.sort()
+    model_written = False
     for model_pb_path in model_paths:
         model = load(model_pb_path)
         if ml:
@@ -145,6 +146,8 @@ def gen_model_test_coverage(schemas, f, ml):
                     ml_present = True
             if not ml_present:
                 continue
+            else:
+                model_written = True
         f.write('## {}\n'.format(model.graph.name))
         # Deconstruct model
         num_covered = 0
@@ -207,6 +210,8 @@ def gen_model_test_coverage(schemas, f, ml):
                     f.write('{}: 0\n'.format(attribute))
             f.write('</details>\n')
         f.write('</details>\n')
+    if not model_written:
+        f.write('No model tests present for selected domain')
 
 
 def gen_overall_test_coverage(schemas, f, ml):
