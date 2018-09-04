@@ -152,7 +152,8 @@ ProtoTestCase LoadSingleTestCase(const TestCase& t) {
   ProtoTestCase st;
   std::string raw_model;
   LoadSingleFile(t.model_filename_, raw_model);
-  ParseProtoFromBytes(&st.model_, raw_model.c_str(), raw_model.size());
+  ONNX_NAMESPACE::ParseProtoFromBytes(
+      &st.model_, raw_model.c_str(), raw_model.size());
 
   for (auto& test_data : t.test_data_) {
     ProtoTestData proto_test_data;
@@ -160,15 +161,16 @@ ProtoTestCase LoadSingleTestCase(const TestCase& t) {
     for (auto& input_file : test_data.input_filenames_) {
       std::string input_data;
       LoadSingleFile(input_file, input_data);
-      onnx::TensorProto input_proto;
-      ParseProtoFromBytes(&input_proto, input_data.c_str(), input_data.size());
+      ONNX_NAMESPACE::TensorProto input_proto;
+      ONNX_NAMESPACE::ParseProtoFromBytes(
+          &input_proto, input_data.c_str(), input_data.size());
       proto_test_data.inputs_.emplace_back(std::move(input_proto));
     }
     for (auto& output_file : test_data.output_filenames_) {
       std::string output_data = "";
       LoadSingleFile(output_file, output_data);
-      onnx::TensorProto output_proto;
-      ParseProtoFromBytes(
+      ONNX_NAMESPACE::TensorProto output_proto;
+      ONNX_NAMESPACE::ParseProtoFromBytes(
           &output_proto, output_data.c_str(), output_data.size());
       proto_test_data.outputs_.emplace_back(std::move(output_proto));
     }

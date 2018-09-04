@@ -4,7 +4,7 @@ namespace onnx {
 namespace testing {
 
 onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
-    const onnx::TensorProto& proto_tensor) {
+    const ONNX_NAMESPACE::TensorProto& proto_tensor) {
   onnxTensorDescriptorV1 onnx_tensor;
   onnx_tensor.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
   onnx_tensor.name = proto_tensor.name().c_str();

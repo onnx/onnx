@@ -162,16 +162,17 @@ class ONNXCppDriverTest
           input_descriptor.push_back(
               onnx::testing::ProtoToOnnxTensorDescriptor(input));
         }
-		int output_count = 0;
+        int output_count = 0;
         for (auto& output : proto_test_data.outputs_) {
           output_count++;
-		  output_descriptor.push_back(
+          output_descriptor.push_back(
               onnx::testing::ProtoToOnnxTensorDescriptor(output));
           onnxTensorDescriptorV1 result;
           result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
-		  std::string name_string  = "output_" + onnx::testing::to_string(output_count);
+          std::string name_string =
+              "output_" + onnx::testing::to_string(output_count);
           result.name = name_string.c_str();
-		  result.dataType = output.data_type();
+          result.dataType = output.data_type();
           result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
           std::vector<uint64_t> shape_values(
               output.dims().begin(), output.dims().end());

@@ -53,8 +53,8 @@ struct TestCase {
  *	Real data was loaded in this type of class..
  */
 struct ProtoTestData {
-  std::vector<onnx::TensorProto> inputs_;
-  std::vector<onnx::TensorProto> outputs_;
+  std::vector<ONNX_NAMESPACE::TensorProto> inputs_;
+  std::vector<ONNX_NAMESPACE::TensorProto> outputs_;
 };
 
 /**
@@ -63,7 +63,7 @@ struct ProtoTestData {
  *	Real data was loaded in this type of class.
  */
 struct ProtoTestCase {
-  onnx::ModelProto model_;
+  ONNX_NAMESPACE::ModelProto model_;
   std::vector<ProtoTestData> proto_test_data_;
 };
 
