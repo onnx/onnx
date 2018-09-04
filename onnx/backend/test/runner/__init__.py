@@ -267,6 +267,8 @@ class Runner(object):
                 model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.onnx')
             model = onnx.load(model_pb_path)
+            versions = [model.opset_import[0].version]
+            # if os.env.get(
             model_marker[0] = model
             if hasattr(self.backend, 'is_compatible') \
                and callable(self.backend.is_compatible) \
