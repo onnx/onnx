@@ -20,7 +20,7 @@ class ONNXCppDriverTest
     : public testing::TestWithParam<onnx::testing::ProtoTestCase> {
  protected:
   std::vector<onnx::testing::ProtoTestData> protos_;
-  onnx::ModelProto model_;
+  ONNX_NAMESPACE::ModelProto model_;
   void SetUp() override {
     onnx::testing::ProtoTestCase t = GetParam();
     protos_ = t.proto_test_data_;
@@ -121,15 +121,15 @@ class ONNXCppDriverTest
   }
   void RunAndVerify(onnxifi_library& lib, onnxBackend& backend) {
     // Check Model
-    onnx::checker::check_model(model_);
+    ONNX_NAMESPACE::checker::check_model(model_);
     // Check Input&Output Tensors
-    onnx::checker::CheckerContext ctx;
+    ONNX_NAMESPACE::checker::CheckerContext ctx;
     for (auto proto_test_data : protos_) {
       for (auto input : proto_test_data.inputs_) {
-        onnx::checker::check_tensor(input, ctx);
+        ONNX_NAMESPACE::checker::check_tensor(input, ctx);
       }
       for (auto output : proto_test_data.outputs_) {
-        onnx::checker::check_tensor(output, ctx);
+        ONNX_NAMESPACE::checker::check_tensor(output, ctx);
       }
     }
     /* TO DO:
