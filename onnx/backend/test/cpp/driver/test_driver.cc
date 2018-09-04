@@ -3,12 +3,13 @@
 #include <cstdlib>
 #include <fstream>
 
+#include <dirent.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #ifdef _WIN32
+#include <io.h>
 #include <windows.h>
 #else
-#include <dirent.h>
 #include <errno.h>
 #endif
 
@@ -16,9 +17,15 @@ namespace ONNX_NAMESPACE {
 namespace testing {
 bool FileExists(const std::string& filename) {
   struct stat stats;
+#ifdef _WIN32
+  if (INVALID_FILE_ATTRIBUTE == GetFileAttributes(filename.c_str())) {
+    return false;
+  }
+#else
   if (lstat(filename.c_str(), &stats) != 0 || !S_ISREG(stats.st_mode)) {
     return false;
   }
+#endif
   return true;
 }
 
@@ -75,6 +82,8 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   if (target_dir[target_dir.size() - 1] == '/') {
     target_dir.erase(target_dir.size() - 1, 1);
   }
+  // ifdef _WIN32
+  //#else
   DIR* directory;
   try {
     directory = opendir(target_dir.c_str());
@@ -118,6 +127,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
       return false;
     }
   }
+  //#endif
   return true;
 }
 
