@@ -79,6 +79,10 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 }
 
 void OpSchema::Verify(const NodeProto& node) const {
+  if (deprecated_) {
+    fail_check("Operator '", name_, "' has been deprecated since version ", since_version_);
+  }
+
   // Check the number of inputs.
   if (node.input_size() < min_input_ || node.input_size() > max_input_) {
     fail_check(
@@ -272,6 +276,11 @@ void OpSchema::Verify(const NodeProto& node) const {
 
 OpSchema& OpSchema::SinceVersion(OperatorSetVersion v) {
   since_version_ = v;
+  return *this;
+}
+
+OpSchema& OpSchema::Deprecate() {
+  deprecated_ = true;
   return *this;
 }
 
