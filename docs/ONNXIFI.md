@@ -1,10 +1,10 @@
-# ONNX Interface for Framework Integration (ONNXIFI) Proposal
+# ONNX Interface for Framework Integration (ONNXIFI)
 
-We propose a cross-platform API for loading and executing ONNX graphs on optimized backends. High-level frameworks and applications can use this API to execute neural network and machine learning models. Hardware vendors can implement this API to expose specialized hardware accelerators and highly optimized software infrastructure to the users.
+ONNXIFI is a cross-platform API for loading and executing ONNX graphs on optimized backends. High-level frameworks and applications can use this API to execute neural network and machine learning models. Hardware vendors can implement this API to expose specialized hardware accelerators and highly optimized software infrastructure to the users.
 
 ## Core Features
 
-- Standardized interface for neural network inference on special-purpose accelerators, CPUs, GPUs, DSPs, and FPGAs
+- Standardized interface for neural network inference on special-purpose accelerators (NPUs), CPUs, GPUs, DSPs, and FPGAs
 - Based on widely supported technologies
   - C API for function calls
   - ONNX format for passing model graphs
@@ -20,13 +20,19 @@ We propose a cross-platform API for loading and executing ONNX graphs on optimiz
 
 ## How to Use ONNX Interface for Framework Integration
 
-0. (Optional) Use `onnxifi_library_load` to dynamically load the ONNX Interface for Framework Integration library.
-1. Call `onnxGetNumBackends` to get the number of available backends. Note that it can be 0.
+0. (Optional) Use `onnxifi_load` to dynamically load the ONNX Interface for Framework Integration library.
+1. Call `onnxGetBackendIDs` to get stable identifiers of available backends. Note: it is possible there are no backends installed in the system.
 2. Call `onnxGetBackendInfo` to check additional information about any available backend.
-3. Call `onnxGetBackendCompatibility` to check if your model, or parts of it, can run on the backend.
+3. Call `onnxGetBackendCompatibility` to check which operations within your model can run on the backend.
 4. Call `onnxInitBackend` to initialize a backend, then call `onnxInitGraph` to offload one or more model graphs to the backend.
-5. Call `onnxSetGraphIO` to set inputs and output for the graph, then call `onnxRunGraph` to execute the graph(s). If your model works with fixed-size inputs, one call to `onnxSetGraphIO` is sufficient for multiple `onnxRunGraph` calls. For models with variable-size inputs, you'd need to call `onnxSetGraphIO` before each `onnxRunGraph` call.
-6. When done using the model, release the model graph(s) with `onnxReleaseGraph`, then release the backend with `onnxReleaseBackend`
+5. Call `onnxSetGraphIO` to set locations and shapes for inputs and outputs of a graph.
+6. Initialize an `inputFence` structure of type `onnxMemoryFenceV1`: set `tag` to `ONNXIFI_TAG_MEMORY_FENCE_V1`, `type` to `ONNXIFI_SYNCHRONIZATION_EVENT`, and call `onnxInitEvent` to initiaze the `event` member.
+7. Initialize an `outputFence` structure of type `onnxMemoryFenceV1`: set `tag` to `ONNXIFI_TAG_MEMORY_FENCE_V1`, `type` to `ONNXIFI_SYNCHRONIZATION_EVENT`, and `event` to null.
+8. Call `onnxRunGraph` with the initialized `inputFence` and `outputFence` structures to enable execution of the graph. The call to `onnxRunGraph` will populate `event` member of the `outputFence` with a newly created event object, asynchronously execute the graph once `inputFence`'s `event` is signalled, and then signal the `outputFence`'s `event`.
+9. Call `onnxSignalEvent` with `event` member of `inputFence` to signal to the backend that the inputs are ready to be consumed. 
+10. Call `onnxWaitEvent` (alternatively, repeatedly call `onnxGetEventState` in a loop until the event state is `ONNXIFI_EVENT_STATE_SIGNALLED`) with `event` member of `outputFence` to wait until graph outputs are ready to be consumed. Release events for inputs and outputs using `onnxReleaseEvent`.
+11. If your model works with fixed-size inputs and outputs, and shape and location of inputs and outputs does not change, one call to `onnxSetGraphIO` is sufficient for multiple `onnxRunGraph` calls. The previous call to `onnxRunGraph`, however, must have finished before a user calls `onnxRunGraph` again, because concurrent execution with the same input and output locations is not allowed. For models with variable-size inputs or outputs, you'd need to call `onnxSetGraphIO` before each `onnxRunGraph` call.
+12. When done using the model, release the model graph(s) with `onnxReleaseGraph`, then release the backend with `onnxReleaseBackend` and backend ID with `onnxReleaseBackendID`.
 
 ## How to Implement ONNX Interface for Framework Integration
 
@@ -39,11 +45,16 @@ The minimum functionality an ONNXIFI implementation must provide is the followin
 
 ### Discovery
 Vendor-provided libraries should adhere to some rules to ensure discovery by ONNX-supported frameworks and applications:
-- Use `libonnxifi-<backend>.so` filename on Linux/Android
-- Use `libonnxifi-<backend>.dylib` filename on macOS
-- Use `onnxifi-<backend>.dll` filename on Windows
-- Append ONNX function names with `<BACKEND>` (a vendor may define `ONNXIFI_LIBRARY_SUFFIX=<BACKEND>` and when using `onnxifi.h` header).
-`<backend>` is the vendor-specific name in lowercase, and `<BACKEND>` is the same name in uppercase. E.g. a vendor **Gamma** would provide `libonnxifi-gamma.so` for Linux systems, and this library would implement functions `onnxGetNumBackendsGAMMA`, `onnxGetBackendInfoGAMMA`, etc.
+
+1. The libraries must be installed in the following directories:
+  - GNU/Linux: user-installed system library directory (typically /usr/lib)
+  - macOS: /opt/onnx/lib
+  - Windows: system directory (typically C:\Windows\System32)
+
+2. Filenames of vendor-specific libraries must follow the rule below:
+  - On Windows, library filename must match wildcard `onnxifi-*.dll`
+  - On macOS, library filename must match wildcard `libonnxifi-*.dylib`
+  - On Linux and other OSes, library filename must match wildcard `libonnxifi-*.so`
 
 ### Extensions
 

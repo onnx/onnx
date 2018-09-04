@@ -215,6 +215,15 @@ class OpSchema final {
   OpSchema& SinceVersion(OperatorSetVersion n); // aka int
 
   /**
+   * Marks this op as deprecated as of it's since_version. This will cause the
+   * Schema() lookup functions to return nullptr when the version is in the
+   * deprecated range.
+   */
+  OpSchema& Deprecate();
+
+  bool Deprecated() const { return deprecated_; }
+
+  /**
    * @brief Input could be one of the values specified in allowed_input_nums.
    */
   OpSchema& NumInputs(std::set<int> allowed_input_nums);
@@ -511,6 +520,10 @@ class OpSchema final {
     return since_version_;
   }
 
+  bool deprecated() const {
+    return deprecated_;
+  }
+
   int min_input() const {
     return min_input_;
   }
@@ -557,6 +570,7 @@ class OpSchema final {
   int max_output_ = 0;
   // The default is a little goofy, since it is never what you want
   OperatorSetVersion since_version_ = 1;
+  bool deprecated_{};
   std::function<bool(int)> num_inputs_allowed_ = [](int) { return true; };
   std::function<bool(int)> num_outputs_allowed_ = [](int) { return true; };
   InferenceFunction tensor_inference_function_;
@@ -711,8 +725,8 @@ class OpSchemaRegistry final : public ISchemaRegistry {
         // All versions are less than specified version, or,
         // The <pos> version is greater than specified version.
         pos--;
-        return &(pos->second);
       }
+
       // Schema with exact version as specified one exists.
       return &(pos->second);
     } else {

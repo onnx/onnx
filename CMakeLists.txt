@@ -37,8 +37,6 @@ set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
 file(READ "${PROJECT_SOURCE_DIR}/VERSION_NUMBER" ONNX_VERSION)
 string(STRIP "${ONNX_VERSION}" ONNX_VERSION)
 
-list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/Modules)
-
 if(NOT MSVC)
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
@@ -487,30 +485,32 @@ if(MSVC)
   add_msvc_runtime_flag(onnxifi_loader)
 endif()
 
-# ---[ ONNXIFI wrapper
-add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
-target_include_directories(onnxifi_wrapper PRIVATE
-  $<BUILD_INTERFACE:${ONNX_ROOT}>
-  $<INSTALL_INTERFACE:include>)
-set_target_properties(onnxifi_wrapper PROPERTIES
-  C_STANDARD 99
-  C_EXTENSIONS NO
-  OUTPUT_NAME "onnxifi"
-  POSITION_INDEPENDENT_CODE YES)
-target_link_libraries(onnxifi_wrapper PRIVATE onnxifi_loader onnxifi)
-if(DEFINED ONNXIFI_SEARCH_DIR)
-  target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_SEARCH_DIR=\"${ONNXIFI_SEARCH_DIR}\"")
-endif()
-if(WIN32)
-  if(MSVC)
-    target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__declspec(dllexport)")
-  else()
-    target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__attribute__((__dllexport__))")
+if (NOT ANDROID AND NOT IOS)
+  # ---[ ONNXIFI wrapper
+  add_library(onnxifi_wrapper MODULE onnx/onnxifi_wrapper.c)
+  target_include_directories(onnxifi_wrapper PRIVATE
+    $<BUILD_INTERFACE:${ONNX_ROOT}>
+    $<INSTALL_INTERFACE:include>)
+  set_target_properties(onnxifi_wrapper PROPERTIES
+    C_STANDARD 99
+    C_EXTENSIONS NO
+    OUTPUT_NAME "onnxifi"
+    POSITION_INDEPENDENT_CODE YES)
+  target_link_libraries(onnxifi_wrapper PRIVATE onnxifi_loader onnxifi)
+  if(DEFINED ONNXIFI_SEARCH_DIR)
+    target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_SEARCH_DIR=\"${ONNXIFI_SEARCH_DIR}\"")
   endif()
-endif()
-if(APPLE)
-  # By default CMake would use .so suffix on Mac
-  set_target_properties(onnxifi_wrapper PROPERTIES SUFFIX ".dylib")
+  if(WIN32)
+    if(MSVC)
+      target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__declspec(dllexport)")
+    else()
+      target_compile_definitions(onnxifi_wrapper PRIVATE "ONNXIFI_PUBLIC=__attribute__((__dllexport__))")
+    endif()
+  endif()
+  if(APPLE)
+    # By default CMake would use .so suffix on Mac
+    set_target_properties(onnxifi_wrapper PROPERTIES SUFFIX ".dylib")
+  endif()
 endif()
 
 # ---[ ONNXIFI dummy backend
@@ -549,8 +549,13 @@ install(FILES
 install(EXPORT ONNXTargets DESTINATION share/cmake/ONNX)
 install(TARGETS
   onnx onnx_proto
-  onnxifi onnxifi_dummy onnxifi_loader onnxifi_wrapper
+  onnxifi onnxifi_dummy onnxifi_loader
   EXPORT ONNXTargets DESTINATION lib)
+
+if(NOT ANDROID AND NOT IOS)
+  install(TARGETS onnxifi_wrapper
+    EXPORT ONNXTargets DESTINATION lib)
+endif()
 
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
