@@ -97,7 +97,7 @@ test_shape_inference_blacklist = set(
 
 def do_enforce_test_coverage_whitelist(model):  # type: (ModelProto) -> bool
     if model.graph.name not in test_coverage_whitelist:
-        if os.environ.get('LOCAL_TEST') == str('True'):
+        if os.environ.get(str('LOCAL_TEST')) == 'True':
             return True
         return False
     for node in model.graph.node:
