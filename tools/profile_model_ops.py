@@ -7,13 +7,16 @@ import sys
 import argparse
 
 
-def uniqueOps(model):
+def uniqueOps(model):  # type: (onnx.onnx_pb2.ModelProto) -> None
     print(set([n.op_type for n in model.graph.node]))
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Calculate stats on ONNX models')
-    parser.add_argument('path', type=str, help='a path to an ONNX model')
+    p = argparse.ArgumentParser(description='Calculate stats on ONNX models')
+    p.add_argument('path', type=str, help='a path to an ONNX model')
+    p.add_argument('-u', '--unique_ops', action='store_true',
+            help='list unique ops in model')
     args = parser.parse_args()
     model = onnx.load(args.path)
-    uniqueOps(model)
+    if args.unique_ops:
+        uniqueOps(model)
