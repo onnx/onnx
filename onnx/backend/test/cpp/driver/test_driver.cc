@@ -3,14 +3,14 @@
 #include <cstdlib>
 #include <fstream>
 
-#include <dirent.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #ifdef _WIN32
 #include <io.h>
 #include <windows.h>
 #else
-#include <errno.h>
+#include <dirent.h>
 #endif
 
 namespace ONNX_NAMESPACE {
@@ -33,6 +33,10 @@ void TestDriver::SetDefaultDir(const std::string& s) {
   default_dir_ = s;
 }
 
+/**
+ *	It is possible that case_dir is not a dir.
+ *	But it does not affect the result.
+ */
 void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
   std::string model_name = case_dir;
   model_name += "model.onnx";
@@ -73,7 +77,6 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
   }
 }
 
-//load all test data in target_dir to _testcases
 bool TestDriver::FetchAllTestCases(const std::string& target) {
   std::string target_dir = target;
   if (target_dir == "") {
@@ -82,8 +85,31 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   if (target_dir[target_dir.size() - 1] == '/') {
     target_dir.erase(target_dir.size() - 1, 1);
   }
-  // ifdef _WIN32
-  //#else
+#ifdef _WIN32
+  _finddata_t file;
+  long lf;
+  if ((lf = _findfirst(target_dir.c_str(), &file)) == -1) {
+    std::cerr << "Error: cannot open directory " << target_dir
+              << " when fetching test data: " << strerror(errno) << std::endl;
+    return false;
+  } else {
+    try {
+      do {
+        string entry_dname = file.name;
+                        if (entry_dname != "." && entry_dname != ".."{
+          entry_dname = target_dir + "/" + entry_dname + "/";
+          FetchSingleTestCase(entry_dname);
+			}
+                }while(_findnext(lf, &file) == 0
+    };
+  }
+  catch (const std::exception& e) {
+    _findclose(file);
+    throw;
+  }
+  _findclose(file);
+}
+#else
   DIR* directory;
   try {
     directory = opendir(target_dir.c_str());
@@ -106,8 +132,10 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
         }
       }
       std::string entry_dname = entry->d_name;
-      entry_dname = target_dir + '/' + entry_dname + "/";
-      FetchSingleTestCase(entry_dname);
+      if (entry_dname != "." && entry_dname != "..") {
+        entry_dname = target_dir + "/" + entry_dname + "/";
+        FetchSingleTestCase(entry_dname);
+      }
     }
   } catch (const std::exception& e) {
     if (directory != NULL) {
@@ -127,8 +155,8 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
       return false;
     }
   }
-  //#endif
-  return true;
+#endif
+return true;
 }
 
 std::vector<TestCase> GetTestCase(const std::string& location) {
@@ -137,7 +165,6 @@ std::vector<TestCase> GetTestCase(const std::string& location) {
   return test_driver.testcases_;
 }
 
-// TODO: fix the reading by using faster fread
 void LoadSingleFile(const std::string& filename, std::string& filedata) {
   FILE* fp;
   if ((fp = fopen(filename.c_str(), "r")) != NULL) {
