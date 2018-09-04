@@ -211,7 +211,7 @@ def gen_model_test_coverage(schemas, f, ml):
             f.write('</details>\n')
         f.write('</details>\n')
     if not model_written:
-        f.write('No model tests present for selected domain')
+        f.write('No model tests present for selected domain\n')
 
 
 def gen_overall_test_coverage(schemas, f, ml):
