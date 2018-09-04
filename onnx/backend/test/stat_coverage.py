@@ -138,6 +138,13 @@ def gen_model_test_coverage(schemas, f, ml):
     model_paths.sort()
     for model_pb_path in model_paths:
         model = load(model_pb_path)
+        if ml:
+            ml_present = False
+            for opset in model.opset_import:
+                if opset.domain == 'ai.onnx.ml':
+                    ml_present = True
+            if not ml_present:
+                continue
         f.write('## {}\n'.format(model.graph.name))
         # Deconstruct model
         num_covered = 0
