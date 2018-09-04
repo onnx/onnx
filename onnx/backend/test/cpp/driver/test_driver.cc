@@ -18,7 +18,7 @@ namespace testing {
 bool FileExists(const std::string& filename) {
   struct stat stats;
 #ifdef _WIN32
-  if (INVALID_FILE_ATTRIBUTE == GetFileAttributes(filename.c_str())) {
+  if (INVALID_FILE_ATTRIBUTES == GetFileAttributes(filename.c_str())) {
     return false;
   }
 #else
@@ -87,7 +87,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   }
 #ifdef _WIN32
   _finddata_t file;
-  long lf;
+  intptr_t lf;
   if ((lf = _findfirst(target_dir.c_str(), &file)) == -1) {
     std::cerr << "Error: cannot open directory " << target_dir
               << " when fetching test data: " << strerror(errno) << std::endl;
@@ -95,20 +95,18 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   } else {
     try {
       do {
-        string entry_dname = file.name;
-                        if (entry_dname != "." && entry_dname != ".."{
+        std::string entry_dname = file.name;
+        if (entry_dname != "." && entry_dname != "..") {
           entry_dname = target_dir + "/" + entry_dname + "/";
           FetchSingleTestCase(entry_dname);
-			}
-                }while(_findnext(lf, &file) == 0
-    };
+        }
+      } while (_findnext(lf, &file) == 0);
+    } catch (const std::exception& e) {
+      _findclose(lf);
+      throw;
+    }
+    _findclose(lf);
   }
-  catch (const std::exception& e) {
-    _findclose(file);
-    throw;
-  }
-  _findclose(file);
-}
 #else
   DIR* directory;
   try {
