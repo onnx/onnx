@@ -16,6 +16,6 @@ std::string to_string(T value) {
 }
 
 onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
-    const onnx::TensorProto& proto_tensor);
+    const TensorProto& proto_tensor);
 } // namespace testing
 } // namespace onnx

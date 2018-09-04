@@ -1,9 +1,12 @@
 #include "driver/gtest_utils.h"
+
 #include "onnx/checker.h"
 #include "onnx/onnxifi.h"
 #include "onnx/onnxifi_loader.h"
+
 const bool ONNXIFI_BACKEND_USED = false;
 const float ONNXIFI_TESTDATA_EPS = 1e-5;
+
 template <typename T>
 class CompareOnnxifiData {
  public:
@@ -159,13 +162,16 @@ class ONNXCppDriverTest
           input_descriptor.push_back(
               onnx::testing::ProtoToOnnxTensorDescriptor(input));
         }
+		int output_count = 0;
         for (auto& output : proto_test_data.outputs_) {
-          output_descriptor.push_back(
+          output_count++;
+		  output_descriptor.push_back(
               onnx::testing::ProtoToOnnxTensorDescriptor(output));
           onnxTensorDescriptorV1 result;
           result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
-          result.name = "result";
-          result.dataType = output.data_type();
+		  std::string name_string  = "output_" + onnx::testing::to_string(output_count);
+          result.name = name_string.c_str();
+		  result.dataType = output.data_type();
           result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
           std::vector<uint64_t> shape_values(
               output.dims().begin(), output.dims().end());
