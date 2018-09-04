@@ -139,6 +139,9 @@ class Coverage(object):
                     all_ops.append(schema.name)
                     if schema.support_level == defs.OpSchema.SupportType.EXPERIMENTAL:
                         experimental.append(schema.name)
+                else:
+                    # TODO: Create a separate table for each domain
+                    pass
             all_ops.sort()
             nodes_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'nodes.csv')  # type: ignore
