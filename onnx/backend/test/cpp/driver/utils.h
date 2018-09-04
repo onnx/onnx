@@ -5,7 +5,7 @@
 #include "onnx/onnxifi.h"
 #include "onnx/proto_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace testing {
 
 template <typename T>
@@ -18,4 +18,4 @@ std::string to_string(T value) {
 onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
     const ONNX_NAMESPACE::TensorProto& proto_tensor);
 } // namespace testing
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

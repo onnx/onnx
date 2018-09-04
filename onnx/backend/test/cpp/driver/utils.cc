@@ -1,6 +1,6 @@
 #include "utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace testing {
 
 onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
@@ -18,4 +18,4 @@ onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
   return onnx_tensor;
 }
 } // namespace testing
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

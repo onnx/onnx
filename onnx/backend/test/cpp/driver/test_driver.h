@@ -6,7 +6,7 @@
 #include "utils.h"
 
 #include "gtest/gtest.h"
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace testing {
 /**
  *	Store one chunk of test data files repos,
@@ -118,4 +118,4 @@ std::vector<ProtoTestCase> LoadAllTestCases(const std::string& location);
 std::vector<ProtoTestCase> LoadAllTestCases(const std::vector<TestCase>& t);
 
 } // namespace testing
-} // namespace onnx
+} // namespace ONNX_NAMESPACE

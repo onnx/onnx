@@ -17,12 +17,12 @@ class CompareOnnxifiData {
   }
 };
 class ONNXCppDriverTest
-    : public testing::TestWithParam<onnx::testing::ProtoTestCase> {
+    : public testing::TestWithParam<ONNX_NAMESPACE::testing::ProtoTestCase> {
  protected:
-  std::vector<onnx::testing::ProtoTestData> protos_;
+  std::vector<ONNX_NAMESPACE::testing::ProtoTestData> protos_;
   ONNX_NAMESPACE::ModelProto model_;
   void SetUp() override {
-    onnx::testing::ProtoTestCase t = GetParam();
+    ONNX_NAMESPACE::testing::ProtoTestCase t = GetParam();
     protos_ = t.proto_test_data_;
     model_ = t.model_;
   }
@@ -141,7 +141,7 @@ class ONNXCppDriverTest
       onnxGraph graph;
       uint32_t weightCount = model_.graph().initializer_size();
       onnxTensorDescriptorV1 weightDescriptors =
-          onnx::testing::ProtoToOnnxTensorDescriptor(
+          ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
               model_.graph().initializer(0));
 
       EXPECT_EQ(
@@ -160,17 +160,17 @@ class ONNXCppDriverTest
             result_descriptor;
         for (const auto& input : proto_test_data.inputs_) {
           input_descriptor.push_back(
-              onnx::testing::ProtoToOnnxTensorDescriptor(input));
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(input));
         }
         int output_count = 0;
         for (auto& output : proto_test_data.outputs_) {
           output_count++;
           output_descriptor.push_back(
-              onnx::testing::ProtoToOnnxTensorDescriptor(output));
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(output));
           onnxTensorDescriptorV1 result;
           result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
           std::string name_string =
-              "output_" + onnx::testing::to_string(output_count);
+              "output_" + ONNX_NAMESPACE::testing::to_string(output_count);
           result.name = name_string.c_str();
           result.dataType = output.data_type();
           result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;

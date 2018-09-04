@@ -12,7 +12,7 @@
 #include <errno.h>
 #endif
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace testing {
 bool FileExists(const std::string& filename) {
   struct stat stats;
@@ -192,4 +192,4 @@ std::vector<ProtoTestCase> LoadAllTestCases(const std::vector<TestCase>& t) {
 }
 
 } // namespace testing
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
