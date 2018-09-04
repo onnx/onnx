@@ -368,7 +368,7 @@ ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
           if (status != ONNXIFI_STATUS_SUCCESS) {
             /* Release unwrapped backends for this library */
             for (size_t i = 0; i < num_stored_ids; i++) {
-              libraries[l].onnxReleaseBackendID(backend_ids[i]);
+              (void) libraries[l].onnxReleaseBackendID(backend_ids[i]);
 
               /* Safety precaution to avoid use-after-free bugs */
               backend_ids[i] = NULL;
@@ -425,7 +425,7 @@ error:
       (struct onnxifi_backend_id_wrapper*) backend_ids[i];
     assert(backend_id_wrapper->magic == ONNXIFI_BACKEND_ID_MAGIC);
 
-    backend_id_wrapper->library->onnxReleaseBackendID(
+    (void) backend_id_wrapper->library->onnxReleaseBackendID(
       backend_id_wrapper->backend_id);
 
     /* Safety precaution to avoid use-after-free bugs */
