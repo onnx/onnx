@@ -112,6 +112,7 @@
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
   * <sub>experimental</sub> <a href="#ConstantFill">ConstantFill</a>
   * <sub>experimental</sub> <a href="#Crop">Crop</a>
+  * <sub>experimental</sub> <a href="#DynamicSlice">DynamicSlice</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
   * <sub>experimental</sub> <a href="#ImageScaler">ImageScaler</a>
@@ -10982,6 +10983,44 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+### <sub>experimental</sub> <a name="DynamicSlice"></a><a name="dynamicslice">**DynamicSlice**</a>
+
+  TODO
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of data to extract slices from.</dd>
+<dt><tt>starts</tt> : Tind</dt>
+<dd>Starting indices of corresponding axis in `axes`</dd>
+<dt><tt>ends</tt> : Tind</dt>
+<dd>Ending indices (exclusive) of corresponding axis in axes</dd>
+<dt><tt>axes</tt> : Tind</dt>
+<dd>Axes that `starts` and `ends` apply to.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Sliced data tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
 ### <sub>experimental</sub> <a name="GRUUnit"></a><a name="gruunit">**GRUUnit**</a>
 
   GRUUnit computes the activations of a standard GRU,
@@ -11232,7 +11271,7 @@ This version of the operator has been available since version 1 of the default O
 ### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). 
+  alpha * tanh(beta * x).
       
 
 #### Version

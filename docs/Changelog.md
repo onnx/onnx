@@ -990,6 +990,43 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="DynamicSlice-1"></a>**DynamicSlice-1**</a>
+
+  TODO
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of data to extract slices from.</dd>
+<dt><tt>starts</tt> : Tind</dt>
+<dd>Starting indices of corresponding axis in `axes`</dd>
+<dt><tt>ends</tt> : Tind</dt>
+<dd>Ending indices (exclusive) of corresponding axis in axes</dd>
+<dt><tt>axes</tt> : Tind</dt>
+<dd>Axes that `starts` and `ends` apply to.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Sliced data tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
 ### <a name="Elu-1"></a>**Elu-1**</a>
 
   Elu takes one input data (Tensor<T>) and produces one output data
@@ -4114,7 +4151,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ScaledTanh-1"></a>**ScaledTanh-1**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). 
+  alpha * tanh(beta * x).
       
 
 #### Version
