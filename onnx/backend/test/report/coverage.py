@@ -12,7 +12,7 @@ from tabulate import tabulate  # type: ignore
 
 import onnx
 from onnx import defs, helper, GraphProto
-from typing import Optional, Text, Set, Dict, IO, Sequence
+from typing import Optional, Text, Set, Dict, IO, List
 
 _all_schemas = defs.get_all_schemas()
 
@@ -144,13 +144,13 @@ class Coverage(object):
                     'nodes.csv')  # type: ignore
             models_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                     'models.csv')  # type: ignore
-            existing_nodes = OrderedDict()  # type: OrderedDict[Text, Dict[Text]]
-            existing_models = OrderedDict()  # type: OrderedDict[Text, Dict[Text]]
-            frameworks = []  # type: Sequence[Text]
+            existing_nodes = OrderedDict()  # type: OrderedDict[Text, Dict[Text, Text]]
+            existing_models = OrderedDict()  # type: OrderedDict[Text, Dict[Text, Text]]
+            frameworks = []  # type: List[Text]
             if os.path.isfile(nodes_path):
                 with open(nodes_path, 'r') as nodes_file:
                     reader = csv.DictReader(nodes_file)
-                    frameworks = reader.fieldnames
+                    frameworks = list(reader.fieldnames)
                     for row in reader:
                         op = row['Op']
                         del row['Op']
@@ -186,11 +186,11 @@ class Coverage(object):
                         existing_nodes[node_name][backend] = "Passed!"
                     else:
                         existing_nodes[node_name][backend] = "Failed!"
-                summaries = OrderedDict()  # type: OrderedDict[Text, Text]
+                summaries = dict()  # type: Dict[Any, Any]
                 if "Summary" in existing_nodes:
                     summaries = existing_nodes["Summary"]
                     del existing_nodes["Summary"]
-                summaries[backend] = \
+                summaries[str(backend)] = \
                     "{}/{} node tests passed".format(len(passed), len(all_ops))
                 summaries['Op'] = 'Summary'
                 for node in existing_nodes:
@@ -226,11 +226,11 @@ class Coverage(object):
                         existing_models[model][backend] = "{}/{} nodes covered: {}" \
                             .format(num_covered, len(self.models[bucket][model]
                                 .node_coverages), msg)
-                summaries = OrderedDict()
+                summaries = dict()
                 if "Summary" in existing_models:
                     summaries = existing_models["Summary"]
                     del existing_models["Summary"]
-                summaries[backend] = "{}/{} model tests passed" \
+                summaries[str(backend)] = "{}/{} model tests passed" \
                     .format(len(self.models['passed']), num_models)
                 summaries['Model'] = 'Summary'
                 for model in existing_models:
