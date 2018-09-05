@@ -72,16 +72,35 @@ void mergeShapesAndTypes(
   }
 }
 
-void InferShapes(
-    ModelProto& m,
-    const ISchemaRegistry* schema_registry) {
+void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] =
         static_cast<int>(opset_import.version());
   }
 
-  auto* g = m.mutable_graph();
+  auto* original_g = m.mutable_graph();
+  GraphProto* g = new GraphProto();
+  g->CopyFrom(*original_g);
+
+  // Get lists of nodes and value info in original graph
+  std::unordered_set<std::string> existing_value_info;
+  std::unordered_set<std::string> tensor_set;
+  for (auto& v : g->value_info()) {
+    existing_value_info.insert(v.name());
+  }
+  for (auto& n : g->node()) {
+    for (auto& out_name : n.output()) {
+      tensor_set.insert(std::move(out_name));
+    }
+  }
+
+  // Expand the functions within the temporary copied graph
+  try {
+    DecomposeGraph(*g, m.domain(), {});
+  } catch (std::runtime_error ex) {
+    (void)ex;
+  }
 
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   for (auto& vi : *g->mutable_value_info()) {
@@ -96,7 +115,7 @@ void InferShapes(
     if (vi.has_type())
       valueTypesByName[vi.name()] = vi.mutable_type();
   }
-  
+
   std::unordered_map<std::string, const TensorProto*> initializersByName;
   for (const auto& tp : g->initializer()) {
     initializersByName[tp.name()] = &tp;
@@ -159,6 +178,18 @@ void InferShapes(
       valueTypesByName[n.output(i)] = existingType;
     }
   }
+
+  // Copy the newly inferred value info with appearances
+  // in original graph into original graph
+  for (auto& v : g->value_info()) {
+    if (!existing_value_info.count(v.name()) && tensor_set.count(v.name())) {
+      auto new_v = original_g->add_value_info();
+      new_v->CopyFrom(v);
+    }
+  }
+
+  // Delete the temporary expanded graph
+  delete g;
 }
 
 } // namespace shape_inference

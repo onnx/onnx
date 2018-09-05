@@ -59,14 +59,9 @@ class FunctionBuilderRegistry {
 
 // Method docomposing all functions in graph
 Status DecomposeGraph(
-    GraphProto& input_model,
+    GraphProto& g,
     const std::string& domain,
     std::vector<std::string> function_list = {});
-
-void FunctionExpandHelper(
-    const FunctionProto& func,
-    const NodeProto& node,
-    GraphProto& g);
 
 // Example to register a function.
 // Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {

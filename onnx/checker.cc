@@ -275,6 +275,7 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
+    // Try expand the unrecognized node as a function
     GraphProto g;
     NodeProto temp_node = node;
     NodeProto* ptemp_node = g.add_node();
@@ -287,6 +288,7 @@ void check_node(
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
     }
+    // Check the node in the function with inherited checker context
     for (const NodeProto& node : g.node()) {
       check_node(node, ctx, lex_ctx);
     }
