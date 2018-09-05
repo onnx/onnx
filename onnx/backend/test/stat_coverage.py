@@ -205,10 +205,11 @@ def gen_model_test_coverage(schemas, f, ml):
                     .format(op, len(attrs[op].keys()), len(schema_dict[op]
                         .attributes)))
             for attribute in sorted(schema_dict[op].attributes):
+                f.write('<summary>{}</summary>\n<details>'.format(attribute))
                 if attribute in attrs[op]:
-                    f.write('{}: {}\n'.format(attribute, len(attrs[op][attribute])))
-                else:
-                    f.write('{}: 0\n'.format(attribute))
+                    for value in attrs[op][attribute]:
+                        f.write('{}\n'.format(value))
+                f.write('</details>')
             f.write('</details>\n')
         f.write('</details>\n\n\n')
     if not model_written and ml:
