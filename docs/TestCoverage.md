@@ -5799,6 +5799,692 @@ expect(node, inputs=[x], outputs=[y],
 <br/>
 
 # Model Test Coverage
-## To be filled.
+## bvlc_alexnet
+
+bvlc_alexnet has 24 nodes. Of these, 24 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 2
+storage_order: 0
+strides: 1
+</details>
+</details>
+
+
+## densenet121
+
+densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 1
+pads: 1
+strides: 1
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v1
+
+inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 2
+pads: 2
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v2
+
+inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## resnet50
+
+resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## shufflenet
+
+shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## squeezenet_old
+
+squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## vgg19
+
+vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## zfnet512
+
+zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 2
+beta: 1
+bias: 2
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
 # Overall Test Coverage
 ## To be filled.

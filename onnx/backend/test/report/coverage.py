@@ -9,7 +9,7 @@ import os
 from tabulate import tabulate  # type: ignore
 
 import onnx
-from onnx import defs, helper
+from onnx import defs, helper, GraphProto
 from typing import Optional, Text, Set, Dict, IO
 
 _all_schemas = defs.get_all_schemas()
@@ -49,12 +49,31 @@ class NodeCoverage(object):
             self.attr_coverages[attr.name].add(attr)
 
 
+class ModelCoverage(object):
+    def __init__(self):  # type: () -> None
+        self.name = None  # type: Optional[Text]
+        self.graph = None  # type: Optional[GraphProto]
+        self.node_coverages = defaultdict(NodeCoverage)  # type: Dict[Text, NodeCoverage]
+
+    def add(self, model):  # type: (onnx.ModelProto) -> None
+        assert self.name in [None, model.graph.name]
+
+        if self.name is None:
+            self.name = model.graph.name
+            assert self.name is not None
+            self.graph = model.graph
+
+        for node in model.graph.node:
+            self.node_coverages[node.op_type].add(node)
+
+
 class Coverage(object):
     def __init__(self):  # type: () -> None
         self.buckets = {
             'loaded': defaultdict(NodeCoverage),
             'passed': defaultdict(NodeCoverage),
         }  # type: Dict[Text, Dict[Text, NodeCoverage]]
+        self.models = defaultdict(ModelCoverage)  # type: Dict[Text, ModelCoverage]
 
     def add_node(self, node, bucket):  # type: (onnx.NodeProto, Text) -> None
         self.buckets[bucket][node.op_type].add(node)
@@ -65,6 +84,7 @@ class Coverage(object):
 
     def add_model(self, model, bucket):  # type: (onnx.ModelProto, Text) -> None
         self.add_graph(model.graph, bucket)
+        self.models[model.graph.name].add(model)
 
     def add_proto(self, proto, bucket):  # type: (onnx.ModelProto, Text) -> None
         assert isinstance(proto, onnx.ModelProto)
