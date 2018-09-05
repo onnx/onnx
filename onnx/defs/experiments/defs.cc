@@ -459,14 +459,14 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     DynamicSlice,
-    1,
+    9,
     OpSchema()
         .SetDoc(DynamicSlice_ver1_doc)
         .SetSupportLevel(SupportType::EXPERIMENTAL)
         .Input(0, "data", "Tensor of data to extract slices from.", "T")
         .Input(1, "starts", "1-D tensor of starting indices of corresponding axis in `axes`", "Tind")
         .Input(2, "ends", "1-D tensor of ending indices (exclusive) of corresponding axis in axes", "Tind")
-        .Input(3, "axes", "1-D tensor of axes that `starts` and `ends` apply to.", "Tind")
+        .Input(3, "axes", "1-D tensor of axes that `starts` and `ends` apply to.", "Tind", OpSchema::Optional)
         .Output(0, "output", "Sliced data tensor.", "T")
         .TypeConstraint(
             "T",
