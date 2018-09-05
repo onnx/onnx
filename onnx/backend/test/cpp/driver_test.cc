@@ -215,6 +215,13 @@ class ONNXCppDriverTest
     }
   }
 };
+
+/**
+ *	When testing backend, we do not specify target backend here,
+ *	but always use the by-default backend of onnxifi_loader.
+ *	Check onnxifi_loader.h for more detail of how to indicate specific
+ *backend.
+ */
 TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 	onnxifi_library lib;
 	onnxBackendID backendID;
