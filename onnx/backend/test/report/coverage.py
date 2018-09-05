@@ -12,7 +12,7 @@ from tabulate import tabulate  # type: ignore
 
 import onnx
 from onnx import defs, helper, GraphProto
-from typing import Optional, Text, Set, Dict, IO, List
+from typing import Optional, Text, Set, Dict, IO, List, Any
 
 _all_schemas = defs.get_all_schemas()
 
@@ -183,9 +183,9 @@ class Coverage(object):
                         for other_framework in other_frameworks:
                             existing_nodes[node_name][other_framework] = "Skipped!"
                     if node in passed:
-                        existing_nodes[node_name][backend] = "Passed!"
+                        existing_nodes[node_name][str(backend)] = "Passed!"
                     else:
-                        existing_nodes[node_name][backend] = "Failed!"
+                        existing_nodes[node_name][str(backend)] = "Failed!"
                 summaries = dict()  # type: Dict[Any, Any]
                 if "Summary" in existing_nodes:
                     summaries = existing_nodes["Summary"]
@@ -223,7 +223,7 @@ class Coverage(object):
                             existing_models[model] = OrderedDict()
                             for other_framework in other_frameworks:
                                 existing_models[model][other_framework] = "Skipped!"
-                        existing_models[model][backend] = "{}/{} nodes covered: {}" \
+                        existing_models[model][str(backend)] = "{}/{} nodes covered: {}" \
                             .format(num_covered, len(self.models[bucket][model]
                                 .node_coverages), msg)
                 summaries = dict()

@@ -5,7 +5,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
-import sys
 
 from onnx import defs, load, AttributeProto
 from onnx.backend.test.case import collect_snippets
