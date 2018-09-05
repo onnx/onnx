@@ -44,12 +44,12 @@ The operator computes the {name} ({description}) values for each layer in the ba
 (batch_size x input_feature_dimensions). The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 
-X does not need to explicitly be a 2D vector; rather, it will be
+Input does not need to explicitly be a 2D vector; rather, it will be
 coerced into one. For an arbitrary n-dimensional tensor
-X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-the axis provided, then X will be coerced into a 2-dimensional tensor with
+input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+the axis provided, then input will be coerced into a 2-dimensional tensor with
 dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-case where axis=1, this means the X tensor will be coerced into a 2D tensor
+case where axis=1, this means the input tensor will be coerced into a 2D tensor
 of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
 In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
 Each of these dimensions must be matched correctly, or else the operator
