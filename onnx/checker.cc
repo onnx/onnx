@@ -277,9 +277,8 @@ void check_node(
   if (!schema) {
     // Try expand the unrecognized node as a function
     GraphProto g;
-    NodeProto temp_node = node;
     NodeProto* ptemp_node = g.add_node();
-    ptemp_node->CopyFrom(temp_node);
+    ptemp_node->CopyFrom(node);
     try {
       DecomposeGraph(g, node.domain());
     } catch (std::runtime_error e) {
@@ -289,8 +288,8 @@ void check_node(
           ONNX_NAMESPACE::to_string(domain_version));
     }
     // Check the node in the function with inherited checker context
-    for (const NodeProto& node : g.node()) {
-      check_node(node, ctx, lex_ctx);
+    for (const NodeProto& n : g.node()) {
+      check_node(n, ctx, lex_ctx);
     }
   } else {
     schema->Verify(node);
