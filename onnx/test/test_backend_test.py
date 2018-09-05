@@ -44,7 +44,7 @@ class DummyBackend(onnx.backend.base.Backend):
 
         if do_enforce_test_coverage_whitelist(model):
             # test version conversion
-            if model.graph.name not in ['vgg19', 'inception_v2', 'shufflenet']:
+            if model.graph.name not in ['vgg19', 'inception_v2', 'shufflenet', 'inception_v1']:
                 converted_model = onnx.version_converter.convert_version(model, 1)
                 converted_model = onnx.version_converter.convert_version(converted_model, 8)
                 del converted_model
