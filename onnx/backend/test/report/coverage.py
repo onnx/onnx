@@ -107,8 +107,8 @@ class Coverage(object):
 
         rows = []
         passed = []
-        all_ops = []
-        experimental = []
+        all_ops = []  # type: List[Text]
+        experimental = []  # type: List[Text]
         for op_cov in self.buckets['passed'].values():
             covered_attrs = [
                 '{}: {}'.format(attr_cov.name, len(attr_cov.values))
@@ -140,7 +140,7 @@ class Coverage(object):
     # files is a column naming each op or model and columns for each
     # backend with indications of whether the tests passed or failed for
     # each row.
-    def report_csv(self, all_ops, passed, experimental):  # type: (List[Text], List[Text], List[Text]) -> None
+    def report_csv(self, all_ops, passed, experimental):  # type: (List[Text], List[Optional[Text]], List[Text]) -> None
         for schema in _all_schemas:
             if schema.domain == '' or schema.domain == 'ai.onnx':
                 all_ops.append(schema.name)
