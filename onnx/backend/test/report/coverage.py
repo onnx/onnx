@@ -133,6 +133,14 @@ class Coverage(object):
         if os.environ.get(str('CSVDIR')) is not None:
             self.report_csv(all_ops, passed, experimental)
 
+        # This function writes the coverage report to a set of CSV files for
+        # the Backend Scoreboard (onnx.ai/backend-scoreboard). To enable this
+        # feature, set a CSVDIR environment variable locally with the directory
+        # where you would like the files to be written, relative to the
+        # directory from which you're running pytest.  The format of the CSV
+        # files is a column naming each op or model and columns for each
+        # backend with indications of whether the tests passed or failed for
+        # each row.
         def report_csv(self, all_ops, passed, experimental):  # type: (List[Text], List[Text], List[Text]) -> None
             for schema in _all_schemas:
                 if schema.domain == '' or schema.domain == 'ai.onnx':
