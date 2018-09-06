@@ -16,12 +16,12 @@
 namespace ONNX_NAMESPACE {
 namespace testing {
 bool FileExists(const std::string& filename) {
-  struct stat stats;
 #ifdef _WIN32
   if (INVALID_FILE_ATTRIBUTES == GetFileAttributes(filename.c_str())) {
     return false;
   }
 #else
+  struct stat stats;
   if (lstat(filename.c_str(), &stats) != 0 || !S_ISREG(stats.st_mode)) {
     return false;
   }
@@ -48,7 +48,7 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
       std::vector<std::string> input_filenames, output_filenames;
       std::string input_name, output_name;
       std::string case_dirname = case_dir;
-      case_dirname += "test_data_set_" + to_string(case_count);
+      case_dirname += "test_data_set_" + ONNX_NAMESPACE::to_string(case_count);
 
       output_name = case_dirname + "/output_" + "0" + ".pb";
       if (!FileExists(output_name) && !FileExists(input_name)) {
@@ -56,8 +56,10 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
       }
 
       for (int data_count = 0;; data_count++) {
-        input_name = case_dirname + "/input_" + to_string(data_count) + ".pb";
-        output_name = case_dirname + "/output_" + to_string(data_count) + ".pb";
+        input_name = case_dirname + "/input_" +
+            ONNX_NAMESPACE::to_string(data_count) + ".pb";
+        output_name = case_dirname + "/output_" +
+            ONNX_NAMESPACE::to_string(data_count) + ".pb";
         const bool input_exists = FileExists(input_name);
         const bool output_exists = FileExists(output_name);
         if (!output_exists && !input_exists) {

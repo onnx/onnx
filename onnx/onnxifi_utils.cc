@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "onnxifi_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace testing {

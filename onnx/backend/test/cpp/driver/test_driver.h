@@ -3,7 +3,8 @@
 #include <cstdlib>
 
 #include "onnx/onnxifi_loader.h"
-#include "utils.h"
+#include "onnx/onnxifi_utils.h"
+#include "onnx/string_utils.h"
 
 #include "gtest/gtest.h"
 namespace ONNX_NAMESPACE {
