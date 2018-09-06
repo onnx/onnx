@@ -151,9 +151,9 @@ class Coverage(object):
                 'nodes.csv')  # type: ignore
         models_path = os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
                 'models.csv')  # type: ignore
-        existing_nodes = OrderedDict()  # type: OrderedDict[Text, Dict[Text, Text]]
-        existing_models = OrderedDict()  # type: OrderedDict[Text, Dict[Text, Text]]
-        frameworks = []  # type: List[Text]
+        existing_nodes = OrderedDict()  # type: OrderedDict[Text, Dict[str, str]]
+        existing_models = OrderedDict()  # type: OrderedDict[Text, Dict[str, str]]
+        frameworks = []  # type: List[str]
         if os.path.isfile(nodes_path):
             with open(nodes_path, 'r') as nodes_file:
                 reader = csv.DictReader(nodes_file)
@@ -177,7 +177,7 @@ class Coverage(object):
             if backend not in frameworks:
                 frameworks.append(str(backend))
             else:
-                other_frameworks.remove(backend)
+                other_frameworks.remove(str(backend))
             node_writer = csv.DictWriter(nodes_file, fieldnames=frameworks)
             node_writer.writeheader()
             for node in all_ops:
@@ -188,11 +188,11 @@ class Coverage(object):
                     # Also add Skipped for other nodes
                     existing_nodes[node_name] = OrderedDict()
                     for other_framework in other_frameworks:
-                        existing_nodes[node_name][other_framework] = "Skipped!"
+                        existing_nodes[node_name][other_framework] = str("Skipped!")
                 if node in passed:
-                    existing_nodes[node_name][str(backend)] = "Passed!"
+                    existing_nodes[node_name][str(backend)] = str("Passed!")
                 else:
-                    existing_nodes[node_name][str(backend)] = "Failed!"
+                    existing_nodes[node_name][str(backend)] = str("Failed!")
             summaries = dict()  # type: Dict[Any, Any]
             if "Summary" in existing_nodes:
                 summaries = existing_nodes["Summary"]
@@ -201,7 +201,7 @@ class Coverage(object):
                 "{}/{} node tests passed".format(len(passed), len(all_ops))
             summaries['Op'] = 'Summary'
             for node in existing_nodes:
-                existing_nodes[node][str('Op')] = node
+                existing_nodes[node][str('Op')] = str(node)
                 node_writer.writerow(existing_nodes[node])
             node_writer.writerow(summaries)
         with open(models_path, 'w') as models_file:
@@ -229,10 +229,10 @@ class Coverage(object):
                         # Also add Skipped for other models
                         existing_models[model] = OrderedDict()
                         for other_framework in other_frameworks:
-                            existing_models[model][other_framework] = "Skipped!"
-                    existing_models[model][str(backend)] = "{}/{} nodes covered: {}" \
+                            existing_models[model][other_framework] = str("Skipped!")
+                    existing_models[model][str(backend)] = str("{}/{} nodes covered: {}" \
                         .format(num_covered, len(self.models[bucket][model]
-                            .node_coverages), msg)
+                            .node_coverages), msg))
             summaries.clear()
             if "Summary" in existing_models:
                 summaries = existing_models["Summary"]
