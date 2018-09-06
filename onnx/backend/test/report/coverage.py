@@ -102,6 +102,7 @@ class Coverage(object):
         self.add_model(proto, bucket)
 
     def report_text(self, writer):  # type: (IO[Text]) -> None
+        # type: ignore
         writer.write('---------- onnx coverage: ----------\n')
         writer.write('Operators (passed/loaded/total): {}/{}/{}\n'.format(
             len(self.buckets['passed']),
@@ -152,21 +153,21 @@ class Coverage(object):
                     reader = csv.DictReader(nodes_file)
                     frameworks = list(reader.fieldnames)
                     for row in reader:
-                        op = row['Op']
-                        del row['Op']
-                        existing_nodes[op] = row
+                        op = row[str('Op')]
+                        del row[str('Op')]
+                        existing_nodes[str(op)] = str(row)
             if os.path.isfile(models_path):
                 with open(models_path, 'r') as models_file:
                     reader = csv.DictReader(models_file)
                     for row in reader:
-                        model = row['Model']
-                        del row['Model']
-                        existing_models[model] = row
-            backend = os.environ.get('BACKEND')
+                        model = row[str('Model')]
+                        del row[str('Model')]
+                        existing_models[str(model)] = str(row)
+            backend = os.environ.get(str('BACKEND'))
             other_frameworks = frameworks[1:]
             with open(nodes_path, 'w') as nodes_file:
-                if 'Op' not in frameworks:
-                    frameworks.append('Op')
+                if str('Op') not in frameworks:
+                    frameworks.append(str('Op'))
                 if backend not in frameworks:
                     frameworks.append(str(backend))
                 else:
@@ -194,17 +195,17 @@ class Coverage(object):
                     "{}/{} node tests passed".format(len(passed), len(all_ops))
                 summaries['Op'] = 'Summary'
                 for node in existing_nodes:
-                    existing_nodes[node]['Op'] = node
+                    existing_nodes[node][str('Op')] = node
                     node_writer.writerow(existing_nodes[node])
                 node_writer.writerow(summaries)
             with open(models_path, 'w') as models_file:
-                frameworks[0] = "Model"
+                frameworks[0] = str("Model")
                 model_writer = csv.DictWriter(models_file, fieldnames=frameworks)
                 model_writer.writeheader()
                 # Consider both buckets
                 num_models = 0
                 for bucket in self.models:
-                    for model in self.models[bucket]:
+                    for model in self.models[bucket]:  # type: ignore
                         # Both analyze and run the model on the backend
                         num_covered = 0
                         for node in self.models[bucket][model].node_coverages:
@@ -233,8 +234,8 @@ class Coverage(object):
                 summaries[str(backend)] = "{}/{} model tests passed" \
                     .format(len(self.models['passed']), num_models)
                 summaries['Model'] = 'Summary'
-                for model in existing_models:
-                    existing_models[model]['Model'] = model
+                for model in existing_models:  # type: ignore
+                    existing_models[model][str('Model')] = model
                     model_writer.writerow(existing_models[model])
                 model_writer.writerow(summaries)
             with open(os.path.join(str(os.environ.get('CSVDIR')),  # type: ignore
