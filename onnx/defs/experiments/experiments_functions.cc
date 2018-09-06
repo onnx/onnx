@@ -8,7 +8,7 @@ using namespace ONNX_NAMESPACE;
 
 static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   if (nullptr == func_proto) {
-    return Status(
+    return Common::Status(
         Common::CHECKER,
         Common::INVALID_ARGUMENT,
         "func_proto should not be nullptr.");
@@ -168,7 +168,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"X_MVN"},
       node8);
 
-  return Status::OK();
+  return Common::Status::OK();
 }
 
 ONNX_FUNCTION(

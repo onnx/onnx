@@ -1,5 +1,4 @@
 #include "onnx/checker.h"
-#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "onnx/defs/schema.h"
+#include "onnx/defs/function.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"

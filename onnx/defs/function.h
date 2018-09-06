@@ -11,7 +11,6 @@
 #include "onnx/onnx-operators_pb.h"
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 
 typedef Common::Status (*BuildFunction)(std::unique_ptr<FunctionProto>*);
 
@@ -31,10 +30,10 @@ class FunctionBuilderRegistry {
  public:
   FunctionBuilderRegistry() = default;
 
-  Status Register(const FunctionBuilder& function_builder);
+  Common::Status Register(const FunctionBuilder& function_builder);
 
   // Get functions for specific domain.
-  Status GetFunctions(
+  Common::Status GetFunctions(
       const std::string& domain,
       /*out*/
       std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
@@ -58,7 +57,7 @@ class FunctionBuilderRegistry {
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
 // Method docomposing all functions in graph
-Status DecomposeGraph(
+Common::Status DecomposeGraph(
     GraphProto& g,
     const std::string& domain,
     std::vector<std::string> function_list = {});

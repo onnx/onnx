@@ -26,15 +26,15 @@ BuildFunction FunctionBuilder::GetBuildFunction() const {
   return build_func_;
 }
 
-Status FunctionBuilderRegistry::Register(
+Common::Status FunctionBuilderRegistry::Register(
     const FunctionBuilder& function_builder) {
   std::lock_guard<std::mutex> lock(mutex_);
   function_builders.push_back(function_builder);
-  return Status::OK();
+  return Common::Status::OK();
 }
 
 // Get functions for specific domain.
-Status FunctionBuilderRegistry::GetFunctions(
+Common::Status FunctionBuilderRegistry::GetFunctions(
     const std::string& domain,
     /*out*/
     std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
@@ -171,7 +171,7 @@ void FunctionExpandHelper(
   }
 }
 
-Status DecomposeGraph(
+Common::Status DecomposeGraph(
     GraphProto& g,
     const std::string& domain,
     std::vector<std::string> function_list) {
@@ -210,7 +210,7 @@ Status DecomposeGraph(
     }
   }
   g.CopyFrom(new_g);
-  return Status::OK();
+  return Common::Status::OK();
 }
 
 } // namespace ONNX_NAMESPACE
