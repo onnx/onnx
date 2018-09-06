@@ -29,7 +29,6 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Crop);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, DepthToSpace);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Div);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Dropout);
-class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, DynamicSlice);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Elu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Equal);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Exp);
@@ -147,7 +146,6 @@ class OpSet_Onnx_ver1 {
            Onnx, 1, DepthToSpace)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Div)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Dropout)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, DynamicSlice)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Elu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Equal)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 1, Exp)>());
@@ -456,7 +454,7 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Mean);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, MaxPool);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 8, Scan);
 
-// Iterate over schema from ai.onnx version 7
+// Iterate over schema from ai.onnx version 8
 class OpSet_Onnx_ver8 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
@@ -470,6 +468,17 @@ class OpSet_Onnx_ver8 {
   }
 };
 
+// Forward declarations for ai.onnx version 9
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, DynamicSlice);
+
+// Iterate over schema from ai.onnx version 9
+class OpSet_Onnx_ver9 {
+ public:
+  static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, DynamicSlice)>());
+  }
+};
+
 inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver1>();
   RegisterOpSetSchema<OpSet_Onnx_ver2>();
@@ -479,6 +488,8 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver6>();
   RegisterOpSetSchema<OpSet_Onnx_ver7>();
   RegisterOpSetSchema<OpSet_Onnx_ver8>();
+  RegisterOpSetSchema<OpSet_Onnx_ver9>();
 }
+
 
 } // namespace ONNX_NAMESPACE
