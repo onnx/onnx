@@ -98,6 +98,7 @@ class Runner(object):
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():
                 item.func = pytest.mark.onnx_coverage(item.proto)(item.func)
+                item.category = category
         return self
 
     @property

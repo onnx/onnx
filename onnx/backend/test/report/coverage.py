@@ -16,10 +16,6 @@ from typing import Optional, Text, Set, Dict, IO, List, Any
 
 _all_schemas = defs.get_all_schemas()
 
-model_coverage_whitelist = set(
-    ['bvlc_alexnet', 'densenet121', 'inception_v1', 'inception_v2',
-     'resnet50', 'shufflenet', 'squeezenet_old', 'vgg19', 'zfnet'])
-
 
 class AttrCoverage(object):
     def __init__(self):  # type: () -> None
@@ -91,15 +87,15 @@ class Coverage(object):
         for node in graph.node:
             self.add_node(node, bucket)
 
-    def add_model(self, model, bucket):  # type: (onnx.ModelProto, Text) -> None
+    def add_model(self, model, bucket, is_model):  # type: (onnx.ModelProto, Text, bool) -> None
         self.add_graph(model.graph, bucket)
         # Only add model if name does not start with test
-        if model.graph.name in model_coverage_whitelist:
+        if is_model:
             self.models[bucket][model.graph.name].add(model)
 
-    def add_proto(self, proto, bucket):  # type: (onnx.ModelProto, Text) -> None
+    def add_proto(self, proto, bucket, is_model):  # type: (onnx.ModelProto, Text, bool) -> None
         assert isinstance(proto, onnx.ModelProto)
-        self.add_model(proto, bucket)
+        self.add_model(proto, bucket, is_model)
 
     def report_text(self, writer):  # type: (IO[Text]) -> None
         # type: ignore
@@ -135,6 +131,9 @@ class Coverage(object):
             headers=['Operator', 'Attributes\n(name: #values)'],
             tablefmt='plain'))
         if os.environ.get(str('CSVDIR')) is not None:
+            self.report_csv(all_ops, passed, experimental)
+
+        def report_csv(self, all_ops, passed, experimental):  # type: (List[Text], List[Text], List[Text]) -> None
             for schema in _all_schemas:
                 if schema.domain == '' or schema.domain == 'ai.onnx':
                     all_ops.append(schema.name)
