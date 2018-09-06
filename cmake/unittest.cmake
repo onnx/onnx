@@ -38,7 +38,7 @@ list(APPEND ${ONNXIFI_TEST_DRIVER}_libs ${PROTOBUF_LIBRARIES})
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi)
 
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
-file(GLOB_RECURSE ${ONNXIFI_TEST_DRIVER}_src "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
+file(GLOB_RECURSE ${ONNXIFI_TEST_DRIVER}_src "${ONNX_ROOT}/onnx/backend/test/cpp/*.h" "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
 
 function(AddTest)
   cmake_parse_arguments(_UT "" "TARGET" "LIBS;SOURCES" ${ARGN})

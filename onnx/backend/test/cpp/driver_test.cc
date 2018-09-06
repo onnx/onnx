@@ -1,10 +1,14 @@
-#include "driver/gtest_utils.h"
+#include "gtest_utils.h"
 
 #include "onnx/checker.h"
 #include "onnx/onnxifi.h"
 #include "onnx/onnxifi_loader.h"
 #include "onnx/string_utils.h"
 
+// Now we set this macro to be enbaled,
+// but once we have valid onnxifi backend,
+// we should remove it and set it to be a compiler option.
+#define ONNXIFI_DUMMY_BACKEND
 const float ONNXIFI_TESTDATA_EPS = 1e-5;
 
 template <typename T>
@@ -240,6 +244,6 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 #endif
 }
 INSTANTIATE_TEST_CASE_P(
-	ONNXCppAllTest,
-	ONNXCppDriverTest,
-	testing::ValuesIn(all_test_cases));
+    ONNXCppAllTest,
+    ONNXCppDriverTest,
+    testing::ValuesIn(OnnxifiGtestWrapper::GetTestCases()));

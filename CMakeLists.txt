@@ -263,7 +263,7 @@ file(GLOB_RECURSE onnx_src "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
 	"${ONNX_ROOT}/onnx/test/cpp/*.cc"
 	"${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
-	"${ONNX_ROOT}/onnx/backend/test/cpp/driver/*.h")
+	"${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
 list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
 list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
 

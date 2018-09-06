@@ -12,7 +12,7 @@ onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
   onnx_tensor.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
   std::vector<uint64_t> shape_values(
       proto_tensor.dims().begin(), proto_tensor.dims().end());
-  onnx_tensor.dimensions = shape_values.size();
+  onnx_tensor.dimensions = (uint32_t)shape_values.size();
   onnx_tensor.shape = shape_values.data();
   onnx_tensor.buffer = (onnxPointer)proto_tensor.raw_data().data();
   return onnx_tensor;
