@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 91/99 (91.92%, 5 generators excluded) common operators.
 
-Node tests have covered 1/12 (8.33%, 0 generators excluded) experimental operators.
+Node tests have covered 2/13 (15.38%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -5709,6 +5709,114 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
+### DynamicSlice
+There are 5 test cases, listed as following:
+<details>
+<summary>dynamic_slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.long)
+ends = np.array([3, 10], dtype=np.long)
+axes = np.array([0, 1], dtype=np.long)
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_default_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.long)
+ends = np.array([20, 10, 4], dtype=np.long)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends], outputs=[y],
+       name='test_dynamic_slice_default_axes')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_end_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_end_out_of_bounds')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.long)
+ends = np.array([-1], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 0:-1]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_neg')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_start_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1000:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_start_out_of_bounds')
+```
+
+</details>
+
+
 ### ThresholdedRelu
 There are 2 test cases, listed as following:
 <details>
