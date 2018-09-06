@@ -22,6 +22,7 @@
 #include "onnx/version_converter/adapters/averagepool_7_6.h"
 #include "onnx/version_converter/adapters/dropout_6_7.h"
 #include "onnx/version_converter/adapters/maxpool_8_7.h"
+#include "onnx/version_converter/adapters/prelu_6_7.h"
 #include "onnx/version_converter/adapters/prelu_7_6.h"
 
 namespace ONNX_NAMESPACE { namespace version_conversion {
@@ -178,8 +179,7 @@ class DefaultVersionConverter : public BaseVersionConverter {
         OpSetID(6), OpSetID(5)));
       registerAdapter(make_unique<RemoveConsumedInputs>("PRelu",
         OpSetID(5), OpSetID(6)));
-      registerAdapter(make_unique<CompatibleAdapter>("PRelu",
-        OpSetID(6), OpSetID(7)));
+      registerAdapter(make_unique<PRelu_6_7>());
       registerAdapter(make_unique<PRelu_7_6>());
     }
 

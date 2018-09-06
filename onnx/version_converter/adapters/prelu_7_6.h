@@ -1,4 +1,4 @@
-// Adapter for PRelu in default domain from version 8 to 7
+// Adapter for PRelu in default domain from version 7 to 6
 
 #pragma once
 
@@ -13,11 +13,12 @@ class PRelu_7_6 final : public Adapter {
     void adapt_prelu_7_6(std::shared_ptr<Graph> graph, Node* node) const {
       // Throw an exception if any broadcasting occurs
       const ArrayRef<Value*>& inputs = node->inputs();
+      assertInputsAvailable(inputs, name().c_str(), 2);
       std::vector<Dimension> X_sizes = inputs[0]->sizes();
       std::vector<Dimension> slope_sizes = inputs[1]->sizes();
-      ONNX_ASSERTM(slope_sizes.size() == 1 || check_numpy_unibroadcastable_and_require_broadcast(X_sizes,
-            slope_sizes) == 0,
-          "OpSet Version 6 of PRelu does not support broadcasting.");
+      // TODO: If single element, no conversion necessary
+      // TODO: If CHW where HW are all 1's, then squeeze to remove all these dimensions
+      // TODO: Assert that axis is 1 in non-1D case
     }
 
     void adapt(std::shared_ptr<Graph> graph, Node* node) const override {
