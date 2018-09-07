@@ -92,7 +92,14 @@ void mergeShapesAndTypes(
 
 void InferShapes(
     ModelProto& m,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance());
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const IFunctionBuilderRegistry* func_registry =
+        &FunctionBuilderRegistry::OnnxInstance());
+
+void InferShapeForFunctionNode(
+    const FunctionProto& func,
+	const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

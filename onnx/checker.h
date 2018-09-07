@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
-#include "onnx/defs/schema.h"
 #include "onnx/defs/function.h"
+#include "onnx/defs/schema.h"
 #include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
@@ -62,6 +62,14 @@ class CheckerContext final {
     return schema_registry_;
   }
 
+  void set_func_registry(const IFunctionBuilderRegistry* func_registry) {
+    func_registry_ = func_registry;
+  }
+
+  const IFunctionBuilderRegistry* get_func_registry() const {
+    return func_registry_;
+  }
+
   explicit CheckerContext() : ir_version_(-1) {}
 
  private:
@@ -69,6 +77,8 @@ class CheckerContext final {
   std::unordered_map<std::string, int> opset_imports_;
   bool is_main_graph_ = true;
   const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
+  const IFunctionBuilderRegistry* func_registry_ =
+      &FunctionBuilderRegistry::OnnxInstance();
 };
 
 struct LexicalScopeContext final {
@@ -96,5 +106,7 @@ void check_function(
     const LexicalScopeContext&);
 
 void check_model(const ModelProto& model);
+
+OpSchema* BuildOpSchemaForFunc(const FunctionProto& func);
 } // namespace checker
 } // namespace ONNX_NAMESPACE

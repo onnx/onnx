@@ -72,35 +72,17 @@ void mergeShapesAndTypes(
   }
 }
 
-void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
+void InferShapes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry,
+    const IFunctionBuilderRegistry* func_registry) {
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : m.opset_import()) {
     opset_imports[opset_import.domain()] =
         static_cast<int>(opset_import.version());
   }
 
-  auto* original_g = m.mutable_graph();
-  GraphProto* g = new GraphProto();
-  g->CopyFrom(*original_g);
-
-  // Get lists of nodes and value info in original graph
-  std::unordered_map<std::string, ValueInfoProto*> existing_value_info;
-  std::unordered_set<std::string> tensor_set;
-  for (auto& v : *original_g->mutable_value_info()) {
-    existing_value_info[v.name()] = &v;
-  }
-  for (auto& n : g->node()) {
-    for (auto& out_name : n.output()) {
-      tensor_set.insert(std::move(out_name));
-    }
-  }
-
-  // Expand the functions within the temporary copied graph
-  try {
-    DecomposeGraph(*g, m.domain(), {});
-  } catch (std::runtime_error ex) {
-    (void)ex;
-  }
+  auto* g = m.mutable_graph();
 
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   for (auto& vi : *g->mutable_value_info()) {
@@ -131,17 +113,46 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
 
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-    if (!schema) {
-      continue;
-    }
-
     InferenceContextImpl ctx(n, valueTypesByName, initializersByName);
-    try {
-      schema->GetTypeAndShapeInferenceFunction()(ctx);
-    } catch (const ONNX_NAMESPACE::InferenceError& ex) {
-      (void)ex;
-      // Continue with inference for remaining nodes
+    if (!schema) {
+      if (nullptr == func_registry) {
+        continue;
+      }
+      // The node is not referring a primitive operator.
+      // Check whether it's referring to a function.
+      // If it's referring to a function.
+      std::multimap<std::string, std::unique_ptr<FunctionProto>> funcs;
+      auto status = func_registry->GetFunctions(n.domain(), &funcs);
+      if (!status.IsOK()) {
+        continue;
+      }
+
+      std::map<int, FunctionProto*> version_to_func;
+      auto range = funcs.equal_range(n.op_type());
+      for (auto i = range.first; i != range.second; ++i) {
+        version_to_func[static_cast<int>(i->second->since_version())] =
+            i->second.get();
+      }
+
+      auto pos = version_to_func.lower_bound(domain_version);
+      if (version_to_func.begin() == pos && pos->first > domain_version) {
+        continue;
+      }
+      if (version_to_func.end() == pos || pos->first > domain_version) {
+        // All versions are less than specified version, or,
+        // The <pos> version is greater than specified version.
+        pos--;
+      }
+      InferShapeForFunctionNode(*pos->second, schema_registry, ctx);
       continue;
+    } else {
+      try {
+        schema->GetTypeAndShapeInferenceFunction()(ctx);
+      } catch (const ONNX_NAMESPACE::InferenceError& ex) {
+        (void)ex;
+        // Continue with inference for remaining nodes
+        continue;
+      }
     }
 
     for (int i = 0; i < n.output_size(); ++i) {
@@ -178,22 +189,13 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
       valueTypesByName[n.output(i)] = existingType;
     }
   }
+}
 
-  // Copy the newly inferred value info with appearances
-  // in original graph into original graph
-  for (auto& v : g->value_info()) {
-    if (tensor_set.count(v.name())) {
-      if (!existing_value_info.count(v.name())) {
-        auto new_v = original_g->add_value_info();
-        new_v->CopyFrom(v);
-      } else {
-        existing_value_info[v.name()]->CopyFrom(v);
-      }
-    }
-  }
-
-  // Delete the temporary expanded graph
-  delete g;
+void InferShapeForFunctionNode(
+    const FunctionProto& func,
+    const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx) {
+  // TODO: add implementation.
 }
 
 } // namespace shape_inference

@@ -26,7 +26,19 @@ class FunctionBuilder {
   BuildFunction build_func_;
 };
 
-class FunctionBuilderRegistry {
+class IFunctionBuilderRegistry {
+ public:
+  virtual ~IFunctionBuilderRegistry() = default;
+
+  // Get functions for specific domain.
+  virtual Common::Status GetFunctions(
+      const std::string& domain,
+      /*out*/
+      std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
+      const = 0;
+};
+
+class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
  public:
   FunctionBuilderRegistry() = default;
 
@@ -37,7 +49,7 @@ class FunctionBuilderRegistry {
       const std::string& domain,
       /*out*/
       std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-      const;
+      const override;
 
   static FunctionBuilderRegistry& OnnxInstance();
 
@@ -55,12 +67,6 @@ class FunctionBuilderRegistry {
 #define ONNX_FUNCTION_UNIQ(counter, function_builder)         \
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
-
-// Method docomposing all functions in graph
-Common::Status DecomposeGraph(
-    GraphProto& g,
-    const std::string& domain,
-    std::vector<std::string> function_list = {});
 
 // Example to register a function.
 // Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {

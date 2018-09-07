@@ -274,25 +274,46 @@ void check_node(
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
   if (!schema) {
-    // Try expand the unrecognized node as a function
-    GraphProto g;
-    NodeProto* ptemp_node = g.add_node();
-    ptemp_node->CopyFrom(node);
-    try {
-      DecomposeGraph(g, node.domain());
-    } catch (std::runtime_error e) {
+    // There's no primitive operator for the node.
+    // Check whether it's referring to a function.
+    auto func_registry = ctx.get_func_registry();
+    if (nullptr == func_registry) {
       fail_check(
-          "No Schema registered for " + node.op_type() +
+          "No Op or Function registered for " + node.op_type() +
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
     }
-    // Check the node in the function with inherited checker context
-    for (const NodeProto& n : g.node()) {
-      check_node(n, ctx, lex_ctx);
+    std::multimap<std::string, std::unique_ptr<FunctionProto>> funcs;
+    auto status = func_registry->GetFunctions(node.domain(), &funcs);
+    if (!status.IsOK()) {
+      fail_check(
+          "No Op or Function registered for " + node.op_type() +
+          " with domain_version of " +
+          ONNX_NAMESPACE::to_string(domain_version));
     }
-  } else {
-    schema->Verify(node);
+
+    std::map<int, FunctionProto*> version_to_func;
+    auto range = funcs.equal_range(node.op_type());
+    for (auto i = range.first; i != range.second; ++i) {
+      version_to_func[static_cast<int>(i->second->since_version())] =
+          i->second.get();
+    }
+
+    auto pos = version_to_func.lower_bound(domain_version);
+    if (version_to_func.begin() == pos && pos->first > domain_version) {
+      fail_check(
+          "No Op or Function registered for " + node.op_type() +
+          " with domain_version of " +
+          ONNX_NAMESPACE::to_string(domain_version));
+    }
+    if (version_to_func.end() == pos || pos->first > domain_version) {
+      // All versions are less than specified version, or,
+      // The <pos> version is greater than specified version.
+      pos--;
+    }
+    schema = BuildOpSchemaForFunc(*pos->second);
   }
+  schema->Verify(node);
 }
 
 void check_graph(
@@ -487,6 +508,11 @@ void check_model(const ModelProto& model) {
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
   check_graph(model.graph(), ctx, lex_ctx);
+}
+
+OpSchema* BuildOpSchemaForFunc(const FunctionProto& func) {
+  // TODO: add implementation.
+  return nullptr;
 }
 
 #undef fail_check
