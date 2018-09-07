@@ -101,6 +101,34 @@ Common::Status FunctionBuilderRegistry::GetFunctions(
   return Common::Status::OK();
 }
 
+const FunctionProto* FunctionBuilderRegistry::GetFunction(
+    const std::string& func_name,
+    const int maxInclusiveVersion,
+    const std::string& domain) const {
+  std::multimap<std::string, std::unique_ptr<FunctionProto>> funcs;
+  auto status = GetFunctions(domain, &funcs);
+  if (!status.IsOK()) {
+    return nullptr;
+  }
+  std::map<int, FunctionProto*> version_to_func;
+  auto range = funcs.equal_range(func_name);
+  for (auto i = range.first; i != range.second; ++i) {
+    version_to_func[static_cast<int>(i->second->since_version())] =
+        i->second.get();
+  }
+
+  auto pos = version_to_func.lower_bound(maxInclusiveVersion);
+  if (version_to_func.begin() == pos && pos->first > maxInclusiveVersion) {
+    return nullptr;
+  }
+  if (version_to_func.end() == pos || pos->first > maxInclusiveVersion) {
+    // All versions are less than specified version, or,
+    // The <pos> version is greater than specified version.
+    pos--;
+  }
+  return pos->second;
+}
+
 FunctionBuilderRegistry& FunctionBuilderRegistry::OnnxInstance() {
   static FunctionBuilderRegistry func_builder_registry;
   return func_builder_registry;

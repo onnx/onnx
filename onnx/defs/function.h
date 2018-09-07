@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "onnx/common/constants.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx-operators_pb.h"
 
@@ -30,12 +31,10 @@ class IFunctionBuilderRegistry {
  public:
   virtual ~IFunctionBuilderRegistry() = default;
 
-  // Get functions for specific domain.
-  virtual Common::Status GetFunctions(
-      const std::string& domain,
-      /*out*/
-      std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-      const = 0;
+  virtual const FunctionProto* GetFunction(
+      const std::string& func_name,
+      const int maxInclusiveVersion,
+      const std::string& domain = ONNX_DOMAIN) const = 0;
 };
 
 class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
@@ -49,7 +48,12 @@ class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
       const std::string& domain,
       /*out*/
       std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-      const override;
+      const;
+
+  const FunctionProto* GetFunction(
+      const std::string& func_name,
+      const int maxInclusiveVersion,
+      const std::string& domain = ONNX_DOMAIN) const override;
 
   static FunctionBuilderRegistry& OnnxInstance();
 

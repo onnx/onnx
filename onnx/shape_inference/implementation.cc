@@ -121,29 +121,12 @@ void InferShapes(
       // The node is not referring a primitive operator.
       // Check whether it's referring to a function.
       // If it's referring to a function.
-      std::multimap<std::string, std::unique_ptr<FunctionProto>> funcs;
-      auto status = func_registry->GetFunctions(n.domain(), &funcs);
-      if (!status.IsOK()) {
+      auto func =
+          func_registry->GetFunction(n.op_type(), domain_version, n.domain());
+      if (nullptr == func) {
         continue;
       }
-
-      std::map<int, FunctionProto*> version_to_func;
-      auto range = funcs.equal_range(n.op_type());
-      for (auto i = range.first; i != range.second; ++i) {
-        version_to_func[static_cast<int>(i->second->since_version())] =
-            i->second.get();
-      }
-
-      auto pos = version_to_func.lower_bound(domain_version);
-      if (version_to_func.begin() == pos && pos->first > domain_version) {
-        continue;
-      }
-      if (version_to_func.end() == pos || pos->first > domain_version) {
-        // All versions are less than specified version, or,
-        // The <pos> version is greater than specified version.
-        pos--;
-      }
-      InferShapeForFunctionNode(*pos->second, schema_registry, ctx);
+      InferShapeForFunctionNode(*func, schema_registry, ctx);
       continue;
     } else {
       try {

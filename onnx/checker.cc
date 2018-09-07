@@ -283,35 +283,15 @@ void check_node(
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
     }
-    std::multimap<std::string, std::unique_ptr<FunctionProto>> funcs;
-    auto status = func_registry->GetFunctions(node.domain(), &funcs);
-    if (!status.IsOK()) {
+    auto func = func_registry->GetFunction(
+        node.op_type(), domain_version, node.domain());
+    if (nullptr == func) {
       fail_check(
           "No Op or Function registered for " + node.op_type() +
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
     }
-
-    std::map<int, FunctionProto*> version_to_func;
-    auto range = funcs.equal_range(node.op_type());
-    for (auto i = range.first; i != range.second; ++i) {
-      version_to_func[static_cast<int>(i->second->since_version())] =
-          i->second.get();
-    }
-
-    auto pos = version_to_func.lower_bound(domain_version);
-    if (version_to_func.begin() == pos && pos->first > domain_version) {
-      fail_check(
-          "No Op or Function registered for " + node.op_type() +
-          " with domain_version of " +
-          ONNX_NAMESPACE::to_string(domain_version));
-    }
-    if (version_to_func.end() == pos || pos->first > domain_version) {
-      // All versions are less than specified version, or,
-      // The <pos> version is greater than specified version.
-      pos--;
-    }
-    VerifyFunctionNode(node, *pos->second, ctx);
+    VerifyFunctionNode(node, *func, ctx);
   }
   schema->Verify(node);
 }
