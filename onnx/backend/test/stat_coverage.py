@@ -140,7 +140,6 @@ def gen_model_test_coverage(schemas, f, ml):
     for model_pb_path in model_paths:
         model = load(model_pb_path)
         if ml:
-            print("ML")
             ml_present = False
             for opset in model.opset_import:
                 if opset.domain == 'ai.onnx.ml':

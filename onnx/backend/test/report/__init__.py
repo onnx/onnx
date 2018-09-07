@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import pytest  # type: ignore
 
 from .coverage import Coverage
-from typing import Dict, Text, Sequence, Any
+from typing import Dict, Text, Sequence, Any, List
 
 _coverage = Coverage()
 _marks = {}  # type: Dict[Text, Sequence[Any]]
@@ -18,7 +18,7 @@ def _add_mark(mark, bucket):  # type: (Any, Text) -> None
         assert len(proto) == 1
         proto = proto[0]
     if proto is not None:
-        _coverage.add_proto(proto, bucket)
+        _coverage.add_proto(proto, bucket, mark.args[1] == 'RealModel')
 
 
 def pytest_runtest_call(item):  # type: (pytest.nodes.Item) -> None
