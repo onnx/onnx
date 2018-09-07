@@ -347,6 +347,8 @@ if(BUILD_ONNX_PYTHON)
     target_link_libraries(onnx_cpp2py_export
                           PRIVATE "-Wl,--whole-archive" $<TARGET_FILE:onnx>
                                   "-Wl,--no-whole-archive")
+    set_target_properties(onnx_cpp2py_export
+                          PROPERTIES LINK_FLAGS "-Wl,--exclude-libs,ALL")
   endif()
 
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
