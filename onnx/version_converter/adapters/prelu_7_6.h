@@ -16,8 +16,16 @@ class PRelu_7_6 final : public Adapter {
       assertInputsAvailable(inputs, name().c_str(), 2);
       std::vector<Dimension> X_sizes = inputs[0]->sizes();
       std::vector<Dimension> slope_sizes = inputs[1]->sizes();
-      // TODO: If single element, no conversion necessary
-      // TODO: If CHW where HW are all 1's, then squeeze to remove all these dimensions
+      // If single element in slope, no conversion necessary
+      if (slope_sizes.size() != 1 || slope_sizes[0].dim != 1) {
+        // TODO: If CHW where HW are all 1's, then squeeze to remove all these dimensions
+        for (int i = 1; i < slope_sizes.size(); i++) {
+          ONNX_ASSERTM(slope_sizes[i].dim == 1,
+              "All trailing dimensions of slope input into PRelu must be 1");
+        }
+        // TODO: Add Squeeze op
+
+      }
       // TODO: Assert that axis is 1 in non-1D case
     }
 
