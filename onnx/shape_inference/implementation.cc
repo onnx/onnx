@@ -126,8 +126,14 @@ void InferShapes(
       if (nullptr == func) {
         continue;
       }
-      InferShapeForFunctionNode(*func, schema_registry, ctx);
-      continue;
+      try {
+        InferShapeForFunctionNode(
+            n, *func, schema_registry, domain_version, ctx);
+      } catch (const ONNX_NAMESPACE::InferenceError& ex) {
+        (void)ex;
+        // Continue with inference for remaining nodes
+        continue;
+      }
     } else {
       try {
         schema->GetTypeAndShapeInferenceFunction()(ctx);
@@ -175,10 +181,24 @@ void InferShapes(
 }
 
 void InferShapeForFunctionNode(
+    const NodeProto& node,
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
+    int domain_version,
     InferenceContext& ctx) {
-  // TODO: add implementation.
+  // Create a temproary graphproto to hold the expanded subgraph
+  GraphProto g;
+  // To Generate unique internal tensor names
+  // while preserving node's input/output names
+  FunctionExpandHelper(node, func, g);
+  for (auto& n : g.node()) {
+    const auto schema =
+        schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
+    if (!schema) {
+      return;
+    }
+    schema->GetTypeAndShapeInferenceFunction()(ctx);
+  }
 }
 
 } // namespace shape_inference

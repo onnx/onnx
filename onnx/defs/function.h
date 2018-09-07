@@ -31,7 +31,7 @@ class IFunctionBuilderRegistry {
  public:
   virtual ~IFunctionBuilderRegistry() = default;
 
-  virtual const FunctionProto* GetFunction(
+  virtual std::unique_ptr<FunctionProto> GetFunction(
       const std::string& func_name,
       const int maxInclusiveVersion,
       const std::string& domain = ONNX_DOMAIN) const = 0;
@@ -50,7 +50,7 @@ class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
       std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
       const;
 
-  const FunctionProto* GetFunction(
+  std::unique_ptr<FunctionProto> GetFunction(
       const std::string& func_name,
       const int maxInclusiveVersion,
       const std::string& domain = ONNX_DOMAIN) const override;
@@ -71,6 +71,13 @@ class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
 #define ONNX_FUNCTION_UNIQ(counter, function_builder)         \
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
+
+// Helper function to expand a function node given the function proto
+void FunctionExpandHelper(
+    const NodeProto& node,
+    const FunctionProto& func,
+    GraphProto& g,
+    const std::string& node_prefix = "");
 
 // Example to register a function.
 // Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {

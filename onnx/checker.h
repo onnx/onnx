@@ -108,9 +108,10 @@ void check_function(
 void check_model(const ModelProto& model);
 
 void VerifyFunctionNode(
-    const NodeProto& node,
-    const FunctionProto& func,
-    const CheckerContext& ctx);
+    const NodeProto&,
+    const FunctionProto&,
+    const CheckerContext&,
+    const LexicalScopeContext&);
 
 } // namespace checker
 } // namespace ONNX_NAMESPACE

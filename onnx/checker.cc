@@ -291,9 +291,10 @@ void check_node(
           " with domain_version of " +
           ONNX_NAMESPACE::to_string(domain_version));
     }
-    VerifyFunctionNode(node, *func, ctx);
+    VerifyFunctionNode(node, *func, ctx, lex_ctx);
+  } else {
+    schema->Verify(node);
   }
-  schema->Verify(node);
 }
 
 void check_graph(
@@ -493,8 +494,17 @@ void check_model(const ModelProto& model) {
 void VerifyFunctionNode(
     const NodeProto& node,
     const FunctionProto& func,
-    const CheckerContext& ctx) {
-  // TODO: add implementation.
+    const CheckerContext& ctx,
+    const LexicalScopeContext& lex_ctx) {
+  // Create a temproary graphproto to hold the expanded subgraph
+  GraphProto g;
+  // To Generate unique internal tensor names
+  // while preserving node's input/output names
+  FunctionExpandHelper(node, func, g);
+  for (const NodeProto& n : g.node()) {
+    // Check the nodes in subgraph
+    check_node(n, ctx, lex_ctx);
+  }
 }
 
 #undef fail_check
