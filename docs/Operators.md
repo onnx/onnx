@@ -29,8 +29,10 @@
   * <a href="#Equal">Equal</a>
   * <a href="#Exp">Exp</a>
   * <a href="#Expand">Expand</a>
+  * <a href="#ExpandAs">ExpandAs</a>
   * <a href="#Flatten">Flatten</a>
   * <a href="#Floor">Floor</a>
+  * <a href="#GE">GE</a>
   * <a href="#GRU">GRU</a>
   * <a href="#Gather">Gather</a>
   * <a href="#Gemm">Gemm</a>
@@ -43,6 +45,7 @@
   * <a href="#Identity">Identity</a>
   * <a href="#If">If</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
+  * <a href="#LE">LE</a>
   * <a href="#LRN">LRN</a>
   * <a href="#LSTM">LSTM</a>
   * <a href="#LeakyRelu">LeakyRelu</a>
@@ -60,6 +63,7 @@
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
+  * <a href="#NE">NE</a>
   * <a href="#Neg">Neg</a>
   * <a href="#Not">Not</a>
   * <a href="#Or">Or</a>
@@ -2944,6 +2948,41 @@ expect(node, inputs=[data, new_shape], outputs=[expanded],
 </details>
 
 
+### <a name="ExpandAs"></a><a name="expandas">**ExpandAs**</a>
+
+  Broadcast the input tensor following the given shape of the other tensor. We do not constrain the input
+  tensor to be of the same type as the tensor we want to expand to.
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>other</tt> : T1</dt>
+<dd>The shape of this tensor indicates the shape you want to expand to</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to input tensor.</dd>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Other tensor can be any type</dd>
+</dl>
+
+
 ### <a name="Flatten"></a><a name="flatten">**Flatten**</a>
 
   Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -3088,6 +3127,43 @@ expect(node, inputs=[x], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="GE"></a><a name="ge">**GE**</a>
+
+  Returns the tensor resulted from performing the `greater than or equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="GRU"></a><a name="gru">**GRU**</a>
@@ -4249,6 +4325,43 @@ expect(node, inputs=[x, s, bias], outputs=[y],
 ```
 
 </details>
+
+
+### <a name="LE"></a><a name="le">**LE**</a>
+
+  Returns the tensor resulted from performing the `less than or equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
+</dl>
 
 
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
@@ -6158,6 +6271,43 @@ This version of the operator has been available since version 7 of the default O
 <dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain output types to integral tensors.</dd>
+</dl>
+
+
+### <a name="NE"></a><a name="ne">**NE**</a>
+
+  Returns the tensor resulted from performing the `not equal` logical operation
+  elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+  
+  This operator supports **multidirectional (i.e., Numpy-style) broadcasting**; for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 8 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>First input operand for the logical operator.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Second input operand for the logical operator.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>C</tt> : T1</dt>
+<dd>Result tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(bool), tensor(int32), tensor(int64)</dt>
+<dd>Constrains input to integral tensors.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains output to boolean tensor.</dd>
 </dl>
 
 

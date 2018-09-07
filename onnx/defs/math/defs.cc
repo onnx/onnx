@@ -493,7 +493,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
+std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
+    const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
@@ -1056,4 +1057,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensors."));
+
+static const char* ExpandAs_ver8_doc = R"DOC(
+Broadcast the input tensor following the given shape of the other tensor. We do not constrain the input
+tensor to be of the same type as the tensor we want to expand to.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ExpandAs,
+    8,
+    OpSchema()
+        .SetDoc(ExpandAs_ver8_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Input(
+            1,
+            "other",
+            "The shape of this tensor indicates the shape you want to expand to",
+            "T1")
+        .Output(0, "output", "Output tensor", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to input tensor.")
+        .TypeConstraint(
+            "T1",
+            OpSchema::all_tensor_types(),
+            "Other tensor can be any type"));
+
 } // namespace ONNX_NAMESPACE
