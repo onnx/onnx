@@ -25,12 +25,12 @@ class CompareOnnxifiData {
   }
 };
 class ONNXCppDriverTest
-    : public testing::TestWithParam<ONNX_NAMESPACE::testing::ProtoTestCase> {
+    : public testing::TestWithParam<ONNX_NAMESPACE::testing::ResolvedTestCase> {
  protected:
-  std::vector<ONNX_NAMESPACE::testing::ProtoTestData> protos_;
+  std::vector<ONNX_NAMESPACE::testing::ResolvedTestData> protos_;
   ONNX_NAMESPACE::ModelProto model_;
   void SetUp() override {
-    ONNX_NAMESPACE::testing::ProtoTestCase t = GetParam();
+    ONNX_NAMESPACE::testing::ResolvedTestCase t = GetParam();
     protos_ = t.proto_test_data_;
     model_ = t.model_;
   }
