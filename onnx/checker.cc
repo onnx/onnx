@@ -311,7 +311,7 @@ void check_node(
       // The <pos> version is greater than specified version.
       pos--;
     }
-    schema = BuildOpSchemaForFunc(*pos->second);
+    VerifyFunctionNode(node, *pos->second, ctx);
   }
   schema->Verify(node);
 }
@@ -510,9 +510,11 @@ void check_model(const ModelProto& model) {
   check_graph(model.graph(), ctx, lex_ctx);
 }
 
-OpSchema* BuildOpSchemaForFunc(const FunctionProto& func) {
+void VerifyFunctionNode(
+    const NodeProto& node,
+    const FunctionProto& func,
+    const CheckerContext& ctx) {
   // TODO: add implementation.
-  return nullptr;
 }
 
 #undef fail_check

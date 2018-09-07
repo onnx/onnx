@@ -107,6 +107,9 @@ void check_function(
 
 void check_model(const ModelProto& model);
 
-OpSchema* BuildOpSchemaForFunc(const FunctionProto& func);
+void VerifyFunctionNode(
+    const NodeProto& node,
+    const FunctionProto& func,
+    const CheckerContext& ctx);
 } // namespace checker
 } // namespace ONNX_NAMESPACE
