@@ -9,15 +9,19 @@
 #define ONNXIFI_DUMMY_BACKEND false
 #endif
 
-const float ONNXIFI_TESTDATA_EPS = 1e-5;
+#ifndef ONNXIFI_TESTDATA_EPS
+#define ONNXIFI_TESTDATA_EPS 1e-5
+#endif
+
+const float onnxifi_testdata_eps = ONNXIFI_TESTDATA_EPS;
 
 template <typename T>
 class CompareOnnxifiData {
  public:
   bool IsEqual(void* P, void* Q) {
     T x = *((T*)P), y = *((T*)Q);
-    return ((x - y) > -ONNXIFI_TESTDATA_EPS) &&
-        ((x - y) < ONNXIFI_TESTDATA_EPS);
+    return ((x - y) > -onnxifi_testdata_eps) &&
+        ((x - y) < onnxifi_testdata_eps);
   }
 };
 class ONNXCppDriverTest
@@ -226,22 +230,22 @@ class ONNXCppDriverTest
  *  backend.
  */
 TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
-	onnxifi_library lib;
-	onnxBackendID backendID;
-	onnxBackend backend;
-        if (!ONNXIFI_DUMMY_BACKEND) {
-          EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
+  onnxifi_library lib;
+  onnxBackendID backendID;
+  onnxBackend backend;
+  if (!ONNXIFI_DUMMY_BACKEND) {
+    EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
 
-          size_t numBackends;
-          lib.onnxGetBackendIDs(&backendID, &numBackends);
-          const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
-          lib.onnxInitBackend(backendID, backendProperties, &backend);
-        }
-        RunAndVerify(lib, backend);
-        if (!ONNXIFI_DUMMY_BACKEND) {
-          lib.onnxReleaseBackend(backend);
-          lib.onnxReleaseBackendID(backendID);
-        }
+    size_t numBackends;
+    lib.onnxGetBackendIDs(&backendID, &numBackends);
+    const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
+    lib.onnxInitBackend(backendID, backendProperties, &backend);
+  }
+  RunAndVerify(lib, backend);
+  if (!ONNXIFI_DUMMY_BACKEND) {
+    lib.onnxReleaseBackend(backend);
+    lib.onnxReleaseBackendID(backendID);
+  }
 }
 INSTANTIATE_TEST_CASE_P(
     ONNXCppAllTest,
