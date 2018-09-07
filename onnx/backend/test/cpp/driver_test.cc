@@ -5,10 +5,10 @@
 #include "onnx/onnxifi_loader.h"
 #include "onnx/string_utils.h"
 
-// Now we set this macro to be enbaled,
-// but once we have valid onnxifi backend,
-// we should remove it and set it to be a compiler option.
-#define ONNXIFI_DUMMY_BACKEND
+#ifndef ONNXIFI_DUMMY_BACKEND
+#define ONNXIFI_DUMMY_BACKEND false
+#endif
+
 const float ONNXIFI_TESTDATA_EPS = 1e-5;
 
 template <typename T>
@@ -140,7 +140,7 @@ class ONNXCppDriverTest
      * This chunk of code is to test the correctness of onnxifi backend.
      * Since we are not using a real backend, we should wait and not
      * enable these tests. */
-#ifndef ONNXIFI_DUMMY_BACKEND
+#if !ONNXIFI_DUMMY_BACKEND
     onnxGraph graph;
     uint32_t weightCount = model_.graph().initializer_size();
     onnxTensorDescriptorV1 weightDescriptors =
@@ -229,7 +229,7 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 	onnxifi_library lib;
 	onnxBackendID backendID;
 	onnxBackend backend;
-#ifndef ONNXIFI_DUMMY_BACKEND
+#if !ONNXIFI_DUMMY_BACKEND
         EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
 
         size_t numBackends;
@@ -238,7 +238,7 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
         lib.onnxInitBackend(backendID, backendProperties, &backend);
 #endif
         RunAndVerify(lib, backend);
-#ifndef ONNXIFI_DUMMY_BACKEND
+#if !ONNXIFI_DUMMY_BACKEND
         lib.onnxReleaseBackend(backend);
         lib.onnxReleaseBackendID(backendID);
 #endif
@@ -246,4 +246,4 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 INSTANTIATE_TEST_CASE_P(
     ONNXCppAllTest,
     ONNXCppDriverTest,
-    testing::ValuesIn(OnnxifiGtestWrapper::GetTestCases()));
+    testing::ValuesIn(GetTestCases()));
