@@ -140,82 +140,82 @@ class ONNXCppDriverTest
      * This chunk of code is to test the correctness of onnxifi backend.
      * Since we are not using a real backend, we should wait and not
      * enable these tests. */
-#if !ONNXIFI_DUMMY_BACKEND
-    onnxGraph graph;
-    uint32_t weightCount = model_.graph().initializer_size();
-    onnxTensorDescriptorV1 weightDescriptors =
-        ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
-            model_.graph().initializer(0));
-
-    EXPECT_EQ(
-        lib.onnxInitGraph(
-            backend,
-            NULL,
-            sizeof(model_),
-            &model_,
-            weightCount,
-            &weightDescriptors,
-            &graph),
-        ONNXIFI_STATUS_SUCCESS);
-
-    for (const auto& proto_test_data : protos_) {
-      std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor,
-          result_descriptor;
-      for (const auto& input : proto_test_data.inputs_) {
-        input_descriptor.push_back(
-            ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(input));
-      }
-      int output_count = 0;
-      for (auto& output : proto_test_data.outputs_) {
-        output_count++;
-        output_descriptor.push_back(
-            ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(output));
-        onnxTensorDescriptorV1 result;
-        result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
-        std::string name_string =
-            "output_" + ONNX_NAMESPACE::to_string(output_count);
-        result.name = name_string.c_str();
-        result.dataType = output.data_type();
-        result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
-        std::vector<uint64_t> shape_values(
-            output.dims().begin(), output.dims().end());
-        result.dimensions = shape_values.size();
-        result.shape = shape_values.data();
-        std::vector<uint8_t> raw_data(output.raw_data().size(), 0);
-        result.buffer = (onnxPointer)raw_data.data();
-        result_descriptor.emplace_back(std::move(result));
-      }
-      EXPECT_EQ(
-          lib.onnxSetGraphIO(
-              graph,
-              input_descriptor.size(),
-              input_descriptor.data(),
-              result_descriptor.size(),
-              result_descriptor.data()),
-          ONNXIFI_STATUS_SUCCESS);
-
-      onnxMemoryFenceV1 inputFence, outputFence;
-      inputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
-      outputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
-      inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
-      outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
+    if (!ONNXIFI_DUMMY_BACKEND) {
+      onnxGraph graph;
+      uint32_t weightCount = model_.graph().initializer_size();
+      onnxTensorDescriptorV1 weightDescriptors =
+          ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
+              model_.graph().initializer(0));
 
       EXPECT_EQ(
-          lib.onnxRunGraph(graph, &inputFence, &outputFence),
+          lib.onnxInitGraph(
+              backend,
+              NULL,
+              sizeof(model_),
+              &model_,
+              weightCount,
+              &weightDescriptors,
+              &graph),
           ONNXIFI_STATUS_SUCCESS);
-      EXPECT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
-      for (int i = 0; i < output_descriptor.size(); i++) {
-        auto output_size = GetDescriptorSize(&output_descriptor[i]);
-        for (int j = 0; j < output_size; j++) {
-          EXPECT_EQ(
-              IsDescriptorEqual(output_descriptor[i], result_descriptor[i]),
-              true);
-          ;
+
+      for (const auto& proto_test_data : protos_) {
+        std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor,
+            result_descriptor;
+        for (const auto& input : proto_test_data.inputs_) {
+          input_descriptor.push_back(
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(input));
+        }
+        int output_count = 0;
+        for (auto& output : proto_test_data.outputs_) {
+          output_count++;
+          output_descriptor.push_back(
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(output));
+          onnxTensorDescriptorV1 result;
+          result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
+          std::string name_string =
+              "output_" + ONNX_NAMESPACE::to_string(output_count);
+          result.name = name_string.c_str();
+          result.dataType = output.data_type();
+          result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
+          std::vector<uint64_t> shape_values(
+              output.dims().begin(), output.dims().end());
+          result.dimensions = shape_values.size();
+          result.shape = shape_values.data();
+          std::vector<uint8_t> raw_data(output.raw_data().size(), 0);
+          result.buffer = (onnxPointer)raw_data.data();
+          result_descriptor.emplace_back(std::move(result));
+        }
+        EXPECT_EQ(
+            lib.onnxSetGraphIO(
+                graph,
+                input_descriptor.size(),
+                input_descriptor.data(),
+                result_descriptor.size(),
+                result_descriptor.data()),
+            ONNXIFI_STATUS_SUCCESS);
+
+        onnxMemoryFenceV1 inputFence, outputFence;
+        inputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
+        outputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
+        inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
+        outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
+
+        EXPECT_EQ(
+            lib.onnxRunGraph(graph, &inputFence, &outputFence),
+            ONNXIFI_STATUS_SUCCESS);
+        EXPECT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
+        for (int i = 0; i < output_descriptor.size(); i++) {
+          auto output_size = GetDescriptorSize(&output_descriptor[i]);
+          for (int j = 0; j < output_size; j++) {
+            EXPECT_EQ(
+                IsDescriptorEqual(output_descriptor[i], result_descriptor[i]),
+                true);
+            ;
+          }
         }
       }
+      EXPECT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
     }
-    EXPECT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
-#endif
   }
 };
 
@@ -229,19 +229,19 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 	onnxifi_library lib;
 	onnxBackendID backendID;
 	onnxBackend backend;
-#if !ONNXIFI_DUMMY_BACKEND
-        EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
+        if (!ONNXIFI_DUMMY_BACKEND) {
+          EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
 
-        size_t numBackends;
-        lib.onnxGetBackendIDs(&backendID, &numBackends);
-        const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
-        lib.onnxInitBackend(backendID, backendProperties, &backend);
-#endif
+          size_t numBackends;
+          lib.onnxGetBackendIDs(&backendID, &numBackends);
+          const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
+          lib.onnxInitBackend(backendID, backendProperties, &backend);
+        }
         RunAndVerify(lib, backend);
-#if !ONNXIFI_DUMMY_BACKEND
-        lib.onnxReleaseBackend(backend);
-        lib.onnxReleaseBackendID(backendID);
-#endif
+        if (!ONNXIFI_DUMMY_BACKEND) {
+          lib.onnxReleaseBackend(backend);
+          lib.onnxReleaseBackendID(backendID);
+        }
 }
 INSTANTIATE_TEST_CASE_P(
     ONNXCppAllTest,

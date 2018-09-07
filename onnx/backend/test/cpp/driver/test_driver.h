@@ -95,7 +95,7 @@ class TestDriver {
    *	Each repo in test_data_set_X should include following contents.
    *
    *	Regular file(s): input_X.pb, store one input tensor.
-   *	Reuglar file(s): output_X.pb, store one output tensor.
+   *	Regular file(s): output_X.pb, store one output tensor.
    */
   void FetchSingleTestCase(const std::string& case_dir);
 };

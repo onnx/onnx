@@ -49,7 +49,7 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
       std::string input_name, output_name;
       std::string case_dirname = case_dir;
       case_dirname += "test_data_set_" + ONNX_NAMESPACE::to_string(case_count);
-
+      input_name = case_dirname + "/input_" + "0" + ".pb";
       output_name = case_dirname + "/output_" + "0" + ".pb";
       if (!FileExists(output_name) && !FileExists(input_name)) {
         break;
@@ -104,6 +104,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
         }
       } while (_findnext(lf, &file) == 0);
     } catch (const std::exception& e) {
+      std::cerr << "Error occured while reading directory. " << e << std::endl;
       _findclose(lf);
       throw;
     }
