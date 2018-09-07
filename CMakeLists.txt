@@ -46,8 +46,8 @@ if(NOT MSVC)
   endif()
 endif()
 
+list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
 if(ONNX_BUILD_TESTS)
-  list(APPEND CMAKE_MODULE_PATH ${ONNX_ROOT}/cmake/external)
   include(googletest)
 endif()
 
