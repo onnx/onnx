@@ -78,12 +78,3 @@ AddTest(
     LIBS ${${UT_NAME}_libs}
 )
 
-set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/c++/testdata)
-set(TEST_DATA_DES $<TARGET_FILE_DIR:${UT_NAME}>/testdata)
-
-# Copy test data from source to destination.
-add_custom_command(
-    TARGET ${UT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            ${TEST_DATA_SRC}
-            ${TEST_DATA_DES})
