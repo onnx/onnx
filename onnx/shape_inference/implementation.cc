@@ -84,10 +84,10 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
   g->CopyFrom(*original_g);
 
   // Get lists of nodes and value info in original graph
-  std::unordered_set<std::string> existing_value_info;
+  std::unordered_map<std::string, ValueInfoProto*> existing_value_info;
   std::unordered_set<std::string> tensor_set;
-  for (auto& v : g->value_info()) {
-    existing_value_info.insert(v.name());
+  for (auto& v : *original_g->mutable_value_info()) {
+    existing_value_info[v.name()] = &v;
   }
   for (auto& n : g->node()) {
     for (auto& out_name : n.output()) {
@@ -182,9 +182,13 @@ void InferShapes(ModelProto& m, const ISchemaRegistry* schema_registry) {
   // Copy the newly inferred value info with appearances
   // in original graph into original graph
   for (auto& v : g->value_info()) {
-    if (!existing_value_info.count(v.name()) && tensor_set.count(v.name())) {
-      auto new_v = original_g->add_value_info();
-      new_v->CopyFrom(v);
+    if (tensor_set.count(v.name())) {
+      if (!existing_value_info.count(v.name())) {
+        auto new_v = original_g->add_value_info();
+        new_v->CopyFrom(v);
+      } else {
+        existing_value_info[v.name()]->CopyFrom(v);
+      }
     }
   }
 
