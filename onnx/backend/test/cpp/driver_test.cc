@@ -5,6 +5,13 @@
 #include "onnx/onnxifi_loader.h"
 #include "onnx/string_utils.h"
 
+/**
+ *	In order to not test the backend itself
+ *	but only to test the funcionality of this test driver,
+ *	include IO and integrity checkers,
+ *	please set ONNXIFI_DUMMY_BACKEND to be true when compiling.
+ *	By default it is false.
+ */
 #ifndef ONNXIFI_DUMMY_BACKEND
 #define ONNXIFI_DUMMY_BACKEND false
 #endif
