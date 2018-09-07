@@ -11,6 +11,7 @@ from typing import Dict, Text, Sequence, Any, List
 _coverage = Coverage()
 _marks = {}  # type: Dict[Text, Sequence[Any]]
 
+
 def _add_mark(mark, bucket):  # type: (Any, Text) -> None
     proto = mark.args[0]
     if isinstance(proto, list):

@@ -230,7 +230,7 @@ class Coverage(object):
                         existing_models[model] = OrderedDict()
                         for other_framework in other_frameworks:
                             existing_models[model][other_framework] = str("Skipped!")
-                    existing_models[model][str(backend)] = str("{}/{} nodes covered: {}" \
+                    existing_models[model][str(backend)] = str("{}/{} nodes covered: {}"
                         .format(num_covered, len(self.models[bucket][model]
                             .node_coverages), msg))
             summaries.clear()
