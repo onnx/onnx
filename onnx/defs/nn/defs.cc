@@ -256,7 +256,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The output of each pooling window is divided by the number of elements (exclude pad when attribute count_include_pad is zero)."))
         .Attr(
             "count_include_pad",
-            "Whether include pad pixels when calculating values for the edges.",
+            "Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.",
             AttributeProto::INT,
             static_cast<int64_t>(0)));
 
