@@ -80,12 +80,12 @@ TEST(OnnxifiLoadTest, OnnxifiDummyBackend) {
       backend,
       graphProperties,
       onnxModelSize,
-      &onnxModel,
+      onnxModel,
       weightCount,
       &weightDescriptors,
       &graph));
 
-  // Testing onnxInitGraph
+  // Testing onnxSetGraphIO
   uint32_t inputsCount = 1;
   onnxTensorDescriptorV1 inputDescriptors;
   uint32_t outputsCount = 1;
