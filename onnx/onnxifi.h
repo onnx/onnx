@@ -945,7 +945,7 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxGetBackendIDsFunction)(
     onnxBackendID* backendIDs,
     size_t* numBackends);
-typedef ONNXIFI_CHECK_RESULT onnxStatus
+typedef onnxStatus
   (ONNXIFI_ABI* onnxReleaseBackendIDFunction)(
     onnxBackendID backendID);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
@@ -964,7 +964,7 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
     onnxBackendID backendID,
     const uint64_t* auxPropertiesList,
     onnxBackend* backend);
-typedef ONNXIFI_CHECK_RESULT onnxStatus
+typedef onnxStatus
   (ONNXIFI_ABI* onnxReleaseBackendFunction)(
     onnxBackend backend);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
@@ -981,7 +981,7 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
 typedef ONNXIFI_CHECK_RESULT onnxStatus
   (ONNXIFI_ABI* onnxWaitEventFunction)(
     onnxEvent event);
-typedef ONNXIFI_CHECK_RESULT onnxStatus
+typedef onnxStatus
   (ONNXIFI_ABI* onnxReleaseEventFunction)(
     onnxEvent event);
 typedef ONNXIFI_CHECK_RESULT onnxStatus
@@ -1005,7 +1005,7 @@ typedef ONNXIFI_CHECK_RESULT onnxStatus
     onnxGraph graph,
     const onnxMemoryFenceV1* inputFence,
     onnxMemoryFenceV1* outputFence);
-typedef ONNXIFI_CHECK_RESULT onnxStatus
+typedef onnxStatus
   (ONNXIFI_ABI* onnxReleaseGraphFunction)(
     onnxGraph graph);
 
@@ -1089,7 +1089,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       implementation experienced an
  *                                       unrecovered internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
   onnxReleaseBackendID(
     onnxBackendID backendID);
 
@@ -1383,7 +1383,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       backend experienced an unrecovered
  *                                       internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
   onnxReleaseBackend(
     onnxBackend backend);
 
@@ -1524,7 +1524,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       implementation experienced an
  *                                       unrecovered internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
   onnxReleaseEvent(
     onnxEvent event);
 
@@ -1991,7 +1991,7 @@ ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
  *                                       graph backend experienced an
  *                                       unrecovered internal error.
  */
-ONNXIFI_PUBLIC ONNXIFI_CHECK_RESULT onnxStatus ONNXIFI_ABI
+ONNXIFI_PUBLIC onnxStatus ONNXIFI_ABI
   onnxReleaseGraph(
     onnxGraph graph);
 
