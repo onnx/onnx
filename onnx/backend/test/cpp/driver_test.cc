@@ -5,6 +5,13 @@
 #include "onnx/onnxifi_loader.h"
 #include "onnx/string_utils.h"
 
+/**
+ *	In order to not test the backend itself
+ *	but only to test the funcionality of this test driver,
+ *	include IO and integrity checkers,
+ *	please set ONNXIFI_DUMMY_BACKEND to be true when compiling.
+ *	By default it is false.
+ */
 #ifndef ONNXIFI_DUMMY_BACKEND
 #define ONNXIFI_DUMMY_BACKEND false
 #endif
@@ -25,12 +32,12 @@ class CompareOnnxifiData {
   }
 };
 class ONNXCppDriverTest
-    : public testing::TestWithParam<ONNX_NAMESPACE::testing::ProtoTestCase> {
+    : public testing::TestWithParam<ONNX_NAMESPACE::testing::ResolvedTestCase> {
  protected:
-  std::vector<ONNX_NAMESPACE::testing::ProtoTestData> protos_;
+  std::vector<ONNX_NAMESPACE::testing::ResolvedTestData> protos_;
   ONNX_NAMESPACE::ModelProto model_;
   void SetUp() override {
-    ONNX_NAMESPACE::testing::ProtoTestCase t = GetParam();
+    ONNX_NAMESPACE::testing::ResolvedTestCase t = GetParam();
     protos_ = t.proto_test_data_;
     model_ = t.model_;
   }

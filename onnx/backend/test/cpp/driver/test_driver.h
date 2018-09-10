@@ -15,11 +15,11 @@ namespace testing {
  *	No real data was loaded in this type of class,
  *	but only data location.
  */
-struct TestData {
+struct UnsolvedTestData {
   std::vector<std::string> input_filenames_;
   std::vector<std::string> output_filenames_;
-  TestData() {}
-  TestData(
+  UnsolvedTestData() {}
+  UnsolvedTestData(
       const std::vector<std::string>& input_filenames,
       const std::vector<std::string>& output_filenames)
       : input_filenames_(input_filenames),
@@ -32,20 +32,20 @@ struct TestData {
  *	No real data was loaded in this type of class,
  *	but only data location.
  */
-struct TestCase {
-  TestCase(
+struct UnsolvedTestCase {
+  UnsolvedTestCase(
       const std::string& model_filename,
       const std::string& model_dirname,
-      const std::vector<TestData>& test_data)
+      const std::vector<UnsolvedTestData>& test_data)
       : model_filename_(model_filename),
         model_dirname_(model_dirname),
         test_data_(test_data) {}
 
-  TestCase() {}
+  UnsolvedTestCase() {}
 
   std::string model_filename_;
   std::string model_dirname_;
-  std::vector<TestData> test_data_;
+  std::vector<UnsolvedTestData> test_data_;
 };
 
 /**
@@ -53,7 +53,7 @@ struct TestCase {
  *	including raw input/output and protos
  *	Real data was loaded in this type of class..
  */
-struct ProtoTestData {
+struct ResolvedTestData {
   std::vector<ONNX_NAMESPACE::TensorProto> inputs_;
   std::vector<ONNX_NAMESPACE::TensorProto> outputs_;
 };
@@ -63,9 +63,9 @@ struct ProtoTestData {
  *	including raw model, model proto and several chunks of test data.
  *	Real data was loaded in this type of class.
  */
-struct ProtoTestCase {
+struct ResolvedTestCase {
   ONNX_NAMESPACE::ModelProto model_;
-  std::vector<ProtoTestData> proto_test_data_;
+  std::vector<ResolvedTestData> proto_test_data_;
 };
 
 /**
@@ -76,7 +76,7 @@ class TestDriver {
 
  public:
   void SetDefaultDir(const std::string& s);
-  std::vector<TestCase> testcases_;
+  std::vector<UnsolvedTestCase> testcases_;
   TestDriver(const std::string& default_dir = ".") {
     default_dir_ = default_dir_;
   }
@@ -100,7 +100,7 @@ class TestDriver {
   void FetchSingleTestCase(const std::string& case_dir);
 };
 
-std::vector<TestCase> GetTestCase();
+std::vector<UnsolvedTestCase> GetTestCase();
 
 /**
  *	Load one proto file from filename as string to filedata.
@@ -110,13 +110,14 @@ void LoadSingleFile(const std::string& filename, std::string& filedata);
 /**
  *	Load one test case.
  */
-ProtoTestCase LoadSingleTestCase(const TestCase& t);
+ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t);
 
 /**
  *	Load all test cases.
  */
-std::vector<ProtoTestCase> LoadAllTestCases(const std::string& location);
-std::vector<ProtoTestCase> LoadAllTestCases(const std::vector<TestCase>& t);
+std::vector<ResolvedTestCase> LoadAllTestCases(const std::string& location);
+std::vector<ResolvedTestCase> LoadAllTestCases(
+    const std::vector<UnsolvedTestCase>& t);
 
 } // namespace testing
 } // namespace ONNX_NAMESPACE
