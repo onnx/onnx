@@ -41,7 +41,7 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
   std::string model_name = case_dir;
   model_name += "model.onnx";
   if (FileExists(model_name)) {
-    TestCase test_case;
+    UnsolvedTestCase test_case;
     test_case.model_filename_ = model_name;
     test_case.model_dirname_ = case_dir;
     for (int case_count = 0;; case_count++) {
@@ -72,7 +72,7 @@ void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
           output_filenames.emplace_back(std::move(output_name));
         }
       }
-      TestData test_data(input_filenames, output_filenames);
+      UnsolvedTestData test_data(input_filenames, output_filenames);
       test_case.test_data_.emplace_back(std::move(test_data));
     }
     testcases_.emplace_back(std::move(test_case));
@@ -161,7 +161,7 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
 return true;
 }
 
-std::vector<TestCase> GetTestCase(const std::string& location) {
+std::vector<UnsolvedTestCase> GetTestCase(const std::string& location) {
   TestDriver test_driver;
   test_driver.FetchAllTestCases(location);
   return test_driver.testcases_;
@@ -187,15 +187,15 @@ void LoadSingleFile(const std::string& filename, std::string& filedata) {
   }
 }
 
-ProtoTestCase LoadSingleTestCase(const TestCase& t) {
-  ProtoTestCase st;
+ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
+  ResolvedTestCase st;
   std::string raw_model;
   LoadSingleFile(t.model_filename_, raw_model);
   ONNX_NAMESPACE::ParseProtoFromBytes(
       &st.model_, raw_model.c_str(), raw_model.size());
 
   for (auto& test_data : t.test_data_) {
-    ProtoTestData proto_test_data;
+    ResolvedTestData proto_test_data;
 
     for (auto& input_file : test_data.input_filenames_) {
       std::string input_data;
@@ -217,13 +217,14 @@ ProtoTestCase LoadSingleTestCase(const TestCase& t) {
   return st;
 }
 
-std::vector<ProtoTestCase> LoadAllTestCases(const std::string& location) {
-  std::vector<TestCase> t = GetTestCase(location);
+std::vector<ResolvedTestCase> LoadAllTestCases(const std::string& location) {
+  std::vector<UnsolvedTestCase> t = GetTestCase(location);
   return LoadAllTestCases(t);
 }
 
-std::vector<ProtoTestCase> LoadAllTestCases(const std::vector<TestCase>& t) {
-  std::vector<ProtoTestCase> st;
+std::vector<ResolvedTestCase> LoadAllTestCases(
+    const std::vector<UnsolvedTestCase>& t) {
+  std::vector<ResolvedTestCase> st;
   for (const auto& i : t) {
     st.push_back(LoadSingleTestCase(i));
   }
