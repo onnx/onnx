@@ -3,22 +3,23 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-from collections import namedtuple
 import sys
 
+import onnx.defs
+import numpy as np  # type: ignore
+from onnx import ModelProto
+from typing import List, Optional, Text, Sequence
 from ..utils import import_recursive
-
-TestCase = namedtuple('TestCase', [
-    'name', 'model_name',
-    'url',
-    'model_dir',
-    'model', 'data_sets',
-    'kind',
-])
+from ..test_case import TestCase
 
 _SimpleModelTestCases = []
 
-def expect(model, inputs, outputs, name=None):
+
+def expect(model,  # type: ModelProto
+           inputs,  # type: Sequence[np.ndarray]
+           outputs,  # type: Sequence[np.ndarray]
+           name=None,  # type: Optional[Text]
+           ):  # type: (...) -> None
     name = name or model.graph.name
     _SimpleModelTestCases.append(
         TestCase(
@@ -32,9 +33,11 @@ def expect(model, inputs, outputs, name=None):
         ))
 
 
-BASE_URL = 'https://s3.amazonaws.com/download.onnx/models'
+BASE_URL = 'https://s3.amazonaws.com/download.onnx/models/opset_{}'.format(
+    onnx.defs.onnx_opset_version())
 
-def collect_testcases():
+
+def collect_testcases():  # type: () -> List[TestCase]
     '''Collect model test cases defined in python/numpy code and in model zoo.
     '''
 
@@ -48,8 +51,8 @@ def collect_testcases():
         ('test_resnet50', 'resnet50'),
         ('test_shufflenet', 'shufflenet'),
         ('test_squeezenet', 'squeezenet'),
-        ('test_vgg16', 'vgg16'),
         ('test_vgg19', 'vgg19'),
+        ('test_zfnet512', 'zfnet512'),
     ]
 
     for test_name, model_name in model_tests:
@@ -63,7 +66,6 @@ def collect_testcases():
             data_sets=None,
             kind='real',
         ))
-
 
     import_recursive(sys.modules[__name__])
 

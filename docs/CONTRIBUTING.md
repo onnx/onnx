@@ -30,7 +30,7 @@ Then, after you have made changes to Python and C++ files:
 
 ## Generated operator documentation
 
-[Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions. To refresh these docs, run the following command from the repo root and commit the results:
+[Operator docs in Operators.md](Operators.md) are automatically generated based on C++ operator definitions. To refresh these docs, remember to re-install (see above) and then run the following command from the repo root and commit the results:
 
 ```
 python onnx/defs/gen_doc.py
@@ -51,6 +51,29 @@ pytest
 ```
 
 to begin the tests.
+
+# Static typing (mypy)
+
+We use [mypy](http://mypy-lang.org/) to run static type checks on the onnx code base. To check that your code passes, you'll first need to install the mypy type checker. If you're using python 3, call from your onnx source folder:
+
+```
+pip install -e .[mypy]
+```
+
+The type checker cannot run in a python 2 environment (but it will check python 2 code).
+If you're using python 2, you need to install mypy into your system packages instead:
+
+```
+pip3 install mypy==[version]
+```
+*Note: You'll find the version we're currently using in `setup.py`.*
+
+After having installed mypy, you can run the type checks:
+
+```
+python setup.py typecheck
+```
+
 
 # Other developer documentation
 

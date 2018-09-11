@@ -11,17 +11,21 @@ ONNX defines the versioning policy and mechanism for three classes of entities:
 * Operator specifications that may be referenced by a given ONNX graph. We refer to this as the *operator version*.
 * A defined/trained model that defines a specific graph in terms of specific operators. We refer to this version as the *model version*. 
 
-The versioning of all three of these entity types is distinct, and largely independent. That is, the ONNX IR format evolves at a different rate than the set operators defined by ONNX – in which the former will version much slower than the latter.
+The versioning of all three of these entity types is distinct and largely independent. That is, the ONNX IR format evolves at a different rate than the set operators defined by ONNX – in which the former will version much slower than the latter.
 
-While the versioning mechanisms are clearly specified in this document, the policies for version management are only mandated for IR version and operator version.
+While the versioning mechanisms are clearly specified in this document, specific policies for version management are mandated only for IR version and operator version. For model versioning, they are merely recommendations. For model version, ONNX users and systems MAY follow whichever local customs make sense; however, to facilitate easily managing shared collections of ONNX models, they SHOULD adhere to the policies described under model versioning.
 
-For model version, ONNX users and systems MAY follow whichever local customs make sense, however, to facilitate shared libraries or repositories of ONNX models to be manageable, models SHOULD adhere to the policies described under model versioning.
+In addition to versioning ONNX entities, progressive ONNX _releases_ are assigned increasing version numbers. The release versioning scheme is not described as part of the standard itself. It is discussed in the [ONNX release management document](../RELEASE-MANAGEMENT.md).
+
+### Semantic Versioning or Simple Numbers?
+
+The ONNX versioning system allows for simple monotonically increasing numbers or semantic versioning. For IR and operator sets, versioning is based on simple numbers. For models, ONNX does not proscribe one or the other methodology, but (as stated earlier) recommends a set of shared conventions.
+
+Which versioning scheme is in use by a model is made clear by inspecting the most significant four bytes, which MUST be non-zero when using semantic versioning and MUST be zero when using simple numbers. In other words, when using semver, at least one of the MAJOR or MINOR numbers must be non-zero.
 
 ### SemVer, Files and Frameworks
 
-ONNX builds on the principles and syntax defined by [SemVer 2.0.0](http://semver.org/spec/v2.0.0.html). Throughout this document, we use the terms *breaking change*, *non-breaking change*, and *patch* consistent with SemVer 2.0.0.
-
-The SemVer specification is written in terms of the dependencies between the caller and callee of a given API.  With respect to operator definitions, the NodeProto represents the caller, and the operator specification represents the callee.
+For model and release versioning, ONNX builds on the principles and syntax defined by [SemVer 2.0.0](http://semver.org/spec/v2.0.0.html). Throughout this document, we use the terms *breaking change*, *non-breaking change*, and *patch* consistent with SemVer 2.0.0.
 
 Because ONNX models are serialized files (not APIs), it's worth making clear how the dependency between a serialized model and a piece of software that consumes that model relate.  As a rough approximation, the serialized model plays the role of an API's *callee*, while the consumer of the serialized model plays the role of the API's *caller*.
 
@@ -34,23 +38,26 @@ The ONNX versioning principles are based on [Postel's law](https://en.wikipedia.
 The operational rules specifying how the ONNX project is managed are documented [here](../RELEASE-MANAGEMENT.md).
 
 ### Serializing SemVer version numbers in protobuf
-For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 32-bit integer; the most significant byte is the MAJOR component, the second most significant byte is the MINOR component, the least significant two bytes are the PATCH component.
 
-For example, *1.2.345* is represented as *0x01020159*.
+For efficiency, ONNX serializes the MAJOR, MINOR, and PATCH values as a bit-packed 64-bit integer; the two most significant byte is the MAJOR component, the second two most significant byte is the MINOR component, the least significant four bytes are the PATCH component.
 
-The prerelease and build metadata aren't stored in the model.
+For example, *1.2.345* is represented as *0x0001000200000159*.
+
+Pre-release and build metadata are not stored in the model.
 
 ## IR versioning
 
-Changes to the file format or abstract graph semantics version atomically. Breaking changes to the format or semantics of the ONNX specification require an increment of the MAJOR version.  Non-breaking format or semantic changes that introduce new functionality require an increment of the MINOR version. Non-breaking changes to the specification that simply clarify spec ambiguities require an increment of the PATCH version.
+The IR file format is versioned using simple numbers, which MUST be monotonically increasing. Breaking changes to the format or semantics of the ONNX specification require an increment of the version. Non-breaking changes to the IR format do not require changing the version number. 
+
+NOTE: breaking changes include those that do not alter the serialized binary format, but still break software using libraries that write or read it. For example, changing the spelling of a message property will cause code accessing the property break.
 
 The ONNX IR format adheres to the versioning guidelines defined in the [Updating a Message Type](https://developers.google.com/protocol-buffers/docs/proto3#updating) section of the proto3 specification.
 
-As a general principle, implementations SHOULD be robust in the face of missing fields. However, to ensure basic interoperation, a subset of message fields will be marked as required for a given IR version and all producers MUST set these fields correctly. Required fields always are marked with the comment:
+As a general principle, implementations SHOULD be robust in the face of missing fields. However, to ensure basic interoperation, a subset of message fields will be marked as required for a given IR version and all producers MUST set these fields correctly. Required fields MUST always be marked with the comment:
 
     // This field MUST be present for this version of the IR.
 
-For example, the `ModelProto.ir_version` MUST be present in every model.  The ONNX checker (`onnx/checker.py`) will enforce these rules.
+For example, the `ModelProto.ir_version` property MUST be present in every model. The ONNX checker (`onnx/checker.py`) will enforce these rules.
 
 Because onnx.proto is expected to be consumed by multiple independent developers, changes to onnx.oroto SHOULD NOT break code that depends on generated language bindings (e.g., changing the type of an existing field).
 
@@ -92,27 +99,24 @@ operator id MUST be greater than any extant `op_version` for the
 > 3. Update the `SinceVersion` signifier to the new max version from
 >    step (1).
 
-ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set
-specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover,
-the opset version MUST be no less than the highest operator version number in the set.
+ONNX uses operator sets to group together immutable operator specifications. An ONNX operator set specifies both the domain of all operators it includes, as well as an opset version. The opset version is largely independent from the version field of the operators it includes. When the inventory of a given operator set changes either by addition or removal, its opset version MUST increase. Moreover, the opset version MUST be no less than the highest operator version number in the set.
 
-ONNX models declare which operator sets they require as a list of two part operator ids (domain, opset_version).  The empty string ("") domain indicates the operators defined as part of the 
-ONNX specification; other domains correspond to operator sets of other vendors (e.g., they can be used to provide vendor-specific extensions to ONNX). The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.
+ONNX models declare which operator sets they require as a list of two part operator ids (domain, opset_version).  The empty string ("") domain indicates the operators defined as part of the  ONNX specification; other domains correspond to operator sets of other vendors (e.g., they can be used to provide vendor-specific extensions to ONNX). The union of the operator sets specified by a given model MUST have a compatible operator declaration for each node in the model's graph.
 
 How nodes bind to operator declarations is strictly defined, and are designed to increase model compatibility across ONNX implementations (appealing to the conservative clause of the robustness principle). 
 
-How ONNX implementations bind an operator declaration to specific implementation is outside the scope of this specification.
-Implementations of ONNX MAY elect to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle.
+How ONNX implementations bind an operator declaration to specific implementation is outside the scope of this specification. Implementations of ONNX MAY elect to introduce more sophisticated operator declaration/implementation binding modes to appeal to the liberal clause of the robustness principle.
 
 ## Model versioning
 
-Model versioning is ultimately the domain of a given organization, and therefor, this section of the specification is non-normative and simply proposes a set of practices to consider.
+Model versioning is ultimately the domain of a given organization. Therefore, this section of the specification is not normative. It simply outlines a set of recommended practices.
 
 Model authors and applications/systems MAY elect to ignore the model versioning mechanism and policy rules. For models that will be shared across developers, teams, or organizations, model authors and applications/systems SHOULD adhere to the following version policies:
 
 ISSUE: the following is a strawman. I'm confident some of it is right and some is wrong. Either way, we need to make some calls and document it.  Also note that A LOT of this will likely apply to operators, as both operators and graphs have signatures AND can be versioned.
 
 ### Signature Changes
+
 1. Breaking changes to the ModelProto.graph.GraphProto.input or .output MUST increment the MAJOR version of `ModelProto.model_version`. Breaking changes include:
 
     * Breaking changes to the semantics of an input or output (e.g., changing the required contents of an input tensor from a color image to a black and white image).

@@ -9,6 +9,7 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
+*.pyd
 
 # Compiled Static libraries
 *.lai
@@ -18,8 +19,10 @@
 # Compiled protocol buffers
 *.pb.h
 *.pb.cc
-*_pb2.py
-*_pb.py
+onnx/*_pb2.py
+onnx/*_pb.py
+onnx/*_pb2.pyi
+onnx/*_pb.pyi
 
 # Compiled python
 *.pyc
@@ -63,6 +66,7 @@ build
 build_*
 .build_debug/*
 .build_release/*
+.setuptools-cmake-build/*
 
 # setup.py intermediates
 .eggs
@@ -81,6 +85,16 @@ compile_commands.json
 .cache
 .coverage
 onnx/examples/.coverage.nbval
+.pytest_cache
+test_report
 
 # autocomplete
 .ycm_extra_conf.py
+
+# test coverage data files
+*.gcov
+
+.mypy_cache
+virtualenv
+venv
+

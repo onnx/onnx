@@ -2,3 +2,6 @@
 	path = third_party/pybind11
 	url = https://github.com/pybind/pybind11.git
 	branch = master
+[submodule "third_party/benchmark"]
+	path = third_party/benchmark
+	url = https://github.com/google/benchmark.git

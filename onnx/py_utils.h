@@ -3,7 +3,7 @@
 #include <pybind11/pybind11.h>
 #include "onnx/proto_utils.h"
 
-namespace onnx {
+namespace ONNX_NAMESPACE {
 namespace py = pybind11;
 
 template <typename Proto>
@@ -15,4 +15,4 @@ bool ParseProtoFromPyBytes(Proto* proto, const py::bytes& bytes) {
 
   return ParseProtoFromBytes(proto, buffer, length);
 }
-} // namespace onnx
+} // namespace ONNX_NAMESPACE
