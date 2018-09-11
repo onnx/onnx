@@ -10,7 +10,7 @@ export CMAKE_ARGS="-DONNX_WERROR=ON"
 if [[ -n "USE_LITE_PROTO" ]]; then
     export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
 fi
-
+export CMAKE_ARGS="${CMAKE_ARGS} -DONNXIFI_DUMMY_BACKEND=ON"
 export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
 
 time python setup.py bdist_wheel --universal --dist-dir .
