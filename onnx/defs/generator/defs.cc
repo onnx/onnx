@@ -34,6 +34,121 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
+static const char* Ones_ver1_doc = R"DOC(
+Generate an all-ones tensor of a specific shape. The shape of the output tensor is specified as input argument. 
+The data type can be specified by the 'dtype' argument.
+
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Ones,
+    1,
+    OpSchema()
+        .SetDoc(Ones_ver1_doc)
+        .Attr("shape",
+            "(Required) The shape of the output tensor.",
+             AttributeProto::INTS)
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor, if not specified,"
+            "the output will be tensor(float).",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Output(
+            0,
+            "output",
+            "Output tensor.",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+static const char* OnesLike_ver1_doc = R"DOC(
+Generate an all-ones tensor. The shape of the output tensor is copied from the shape of the input tensor. 
+The data type is specified by the 'dtype' argument, or copied from the input tensor if 'dtype' is not provided.
+
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    OnesLike,
+    1,
+    OpSchema()
+        .SetDoc(OnesLike_ver1_doc)
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor, if not specified,"
+            "the data type of the input tensor T1 is used.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(
+            0,
+            "input",
+            "Input tensor to copy shape, and optionally, type information from.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Output tensor, same shape as input tensor T1.",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain input types. Strings and complex are not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 static const char* RandomUniform_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
@@ -326,6 +441,121 @@ ONNX_OPERATOR_SET_SCHEMA(
           } // else statically-unknown batch-size
           sample_size.set_dim_value(getAttribute(ctx, "sample_size", 1));
           updateOutputShape(ctx, 0, {batch_size, sample_size});
+        }));
+
+static const char* Zeros_ver1_doc = R"DOC(
+Generate an all-zeros tensor of a specific shape. The shape of the output tensor is specified as input argument. 
+The data type can be specified by the 'dtype' argument.
+
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Zeros,
+    1,
+    OpSchema()
+        .SetDoc(Zeros_ver1_doc)
+        .Attr("shape",
+            "(Required) The shape of the output tensor.",
+             AttributeProto::INTS)
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor, if not specified,"
+            "the output will be tensor(float).",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Output(
+            0,
+            "output",
+            "Output tensor.",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+static const char* ZerosLike_ver1_doc = R"DOC(
+Generate an all-zeros tensor. The shape of the output tensor is copied from the shape of the input tensor. 
+The data type is specified by the 'dtype' argument, or copied from the input tensor if 'dtype' is not provided.
+
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ZerosLike,
+    1,
+    OpSchema()
+        .SetDoc(ZerosLike_ver1_doc)
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor, if not specified,"
+            "the data type of the input tensor T1 is used.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(
+            0,
+            "input",
+            "Input tensor to copy shape, and optionally, type information from.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Output tensor, same shape as input tensor T1.",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain input types. Strings and complex are not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
         }));
 
 } // namespace ONNX_NAMESPACE
