@@ -77,6 +77,7 @@ function(AddTest)
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
                            )
+
   endif()
 
   set(TEST_ARGS)

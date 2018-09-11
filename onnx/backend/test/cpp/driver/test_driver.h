@@ -14,6 +14,7 @@ namespace testing {
  *	includng input and output.
  *	No real data was loaded in this type of class,
  *	but only data location.
+ *  Data loading is unsolved, this class CANNOT be treated as real data.
  */
 struct UnsolvedTestData {
   std::vector<std::string> input_filenames_;
@@ -31,6 +32,7 @@ struct UnsolvedTestData {
  *	including one model file and several chunks of test data
  *	No real data was loaded in this type of class,
  *	but only data location.
+ *  Data loading is unsolved, this class CANNOT be treated as real data.
  */
 struct UnsolvedTestCase {
   UnsolvedTestCase(
@@ -50,8 +52,9 @@ struct UnsolvedTestCase {
 
 /**
  *	Store one chunk of test data,
- *	including raw input/output and protos
- *	Real data was loaded in this type of class..
+ *	including raw input/output and protos.
+ *	Real data was loaded in this type of class.
+ *	Data loading is resolved, this class may contains large chunk of data.
  */
 struct ResolvedTestData {
   std::vector<ONNX_NAMESPACE::TensorProto> inputs_;
@@ -62,6 +65,7 @@ struct ResolvedTestData {
  *	Store one test model,
  *	including raw model, model proto and several chunks of test data.
  *	Real data was loaded in this type of class.
+ *	Data loading is resolved, this class may contains large chunk of data.
  */
 struct ResolvedTestCase {
   ONNX_NAMESPACE::ModelProto model_;
