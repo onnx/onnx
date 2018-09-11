@@ -33,8 +33,9 @@ class Ones(Base):
             shape=shape,
             inputs=[],
             outputs=['y'],
-            dtype=1, # 1: FLOAT
+            dtype=1,  # 1: FLOAT
         )
         
         y = np.ones(shape, dtype=np.float32)
         expect(node, inputs=[], outputs=[y], name='test_ones_dim_with_dtype')
+        

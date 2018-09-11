@@ -30,7 +30,7 @@ class OnesLike(Base):
             'OnesLike',
             inputs=['x'],
             outputs=['y'],
-            dtype=1, # 1: FLOAT
+            dtype=1,  # 1: FLOAT
         )
         shape = (2, 5, 1)
         x = np.random.randint(0, 100, size=shape, dtype=np.int32)

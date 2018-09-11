@@ -33,8 +33,9 @@ class Zeros(Base):
             shape=shape,
             inputs=[],
             outputs=['y'],
-            dtype=1, # 1: FLOAT
+            dtype=1,  # 1: FLOAT
         )
         
         y = np.zeros(shape, dtype=np.float32)
         expect(node, inputs=[], outputs=[y], name='test_zeros_dim_with_dtype')
+        

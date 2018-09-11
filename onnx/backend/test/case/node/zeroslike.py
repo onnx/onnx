@@ -30,9 +30,10 @@ class ZerosLike(Base):
             'ZerosLike',
             inputs=['x'],
             outputs=['y'],
-            dtype=1, # 1: FLOAT
+            dtype=1,  # 1: FLOAT
         )
         shape = (2, 5, 1)
         x = np.random.randint(0, 100, size=shape, dtype=np.int32)
         y = np.zeros(shape, dtype=np.float32)
         expect(node, inputs=[x], outputs=[y], name='test_zeroslike_dim_with_dtype')
+        
