@@ -19,23 +19,23 @@ class ConstantLike(Base):
             'ConstantLike',
             inputs=['x'],
             outputs=['y'],
+            value=1.0,
         )        
         x = np.random.randint(0, 100, size=shape, dtype=np.int32)
         y = np.ones(shape, dtype=np.int32)
         expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
 
     @staticmethod
-    def export_zeros_with_input_and_dtype():  # type: () -> None
+    def export_zeros_without_input_dtype():  # type: () -> None
+        shape = (2, 5, 1)
         node = onnx.helper.make_node(
             'ConstantLike',
-            inputs=['x'],
+            inputs=[],
             outputs=['y'],
-            dtype=1,  # 1: FLOAT
+            shape=shape,
         )
-        shape = (2, 5, 1)
-        x = np.random.randint(0, 100, size=shape, dtype=np.int32)
-        y = np.ones(shape, dtype=np.float32)
-        expect(node, inputs=[x], outputs=[y], name='test_constantlike_zeros_with_input_and_dtype')
+        y = np.zeros(shape, dtype=np.float32)
+        expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 
     @staticmethod
     def export_threes_with_shape_and_dtype():  # type: () -> None
