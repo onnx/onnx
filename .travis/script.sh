@@ -5,7 +5,9 @@ source "${script_path%/*}/setup.sh"
 
 # onnx c++ API tests
 export LD_LIBRARY_PATH="${top_dir}/.setuptools-cmake-build/:$LD_LIBRARY_PATH"
-find .setuptools-cmake-build/ -name "onnx_gtests" -ls -exec {} \;
+# do not use find -exec here, it would ignore the segement fault of gtest.
+./.setuptools-cmake-build/onnx_gtests
+./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
 
 # onnx python API tests
 pip install pytest-cov nbval

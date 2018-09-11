@@ -23,6 +23,7 @@ option(ONNX_WERROR "Build with Werror" OFF)
 option(ONNX_COVERAGE "Build with coverage instrumentation" OFF)
 option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
+option(ONNXIFI_DUMMY_BACKEND "Use dummy backend in onnxifi test driver." OFF)
 
 set(ONNX_NAMESPACE "onnx" CACHE STRING "onnx namespace")
 
@@ -560,7 +561,9 @@ if(NOT ANDROID AND NOT IOS)
   install(TARGETS onnxifi_wrapper
     EXPORT ONNXTargets DESTINATION lib)
 endif()
-
+if(ONNXIFI_DUMMY_BACKEND)
+  add_definitions(-DONNXIFI_DUMMY_BACKEND=1)
+endif()
 if(ONNX_BUILD_TESTS)
   include(${ONNX_ROOT}/cmake/unittest.cmake)
 endif()
