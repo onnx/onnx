@@ -68,7 +68,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) The shape of the output tensor. If input tensor T1 is provided, then"
             " 'shape' attribute is ignored and the output follows the shape of the input."
             " One of either input tensor T1 or 'shape' attribute must be provided.",
-             AttributeProto::INTS)
+             AttributeProto::INTS,
+             OPTIONAL)
         .Input(
             0,
             "input",
