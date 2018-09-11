@@ -191,13 +191,66 @@ void InferShapeForFunctionNode(
   // To Generate unique internal tensor names
   // while preserving node's input/output names
   FunctionExpandHelper(node, func, g);
+  // Get a temproary tensor-shape map
+  std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
+  for (int i = 0; i < node.input_size(); ++i) {
+    TypeProto temp_type(*ctx.getInputType(i));
+    temp_valueTypesByName[node.input().Get(i)] = &temp_type;
+  }
+  // Get a temproary initial value map
+  std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
+  for (int i = 0; i < node.input_size(); ++i) {
+    temp_initializersByName[ctx.getInputData(i)->name()] = ctx.getInputData(i);
+  }
   for (auto& n : g.node()) {
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     if (!schema) {
       return;
     }
-    schema->GetTypeAndShapeInferenceFunction()(ctx);
+    InferenceContextImpl temp_ctx(
+        n, temp_valueTypesByName, temp_initializersByName);
+    schema->GetTypeAndShapeInferenceFunction()(temp_ctx);
+    for (int i = 0; i < n.output_size(); ++i) {
+      if (!temp_ctx.getOutputType(i)->has_tensor_type()) {
+        continue;
+      }
+      const auto& inferredType = temp_ctx.getOutputType(i)->tensor_type();
+
+      // Bail out early if shape inference does nothing useful.
+      if (inferredType.elem_type() == TensorProto::UNDEFINED &&
+          !inferredType.has_shape()) {
+        continue;
+      }
+
+      // Checking, Storing the inferred information
+      auto iter = temp_valueTypesByName.find(n.output(i));
+      TypeProto* existingType = nullptr;
+      if (iter != temp_valueTypesByName.end()) {
+        existingType = iter->second;
+        checkShapesAndTypes(inferredType, existingType->tensor_type());
+      } else {
+        // Store the inferred type info in the
+        // subgraph temproarily
+        auto vi = g.add_value_info();
+        vi->set_name(n.output(i));
+        existingType = vi->mutable_type();
+      }
+      mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
+      // Make merged info available to futher inference.
+      temp_valueTypesByName[n.output(i)] = existingType;
+    }
+  }
+  for (int i = 0; i < node.output_size(); ++i) {
+    std::string output_name = node.output().Get(i);
+    // Skip if no type inferred for the tensor
+    if (!temp_valueTypesByName.count(output_name)) {
+      continue;
+    }
+    // Copy the type info from subgraph to ctx
+    // to pass back to maingraph
+    auto type = ctx.getOutputType(i)->mutable_tensor_type();
+    type->CopyFrom(*temp_valueTypesByName[output_name]);
   }
 }
 
