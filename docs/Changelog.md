@@ -713,10 +713,10 @@ This version of the operator has been available since version 1 of the default O
 <dd>(Optional) The value for the elements of the output tensor. Default is 0.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (0 - 1)
 
 <dl>
-<dt><tt>input (Optional)</tt> : T1</dt>
+<dt><tt>input</tt> (optional) : T1</dt>
 <dd>Input tensor to copy shape, and optionally, type information from. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
 </dl>
 

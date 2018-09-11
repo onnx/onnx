@@ -1807,10 +1807,10 @@ This version of the operator has been available since version 1 of the default O
 <dd>(Optional) The value for the elements of the output tensor. Default is 0.</dd>
 </dl>
 
-#### Inputs
+#### Inputs (0 - 1)
 
 <dl>
-<dt><tt>input (Optional)</tt> : T1</dt>
+<dt><tt>input</tt> (optional) : T1</dt>
 <dd>Input tensor to copy shape, and optionally, type information from. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
 </dl>
 
@@ -1842,6 +1842,7 @@ node = onnx.helper.make_node(
     'ConstantLike',
     inputs=['x'],
     outputs=['y'],
+    value=1.0,
 )        
 x = np.random.randint(0, 100, size=shape, dtype=np.int32)
 y = np.ones(shape, dtype=np.int32)
@@ -1873,19 +1874,18 @@ expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_a
 
 
 <details>
-<summary>zeros_with_input_and_dtype</summary>
+<summary>zeros_without_input_dtype</summary>
 
 ```python
+shape = (2, 5, 1)
 node = onnx.helper.make_node(
     'ConstantLike',
-    inputs=['x'],
+    inputs=[],
     outputs=['y'],
-    dtype=1,  # 1: FLOAT
+    shape=shape,
 )
-shape = (2, 5, 1)
-x = np.random.randint(0, 100, size=shape, dtype=np.int32)
-y = np.ones(shape, dtype=np.float32)
-expect(node, inputs=[x], outputs=[y], name='test_constantlike_zeros_with_input_and_dtype')
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 ```
 
 </details>

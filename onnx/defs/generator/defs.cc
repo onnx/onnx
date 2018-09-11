@@ -71,10 +71,11 @@ ONNX_OPERATOR_SET_SCHEMA(
              AttributeProto::INTS)
         .Input(
             0,
-            "input (Optional)",
+            "input",
             "Input tensor to copy shape, and optionally, type information from."
             " One of either input tensor T1 or 'shape' attribute must be provided.",
-            "T1")
+            "T1",
+            OpSchema::Optional)
         .Output(
             0,
             "output",
