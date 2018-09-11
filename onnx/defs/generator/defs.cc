@@ -34,6 +34,89 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
+static const char* ConstantLike_ver1_doc = R"DOC(
+Generate a tensor with specific constant value. The value can be specified by the 'value' 
+attribute. The shape of the output tensor is the same as the input tensor, if the input 
+tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
+the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
+argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
+tensor is also not specified, then the type defaults to 'float'.
+
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ConstantLike,
+    1,
+    OpSchema()
+        .SetDoc(ConstantLike_ver1_doc)
+        .Attr(
+            "value",
+            "(Optional) The value for the elements of the output tensor. Default is 0.",
+            AttributeProto::FLOAT,
+            0.0f)
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor, if not specified,"
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not" 
+            "specified, then type defaults to 'float'.",
+            AttributeProto::FLOAT,
+            OPTIONAL)
+        .Attr(
+            "shape",
+            "(Optional) The shape of the output tensor. If input tensor T1 is provided, then"
+            " 'shape' attribute is ignored and the output follows the shape of the input."
+            " One of either input tensor T1 or 'shape' attribute must be provided.",
+             AttributeProto::INTS)
+        .Input(
+            0,
+            "input (Optional)",
+            "Input tensor to copy shape, and optionally, type information from."
+            " One of either input tensor T1 or 'shape' attribute must be provided.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Output tensor, same shape as input tensor T1.",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain input types. Strings and complex are not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+             "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
 static const char* RandomUniform_ver1_doc = R"DOC(
 Generate a tensor with random values drawn from a uniform distribution. The shape
 of the tensor is specified by the `shape` argument and the range by `low` and `high`.
