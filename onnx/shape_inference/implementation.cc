@@ -128,7 +128,7 @@ void InferShapes(
       }
       try {
         InferShapeForFunctionNode(
-            n, *func, schema_registry, domain_version, ctx);
+            n, *func, schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
         (void)ex;
         // Continue with inference for remaining nodes
@@ -184,8 +184,8 @@ void InferShapeForFunctionNode(
     const NodeProto& node,
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
-    int domain_version,
     InferenceContext& ctx) {
+  int domain_version = func.since_version();
   // Create a temproary graphproto to hold the expanded subgraph
   GraphProto g;
   // To Generate unique internal tensor names

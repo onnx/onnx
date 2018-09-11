@@ -100,7 +100,6 @@ void InferShapeForFunctionNode(
     const NodeProto& node,
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
-    int domain_version,
     InferenceContext& ctx);
 
 } // namespace shape_inference
