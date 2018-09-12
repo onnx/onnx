@@ -4,19 +4,6 @@
 #ifndef ONNX_ONNX_PB_H
 #define ONNX_ONNX_PB_H
 
-/**
- * Macro for marking functions as having public visibility.
- * Ported from folly/CPortability.h
- */
-#ifndef __GNUC_PREREQ
-#if defined __GNUC__ && defined __GNUC_MINOR__
-#define __GNUC_PREREQ(maj, min) \
-  ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
-#else
-#define __GNUC_PREREQ(maj, min) 0
-#endif
-#endif
-
 // Defines ONNX_EXPORT and ONNX_IMPORT. On Windows, this corresponds to
 // different declarations (dllexport and dllimport). On Linux/Mac, it just
 // resolves to the same "default visibility" setting.
@@ -30,11 +17,7 @@
 #endif
 #else
 #if defined(__GNUC__)
-#if __GNUC_PREREQ(4, 9)
-#define ONNX_EXPORT [[gnu::visibility("default")]]
-#else
 #define ONNX_EXPORT __attribute__((__visibility__("default")))
-#endif
 #else
 #define ONNX_EXPORT
 #endif
