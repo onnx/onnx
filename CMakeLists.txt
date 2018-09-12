@@ -118,11 +118,8 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
     return()
   endif()
 
-  if(MSVC AND BUILD_SHARED_LIBS)
-    set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
-  else()
-    set(ONNX_DLLEXPORT_STR "")
-  endif()
+  # Add ONNX_API prefix to protobuf classes and methods in all cases
+  set(ONNX_DLLEXPORT_STR "dllexport_decl=ONNX_API:")
 
   set(${SRCS})
   set(${HDRS})
