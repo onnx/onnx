@@ -271,6 +271,16 @@ target_include_directories(onnx_proto PUBLIC
   $<INSTALL_INTERFACE:include>
   ${PROTOBUF_INCLUDE_DIRS})
 
+if (MSVC)
+  if (BUILD_SHARED_LIBS)
+    set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
+  else()
+    set(ONNX_API_DEFINE "-DONNX_API=")
+  endif()
+else()
+  set(ONNX_API_DEFINE "-DONNX_API=")
+endif()
+target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
