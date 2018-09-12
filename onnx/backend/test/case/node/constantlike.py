@@ -20,7 +20,7 @@ class ConstantLike(Base):
             inputs=['x'],
             outputs=['y'],
             value=1.0,
-        )        
+        )
         x = np.random.randint(0, 100, size=shape, dtype=np.int32)
         y = np.ones(shape, dtype=np.int32)
         expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
@@ -48,6 +48,6 @@ class ConstantLike(Base):
             value=3.0,
             dtype=11,  # 11: DOUBLE
         )
-        
-        y = 3.0*np.ones(shape, dtype=np.float64)
+
+        y = 3.0 * np.ones(shape, dtype=np.float64)
         expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
