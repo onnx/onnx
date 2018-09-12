@@ -127,8 +127,7 @@ void InferShapes(
         continue;
       }
       try {
-        InferShapeForFunctionNode(
-            n, *func, schema_registry, ctx);
+        InferShapeForFunctionNode(*func, schema_registry, ctx);
       } catch (const ONNX_NAMESPACE::InferenceError& ex) {
         (void)ex;
         // Continue with inference for remaining nodes
@@ -181,37 +180,53 @@ void InferShapes(
 }
 
 void InferShapeForFunctionNode(
-    const NodeProto& node,
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx) {
-  int domain_version = func.since_version();
-  // Create a temproary graphproto to hold the expanded subgraph
+  int domain_version = (int)func.since_version();
   GraphProto g;
-  // To Generate unique internal tensor names
-  // while preserving node's input/output names
-  FunctionExpandHelper(node, func, g);
   // Get a temproary tensor-shape map
   std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
-  for (int i = 0; i < node.input_size(); ++i) {
+  for (int i = 0; i < func.input_size(); ++i) {
     TypeProto temp_type(*ctx.getInputType(i));
-    temp_valueTypesByName[node.input().Get(i)] = &temp_type;
+    temp_valueTypesByName[func.input().Get(i)] = &temp_type;
   }
   // Get a temproary initial value map
-  std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
-  for (int i = 0; i < node.input_size(); ++i) {
+  std::unordered_map<std::string, const ONNX_NAMESPACE::TensorProto*>
+      temp_initializersByName;
+  for (int i = 0; i < ctx.getNumInputs(); ++i) {
     temp_initializersByName[ctx.getInputData(i)->name()] = ctx.getInputData(i);
   }
-  for (auto& n : g.node()) {
+  std::unordered_map<std::string, const AttributeProto*> attr_map;
+  for (auto& attr : func.attribute()) {
+    if (ctx.getAttribute(attr) != nullptr) {
+      attr_map[attr] = ctx.getAttribute(attr);
+    }
+  }
+
+  for (auto& n : func.node()) {
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     if (!schema) {
       return;
     }
+    NodeProto copy_n(n);
+    // Add attribute information into the temproary node
+    copy_n.clear_attribute();
+    for (auto attr : n.attribute()) {
+      if (attr.has_ref_attr_name()) {
+        if (attr_map.count(attr.ref_attr_name())) {
+          copy_n.add_attribute()->CopyFrom(*attr_map[attr.ref_attr_name()]);
+        }
+      } else {
+        copy_n.add_attribute()->CopyFrom(attr);
+      }
+    }
+
     InferenceContextImpl temp_ctx(
-        n, temp_valueTypesByName, temp_initializersByName);
+        copy_n, temp_valueTypesByName, temp_initializersByName);
     schema->GetTypeAndShapeInferenceFunction()(temp_ctx);
-    for (int i = 0; i < n.output_size(); ++i) {
+    for (int i = 0; i < copy_n.output_size(); ++i) {
       if (!temp_ctx.getOutputType(i)->has_tensor_type()) {
         continue;
       }
@@ -233,16 +248,16 @@ void InferShapeForFunctionNode(
         // Store the inferred type info in the
         // subgraph temproarily
         auto vi = g.add_value_info();
-        vi->set_name(n.output(i));
+        vi->set_name(copy_n.output(i));
         existingType = vi->mutable_type();
       }
       mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
       // Make merged info available to futher inference.
-      temp_valueTypesByName[n.output(i)] = existingType;
+      temp_valueTypesByName[copy_n.output(i)] = existingType;
     }
   }
-  for (int i = 0; i < node.output_size(); ++i) {
-    std::string output_name = node.output().Get(i);
+  for (int i = 0; i < func.output_size(); ++i) {
+    std::string output_name = func.output().Get(i);
     // Skip if no type inferred for the tensor
     if (!temp_valueTypesByName.count(output_name)) {
       continue;

@@ -97,7 +97,6 @@ void InferShapes(
         &FunctionBuilderRegistry::OnnxInstance());
 
 void InferShapeForFunctionNode(
-    const NodeProto& node,
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
     InferenceContext& ctx);
