@@ -9,6 +9,8 @@ import io
 import os
 import sys
 
+import numpy as np
+
 from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
@@ -119,7 +121,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
                 def format_value(value):  # type: (Any) -> Any
                     if isinstance(value, float):
-                        value = round(value, 5)
+                        value = str(np.round(value, 5))
                     if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
                         value = value.decode('utf-8')
                     return value
