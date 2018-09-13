@@ -30,9 +30,10 @@ Supported pass names:
     -- eliminate_nop_transpose
     -- eliminate_nop_pad
     -- eliminate_unused_initializer
+    -- fuse_add_bias_into_conv
+    -- fuse_arithmetic_into_batch_norm
     -- fuse_consecutive_squeezes
     -- fuse_consecutive_transposes
-    -- fuse_add_bias_into_conv
     -- fuse_transpose_into_gemm
 """
 
