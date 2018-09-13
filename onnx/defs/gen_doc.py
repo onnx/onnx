@@ -8,7 +8,7 @@ import io
 import os
 from collections import defaultdict
 
-from onnx import defs, FunctionProto, OperatorStatus
+from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from typing import Text, Sequence, Dict, List, Type, Set, Tuple
@@ -109,10 +109,20 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
         s += '\n#### Attributes\n\n'
         s += '<dl>\n'
         for _, attr in sorted(schema.attributes.items()):
+            # option holds either required or default value
+            opt = ''
+            if attr.required:
+                opt = 'required'
+            elif attr.default_value.name:
+                default_value = helper.get_attribute_value(attr.default_value)
+                if isinstance(default_value, (bytes, bytearray)):
+                    default_value = default_value.decode('utf-8')
+                opt = 'default is {}'.format(default_value)
+
             s += '<dt><tt>{}</tt> : {}{}</dt>\n'.format(
                 attr.name,
                 display_attr_type(attr.type),
-                ' (required)' if attr.required else '')
+                ' ({})'.format(opt) if opt else '')
             s += '<dd>{}</dd>\n'.format(attr.description)
         s += '</dl>\n'
 
