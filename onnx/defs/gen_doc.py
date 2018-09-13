@@ -4,9 +4,10 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import defaultdict
 import io
 import os
-from collections import defaultdict
+import sys
 
 from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
@@ -115,8 +116,18 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
                 opt = 'required'
             elif attr.default_value.name:
                 default_value = helper.get_attribute_value(attr.default_value)
-                if isinstance(default_value, (bytes, bytearray)):
-                    default_value = default_value.decode('utf-8')
+
+                def format_value(value):
+                    if isinstance(value, float):
+                        value = round(value, 5)
+                    if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                        value = value.decode('utf-8')
+                    return value
+
+                if isinstance(default_value, list):
+                    default_value = [format_value(val) for val in default_value]
+                else:
+                    default_value = format_value(default_value)
                 opt = 'default is {}'.format(default_value)
 
             s += '<dt><tt>{}</tt> : {}{}</dt>\n'.format(

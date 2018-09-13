@@ -386,11 +386,11 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>consumed_inputs</tt> : list of ints (required)</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>epsilon</tt> : float (default is 9.999999747378752e-06)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
-<dt><tt>momentum</tt> : float (default is 0.8999999761581421)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
@@ -1704,7 +1704,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.20000000298023224)</dt>
+<dt><tt>alpha</tt> : float (default is 0.2)</dt>
 <dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float (default is 0.5)</dt>
 <dd>Value of beta default to 0.5</dd>
@@ -1909,7 +1909,7 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>epsilon</tt> : float (default is 9.999999747378752e-06)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 </dl>
 
@@ -1958,7 +1958,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 9.999999747378752e-05)</dt>
+<dt><tt>alpha</tt> : float (default is 0.0001)</dt>
 <dd>Scaling parameter, default is 1e-4f.</dd>
 <dt><tt>beta</tt> : float (default is 0.75)</dt>
 <dd>The exponent, default is 0.75f</dd>
@@ -2151,7 +2151,7 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.009999999776482582)</dt>
+<dt><tt>alpha</tt> : float (default is 0.01)</dt>
 <dd>Coefficient of leakage default to 0.01.</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
@@ -3287,7 +3287,7 @@ This version of the operator has been available since version 1 of the default O
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.For example with LeakyRelu, the default alpha is 0.01.</dd>
 <dt><tt>activation_beta</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
-<dt><tt>activations</tt> : list of strings (default is [b'Tanh', b'Tanh'])</dt>
+<dt><tt>activations</tt> : list of strings (default is ['Tanh', 'Tanh'])</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
@@ -4165,11 +4165,11 @@ This version of the operator has been available since version 1 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.673200011253357)</dt>
+<dt><tt>alpha</tt> : float (default is 1.6732)</dt>
 <dd>Coefficient of SELU default to 1.6732.</dd>
 <dt><tt>consumed_inputs</tt> : list of ints</dt>
 <dd>legacy optimization attribute.</dd>
-<dt><tt>gamma</tt> : float (default is 1.0506999492645264)</dt>
+<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
 <dd>Coefficient of SELU default to 1.0507.</dd>
 </dl>
 
@@ -5573,11 +5573,11 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 9.999999747378752e-06)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 <dt><tt>is_test</tt> : int (default is 0)</dt>
 <dd>If set to nonzero, run spatial batch normalization in test mode, default is 0.</dd>
-<dt><tt>momentum</tt> : float (default is 0.8999999761581421)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
@@ -6003,7 +6003,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.20000000298023224)</dt>
+<dt><tt>alpha</tt> : float (default is 0.2)</dt>
 <dd>Value of alpha default to 0.2</dd>
 <dt><tt>beta</tt> : float (default is 0.5)</dt>
 <dd>Value of beta default to 0.5</dd>
@@ -6046,7 +6046,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 9.999999747378752e-06)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
 </dl>
 
@@ -6088,7 +6088,7 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 0.009999999776482582)</dt>
+<dt><tt>alpha</tt> : float (default is 0.01)</dt>
 <dd>Coefficient of leakage default to 0.01.</dd>
 </dl>
 
@@ -6432,9 +6432,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>alpha</tt> : float (default is 1.6732631921768188)</dt>
+<dt><tt>alpha</tt> : float (default is 1.67326)</dt>
 <dd>Coefficient of SELU default to 1.67326319217681884765625 (i.e., float32 approximation of 1.6732632423543772848170429916717).</dd>
-<dt><tt>gamma</tt> : float (default is 1.0507010221481323)</dt>
+<dt><tt>gamma</tt> : float (default is 1.0507)</dt>
 <dd>Coefficient of SELU default to 1.05070102214813232421875 (i.e., float32 approximation of 1.0507009873554804934193349852946).</dd>
 </dl>
 
@@ -6913,9 +6913,9 @@ This version of the operator has been available since version 7 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>epsilon</tt> : float (default is 9.999999747378752e-06)</dt>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
 <dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
-<dt><tt>momentum</tt> : float (default is 0.8999999761581421)</dt>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
 <dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
@@ -7765,7 +7765,7 @@ This version of the operator has been available since version 7 of the default O
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.For example with LeakyRelu, the default alpha is 0.01.</dd>
 <dt><tt>activation_beta</tt> : list of floats</dt>
 <dd>Optional scaling values used by some activation functions. The values are consumed in the order of activation functions, for example (f, g, h) in LSTM. Default values are the same as of corresponding ONNX operators.</dd>
-<dt><tt>activations</tt> : list of strings (default is [b'Tanh', b'Tanh'])</dt>
+<dt><tt>activations</tt> : list of strings (default is ['Tanh', 'Tanh'])</dt>
 <dd>One (or two if bidirectional) activation function for input gate. The activation function must be one of the activation functions specified above. Optional: Default `Tanh` if not specified.</dd>
 <dt><tt>clip</tt> : float</dt>
 <dd>Cell clip threshold. Clipping bounds the elements of a tensor in the range of [-threshold, +threshold] and is applied to the input of activations. No clip if not specified.</dd>
