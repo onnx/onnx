@@ -4,24 +4,11 @@
 #ifndef ONNX_ONNX_PB_H
 #define ONNX_ONNX_PB_H
 
-/**
- * Macro for marking functions as having public visibility.
- * Ported from folly/CPortability.h
- */
-#ifndef __GNUC_PREREQ
-#if defined __GNUC__ && defined __GNUC_MINOR__
-#define __GNUC_PREREQ(maj, min) \
-  ((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
-#else
-#define __GNUC_PREREQ(maj, min) 0
-#endif
-#endif
-
 // Defines ONNX_EXPORT and ONNX_IMPORT. On Windows, this corresponds to
 // different declarations (dllexport and dllimport). On Linux/Mac, it just
 // resolves to the same "default visibility" setting.
 #if defined(_MSC_VER)
-#if defined(ONNX_BUILD_SHARED_LIBS)
+#if defined(ONNX_BUILD_SHARED_LIBS) || defined(ONNX_BUILD_MAIN_LIB)
 #define ONNX_EXPORT __declspec(dllexport)
 #define ONNX_IMPORT __declspec(dllimport)
 #else
@@ -30,11 +17,7 @@
 #endif
 #else
 #if defined(__GNUC__)
-#if __GNUC_PREREQ(4, 9)
-#define ONNX_EXPORT [[gnu::visibility("default")]]
-#else
 #define ONNX_EXPORT __attribute__((__visibility__("default")))
-#endif
 #else
 #define ONNX_EXPORT
 #endif
@@ -48,14 +31,19 @@
 // This is used in e.g. ONNX's protobuf files: when building the main library,
 // it is defined as ONNX_EXPORT to fix a Windows global-variable-in-dll
 // issue, and for anyone dependent on ONNX it will be defined as
-// ONNX_IMPORT.
-// This is a solution from https://github.com/caffe2/caffe2/blob/4f534fad1af9f77d4f0496ecd37dafb382330223/caffe2/core/common.h
-#ifndef ONNX_API
-#ifdef ONNX_BUILD_MAIN_LIB
+// ONNX_IMPORT. ONNX_BUILD_MAIN_LIB can also be set when being built
+// statically if ONNX is being linked into a shared library that wants
+// to export the ONNX APIs and classes.
+//
+// More details on Windows dllimport / dllexport can be found at
+// https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
+//
+// This solution is similar to
+// https://github.com/pytorch/pytorch/blob/master/caffe2/core/common.h
+#if defined(ONNX_BUILD_SHARED_LIBS) || defined(ONNX_BUILD_MAIN_LIB)
 #define ONNX_API ONNX_EXPORT
 #else
 #define ONNX_API ONNX_IMPORT
-#endif
 #endif
 
 #ifdef ONNX_ML
