@@ -272,7 +272,7 @@ target_include_directories(onnx_proto PUBLIC
   ${PROTOBUF_INCLUDE_DIRS})
 
 if (MSVC)
-  if (BUILD_SHARED_LIBS)
+  if (BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
   else()
     set(ONNX_API_DEFINE "-DONNX_API=")

@@ -8,7 +8,7 @@
 // different declarations (dllexport and dllimport). On Linux/Mac, it just
 // resolves to the same "default visibility" setting.
 #if defined(_MSC_VER)
-#if defined(ONNX_BUILD_SHARED_LIBS)
+#if defined(ONNX_BUILD_SHARED_LIBS) || defined(ONNX_BUILD_MAIN_LIB)
 #define ONNX_EXPORT __declspec(dllexport)
 #define ONNX_IMPORT __declspec(dllimport)
 #else
@@ -40,7 +40,7 @@
 //
 // This solution is similar to
 // https://github.com/pytorch/pytorch/blob/master/caffe2/core/common.h
-#ifdef ONNX_BUILD_MAIN_LIB
+#if defined(ONNX_BUILD_SHARED_LIBS) || defined(ONNX_BUILD_MAIN_LIB)
 #define ONNX_API ONNX_EXPORT
 #else
 #define ONNX_API ONNX_IMPORT
