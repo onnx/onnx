@@ -12,7 +12,7 @@ import sys
 from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
-from typing import Text, Sequence, Dict, List, Type, Set, Tuple
+from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
