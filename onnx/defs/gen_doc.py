@@ -119,7 +119,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             elif attr.default_value.name:
                 default_value = helper.get_attribute_value(attr.default_value)
 
-                def format_value(value):  # type: (Any) -> Any
+                def format_value(value):  # type: (Any) -> Text
                     if isinstance(value, float):
                         value = str(np.round(value, 5))
                     if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
