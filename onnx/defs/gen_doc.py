@@ -14,10 +14,8 @@ from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
 from typing import Text, Sequence, Dict, List, Type, Set, Tuple
 
-
 SNIPPETS = collect_snippets()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
-
 
 if ONNX_ML:
     ext = '-ml.md'
@@ -72,16 +70,19 @@ def display_domain_short(domain):  # type: (Text) -> Text
 def display_version_link(name, version):  # type: (Text, int) -> Text
     changelog_md = 'Changelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
-    return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
+    return '<a href="{}#{}">{}</a>'.format(changelog_md,
+                                           name_with_ver, name_with_ver)
 
 
 def display_function_version_link(name, version):  # type: (Text, int) -> Text
     changelog_md = 'FunctionsChangelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
-    return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
+    return '<a href="{}#{}">{}</a>'.format(changelog_md,
+                                           name_with_ver, name_with_ver)
 
 
-def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
+# type: (OpSchema, Sequence[OpSchema]) -> Text
+def display_schema(schema, versions):
     s = ''
 
     # doc
@@ -93,7 +94,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
     # since version
     s += '\n#### Version\n'
-    s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
+    s += '\nThis version of the operator has been ' + (
+        'deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
     s += ' of {}.\n'.format(display_domain(schema.domain))
     if len(versions) > 1:
         # TODO: link to the Changelog.md
@@ -120,7 +122,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
                 def format_value(value):
                     if isinstance(value, float):
                         value = round(value, 5)
-                    if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                    if isinstance(value, (bytes, bytearray)
+                                  ) and sys.version_info[0] == 3:
                         value = value.decode('utf-8')
                     return value
 
@@ -151,7 +154,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == input.option:
                 option_str = " (variadic)"
-            s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
+            s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(
+                input.name, option_str, input.typeStr)
             s += '<dd>{}</dd>\n'.format(input.description)
         s += '</dl>\n'
 
@@ -170,7 +174,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == output.option:
                 option_str = " (variadic)"
-            s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
+            s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(
+                output.name, option_str, output.typeStr)
             s += '<dd>{}</dd>\n'.format(output.description)
         s += '</dl>\n'
 
@@ -193,7 +198,8 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
     return s
 
 
-def display_function(function, versions, domain=ONNX_DOMAIN):  # type: (FunctionProto, List[int], Text) -> Text
+# type: (FunctionProto, List[int], Text) -> Text
+def display_function(function, versions, domain=ONNX_DOMAIN):
     s = ''
 
     if domain:
@@ -210,11 +216,15 @@ def display_function(function, versions, domain=ONNX_DOMAIN):  # type: (Function
 
     # since version
     s += '\n#### Version\n'
-    s += '\nThis version of the function has been available since version {}'.format(function.since_version)
+    s += '\nThis version of the function has been available since version {}'.format(
+        function.since_version)
     s += ' of {}.\n'.format(display_domain(domain_prefix))
     if len(versions) > 1:
         s += '\nOther versions of this function: {}\n'.format(
-            ', '.join(display_function_version_link(domain_prefix + function.name, v) for v in versions if v != function.since_version))
+            ', '.join(
+                display_function_version_link(
+                    domain_prefix + function.name,
+                    v) for v in versions if v != function.since_version))
 
     # inputs
     s += '\n#### Inputs'
@@ -251,8 +261,9 @@ def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
 
 
 def function_status_str(status=OperatorStatus.Value("EXPERIMENTAL")):  # type: ignore
-    return \
-        "<sub>experimental</sub> " if status == OperatorStatus.Value('EXPERIMENTAL') else ""  # type: ignore
+    # type: ignore
+    return "<sub>experimental</sub> " if status == OperatorStatus.Value(
+        'EXPERIMENTAL') else ""
 
 
 def main(args):  # type: (Type[Args]) -> None
@@ -264,7 +275,8 @@ def main(args):  # type: (Type[Args]) -> None
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> version -> [schema]
-        dv_index = defaultdict(lambda: defaultdict(list))  # type: Dict[Text, Dict[int, List[OpSchema]]]
+        # type: Dict[Text, Dict[int, List[OpSchema]]]
+        dv_index = defaultdict(lambda: defaultdict(list))
         for schema in defs.get_all_schemas_with_history():
             dv_index[schema.domain][schema.since_version].append(schema)
 
@@ -277,11 +289,15 @@ def main(args):  # type: (Type[Args]) -> None
             s = '# {}\n'.format(display_domain_short(domain))
 
             for version, unsorted_schemas in sorted(versionmap.items()):
-                s += '## Version {} of {}\n'.format(version, display_domain(domain))
+                s += '## Version {} of {}\n'.format(version,
+                                                    display_domain(domain))
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
-                    name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
-                                                   schema.since_version)
-                    s += ('### <a name="{}"></a>**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(name_with_ver, name_with_ver)
+                    name_with_ver = '{}-{}'.format(
+                        format_name_with_domain(
+                            domain, schema.name), schema.since_version)
+                    s += ('### <a name="{}"></a>**{}**' +
+                          (' (deprecated)' if schema.deprecated else '') +
+                          '</a>\n').format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
 
@@ -299,7 +315,8 @@ def main(args):  # type: (Type[Args]) -> None
         else:
             all_functions = defs.get_functions('')
 
-        changelog_versionmap = defaultdict(list)  # type: Dict[int, List[FunctionProto]]
+        # type: Dict[int, List[FunctionProto]]
+        changelog_versionmap = defaultdict(list)
         for fn_name, functions in sorted(all_functions.items()):
             for func in functions:
                 changelog_versionmap[func.since_version].append(func)
@@ -317,12 +334,16 @@ def main(args):  # type: (Type[Args]) -> None
         for version, function_list in sorted(changelog_versionmap.items()):
             s = ""
             for function in function_list:
-                s += '## Version {} of domain {}\n'.format(version, domain_display_name)
+                s += '## Version {} of domain {}\n'.format(
+                    version, domain_display_name)
                 name_with_ver = '{}-{}'.format(domain_prefix +
                                                fn_name, function.since_version)
-                s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
-                available_versions = [func.since_version for func in all_functions[function.name]]
-                s += display_function(function, available_versions, domain_prefix)
+                s += '### <a name="{}"></a>**{}**</a>\n'.format(
+                    name_with_ver, name_with_ver)
+                available_versions = [
+                    func.since_version for func in all_functions[function.name]]
+                s += display_function(function,
+                                      available_versions, domain_prefix)
                 s += '\n'
             fout.write(s)
 
@@ -334,15 +355,18 @@ def main(args):  # type: (Type[Args]) -> None
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> support level -> name -> [schema]
-        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # type: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]]
+        # type: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]]
+        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         for schema in defs.get_all_schemas_with_history():
-            index[schema.domain][int(schema.support_level)][schema.name].append(schema)
+            index[schema.domain][int(schema.support_level)
+                                 ][schema.name].append(schema)
 
         fout.write('\n')
 
         # Preprocess the Operator Schemas
         # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
-        operator_schemas = list()  # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
+        # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
+        operator_schemas = list()
         exsting_ops = set()  # type: Set[Text]
         for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain):
@@ -352,7 +376,9 @@ def main(args):  # type: (Type[Args]) -> None
             for _support, _namemap in sorted(_supportmap.items()):
                 processed_namemap = list()
                 for n, unsorted_versions in sorted(_namemap.items()):
-                    versions = sorted(unsorted_versions, key=lambda s: s.since_version)
+                    versions = sorted(
+                        unsorted_versions,
+                        key=lambda s: s.since_version)
                     schema = versions[-1]
                     if schema.name in exsting_ops:
                         continue
@@ -383,11 +409,14 @@ def main(args):  # type: (Type[Args]) -> None
             for _, namemap in supportmap:
                 for op_type, schema, versions in namemap:
                     # op_type
-                    s = ('### {}<a name="{}"></a><a name="{}">**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(
-                        support_level_str(schema.support_level),
-                        format_name_with_domain(domain, op_type),
-                        format_name_with_domain(domain, op_type.lower()),
-                        format_name_with_domain(domain, op_type))
+                    s = (
+                        '### {}<a name="{}"></a><a name="{}">**{}**' + (
+                            ' (deprecated)' if schema.deprecated else '') + '</a>\n').format(
+                        support_level_str(
+                            schema.support_level), format_name_with_domain(
+                            domain, op_type), format_name_with_domain(
+                            domain, op_type.lower()), format_name_with_domain(
+                            domain, op_type))
 
                     s += display_schema(schema, versions)
 
@@ -426,7 +455,10 @@ def main(args):  # type: (Type[Args]) -> None
 
             existing_functions = set()  # type: Set[Text]
             for function_name, functions in sorted(all_functions.items()):
-                for function in sorted(functions, key=lambda s: s.since_version, reverse=True):
+                for function in sorted(
+                        functions,
+                        key=lambda s: s.since_version,
+                        reverse=True):
                     if function.name in existing_functions:
                         continue
                     existing_functions.add(function.name)
@@ -441,19 +473,26 @@ def main(args):  # type: (Type[Args]) -> None
 
             for function_name, functions in sorted(all_functions.items()):
                 available_versions = [func.since_version for func in functions]
-                function = sorted(functions, key=lambda s: s.since_version, reverse=True)[0]
+                function = sorted(
+                    functions,
+                    key=lambda s: s.since_version,
+                    reverse=True)[0]
                 s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
                     function_status_str(function.status),
                     domain_prefix + function.name, domain_prefix + function.name.lower(),
                     domain_prefix + function.name)
 
-                s += display_function(function, available_versions, domain_prefix)
+                s += display_function(function,
+                                      available_versions, domain_prefix)
                 s += '\n\n'
                 fout.write(s)
 
 
 if __name__ == '__main__':
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    base_dir = os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(
+                os.path.realpath(__file__))))
     docs_dir = os.path.join(base_dir, 'docs')
 
     class Args(object):
@@ -461,4 +500,5 @@ if __name__ == '__main__':
         function_output = os.path.join(docs_dir, 'Functions' + ext)
         changelog = os.path.join(docs_dir, 'Changelog' + ext)
         fn_changelog = os.path.join(docs_dir, 'FunctionsChangelog' + ext)
+
     main(Args)
