@@ -31,8 +31,15 @@
 // This is used in e.g. ONNX's protobuf files: when building the main library,
 // it is defined as ONNX_EXPORT to fix a Windows global-variable-in-dll
 // issue, and for anyone dependent on ONNX it will be defined as
-// ONNX_IMPORT.
-// This is a solution from https://github.com/caffe2/caffe2/blob/4f534fad1af9f77d4f0496ecd37dafb382330223/caffe2/core/common.h
+// ONNX_IMPORT. ONNX_BUILD_MAIN_LIB can also be set when being built
+// statically if ONNX is being linked into a shared library that wants
+// to export the ONNX APIs and classes.
+//
+// More details on Windows dllimport / dllexport can be found at
+// https://msdn.microsoft.com/en-us/library/3y1sfaz2.aspx
+//
+// This solution is similar to
+// https://github.com/pytorch/pytorch/blob/master/caffe2/core/common.h
 #ifdef ONNX_BUILD_MAIN_LIB
 #define ONNX_API ONNX_EXPORT
 #else
