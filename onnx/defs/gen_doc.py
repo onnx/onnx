@@ -9,7 +9,7 @@ import io
 import os
 import sys
 
-import numpy as np
+import numpy as np  # type: ignore
 
 from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN

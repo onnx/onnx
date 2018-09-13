@@ -294,7 +294,6 @@ install_requires.extend([
 setup_requires.append('pytest-runner')
 tests_require.append('pytest-cov')
 tests_require.append('nbval')
-tests_require.append('numpy')
 tests_require.append('tabulate')
 tests_require.append('typing')
 tests_require.append('typing-extensions')
