@@ -121,10 +121,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
                 def format_value(value):  # type: (Any) -> Text
                     if isinstance(value, float):
-                        value = str(np.round(value, 5))
+                        value = np.round(value, 5)
                     if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
                         value = value.decode('utf-8')
-                    return value
+                    return str(value)
 
                 if isinstance(default_value, list):
                     default_value = [format_value(val) for val in default_value]
