@@ -48,7 +48,7 @@ TensorProto message and be valid as an output type.
 
 ONNX_OPERATOR_SET_SCHEMA(
     ConstantLike,
-    1,
+    9,
     OpSchema()
         .SetDoc(ConstantLike_ver1_doc)
         .Attr(
