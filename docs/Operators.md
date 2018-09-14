@@ -62,6 +62,8 @@
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
   * <a href="#Not">Not</a>
+  * <a href="#Ones">Ones</a>
+  * <a href="#OnesLike">OnesLike</a>
   * <a href="#Or">Or</a>
   * <a href="#PRelu">PRelu</a>
   * <a href="#Pad">Pad</a>
@@ -108,6 +110,8 @@
   * <a href="#Unsqueeze">Unsqueeze</a>
   * <a href="#Upsample">Upsample</a>
   * <a href="#Xor">Xor</a>
+  * <a href="#Zeros">Zeros</a>
+  * <a href="#ZerosLike">ZerosLike</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
   * <sub>experimental</sub> <a href="#ConstantFill">ConstantFill</a>
@@ -6282,6 +6286,168 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 </details>
 
 
+### <a name="Ones"></a><a name="ones">**Ones**</a>
+
+  Generate an all-ones tensor of a specific shape. The shape of the output tensor is specified as input argument. 
+  The data type can be specified by the 'dtype' argument.
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified,the output will be tensor(float).</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>(Required) The shape of the output tensor.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_dtype</summary>
+
+```python
+shape = (2, 5, 1)
+node = onnx.helper.make_node(
+    'Ones',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+    dtype=1, # 1: FLOAT
+)
+
+y = np.ones(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_ones_dim_with_dtype')
+```
+
+</details>
+
+
+<details>
+<summary>without_dtype</summary>
+
+```python
+shape = (4, 3, 2)
+node = onnx.helper.make_node(
+    'Ones',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+)
+
+y = np.ones(shape, dtype=np.int32)
+expect(node, inputs=[], outputs=[y], name='test_ones_dim_without_dtype')
+```
+
+</details>
+
+
+### <a name="OnesLike"></a><a name="oneslike">**OnesLike**</a>
+
+  Generate an all-ones tensor. The shape of the output tensor is copied from the shape of the input tensor. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if 'dtype' is not provided.
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified,the data type of the input tensor T1 is used.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to copy shape, and optionally, type information from.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor, same shape as input tensor T1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'OnesLike',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=1, # 1: FLOAT
+)
+shape = (2, 5, 1)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.ones(shape, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_oneslike_dim_with_dtype')
+```
+
+</details>
+
+
+<details>
+<summary>without_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'OnesLike',
+    inputs=['x'],
+    outputs=['y'],
+)
+shape = (4, 3, 2)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.ones(shape, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_oneslike_dim_without_dtype')
+```
+
+</details>
+
+
 ### <a name="Or"></a><a name="or">**Or**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
@@ -10800,6 +10966,168 @@ y = (np.random.randn(3, 1, 5, 6) > 0).astype(np.bool)
 z = np.logical_xor(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_xor_bcast4v4d')
+```
+
+</details>
+
+
+### <a name="Zeros"></a><a name="zeros">**Zeros**</a>
+
+  Generate an all-zeros tensor of a specific shape. The shape of the output tensor is specified as input argument. 
+  The data type can be specified by the 'dtype' argument.
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified,the output will be tensor(float).</dd>
+<dt><tt>shape</tt> : list of ints (required)</dt>
+<dd>(Required) The shape of the output tensor.</dd>
+</dl>
+
+#### Inputs
+
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Output tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_dtype</summary>
+
+```python
+shape = (2, 5, 1)
+node = onnx.helper.make_node(
+    'Zeros',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+    dtype=1, # 1: FLOAT
+)
+
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_zeros_dim_with_dtype')
+```
+
+</details>
+
+
+<details>
+<summary>without_dtype</summary>
+
+```python
+shape = (4, 3, 2)
+node = onnx.helper.make_node(
+    'Zeros',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+)
+
+y = np.zeros(shape, dtype=np.int32)
+expect(node, inputs=[], outputs=[y], name='test_zeros_dim_without_dtype')
+```
+
+</details>
+
+
+### <a name="ZerosLike"></a><a name="zeroslike">**ZerosLike**</a>
+
+  Generate an all-zeros tensor. The shape of the output tensor is copied from the shape of the input tensor. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if 'dtype' is not provided.
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor, if not specified,the data type of the input tensor T1 is used.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to copy shape, and optionally, type information from.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor, same shape as input tensor T1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ZerosLike',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=1, # 1: FLOAT
+)
+shape = (2, 5, 1)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_zeroslike_dim_with_dtype')
+```
+
+</details>
+
+
+<details>
+<summary>without_dtype</summary>
+
+```python
+node = onnx.helper.make_node(
+    'ZerosLike',
+    inputs=['x'],
+    outputs=['y'],
+)
+shape = (4, 3, 2)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.zeros(shape, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_zeroslike_dim_without_dtype')
 ```
 
 </details>
