@@ -1863,7 +1863,7 @@ node = onnx.helper.make_node(
     inputs=[],
     outputs=['y'],
     value=3.0,
-    dtype=11,  # 11: DOUBLE
+    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
 )
 
 y = 3.0 * np.ones(shape, dtype=np.float64)
