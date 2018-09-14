@@ -127,4 +127,63 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(bool)"},
             "Constrains output to boolean tensor."));
 
+std::function<void(OpSchema&)> BinaryLogicDocGenerator_opset7(const char* name) {
+    return [=](OpSchema& schema) {
+        std::string doc = R"DOC(
+Returns the tensor resulted from performing the `{name}` logical operation
+elementwise on the input tensors `A` and `B` (with Numpy-style broadcasting support).
+
+{broadcast_doc}
+)DOC";
+        ReplaceAll(doc, "{name}", name);
+        ReplaceAll(doc, "{broadcast_doc}", GenerateBroadcastingDocMul().c_str());
+        schema.SetDoc(doc);
+        schema.Input(0, "A", "First input operand for the logical operator.", "T");
+        schema.Input(1, "B", "Second input operand for the logical operator.", "T");
+        schema.Output(0, "C", "Result tensor.", "T1");
+        schema.TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          updateOutputElemType(ctx, 0, TensorProto::BOOL);
+          if (hasNInputShapes(ctx, 2))
+            bidirectionalBroadcastShapeInference(
+                ctx.getInputType(0)->tensor_type().shape(),
+                ctx.getInputType(1)->tensor_type().shape(),
+                *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
+        });
+    };
+}
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Greater,
+    7,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator_opset7("greater"))
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrains input to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor."));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Less,
+    7,
+    OpSchema()
+        .FillUsing(BinaryLogicDocGenerator_opset7("less"))
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrains input to float tensors.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains output to boolean tensor."));
+
+
+
 } // namespace ONNX_NAMESPACE
