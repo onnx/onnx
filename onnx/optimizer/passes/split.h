@@ -11,7 +11,10 @@ static constexpr const char* impure_operators[] = {
   "RandomNormal",
   "RandomNormalLike",
   "RandomUniform",
-  "RandomUniformLike"
+  "RandomUniformLike",
+  "Loop",
+  "If",
+  "Scan",
 };
 
 static bool is_pure_operator(Node * n) {
