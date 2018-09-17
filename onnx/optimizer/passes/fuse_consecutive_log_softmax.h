@@ -17,7 +17,8 @@ struct FuseConsecutiveLogSoftmax final : public OptimizePass {
       auto* n = *it;
       DescendOnGraphAttributes(
           n, [this](Graph& g) { fuse_consecutive_log_softmax(g); });
-      if (n->kind() == kLog && n->input()->node()->kind() == kSoftmax) {
+      if (n->kind() == kLog && n->input()->node()->kind() == kSoftmax &&
+          n->input()->uses().size() == 1) {
         Node* log_node = n;
         Node* softmax_node = log_node->inputs()[0]->node();
         auto orig_input = log_node->input();
