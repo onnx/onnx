@@ -8377,6 +8377,56 @@ This version of the operator has been available since version 8 of the default O
 </dl>
 
 ## Version 9 of the default ONNX operator set
+### <a name="ConstantLike-9"></a>**ConstantLike-9**</a>
+
+  Generate a tensor with specific constant value. The value can be specified by the 'value' 
+  attribute. The shape of the output tensor is the same as the input tensor, if the input 
+  tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
+  the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
+  argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
+  tensor is also not specified, then the type defaults to 'float'.
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dt><tt>shape</tt> : list of ints</dt>
+<dd>(Optional) The shape of the output tensor. If input tensor T1 is provided, then 'shape' attribute is ignored and the output follows the shape of the input. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+<dt><tt>value</tt> : float</dt>
+<dd>(Optional) The value for the elements of the output tensor. Default is 0.</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : T1</dt>
+<dd>Input tensor to copy shape, and optionally, type information from. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor, same shape as input tensor T1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
 ### <a name="DynamicSlice-9"></a>**DynamicSlice-9**</a>
 
   Produces a slice of the input tensor along multiple axes. Similar to numpy:
