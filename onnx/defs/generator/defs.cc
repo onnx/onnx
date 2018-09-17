@@ -34,7 +34,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           updateOutputShape(ctx, 0, tensor_proto);
         }));
 
-static const char* ConstantLike_ver1_doc = R"DOC(
+static const char* ConstantLike_ver9_doc = R"DOC(
 Generate a tensor with specific constant value. The value can be specified by the 'value' 
 attribute. The shape of the output tensor is the same as the input tensor, if the input 
 tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
@@ -50,7 +50,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     ConstantLike,
     9,
     OpSchema()
-        .SetDoc(ConstantLike_ver1_doc)
+        .SetDoc(ConstantLike_ver9_doc)
         .Attr(
             "value",
             "(Optional) The value for the elements of the output tensor. Default is 0.",
