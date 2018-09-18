@@ -20,12 +20,18 @@ struct FuseConsecutiveLogSoftmax final : public OptimizePass {
       if (n->kind() == kLog && n->input()->node()->kind() == kSoftmax &&
           n->input()->uses().size() == 1) {
         Node* log_node = n;
+        Value* log_node_output = log_node->output();
         Node* softmax_node = log_node->inputs()[0]->node();
         auto orig_input = log_node->input();
         Node* log_softmax_node = graph.create(kLogSoftmax, 1);
+
+        // log_softmax_node construction
         log_softmax_node->i_(kaxis, softmax_node->i(kaxis));
         log_softmax_node->addInput(softmax_node->input());
         log_softmax_node->insertBefore(softmax_node);
+        log_softmax_node->output()->setSizes(log_node_output->sizes());
+        log_softmax_node->output()->setElemType(log_node_output->elemType());
+
         log_node->replaceAllUsesWith(log_softmax_node);
         log_node->removeAllInputs();
         softmax_node->destroy();
