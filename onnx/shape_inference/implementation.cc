@@ -187,15 +187,18 @@ void InferShapeForFunctionNode(
   GraphProto g;
   // Get a temproary tensor-shape map
   std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
+  std::vector<TypeProto> temp_types_cache;
   for (int i = 0; i < func.input_size(); ++i) {
-    TypeProto temp_type(*ctx.getInputType(i));
-    temp_valueTypesByName[func.input().Get(i)] = &temp_type;
+    temp_types_cache.push_back(*ctx.getInputType(i));
+    temp_valueTypesByName[func.input().Get(i)] = &temp_types_cache.back();
   }
   // Get a temproary initial value map
-  std::unordered_map<std::string, const ONNX_NAMESPACE::TensorProto*>
+  std::unordered_map<std::string, const TensorProto*>
       temp_initializersByName;
   for (int i = 0; i < ctx.getNumInputs(); ++i) {
-    temp_initializersByName[ctx.getInputData(i)->name()] = ctx.getInputData(i);
+    if (ctx.getInputData(i) != nullptr) {
+      temp_initializersByName[func.input().Get(i)] = ctx.getInputData(i);
+    }
   }
   std::unordered_map<std::string, const AttributeProto*> attr_map;
   for (auto& attr : func.attribute()) {
@@ -265,7 +268,7 @@ void InferShapeForFunctionNode(
     // Copy the type info from subgraph to ctx
     // to pass back to maingraph
     auto type = ctx.getOutputType(i)->mutable_tensor_type();
-    type->CopyFrom(*temp_valueTypesByName[output_name]);
+    type->CopyFrom(temp_valueTypesByName[output_name]->tensor_type());
   }
 }
 
