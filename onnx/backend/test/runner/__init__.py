@@ -97,7 +97,7 @@ class Runner(object):
 
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():
-                item.func = pytest.mark.onnx_coverage(item.proto)(item.func)
+                item.func = pytest.mark.onnx_coverage(item.proto, category)(item.func)
         return self
 
     @property
@@ -174,8 +174,9 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
+    @staticmethod
     @retry_excute(3)
-    def _download_model(self, model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
+    def _download_model(model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
         # On Windows, NamedTemporaryFile can not be opened for a
         # second time
         download_file = tempfile.NamedTemporaryFile(delete=False)
@@ -195,7 +196,8 @@ class Runner(object):
         finally:
             os.remove(download_file.name)
 
-    def _prepare_model_data(self, model_test):  # type: (TestCase) -> Text
+    @staticmethod
+    def _prepare_model_data(model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
@@ -212,7 +214,7 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            self._download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
+            Runner._download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
         return model_dir
 
     def _add_test(self,
@@ -260,7 +262,7 @@ class Runner(object):
 
         def run(test_self, device):  # type: (Any, Text) -> None
             if model_test.model_dir is None:
-                model_dir = self._prepare_model_data(model_test)
+                model_dir = Runner._prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.onnx')

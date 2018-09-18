@@ -95,7 +95,17 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 
 #undef check_data_field
 
-  if (num_value_fields != 1) {
+  int64_t nelem = 1;
+  for (auto x : tensor.dims()) {
+    nelem *= x;
+  }
+  if (nelem == 0 && num_value_fields != 0) {
+    fail_check(
+        "TensorProto (tensor name: ",
+        tensor.name(),
+        ") is 0-element but contains data!");
+  }
+  if (nelem != 0 && num_value_fields != 1) {
     fail_check(
         "TensorProto (tensor name: ",
         tensor.name(),
@@ -111,7 +121,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
     return;
   } else {
 #define check_field(field)               \
-  if (!has_##field) {                    \
+  if (nelem != 0 && !has_##field) {      \
     fail_check(                          \
         "values of data_type '",         \
         tensor.data_type(),              \

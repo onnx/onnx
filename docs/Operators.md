@@ -19,6 +19,7 @@
   * <a href="#Clip">Clip</a>
   * <a href="#Concat">Concat</a>
   * <a href="#Constant">Constant</a>
+  * <a href="#ConstantLike">ConstantLike</a>
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
@@ -112,6 +113,7 @@
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
   * <sub>experimental</sub> <a href="#ConstantFill">ConstantFill</a>
   * <sub>experimental</sub> <a href="#Crop">Crop</a>
+  * <sub>experimental</sub> <a href="#DynamicSlice">DynamicSlice</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
   * <sub>experimental</sub> <a href="#ImageScaler">ImageScaler</a>
@@ -824,7 +826,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 <dt><tt>auto_pad</tt> : string</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>count_include_pad</tt> : int</dt>
-<dd>Whether include pad pixels when calculating values for the edges.</dd>
+<dd>Whether include pad pixels when calculating values for the edges. Default is 0, doesn't count include pad.</dd>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
@@ -1772,6 +1774,117 @@ node = onnx.helper.make_node(
 
 expect(node, inputs=[], outputs=[values],
        name='test_constant')
+```
+
+</details>
+
+
+### <a name="ConstantLike"></a><a name="constantlike">**ConstantLike**</a>
+
+  Generate a tensor with specific constant value. The value can be specified by the 'value' 
+  attribute. The shape of the output tensor is the same as the input tensor, if the input 
+  tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
+  the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
+  argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
+  tensor is also not specified, then the type defaults to 'float'.
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dt><tt>shape</tt> : list of ints</dt>
+<dd>(Optional) The shape of the output tensor. If input tensor T1 is provided, then 'shape' attribute is ignored and the output follows the shape of the input. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+<dt><tt>value</tt> : float</dt>
+<dd>(Optional) The value for the elements of the output tensor. Default is 0.</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : T1</dt>
+<dd>Input tensor to copy shape, and optionally, type information from. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor, same shape as input tensor T1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>ones_with_input</summary>
+
+```python
+shape = (4, 3, 2)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=['x'],
+    outputs=['y'],
+    value=1.0,
+)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.ones(shape, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
+```
+
+</details>
+
+
+<details>
+<summary>threes_with_shape_and_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+    value=3.0,
+    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
+)
+
+y = 3.0 * np.ones(shape, dtype=np.float64)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
+```
+
+</details>
+
+
+<details>
+<summary>zeros_without_input_dtype</summary>
+
+```python
+shape = (2, 5, 1)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=[],
+    outputs=['y'],
+    shape=shape,
+)
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 ```
 
 </details>
@@ -3760,9 +3873,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>
+Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>, <a href="Changelog.md#Greater-7">Greater-7</a>
 
 #### Inputs
 
@@ -3783,7 +3896,7 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrains input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
@@ -3930,12 +4043,12 @@ expect(node, inputs=[x], outputs=[y],
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the hardmax values of the corresponding input.
   
-  X does not need to explicitly be a 2D vector; rather, it will be
+  Input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then input will be coerced into a 2-dimensional tensor with
   dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  case where axis=1, this means the input tensor will be coerced into a 2D tensor
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
@@ -4715,9 +4828,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>
+Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>, <a href="Changelog.md#Less-7">Less-7</a>
 
 #### Inputs
 
@@ -4738,7 +4851,7 @@ Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrains input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
@@ -4852,12 +4965,12 @@ expect(node, inputs=[x], outputs=[y],
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the logsoftmax values of the corresponding input.
   
-  X does not need to explicitly be a 2D vector; rather, it will be
+  Input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then input will be coerced into a 2-dimensional tensor with
   dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  case where axis=1, this means the input tensor will be coerced into a 2D tensor
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
@@ -8754,7 +8867,7 @@ for test_name, shape in test_cases.items():
 
 ### <a name="Scan"></a><a name="scan">**Scan**</a>
 
-  Scan can be used to iterate over (specified axes of) one or more scan_input tensors,
+  Scan can be used to iterate over one or more scan_input tensors,
   constructing zero or more scan_output tensors. It combines ideas from general recurrences,
   functional programming constructs such as scan, fold, map, and zip and is intended to enable
   generalizations of RNN-like constructs for sequence-to-sequence processing.
@@ -9452,12 +9565,12 @@ expect(node, inputs=[x], outputs=[y],
   (batch_size x input_feature_dimensions). The output tensor has the same shape
   and contains the softmax values of the corresponding input.
   
-  X does not need to explicitly be a 2D vector; rather, it will be
+  Input does not need to explicitly be a 2D vector; rather, it will be
   coerced into one. For an arbitrary n-dimensional tensor
-  X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-  the axis provided, then X will be coerced into a 2-dimensional tensor with
+  input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+  the axis provided, then input will be coerced into a 2-dimensional tensor with
   dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-  case where axis=1, this means the X tensor will be coerced into a 2D tensor
+  case where axis=1, this means the input tensor will be coerced into a 2D tensor
   of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
   In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
   Each of these dimensions must be matched correctly, or else the operator
@@ -10981,6 +11094,190 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+### <sub>experimental</sub> <a name="DynamicSlice"></a><a name="dynamicslice">**DynamicSlice**</a>
+
+  Produces a slice of the input tensor along multiple axes. Similar to numpy:
+  https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+  Slices uses `axes`, `starts` and `ends` inputs to specify the start and end
+  dimension for each axis in the list of axes, it uses this information to
+  slice the input `data` tensor. If a negative value is passed for any of the
+  start or end indices, it represent number of elements before the end of that
+  dimension. If the value passed to start or end is larger than the `n` (the
+  number of elements in this dimension), it represents `n`. For slicing to the
+  end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+  If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+  Example 1:
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    axes = [0, 1]
+    starts = [1, 0]
+    ends = [2, 3]
+    result = [
+        [5, 6, 7],
+    ]
+  Example 2:
+    data = [
+        [1, 2, 3, 4],
+        [5, 6, 7, 8],
+    ]
+    starts = [0, 1]
+    ends = [-1, 1000]
+    result = [
+        [2, 3, 4],
+    ]
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs (3 - 4)
+
+<dl>
+<dt><tt>data</tt> : T</dt>
+<dd>Tensor of data to extract slices from.</dd>
+<dt><tt>starts</tt> : Tind</dt>
+<dd>1-D tensor of starting indices of corresponding axis in `axes`</dd>
+<dt><tt>ends</tt> : Tind</dt>
+<dd>1-D tensor of ending indices (exclusive) of corresponding axis in axes</dd>
+<dt><tt>axes</tt> (optional) : Tind</dt>
+<dd>1-D tensor of axes that `starts` and `ends` apply to.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Sliced data tensor.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
+<dd>Constrain indices to integer types</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>dynamic_slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.long)
+ends = np.array([3, 10], dtype=np.long)
+axes = np.array([0, 1], dtype=np.long)
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice')
+```
+
+</details>
+
+
+<details>
+<summary>dynamic_slice_default_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.long)
+ends = np.array([20, 10, 4], dtype=np.long)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends], outputs=[y],
+       name='test_dynamic_slice_default_axes')
+```
+
+</details>
+
+
+<details>
+<summary>dynamic_slice_end_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_end_out_of_bounds')
+```
+
+</details>
+
+
+<details>
+<summary>dynamic_slice_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.long)
+ends = np.array([-1], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 0:-1]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_neg')
+```
+
+</details>
+
+
+<details>
+<summary>dynamic_slice_start_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1000:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_start_out_of_bounds')
+```
+
+</details>
+
+
 ### <sub>experimental</sub> <a name="GRUUnit"></a><a name="gruunit">**GRUUnit**</a>
 
   GRUUnit computes the activations of a standard GRU,
@@ -11192,7 +11489,7 @@ This version of the operator has been available since version 1 of the default O
 ### <sub>experimental</sub> <a name="ScaledTanh"></a><a name="scaledtanh">**ScaledTanh**</a>
 
   Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-  alpha * tanh(beta * x). 
+  alpha * tanh(beta * x).
       
 
 #### Version

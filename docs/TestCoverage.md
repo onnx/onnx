@@ -5,9 +5,9 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 91/99 (91.92%, 5 generators excluded) common operators.
+Node tests have covered 92/100 (92.00%, 5 generators excluded) common operators.
 
-Node tests have covered 1/12 (8.33%, 0 generators excluded) experimental operators.
+Node tests have covered 2/13 (15.38%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -1020,6 +1020,62 @@ node = onnx.helper.make_node(
 
 expect(node, inputs=[], outputs=[values],
        name='test_constant')
+```
+
+</details>
+
+
+### ConstantLike
+There are 3 test cases, listed as following:
+<details>
+<summary>ones_with_input</summary>
+
+```python
+shape = (4, 3, 2)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=['x'],
+    outputs=['y'],
+    value=1.0,
+)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.ones(shape, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
+```
+
+</details>
+<details>
+<summary>threes_with_shape_and_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+    value=3.0,
+    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
+)
+
+y = 3.0 * np.ones(shape, dtype=np.float64)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
+```
+
+</details>
+<details>
+<summary>zeros_without_input_dtype</summary>
+
+```python
+shape = (2, 5, 1)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=[],
+    outputs=['y'],
+    shape=shape,
+)
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 ```
 
 </details>
@@ -5709,6 +5765,114 @@ expect(node, inputs=[x, y], outputs=[z],
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
+### DynamicSlice
+There are 5 test cases, listed as following:
+<details>
+<summary>dynamic_slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.long)
+ends = np.array([3, 10], dtype=np.long)
+axes = np.array([0, 1], dtype=np.long)
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_default_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.long)
+ends = np.array([20, 10, 4], dtype=np.long)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends], outputs=[y],
+       name='test_dynamic_slice_default_axes')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_end_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_end_out_of_bounds')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.long)
+ends = np.array([-1], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 0:-1]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_neg')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_start_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1000:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_start_out_of_bounds')
+```
+
+</details>
+
+
 ### ThresholdedRelu
 There are 2 test cases, listed as following:
 <details>
@@ -5799,6 +5963,692 @@ expect(node, inputs=[x], outputs=[y],
 <br/>
 
 # Model Test Coverage
-## To be filled.
+## bvlc_alexnet
+
+bvlc_alexnet has 24 nodes. Of these, 24 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 2
+storage_order: 0
+strides: 1
+</details>
+</details>
+
+
+## densenet121
+
+densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 1
+pads: 1
+strides: 1
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v1
+
+inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 2
+pads: 2
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v2
+
+inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## resnet50
+
+resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## shufflenet
+
+shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## squeezenet_old
+
+squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## vgg19
+
+vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## zfnet512
+
+zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 2
+beta: 1
+bias: 2
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
 # Overall Test Coverage
 ## To be filled.
