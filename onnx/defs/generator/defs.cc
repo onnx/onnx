@@ -50,12 +50,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomUniform_ver1_doc)
         .Attr(
             "low",
-            "Lower boundary of the output values. If not specified, default is 0.",
+            "Lower boundary of the output values.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "high",
-            "Upper boundary of the output values. If not specified, default is 1.",
+            "Upper boundary of the output values.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
@@ -100,12 +100,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomNormal_ver1_doc)
         .Attr(
             "mean",
-            "The mean of the normal distribution. If not specified, default is 0.",
+            "The mean of the normal distribution.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "scale",
-            "The standard deviation of the normal distribution. If not specified, default is 1.",
+            "The standard deviation of the normal distribution.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
@@ -150,12 +150,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomUniformLike_ver1_doc)
         .Attr(
             "low",
-            "Lower boundary of the output values. If not specified, default is 0.",
+            "Lower boundary of the output values.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "high",
-            "Upper boundary of the output values. If not specified, default is 1.",
+            "Upper boundary of the output values.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
@@ -215,12 +215,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomNormalLike_ver1_doc)
         .Attr(
             "mean",
-            "The mean of the normal distribution. If not specified, default is 0.",
+            "The mean of the normal distribution.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "scale",
-            "The standard deviation of the normal distribution. If not specified, default is 1.",
+            "The standard deviation of the normal distribution.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
