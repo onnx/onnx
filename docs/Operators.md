@@ -19,6 +19,7 @@
   * <a href="#Clip">Clip</a>
   * <a href="#Concat">Concat</a>
   * <a href="#Constant">Constant</a>
+  * <a href="#ConstantLike">ConstantLike</a>
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
@@ -1774,6 +1775,117 @@ node = onnx.helper.make_node(
 
 expect(node, inputs=[], outputs=[values],
        name='test_constant')
+```
+
+</details>
+
+
+### <a name="ConstantLike"></a><a name="constantlike">**ConstantLike**</a>
+
+  Generate a tensor with specific constant value. The value can be specified by the 'value' 
+  attribute. The shape of the output tensor is the same as the input tensor, if the input 
+  tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
+  the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
+  argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
+  tensor is also not specified, then the type defaults to 'float'.
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dt><tt>shape</tt> : list of ints</dt>
+<dd>(Optional) The shape of the output tensor. If input tensor T1 is provided, then 'shape' attribute is ignored and the output follows the shape of the input. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+<dt><tt>value</tt> : float</dt>
+<dd>(Optional) The value for the elements of the output tensor. Default is 0.</dd>
+</dl>
+
+#### Inputs (0 - 1)
+
+<dl>
+<dt><tt>input</tt> (optional) : T1</dt>
+<dd>Input tensor to copy shape, and optionally, type information from. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor, same shape as input tensor T1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>ones_with_input</summary>
+
+```python
+shape = (4, 3, 2)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=['x'],
+    outputs=['y'],
+    value=1.0,
+)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.ones(shape, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
+```
+
+</details>
+
+
+<details>
+<summary>threes_with_shape_and_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+    value=3.0,
+    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
+)
+
+y = 3.0 * np.ones(shape, dtype=np.float64)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
+```
+
+</details>
+
+
+<details>
+<summary>zeros_without_input_dtype</summary>
+
+```python
+shape = (2, 5, 1)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=[],
+    outputs=['y'],
+    shape=shape,
+)
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 ```
 
 </details>
@@ -3762,9 +3874,9 @@ expect(node, inputs=[x], outputs=[y], name='test_globalmaxpool_precomputed')
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>
+Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>, <a href="Changelog.md#Greater-7">Greater-7</a>
 
 #### Inputs
 
@@ -3785,7 +3897,7 @@ Other versions of this operator: <a href="Changelog.md#Greater-1">Greater-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrains input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
@@ -4717,9 +4829,9 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>
+Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>, <a href="Changelog.md#Less-7">Less-7</a>
 
 #### Inputs
 
@@ -4740,7 +4852,7 @@ Other versions of this operator: <a href="Changelog.md#Less-1">Less-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrains input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>

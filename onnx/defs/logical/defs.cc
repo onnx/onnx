@@ -81,12 +81,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Greater,
-    7,
+    9,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("greater"))
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            OpSchema::all_numeric_types(),
             "Constrains input to float tensors.")
         .TypeConstraint(
             "T1",
@@ -95,12 +95,12 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 ONNX_OPERATOR_SET_SCHEMA(
     Less,
-    7,
+    9,
     OpSchema()
         .FillUsing(BinaryLogicDocGenerator("less"))
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            OpSchema::all_numeric_types(),
             "Constrains input to float tensors.")
         .TypeConstraint(
             "T1",
