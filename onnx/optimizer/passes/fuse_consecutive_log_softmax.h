@@ -28,7 +28,7 @@ struct FuseConsecutiveLogSoftmax final : public OptimizePass {
         log_softmax_node->insertBefore(softmax_node);
         log_node->replaceAllUsesWith(log_softmax_node);
         log_node->removeAllInputs();
-        softmax_node->destroy();
+        it.destroyCurrent();
         it.destroyCurrent();
       }
     }
