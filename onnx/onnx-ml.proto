@@ -373,7 +373,7 @@ message TensorProto {
   optional bytes raw_data = 9;
 
   // For double
-  // Complex64 tensors are encoded as a single array of doubles,
+  // Complex128 tensors are encoded as a single array of doubles,
   // with the real components appearing in odd numbered positions,
   // and the corresponding imaginary component apparing in the
   // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
