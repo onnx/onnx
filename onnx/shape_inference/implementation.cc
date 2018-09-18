@@ -195,8 +195,8 @@ void InferShapeForFunctionNode(
   // Get a temproary initial value map
   std::unordered_map<std::string, const TensorProto*>
       temp_initializersByName;
-  for (int i = 0; i < ctx.getNumInputs(); ++i) {
-    if (ctx.getInputData(i) != nullptr) {
+  for (int i = 0; i < (const int)(ctx.getNumInputs()); ++i) {
+    if (ctx.getInputData(i) != nullptr && i < func.input_size()) {
       temp_initializersByName[func.input().Get(i)] = ctx.getInputData(i);
     }
   }
