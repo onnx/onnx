@@ -146,6 +146,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
       case TensorProto::INT32:
       case TensorProto::UINT16:
       case TensorProto::BOOL:
+      case TensorProto::FLOAT16:
+      case TensorProto::BFLOAT16:
         check_field(int32_data);
         break;
 
