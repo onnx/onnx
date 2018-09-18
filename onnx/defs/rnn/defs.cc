@@ -448,7 +448,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "input_forget",
-            "Couple the input and forget gates if 1, default 0.",
+            "Couple the input and forget gates if 1.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Input(
