@@ -137,7 +137,7 @@ The type of the output tensor is integer.)DOC";
     schema.SetDoc(doc.c_str());
     schema.Attr(
         "axis",
-        "The axis in which to compute the arg indices. Default is 0.",
+        "The axis in which to compute the arg indices.",
         AttributeProto::INT,
         static_cast<int64_t>(0));
     schema.Attr(
