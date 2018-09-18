@@ -450,7 +450,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices. Default is 0.</dd>
+<dd>The axis in which to compute the arg indices.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -571,7 +571,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>The axis in which to compute the arg indices. Default is 0.</dd>
+<dd>The axis in which to compute the arg indices.</dd>
 <dt><tt>keepdims</tt> : int (default is 1)</dt>
 <dd>Keep the reduced dimension or not, default 1 mean keep reduced dimension.</dd>
 </dl>
@@ -832,7 +832,7 @@ Other versions of this operator: <a href="Changelog.md#AveragePool-1">AveragePoo
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -1274,11 +1274,11 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 
 <dl>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
-<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
+<dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
-<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum), default is 0.9f.</dd>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
-<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.Default is 1.</dd>
+<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.</dd>
 </dl>
 
 #### Inputs
@@ -1794,15 +1794,15 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
+<dd>dilation value along each axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
-<dd>number of groups input channels and output channels are divided into, default is 1.</dd>
+<dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -1977,9 +1977,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>auto_pad</tt> : string (default is NOTSET)</dt>
 <dd>auto_pad must be either NOTSET, SAME_UPPER, SAME_LOWER or VALID. Where default value is NOTSET, which means explicit padding is used. SAME_UPPER or SAME_LOWER mean pad the input so that the output size match the input.In case of odd number add the extra padding at the end for SAME_UPPER and at the beginning for SAME_LOWER. VALID mean no padding. DEPRECATION NOTE: auto_pad is only intended to support legacy uses, and for framework authors, one is explicitly encouraged to use explicit padding specified in the pads attribute.</dd>
 <dt><tt>dilations</tt> : list of ints</dt>
-<dd>dilation value along each axis of the filter. If not present, the dilation defaults to 1 along each axis.</dd>
+<dd>dilation value along each axis of the filter.</dd>
 <dt><tt>group</tt> : int (default is 1)</dt>
-<dd>number of groups input channels and output channels are divided into, default is 1.</dd>
+<dd>number of groups input channels and output channels are divided into.</dd>
 <dt><tt>kernel_shape</tt> : list of ints</dt>
 <dd>The shape of the convolution kernel. If not present, should be inferred from input W.</dd>
 <dt><tt>output_padding</tt> : list of ints</dt>
@@ -1989,7 +1989,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each axis.</dd>
 </dl>
 
 #### Inputs (2 - 3)
@@ -2549,7 +2549,7 @@ Other versions of this operator: <a href="Changelog.md#Dropout-1">Dropout-1</a>,
 
 <dl>
 <dt><tt>ratio</tt> : float (default is 0.5)</dt>
-<dd>(float, default 0.5) the ratio of random dropout</dd>
+<dd>The ratio of random dropout</dd>
 </dl>
 
 #### Inputs
@@ -2634,7 +2634,7 @@ Other versions of this operator: <a href="Changelog.md#Elu-1">Elu-1</a>
 
 <dl>
 <dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Coefficient of ELU default to 1.0.</dd>
+<dd>Coefficient of ELU.</dd>
 </dl>
 
 #### Inputs
@@ -2958,7 +2958,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(Default to 1) Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [0, R], where R is the rank of the input tensor. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
+<dd>Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [0, R], where R is the rank of the input tensor. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
 </dl>
 
 #### Inputs
@@ -3378,7 +3378,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to gather on, defaults to 0. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
+<dd>Which axis to gather on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
 </dl>
 
 #### Inputs
@@ -3476,9 +3476,9 @@ Other versions of this operator: <a href="Changelog.md#Gemm-1">Gemm-1</a>, <a hr
 
 <dl>
 <dt><tt>alpha</tt> : float (default is 1.0)</dt>
-<dd>Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.</dd>
+<dd>Scalar multiplier for the product of input tensors A * B.</dd>
 <dt><tt>beta</tt> : float (default is 1.0)</dt>
-<dd>Scalar multiplier for input tensor C, and the default value is 1.0.</dd>
+<dd>Scalar multiplier for input tensor C.</dd>
 <dt><tt>transA</tt> : int (default is 0)</dt>
 <dd>Whether A should be transposed</dd>
 <dt><tt>transB</tt> : int (default is 0)</dt>
@@ -3651,7 +3651,7 @@ Other versions of this operator: <a href="Changelog.md#GlobalLpPool-1">GlobalLpP
 
 <dl>
 <dt><tt>p</tt> : int (default is 2)</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
+<dd>p value of the Lp norm used to pool over the input data.</dd>
 </dl>
 
 #### Inputs
@@ -3850,9 +3850,9 @@ Other versions of this operator: <a href="Changelog.md#HardSigmoid-1">HardSigmoi
 
 <dl>
 <dt><tt>alpha</tt> : float (default is 0.2)</dt>
-<dd>Value of alpha default to 0.2</dd>
+<dd>Value of alpha.</dd>
 <dt><tt>beta</tt> : float (default is 0.5)</dt>
-<dd>Value of beta default to 0.5</dd>
+<dd>Value of beta.</dd>
 </dl>
 
 #### Inputs
@@ -3951,7 +3951,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
 </dl>
 
 #### Inputs
@@ -4168,7 +4168,7 @@ Other versions of this operator: <a href="Changelog.md#InstanceNormalization-1">
 
 <dl>
 <dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
-<dd>The epsilon value to use to avoid division by zero, default is 1e-5f.</dd>
+<dd>The epsilon value to use to avoid division by zero.</dd>
 </dl>
 
 #### Inputs
@@ -4272,11 +4272,11 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>alpha</tt> : float (default is 0.0001)</dt>
-<dd>Scaling parameter, default is 1e-4f.</dd>
+<dd>Scaling parameter.</dd>
 <dt><tt>beta</tt> : float (default is 0.75)</dt>
-<dd>The exponent, default is 0.75f</dd>
+<dd>The exponent.</dd>
 <dt><tt>bias</tt> : float (default is 1.0)</dt>
-<dd>Default to 1.0f</dd>
+<dd></dd>
 <dt><tt>size</tt> : int (required)</dt>
 <dd>The number of channels to sum over</dd>
 </dl>
@@ -4472,7 +4472,7 @@ Other versions of this operator: <a href="Changelog.md#LSTM-1">LSTM-1</a>
 <dt><tt>hidden_size</tt> : int</dt>
 <dd>Number of neurons in the hidden layer</dd>
 <dt><tt>input_forget</tt> : int (default is 0)</dt>
-<dd>Couple the input and forget gates if 1, default 0.</dd>
+<dd>Couple the input and forget gates if 1.</dd>
 </dl>
 
 #### Inputs (3 - 8)
@@ -4636,7 +4636,7 @@ Other versions of this operator: <a href="Changelog.md#LeakyRelu-1">LeakyRelu-1<
 
 <dl>
 <dt><tt>alpha</tt> : float (default is 0.01)</dt>
-<dd>Coefficient of leakage default to 0.01.</dd>
+<dd>Coefficient of leakage.</dd>
 </dl>
 
 #### Inputs
@@ -4873,7 +4873,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
 </dl>
 
 #### Inputs
@@ -5154,9 +5154,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>(int64, default -1) the axis on which to apply normalization, -1 mean last axis.</dd>
+<dd>The axis on which to apply normalization, -1 mean last axis.</dd>
 <dt><tt>p</tt> : int (default is 2)</dt>
-<dd>(int64, default 2) the order of the normalization, only 1 or 2 are supported.</dd>
+<dd>The order of the normalization, only 1 or 2 are supported.</dd>
 </dl>
 
 #### Inputs
@@ -5203,11 +5203,11 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 <dt><tt>kernel_shape</tt> : list of ints (required)</dt>
 <dd>The size of the kernel along each axis.</dd>
 <dt><tt>p</tt> : int (default is 2)</dt>
-<dd>p value of the Lp norm used to pool over the input data, default is 2.</dd>
+<dd>p value of the Lp norm used to pool over the input data.</dd>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -5415,9 +5415,9 @@ Other versions of this operator: <a href="Changelog.md#MaxPool-1">MaxPool-1</a>
 <dt><tt>pads</tt> : list of ints</dt>
 <dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
 <dt><tt>storage_order</tt> : int (default is 0)</dt>
-<dd>The storage order of the tensor. 0 is row major, and 1 is column major. Default is 0.</dd>
+<dd>The storage order of the tensor. 0 is row major, and 1 is column major.</dd>
 <dt><tt>strides</tt> : list of ints</dt>
-<dd>Stride along each axis. If not present, the stride defaults to 1 along each axis.</dd>
+<dd>Stride along each axis.</dd>
 </dl>
 
 #### Inputs
@@ -5860,7 +5860,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>pooled_shape</tt> : list of ints (required)</dt>
 <dd>ROI pool output shape (height, width).</dd>
 <dt><tt>spatial_scale</tt> : float (default is 1.0)</dt>
-<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling, default is 1.0f.</dd>
+<dd>Multiplicative spatial scale factor to translate ROI coordinates from their input scale to the scale used when pooling.</dd>
 </dl>
 
 #### Inputs
@@ -6521,7 +6521,7 @@ Other versions of this operator: <a href="Changelog.md#Pad-1">Pad-1</a>
 <dt><tt>pads</tt> : list of ints (required)</dt>
 <dd>List of integers indicating the number of padding elements to add or remove (if negative) at the beginning and end of each axis. For 2D it is the number of pixels. `pads` rank should be double of the input's rank. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`.</dd>
 <dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>One float, indicates the value to be filled, default is 0</dd>
+<dd>One float, indicates the value to be filled.</dd>
 </dl>
 
 #### Inputs
@@ -6939,9 +6939,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. Default is TensorProto::FLOAT.</dd>
 <dt><tt>mean</tt> : float (default is 0.0)</dt>
-<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
+<dd>The mean of the normal distribution.</dd>
 <dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
+<dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -6986,9 +6986,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>mean</tt> : float (default is 0.0)</dt>
-<dd>The mean of the normal distribution. If not specified, default is 0.</dd>
+<dd>The mean of the normal distribution.</dd>
 <dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>The standard deviation of the normal distribution. If not specified, default is 1.</dd>
+<dd>The standard deviation of the normal distribution.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -7036,9 +7036,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>dtype</tt> : int (default is 1)</dt>
 <dd>The data type for the elements of the output tensor. If not specified, default is TensorProto::FLOAT.</dd>
 <dt><tt>high</tt> : float (default is 1.0)</dt>
-<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
+<dd>Upper boundary of the output values.</dd>
 <dt><tt>low</tt> : float (default is 0.0)</dt>
-<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
+<dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 <dt><tt>shape</tt> : list of ints (required)</dt>
@@ -7083,9 +7083,9 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor, if not specified, we will usethe data type of the input tensor.</dd>
 <dt><tt>high</tt> : float (default is 1.0)</dt>
-<dd>Upper boundary of the output values. If not specified, default is 1.</dd>
+<dd>Upper boundary of the output values.</dd>
 <dt><tt>low</tt> : float (default is 0.0)</dt>
-<dd>Lower boundary of the output values. If not specified, default is 0.</dd>
+<dd>Lower boundary of the output values.</dd>
 <dt><tt>seed</tt> : float</dt>
 <dd>(Optional) Seed to the random generator, if not specified we will auto generate one.</dd>
 </dl>
@@ -9473,7 +9473,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is 1)</dt>
-<dd>(int) default to 1; describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
+<dd>Describes the axis of the inputs when coerced to 2D; defaults to one because the 0th axis most likely describes the batch_size</dd>
 </dl>
 
 #### Inputs
@@ -9754,7 +9754,7 @@ Other versions of this operator: <a href="Changelog.md#Split-1">Split-1</a>
 
 <dl>
 <dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Which axis to split on (defaults to 0)</dd>
+<dd>Which axis to split on.</dd>
 <dt><tt>split</tt> : list of ints</dt>
 <dd>length of each output</dd>
 </dl>
@@ -10392,7 +10392,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>Dimension on which to do the sort. Default -1, which indicates the last axis</dd>
+<dd>Dimension on which to do the sort.</dd>
 <dt><tt>k</tt> : int (required)</dt>
 <dd>Number of top elements to retrieve</dd>
 </dl>
@@ -10915,7 +10915,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>shape</tt> : list of ints</dt>
 <dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
 <dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>The value for the elements of the output tensor. Default is 0.</dd>
+<dd>The value for the elements of the output tensor.</dd>
 </dl>
 
 #### Inputs (0 - 1)
@@ -11271,7 +11271,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>bias</tt> : list of floats</dt>
 <dd>Bias applied to each channel, same size as C.</dd>
 <dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>(float, default 1.0) the scale to apply.</dd>
+<dd>The scale to apply.</dd>
 </dl>
 
 #### Inputs
@@ -11308,9 +11308,9 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>across_channels</tt> : int (default is 0)</dt>
-<dd>If 1, mean and variance are computed across channels. Default is 0.</dd>
+<dd>If 1, mean and variance are computed across channels.</dd>
 <dt><tt>normalize_variance</tt> : int (default is 1)</dt>
-<dd>If 0, normalize the mean only.  Default is 1.</dd>
+<dd>If 0, normalize the mean only.</dd>
 </dl>
 
 #### Inputs
@@ -11389,7 +11389,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>scale</tt> : float (default is 1.0)</dt>
-<dd>(float, default 1.0) the scale to apply.</dd>
+<dd>The scale to apply.</dd>
 </dl>
 
 #### Inputs
