@@ -53,7 +53,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(ConstantLike_ver9_doc)
         .Attr(
             "value",
-            "(Optional) The value for the elements of the output tensor. Default is 0.",
+            "(Optional) The value for the elements of the output tensor.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
