@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 92/100 (92.00%, 5 generators excluded) common operators.
+Node tests have covered 93/101 (92.08%, 5 generators excluded) common operators.
 
 Node tests have covered 2/13 (15.38%, 0 generators excluded) experimental operators.
 
@@ -1795,6 +1795,45 @@ expanded = np.tile(data, 4)
 new_shape = np.array(new_shape, dtype=np.int64)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_unchanged')
+```
+
+</details>
+
+
+### EyeLike
+There are 2 test cases, listed as following:
+<details>
+<summary>with_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=onnx.TensorProto.DOUBLE,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.float64)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_with_dtype')
+```
+
+</details>
+<details>
+<summary>without_dtype</summary>
+
+```python
+shape = (4, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 ```
 
 </details>
