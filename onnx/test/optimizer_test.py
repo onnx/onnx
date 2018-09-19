@@ -758,6 +758,69 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].attribute[0].i == 2
         assert optimized_model.graph.node[1].op_type == "Exp"
 
+    def test_eliminate_nop_monotone_argmax_basic_no_node_axis(self):  # type: () -> None
+        for node_name in ["log", "exp", "sqrt"]:
+            for axis in range(3):
+                node = helper.make_node(node_name, ["X"], ["Y"])
+                argmax = helper.make_node("ArgMax", ["Y"], ["Z"], axis=axis)
+                graph = helper.make_graph(
+                    [node, argmax],
+                    "test",
+                    [helper.make_tensor_value_info(
+                        "X", TensorProto.FLOAT, (5, 7, 11))],
+                    [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+                optimized_model = self._optimized(
+                    graph, ["eliminate_nop_monotone_argmax"])
+
+                assert len(optimized_model.graph.output) == 1
+                assert len(optimized_model.graph.node) == 1
+                assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                assert optimized_model.graph.node[0].op_type == "ArgMax"
+                assert optimized_model.graph.node[0].attribute[0].name == "axis"
+                assert optimized_model.graph.node[0].attribute[0].i == axis
+
+    def test_eliminate_nop_monotone_argmax_basic_with_node_axis(self):  # type: () -> None
+        for node_name in ["Softmax", "LogSoftmax"]:
+            for axis_n in range(3):
+                for axis_max in range(3):
+                    node = helper.make_node(node_name, ["X"], ["Y"], axis=axis_n)
+                    argmax = helper.make_node("ArgMax", ["Y"], ["Z"], axis=axis_max)
+                    graph = helper.make_graph(
+                        [node, argmax],
+                        "test",
+                        [helper.make_tensor_value_info(
+                            "X", TensorProto.FLOAT, (5, 7, 11))],
+                        [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+                    optimized_model = self._optimized(
+                        graph, ["eliminate_nop_monotone_argmax"])
+
+                    if axis_max == axis_n:
+                        assert len(optimized_model.graph.output) == 1
+                        assert len(optimized_model.graph.node) == 1
+                        assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                        assert optimized_model.graph.node[0].op_type == "ArgMax"
+                        assert optimized_model.graph.node[0].attribute[0].name == "axis"
+                        assert optimized_model.graph.node[0].attribute[0].i == axis_max
+                    else:
+                        assert optimized_model.graph == graph
+
+    def test_eliminate_nop_monotone_argmax_multiple_out(self):  # type: () -> None
+        for node_name in ["Log", "Exp", "Sqrt"]:
+            for axis in range(3):
+                node = helper.make_node(node_name, ["X"], ["Y"])
+                node2 = helper.make_node(node_name, ["Y"], ["Z1"])
+                argmax = helper.make_node("ArgMax", ["Y"], ["Z"], axis=axis)
+                graph = helper.make_graph(
+                    [node, node2, argmax],
+                    "test",
+                    [helper.make_tensor_value_info(
+                        "X", TensorProto.FLOAT, (5, 7, 11))],
+                    [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11)),
+                     helper.make_tensor_value_info("Z1", TensorProto.FLOAT, (5, 7, 11))])
+                optimized_model = self._optimized(
+                    graph, ["eliminate_nop_monotone_argmax"])
+                assert optimized_model.graph == graph
+
     def test_preserve_value_info(self):  # type: () -> None
         trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
         trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
