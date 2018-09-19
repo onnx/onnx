@@ -147,13 +147,11 @@ std::string DataTypeUtils::ToString(
         param_str.append(
             ToString(param_proto, (p == 0) ? empty : ",", empty));
       }
-      result.append("opq(");
-      result.append("d(")
-          .append(op_type.has_domain() ? op_type.domain() : empty)
-          .append("),");
-      result.append("n(")
-          .append(op_type.has_name() ? op_type.name() : empty)
-          .append("),");
+      result.append("opaque(");
+      result.append(op_type.has_domain() ? op_type.domain() : empty)
+          .append(",");
+      result.append(op_type.has_name() ? op_type.name() : empty)
+          .append(",");
       result.append("p(").append(param_str).append("))");
       return result;
     }
@@ -197,27 +195,22 @@ void DataTypeUtils::FromString(
     return FromString(
         std::string(v.Data(), v.Size()),
         *type_proto.mutable_map_type()->mutable_value_type());
-  } else if (s.LStrip("opq")) {
+  } else if (s.LStrip("opaque(")) {
     // Possible to have an Opaque type w/o parameters
     // so we make sure it exists
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
-    if (s.LStrip("d(")) {
-      size_t rp = s.Find(')');
-      assert(rp != std::string::npos);
-      if (rp > 0) {
-        opaque_type->mutable_domain()->assign(s.Data(), rp);
-      }
-      s.LStrip(rp + 1);
+    // Check if we have domain which is positionally first
+    size_t cm = s.Find(',');
+    if (cm > 0) {
+      opaque_type->mutable_domain()->assign(s.Data(), cm);
     }
-    if (s.LStrip("n(")) {
-      size_t rp = s.Find(')');
-      assert(rp != std::string::npos);
-      if (rp > 0) {
-        opaque_type->mutable_name()->assign(s.Data(), rp);
-      }
-      s.LStrip(rp + 1);
+    s.LStrip(cm + 1);
+    cm = s.Find(',');
+    if (cm > 0) {
+      opaque_type->mutable_name()->assign(s.Data(), cm);
     }
+    s.LStrip(cm + 1);
     if (s.LStrip("p(")) {
       s.ParensWhitespaceStrip();
       auto param_size = s.Find(',');
@@ -234,9 +227,9 @@ void DataTypeUtils::FromString(
         FromString(param, *opaque_type->add_parameters());
       }
     }
-  }
+  } else
 #endif
-      if (s.LStrip("tensor")) {
+  if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
