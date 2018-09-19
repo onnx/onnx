@@ -24,6 +24,8 @@ _(Neg) \
 _(Sub) \
 _(Pow) \
 _(Sigmoid) \
+_(Softmax) \
+_(LogSoftmax) \
 _(Tanh) \
 _(mul) \
 _(neg) \
@@ -109,6 +111,7 @@ _(le) \
 _(lerp) \
 _(lgamma) \
 _(log) \
+_(Log) \
 _(log1p) \
 _(lt) \
 _(max) \
