@@ -87,7 +87,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   if (node.input_size() < min_input_ || node.input_size() > max_input_) {
     fail_check(
         "Node (",
-            node.name(),
+        node.name(),
         ") has input size ",
         node.input_size(),
         " not in range [min=",
@@ -106,7 +106,7 @@ void OpSchema::Verify(const NodeProto& node) const {
   if (node.output_size() < min_output_ || node.output_size() > max_output_) {
     fail_check(
         "Node (",
-            node.name(),
+        node.name(),
         ") has output size ",
         node.output_size(),
         " not in range [min=",
