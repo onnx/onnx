@@ -127,7 +127,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(ConstantFill_ver1_doc)
         .Attr(
             "value",
-            "The value for the elements of the output tensor. Default is 0.",
+            "The value for the elements of the output tensor.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
@@ -261,7 +261,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Scale_ver1_doc)
         .Attr(
             "scale",
-            "(float, default 1.0) the scale to apply.",
+            "The scale to apply.",
             AttributeProto::FLOAT,
             1.0f)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
@@ -352,7 +352,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "scale",
-            "(float, default 1.0) the scale to apply.",
+            "The scale to apply.",
             AttributeProto::FLOAT,
             1.0f)
         .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")

@@ -135,11 +135,11 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
     switch (tensor.data_type()) {
       case TensorProto::FLOAT:
       case TensorProto::COMPLEX64:
-      case TensorProto::COMPLEX128:
         check_field(float_data);
         break;
 
       case TensorProto::DOUBLE:
+      case TensorProto::COMPLEX128:
         check_field(double_data);
         break;
 

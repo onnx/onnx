@@ -60,7 +60,7 @@ will throw errors.
     schema.SetDoc(doc);
     schema.Attr(
         "axis",
-        "(int) default to 1; describes the axis of the inputs when coerced "
+        "Describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
         "the batch_size",
         AttributeProto::INT,
@@ -256,7 +256,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "alpha",
-            "Coefficient of leakage default to 0.01.",
+            "Coefficient of leakage.",
             AttributeProto::FLOAT,
             0.01f)
         .SetDoc(LeakyRelu_ver6_doc)
@@ -313,7 +313,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "alpha",
-            "Coefficient of ELU default to 1.0.",
+            "Coefficient of ELU.",
             AttributeProto::FLOAT,
             1.0f)
         .SetDoc(Elu_ver6_doc)
@@ -476,12 +476,12 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema()
         .Attr(
             "alpha",
-            "Value of alpha default to 0.2",
+            "Value of alpha.",
             AttributeProto::FLOAT,
             0.2f)
         .Attr(
             "beta",
-            "Value of beta default to 0.5",
+            "Value of beta.",
             AttributeProto::FLOAT,
             0.5f)
         .SetDoc(HardSigmoid_ver6_doc)
@@ -699,12 +699,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "alpha",
-            "Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.",
+            "Scalar multiplier for the product of input tensors A * B.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
             "beta",
-            "Scalar multiplier for input tensor C, and the default value is 1.0.",
+            "Scalar multiplier for input tensor C.",
             AttributeProto::FLOAT,
             1.0f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -867,8 +867,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true)
         .Attr(
             "axis",
-            "Dimension on which to do the sort. Default -1, which indicates the last"
-            " axis",
+            "Dimension on which to do the sort.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
