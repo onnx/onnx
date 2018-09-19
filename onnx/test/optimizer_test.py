@@ -715,6 +715,7 @@ class TestOptimizer(unittest.TestCase):
 
             assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
             assert len(optimized_model.graph.output) == 1
+            assert len(optimized_model.graph.node) == 1
             assert optimized_model.graph.node[0].op_type == "LogSoftmax"
             assert optimized_model.graph.node[0].attribute[0].name == "axis"
             assert optimized_model.graph.node[0].attribute[0].i == axis
@@ -734,7 +735,7 @@ class TestOptimizer(unittest.TestCase):
 
         assert graph == optimized_model.graph
 
-    def test_fuse_consecutive_softmax_multiple_out(self):  # type: () -> None
+    def test_fuse_consecutive_softmax_log_multiple_out(self):  # type: () -> None
         softmax = helper.make_node("Softmax", ["X"], ["Y"], axis=2)
         log = helper.make_node("Log", ["Y"], ["Z"])
         exp = helper.make_node("Exp", ["Z"], ["Z1"])
@@ -749,6 +750,7 @@ class TestOptimizer(unittest.TestCase):
             graph, ["fuse_consecutive_log_softmax"])
 
         assert len(optimized_model.graph.output) == 2
+        assert len(optimized_model.graph.node) == 2
         assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
         assert optimized_model.graph.output[1].type.tensor_type.elem_type == TensorProto.FLOAT
         assert optimized_model.graph.node[0].op_type == "LogSoftmax"
