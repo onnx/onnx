@@ -86,7 +86,9 @@ void OpSchema::Verify(const NodeProto& node) const {
   // Check the number of inputs.
   if (node.input_size() < min_input_ || node.input_size() > max_input_) {
     fail_check(
-        "Input size ",
+        "Node (",
+        node.name(),
+        ") has input size ",
         node.input_size(),
         " not in range [min=",
         min_input_,
@@ -97,13 +99,17 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   if (!num_inputs_allowed_(node.input_size())) {
     fail_check(
-        "Input size ", node.input_size(), " not in allowed input sizes.");
+        "Node (",
+        node.name(),
+        ") has input size ", node.input_size(), " not in allowed input sizes.");
   }
 
   // Check the number of outputs.
   if (node.output_size() < min_output_ || node.output_size() > max_output_) {
     fail_check(
-        "Output size ",
+        "Node (",
+        node.name(),
+        ") has output size ",
         node.output_size(),
         " not in range [min=",
         min_output_,
@@ -114,7 +120,9 @@ void OpSchema::Verify(const NodeProto& node) const {
 
   if (!num_outputs_allowed_(node.output_size())) {
     fail_check(
-        "Output size ", node.output_size(), " not in allowed output sizes.");
+        "Node (",
+        node.name(),
+        "has output size ", node.output_size(), " not in allowed output sizes.");
   }
 
   // Check the values of inputs / outputs
@@ -136,7 +144,9 @@ void OpSchema::Verify(const NodeProto& node) const {
     }
     if (node.input(in_idx).empty() && (Single == inputs_[in_idx].GetOption())) {
       fail_check(
-          "Input ",
+          "Node (",
+          node.name(),
+          ")'s input ",
           in_idx,
           " is marked single but has an empty string in the graph");
     }
@@ -162,7 +172,9 @@ void OpSchema::Verify(const NodeProto& node) const {
     if (node.output(out_idx).empty() &&
         (Single == outputs_[out_idx].GetOption())) {
       fail_check(
-          "Output ",
+          "Node (",
+          node.name(),
+          ")'s output ",
           out_idx,
           " is marked single but has an empty string in the graph");
     }
