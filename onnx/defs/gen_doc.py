@@ -4,14 +4,17 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import defaultdict
 import io
 import os
-from collections import defaultdict
+import sys
 
-from onnx import defs, FunctionProto, OperatorStatus
+import numpy as np  # type: ignore
+
+from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
-from typing import Text, Sequence, Dict, List, Type, Set, Tuple
+from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
@@ -109,10 +112,30 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
         s += '\n#### Attributes\n\n'
         s += '<dl>\n'
         for _, attr in sorted(schema.attributes.items()):
+            # option holds either required or default value
+            opt = ''
+            if attr.required:
+                opt = 'required'
+            elif attr.default_value.name:
+                default_value = helper.get_attribute_value(attr.default_value)
+
+                def format_value(value):  # type: (Any) -> Text
+                    if isinstance(value, float):
+                        value = np.round(value, 5)
+                    if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                        value = value.decode('utf-8')
+                    return str(value)
+
+                if isinstance(default_value, list):
+                    default_value = [format_value(val) for val in default_value]
+                else:
+                    default_value = format_value(default_value)
+                opt = 'default is {}'.format(default_value)
+
             s += '<dt><tt>{}</tt> : {}{}</dt>\n'.format(
                 attr.name,
                 display_attr_type(attr.type),
-                ' (required)' if attr.required else '')
+                ' ({})'.format(opt) if opt else '')
             s += '<dd>{}</dd>\n'.format(attr.description)
         s += '</dl>\n'
 

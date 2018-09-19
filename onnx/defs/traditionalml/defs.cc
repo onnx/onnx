@@ -51,7 +51,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input must be a tensor of a numeric type. The output will be of the same tensor type.")
         .Attr(
             "threshold",
-            "Values greater than this are mapped to 1, others to 0.<br>The default threshold is 0.0.",
+            "Values greater than this are mapped to 1, others to 0.",
             AttributeProto::FLOAT,
             0.f));
 
@@ -78,17 +78,17 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The output is a 1-D tensor of string, float, or integer.")
         .Attr(
             "cast_to",
-            "A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'; the default is 'TO_FLOAT'",
+            "A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'.",
             AttributeProto::STRING,
             std::string("TO_FLOAT"))
         .Attr(
             "map_form",
-            "Indicates whether to only output as many values as are in the input (dense), or position the input based on using the key of the map as the index of the output (sparse).<br>One of 'DENSE', 'SPARSE', default is 'DENSE'",
+            "Indicates whether to only output as many values as are in the input (dense), or position the input based on using the key of the map as the index of the output (sparse).<br>One of 'DENSE', 'SPARSE'.",
             AttributeProto::STRING,
             std::string("DENSE"))
         .Attr(
             "max_map",
-            "If the value of map_form is 'SPARSE,' this attribute indicates the total length of the output tensor.<br>The default value is 1.",
+            "If the value of map_form is 'SPARSE,' this attribute indicates the total length of the output tensor.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -602,7 +602,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The output type will be a tensor of strings or integers, depending on which of the the classlabels_* attributes is used. Its size will match the bactch size of the input.")
         .Attr(
             "kernel_type",
-            "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'",
+            "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.",
             AttributeProto::STRING,
             std::string("LINEAR"))
         .Attr(
@@ -676,7 +676,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "The input type must be a tensor of a numeric type, either [C] or [N,C].")
         .Attr(
             "kernel_type",
-            "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'",
+            "The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.",
             AttributeProto::STRING,
             std::string("LINEAR"))
         .Attr(
@@ -691,7 +691,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "one_class",
-            "Flag indicating whether the regression is a one-class SVM or not. The default is false.",
+            "Flag indicating whether the regression is a one-class SVM or not.",
             AttributeProto::INT,
             static_cast<int64_t>(0))
         .Attr(
