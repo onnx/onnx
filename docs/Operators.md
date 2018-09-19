@@ -10699,7 +10699,7 @@ This version of the operator has been available since version 1 of the default O
 #### Examples
 
 <details>
-<summary>squeeze</summary>
+<summary>unsqueeze</summary>
 
 ```python
 node = onnx.helper.make_node(
