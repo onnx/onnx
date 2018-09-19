@@ -7,21 +7,23 @@
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
-#include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/eliminate_nop_pad.h"
+#include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
 #include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
+#include "onnx/optimizer/passes/fuse_bn_into_conv.h"
+#include "onnx/optimizer/passes/fuse_consecutive_log_softmax.h"
 #include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
 #include "onnx/optimizer/passes/split.h"
-#include "onnx/optimizer/passes/fuse_bn_into_conv.h"
 #include "onnx/proto_utils.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
 struct Optimizer {
   std::map<std::string, std::unique_ptr<OptimizePass>> passes;
@@ -36,6 +38,7 @@ struct Optimizer {
     registerOptimizer<FuseConsecutiveSqueezes>();
     registerOptimizer<FuseConsecutiveTransposes>();
     registerOptimizer<FuseTransposeIntoGemm>();
+    registerOptimizer<FuseConsecutiveLogSoftmax>();
     registerOptimizer<FuseAddBiasIntoConv>();
     registerOptimizer<Nop>();
     registerOptimizer<SplitInit>();
@@ -53,7 +56,8 @@ struct Optimizer {
 
     if (g.get() == nullptr) {
       std::cerr << "Warning: onnx optimizer is unable to parse input model. "
-        << "(The IR version of the ONNX model may be too old.)" << std::endl;
+                << "(The IR version of the ONNX model may be too old.)"
+                << std::endl;
       // If we can't parse the file, just return the input.
       return mp_in;
     }
@@ -82,7 +86,8 @@ struct Optimizer {
     return mp_out;
   }
 
-  template<class Optimizer, class... Args> void registerOptimizer(Args&& ...args) {
+  template <class Optimizer, class... Args>
+  void registerOptimizer(Args&&... args) {
     auto optimizer = make_unique<Optimizer>(std::forward<Args>(args)...);
     passes[optimizer->name] = std::move(optimizer);
   }

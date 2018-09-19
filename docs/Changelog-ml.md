@@ -48,8 +48,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Attributes
 
 <dl>
-<dt><tt>threshold</tt> : float</dt>
-<dd>Values greater than this are mapped to 1, others to 0.<br>The default threshold is 0.0.</dd>
+<dt><tt>threshold</tt> : float (default is 0.0)</dt>
+<dd>Values greater than this are mapped to 1, others to 0.</dd>
 </dl>
 
 #### Inputs
@@ -86,12 +86,12 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Attributes
 
 <dl>
-<dt><tt>cast_to</tt> : string</dt>
-<dd>A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'; the default is 'TO_FLOAT'</dd>
-<dt><tt>map_form</tt> : string</dt>
-<dd>Indicates whether to only output as many values as are in the input (dense), or position the input based on using the key of the map as the index of the output (sparse).<br>One of 'DENSE', 'SPARSE', default is 'DENSE'</dd>
-<dt><tt>max_map</tt> : int</dt>
-<dd>If the value of map_form is 'SPARSE,' this attribute indicates the total length of the output tensor.<br>The default value is 1.</dd>
+<dt><tt>cast_to</tt> : string (default is TO_FLOAT)</dt>
+<dd>A string indicating the desired element type of the output tensor, one of 'TO_FLOAT', 'TO_STRING', 'TO_INT64'.</dd>
+<dt><tt>map_form</tt> : string (default is DENSE)</dt>
+<dd>Indicates whether to only output as many values as are in the input (dense), or position the input based on using the key of the map as the index of the output (sparse).<br>One of 'DENSE', 'SPARSE'.</dd>
+<dt><tt>max_map</tt> : int (default is 1)</dt>
+<dd>If the value of map_form is 'SPARSE,' this attribute indicates the total length of the output tensor.</dd>
 </dl>
 
 #### Inputs
@@ -139,9 +139,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The integers of the map. This sequence must be the same length as the 'cats_strings' sequence.</dd>
 <dt><tt>cats_strings</tt> : list of strings</dt>
 <dd>The strings of the map. This sequence must be the same length as the 'cats_int64s' sequence</dd>
-<dt><tt>default_int64</tt> : int</dt>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
-<dt><tt>default_string</tt> : string</dt>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
 </dl>
 
@@ -280,9 +280,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Value(s) to change to</dd>
 <dt><tt>imputed_value_int64s</tt> : list of ints</dt>
 <dd>Value(s) to change to.</dd>
-<dt><tt>replaced_value_float</tt> : float</dt>
+<dt><tt>replaced_value_float</tt> : float (default is 0.0)</dt>
 <dd>A value that needs replacing.</dd>
-<dt><tt>replaced_value_int64</tt> : int</dt>
+<dt><tt>replaced_value_int64</tt> : int (default is 0)</dt>
 <dd>A value that needs replacing.</dd>
 </dl>
 
@@ -329,9 +329,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dl>
 <dt><tt>classes_strings</tt> : list of strings</dt>
 <dd>A list of labels.</dd>
-<dt><tt>default_int64</tt> : int</dt>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
-<dt><tt>default_string</tt> : string</dt>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.</dd>
 </dl>
 
@@ -377,9 +377,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>A collection of weights of the model(s).</dd>
 <dt><tt>intercepts</tt> : list of floats</dt>
 <dd>A collection of intercepts.</dd>
-<dt><tt>multi_class</tt> : int</dt>
+<dt><tt>multi_class</tt> : int (default is 0)</dt>
 <dd>Indicates whether to do OvR or multinomial (0=OvR is the default).</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the scores vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
 </dl>
 
@@ -428,9 +428,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Weights of the model(s).</dd>
 <dt><tt>intercepts</tt> : list of floats</dt>
 <dd>Weights of the intercepts, if used.</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the regression output vector.<br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
-<dt><tt>targets</tt> : int</dt>
+<dt><tt>targets</tt> : int (default is 1)</dt>
 <dd>The total number of regression targets, 1 if not defined.</dd>
 </dl>
 
@@ -475,7 +475,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Attributes
 
 <dl>
-<dt><tt>norm</tt> : string</dt>
+<dt><tt>norm</tt> : string (default is MAX)</dt>
 <dd>One of 'MAX,' 'L1,' 'L2'</dd>
 </dl>
 
@@ -522,7 +522,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>List of categories, ints.<br>One and only one of the 'cats_*' attributes must be defined.</dd>
 <dt><tt>cats_strings</tt> : list of strings</dt>
 <dd>List of categories, strings.<br>One and only one of the 'cats_*' attributes must be defined.</dd>
-<dt><tt>zeros</tt> : int</dt>
+<dt><tt>zeros</tt> : int (default is 1)</dt>
 <dd>If true and category is not present, will return all zeros; if false and a category if not found, the operator will fail.</dd>
 </dl>
 
@@ -566,9 +566,9 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd></dd>
 <dt><tt>kernel_params</tt> : list of floats</dt>
 <dd>List of 3 elements containing gamma, coef0, and degree, in that order. Zero if unused for the kernel.</dd>
-<dt><tt>kernel_type</tt> : string</dt>
-<dd>The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>kernel_type</tt> : string (default is LINEAR)</dt>
+<dd>The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
 <dt><tt>prob_a</tt> : list of floats</dt>
 <dd>First set of probability coefficients.</dd>
@@ -622,13 +622,13 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Support vector coefficients.</dd>
 <dt><tt>kernel_params</tt> : list of floats</dt>
 <dd>List of 3 elements containing gamma, coef0, and degree, in that order. Zero if unused for the kernel.</dd>
-<dt><tt>kernel_type</tt> : string</dt>
-<dd>The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID. The default is 'LINEAR.'</dd>
-<dt><tt>n_supports</tt> : int</dt>
+<dt><tt>kernel_type</tt> : string (default is LINEAR)</dt>
+<dd>The kernel type, one of 'LINEAR,' 'POLY,' 'RBF,' 'SIGMOID'.</dd>
+<dt><tt>n_supports</tt> : int (default is 0)</dt>
 <dd>The number of support vectors.</dd>
-<dt><tt>one_class</tt> : int</dt>
-<dd>Flag indicating whether the regression is a one-class SVM or not. The default is false.</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>one_class</tt> : int (default is 0)</dt>
+<dd>Flag indicating whether the regression is a one-class SVM or not.</dd>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'</dd>
 <dt><tt>rho</tt> : list of floats</dt>
 <dd></dd>
@@ -746,7 +746,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Child node if expression is true.</dd>
 <dt><tt>nodes_values</tt> : list of floats</dt>
 <dd>Thresholds to do the splitting on for each node.</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the score. <br> One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT.'</dd>
 </dl>
 
@@ -795,7 +795,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 #### Attributes
 
 <dl>
-<dt><tt>aggregate_function</tt> : string</dt>
+<dt><tt>aggregate_function</tt> : string (default is SUM)</dt>
 <dd>Defines how to aggregate leaf values within a target. <br>One of 'AVERAGE,' 'SUM,' 'MIN,' 'MAX.'</dd>
 <dt><tt>base_values</tt> : list of floats</dt>
 <dd>Base values for classification, added to final class score; the size must be the same as the classes or can be left unassigned (assumed 0)</dd>
@@ -819,7 +819,7 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>Child node if expression is true</dd>
 <dt><tt>nodes_values</tt> : list of floats</dt>
 <dd>Thresholds to do the splitting on for each node.</dd>
-<dt><tt>post_transform</tt> : string</dt>
+<dt><tt>post_transform</tt> : string (default is NONE)</dt>
 <dd>Indicates the transform to apply to the score. <br>One of 'NONE,' 'SOFTMAX,' 'LOGISTIC,' 'SOFTMAX_ZERO,' or 'PROBIT'</dd>
 <dt><tt>target_ids</tt> : list of ints</dt>
 <dd>The index of the target that each weight is for</dd>
