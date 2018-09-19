@@ -19,7 +19,7 @@ struct EliminateNopMonotoneArgmax final : public OptimizePass {
   explicit EliminateNopMonotoneArgmax()
       : OptimizePass("eliminate_nop_monotone_argmax", API_TYPE::IR) {}
 
-  static inline bool satisfies_monotone_condition(int axis, Node* node) {
+  static inline bool satisfies_monotone_condition(int64_t axis, Node* node) {
     if (monotone_node_no_axis_kind.find(node->kind()) !=
         monotone_node_no_axis_kind.end()) {
       return true;
