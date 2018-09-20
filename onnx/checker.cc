@@ -506,15 +506,13 @@ void VerifyFunctionNode(
     const FunctionProto& func,
     const CheckerContext& ctx,
     const LexicalScopeContext& lex_ctx) {
-  // Create a temproary graphproto to hold the expanded subgraph
+  // Create a temporary graphproto to hold the expanded subgraph
   GraphProto g;
+  g.set_name("func_" + func.name() + "_expanded_subgraph");
   // To Generate unique internal tensor names
   // while preserving node's input/output names
   FunctionExpandHelper(node, func, g);
-  for (const NodeProto& n : g.node()) {
-    // Check the nodes in subgraph
-    check_node(n, ctx, lex_ctx);
-  }
+  check_graph(g, ctx, lex_ctx);
 }
 
 #undef fail_check
