@@ -28,14 +28,14 @@ class TestChecker(unittest.TestCase):
         checker.check_node(node)
 
     def test_check_node_input_marked_optional(self):  # type: () -> None
-        # Constant fill's input is marked optional
+        # GivenTensorFill's input is marked optional, hence it is used in this test.
         node = helper.make_node(
-            "ConstantFill", [], ["Y"], name="test")
+            "GivenTensorFill", [], ["Y"], name="test")
         checker.check_node(node)
 
         # Explicitly pass the empty string as optional
         node = helper.make_node(
-            "ConstantFill", [""], ["Y"], name="test")
+            "GivenTensorFill", [""], ["Y"], name="test")
 
         # Input of RELU is not optional
         node = helper.make_node(
@@ -61,8 +61,9 @@ class TestChecker(unittest.TestCase):
         checker.check_graph(graph)
 
     def test_check_graph_optional_input(self):  # type: () -> None
+        # GivenTensorFill's input is marked optional, hence it is used in this test.
         node = helper.make_node(
-            "ConstantFill", [""], ["Y"], name="test")
+            "GivenTensorFill", [""], ["Y"], name="test")
         graph = helper.make_graph(
             [node],
             "test",
