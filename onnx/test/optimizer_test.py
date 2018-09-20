@@ -822,7 +822,7 @@ class TestOptimizer(unittest.TestCase):
                 assert optimized_model.graph == graph
 
     def test_eliminate_nop_monotone_argmax_consecutive(self):  # type: () -> None
-        def _assertion(graph, optimized_model, axis_aligned, true_axis):  # type: () -> None
+        def _assertion(graph, optimized_model, axis_aligned, true_axis):  # type: (GraphProto, ModelProto, bool, int) -> None
             if axis_aligned:
                 assert len(optimized_model.graph.output) == 1
                 assert len(optimized_model.graph.node) == 1
