@@ -1,7 +1,7 @@
 {% set version = "1.0.0" %}
 
 package:
-  name: onnx
+  name: onnxe
   version: {{ version }}
 
 source:
