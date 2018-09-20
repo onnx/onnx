@@ -25,7 +25,7 @@ struct EliminateNopMonotoneArgmax final : public OptimizePass {
       return true;
     }
     if (monotone_node_axis_kind.find(node->kind()) !=
-        monotone_node_no_axis_kind.end()) {
+        monotone_node_axis_kind.end()) {
       return axis == node->i(kaxis);
     }
     return false;
