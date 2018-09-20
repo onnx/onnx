@@ -9,9 +9,8 @@ namespace ONNX_NAMESPACE {
 namespace optimization {
 
 const std::unordered_set<NodeKind> monotone_node_no_axis_kind{kLog,
-                                                              klog,
-                                                              kexp,
-                                                              ksqrt};
+                                                              kExp,
+                                                              kSqrt};
 const std::unordered_set<NodeKind> monotone_node_axis_kind{kSoftmax,
                                                            kLogSoftmax};
 
@@ -31,24 +30,29 @@ struct EliminateNopMonotoneArgmax final : public OptimizePass {
     return false;
   }
 
-  void eliminate_nop_monotone_argmax(Graph& graph) {
+  bool eliminate_nop_monotone_argmax(Graph& graph) {
+    bool mark_change = false;
     for (auto it = graph.begin(); it != graph.end(); ++it) {
       auto* n = *it;
-      DescendOnGraphAttributes(
-          n, [this](Graph& g) { eliminate_nop_monotone_argmax(g); });
+      mark_change |= DescendOnGraphAttributesMarkChange(
+          n, [this](Graph& g) { return eliminate_nop_monotone_argmax(g); });
+
       if (n->kind() == kArgMax && n->inputs().size() == 1 &&
           satisfies_monotone_condition(n->i(kaxis), n->input()->node())) {
         Node* monotone_node = n->input()->node();
         if (monotone_node->output()->uses().size() == 1) {
           monotone_node->output()->replaceAllUsesWith(monotone_node->input());
           monotone_node->destroy();
+          mark_change = true;
         }
       }
     }
+    return mark_change;
   }
 
   void optimize(Graph& graph) override {
-    eliminate_nop_monotone_argmax(graph);
+    while (eliminate_nop_monotone_argmax(graph))
+      ;
   }
 };
 

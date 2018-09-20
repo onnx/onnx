@@ -101,7 +101,7 @@ namespace ONNX_NAMESPACE {
   _(div)                          \
   _(eq)                           \
   _(equal)                        \
-  _(exp)                          \
+  _(Exp)                          \
   _(expm1)                        \
   _(floor)                        \
   _(fmod)                         \
@@ -111,7 +111,6 @@ namespace ONNX_NAMESPACE {
   _(le)                           \
   _(lerp)                         \
   _(lgamma)                       \
-  _(log)                          \
   _(Log)                          \
   _(log1p)                        \
   _(lt)                           \
@@ -126,7 +125,7 @@ namespace ONNX_NAMESPACE {
   _(rsqrt)                        \
   _(sin)                          \
   _(sinh)                         \
-  _(sqrt)                         \
+  _(Sqrt)                         \
   _(sub)                          \
   _(tan)                          \
   _(trunc)                        \
