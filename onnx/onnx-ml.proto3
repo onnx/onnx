@@ -421,26 +421,26 @@ message TypeProto {
 
   // repeated T
   message Sequence {
-  // The type and optional shape of each element of the sequence.
-  // This field MUST be present for this version of the IR.
+    // The type and optional shape of each element of the sequence.
+    // This field MUST be present for this version of the IR.
     TypeProto elem_type = 1;
   };
 
   // map<K,V>
   message Map {
-  // This field MUST be present for this version of the IR.
-  // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
+    // This field MUST be present for this version of the IR.
+    // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
     TensorProto.DataType key_type = 1;
-  // This field MUST be present for this version of the IR.
+    // This field MUST be present for this version of the IR.
     TypeProto value_type = 2;
   };
 
   message Opaque {
-   // When missing, the domain is the same as the model's.
+    // When missing, the domain is the same as the model's.
     string domain = 1;
-  // The name is optional but significant when provided.
+    // The name is optional but significant when provided.
     string name = 2;
-  // parameters that help defining the type
+    // parameters that help defining the type
     repeated TypeProto parameters = 3;
   }
 
