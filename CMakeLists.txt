@@ -257,8 +257,8 @@ relative_protobuf_generate_cpp(gen_onnx_operators_proto
                                ${ONNX_ROOT}
                                gen_onnx_proto
                                onnx/onnx-operators.in.proto)
-list(APPEND ONNX_PROTO_SRCS ${__tmp_onnx_srcs})
-list(APPEND ONNX_PROTO_HDRS ${__tmp_onnx_hdrs})
+list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
+list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
 file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
