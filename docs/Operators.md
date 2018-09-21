@@ -58,6 +58,7 @@
   * <a href="#MaxPool">MaxPool</a>
   * <a href="#MaxRoiPool">MaxRoiPool</a>
   * <a href="#Mean">Mean</a>
+  * <a href="#Merge">Merge</a>
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
@@ -6067,6 +6068,76 @@ node = onnx.helper.make_node(
 )
 expect(node, inputs=[data_0, data_1], outputs=[result],
        name='test_mean_two_inputs')
+```
+
+</details>
+
+
+### <a name="Merge"></a><a name="merge">**Merge**</a>
+
+  Merge the input tensor's dimension according to 'axis' attribute.
+  All dimensions before this axis will be merged to current axis.
+  Input [d0, d1, ... dn]
+  Output [d0*d1*...daxis, daxis+1, ... dn ] 
+  
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>The axis from which merge dimension for input tensor.</dd>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>Input tensor to copy shape, and optionally, type information from. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain input types. Strings and complex are not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types. Strings and complex are not supported.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>merge</summary>
+
+```python
+shape = (4, 4, 1)
+node = onnx.helper.make_node(
+    'Merge',
+    inputs=['x'],
+    outputs=['y'],
+    axis = 1
+)
+new_shape = [-1]
+new_shape.extend (shape[1:])
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.reshape(x, new_shape)
+expect(node, inputs=[x], outputs=[y], name='test_merge')
 ```
 
 </details>
