@@ -73,17 +73,10 @@ void mergeShapesAndTypes(
 }
 
 void InferShapes(
-    ModelProto& m,
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
     const ISchemaRegistry* schema_registry,
     const IFunctionBuilderRegistry* func_registry) {
-  std::unordered_map<std::string, int> opset_imports;
-  for (const auto& opset_import : m.opset_import()) {
-    opset_imports[opset_import.domain()] =
-        static_cast<int>(opset_import.version());
-  }
-
-  auto* g = m.mutable_graph();
-
   std::unordered_map<std::string, TypeProto*> valueTypesByName;
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type())
@@ -179,6 +172,19 @@ void InferShapes(
   }
 }
 
+void InferShapes(
+    ModelProto& m,
+    const ISchemaRegistry* schema_registry,
+    const IFunctionBuilderRegistry* func_registry) {
+  std::unordered_map<std::string, int> opset_imports;
+  for (const auto& opset_import : m.opset_import()) {
+    opset_imports[opset_import.domain()] =
+        static_cast<int>(opset_import.version());
+  }
+  auto* g = m.mutable_graph();
+  InferShapes(g, opset_imports, schema_registry, func_registry);
+}
+
 void InferShapeForFunctionNode(
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
@@ -193,8 +199,7 @@ void InferShapeForFunctionNode(
     temp_valueTypesByName[func.input().Get(i)] = &temp_types_cache.back();
   }
   // Get a temproary initial value map
-  std::unordered_map<std::string, const TensorProto*>
-      temp_initializersByName;
+  std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
   for (int i = 0; i < (const int)(ctx.getNumInputs()); ++i) {
     if (ctx.getInputData(i) != nullptr && i < func.input_size()) {
       temp_initializersByName[func.input().Get(i)] = ctx.getInputData(i);

@@ -162,9 +162,17 @@ void FunctionExpandHelper(
   std::unordered_map<std::string, AttributeProto> attr_map;
 
   for (int idx = 0; idx < node.input_size(); ++idx) {
+    if (idx >= func.input_size()) {
+      throw std::runtime_error(
+          "Input for function node " + node_name + " is out of bounds");
+    }
     input_names_map[func.input().Get(idx)] = node.input().Get(idx);
   }
   for (int idx = 0; idx < node.output_size(); ++idx) {
+    if (idx >= func.output_size()) {
+      throw std::runtime_error(
+          "Output for function node " + node_name + " is out of bounds");
+    }
     output_names_map[func.output().Get(idx)] = node.output().Get(idx);
   }
 

@@ -96,6 +96,13 @@ void InferShapes(
     const IFunctionBuilderRegistry* func_registry =
         &FunctionBuilderRegistry::OnnxInstance());
 
+void InferShapes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const IFunctionBuilderRegistry* func_registry =
+        &FunctionBuilderRegistry::OnnxInstance());
+
 void InferShapeForFunctionNode(
     const FunctionProto& func,
     const ISchemaRegistry* schema_registry,
