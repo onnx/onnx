@@ -6076,13 +6076,12 @@ expect(node, inputs=[data_0, data_1], outputs=[result],
 ### <a name="Merge"></a><a name="merge">**Merge**</a>
 
   Merge the input tensor's dimension according to 'axis' attribute.
-      All dimensions before this axis will be merged to current axis.
-      Input [d0, d1, ... dn]
-      Output [d0*d1*...daxis, daxis+1, ... dn ] 
+  All dimensions before this axis will be merged to current axis.
+  Input [d0, d1, ... dn]
+  Output [d0*d1*...daxis, daxis+1, ... dn ] 
   
-      The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-      TensorProto message and be valid as an output type.
-      
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
 
 #### Version
 
