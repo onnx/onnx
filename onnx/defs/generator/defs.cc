@@ -121,9 +121,10 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* EyeLike_ver9_doc = R"DOC(
 Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D 
-tensors are supported, i.e. input T1 must be of rank 2.  The shape of the output tensor is the 
+tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the 
 same as the input tensor. The data type can be specified by the 'dtype' argument. If 
-'dtype' is not specified, then the type of input tensor is used.
+'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal 
+is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
 
 The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
 TensorProto message and be valid as an output type.
@@ -134,6 +135,13 @@ ONNX_OPERATOR_SET_SCHEMA(
     9,
     OpSchema()
         .SetDoc(EyeLike_ver9_doc)
+        .Attr(
+            "k",
+            "(Optional) Index of the diagonal to be populated with ones. Default is 0." 
+            " If T2 is the output, this op sets T2[i, i+k] = 1. k = 0 populates the main diagonal, "
+            "k > 0 populates an upper diagonal,  and k < 0 populates a lower diagonal.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor. If not specified,"
@@ -182,14 +190,17 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)"},
              "Constrain output types. Strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          if (ctx.getAttribute("dtype") != nullptr)
+          if (ctx.getAttribute("dtype") != nullptr) {
             propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-          else
+          }
+          else {
             propagateElemTypeFromInputToOutput(ctx, 0, 0);  
+          }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
-            if (input_shape.dim_size() != 2)            
+            if (input_shape.dim_size() != 2) {         
               fail_shape_inference("Input tensor must be 2-dimensional");
+            }
           }
           propagateShapeFromInputToOutput(ctx, 0, 0);
         }));

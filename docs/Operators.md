@@ -1532,9 +1532,9 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
+<dt><tt>max</tt> : float (default is 3.40282346639e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
+<dt><tt>min</tt> : float (default is -3.40282346639e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -3060,9 +3060,10 @@ expect(node, inputs=[data, new_shape], outputs=[expanded],
 ### <a name="EyeLike"></a><a name="eyelike">**EyeLike**</a>
 
   Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D 
-  tensors are supported, i.e. input T1 must be of rank 2.  The shape of the output tensor is the 
+  tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the 
   same as the input tensor. The data type can be specified by the 'dtype' argument. If 
-  'dtype' is not specified, then the type of input tensor is used.
+  'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal 
+  is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
   
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
@@ -3076,6 +3077,8 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>dtype</tt> : int</dt>
 <dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dt><tt>k</tt> : int (default is 0)</dt>
+<dd>(Optional) Index of the diagonal to be populated with ones. Default is 0. If T2 is the output, this op sets T2[i, i+k] = 1. k = 0 populates the main diagonal, k > 0 populates an upper diagonal,  and k < 0 populates a lower diagonal.</dd>
 </dl>
 
 #### Inputs
@@ -3103,6 +3106,28 @@ This version of the operator has been available since version 9 of the default O
 
 
 #### Examples
+
+<details>
+<summary>populate_off_main_diagonal</summary>
+
+```python
+shape = (4, 5)
+off_diagonal_offset = 1
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    k=off_diagonal_offset,
+    dtype=onnx.TensorProto.FLOAT,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], k=off_diagonal_offset, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_populate_off_main_diagonal')
+```
+
+</details>
+
 
 <details>
 <summary>with_dtype</summary>
