@@ -8569,13 +8569,12 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="Merge-9"></a>**Merge-9**</a>
 
   Merge the input tensor's dimension according to 'axis' attribute.
-      All dimensions before this axis will be merged to current axis.
-      Input [d0, d1, ... dn]
-      Output [d0*d1*...daxis, daxis+1, ... dn ] 
+  All dimensions before this axis will be merged to current axis.
+  Input [d0, d1, ... dn]
+  Output [d0*d1*...daxis, daxis+1, ... dn ] 
   
-      The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-      TensorProto message and be valid as an output type.
-      
+  The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+  TensorProto message and be valid as an output type.
 
 #### Version
 
