@@ -412,85 +412,85 @@ ONNX_OPERATOR_SET_SCHEMA(
           sample_size.set_dim_value(getAttribute(ctx, "sample_size", 1));
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
+    
+static const char* Merge_ver9_doc = R"DOC(
+Merge the input tensor's dimension according to 'axis' attribute.
+All dimensions before this axis will be merged to current axis.
+Input [d0, d1, ... dn]
+Output [d0*d1*...daxis, daxis+1, ... dn ] 
 
-    static const char* Merge_ver9_doc = R"DOC(
-    Merge the input tensor's dimension according to 'axis' attribute.
-    All dimensions before this axis will be merged to current axis.
-    Input [d0, d1, ... dn]
-    Output [d0*d1*...daxis, daxis+1, ... dn ] 
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
 
-    The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
-    TensorProto message and be valid as an output type.
-    )DOC";
-
-    ONNX_OPERATOR_SET_SCHEMA(
-        Merge,
-        9,
-        OpSchema()
-            .SetDoc(Merge_ver9_doc)
-            .Attr(
-                "axis",
-                "The axis from which merge dimension for input tensor.",
-                AttributeProto::INT,
-                static_cast<int64_t>(1))
-            .Attr(
-                "dtype",
-                "(Optional) The data type for the elements of the output tensor. If not specified,"
-                "the data type of the input tensor T1 is used. If input tensor T1 is also not" 
-                "specified, then type defaults to 'float'.",
-                AttributeProto::INT,
-                OPTIONAL)
-            .Input(
-                0,
-                "input",
-                "Input tensor to copy shape, and optionally, type information from."
-                " One of either input tensor T1 or 'shape' attribute must be provided.",
-                "T1")
-            .Output(
-                0,
-                "output",
-                "Output tensor",
-                "T2")
-            .TypeConstraint(
-                "T1",
-                {"tensor(float16)",
-                "tensor(float)",
-                "tensor(double)",
-                "tensor(int8)",
-                "tensor(int16)",
-                "tensor(int32)",
-                "tensor(int64)",
-                "tensor(uint8)",
-                "tensor(uint16)",
-                "tensor(uint32)",
-                "tensor(uint64)",
-                "tensor(bool)"},
-                "Constrain input types. Strings and complex are not supported.")
-            .TypeConstraint(
-                "T2",
-                {"tensor(float16)",
-                "tensor(float)",
-                "tensor(double)",
-                "tensor(int8)",
-                "tensor(int16)",
-                "tensor(int32)",
-                "tensor(int64)",
-                "tensor(uint8)",
-                "tensor(uint16)",
-                "tensor(uint32)",
-                "tensor(uint64)",
-                "tensor(bool)"},
-                "Constrain output types. Strings and complex are not supported.")
-            .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-            if (ctx.getAttribute("dtype") != nullptr)
-                propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-            else
-                propagateElemTypeFromInputToOutput(ctx, 0, 0); 
-            if (hasNInputShapes(ctx, 1)) {
-                auto& input_shape = getInputShape(ctx, 1);
-                if (input_shape.dim_size() < 2)
-                    fail_shape_inference("Input tensor dimention must be larger than 1")
-            }
-            propagateShapeFromInputToOutput(ctx, 0, 0);
-            }));
+ONNX_OPERATOR_SET_SCHEMA(
+    Merge,
+    9,
+    OpSchema()
+        .SetDoc(Merge_ver9_doc)
+        .Attr(
+            "axis",
+            "The axis from which merge dimension for input tensor.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor. If not specified,"
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not" 
+            "specified, then type defaults to 'float'.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(
+            0,
+            "input",
+            "Input tensor to copy shape, and optionally, type information from."
+            " One of either input tensor T1 or 'shape' attribute must be provided.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Output tensor",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+            "tensor(float)",
+            "tensor(double)",
+            "tensor(int8)",
+            "tensor(int16)",
+            "tensor(int32)",
+            "tensor(int64)",
+            "tensor(uint8)",
+            "tensor(uint16)",
+            "tensor(uint32)",
+            "tensor(uint64)",
+            "tensor(bool)"},
+            "Constrain input types. Strings and complex are not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+            "tensor(float)",
+            "tensor(double)",
+            "tensor(int8)",
+            "tensor(int16)",
+            "tensor(int32)",
+            "tensor(int64)",
+            "tensor(uint8)",
+            "tensor(uint16)",
+            "tensor(uint32)",
+            "tensor(uint64)",
+            "tensor(bool)"},
+            "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        if (ctx.getAttribute("dtype") != nullptr)
+            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+        else
+            propagateElemTypeFromInputToOutput(ctx, 0, 0); 
+        if (hasNInputShapes(ctx, 1)) {
+            auto& input_shape = getInputShape(ctx, 1);
+            if (input_shape.dim_size() < 2)
+                fail_shape_inference("Input tensor dimention must be larger than 1")
+        }
+        propagateShapeFromInputToOutput(ctx, 0, 0);
+        }));
 } // namespace ONNX_NAMESPACE
