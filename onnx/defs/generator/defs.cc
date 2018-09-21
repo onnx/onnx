@@ -412,7 +412,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           sample_size.set_dim_value(getAttribute(ctx, "sample_size", 1));
           updateOutputShape(ctx, 0, {batch_size, sample_size});
         }));
-    
+
 static const char* Merge_ver9_doc = R"DOC(
 Merge the input tensor's dimension according to 'axis' attribute.
 All dimensions before this axis will be merged to current axis.
