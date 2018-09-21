@@ -117,6 +117,9 @@ std::unique_ptr<FunctionProto> FunctionBuilderRegistry::GetFunction(
         std::move(i->second);
   }
 
+  if (version_to_func.empty()) {
+    return nullptr;
+  }
   auto pos = version_to_func.lower_bound(maxInclusiveVersion);
   if (version_to_func.begin() == pos && pos->first > maxInclusiveVersion) {
     return nullptr;
