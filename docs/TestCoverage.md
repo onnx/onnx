@@ -5584,7 +5584,7 @@ expect(node, inputs=[data], outputs=[transposed],
 ### Unsqueeze
 There are 1 test cases, listed as following:
 <details>
-<summary>squeeze</summary>
+<summary>unsqueeze</summary>
 
 ```python
 node = onnx.helper.make_node(

@@ -243,29 +243,33 @@ function(RELATIVE_PROTOBUF_GENERATE_CPP NAME SRCS HDRS ROOT_DIR DEPEND)
 endfunction()
 
 relative_protobuf_generate_cpp(gen_onnx_proto
-                               PROTO_SRCS
-                               PROTO_HDRS
+                               __tmp_srcs
+                               __tmp_hdrs
                                ${ONNX_ROOT}
                                ""
                                onnx/onnx.in.proto)
+list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
+list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
+
 relative_protobuf_generate_cpp(gen_onnx_operators_proto
-                               PROTO_SRCS2
-                               PROTO_HDRS2
+                               __tmp_srcs
+                               __tmp_hdrs
                                ${ONNX_ROOT}
                                gen_onnx_proto
                                onnx/onnx-operators.in.proto)
-list(APPEND PROTO_SRCS ${PROTO_SRCS2})
-list(APPEND PROTO_HDRS ${PROTO_HDRS2})
+list(APPEND ONNX_PROTO_SRCS ${__tmp_srcs})
+list(APPEND ONNX_PROTO_HDRS ${__tmp_hdrs})
 
-file(GLOB_RECURSE onnx_src "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
+file(GLOB_RECURSE __tmp_srcs "${ONNX_ROOT}/onnx/*.h" "${ONNX_ROOT}/onnx/*.cc")
 file(GLOB_RECURSE onnx_gtests_src "${ONNX_ROOT}/onnx/test/cpp/*.h"
 	"${ONNX_ROOT}/onnx/test/cpp/*.cc"
 	"${ONNX_ROOT}/onnx/backend/test/cpp/*.cc"
 	"${ONNX_ROOT}/onnx/backend/test/cpp/*.h")
-list(REMOVE_ITEM onnx_src "${ONNX_ROOT}/onnx/cpp2py_export.cc")
-list(REMOVE_ITEM onnx_src ${onnx_gtests_src})
+list(REMOVE_ITEM __tmp_srcs "${ONNX_ROOT}/onnx/cpp2py_export.cc")
+list(REMOVE_ITEM __tmp_srcs ${onnx_gtests_src})
+list(APPEND ONNX_SRCS ${__tmp_srcs})
 
-add_library(onnx_proto ${PROTO_SRCS} ${PROTO_HDRS})
+add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
@@ -297,7 +301,7 @@ else()
 endif()
 add_onnx_global_defines(onnx_proto)
 
-add_library(onnx ${onnx_src})
+add_library(onnx ${ONNX_SRCS})
 target_include_directories(onnx PUBLIC
   $<BUILD_INTERFACE:${ONNX_ROOT}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>

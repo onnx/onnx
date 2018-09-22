@@ -112,7 +112,7 @@ struct FuseAddBiasIntoConv final : public OptimizePass {
           orig_conv->node()->addInput(conv_3rd_input);
         } else if (rank > static_cast<int64_t>(bias_shape.size()) + 1) {
           continue;
-        } else if (num_el == M && 
+        } else if (num_el == M &&
             bias_shape[1 + bias_shape.size() - static_cast<unsigned>(rank)].dim == M) {
           ONNX_ASSERT(bias_shape.size() > 1);
           if (orig_bias->node()->kind() != kParam && orig_conv->node()->isBefore(orig_bias->node())) {
