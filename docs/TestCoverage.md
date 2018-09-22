@@ -6486,88 +6486,6 @@ axes: 1
 </details>
 
 
-## vgg16
-
-vgg16 has 21 nodes. Of these, 21 are covered by node tests (100.0%)
-
-
-<details>
-<summary>nodes</summary>
-
-<details>
-<summary>AveragePool: 3 out of 5 attributes covered</summary>
-
-auto_pad: 0
-count_include_pad: 0
-kernel_shape: 3
-pads: 3
-strides: 2
-</details>
-<details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
-
-epsilon: 2
-momentum: 0
-spatial: 0
-</details>
-<details>
-<summary>Concat: 1 out of 1 attributes covered</summary>
-
-axis: 1
-</details>
-<details>
-<summary>Conv: 4 out of 6 attributes covered</summary>
-
-auto_pad: 0
-dilations: 0
-group: 6
-kernel_shape: 5
-pads: 4
-strides: 3
-</details>
-<details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
-
-ratio: 2
-</details>
-<details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
-
-alpha: 0
-beta: 0
-transA: 0
-transB: 1
-</details>
-<details>
-<summary>LRN: 4 out of 4 attributes covered</summary>
-
-alpha: 2
-beta: 1
-bias: 2
-size: 1
-</details>
-<details>
-<summary>MaxPool: 3 out of 5 attributes covered</summary>
-
-auto_pad: 0
-kernel_shape: 2
-pads: 3
-storage_order: 0
-strides: 2
-</details>
-<details>
-<summary>Transpose: 1 out of 1 attributes covered</summary>
-
-perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
-
-axes: 1
-</details>
-</details>
-
-
 ## vgg19
 
 vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
@@ -6613,7 +6531,7 @@ strides: 3
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6623,9 +6541,9 @@ transB: 1
 <details>
 <summary>LRN: 4 out of 4 attributes covered</summary>
 
-alpha: 2
+alpha: 1
 beta: 1
-bias: 2
+bias: 1
 size: 1
 </details>
 <details>
@@ -6695,7 +6613,7 @@ strides: 3
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
