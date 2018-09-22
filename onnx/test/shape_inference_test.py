@@ -932,7 +932,7 @@ class TestShapeInference(unittest.TestCase):
     def test_mvn_function_output_shape(self):
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16))],
-            [make_node('MeanVarianceNormalization', 'X', 'Y', axes=[0,2,3])],
+            [make_node('MeanVarianceNormalization', 'X', 'Y', axes=[0, 2, 3])],
             []
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
