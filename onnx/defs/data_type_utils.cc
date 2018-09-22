@@ -119,25 +119,46 @@ std::string DataTypeUtils::ToString(
     const std::string& right) {
   switch (type_proto.value_case()) {
     case TypeProto::ValueCase::kTensorType: {
-        // Note: We do not distinguish tensors with zero rank (a shape consisting of
-        // an empty sequence of dimensions) here.
-        return left + "tensor(" +
-            ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" +
-            right;
+      // Note: We do not distinguish tensors with zero rank (a shape consisting
+      // of an empty sequence of dimensions) here.
+      return left + "tensor(" +
+          ToDataTypeString(type_proto.tensor_type().elem_type()) + ")" + right;
     }
 #ifdef ONNX_ML
     case TypeProto::ValueCase::kSequenceType: {
-        return ToString(type_proto.sequence_type().elem_type(), left + "seq(", ")" + right);
+      return ToString(
+          type_proto.sequence_type().elem_type(), left + "seq(", ")" + right);
     }
 
     case TypeProto::ValueCase::kMapType: {
-        std::string map_str = "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
-        return ToString(type_proto.map_type().value_type(), left + map_str, ")" + right);
+      std::string map_str =
+          "map(" + ToDataTypeString(type_proto.map_type().key_type()) + ",";
+      return ToString(
+          type_proto.map_type().value_type(), left + map_str, ")" + right);
+    }
+    case TypeProto::ValueCase::kOpaqueType: {
+      static const std::string empty;
+      std::string result;
+      std::string param_str;
+      const auto& op_type = type_proto.opaque_type();
+      const auto param_size = op_type.parameters_size();
+      for (int p = 0; p < param_size; ++p) {
+        const auto& param_proto = op_type.parameters(p);
+        param_str.append(
+            ToString(param_proto, (p == 0) ? empty : ",", empty));
+      }
+      result.append("opaque(");
+      result.append(op_type.has_domain() ? op_type.domain() : empty)
+          .append(",");
+      result.append(op_type.has_name() ? op_type.name() : empty)
+          .append(",");
+      result.append("p(").append(param_str).append("))");
+      return result;
     }
 #endif
     default:
       assert(false);
-      return "";
+      return std::string();
   }
 }
 
@@ -156,22 +177,57 @@ void DataTypeUtils::FromString(
   type_proto.Clear();
 #ifdef ONNX_ML
   if (s.LStrip("seq")) {
+    s.ParensWhitespaceStrip();
+    return FromString(
+        std::string(s.Data(), s.Size()),
+        *type_proto.mutable_sequence_type()->mutable_elem_type());
+  } else if (s.LStrip("map")) {
+    s.ParensWhitespaceStrip();
+    size_t key_size = s.Find(',');
+    StringRange k(s.Data(), key_size);
+    std::string key(k.Data(), k.Size());
+    s.LStrip(key_size);
+    s.LStrip(",");
+    StringRange v(s.Data(), s.Size());
+    TensorProto::DataType key_type;
+    FromDataTypeString(key, key_type);
+    type_proto.mutable_map_type()->set_key_type(key_type);
+    return FromString(
+        std::string(v.Data(), v.Size()),
+        *type_proto.mutable_map_type()->mutable_value_type());
+  } else if (s.LStrip("opaque(")) {
+    // Possible to have an Opaque type w/o parameters
+    // so we make sure it exists
+    auto* opaque_type = type_proto.mutable_opaque_type();
+    s.ParensWhitespaceStrip();
+    // Check if we have domain which is positionally first
+    size_t cm = s.Find(',');
+    if (cm > 0) {
+      opaque_type->mutable_domain()->assign(s.Data(), cm);
+    }
+    s.LStrip(cm + 1);
+    cm = s.Find(',');
+    if (cm > 0) {
+      opaque_type->mutable_name()->assign(s.Data(), cm);
+    }
+    s.LStrip(cm + 1);
+    if (s.LStrip("p(")) {
       s.ParensWhitespaceStrip();
-      return FromString(std::string(s.Data(), s.Size()), *type_proto.mutable_sequence_type()->mutable_elem_type());
-  }
-  else if (s.LStrip("map") ){
-      s.ParensWhitespaceStrip();
-      size_t key_size = s.Find(',');
-      StringRange k(s.Data(), key_size);
-      std::string key = std::string(k.Data(), k.Size());
-      s.LStrip(key_size);
-      s.LStrip(",");
-      StringRange v(s.Data(), s.Size());
-      TensorProto::DataType key_type;
-      FromDataTypeString(key, key_type);
-      type_proto.mutable_map_type()->set_key_type(key_type);
-      return FromString(std::string(v.Data(), v.Size()), *type_proto.mutable_map_type()->mutable_value_type());
-  }
+      auto param_size = s.Find(',');
+      while (param_size != std::string::npos) {
+        // Means there are multiple params
+        std::string param(s.Data(), param_size);
+        FromString(param, *opaque_type->add_parameters());
+        s.LStrip(param_size);
+        s.LStrip(",");
+        param_size = s.Find(',');
+      }
+      if (!s.Empty()) {
+        std::string param(s.Data(), s.Size());
+        FromString(param, *opaque_type->add_parameters());
+      }
+    }
+  } else
 #endif
   if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
@@ -392,8 +448,7 @@ TypesWrapper::TypesWrapper() {
   type_str_to_tensor_data_type_["uint32"] = TensorProto_DataType_UINT32;
   type_str_to_tensor_data_type_["uint64"] = TensorProto_DataType_UINT64;
   type_str_to_tensor_data_type_["complex64"] = TensorProto_DataType_COMPLEX64;
-  type_str_to_tensor_data_type_["complex128"] =
-      TensorProto_DataType_COMPLEX128;
+  type_str_to_tensor_data_type_["complex128"] = TensorProto_DataType_COMPLEX128;
   type_str_to_tensor_data_type_["string"] = TensorProto_DataType_STRING;
   type_str_to_tensor_data_type_["bool"] = TensorProto_DataType_BOOL;
 
