@@ -2763,44 +2763,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="MeanVarianceNormalization-1"></a>**MeanVarianceNormalization-1**</a>
-
-  Perform mean variance normalization.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>across_channels</tt> : int (default is 0)</dt>
-<dd>If 1, mean and variance are computed across channels.</dd>
-<dt><tt>normalize_variance</tt> : int (default is 1)</dt>
-<dd>If 0, normalize the mean only.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
 ### <a name="Min-1"></a>**Min-1**</a>
 
   Element-wise min of each of the input tensors. All inputs and outputs must
