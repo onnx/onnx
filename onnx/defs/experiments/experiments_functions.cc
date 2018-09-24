@@ -8,7 +8,7 @@ using namespace ONNX_NAMESPACE;
 
 static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   if (nullptr == func_proto) {
-    return Status(
+    return Common::Status(
         Common::CHECKER,
         Common::INVALID_ARGUMENT,
         "func_proto should not be nullptr.");
@@ -28,11 +28,11 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       "global mean and global variance with all variables sharing the same mean/variance.<br/>"
       "&nbsp;&nbsp;&nbsp;&nbsp;(The KeepDims attribute in ReducedMean is set to true for calculation)<br/>"
       "<br/><b>OUTPUT: </b>X_MVN(float/float16/double) with the same shape as input X<br/>");
-  func.set_since_version(8);
+  func.set_since_version(9);
   func.add_input("X");
   func.add_output("X_MVN");
   func.add_attribute("axes");
-  func.set_status(OperatorStatus::EXPERIMENTAL);
+  func.set_status(OperatorStatus::STABLE);
 
   NodeProto* initial_node0 = func.add_node();
   BuildNode(
@@ -168,7 +168,7 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
       std::vector<std::string>{"X_MVN"},
       node8);
 
-  return Status::OK();
+  return Common::Status::OK();
 }
 
 ONNX_FUNCTION(
