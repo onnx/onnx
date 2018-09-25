@@ -36,6 +36,7 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     TensorProto.INT64: TensorProto.INT64,
     TensorProto.BOOL: TensorProto.INT32,
     TensorProto.FLOAT16: TensorProto.UINT16,
+    TensorProto.BFLOAT16: TensorProto.UINT16,
     TensorProto.DOUBLE: TensorProto.DOUBLE,
     TensorProto.COMPLEX64: TensorProto.FLOAT,
     TensorProto.COMPLEX128: TensorProto.DOUBLE,
