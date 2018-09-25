@@ -25,8 +25,6 @@ option(ONNX_BUILD_TESTS "Build ONNX C++ APIs Tests" OFF)
 option(ONNX_USE_LITE_PROTO "Use lite protobuf instead of full." OFF)
 option(ONNXIFI_DUMMY_BACKEND "Use dummy backend in onnxifi test driver." OFF)
 
-set(ONNX_NAMESPACE "onnx" CACHE STRING "onnx namespace")
-
 # Set C++11 as standard for the whole project
 if(NOT MSVC)
   set(CMAKE_CXX_STANDARD 11)
@@ -45,6 +43,13 @@ if(NOT MSVC)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
   endif()
+endif()
+
+if(ONNX_NAMESPACE)
+  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=${ONNX_NAMESPACE}")
+else()
+  set(ONNX_NAMESPACE "onnx")
+  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=onnx")
 endif()
 
 if(ONNX_BUILD_TESTS)
