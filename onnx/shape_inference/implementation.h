@@ -1,5 +1,6 @@
 #pragma once
 
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
@@ -11,7 +12,8 @@ struct InferenceContextImpl : public InferenceContext {
   InferenceContextImpl(
       const NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
-      const std::unordered_map<std::string, const TensorProto*>& inputDataByName) {
+      const std::unordered_map<std::string, const TensorProto*>&
+          inputDataByName) {
     for (const auto& attr : n.attribute()) {
       attributesByName_[attr.name()] = &attr;
     }
@@ -90,7 +92,21 @@ void mergeShapesAndTypes(
 
 void InferShapes(
     ModelProto& m,
-    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance());
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const IFunctionBuilderRegistry* func_registry =
+        &FunctionBuilderRegistry::OnnxInstance());
+
+void InferShapes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const IFunctionBuilderRegistry* func_registry =
+        &FunctionBuilderRegistry::OnnxInstance());
+
+void InferShapeForFunctionNode(
+    const FunctionProto& func,
+    const ISchemaRegistry* schema_registry,
+    InferenceContext& ctx);
 
 } // namespace shape_inference
 } // namespace ONNX_NAMESPACE

@@ -200,7 +200,7 @@ class ConvTranspose(Base):
 
         node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                                      strides=[3, 2],
-                                     output_shape=[1, 2, 10, 8])
+                                     output_shape=[10, 8])
         expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
         node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],

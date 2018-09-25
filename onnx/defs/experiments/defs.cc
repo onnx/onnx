@@ -363,33 +363,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* MeanVarianceNormalization_ver1_doc =
-    R"DOC(Perform mean variance normalization.)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    MeanVarianceNormalization,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(MeanVarianceNormalization_ver1_doc)
-        .Attr(
-            "across_channels",
-            "If 1, mean and variance are computed across channels.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "normalize_variance",
-            "If 0, normalize the mean only.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
-        .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
-        .Output(0, "output", "Result, has same shape and type as input", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
 static const char* Crop_ver1_doc =
     R"DOC(Crop and image to the specified spatial dimensions. If scale is given,
 then optionally start the crop offset by the left/top border amounts.
