@@ -7,7 +7,7 @@
 ## Summary
 Node tests have covered 93/101 (92.08%, 5 generators excluded) common operators.
 
-Node tests have covered 2/13 (15.38%, 0 generators excluded) experimental operators.
+Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -1402,7 +1402,7 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
-                             output_shape=[1, 2, 10, 8])
+                             output_shape=[10, 8])
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
@@ -6005,9 +6005,6 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### ImageScaler (call for test cases)
-
-
-### MeanVarianceNormalization (call for test cases)
 
 
 ### ParametricSoftplus (call for test cases)

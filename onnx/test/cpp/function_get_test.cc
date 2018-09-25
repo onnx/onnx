@@ -17,5 +17,14 @@ TEST(FunctionAPITest, Get_All_Functions) {
   auto temp_iter = temp_map.find("MeanVarianceNormalization");
   EXPECT_EQ(temp_iter->second->attribute_size(), 1);
 }
+
+TEST(FunctionAPITest, Get_Function_With_Version) {
+  FunctionBuilderRegistry& function_registry =
+      FunctionBuilderRegistry::OnnxInstance();
+  auto func = function_registry.GetFunction(
+      "MeanVarianceNormalization", 9, ONNX_DOMAIN);
+  EXPECT_EQ(func->name(), "MeanVarianceNormalization");
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

@@ -7,11 +7,11 @@
 #include <string>
 #include <vector>
 
+#include "onnx/common/constants.h"
 #include "onnx/common/status.h"
 #include "onnx/onnx-operators_pb.h"
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 
 typedef Common::Status (*BuildFunction)(std::unique_ptr<FunctionProto>*);
 
@@ -27,18 +27,33 @@ class FunctionBuilder {
   BuildFunction build_func_;
 };
 
-class FunctionBuilderRegistry {
+class IFunctionBuilderRegistry {
+ public:
+  virtual ~IFunctionBuilderRegistry() = default;
+
+  virtual std::unique_ptr<FunctionProto> GetFunction(
+      const std::string& func_name,
+      const int maxInclusiveVersion,
+      const std::string& domain = ONNX_DOMAIN) const = 0;
+};
+
+class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
  public:
   FunctionBuilderRegistry() = default;
 
-  Status Register(const FunctionBuilder& function_builder);
+  Common::Status Register(const FunctionBuilder& function_builder);
 
   // Get functions for specific domain.
-  Status GetFunctions(
+  Common::Status GetFunctions(
       const std::string& domain,
       /*out*/
       std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
       const;
+
+  std::unique_ptr<FunctionProto> GetFunction(
+      const std::string& func_name,
+      const int maxInclusiveVersion,
+      const std::string& domain = ONNX_DOMAIN) const override;
 
   static FunctionBuilderRegistry& OnnxInstance();
 
@@ -56,6 +71,13 @@ class FunctionBuilderRegistry {
 #define ONNX_FUNCTION_UNIQ(counter, function_builder)         \
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
+
+// Helper function to expand a function node given the function proto
+void FunctionExpandHelper(
+    const NodeProto& node,
+    const FunctionProto& func,
+    GraphProto& g,
+    const std::string& node_prefix = "");
 
 // Example to register a function.
 // Common::Status BuildFc(std::unique_ptr<FunctionProto>* func_proto) {

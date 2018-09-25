@@ -118,7 +118,6 @@
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
   * <sub>experimental</sub> <a href="#GivenTensorFill">GivenTensorFill</a>
   * <sub>experimental</sub> <a href="#ImageScaler">ImageScaler</a>
-  * <sub>experimental</sub> <a href="#MeanVarianceNormalization">MeanVarianceNormalization</a>
   * <sub>experimental</sub> <a href="#ParametricSoftplus">ParametricSoftplus</a>
   * <sub>experimental</sub> <a href="#Scale">Scale</a>
   * <sub>experimental</sub> <a href="#ScaledTanh">ScaledTanh</a>
@@ -2341,7 +2340,7 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
-                             output_shape=[1, 2, 10, 8])
+                             output_shape=[10, 8])
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
@@ -11496,45 +11495,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Bias applied to each channel, same size as C.</dd>
 <dt><tt>scale</tt> : float (default is 1.0)</dt>
 <dd>The scale to apply.</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Input tensor of shape [N,C,H,W]</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T</dt>
-<dd>Result, has same shape and type as input</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="MeanVarianceNormalization"></a><a name="meanvariancenormalization">**MeanVarianceNormalization**</a>
-
-  Perform mean variance normalization.
-
-#### Version
-
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>across_channels</tt> : int (default is 0)</dt>
-<dd>If 1, mean and variance are computed across channels.</dd>
-<dt><tt>normalize_variance</tt> : int (default is 1)</dt>
-<dd>If 0, normalize the mean only.</dd>
 </dl>
 
 #### Inputs
