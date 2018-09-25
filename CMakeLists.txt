@@ -45,11 +45,8 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(ONNX_NAMESPACE)
-  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=${ONNX_NAMESPACE}")
-else()
+if(NOT ONNX_NAMESPACE)
   set(ONNX_NAMESPACE "onnx")
-  set(MY_ONNX_NAMESPACE "-DONNX_NAMESPACE=onnx")
 endif()
 
 if(ONNX_BUILD_TESTS)
