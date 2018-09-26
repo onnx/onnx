@@ -286,7 +286,7 @@ if (MSVC)
 else()
   set(ONNX_API_DEFINE "-DONNX_API=")
 endif()
-target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
+target_compile_definitions(onnx_proto PUBLIC ${ONNX_API_DEFINE})
 
 if(ONNX_USE_LITE_PROTO)
   if(TARGET protobuf::libprotobuf-lite)
