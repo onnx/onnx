@@ -241,7 +241,7 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
   onnxBackend backend;
   if (!ONNXIFI_DUMMY_BACKEND) {
     EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
-    size_t numBackends = 1;
+    size_t numBackends = 0;
     lib.onnxGetBackendIDs(&backendID, &numBackends);
     const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
     lib.onnxInitBackend(backendID, backendProperties, &backend);
