@@ -1704,7 +1704,7 @@ node = onnx.helper.make_node(
     outputs=['output'],
     axis=0,
 )
-input =  np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
 condition = np.array([0, 1, 1])
 output = np.compress(condition, input, axis=0)
 #print(output)
@@ -1712,7 +1712,7 @@ output = np.compress(condition, input, axis=0)
 # [ 5.  6.]]
 
 expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
-       name='export_compress_0')
+       name='test_compress_0')
 ```
 
 </details>
@@ -1728,7 +1728,7 @@ node = onnx.helper.make_node(
     outputs=['output'],
     axis=1,
 )
-input =  np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
 condition = np.array([0, 1])
 output = np.compress(condition, input, axis=1)
 #print(output)
@@ -1736,7 +1736,7 @@ output = np.compress(condition, input, axis=1)
 # [ 4.]
 # [ 6.]]
 expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
-       name='export_compress_1')
+       name='test_compress_1')
 ```
 
 </details>

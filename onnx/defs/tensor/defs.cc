@@ -1145,7 +1145,5 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T1",
             {"tensor(bool)"},
-            "Constrains to boolean tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-        
+            "Constrains to boolean tensors."));
 } // namespace ONNX_NAMESPACE
