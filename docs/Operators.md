@@ -1735,6 +1735,7 @@ output = np.compress(condition, input, axis=1)
 #[[ 2.]
 # [ 4.]
 # [ 6.]]
+
 expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
        name='test_compress_1')
 ```

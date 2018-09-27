@@ -47,6 +47,7 @@ For implementors in the ONNX community to be able to effectively implement any n
   - What frameworks already have this operation? (e.g. CNTK, Tensorflow, etc.)
   - Which research papers describe or reference it? (e.g. arxiv paper)
 - Sample operator implementation in Python, with minimal dependencies except numpy.
+- run onnx/backend/test/stat_coverage.py to update TestCoverage.md
 
 # Testing
 
