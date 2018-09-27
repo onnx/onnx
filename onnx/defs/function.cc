@@ -3,6 +3,7 @@
 
 #include "onnx/defs/function.h"
 #include "onnx/checker.h"
+#include "onnx/defs/operator_sets.h"
 #include "onnx/defs/schema.h"
 #include "onnx/string_utils.h"
 
@@ -45,6 +46,17 @@ Common::Status FunctionBuilderRegistry::GetFunctions(
         Common::INVALID_ARGUMENT,
         "function_set should not be nullptr.");
   }
+
+  class FunctionBuilderRegisterer {
+   public:
+    FunctionBuilderRegisterer() {
+      RegisterOnnxFunctionBuilder();
+    }
+  };
+
+#ifndef __ONNX_DISABLE_STATIC_REGISTRATION
+  static FunctionBuilderRegisterer functionBuilder_registerer;
+#endif
 
   for (auto func_builder : function_builders) {
     if (func_builder.GetDomain() != domain) {

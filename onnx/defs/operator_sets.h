@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
@@ -471,16 +472,24 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, DynamicSlice);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, EyeLike);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Greater);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Less);
+class ONNX_FUNCTION_BUILDER_CLASS_NAME(Onnx, 9, MeanVarianceNormalization);
 
 // Iterate over schema from ai.onnx version 9
 class OpSet_Onnx_ver9 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, ConstantLike)>());
-    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, DynamicSlice)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 9, ConstantLike)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+           Onnx, 9, DynamicSlice)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, EyeLike)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Greater)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Less)>());
+  }
+  static void ForEachFunctionBuilder(
+      std::function<void(FunctionBuilder&&)> fn) {
+    fn(GetFunctionBuilder<ONNX_FUNCTION_BUILDER_CLASS_NAME(
+           Onnx, 9, MeanVarianceNormalization)>());
   }
 };
 
@@ -496,5 +505,7 @@ inline void RegisterOnnxOperatorSetSchema() {
   RegisterOpSetSchema<OpSet_Onnx_ver9>();
 }
 
-
+inline void RegisterOnnxFunctionBuilder() {
+  RegisterFunctionBuilder<OpSet_Onnx_ver9>();
+}
 } // namespace ONNX_NAMESPACE
