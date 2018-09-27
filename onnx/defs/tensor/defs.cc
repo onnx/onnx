@@ -1121,4 +1121,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Compress_ver1_doc = R"DOC(
+    Compress a tensor that behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+    )DOC";
+ONNX_OPERATOR_SET_SCHEMA(
+    Compress,
+    9,
+    OpSchema()
+        .SetDoc(Compress_ver1_doc)
+        .Attr(
+            "axis",
+            "Axis along which to take slices.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Input(0, "input", "Tensor of rank r >= 1.", "T")
+        .Input(1, "condition", "Rank 1 tensor of booleans to indicate which slices to be selected.", "T1")
+        .Output(0, "output", "Tensor of rank r.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains to boolean tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+        
 } // namespace ONNX_NAMESPACE
