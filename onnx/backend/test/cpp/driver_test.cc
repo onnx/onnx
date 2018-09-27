@@ -147,28 +147,29 @@ class ONNXCppDriverTest
         ONNX_NAMESPACE::checker::check_tensor(output, ctx);
       }
     }
-    /* TO DO:
-     * This chunk of code is to test the correctness of onnxifi backend.
-     * Since we are not using a real backend, we should wait and not
-     * enable these tests. */
     if (!ONNXIFI_DUMMY_BACKEND) {
       onnxGraph graph;
       uint32_t weightCount = model_.graph().initializer_size();
-      onnxTensorDescriptorV1 weightDescriptors =
-          ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
-              model_.graph().initializer(0));
-
+      onnxTensorDescriptorV1 weightDescriptors,
+          *weightDescriptors_pointer = NULL;
+      if (weightCount != 0) {
+        weightDescriptors =
+            ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
+                model_.graph().initializer(0));
+        weightDescriptors_pointer = &weightDescriptors;
+      }
+      std::string serialized_model;
+      model_.SerializeToString(&serialized_model);
       EXPECT_EQ(
           lib.onnxInitGraph(
               backend,
               NULL,
-              sizeof(model_),
-              &model_,
+              serialized_model.size(),
+              serialized_model.c_str(),
               weightCount,
-              &weightDescriptors,
+              weightDescriptors_pointer,
               &graph),
           ONNXIFI_STATUS_SUCCESS);
-
       for (const auto& proto_test_data : protos_) {
         std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor,
             result_descriptor;
@@ -233,17 +234,16 @@ class ONNXCppDriverTest
 /**
  *	When testing backend, we do not specify target backend here,
  *	but always use the by-default backend of onnxifi_loader.
- *	Check onnxifi_loader.h for more detail of how to indicate specific
+ *	Check onnxifi_loader.c for more detail of how to indicate specific
  *  backend.
  */
 TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
   onnxifi_library lib;
-  onnxBackendID backendID;
+  onnxBackendID backendID = NULL;
   onnxBackend backend;
   if (!ONNXIFI_DUMMY_BACKEND) {
     EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
-
-    size_t numBackends;
+    size_t numBackends = 0;
     lib.onnxGetBackendIDs(&backendID, &numBackends);
     const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
     lib.onnxInitBackend(backendID, backendProperties, &backend);
