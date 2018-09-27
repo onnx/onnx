@@ -158,12 +158,14 @@ class ONNXCppDriverTest
                 model_.graph().initializer(0));
         weightDescriptors_pointer = &weightDescriptors;
       }
+      std::string serialized_model;
+      model_.SerializeToString(&serialized_model);
       EXPECT_EQ(
           lib.onnxInitGraph(
               backend,
               NULL,
-              sizeof(model_),
-              &model_,
+              serialized_model.size(),
+              serialized_model.c_str(),
               weightCount,
               weightDescriptors_pointer,
               &graph),
