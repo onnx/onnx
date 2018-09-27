@@ -165,7 +165,7 @@ class ONNXCppDriverTest
               backend,
               NULL,
               serialized_model.size(),
-              serialized_model.c_str(),
+              serialized_model.data(),
               weightCount,
               weightDescriptors_pointer,
               &graph),
