@@ -3,7 +3,8 @@
 
 #include "onnx/optimizer/optimize.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
 // TODO: Remove this static reference
 static Optimizer _optimizer;
@@ -22,4 +23,5 @@ const std::vector<std::string> GetAvailablePasses() {
   return names;
 }
 
-}} // namespace ONNX_NAMESPACE:optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE
