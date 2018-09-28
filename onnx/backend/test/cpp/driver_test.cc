@@ -158,12 +158,14 @@ class ONNXCppDriverTest
                 model_.graph().initializer(0));
         weightDescriptors_pointer = &weightDescriptors;
       }
-      EXPECT_EQ(
+      std::string serialized_model;
+      model_.SerializeToString(&serialized_model);
+      ASSERT_EQ(
           lib.onnxInitGraph(
               backend,
               NULL,
-              sizeof(model_),
-              &model_,
+              serialized_model.size(),
+              serialized_model.data(),
               weightCount,
               weightDescriptors_pointer,
               &graph),
@@ -195,7 +197,7 @@ class ONNXCppDriverTest
           result.buffer = (onnxPointer)raw_data.data();
           result_descriptor.emplace_back(std::move(result));
         }
-        EXPECT_EQ(
+        ASSERT_EQ(
             lib.onnxSetGraphIO(
                 graph,
                 input_descriptor.size(),
@@ -210,10 +212,10 @@ class ONNXCppDriverTest
         inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
         outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
 
-        EXPECT_EQ(
+        ASSERT_EQ(
             lib.onnxRunGraph(graph, &inputFence, &outputFence),
             ONNXIFI_STATUS_SUCCESS);
-        EXPECT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
+        ASSERT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
         for (int i = 0; i < output_descriptor.size(); i++) {
           auto output_size = GetDescriptorSize(&output_descriptor[i]);
           for (int j = 0; j < output_size; j++) {
@@ -224,7 +226,7 @@ class ONNXCppDriverTest
           }
         }
       }
-      EXPECT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
+      ASSERT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
     }
   }
 };
@@ -240,7 +242,7 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
   onnxBackendID backendID = NULL;
   onnxBackend backend;
   if (!ONNXIFI_DUMMY_BACKEND) {
-    EXPECT_TRUE(onnxifi_load(1, NULL, &lib));
+    ASSERT_TRUE(onnxifi_load(1, NULL, &lib));
     size_t numBackends = 0;
     lib.onnxGetBackendIDs(&backendID, &numBackends);
     const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
