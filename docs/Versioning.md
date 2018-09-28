@@ -140,3 +140,13 @@ ISSUE: what's our policy when a model takes a dependency on new `IR_VERSION` cha
 ### Accuracy or performance changes
 
 Assuming that there are no breaking changes to the signature of the model's graph or any operator dependencies, the shape and contents of the graph can change freely provided there are no semantic changes to the model. However, changes to the shape and contents of the graph can impact model accuracy and/or model performance.
+
+## Released Versions
+
+ONNX version|File format version|Operator set version ai.onnx|Operator set version ai.onnx.ml
+------------|-------------------|----------------------------|-------------------------------
+1.0|3|1|1
+1.1|3|5|1
+1.1.2|3|6|1
+1.2|3|7|1
+1.3|3|8|1
