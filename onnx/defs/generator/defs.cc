@@ -113,7 +113,14 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)"},
              "Constrain output types. Strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (ctx.getAttribute("dtype") != nullptr) {
+            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          }
+          else {
+            if (hasNInputShapes(ctx, 1)) {
+              propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            }
+          }
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
