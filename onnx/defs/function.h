@@ -81,12 +81,6 @@ FunctionBuilder GetFunctionBuilder();
     return build_func;                                                        \
   }
 
-// Registers all function builder of a given operator set
-template <class T>
-void RegisterFunctionBuilder() {
-  T::ForEachFunctionBuilder(RegisterOneFunctionBuilder);
-};
-
 #define ONNX_FUNCTION(function_builder) \
   ONNX_FUNCTION_UNIQ_HELPER(__COUNTER__, function_builder)
 
@@ -97,7 +91,15 @@ void RegisterFunctionBuilder() {
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
-void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder); 
+inline void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder) { 
+  ONNX_FUNCTION(func_builder); 
+}
+
+// Registers all function builder of a given operator set
+template <class T>
+void RegisterFunctionBuilder() {
+  T::ForEachFunctionBuilder(RegisterOneFunctionBuilder);
+};
 
 // Helper function to expand a function node given the function proto
 void FunctionExpandHelper(
