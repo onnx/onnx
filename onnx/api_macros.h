@@ -1,5 +1,5 @@
-#ifndef ONNX_API_H
-#define ONNX_API_H
+#ifndef ONNX_API_MACROS_H
+#define ONNX_API_MACROS_H
 
 // Defines ONNX_EXPORT and ONNX_IMPORT. On Windows, this corresponds to
 // different declarations (dllexport and dllimport). On Linux/Mac, it just
@@ -43,4 +43,4 @@
 #define ONNX_API ONNX_IMPORT
 #endif
 
-#endif /* !defined(ONNX_API_H) */
+#endif /* !defined(ONNX_API_MACROS_H) */
