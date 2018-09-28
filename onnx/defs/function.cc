@@ -228,4 +228,9 @@ void FunctionExpandHelper(
     }
   }
 }
+
+void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder) {
+  ONNX_FUNCTION(func_builder);
+};
+
 } // namespace ONNX_NAMESPACE

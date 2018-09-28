@@ -97,9 +97,7 @@ void RegisterFunctionBuilder() {
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
-inline void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder) {
-  ONNX_FUNCTION(func_builder);
-};
+void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder); 
 
 // Helper function to expand a function node given the function proto
 void FunctionExpandHelper(
