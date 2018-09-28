@@ -20,6 +20,8 @@
 #include "data_type_utils.h"
 #include "onnx/common/constants.h"
 #include "onnx/defs/shape_inference.h"
+#include "onnx/api_macros.h"
+
 namespace ONNX_NAMESPACE {
 
 class SchemaError final : public std::runtime_error {
@@ -595,7 +597,7 @@ class ISchemaRegistry {
 /**
  * @brief A registry to hold all the operator schemas.
  */
-class OpSchemaRegistry final : public ISchemaRegistry {
+class ONNX_API OpSchemaRegistry final : public ISchemaRegistry {
  public:
   // A singleton class to store domain to min/max op_set version map.
   class DomainToVersionRange final {
