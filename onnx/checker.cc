@@ -285,7 +285,7 @@ void check_node(
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(
       node.op_type(), domain_version, node.domain());
-  if (!schema) {
+  if (!schema || schema->Deprecated()) {
     // There's no primitive operator for the node.
     // Check whether it's referring to a function.
     auto func_registry = ctx.get_func_registry();
