@@ -3,6 +3,14 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
+Pass::Pass(
+    PassType pass_type,
+    PassEfficiency pass_efficiency,
+    PassOptimizationType pass_optimization_type) {
+  this->pass_type = pass_type;
+  this->pass_efficiency = pass_efficiency;
+  this->pass_optimization_type = pass_optimization_type;
+}
 uint Pass::DescendOnGraphAttributes(Node* n, std::function<uint(Graph&)> fn) {
   uint num_changes = 0;
   for (auto name : n->attributeNames()) {
@@ -27,20 +35,36 @@ uint PredicateBasedPass::_runPassInternal(Graph& graph) {
         n, [this](Graph& g) { return _runPassInternal(g); });
 
     if (this->patternMatchPredicate(n)) {
-      num_changes += this->runTransform(n);
+      bool destroy_current = false;
+      num_changes += this->runTransform(n, destroy_current);
+
+      if (destroy_current) {
+        it.destroyCurrent();
+        it.destroyCurrent();
+      }
     }
   }
   return num_changes;
 }
 
 PostPassAnalysis PredicateBasedPass::runPass(Graph& graph) {
-  auto initialized_pass = this->initializePass(graph);
+  bool initialized_pass = this->initializePass(graph);
   uint touched_optimizations = this->_runPassInternal(graph);
-  auto finalized_pass = this->finalizePass(graph);
+  bool finalized_pass = this->finalizePass(graph);
 
-  return PostPredictBasedPassAnalysis(
+  return PostPredicateBasedPassAnalysis(
       this, touched_optimizations, initialized_pass, finalized_pass);
 }
 
+PostPredicateBasedPassAnalysis::PostPredicateBasedPassAnalysis(
+    Pass* pass,
+    uint num_positive_transforms,
+    bool succesful_initialization,
+    bool succesful_finalization) {
+  this->pass = pass;
+  this->num_positive_transforms = num_positive_transforms;
+  this->succesful_initialization = succesful_initialization;
+  this->succesful_finalization = succesful_finalization;
+}
 } // namespace optimization
 } // namespace ONNX_NAMESPACE

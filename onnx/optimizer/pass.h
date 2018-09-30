@@ -31,10 +31,7 @@ class Pass {
   explicit Pass(
       PassType pass_type,
       PassEfficiency pass_efficiency,
-      PassOptimizationType pass_optimization_type)
-      : pass_type(pass_type),
-        pass_efficiency(pass_efficiency),
-        pass_optimization_type(pass_optimization_type) {}
+      PassOptimizationType pass_optimization_type);
   virtual ~Pass();
 
   PassType getPassType() const {
@@ -55,39 +52,33 @@ class Pass {
     return false;
   }
   virtual PostPassAnalysis runPass(Graph& graph) = 0;
-  virtual PostPassAnalysis runPass(ONNX_NAMESPACE::ModelProto& graph) = 0;
 
  protected:
   uint DescendOnGraphAttributes(Node* n, std::function<uint(Graph&)> fn);
 };
 
-class ImmutablePass : Pass {
- public:
-  explicit ImmutablePass()
-      : Pass(
-            PassType::Immutable,
-            PassEfficiency::Complete,
-            PassOptimizationType::None) {}
-  ~ImmutablePass() override;
-};
+// class ImmutablePass : Pass {
+//  public:
+//   explicit ImmutablePass()
+//       : Pass(
+//             PassType::Immutable,
+//             PassEfficiency::Complete,
+//             PassOptimizationType::None) {}
+//   ~ImmutablePass() override;
+// };
 
-struct PostPredictBasedPassAnalysis : PostPassAnalysis {
+struct PostPredicateBasedPassAnalysis : PostPassAnalysis {
   Pass* pass;
   uint num_positive_transforms;
   bool succesful_initialization;
   bool succesful_finalization;
 
  public:
-  explicit PostPredictBasedPassAnalysis(
+  explicit PostPredicateBasedPassAnalysis(
       Pass* pass,
       uint num_positive_transforms,
       bool succesful_initialization,
-      bool succesful_finalization)
-      : pass(pass),
-        num_positive_transforms(num_positive_transforms),
-        succesful_initialization(succesful_initialization),
-        succesful_finalization(succesful_finalization) {}
-
+      bool succesful_finalization);
   bool graphChanged() {
     return this->num_positive_transforms > 0;
   }
@@ -100,7 +91,7 @@ struct PostPredictBasedPassAnalysis : PostPassAnalysis {
   }
 };
 
-class PredicateBasedPass final : Pass {
+class PredicateBasedPass : public Pass {
  public:
   explicit PredicateBasedPass(
       PassType pass_type,
@@ -109,19 +100,13 @@ class PredicateBasedPass final : Pass {
       : Pass(pass_type, pass_efficiency, pass_optimization_type) {}
   ~PredicateBasedPass() override;
 
-  virtual bool patternMatchPredicate(Node* node) {
-    return false;
-  }
-  virtual bool runTransform(Node* node) {
-    return false;
-  }
+  virtual bool patternMatchPredicate(Node* node) = 0;
+  virtual bool runTransform(Node* node, bool& destroy_current) = 0;
 
-  PostPassAnalysis runPass(Graph& graph);
-  PostPassAnalysis runPass(ONNX_NAMESPACE::ModelProto& graph);
+  PostPassAnalysis runPass(Graph& graph) override;
 
  private:
   uint _runPassInternal(Graph& graph);
-  uint _runPassInternal(ONNX_NAMESPACE::ModelProto& graph);
 };
 
 class FullGraphBasedPass : Pass {

@@ -16,11 +16,7 @@ ModelProto Optimize(
 }
 
 const std::vector<std::string> GetAvailablePasses() {
-  std::vector<std::string> names;
-  for (const auto& pass : _optimizer.passes) {
-    names.push_back(pass.first);
-  }
-  return names;
+  return _optimizer.passes.GetAvailablePasses();
 }
 
 } // namespace optimization

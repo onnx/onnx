@@ -6,46 +6,18 @@
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
-#include "onnx/optimizer/passes/eliminate_identity.h"
-#include "onnx/optimizer/passes/eliminate_nop_pad.h"
-#include "onnx/optimizer/passes/eliminate_nop_transpose.h"
-#include "onnx/optimizer/passes/eliminate_unused_initializer.h"
-#include "onnx/optimizer/passes/extract_constant_to_initializer.h"
-#include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
-#include "onnx/optimizer/passes/fuse_bn_into_conv.h"
-#include "onnx/optimizer/passes/fuse_consecutive_log_softmax.h"
-#include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
-#include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
-#include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
-#include "onnx/optimizer/passes/lift_lexical_references.h"
-#include "onnx/optimizer/passes/nop.h"
-#include "onnx/optimizer/passes/split.h"
+#include "onnx/optimizer/pass_manager.h"
+#include "onnx/optimizer/pass_registry.h"
 #include "onnx/proto_utils.h"
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
 struct Optimizer {
-  std::map<std::string, std::unique_ptr<OptimizePass>> passes;
+ public:
+  GlobalPassRegistry passes;
 
-  Optimizer() {
-    // Register the optimization passes to the optimizer.
-    registerOptimizer<EliminateIdentity>();
-    registerOptimizer<EliminateNopTranspose>();
-    registerOptimizer<EliminateNopPad>();
-    registerOptimizer<EliminateUnusedInitializer>();
-    registerOptimizer<ExtractConstantToInitializer>();
-    registerOptimizer<FuseConsecutiveSqueezes>();
-    registerOptimizer<FuseConsecutiveTransposes>();
-    registerOptimizer<FuseTransposeIntoGemm>();
-    registerOptimizer<FuseConsecutiveLogSoftmax>();
-    registerOptimizer<FuseAddBiasIntoConv>();
-    registerOptimizer<Nop>();
-    registerOptimizer<SplitInit>();
-    registerOptimizer<SplitPredict>();
-    registerOptimizer<LiftLexicalReferences>();
-    registerOptimizer<FuseBNIntoConv>();
-  }
+  Optimizer() {}
 
   virtual ~Optimizer() = default;
 
@@ -64,32 +36,14 @@ struct Optimizer {
 
     ModelProto mp_out = PrepareOutput(mp_in);
 
+    GeneralPassManager pass_manager;
     for (const auto& name : names) {
-      auto it = passes.find(name);
-      ONNX_ASSERTM(it != passes.end(), "pass %s is unknown.", name.c_str());
-      if (it != passes.end()) {
-        const auto& pass = it->second;
-        if (pass->type == API_TYPE::PROTO) {
-          // Operate on ModelProto.
-          ExportModelProto(&mp_out, g);
-          pass->optimize(mp_out);
-          g = ImportModelProto(mp_out);
-
-        } else {
-          // Operate on Graph (IR).
-          pass->optimize(*g);
-        }
-      }
+      auto pass = passes.find(name);
+      pass_manager.add(pass);
     }
-
+    pass_manager.run(*g);
     ExportModelProto(&mp_out, g);
     return mp_out;
-  }
-
-  template <class Optimizer, class... Args>
-  void registerOptimizer(Args&&... args) {
-    auto optimizer = make_unique<Optimizer>(std::forward<Args>(args)...);
-    passes[optimizer->name] = std::move(optimizer);
   }
 };
 
