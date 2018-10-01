@@ -14,14 +14,21 @@
 //   condition 1: A is not used as any node's input
 //   condition 2: A is not an output
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
-struct EliminateUnusedInitializer final : public OptimizePass {
+struct EliminateUnusedInitializer final : public FullGraphBasedPass {
   explicit EliminateUnusedInitializer()
-      : OptimizePass("eliminate_unused_initializer", API_TYPE::IR) {}
+      : FullGraphBasedPass(
+            PassType::Nop,
+            PassEfficiency::Complete,
+            PassOptimizationType::Memory) {}
+
+  std::string getPassName() const override {
+    return "eliminate_unused_initializer";
+  }
 
   void erase_used_initializers(
       Graph& g,
@@ -31,9 +38,10 @@ struct EliminateUnusedInitializer final : public OptimizePass {
     }
     for (auto it = g.begin(); it != g.end(); ++it) {
       auto* n = *it;
-      DescendOnGraphAttributes(n, [this, initializer_names](Graph& graph) {
-        erase_used_initializers(graph, initializer_names);
-      });
+      DescendOnGraphAttributesUnconstrained(
+          n, [this, initializer_names](Graph& graph) {
+            erase_used_initializers(graph, initializer_names);
+          });
       for (auto* input : n->inputs()) {
         initializer_names->erase(input->uniqueName());
       }
@@ -58,8 +66,9 @@ struct EliminateUnusedInitializer final : public OptimizePass {
     }
   }
 
-  void optimize(Graph& graph) override {
+  PostPassAnalysis runPass(Graph& graph) {
     eliminate_unused_initializer(graph);
+    return PostPassAnalysis();
   }
 };
 

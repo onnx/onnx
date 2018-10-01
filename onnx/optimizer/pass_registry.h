@@ -30,7 +30,20 @@ struct GlobalPassRegistry {
 
   GlobalPassRegistry() {
     // Register the optimization passes to the optimizer.
-    // registerOptimizer<EliminateIdentity>();
+    registerOptimizer<EliminateIdentity>();
+    registerOptimizer<EliminateNopPad>();
+    registerOptimizer<EliminateNopTranspose>();
+    registerOptimizer<EliminateUnusedInitializer>();
+    registerOptimizer<ExtractConstantToInitializer>();
+    registerOptimizer<FuseAddBiasIntoConv>();
+    registerOptimizer<FuseBNIntoConv>();
+    registerOptimizer<FuseConsecutiveLogSoftmax>();
+    registerOptimizer<FuseConsecutiveSqueezes>();
+    registerOptimizer<FuseConsecutiveTransposes>();
+    registerOptimizer<FuseTransposeIntoGemm>();
+    registerOptimizer<LiftLexicalReferences>();
+    registerOptimizer<SplitInit>();
+    registerOptimizer<SplitPredict>();
   }
 
   ~GlobalPassRegistry() {
@@ -50,7 +63,7 @@ struct GlobalPassRegistry {
   template <typename T>
   void registerOptimizer() {
     static_assert(std::is_base_of<Pass, T>::value, "T must inherit from Pass");
-    T* pass = new T();
+    Pass* pass = new T();
     passes[pass->getPassName()] = pass;
   }
 };

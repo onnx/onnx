@@ -23,18 +23,26 @@
 // $$ X_{bn} = \frac{s(X - m)}{\sqrt{\sigma + \epsilon}} + b_{bn}$$
 // $$ X_{conv} = X * W + b_{conv} $$
 // thus, substituting $X$ with $X_{conv}$ in the BN equation we get:
-// $$X_{bn} = X * \frac{sW}{\sqrt{\sigma + \epsilon}} + \frac{s(b_{conv} - m)}{\sqrt{\sigma + \epsilon}} + b_{bn}$$
-// or
+// $$X_{bn} = X * \frac{sW}{\sqrt{\sigma + \epsilon}} + \frac{s(b_{conv} -
+// m)}{\sqrt{\sigma + \epsilon}} + b_{bn}$$ or
 // $$ W' = W\frac{s}{\sqrt{\sigma + \epsilon}}$$
 // $$ b' = (b_{conv} - m)\frac{s}{\sqrt{\sigma + \epsilon}} + b_{bn}$$
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/common/assertions.h"
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
-//TODO: Currently broken for complex values and float16
-struct FuseBNIntoConv final : public OptimizePass {
+namespace ONNX_NAMESPACE {
+namespace optimization {
+// TODO: Currently broken for complex values and float16
+struct FuseBNIntoConv final : public PredicateBasedPass {
   explicit FuseBNIntoConv()
-    : OptimizePass("fuse_bn_into_conv", API_TYPE::IR) {
+      : PredicateBasedPass(
+            PassType::Fuse,
+            PassEfficiency::Complete,
+            PassOptimizationType::Compute) {}
+
+  std::string getPassName() const override {
+    return "fuse_bn_into_conv";
   }
 
   void replace_inputs(Tensor& W, Tensor& b, Node* conv, Graph& graph) {
@@ -58,7 +66,7 @@ struct FuseBNIntoConv final : public OptimizePass {
     }
   }
 
-  bool modify_conv(Node* conv, Node* bn, Graph& graph)  {
+  bool modify_conv(Node* conv, Node* bn, Graph& graph) {
     const auto& bn_inputs = bn->inputs();
     const auto& conv_inputs = conv->inputs();
     auto end_iter = graph.initializers().end();
@@ -73,16 +81,24 @@ struct FuseBNIntoConv final : public OptimizePass {
     }
 
     ONNX_ASSERT(s_iter->sizes().size() == 1);
-    ONNX_ASSERT(bbn_iter->sizes().size() == 1 && bbn_iter->sizes()[0] == s_iter->sizes()[0]);
-    ONNX_ASSERT(m_iter->sizes().size() == 1 && m_iter->sizes()[0] == s_iter->sizes()[0]);
-    ONNX_ASSERT(var_iter->sizes().size() == 1 && var_iter->sizes()[0] == s_iter->sizes()[0]);
-    ONNX_ASSERT(W_iter->sizes().size() > 2 && W_iter->sizes()[0] == s_iter->sizes()[0]);
-    ONNX_ASSERT(s_iter->elem_type() == bbn_iter->elem_type() &&
-                s_iter->elem_type() == m_iter->elem_type() &&
-                s_iter->elem_type() == var_iter->elem_type() &&
-                s_iter->elem_type() == W_iter->elem_type());
+    ONNX_ASSERT(
+        bbn_iter->sizes().size() == 1 &&
+        bbn_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(
+        m_iter->sizes().size() == 1 &&
+        m_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(
+        var_iter->sizes().size() == 1 &&
+        var_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(
+        W_iter->sizes().size() > 2 && W_iter->sizes()[0] == s_iter->sizes()[0]);
+    ONNX_ASSERT(
+        s_iter->elem_type() == bbn_iter->elem_type() &&
+        s_iter->elem_type() == m_iter->elem_type() &&
+        s_iter->elem_type() == var_iter->elem_type() &&
+        s_iter->elem_type() == W_iter->elem_type());
     if (s_iter->elem_type() != ONNX_NAMESPACE::TensorProto_DataType_FLOAT &&
-        s_iter->elem_type() != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE)  {
+        s_iter->elem_type() != ONNX_NAMESPACE::TensorProto_DataType_DOUBLE) {
       return false;
     }
 
@@ -93,7 +109,8 @@ struct FuseBNIntoConv final : public OptimizePass {
         return false;
       }
       bc = *bc_iter;
-      ONNX_ASSERT(bc.sizes().size() == 1 && bc.sizes()[0] == s_iter->sizes()[0]);
+      ONNX_ASSERT(
+          bc.sizes().size() == 1 && bc.sizes()[0] == s_iter->sizes()[0]);
     }
 
     Tensor s = *s_iter;
@@ -101,37 +118,36 @@ struct FuseBNIntoConv final : public OptimizePass {
     const Tensor& m = *m_iter;
     Tensor var = *var_iter;
     Tensor W = *W_iter;
-    float epsilon = bn->hasAttribute(kepsilon) ? (float) bn->f(kepsilon) : 1e-5f;
+    float epsilon = bn->hasAttribute(kepsilon) ? (float)bn->f(kepsilon) : 1e-5f;
     Tensor eps;
 
-    #define DO_COMPUTATION(TENSOR_TYPE, vec)                                   \
-      eps.sizes().push_back(s.sizes()[0]);                                     \
-      eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;    \
-      for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {                          \
-        eps.vec().push_back(epsilon);                                          \
-      }                                                                        \
-      if (conv_inputs.size() != 3) {                                           \
-        bc.sizes().push_back(s.sizes()[0]);                                    \
-        bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;   \
-        for (int64_t i = 0; i < eps.sizes()[0]; ++i)  {                        \
-          bc.vec().push_back(0.f);                                             \
-        }                                                                      \
-      }                                                                        \
-      var.add(eps);                                                            \
-      var.sqrt();                                                              \
-      s.divide(var);                                                           \
-      W.scale_by_first_dim(s);                                                 \
-      bc.subtract(m);                                                          \
-      bc.multiply(s);                                                          \
-      bc.add(bbn);                                                             \
+#define DO_COMPUTATION(TENSOR_TYPE, vec)                                 \
+  eps.sizes().push_back(s.sizes()[0]);                                   \
+  eps.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE;  \
+  for (int64_t i = 0; i < eps.sizes()[0]; ++i) {                         \
+    eps.vec().push_back(epsilon);                                        \
+  }                                                                      \
+  if (conv_inputs.size() != 3) {                                         \
+    bc.sizes().push_back(s.sizes()[0]);                                  \
+    bc.elem_type() = ONNX_NAMESPACE::TensorProto_DataType_##TENSOR_TYPE; \
+    for (int64_t i = 0; i < eps.sizes()[0]; ++i) {                       \
+      bc.vec().push_back(0.f);                                           \
+    }                                                                    \
+  }                                                                      \
+  var.add(eps);                                                          \
+  var.sqrt();                                                            \
+  s.divide(var);                                                         \
+  W.scale_by_first_dim(s);                                               \
+  bc.subtract(m);                                                        \
+  bc.multiply(s);                                                        \
+  bc.add(bbn);
 
-    switch(s.elem_type()) {
+    switch (s.elem_type()) {
       case ONNX_NAMESPACE::TensorProto_DataType_FLOAT: {
         DO_COMPUTATION(FLOAT, floats)
         break;
       }
-      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE:
-      {
+      case ONNX_NAMESPACE::TensorProto_DataType_DOUBLE: {
         DO_COMPUTATION(DOUBLE, doubles)
         break;
       }
@@ -143,37 +159,31 @@ struct FuseBNIntoConv final : public OptimizePass {
     return true;
   }
 
-  void fuse_bn_into_conv(Graph& graph) {
-
-    for (auto it = graph.begin(); it != graph.end(); ++it) {
-      auto* n = *it;
-      DescendOnGraphAttributes(n, [this](Graph& g){fuse_bn_into_conv(g);});
-      if (n->kind() == kBatchNormalization && n->inputs()[0]->node()->kind() == kConv) {
-        Node* bn = n;
-        Node* conv = n->inputs()[0]->node();
-        auto origInput = bn->inputs()[0];
-        if (origInput->uses().size() > 1 ||
-            bn->outputs().size() > 1 ||
-            !modify_conv(conv, bn, graph)) {
-          continue;
-        }
-        for (int i = 4; i >= 1; --i)  {
-          if (bn->inputs()[i]->uses().size() == 1) {
-            auto input = bn->inputs()[i];
-            bn->removeInput(i);
-            graph.eraseInitializerAndInput(input);
-          }
-        }
-        bn->output()->replaceAllUsesWith(origInput);
-        it.destroyCurrent();
-
+  bool patternMatchPredicate(Node* node) override {
+    return node->kind() == kBatchNormalization &&
+        node->inputs()[0]->node()->kind() == kConv;
+  }
+  bool runTransform(Node* n, Graph& graph, bool& destroy_current) override {
+    Node* bn = n;
+    Node* conv = n->inputs()[0]->node();
+    auto origInput = bn->inputs()[0];
+    if (origInput->uses().size() > 1 || bn->outputs().size() > 1 ||
+        !modify_conv(conv, bn, graph)) {
+      destroy_current = false;
+      return false;
+    }
+    for (int i = 4; i >= 1; --i) {
+      if (bn->inputs()[i]->uses().size() == 1) {
+        auto input = bn->inputs()[i];
+        bn->removeInput(i);
+        graph.eraseInitializerAndInput(input);
       }
     }
-  }
-
-  void optimize(Graph& graph) override {
-    fuse_bn_into_conv(graph);
+    bn->output()->replaceAllUsesWith(origInput);
+    destroy_current = true;
+    return true;
   }
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE

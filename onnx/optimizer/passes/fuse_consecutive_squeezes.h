@@ -9,16 +9,21 @@
 //   Z = Squeeze(Y, axes=[0, 4]) -> shape=[2, 3, 5]
 // After:
 //   Z = Squeeze(X, axes=[0, 1, 4, 6])
-
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
-struct FuseConsecutiveSqueezes final : public OptimizePass {
+struct FuseConsecutiveSqueezes final : public PredicateBasedPass {
   explicit FuseConsecutiveSqueezes()
-      : OptimizePass("fuse_consecutive_squeezes", API_TYPE::IR) {}
+      : PredicateBasedPass(
+            PassType::Fuse,
+            PassEfficiency::Complete,
+            PassOptimizationType::Compute) {}
 
+  std::string getPassName() const override {
+    return "fuse_consecutive_squeezes";
+  }
   // returns a vector `ret` such that squeeze by `ret` is equivalent
   // to squeeze by `axes_1` and then by `axes_2`
   std::vector<int64_t> compose_squeezes(
@@ -53,26 +58,20 @@ struct FuseConsecutiveSqueezes final : public OptimizePass {
     return ret;
   }
 
-  void fuse_consecutive_squeezes(Graph& graph) {
-    for (auto it = graph.begin(); it != graph.end(); ++it) {
-      auto* n = *it;
-      DescendOnGraphAttributes(
-          n, [this](Graph& g) { fuse_consecutive_squeezes(g); });
-      if (n->kind() == kSqueeze && n->input()->node()->kind() == kSqueeze) {
-        auto orig_input = n->input();
-        n->is_(
-            kaxes,
-            compose_squeezes(orig_input->node()->is(kaxes), n->is(kaxes)));
-        n->replaceInput(0, orig_input->node()->input());
-        if (orig_input->uses().size() == 0) {
-          orig_input->node()->destroy();
-        }
-      }
-    }
+  bool patternMatchPredicate(Node* node) override {
+    return node->kind() == kSqueeze &&
+        node->input()->node()->kind() == kSqueeze;
   }
-
-  void optimize(Graph& graph) override {
-    fuse_consecutive_squeezes(graph);
+  bool runTransform(Node* n, Graph& graph, bool& destroy_current) override {
+    auto orig_input = n->input();
+    n->is_(
+        kaxes, compose_squeezes(orig_input->node()->is(kaxes), n->is(kaxes)));
+    n->replaceInput(0, orig_input->node()->input());
+    if (orig_input->uses().size() == 0) {
+      orig_input->node()->destroy();
+    }
+    destroy_current = false;
+    return true;
   }
 };
 

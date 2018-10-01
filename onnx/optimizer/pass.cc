@@ -11,7 +11,11 @@ Pass::Pass(
   this->pass_efficiency = pass_efficiency;
   this->pass_optimization_type = pass_optimization_type;
 }
-uint Pass::DescendOnGraphAttributes(Node* n, std::function<uint(Graph&)> fn) {
+Pass::~Pass() {}
+
+uint Pass::DescendOnGraphAttributesAndCount(
+    Node* n,
+    std::function<uint(Graph&)> fn) {
   uint num_changes = 0;
   for (auto name : n->attributeNames()) {
     auto kind = n->kindOf(name);
@@ -27,18 +31,35 @@ uint Pass::DescendOnGraphAttributes(Node* n, std::function<uint(Graph&)> fn) {
   return num_changes;
 }
 
+void Pass::DescendOnGraphAttributesUnconstrained(
+    Node* n,
+    std::function<void(Graph&)> fn) {
+  for (auto name : n->attributeNames()) {
+    auto kind = n->kindOf(name);
+    if (kind == AttributeKind::g) {
+      fn(*n->g(name));
+    }
+    if (kind == AttributeKind::gs) {
+      for (auto& g : n->gs(name)) {
+        fn(*g);
+      }
+    }
+  }
+}
+PredicateBasedPass::~PredicateBasedPass() {}
 uint PredicateBasedPass::_runPassInternal(Graph& graph) {
   uint num_changes = false;
   for (auto it = graph.begin(); it != graph.end(); ++it) {
     auto* n = *it;
-    num_changes += this->DescendOnGraphAttributes(
+    num_changes += this->DescendOnGraphAttributesAndCount(
         n, [this](Graph& g) { return _runPassInternal(g); });
 
     if (this->patternMatchPredicate(n)) {
       bool destroy_current = false;
-      num_changes += this->runTransform(n, destroy_current);
+      num_changes += this->runTransform(n, graph, destroy_current);
 
       if (destroy_current) {
+        std::cerr << destroy_current;
         it.destroyCurrent();
         it.destroyCurrent();
       }
@@ -66,5 +87,8 @@ PostPredicateBasedPassAnalysis::PostPredicateBasedPassAnalysis(
   this->succesful_initialization = succesful_initialization;
   this->succesful_finalization = succesful_finalization;
 }
+
+FullGraphBasedPass::~FullGraphBasedPass() {}
+
 } // namespace optimization
 } // namespace ONNX_NAMESPACE
