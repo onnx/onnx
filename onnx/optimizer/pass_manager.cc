@@ -3,6 +3,9 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
+PassManager::PassManager() {}
+PassManager::~PassManager() {}
+
 void GeneralPassManager::add(Pass* pass) {
   this->passes.insert(pass);
 }

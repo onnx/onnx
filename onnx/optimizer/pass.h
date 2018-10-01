@@ -28,7 +28,7 @@ class Pass {
   PassOptimizationType pass_optimization_type;
 
  public:
-  explicit Pass(
+  Pass(
       PassType pass_type,
       PassEfficiency pass_efficiency,
       PassOptimizationType pass_optimization_type);
@@ -43,18 +43,23 @@ class Pass {
   PassOptimizationType getPassOptimizationType() const {
     return this->pass_optimization_type;
   }
-  virtual std::string getPassName() const;
+  virtual std::string getPassName() const = 0;
 
-  virtual bool initializePass(Graph&) {
+  virtual bool initializePass(Graph& graph) {
     return false;
   }
-  virtual bool finalizePass(Graph&) {
+  virtual bool finalizePass(Graph& graph) {
     return false;
   }
   virtual PostPassAnalysis runPass(Graph& graph) = 0;
 
  protected:
-  uint DescendOnGraphAttributes(Node* n, std::function<uint(Graph&)> fn);
+  uint DescendOnGraphAttributesAndCount(
+      Node* n,
+      std::function<uint(Graph&)> fn);
+  void DescendOnGraphAttributesUnconstrained(
+      Node* n,
+      std::function<void(Graph&)> fn);
 };
 
 // class ImmutablePass : Pass {
@@ -101,7 +106,8 @@ class PredicateBasedPass : public Pass {
   ~PredicateBasedPass() override;
 
   virtual bool patternMatchPredicate(Node* node) = 0;
-  virtual bool runTransform(Node* node, bool& destroy_current) = 0;
+  virtual bool
+  runTransform(Node* node, Graph& graph, bool& destroy_current) = 0;
 
   PostPassAnalysis runPass(Graph& graph) override;
 
@@ -109,7 +115,7 @@ class PredicateBasedPass : public Pass {
   uint _runPassInternal(Graph& graph);
 };
 
-class FullGraphBasedPass : Pass {
+class FullGraphBasedPass : public Pass {
  public:
   explicit FullGraphBasedPass(
       PassType pass_type,

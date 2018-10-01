@@ -2,8 +2,6 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
-#pragma once
-
 #include "onnx/optimizer/pass.h"
 
 namespace ONNX_NAMESPACE {
@@ -15,7 +13,7 @@ struct EmptyPassManagerAnalysis : PassManagerAnalysis {};
 class PassManager {
  public:
   PassManager();
-  virtual ~PassManager() = default;
+  virtual ~PassManager();
 
   virtual void add(Pass* P) = 0;
   virtual PassManagerAnalysis run(Graph& graph) = 0;
@@ -23,8 +21,8 @@ class PassManager {
 
 class GeneralPassManager : public PassManager {
  public:
-  GeneralPassManager();
-  ~GeneralPassManager() override;
+  GeneralPassManager() {}
+  ~GeneralPassManager() override {}
 
   void add(Pass* pass) override;
   PassManagerAnalysis run(Graph& graph) override;
