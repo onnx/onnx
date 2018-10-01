@@ -129,6 +129,6 @@ void FunctionExpandHelper(
 //  return Status::OK();
 //}
 //
-// ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
+// ONNX_FUNCTION_BUILD(Name, Ver, FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
 
 } // namespace ONNX_NAMESPACE

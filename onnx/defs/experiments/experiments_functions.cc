@@ -177,5 +177,3 @@ ONNX_FUNCTION_BUILD(
     FunctionBuilder().SetDomain(ONNX_DOMAIN).SetBuildFunction(BuildMVN));
 
 } // namespace ONNX_NAMESPACE
-// ONNX_FUNCTION(
-//    FunctionBuilder().SetDomain(ONNX_DOMAIN).SetBuildFunction(BuildMVN));
