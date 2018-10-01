@@ -3,6 +3,7 @@
 // Adventurous users should note that the APIs will probably change.
 
 #include "onnx/optimizer/pass.h"
+#include <set>
 
 namespace ONNX_NAMESPACE {
 namespace optimization {

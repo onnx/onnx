@@ -22,6 +22,9 @@
 #include "onnx/optimizer/passes/split.h"
 #include "onnx/proto_utils.h"
 
+#include <unordered_set>
+#include <vector>
+
 namespace ONNX_NAMESPACE {
 namespace optimization {
 

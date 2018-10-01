@@ -10,6 +10,8 @@
 #include "onnx/optimizer/pass_registry.h"
 #include "onnx/proto_utils.h"
 
+#include "vector"
+
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
