@@ -3,6 +3,7 @@
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
+
 Pass::Pass(
     PassType pass_type,
     PassEfficiency pass_efficiency,
@@ -83,12 +84,12 @@ PostPassAnalysis PredicateBasedPass::runPass(Graph& graph) {
 PostPredicateBasedPassAnalysis::PostPredicateBasedPassAnalysis(
     Pass* pass,
     uint num_positive_transforms,
-    bool succesful_initialization,
-    bool succesful_finalization) {
+    bool initialization_done,
+    bool finalization_done) {
   this->pass = pass;
   this->num_positive_transforms = num_positive_transforms;
-  this->succesful_initialization = succesful_initialization;
-  this->succesful_finalization = succesful_finalization;
+  this->initialization_done = initialization_done;
+  this->finalization_done = finalization_done;
 }
 
 FullGraphBasedPass::~FullGraphBasedPass() {}

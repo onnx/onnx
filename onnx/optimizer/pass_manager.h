@@ -7,9 +7,12 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
+// An analysis returned from the run done by a manager
 struct PassManagerAnalysis {};
 struct EmptyPassManagerAnalysis : PassManagerAnalysis {};
 
+// Base class of all PassManager's. The class should be able to add new passes
+// as well as run the passes given a graph.
 class PassManager {
  public:
   PassManager();
@@ -19,6 +22,8 @@ class PassManager {
   virtual PassManagerAnalysis run(Graph& graph) = 0;
 };
 
+// The GeneralPassManager has no restriction on type of Pass and runs the passes
+// once in a linear fashion.
 class GeneralPassManager : public PassManager {
  public:
   GeneralPassManager() {}

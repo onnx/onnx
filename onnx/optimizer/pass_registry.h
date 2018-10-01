@@ -25,6 +25,7 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
+// Registry containing all passes available in ONNX.
 struct GlobalPassRegistry {
   std::map<std::string, Pass*> passes;
 
