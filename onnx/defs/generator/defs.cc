@@ -59,10 +59,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor. If not specified,"
-            "the data type of the input tensor T1 is used. If input tensor T1 is also not" 
-            "specified, then type defaults to 'float'.",
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not " 
+            "specified, then output tensor type defaults to 'float'.",
             AttributeProto::INT,
-            static_cast<int64_t>(TensorProto::FLOAT))
+            OPTIONAL)
         .Attr(
             "shape",
             "(Optional) The shape of the output tensor. If input tensor T1 is provided, then"
@@ -113,7 +113,14 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)"},
              "Constrain output types. Strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (ctx.getAttribute("dtype") != nullptr) {
+            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          }
+          else {
+            if (hasNInputShapes(ctx, 1)) {
+              propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            }
+          }
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
