@@ -1,8 +1,8 @@
 #include "onnx/optimizer/pass.h"
+#include "onnx/common/assertions.h"
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
-
 Pass::Pass(
     PassType pass_type,
     PassEfficiency pass_efficiency,
@@ -59,9 +59,12 @@ uint PredicateBasedPass::_runPassInternal(Graph& graph) {
       num_changes += this->runTransform(n, graph, destroy_current);
 
       if (destroy_current) {
-        std::cerr << destroy_current;
         it.destroyCurrent();
-        it.destroyCurrent();
+        try {
+          it.destroyCurrent();
+        } catch (const assert_error& error) {
+          continue;
+        }
       }
     }
   }
