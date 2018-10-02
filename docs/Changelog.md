@@ -8598,7 +8598,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>N-D tensor</dd>
 <dt><tt>scales</tt> : tensor(float)</dt>
-<dd>The scale array along each dimension. It takes value greater than or equal to 1. The rank of 'scales' should be the same as the rank of input 'X'.</dd>
+<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>
 
 #### Outputs

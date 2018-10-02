@@ -1085,7 +1085,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             1,
             "scales",
             "The scale array along each dimension. It takes value greater than or equal to 1."
-            " The rank of 'scales' should be the same as the rank of input 'X'.",
+            " The number of elements of 'scales' should be the same as the rank of input 'X'.",
             "tensor(float)")
         .Output(0, "Y", "N-D tensor after resizing", "T")
         .TypeConstraint(
