@@ -91,9 +91,9 @@ class Pass {
  protected:
   // Iterates through the elements in the graph and counts the number of times
   // the transform is succesfully run.
-  uint DescendOnGraphAttributesAndCount(
+  unsigned int DescendOnGraphAttributesAndCount(
       Node* n,
-      std::function<uint(Graph&)> fn);
+      std::function<unsigned int(Graph&)> fn);
   // A more general version of the function above that doesn't constrain the
   // return type of fn.
   void DescendOnGraphAttributesUnconstrained(
@@ -114,14 +114,14 @@ class ImmutablePass : Pass {
 // Pass Analysis done after a predicate based pass.
 struct PostPredicateBasedPassAnalysis : PostPassAnalysis {
   Pass* pass;
-  uint num_positive_transforms;
+  unsigned int num_positive_transforms;
   bool initialization_done;
   bool finalization_done;
 
  public:
   explicit PostPredicateBasedPassAnalysis(
       Pass* pass,
-      uint num_positive_transforms,
+      unsigned int num_positive_transforms,
       bool initialization_done,
       bool finalization_done);
 
@@ -161,7 +161,7 @@ class PredicateBasedPass : public Pass {
   PostPassAnalysis runPass(Graph& graph) override;
 
  private:
-  uint _runPassInternal(Graph& graph);
+  unsigned int _runPassInternal(Graph& graph);
 };
 
 // The most general pass which allows the user to run a pass given only a graph.

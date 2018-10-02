@@ -14,10 +14,10 @@ Pass::Pass(
 }
 Pass::~Pass() {}
 
-uint Pass::DescendOnGraphAttributesAndCount(
+unsigned int Pass::DescendOnGraphAttributesAndCount(
     Node* n,
-    std::function<uint(Graph&)> fn) {
-  uint num_changes = 0;
+    std::function<unsigned int(Graph&)> fn) {
+  unsigned int num_changes = 0;
   for (auto name : n->attributeNames()) {
     auto kind = n->kindOf(name);
     if (kind == AttributeKind::g) {
@@ -48,8 +48,8 @@ void Pass::DescendOnGraphAttributesUnconstrained(
   }
 }
 PredicateBasedPass::~PredicateBasedPass() {}
-uint PredicateBasedPass::_runPassInternal(Graph& graph) {
-  uint num_changes = false;
+unsigned int PredicateBasedPass::_runPassInternal(Graph& graph) {
+  unsigned int num_changes = false;
   for (auto it = graph.begin(); it != graph.end(); ++it) {
     auto* n = *it;
     num_changes += this->DescendOnGraphAttributesAndCount(
@@ -63,7 +63,7 @@ uint PredicateBasedPass::_runPassInternal(Graph& graph) {
         it.destroyCurrent();
         try {
           it.destroyCurrent();
-        } catch (const assert_error& error) {
+        } catch (const assert_error error) {
           continue;
         }
       }
@@ -74,7 +74,7 @@ uint PredicateBasedPass::_runPassInternal(Graph& graph) {
 
 PostPassAnalysis PredicateBasedPass::runPass(Graph& graph) {
   bool initialized_pass = this->initializePass(graph);
-  uint touched_optimizations = this->_runPassInternal(graph);
+  unsigned int touched_optimizations = this->_runPassInternal(graph);
   bool finalized_pass = this->finalizePass(graph);
 
   return PostPredicateBasedPassAnalysis(
@@ -83,7 +83,7 @@ PostPassAnalysis PredicateBasedPass::runPass(Graph& graph) {
 
 PostPredicateBasedPassAnalysis::PostPredicateBasedPassAnalysis(
     Pass* pass,
-    uint num_positive_transforms,
+    unsigned int num_positive_transforms,
     bool initialization_done,
     bool finalization_done) {
   this->pass = pass;
