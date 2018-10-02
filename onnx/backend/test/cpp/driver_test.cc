@@ -48,6 +48,32 @@ class ONNXCppDriverTest
     }
     return d_size;
   }
+  bool IsUnsupported(onnxStatus s, std::string& msg) {
+    if (s == ONNXIFI_STATUS_UNSUPPORTED_VERSION) {
+      msg = "Unsupported version of ONNX or operator.";
+      return true;
+    }
+
+    if (s == ONNXIFI_STATUS_UNSUPPORTED_OPERATOR) {
+      msg = "Unsupported operator.";
+      return true;
+    }
+
+    if (s == ONNXIFI_STATUS_UNSUPPORTED_ATTRIBUTE) {
+      msg = "Unsupported attribute.";
+      return true;
+    }
+
+    if (s == ONNXIFI_STATUS_UNSUPPORTED_SHAPE) {
+      msg = "Unsupported shape.";
+      return true;
+    }
+    if (s == ONNXIFI_STATUS_UNSUPPORTED_DATATYPE) {
+      msg = "Unsupported datatype";
+      return true;
+    }
+    return false;
+  }
   bool IsDescriptorEqual(
       const onnxTensorDescriptorV1& x,
       const onnxTensorDescriptorV1& y) {
@@ -134,7 +160,10 @@ class ONNXCppDriverTest
     }
     return true;
   }
-  void RunAndVerify(onnxifi_library& lib, onnxBackend& backend) {
+  void RunAndVerify(
+      onnxifi_library& lib,
+      onnxBackend& backend,
+      onnxBackendID backendID) {
     // Check Model
     ONNX_NAMESPACE::checker::check_model(model_);
     // Check Input&Output Tensors
@@ -160,6 +189,16 @@ class ONNXCppDriverTest
       }
       std::string serialized_model;
       model_.SerializeToString(&serialized_model);
+      std::cout << model_.graph().name() << std::endl;
+      auto is_compatible = lib.onnxGetBackendCompatibility(
+          backendID, serialized_model.size(), serialized_model.data());
+      std::string error_msg;
+      if (IsUnsupported(is_compatible, error_msg)) {
+        std::cout << "Warnning: " << error_msg
+                  << " This test case will be skipped." << std::endl;
+        return;
+      }
+      ASSERT_EQ(is_compatible, ONNXIFI_STATUS_SUCCESS);
       ASSERT_EQ(
           lib.onnxInitGraph(
               backend,
@@ -239,19 +278,32 @@ class ONNXCppDriverTest
  */
 TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
   onnxifi_library lib;
-  onnxBackendID backendID = NULL;
+  onnxBackendID* backendIDs = NULL;
   onnxBackend backend;
+  const size_t max_info_size = 50; // The maximum backend info size
   if (!ONNXIFI_DUMMY_BACKEND) {
     ASSERT_TRUE(onnxifi_load(1, NULL, &lib));
     size_t numBackends = 0;
-    lib.onnxGetBackendIDs(&backendID, &numBackends);
-    const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
-    lib.onnxInitBackend(backendID, backendProperties, &backend);
-  }
-  RunAndVerify(lib, backend);
-  if (!ONNXIFI_DUMMY_BACKEND) {
-    lib.onnxReleaseBackend(backend);
-    lib.onnxReleaseBackendID(backendID);
+    lib.onnxGetBackendIDs(backendIDs, &numBackends);
+    backendIDs = (void**)malloc(numBackends * sizeof(onnxBackendID));
+    lib.onnxGetBackendIDs(backendIDs, &numBackends);
+
+    for (int i = 0; i < numBackends; i++) {
+      const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
+      lib.onnxInitBackend(backendIDs[i], backendProperties, &backend);
+      char infovalue[max_info_size];
+      size_t infoValueSize = max_info_size;
+      EXPECT_EQ(
+          lib.onnxGetBackendInfo(
+              backendIDs[i], ONNXIFI_BACKEND_NAME, infovalue, &infoValueSize),
+          ONNXIFI_STATUS_SUCCESS);
+      RunAndVerify(lib, backend, backendIDs[i]);
+      lib.onnxReleaseBackend(backend);
+      lib.onnxReleaseBackendID(backendIDs[i]);
+    }
+    free(backendIDs);
+  } else {
+    RunAndVerify(lib, backend, NULL);
   }
 }
 INSTANTIATE_TEST_CASE_P(
