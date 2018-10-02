@@ -1752,7 +1752,7 @@ Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
