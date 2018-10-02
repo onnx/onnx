@@ -78,7 +78,8 @@ could also be 0, in which case the actual dimension value is unchanged (i.e. tak
 from the input tensor).)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    Reshape, 5,
+    Reshape,
+    5,
     OpSchema()
         .SetDoc(Reshape_ver5_doc)
         .Input(0, "data", "An input tensor.", "T")
@@ -86,14 +87,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "reshaped", "Reshaped data.", "T")
         .TypeConstraint(
             "T",
-			OpSchema::all_tensor_types(),
+            OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Type inference
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           // Shape Inference if 2nd input data (the target shape) is available
-          const TensorProto *targetShapeInitializer =
-              ctx.getInputData(1);
+          const TensorProto* targetShapeInitializer = ctx.getInputData(1);
           if (!targetShapeInitializer) {
             return;
           }
@@ -101,13 +101,13 @@ ONNX_OPERATOR_SET_SCHEMA(
           // The targetShape vector represents the specified shape for output.
           std::vector<int64_t> targetShape;
           if (targetShapeInitializer->has_raw_data()) {
-            const std::string &bytes = targetShapeInitializer->raw_data();
-            targetShape.insert(targetShape.end(),
-                               reinterpret_cast<const int64_t *>(bytes.c_str()),
-                               reinterpret_cast<const int64_t *>(bytes.c_str() +
-                                                                 bytes.size()));
+            const std::string& bytes = targetShapeInitializer->raw_data();
+            targetShape.insert(
+                targetShape.end(),
+                reinterpret_cast<const int64_t*>(bytes.c_str()),
+                reinterpret_cast<const int64_t*>(bytes.c_str() + bytes.size()));
           } else {
-            const auto &data = targetShapeInitializer->int64_data();
+            const auto& data = targetShapeInitializer->int64_data();
             targetShape.insert(targetShape.end(), data.begin(), data.end());
           }
 
@@ -121,15 +121,15 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the dimensions we are setting outputShape in the outputProduct
           // variable. The outputProduct will potentially be used for inferring
           // a dimension marked -1.
-          auto *outputShape =
+          auto* outputShape =
               ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          TensorShapeProto::Dimension *negativeOneDim = nullptr;
-          const auto &dataInputTensorType = ctx.getInputType(0)->tensor_type();
+          TensorShapeProto::Dimension* negativeOneDim = nullptr;
+          const auto& dataInputTensorType = ctx.getInputType(0)->tensor_type();
           std::vector<bool> unresolvedZeros(targetShape.size(), false);
           int64_t outputProduct = 1;
           for (int i = 0; i < static_cast<int>(targetShape.size()); ++i) {
             // Add a new dimension to outputShape
-            auto *new_dim = outputShape->add_dim();
+            auto* new_dim = outputShape->add_dim();
             if (targetShape[i] == -1) {
               // Check if multiple -1's. If not, set negativeOneDim, marking
               // this dimension to potentially be filled in later.
@@ -149,13 +149,13 @@ ONNX_OPERATOR_SET_SCHEMA(
                   fail_shape_inference("Invalid position of 0");
                 }
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
-                  const auto &dim_value =
+                  const auto& dim_value =
                       dataInputTensorType.shape().dim(i).dim_value();
                   new_dim->set_dim_value(dim_value);
                   outputProduct *= dim_value;
                   unresolvedZeros[i] = false;
                 } else if (dataInputTensorType.shape().dim(i).has_dim_param()) {
-                  const auto &dim_param =
+                  const auto& dim_param =
                       dataInputTensorType.shape().dim(i).dim_param();
                   new_dim->set_dim_param(dim_param);
                 }
@@ -190,7 +190,9 @@ ONNX_OPERATOR_SET_SCHEMA(
                 if (dataInputTensorType.shape().dim(i).has_dim_value()) {
                   inputProduct *=
                       dataInputTensorType.shape().dim(i).dim_value();
-                } else if (i >= static_cast<int>(unresolvedZeros.size()) || !unresolvedZeros[i]) {
+                } else if (
+                    i >= static_cast<int>(unresolvedZeros.size()) ||
+                    !unresolvedZeros[i]) {
                   inputProductValid = false;
                   break;
                 }
@@ -1063,7 +1065,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           // interface to get values of constant inputs.
         }));
 
-static const char* Upsample_ver7_doc = R"DOC(
+static const char* Upsample_ver9_doc = R"DOC(
 Upsample the input tensor.
 Each dimension value of the output tensor is:
   output_dimension = floor(input_dimension * scale).
@@ -1071,25 +1073,26 @@ Each dimension value of the output tensor is:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Upsample,
-    7,
+    9,
     OpSchema()
-        .Attr(
-            "scales",
-            "The scale array along each dimension. It takes value greater than or equal to 1."
-            " The number of elements of 'scales' should be the same as the rank of input 'X'.",
-            AttributeProto::FLOATS)
         .Attr(
             "mode",
             "Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)",
             AttributeProto::STRING,
             std::string("nearest"))
         .Input(0, "X", "N-D tensor", "T")
+        .Input(
+            1,
+            "scales",
+            "The scale array along each dimension. It takes value greater than or equal to 1."
+            " The rank of 'scales' should be the same as the rank of input 'X'.",
+            "tensor(float)")
         .Output(0, "Y", "N-D tensor after resizing", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Constrain input and output types to all tensor types.")
-        .SetDoc(Upsample_ver7_doc)
+            "Constrain input 'X' and output 'Y' to all tensor types.")
+        .SetDoc(Upsample_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (!hasNInputShapes(ctx, 1)) {
             return;
@@ -1097,16 +1100,29 @@ ONNX_OPERATOR_SET_SCHEMA(
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           auto& input_shape = getInputShape(ctx, 0);
           auto* output_shape = getOutputShape(ctx, 0);
-          auto* scale_attr = ctx.getAttribute("scales");
-          if (input_shape.dim_size() != scale_attr->floats_size()) {
-            fail_shape_inference(
-                "Upsample: Input dims != attribute 'scales' dims");
+          output_shape->clear_dim();
+          auto scales = ctx.getInputData(1);
+          if (nullptr != scales) {
+            // Infernece output shape's dimension value if 'scales' is known.
+            if (scales->data_type() == TensorProto::FLOAT &&
+                scales->float_data_size() == output_shape->dim_size()) {
+              for (int i = 0; i < input_shape.dim_size(); ++i) {
+                float dim_value =
+                    static_cast<float>(input_shape.dim(i).dim_value());
+                output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+                    std::floor(dim_value * scales->float_data(i))));
+              }
+            } else {
+              fail_shape_inference(
+                  "Input 'scales' must have same rank as input 'X' and have float data.");
+            }
+          } else {
+            // Inference output shape's rank in any case.
+            for (int i = 0; i < input_shape.dim_size(); ++i) {
+              output_shape->add_dim();
+            }
           }
-          for (int i=0; i<input_shape.dim_size(); ++i) {
-            float dim_value = static_cast<float>(input_shape.dim(i).dim_value());
-            output_shape->add_dim()->set_dim_value(
-                static_cast<int64_t>(std::floor(dim_value * scale_attr->floats(i))));
-          }
+
         }));
 
 ONNX_OPERATOR_SET_SCHEMA(
