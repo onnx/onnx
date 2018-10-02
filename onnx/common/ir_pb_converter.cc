@@ -27,6 +27,7 @@ Tensor tensorProtoToTensor(const ONNX_NAMESPACE::TensorProto & tp) {
     break;
   }
   case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
+  case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
   case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
   case ONNX_NAMESPACE::TensorProto_DataType_INT8:
   case ONNX_NAMESPACE::TensorProto_DataType_INT16:
@@ -355,6 +356,7 @@ void encodeTensor(ONNX_NAMESPACE::TensorProto * p, const Tensor & tensor) {
     break;
   }
   case ONNX_NAMESPACE::TensorProto_DataType_FLOAT16:
+  case ONNX_NAMESPACE::TensorProto_DataType_BFLOAT16:
   case ONNX_NAMESPACE::TensorProto_DataType_BOOL:
   case ONNX_NAMESPACE::TensorProto_DataType_INT8:
   case ONNX_NAMESPACE::TensorProto_DataType_INT16:
