@@ -196,6 +196,7 @@ class ONNXCppDriverTest
       if (IsUnsupported(is_compatible, error_msg)) {
         std::cout << "Warnning: " << error_msg
                   << " This test case will be skipped." << std::endl;
+        GTEST_SKIP();
         return;
       }
       ASSERT_EQ(is_compatible, ONNXIFI_STATUS_SUCCESS);
