@@ -67,21 +67,24 @@ ISSUE: define type compatibility rules either here or under model versioning - p
 
 ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation.  Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on.
 
-A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`).  Nodes in graphs always refer to operators by their three-part identifier.
+A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`).  Nodes in graphs always refer to operators by their three-part identifier. Breaking opset changes include:
 
-If the semantics of an operator are changed, you MUST create a new operator; the `op_version` of the new
-operator id MUST be greater than any extant `op_version` for the
-`domain`. The following changes would be considered breaking:
+* Adding/removing/renaming an attribute. This even includes the case of adding a new optional attribute, where omitting the attribute would imply a default value yielding semantics identical to the previous operator version.
 
-* Adding/removing/renaming an attribute, even an optional attribute such that when the attribute is omitted,
-  the semantics are identical to a previous operator.
+* Adding/removing/reordering inputs or outputs.
 
-* Adding/removing/renaming input or output, even when optional.
+* Adding/removing types supported by inputs and outputs, and changing types used by attributes.
+
+* Supporting new behavior even when the existing parameter signature is otherwise identical (e.g. implicitly supporting tensor broadcasting in the Mean operator).
 
 The following are not breaking:
 
 * Clarifications of specification ambiguities to match prevailing
   implementation practice.
+
+If the semantics of an operator or function are changed, you MUST create a new operator; the `op_version` of the new
+operator id MUST be greater than any extant `op_version` for the
+`domain`.
 
 > In practice, this means that BC-breaking changes in the ONNX
 > repository require contributors to follow the following three steps:
