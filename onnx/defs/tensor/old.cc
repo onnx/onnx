@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include <cmath>
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver1_doc = R"DOC(

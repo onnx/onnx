@@ -1103,7 +1103,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           output_shape->clear_dim();
           auto scales = ctx.getInputData(1);
           if (nullptr != scales) {
-            // Infernece output shape's dimension value if 'scales' is known.
+            // Infer output shape's dimension value if 'scales' is known.
             if (scales->data_type() == TensorProto::FLOAT &&
                 scales->float_data_size() == output_shape->dim_size()) {
               for (int i = 0; i < input_shape.dim_size(); ++i) {
@@ -1117,7 +1117,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                   "Input 'scales' must have same rank as input 'X' and have float data.");
             }
           } else {
-            // Inference output shape's rank in any case.
+            // Infer output shape's rank in any case.
             for (int i = 0; i < input_shape.dim_size(); ++i) {
               output_shape->add_dim();
             }
