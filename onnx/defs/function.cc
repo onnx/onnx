@@ -47,15 +47,8 @@ Common::Status FunctionBuilderRegistry::GetFunctions(
         "function_set should not be nullptr.");
   }
 
-  class FunctionBuilderRegisterer {
-   public:
-    FunctionBuilderRegisterer() {
-      RegisterOnnxFunctionBuilder();
-    }
-  };
-
 #ifndef __ONNX_DISABLE_STATIC_REGISTRATION
-  static FunctionBuilderRegisterer functionBuilder_registerer;
+  static bool functionBuilder_registerer = (RegisterOnnxFunctionBuilder(), false);
 #endif
 
   for (auto func_builder : function_builders) {
