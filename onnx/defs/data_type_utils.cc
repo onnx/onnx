@@ -147,12 +147,11 @@ std::string DataTypeUtils::ToString(
         param_str.append(
             ToString(param_proto, (p == 0) ? empty : ",", empty));
       }
-      result.append("opaque(");
+      result.append(left).append("opaque(");
       result.append(op_type.has_domain() ? op_type.domain() : empty)
           .append(",");
-      result.append(op_type.has_name() ? op_type.name() : empty)
-          .append(",");
-      result.append("p(").append(param_str).append("))");
+      result.append(op_type.has_name() ? op_type.name() : empty).append(",");
+      result.append("p(").append(param_str).append("))").append(right);
       return result;
     }
 #endif
