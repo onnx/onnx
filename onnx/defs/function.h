@@ -69,11 +69,9 @@ FunctionBuilder GetFunctionBuilder();
   name##_##domain##_ver##ver
 
 #define ONNX_FUNCTION_BUILD(name, ver, build_func) \
-  ONNX_FUNCTION_BUILD_HELPER(                      \
-      __COUNTER__, name, Onnx, ONNX_DOMAIN, ver, build_func)
+  ONNX_FUNCTION_BUILD_HELPER(name, Onnx, ONNX_DOMAIN, ver, build_func)
 
-#define ONNX_FUNCTION_BUILD_HELPER(                                           \
-    counter, name, domain, domain_str, ver, build_func)                       \
+#define ONNX_FUNCTION_BUILD_HELPER(name, domain, domain_str, ver, build_func) \
   class ONNX_FUNCTION_BUILDER_CLASS_NAME(domain, ver, name);                  \
   template <>                                                                 \
   FunctionBuilder                                                             \
@@ -91,8 +89,8 @@ FunctionBuilder GetFunctionBuilder();
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
 
-inline void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder) { 
-  ONNX_FUNCTION(func_builder); 
+inline void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder) {
+  ONNX_FUNCTION(func_builder);
 }
 
 // Registers all function builder of a given operator set
@@ -129,6 +127,7 @@ void FunctionExpandHelper(
 //  return Status::OK();
 //}
 //
-// ONNX_FUNCTION_BUILD(Name, Ver, FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
+// ONNX_FUNCTION_BUILD(Name, Ver,
+// FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
 
 } // namespace ONNX_NAMESPACE
