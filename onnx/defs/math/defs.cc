@@ -410,7 +410,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* PRelu_ver7_doc = R"DOC(
+static const char* PRelu_ver9_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
@@ -418,10 +418,10 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
-    7,
+    9,
     OpSchema()
         .SetDoc(
-            PRelu_ver7_doc +
+            PRelu_ver9_doc +
             GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
         .Input(0, "X", "Input tensor", "T")
         .Input(
@@ -433,8 +433,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor (same size as X)", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Sigmoid_ver6_doc = R"DOC(
@@ -627,7 +633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Gemm_ver7_doc = R"DOC(General Matrix multiplication:
+static const char* Gemm_ver9_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
 A' = transpose(A) if transA else A
@@ -642,10 +648,10 @@ computation if attribute transA is non-zero, same for B and transB.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
-    7,
+    9,
     OpSchema()
         .SetDoc(
-            Gemm_ver7_doc +
+            Gemm_ver9_doc +
             GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
         .Input(
             0,
@@ -670,8 +676,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor of shape (M, N).", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
         .Attr(
             "transA",
             "Whether A should be transposed",
