@@ -1105,7 +1105,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (nullptr != scales) {
             // Infer output shape's dimension value if 'scales' is known.
             if (scales->data_type() == TensorProto::FLOAT &&
-                scales->float_data_size() == output_shape->dim_size()) {
+                scales->float_data_size() == input_shape.dim_size()) {
               for (int i = 0; i < input_shape.dim_size(); ++i) {
                 float dim_value =
                     static_cast<float>(input_shape.dim(i).dim_value());
@@ -1114,7 +1114,7 @@ ONNX_OPERATOR_SET_SCHEMA(
               }
             } else {
               fail_shape_inference(
-                  "Input 'scales' must have same rank as input 'X' and have float data.");
+                  "Number of elements of input 'scales' must be same as rank of input 'X' and element type must be float.");
             }
           } else {
             // Infer output shape's rank in any case.
