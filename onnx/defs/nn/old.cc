@@ -455,4 +455,56 @@ ONNX_OPERATOR_SET_SCHEMA(
           // the other outputs as well.
         }));
 
+static const char* Flatten_ver1_doc = R"DOC(
+Flattens the input tensor into a 2D matrix. If input tensor has shape
+(d_0, d_1, ... d_n) then the output will have shape
+(d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Flatten,
+    1,
+    OpSchema()
+        .SetDoc(Flatten_ver1_doc)
+        .Input(0, "input", "A tensor of rank >= axis.", "T")
+        .Output(
+            0,
+            "output",
+            "A 2D tensor with the contents of the input tensor, "
+            "with input dimensions up to axis flattened to the outer dimension "
+            "of the output and remaining input dimensions flattened into the inner "
+            "dimension of the output.",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .Attr(
+            "axis",
+            "Indicate up to which input dimensions "
+            "(exclusive) should be flattened to the outer dimension of the output. "
+            "The value for axis must be in the range [0, R], where R is the rank of the input tensor. "
+            "When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), "
+            "where the shape of the input tensor is (d_0, d_1, ... d_n). ",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasInputShape(ctx, 0))
+            return;
+          auto& input_shape = getInputShape(ctx, 0);
+          int rank = static_cast<int>(input_shape.dim_size());
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 1));
+          if (axis > rank || axis < 0) {
+            fail_shape_inference(
+                "Invalid value(", axis, ") for attribute 'axis'");
+          }
+          // TODO: is the operation defined for input-rank < 2?
+          updateOutputShape(
+              ctx,
+              0,
+              {multiplyDims(input_shape, 0, axis),
+               multiplyDims(input_shape, axis, rank)});
+        }));
+
 } // namespace ONNX_NAMESPACE
