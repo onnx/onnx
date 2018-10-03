@@ -727,22 +727,28 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* MatMul_ver6_doc = R"DOC(
+static const char* MatMul_ver9_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
-    1,
+    9,
     OpSchema()
         .Input(0, "A", "N-dimensional matrix A", "T")
         .Input(1, "B", "N-dimensional matrix B", "T")
         .Output(0, "Y", "Matrix multiply results from A * B", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .SetDoc(MatMul_ver6_doc)
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
+        .SetDoc(MatMul_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
