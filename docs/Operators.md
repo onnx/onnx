@@ -1727,7 +1727,9 @@ for test_case, values_ in test_cases.items():
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Constant-1">Constant-1</a>
 
 #### Attributes
 
@@ -1749,8 +1751,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
 </dl>
 
 
@@ -5463,7 +5465,9 @@ Other versions of this operator: <a href="Changelog.md#LpPool-1">LpPool-1</a>
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#MatMul-1">MatMul-1</a>
 
 #### Inputs
 
@@ -5484,8 +5488,8 @@ This version of the operator has been available since version 1 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 
 
