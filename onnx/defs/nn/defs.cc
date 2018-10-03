@@ -153,7 +153,7 @@ void convPoolTypeAndShapeInference(
   if (ctx.getNumOutputs() > 1) {
     // MaxPool with two outputs case.
     auto second_output_shape =
-      ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
+        ctx.getOutputType(1)->mutable_tensor_type()->mutable_shape();
     second_output_shape->CopyFrom(*output_shape);
   }
 }
@@ -195,10 +195,7 @@ std::function<void(OpSchema&)> PoolOpSchemaGenerator(
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides",
-        "Stride along each axis.",
-        AttributeProto::INTS,
-        OPTIONAL);
+        "strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -315,10 +312,7 @@ std::function<void(OpSchema&)> LpPoolOpSchemaGenerator(const char* name) {
         "The size of the kernel along each axis.",
         AttributeProto::INTS);
     schema.Attr(
-        "strides",
-        "Stride along each axis.",
-        AttributeProto::INTS,
-        OPTIONAL);
+        "strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -528,10 +522,7 @@ computes the output.)DOC";
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
-        "strides",
-        "Stride along each axis.",
-        AttributeProto::INTS,
-        OPTIONAL);
+        "strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -755,10 +746,7 @@ output_shape can also be explicitly specified in which case pads values are auto
         AttributeProto::INTS,
         OPTIONAL);
     schema.Attr(
-        "strides",
-        "Stride along each axis.",
-        AttributeProto::INTS,
-        OPTIONAL);
+        "strides", "Stride along each axis.", AttributeProto::INTS, OPTIONAL);
     schema.Attr(
         "auto_pad",
         auto_pad_doc,
@@ -1117,7 +1105,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Flatten_ver1_doc = R"DOC(
+static const char* Flatten_ver9_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
 (d_0, d_1, ... d_n) then the output will have shape
 (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
@@ -1125,9 +1113,9 @@ Flattens the input tensor into a 2D matrix. If input tensor has shape
 
 ONNX_OPERATOR_SET_SCHEMA(
     Flatten,
-    1,
+    9,
     OpSchema()
-        .SetDoc(Flatten_ver1_doc)
+        .SetDoc(Flatten_ver9_doc)
         .Input(0, "input", "A tensor of rank >= axis.", "T")
         .Output(
             0,
@@ -1139,8 +1127,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_tensor_types(),
+            "Constrain input and output to all tensor types.")
         .Attr(
             "axis",
             "Indicate up to which input dimensions "
@@ -1187,16 +1175,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     1,
     OpSchema()
         .Attr("size", "The number of channels to sum over", AttributeProto::INT)
-        .Attr(
-            "alpha",
-            "Scaling parameter.",
-            AttributeProto::FLOAT,
-            0.0001f)
-        .Attr(
-            "beta",
-            "The exponent.",
-            AttributeProto::FLOAT,
-            0.75f)
+        .Attr("alpha", "Scaling parameter.", AttributeProto::FLOAT, 0.0001f)
+        .Attr("beta", "The exponent.", AttributeProto::FLOAT, 0.75f)
         .Attr("bias", "", AttributeProto::FLOAT, 1.0f)
         .Input(
             0,
