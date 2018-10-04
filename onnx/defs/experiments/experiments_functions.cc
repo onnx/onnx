@@ -4,8 +4,8 @@
 #include "onnx/common/constants.h"
 #include "onnx/common/model_helpers.h"
 #include "onnx/defs/function.h"
-using namespace ONNX_NAMESPACE;
 
+namespace ONNX_NAMESPACE {
 static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   if (nullptr == func_proto) {
     return Common::Status(
@@ -171,5 +171,9 @@ static Common::Status BuildMVN(std::unique_ptr<FunctionProto>* func_proto) {
   return Common::Status::OK();
 }
 
-ONNX_FUNCTION(
+ONNX_FUNCTION_BUILD(
+    MeanVarianceNormalization,
+    9,
     FunctionBuilder().SetDomain(ONNX_DOMAIN).SetBuildFunction(BuildMVN));
+
+} // namespace ONNX_NAMESPACE
