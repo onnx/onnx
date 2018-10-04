@@ -21,7 +21,7 @@ struct Optimizer {
 
   Optimizer() {}
 
-  virtual ~Optimizer() = default;
+  ~Optimizer() = default;
 
   ModelProto optimize(
       const ModelProto& mp_in,
@@ -47,6 +47,8 @@ struct Optimizer {
     ExportModelProto(&mp_out, g);
     return mp_out;
   }
+
+  static Optimizer OptimizerSingleton;
 };
 
 const std::vector<std::string> GetAvailablePasses();

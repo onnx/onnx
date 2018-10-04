@@ -6,17 +6,16 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
-// TODO: Remove this static reference
-static Optimizer _optimizer;
+Optimizer Optimizer::OptimizerSingleton;
 
 ModelProto Optimize(
     const ModelProto& mp_in,
     const std::vector<std::string>& names) {
-  return _optimizer.optimize(mp_in, names);
+  return Optimizer::OptimizerSingleton.optimize(mp_in, names);
 }
 
 const std::vector<std::string> GetAvailablePasses() {
-  return _optimizer.passes.GetAvailablePasses();
+  return Optimizer::OptimizerSingleton.passes.GetAvailablePasses();
 }
 
 } // namespace optimization

@@ -17,14 +17,14 @@ struct PostPassAnalysis {};
 enum PassType {
   // Class of optimizations that fuses operations.
   Fuse = 0,
-  // Class of optimizations that remove useless operations.
+  // Class of optimizations that removes useless operations.
   Nop = 1,
   // Class of optimizations that includes some form of seperation.
   Seperate = 2,
   // Immutable pass, also sometimes referred to as an analysis pass.
   Immutable = 3,
-  // Unknown type of pass.
-  Unk = 4
+  // Other type of pass.
+  Other = 4
 };
 
 enum PassEfficiency {

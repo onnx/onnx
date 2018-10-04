@@ -34,20 +34,20 @@ struct GlobalPassRegistry {
 
   GlobalPassRegistry() {
     // Register the optimization passes to the optimizer.
-    registerOptimizer<EliminateIdentity>();
-    registerOptimizer<EliminateNopPad>();
-    registerOptimizer<EliminateNopTranspose>();
-    registerOptimizer<EliminateUnusedInitializer>();
-    registerOptimizer<ExtractConstantToInitializer>();
-    registerOptimizer<FuseAddBiasIntoConv>();
-    registerOptimizer<FuseBNIntoConv>();
-    registerOptimizer<FuseConsecutiveLogSoftmax>();
-    registerOptimizer<FuseConsecutiveSqueezes>();
-    registerOptimizer<FuseConsecutiveTransposes>();
-    registerOptimizer<FuseTransposeIntoGemm>();
-    registerOptimizer<LiftLexicalReferences>();
-    registerOptimizer<SplitInit>();
-    registerOptimizer<SplitPredict>();
+    registerPass<EliminateIdentity>();
+    registerPass<EliminateNopPad>();
+    registerPass<EliminateNopTranspose>();
+    registerPass<EliminateUnusedInitializer>();
+    registerPass<ExtractConstantToInitializer>();
+    registerPass<FuseAddBiasIntoConv>();
+    registerPass<FuseBNIntoConv>();
+    registerPass<FuseConsecutiveLogSoftmax>();
+    registerPass<FuseConsecutiveSqueezes>();
+    registerPass<FuseConsecutiveTransposes>();
+    registerPass<FuseTransposeIntoGemm>();
+    registerPass<LiftLexicalReferences>();
+    registerPass<SplitInit>();
+    registerPass<SplitPredict>();
   }
 
   ~GlobalPassRegistry() {
@@ -65,7 +65,7 @@ struct GlobalPassRegistry {
   const std::vector<std::string> GetAvailablePasses();
 
   template <typename T>
-  void registerOptimizer() {
+  void registerPass() {
     static_assert(std::is_base_of<Pass, T>::value, "T must inherit from Pass");
     Pass* pass = new T();
     passes[pass->getPassName()] = pass;

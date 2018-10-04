@@ -12,6 +12,7 @@ Pass::Pass(
   this->pass_efficiency = pass_efficiency;
   this->pass_optimization_type = pass_optimization_type;
 }
+
 Pass::~Pass() {}
 
 unsigned int Pass::DescendOnGraphAttributesAndCount(
@@ -47,7 +48,9 @@ void Pass::DescendOnGraphAttributesUnconstrained(
     }
   }
 }
+
 PredicateBasedPass::~PredicateBasedPass() {}
+
 unsigned int PredicateBasedPass::_runPassInternal(Graph& graph) {
   unsigned int num_changes = false;
   for (auto it = graph.begin(); it != graph.end(); ++it) {
