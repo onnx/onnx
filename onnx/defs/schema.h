@@ -624,10 +624,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       map_[domain] = std::make_pair(min_version, max_version);
     }
 
-    static DomainToVersionRange& Instance() {
-      static DomainToVersionRange domain_to_version_range;
-      return domain_to_version_range;
-    }
+    static DomainToVersionRange& Instance();
 
    private:
     // Key: domain. Value: <lowest version, highest version> pair.
