@@ -10896,7 +10896,7 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
-scales=np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
 
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
