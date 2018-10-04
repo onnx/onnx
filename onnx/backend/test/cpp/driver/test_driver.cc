@@ -213,6 +213,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
           &output_proto, output_data.c_str(), output_data.size());
       proto_test_data.outputs_.emplace_back(std::move(output_proto));
     }
+    st.proto_test_data_.emplace_back(std::move(proto_test_data));
   }
   return st;
 }
