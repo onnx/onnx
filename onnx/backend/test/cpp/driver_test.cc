@@ -20,6 +20,17 @@
 #define ONNXIFI_TESTDATA_EPS 1e-5
 #endif
 
+#define ASSERT_MEMORYSAFE_SUCCESS(X, isGraphInitialized) \
+  {                                                      \
+    onnxStatus sta = X;                                  \
+    if (sta != ONNXIFI_STATUS_SUCCESS) {                 \
+      if (isGraphInitialized) {                          \
+        lib.onnxReleaseGraph(graph);                     \
+      }                                                  \
+    }                                                    \
+    ASSERT_EQ(sta, ONNXIFI_STATUS_SUCCESS);              \
+  }
+
 const float onnxifi_testdata_eps = ONNXIFI_TESTDATA_EPS;
 
 template <typename T>
@@ -199,8 +210,8 @@ class ONNXCppDriverTest
         GTEST_SKIP();
         return;
       }
-      ASSERT_EQ(is_compatible, ONNXIFI_STATUS_SUCCESS);
-      ASSERT_EQ(
+      ASSERT_MEMORYSAFE_SUCCESS(is_compatible, false);
+      ASSERT_MEMORYSAFE_SUCCESS(
           lib.onnxInitGraph(
               backend,
               NULL,
@@ -209,7 +220,7 @@ class ONNXCppDriverTest
               weightCount,
               weightDescriptors_pointer,
               &graph),
-          ONNXIFI_STATUS_SUCCESS);
+          false);
       for (const auto& proto_test_data : protos_) {
         std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor,
             result_descriptor;
@@ -237,14 +248,14 @@ class ONNXCppDriverTest
           result.buffer = (onnxPointer)raw_data.data();
           result_descriptor.emplace_back(std::move(result));
         }
-        ASSERT_EQ(
+        ASSERT_MEMORYSAFE_SUCCESS(
             lib.onnxSetGraphIO(
                 graph,
                 input_descriptor.size(),
                 input_descriptor.data(),
                 result_descriptor.size(),
                 result_descriptor.data()),
-            ONNXIFI_STATUS_SUCCESS);
+            true);
 
         onnxMemoryFenceV1 inputFence, outputFence;
         inputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
@@ -252,10 +263,9 @@ class ONNXCppDriverTest
         inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
         outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
 
-        ASSERT_EQ(
-            lib.onnxRunGraph(graph, &inputFence, &outputFence),
-            ONNXIFI_STATUS_SUCCESS);
-        ASSERT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
+        ASSERT_MEMORYSAFE_SUCCESS(
+            lib.onnxRunGraph(graph, &inputFence, &outputFence), true);
+        ASSERT_MEMORYSAFE_SUCCESS(lib.onnxWaitEvent(outputFence.event), true);
         for (int i = 0; i < output_descriptor.size(); i++) {
           auto output_size = GetDescriptorSize(&output_descriptor[i]);
           for (int j = 0; j < output_size; j++) {
@@ -266,7 +276,7 @@ class ONNXCppDriverTest
           }
         }
       }
-      ASSERT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
+      ASSERT_MEMORYSAFE_SUCCESS(lib.onnxReleaseGraph(graph), false);
     }
   }
 };
