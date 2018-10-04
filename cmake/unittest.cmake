@@ -6,32 +6,16 @@ include(${ONNX_ROOT}/cmake/Utils.cmake)
 
 find_package(Threads)
 
-function(add_whole_archive_flag lib output_var)
-  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set(${output_var} -Wl,-force_load,$<TARGET_FILE:${lib}> PARENT_SCOPE)
-  elseif(MSVC)
-    # In MSVC, we will add whole archive in default.
-    set(${output_var} -WHOLEARCHIVE:$<SHELL_PATH:$<TARGET_FILE:${lib}>>
-        PARENT_SCOPE)
-  else()
-    # Assume everything else is like gcc
-    set(${output_var}
-        "-Wl,--whole-archive $<TARGET_FILE:${lib}> -Wl,--no-whole-archive"
-        PARENT_SCOPE)
-  endif()
-endfunction()
-
 set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
 set(${ONNXIFI_TEST_DRIVER}_libs ${googletest_STATIC_LIBRARIES})
 
-add_whole_archive_flag(onnx tmp)
-list(APPEND ${UT_NAME}_libs ${tmp})
+list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
 list(APPEND ${UT_NAME}_libs onnxifi_loader)
 list(APPEND ${UT_NAME}_libs onnxifi)
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
-list(APPEND ${ONNXIFI_TEST_DRIVER}_libs ${tmp})
+list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx)
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx_proto)
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi_loader)
 list(APPEND ${ONNXIFI_TEST_DRIVER}_libs ${PROTOBUF_LIBRARIES})
