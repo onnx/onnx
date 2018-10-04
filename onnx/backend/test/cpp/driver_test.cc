@@ -41,6 +41,7 @@ class ONNXCppDriverTest
     protos_ = t.proto_test_data_;
     model_ = t.model_;
   }
+
   uint64_t GetDescriptorSize(const onnxTensorDescriptorV1* t) {
     uint64_t d_size = 1;
     for (int i = 0; i < t->dimensions; i++) {
@@ -48,6 +49,19 @@ class ONNXCppDriverTest
     }
     return d_size;
   }
+
+  void GtestAssertMemorySafeSuccess(
+      onnxStatus x,
+      onnxGraph* graph_pointer,
+      onnxifi_library& lib) {
+    if (x != ONNXIFI_STATUS_SUCCESS) {
+      if (graph_pointer != NULL) {
+        lib.onnxReleaseGraph(*graph_pointer);
+      }
+    }
+    ASSERT_EQ(x, ONNXIFI_STATUS_SUCCESS);
+  }
+
   bool IsUnsupported(onnxStatus s, std::string& msg) {
     if (s == ONNXIFI_STATUS_UNSUPPORTED_VERSION) {
       msg = "Unsupported version of ONNX or operator.";
@@ -199,8 +213,8 @@ class ONNXCppDriverTest
         GTEST_SKIP();
         return;
       }
-      ASSERT_EQ(is_compatible, ONNXIFI_STATUS_SUCCESS);
-      ASSERT_EQ(
+      GtestAssertMemorySafeSuccess(is_compatible, NULL, lib);
+      GtestAssertMemorySafeSuccess(
           lib.onnxInitGraph(
               backend,
               NULL,
@@ -209,7 +223,8 @@ class ONNXCppDriverTest
               weightCount,
               weightDescriptors_pointer,
               &graph),
-          ONNXIFI_STATUS_SUCCESS);
+          NULL,
+          lib);
       for (const auto& proto_test_data : protos_) {
         std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor,
             result_descriptor;
@@ -224,8 +239,7 @@ class ONNXCppDriverTest
               ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(output));
           onnxTensorDescriptorV1 result;
           result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
-          std::string name_string =
-              "output_" + ONNX_NAMESPACE::to_string(output_count);
+          std::string name_string = output_descriptor[output_count - 1].name;
           result.name = name_string.c_str();
           result.dataType = output.data_type();
           result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
@@ -237,36 +251,41 @@ class ONNXCppDriverTest
           result.buffer = (onnxPointer)raw_data.data();
           result_descriptor.emplace_back(std::move(result));
         }
-        ASSERT_EQ(
+        GtestAssertMemorySafeSuccess(
             lib.onnxSetGraphIO(
                 graph,
                 input_descriptor.size(),
                 input_descriptor.data(),
                 result_descriptor.size(),
                 result_descriptor.data()),
-            ONNXIFI_STATUS_SUCCESS);
+            &graph,
+            lib);
 
         onnxMemoryFenceV1 inputFence, outputFence;
         inputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
         outputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
         inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
         outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
-
-        ASSERT_EQ(
-            lib.onnxRunGraph(graph, &inputFence, &outputFence),
-            ONNXIFI_STATUS_SUCCESS);
-        ASSERT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
+        GtestAssertMemorySafeSuccess(
+            lib.onnxInitEvent(backend, &inputFence.event), &graph, lib);
+        GtestAssertMemorySafeSuccess(
+            lib.onnxInitEvent(backend, &outputFence.event), &graph, lib);
+        GtestAssertMemorySafeSuccess(
+            lib.onnxSignalEvent(inputFence.event), &graph, lib);
+        GtestAssertMemorySafeSuccess(
+            lib.onnxRunGraph(graph, &inputFence, &outputFence), &graph, lib);
+        GtestAssertMemorySafeSuccess(
+            lib.onnxWaitEvent(outputFence.event), &graph, lib);
         for (int i = 0; i < output_descriptor.size(); i++) {
           auto output_size = GetDescriptorSize(&output_descriptor[i]);
           for (int j = 0; j < output_size; j++) {
             EXPECT_EQ(
                 IsDescriptorEqual(output_descriptor[i], result_descriptor[i]),
                 true);
-            ;
           }
         }
       }
-      ASSERT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
+      GtestAssertMemorySafeSuccess(lib.onnxReleaseGraph(graph), NULL, lib);
     }
   }
 };
