@@ -20,15 +20,15 @@
 #define ONNXIFI_TESTDATA_EPS 1e-5
 #endif
 
-#define ASSERT_MEMORYSAFE_SUCCESS(X, isGraphInitialized) \
-  {                                                      \
-    onnxStatus sta = X;                                  \
-    if (sta != ONNXIFI_STATUS_SUCCESS) {                 \
-      if (isGraphInitialized) {                          \
-        lib.onnxReleaseGraph(graph);                     \
-      }                                                  \
-    }                                                    \
-    ASSERT_EQ(sta, ONNXIFI_STATUS_SUCCESS);              \
+#define ASSERT_MEMORYSAFE_SUCCESS(X, isGraphInitialized)  \
+  {                                                       \
+    onnxStatus sta = X;                                   \
+    if (sta != ONNXIFI_STATUS_SUCCESS) {                  \
+      if (isGraphInitialized) {                           \
+        lib.onnxReleaseGraph(graph);                      \
+      }                                                   \
+    }                                                     \
+    ASSERT_EQ(sta, ONNXIFI_STATUS_SUCCESS);               \
   }
 
 const float onnxifi_testdata_eps = ONNXIFI_TESTDATA_EPS;
