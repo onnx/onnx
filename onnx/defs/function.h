@@ -62,6 +62,23 @@ class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
   std::mutex mutex_;
 };
 
+template <typename T>
+FunctionBuilder GetFunctionBuilder();
+
+#define ONNX_FUNCTION_BUILDER_CLASS_NAME(domain, ver, name) \
+  name##_##domain##_ver##ver
+
+#define ONNX_FUNCTION_BUILD(name, ver, build_func) \
+  ONNX_FUNCTION_BUILD_HELPER(name, Onnx, ONNX_DOMAIN, ver, build_func)
+
+#define ONNX_FUNCTION_BUILD_HELPER(name, domain, domain_str, ver, build_func) \
+  class ONNX_FUNCTION_BUILDER_CLASS_NAME(domain, ver, name);                  \
+  template <>                                                                 \
+  FunctionBuilder                                                             \
+  GetFunctionBuilder<ONNX_FUNCTION_BUILDER_CLASS_NAME(domain, ver, name)>() { \
+    return build_func;                                                        \
+  }
+
 #define ONNX_FUNCTION(function_builder) \
   ONNX_FUNCTION_UNIQ_HELPER(__COUNTER__, function_builder)
 
@@ -71,6 +88,16 @@ class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
 #define ONNX_FUNCTION_UNIQ(counter, function_builder)         \
   static Common::Status function_builder_##counter##_status = \
       FunctionBuilderRegistry::OnnxInstance().Register(function_builder);
+
+inline void RegisterOneFunctionBuilder(FunctionBuilder&& func_builder) {
+  ONNX_FUNCTION(func_builder);
+}
+
+// Registers all function builder of a given operator set
+template <class T>
+void RegisterFunctionBuilder() {
+  T::ForEachFunctionBuilder(RegisterOneFunctionBuilder);
+};
 
 // Helper function to expand a function node given the function proto
 void FunctionExpandHelper(
@@ -100,6 +127,7 @@ void FunctionExpandHelper(
 //  return Status::OK();
 //}
 //
-// ONNX_FUNCTION(FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
+// ONNX_FUNCTION_BUILD(Name, Ver,
+// FunctionBuilder().SetDomain("").SetBuildFunction(BuildFc));
 
 } // namespace ONNX_NAMESPACE
