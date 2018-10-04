@@ -27,4 +27,11 @@ function(add_onnx_global_defines target)
     target_compile_definitions(${target} PUBLIC "ONNX_USE_LITE_PROTO=1")
   endif()
 
+  if (BUILD_SHARED_LIBS)
+    target_compile_definitions(${target} PRIVATE "ONNX_BUILD_SHARED_LIBS=1")
+  endif()
+
+  if (ONNX_BUILD_MAIN_LIB)
+    target_compile_definitions(${target} PRIVATE "ONNX_BUILD_MAIN_LIB=1")
+  endif()
 endfunction()
