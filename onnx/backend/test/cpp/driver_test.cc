@@ -174,6 +174,10 @@ class ONNXCppDriverTest
     }
     return true;
   }
+
+  std::vector<std::vector<uint64_t>> shape_pool;
+  std::vector<std::vector<uint8_t>> data_pool;
+
   void RunAndVerify(
       onnxifi_library& lib,
       onnxBackend& backend,
@@ -198,7 +202,7 @@ class ONNXCppDriverTest
       if (weightCount != 0) {
         weightDescriptors =
             ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
-                model_.graph().initializer(0));
+                model_.graph().initializer(0), shape_pool);
         weightDescriptors_pointer = &weightDescriptors;
       }
       std::string serialized_model;
@@ -230,13 +234,15 @@ class ONNXCppDriverTest
             result_descriptor;
         for (const auto& input : proto_test_data.inputs_) {
           input_descriptor.push_back(
-              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(input));
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
+                  input, shape_pool));
         }
         int output_count = 0;
         for (auto& output : proto_test_data.outputs_) {
           output_count++;
           output_descriptor.push_back(
-              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(output));
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
+                  output, shape_pool));
           onnxTensorDescriptorV1 result;
           result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
           std::string name_string = output_descriptor[output_count - 1].name;
@@ -245,10 +251,12 @@ class ONNXCppDriverTest
           result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
           std::vector<uint64_t> shape_values(
               output.dims().begin(), output.dims().end());
-          result.dimensions = shape_values.size();
-          result.shape = shape_values.data();
+          shape_pool.emplace_back(std::move(shape_values));
+          result.dimensions = shape_pool.back().size();
+          result.shape = shape_pool.back().data();
           std::vector<uint8_t> raw_data(output.raw_data().size(), 0);
-          result.buffer = (onnxPointer)raw_data.data();
+          data_pool.emplace_back(std::move(raw_data));
+          result.buffer = (onnxPointer)data_pool.back().data();
           result_descriptor.emplace_back(std::move(result));
         }
         GtestAssertMemorySafeSuccess(
@@ -276,8 +284,11 @@ class ONNXCppDriverTest
             lib.onnxRunGraph(graph, &inputFence, &outputFence), &graph, lib);
         GtestAssertMemorySafeSuccess(
             lib.onnxWaitEvent(outputFence.event), &graph, lib);
+        ASSERT_EQ(output_descriptor.size(), result_descriptor.size());
         for (int i = 0; i < output_descriptor.size(); i++) {
           auto output_size = GetDescriptorSize(&output_descriptor[i]);
+          auto result_size = GetDescriptorSize(&result_descriptor[i]);
+          ASSERT_EQ(output_size, result_size);
           for (int j = 0; j < output_size; j++) {
             EXPECT_EQ(
                 IsDescriptorEqual(output_descriptor[i], result_descriptor[i]),
