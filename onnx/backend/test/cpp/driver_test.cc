@@ -36,6 +36,13 @@ class ONNXCppDriverTest
  protected:
   std::vector<ONNX_NAMESPACE::testing::ResolvedTestData> protos_;
   ONNX_NAMESPACE::ModelProto model_;
+
+  // A memory pool of shape information of onnxTensorDescriptorV1 used in this
+  // test driver.
+  std::vector<std::vector<uint64_t>> shape_pool;
+  // A memory pool of raw_data of backend output in onnxTensorDescriptorV1.
+  std::vector<std::vector<uint8_t>> data_pool;
+
   void SetUp() override {
     ONNX_NAMESPACE::testing::ResolvedTestCase t = GetParam();
     protos_ = t.proto_test_data_;
@@ -88,6 +95,7 @@ class ONNXCppDriverTest
     }
     return false;
   }
+
   bool IsDescriptorEqual(
       const onnxTensorDescriptorV1& x,
       const onnxTensorDescriptorV1& y) {
@@ -174,12 +182,6 @@ class ONNXCppDriverTest
     }
     return true;
   }
-
-  // A memory pool of shape information of onnxTensorDescriptorV1 used in this
-  // test driver.
-  std::vector<std::vector<uint64_t>> shape_pool;
-  // A memory pool of raw_data of backend output in onnxTensorDescriptorV1.
-  std::vector<std::vector<uint8_t>> data_pool;
 
   void RunAndVerify(
       onnxifi_library& lib,
@@ -287,6 +289,8 @@ class ONNXCppDriverTest
             lib.onnxRunGraph(graph, &inputFence, &outputFence), &graph, lib);
         GtestAssertMemorySafeSuccess(
             lib.onnxWaitEvent(outputFence.event), &graph, lib);
+        lib.onnxReleaseEvent(outputFence.event);
+        lib.onnxReleaseEvent(inputFence.event);
         ASSERT_EQ(output_descriptor.size(), result_descriptor.size());
         for (int i = 0; i < output_descriptor.size(); i++) {
           auto output_size = GetDescriptorSize(&output_descriptor[i]);
