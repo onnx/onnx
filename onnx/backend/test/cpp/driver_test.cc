@@ -175,7 +175,10 @@ class ONNXCppDriverTest
     return true;
   }
 
+  // A memory pool of shape information of onnxTensorDescriptorV1 used in this
+  // test driver.
   std::vector<std::vector<uint64_t>> shape_pool;
+  // A memory pool of raw_data of backend output in onnxTensorDescriptorV1.
   std::vector<std::vector<uint8_t>> data_pool;
 
   void RunAndVerify(
