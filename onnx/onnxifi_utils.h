@@ -9,6 +9,7 @@ namespace ONNX_NAMESPACE {
 namespace testing {
 
 onnxTensorDescriptorV1 ProtoToOnnxTensorDescriptor(
-    const ONNX_NAMESPACE::TensorProto& proto_tensor);
+    const ONNX_NAMESPACE::TensorProto& proto_tensor,
+    std::vector<std::vector<uint64_t>>& shape_pool);
 } // namespace testing
 } // namespace ONNX_NAMESPACE
