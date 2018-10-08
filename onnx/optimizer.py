@@ -50,5 +50,9 @@ def optimize(model, passes=None, fixed_point=False):  # type: (ModelProto, Optio
         raise ValueError('Optimizer only accepts ModelProto, incorrect type: {}'.format(type(model)))
 
     model_str = model.SerializeToString()
-    optimized_model_str = C.optimize(model_str, passes, fixed_point)
+    if fixed_point:
+        optimized_model_str = C.optimize_fixedpoint(model_str, passes)
+    else:
+        optimized_model_str = C.optimize(model_str, passes)
+
     return onnx.load_from_string(optimized_model_str)

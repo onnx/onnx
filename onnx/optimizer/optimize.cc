@@ -27,12 +27,16 @@ Optimizer::~Optimizer() {
 
 ModelProto Optimize(
     const ModelProto& mp_in,
-    const std::vector<std::string>& names,
-    const bool fixed_point) {
-  Optimizer current_opt(names, fixed_point);
+    const std::vector<std::string>& names) {
+  Optimizer current_opt(names, false);
   return current_opt.optimize(mp_in);
 }
-
+ModelProto OptimizeFixed(
+    const ModelProto& mp_in,
+    const std::vector<std::string>& names) {
+  Optimizer current_opt(names, true);
+  return current_opt.optimize(mp_in);
+}
 const std::vector<std::string> GetAvailablePasses() {
   return Optimizer::passes.GetAvailablePasses();
 }

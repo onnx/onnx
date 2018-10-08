@@ -249,18 +249,26 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
 
   optimizer.def(
       "optimize",
-      [](const py::bytes& bytes,
-         const std::vector<std::string>& names,
-         const bool fixed_point) {
+      [](const py::bytes& bytes, const std::vector<std::string>& names) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        auto const result =
-            optimization::Optimize(std::move(proto), names, fixed_point);
+        auto const result = optimization::Optimize(std::move(proto), names);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);
       });
 
+  optimizer.def(
+      "optimize_fixedpoint",
+      [](const py::bytes& bytes, const std::vector<std::string>& names) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        auto const result =
+            optimization::OptimizeFixed(std::move(proto), names);
+        std::string out;
+        result.SerializeToString(&out);
+        return py::bytes(out);
+      });
   optimizer.def("get_available_passes", &optimization::GetAvailablePasses);
 
   // Submodule `version_converter`

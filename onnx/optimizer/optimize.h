@@ -47,8 +47,10 @@ const std::vector<std::string> GetAvailablePasses();
 
 ModelProto Optimize(
     const ModelProto& mp_in,
-    const std::vector<std::string>& names,
-    const bool fixed_point);
+    const std::vector<std::string>& names);
 
+ModelProto OptimizeFixed(
+    const ModelProto& mp_in,
+    const std::vector<std::string>& names);
 } // namespace optimization
 } // namespace ONNX_NAMESPACE
