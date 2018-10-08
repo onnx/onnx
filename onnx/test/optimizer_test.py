@@ -927,5 +927,6 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].attribute[0].i == 2
         assert optimized_model.graph.node[1].op_type == "Log"
 
+
 if __name__ == '__main__':
     unittest.main()
