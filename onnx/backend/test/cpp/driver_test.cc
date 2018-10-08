@@ -66,7 +66,8 @@ class ONNXCppDriverTest
         lib.onnxReleaseGraph(*graph_pointer);
       }
     }
-    return x == ONNXIFI_STATUS_SUCCESS;
+    bool result = (x == ONNXIFI_STATUS_SUCCESS);
+    return result;
   }
 
   bool IsUnsupported(onnxStatus s, std::string& msg) {
