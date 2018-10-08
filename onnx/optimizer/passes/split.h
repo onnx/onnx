@@ -198,9 +198,9 @@ struct SplitInit final : public FullGraphBasedPass {
     return "split_init";
   }
 
-  PostPassAnalysis runPass(Graph& graph) override {
+  PostPassAnalysis* runPass(Graph& graph) override {
     split_init_and_predict(graph, true, false);
-    return PostPassAnalysis();
+    return new PostPassAnalysis();
   }
 };
 
@@ -214,9 +214,9 @@ struct SplitPredict final : public FullGraphBasedPass {
     return "split_predict";
   }
 
-  PostPassAnalysis runPass(Graph& graph) override {
+  PostPassAnalysis* runPass(Graph& graph) override {
     split_init_and_predict(graph, false, true);
-    return PostPassAnalysis();
+    return new PostPassAnalysis();
   }
 };
 

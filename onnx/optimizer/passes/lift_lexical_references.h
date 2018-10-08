@@ -192,7 +192,7 @@ struct LiftLexicalReferences : public FullGraphBasedPass {
     return unresolved_references;
   }
 
-  PostPassAnalysis runPass(Graph& graph) override {
+  PostPassAnalysis* runPass(Graph& graph) override {
     auto unresolved = liftReferences(&graph);
 
     if (unresolved.size()) {
@@ -202,7 +202,7 @@ struct LiftLexicalReferences : public FullGraphBasedPass {
       }
       throw std::runtime_error(errmsg);
     }
-    return PostPassAnalysis();
+    return new PostPassAnalysis();
   }
 };
 

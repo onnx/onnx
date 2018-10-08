@@ -16,16 +16,13 @@ namespace ONNX_NAMESPACE {
 namespace optimization {
 
 struct Optimizer {
+  static GlobalPassRegistry passes;
+
  public:
-  GlobalPassRegistry passes;
+  Optimizer(const std::vector<std::string>& names, const bool fixed_point);
+  ~Optimizer();
 
-  Optimizer() {}
-
-  ~Optimizer() = default;
-
-  ModelProto optimize(
-      const ModelProto& mp_in,
-      const std::vector<std::string>& names) {
+  ModelProto optimize(const ModelProto& mp_in) {
     std::shared_ptr<Graph> g(ImportModelProto(mp_in));
 
     if (g.get() == nullptr) {
@@ -37,25 +34,21 @@ struct Optimizer {
     }
 
     ModelProto mp_out = PrepareOutput(mp_in);
-
-    GeneralPassManager pass_manager;
-    for (const auto& name : names) {
-      auto pass = passes.find(name);
-      pass_manager.add(pass);
-    }
-    pass_manager.run(*g);
+    this->pass_manager->run(*g);
     ExportModelProto(&mp_out, g);
     return mp_out;
   }
 
-  static Optimizer OptimizerSingleton;
+ private:
+  PassManager* pass_manager;
 };
 
 const std::vector<std::string> GetAvailablePasses();
 
 ModelProto Optimize(
     const ModelProto& mp_in,
-    const std::vector<std::string>& names);
+    const std::vector<std::string>& names,
+    const bool fixed_point);
 
 } // namespace optimization
 } // namespace ONNX_NAMESPACE

@@ -6,6 +6,7 @@
 #include "onnx/common/ir.h"
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
+#include "onnx/optimizer/passes/eliminate_deadend.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_pad.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
@@ -34,6 +35,7 @@ struct GlobalPassRegistry {
 
   GlobalPassRegistry() {
     // Register the optimization passes to the optimizer.
+    registerPass<EliminateDeadEnd>();
     registerPass<EliminateIdentity>();
     registerPass<EliminateNopPad>();
     registerPass<EliminateNopTranspose>();

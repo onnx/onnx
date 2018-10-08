@@ -2,8 +2,9 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
-#include "onnx/optimizer/pass.h"
 #include <set>
+#include "onnx/optimizer/pass.h"
+#include "onnx/optimizer/passes/eliminate_deadend.h"
 
 namespace ONNX_NAMESPACE {
 namespace optimization {
@@ -20,7 +21,7 @@ class PassManager {
   virtual ~PassManager();
 
   virtual void add(Pass* P) = 0;
-  virtual PassManagerAnalysis run(Graph& graph) = 0;
+  virtual PassManagerAnalysis* run(Graph& graph) = 0;
 };
 
 // The GeneralPassManager has no restriction on type of Pass and runs the passes
@@ -28,13 +29,20 @@ class PassManager {
 class GeneralPassManager : public PassManager {
  public:
   GeneralPassManager() {}
-  ~GeneralPassManager() override {}
+  ~GeneralPassManager() override;
 
   void add(Pass* pass) override;
-  PassManagerAnalysis run(Graph& graph) override;
+  PassManagerAnalysis* run(Graph& graph) override;
 
- private:
+ protected:
   std::set<Pass*> passes;
 };
+
+// Exhibits the same behavior as GeneralPassManager but will instead check
+// whether or not fixed point optimization is needed.
+class FixedPointPassManager : public GeneralPassManager {
+  PassManagerAnalysis* run(Graph& graph) override;
+};
+
 } // namespace optimization
 } // namespace ONNX_NAMESPACE

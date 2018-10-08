@@ -11,7 +11,9 @@ namespace ONNX_NAMESPACE {
 namespace optimization {
 
 // Base struct representing result of a pass.
-struct PostPassAnalysis {};
+struct PostPassAnalysis {
+  virtual ~PostPassAnalysis() = default;
+};
 
 // Enum that represents the type of optimization it is.
 enum PassType {
@@ -86,7 +88,7 @@ class Pass {
   virtual bool finalizePass(Graph& graph) {
     return false;
   }
-  virtual PostPassAnalysis runPass(Graph& graph) = 0;
+  virtual PostPassAnalysis* runPass(Graph& graph) = 0;
 
  protected:
   // Iterates through the elements in the graph and counts the number of times
@@ -112,14 +114,14 @@ class ImmutablePass : Pass {
 };
 
 // Pass Analysis done after a predicate based pass.
-struct PostPredicateBasedPassAnalysis : PostPassAnalysis {
+struct CountBasedPassAnalysis : PostPassAnalysis {
   Pass* pass;
   unsigned int num_positive_transforms;
   bool initialization_done;
   bool finalization_done;
 
  public:
-  explicit PostPredicateBasedPassAnalysis(
+  explicit CountBasedPassAnalysis(
       Pass* pass,
       unsigned int num_positive_transforms,
       bool initialization_done,
@@ -158,7 +160,7 @@ class PredicateBasedPass : public Pass {
   virtual bool
   runTransform(Node* node, Graph& graph, bool& destroy_current) = 0;
 
-  PostPassAnalysis runPass(Graph& graph) override;
+  PostPassAnalysis* runPass(Graph& graph) override;
 
  private:
   unsigned int _runPassInternal(Graph& graph);
