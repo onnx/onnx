@@ -17,7 +17,7 @@
 namespace ONNX_NAMESPACE {
 
 void RegisterSchema(OpSchema&& schema) {
-  OpSchemaRegistry::OpSchemaRegisterOnce(registration) = schema;
+  OpSchemaRegistry::OpSchemaRegisterOnce ONNX_UNUSED registration = schema;
 }
 
 #ifndef NDEBUG
