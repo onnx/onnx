@@ -44,7 +44,7 @@ struct UnsolvedTestCase {
         test_data_(test_data) {}
 
   UnsolvedTestCase() {}
-
+  std::string test_case_name_;
   std::string model_filename_;
   std::string model_dirname_;
   std::vector<UnsolvedTestData> test_data_;
@@ -70,6 +70,7 @@ struct ResolvedTestData {
 struct ResolvedTestCase {
   ONNX_NAMESPACE::ModelProto model_;
   std::vector<ResolvedTestData> proto_test_data_;
+  std::string test_case_name_;
 };
 
 /**
@@ -101,7 +102,9 @@ class TestDriver {
    *	Regular file(s): input_X.pb, store one input tensor.
    *	Regular file(s): output_X.pb, store one output tensor.
    */
-  void FetchSingleTestCase(const std::string& case_dir);
+  void FetchSingleTestCase(
+      const std::string& case_dir,
+      const std::string& test_case_name);
 };
 
 std::vector<UnsolvedTestCase> GetTestCase();
