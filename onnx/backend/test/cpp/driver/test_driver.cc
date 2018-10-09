@@ -100,7 +100,8 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
   } else {
     try {
       do {
-        std::string entry_dname = file.name, full_entry_dname;
+        std::string entry_dname = file.name;
+        std::string full_entry_dname;
         if (entry_dname != "." && entry_dname != "..") {
           full_entry_dname = target_dir + "/" + entry_dname + "/";
           FetchSingleTestCase(full_entry_dname, entry_dname);
@@ -136,7 +137,8 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
           break;
         }
       }
-      std::string full_entry_dname, entry_dname = entry->d_name;
+      std::string full_entry_dname;
+      std::string entry_dname = entry->d_name;
       if (entry_dname != "." && entry_dname != "..") {
         full_entry_dname = target_dir + "/" + entry_dname + "/";
         FetchSingleTestCase(full_entry_dname, entry_dname);
