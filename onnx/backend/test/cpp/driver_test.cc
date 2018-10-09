@@ -40,6 +40,13 @@ class ONNXCppDriverTest
     std::string operator()(const testing::TestParamInfo<T>& t) const {
       auto test_case =
           static_cast<ONNX_NAMESPACE::testing::ResolvedTestCase>(t.param);
+      /**
+       *  We pick folder name instead of model.graph().name as test case name
+       * here mostly for two reasons:
+       *  1. Name of proto graph can be empty or ruined.
+       *  2. Compares to the complex logic of protobuf, folder name is easier to
+       * parse, to modify and to use.
+       */
       return test_case.test_case_name_;
     }
   };
