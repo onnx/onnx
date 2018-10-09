@@ -20,7 +20,7 @@ class PassManager {
   PassManager();
   virtual ~PassManager();
 
-  virtual void add(Pass* P) = 0;
+  virtual void add(std::shared_ptr<Pass> P) = 0;
   virtual PassManagerAnalysis* run(Graph& graph) = 0;
 };
 
@@ -31,11 +31,11 @@ class GeneralPassManager : public PassManager {
   GeneralPassManager() {}
   ~GeneralPassManager() override;
 
-  void add(Pass* pass) override;
+  void add(std::shared_ptr<Pass> pass) override;
   PassManagerAnalysis* run(Graph& graph) override;
 
  protected:
-  std::set<Pass*> passes;
+  std::set<std::shared_ptr<Pass>> passes;
 };
 
 // Exhibits the same behavior as GeneralPassManager but will instead check

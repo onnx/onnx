@@ -9,12 +9,12 @@ PassManager::~PassManager() {}
 GeneralPassManager::~GeneralPassManager() {
   this->passes.clear();
 }
-void GeneralPassManager::add(Pass* pass) {
+void GeneralPassManager::add(std::shared_ptr<Pass> pass) {
   this->passes.insert(pass);
 }
 
 PassManagerAnalysis* GeneralPassManager::run(Graph& graph) {
-  for (Pass* pass : this->passes) {
+  for (std::shared_ptr<Pass> pass : this->passes) {
     auto pass_analysis = pass->runPass(graph);
     delete pass_analysis;
   }
@@ -26,7 +26,7 @@ PassManagerAnalysis* FixedPointPassManager::run(Graph& graph) {
 
   do {
     fixed_point_optimization_done = false;
-    for (Pass* pass : this->passes) {
+    for (std::shared_ptr<Pass> pass : this->passes) {
       PostPassAnalysis* analysis = pass->runPass(graph);
       CountBasedPassAnalysis* count_analysis =
           dynamic_cast<CountBasedPassAnalysis*>(analysis);
@@ -37,7 +37,7 @@ PassManagerAnalysis* FixedPointPassManager::run(Graph& graph) {
             dynamic_cast<CountBasedPassAnalysis*>(pass->runPass(graph));
         fixed_point_optimization_done = true;
       }
-      delete count_analysis;
+      delete analysis;
     }
   } while (fixed_point_optimization_done);
 

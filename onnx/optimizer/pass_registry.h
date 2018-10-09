@@ -31,7 +31,7 @@ namespace optimization {
 
 // Registry containing all passes available in ONNX.
 struct GlobalPassRegistry {
-  std::map<std::string, Pass*> passes;
+  std::map<std::string, std::shared_ptr<Pass>> passes;
 
   GlobalPassRegistry() {
     // Register the optimization passes to the optimizer.
@@ -53,12 +53,10 @@ struct GlobalPassRegistry {
   }
 
   ~GlobalPassRegistry() {
-    for (auto itr = this->passes.begin(); itr != this->passes.end(); itr++) {
-      delete itr->second;
-    }
+    this->passes.clear();
   }
 
-  Pass* find(std::string pass_name) {
+  std::shared_ptr<Pass> find(std::string pass_name) {
     auto it = this->passes.find(pass_name);
     ONNX_ASSERTM(
         it != this->passes.end(), "pass %s is unknown.", pass_name.c_str());
@@ -69,7 +67,7 @@ struct GlobalPassRegistry {
   template <typename T>
   void registerPass() {
     static_assert(std::is_base_of<Pass, T>::value, "T must inherit from Pass");
-    Pass* pass = new T();
+    std::shared_ptr<Pass> pass(new T());
     passes[pass->getPassName()] = pass;
   }
 };
