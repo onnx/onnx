@@ -21,7 +21,7 @@ class PassManager {
   virtual ~PassManager();
 
   virtual void add(std::shared_ptr<Pass> P) = 0;
-  virtual PassManagerAnalysis* run(Graph& graph) = 0;
+  virtual std::shared_ptr<PassManagerAnalysis> run(Graph& graph) = 0;
 };
 
 // The GeneralPassManager has no restriction on type of Pass and runs the passes
@@ -32,7 +32,7 @@ class GeneralPassManager : public PassManager {
   ~GeneralPassManager() override;
 
   void add(std::shared_ptr<Pass> pass) override;
-  PassManagerAnalysis* run(Graph& graph) override;
+  std::shared_ptr<PassManagerAnalysis> run(Graph& graph) override;
 
  protected:
   std::set<std::shared_ptr<Pass>> passes;
@@ -41,7 +41,7 @@ class GeneralPassManager : public PassManager {
 // Exhibits the same behavior as GeneralPassManager but will instead check
 // whether or not fixed point optimization is needed.
 class FixedPointPassManager : public GeneralPassManager {
-  PassManagerAnalysis* run(Graph& graph) override;
+  std::shared_ptr<PassManagerAnalysis> run(Graph& graph) override;
 };
 
 } // namespace optimization

@@ -66,9 +66,9 @@ struct EliminateUnusedInitializer final : public FullGraphBasedPass {
     }
   }
 
-  PostPassAnalysis* runPass(Graph& graph) {
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) {
     eliminate_unused_initializer(graph);
-    return new PostPassAnalysis();
+    return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
 

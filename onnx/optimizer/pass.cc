@@ -75,13 +75,13 @@ unsigned int PredicateBasedPass::_runPassInternal(Graph& graph) {
   return num_changes;
 }
 
-PostPassAnalysis* PredicateBasedPass::runPass(Graph& graph) {
+std::shared_ptr<PostPassAnalysis> PredicateBasedPass::runPass(Graph& graph) {
   bool initialized_pass = this->initializePass(graph);
   unsigned int touched_optimizations = this->_runPassInternal(graph);
   bool finalized_pass = this->finalizePass(graph);
 
-  return new CountBasedPassAnalysis(
-      this, touched_optimizations, initialized_pass, finalized_pass);
+  return std::shared_ptr<PostPassAnalysis>(new CountBasedPassAnalysis(
+      this, touched_optimizations, initialized_pass, finalized_pass));
 }
 
 CountBasedPassAnalysis::CountBasedPassAnalysis(

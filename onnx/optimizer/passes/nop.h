@@ -15,8 +15,8 @@ struct Nop final : public FullGraphBasedPass {
   std::string getPassName() const override {
     return "nop";
   }
-  PostPassAnalysis* runPass(Graph& graph) {
-    return new PostPassAnalysis();
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) {
+    return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
 

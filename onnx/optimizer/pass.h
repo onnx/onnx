@@ -88,7 +88,7 @@ class Pass {
   virtual bool finalizePass(Graph& graph) {
     return false;
   }
-  virtual PostPassAnalysis* runPass(Graph& graph) = 0;
+  virtual std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) = 0;
 
  protected:
   // Iterates through the elements in the graph and counts the number of times
@@ -115,6 +115,11 @@ class ImmutablePass : Pass {
 
 // Pass Analysis done after a predicate based pass.
 struct CountBasedPassAnalysis : PostPassAnalysis {
+  // Have to use raw pointer here. The idea is that the pass will pass <this> as a
+  // parameter to the constructor. We could use std::enable_shared_from_this but
+  // this complicates the memory model. Also since all passes come from
+  // GlobalPassRegistry which already utilizes smart pointers we don't have to
+  // worry about memory leaks from passes.
   Pass* pass;
   unsigned int num_positive_transforms;
   bool initialization_done;
@@ -160,7 +165,7 @@ class PredicateBasedPass : public Pass {
   virtual bool
   runTransform(Node* node, Graph& graph, bool& destroy_current) = 0;
 
-  PostPassAnalysis* runPass(Graph& graph) override;
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override;
 
  private:
   unsigned int _runPassInternal(Graph& graph);

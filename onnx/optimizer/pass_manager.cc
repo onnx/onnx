@@ -13,35 +13,33 @@ void GeneralPassManager::add(std::shared_ptr<Pass> pass) {
   this->passes.insert(pass);
 }
 
-PassManagerAnalysis* GeneralPassManager::run(Graph& graph) {
+std::shared_ptr<PassManagerAnalysis> GeneralPassManager::run(Graph& graph) {
   for (std::shared_ptr<Pass> pass : this->passes) {
     auto pass_analysis = pass->runPass(graph);
-    delete pass_analysis;
   }
-  return new EmptyPassManagerAnalysis();
+  return std::shared_ptr<PassManagerAnalysis>(new EmptyPassManagerAnalysis());
 }
 
-PassManagerAnalysis* FixedPointPassManager::run(Graph& graph) {
+std::shared_ptr<PassManagerAnalysis> FixedPointPassManager::run(Graph& graph) {
   bool fixed_point_optimization_done;
 
   do {
     fixed_point_optimization_done = false;
     for (std::shared_ptr<Pass> pass : this->passes) {
-      PostPassAnalysis* analysis = pass->runPass(graph);
-      CountBasedPassAnalysis* count_analysis =
-          dynamic_cast<CountBasedPassAnalysis*>(analysis);
+      std::shared_ptr<PostPassAnalysis> analysis = pass->runPass(graph);
+      std::shared_ptr<CountBasedPassAnalysis> count_analysis =
+          std::dynamic_pointer_cast<CountBasedPassAnalysis>(analysis);
 
       while (nullptr != count_analysis &&
              count_analysis->fixedPointOptimizationNeeded()) {
-        count_analysis =
-            dynamic_cast<CountBasedPassAnalysis*>(pass->runPass(graph));
+        count_analysis = std::dynamic_pointer_cast<CountBasedPassAnalysis>(
+            pass->runPass(graph));
         fixed_point_optimization_done = true;
       }
-      delete analysis;
     }
   } while (fixed_point_optimization_done);
 
-  return new EmptyPassManagerAnalysis();
+  return std::shared_ptr<PassManagerAnalysis>(new EmptyPassManagerAnalysis());
 }
 
 } // namespace optimization
