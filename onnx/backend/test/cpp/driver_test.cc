@@ -31,8 +31,19 @@ class CompareOnnxifiData {
         ((x - y) < onnxifi_testdata_eps);
   }
 };
+
 class ONNXCppDriverTest
     : public testing::TestWithParam<ONNX_NAMESPACE::testing::ResolvedTestCase> {
+ public:
+  struct PrintToStringParamName {
+    template <class T>
+    std::string operator()(const testing::TestParamInfo<T>& t) const {
+      auto test_case =
+          static_cast<ONNX_NAMESPACE::testing::ResolvedTestCase>(t.param);
+      return test_case.model_.graph().name();
+    }
+  };
+
  protected:
   std::vector<ONNX_NAMESPACE::testing::ResolvedTestData> protos_;
   ONNX_NAMESPACE::ModelProto model_;
@@ -213,7 +224,6 @@ class ONNXCppDriverTest
       }
       std::string serialized_model;
       model_.SerializeToString(&serialized_model);
-      std::cout << model_.graph().name() << std::endl;
       auto is_compatible = lib.onnxGetBackendCompatibility(
           backendID, serialized_model.size(), serialized_model.data());
       std::string error_msg;
@@ -346,7 +356,9 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
     RunAndVerify(lib, backend, NULL);
   }
 }
+
 INSTANTIATE_TEST_CASE_P(
     ONNXCppAllTest,
     ONNXCppDriverTest,
-    testing::ValuesIn(GetTestCases()));
+    testing::ValuesIn(GetTestCases()),
+    ONNXCppDriverTest::PrintToStringParamName());
