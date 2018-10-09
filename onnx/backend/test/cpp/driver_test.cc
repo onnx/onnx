@@ -40,7 +40,7 @@ class ONNXCppDriverTest
     std::string operator()(const testing::TestParamInfo<T>& t) const {
       auto test_case =
           static_cast<ONNX_NAMESPACE::testing::ResolvedTestCase>(t.param);
-      return test_case.model_.graph().name();
+      return test_case.test_case_name_;
     }
   };
 
