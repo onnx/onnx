@@ -1,3 +1,5 @@
+version: 2
+
 # NOTE: We only perform the merge in build step and not in test step, because
 # all source files will be shared from build to test
 merge_with_master: &merge_with_master
