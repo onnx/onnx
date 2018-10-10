@@ -99,7 +99,7 @@ Common::Status FunctionBuilderRegistry::GetFunctions(
 
   const std::multimap<std::string, std::unique_ptr<FunctionProto>>&
       function_name_map = domain_functions_map.at(domain);
-  for (auto& iter = function_name_map.begin(); iter != function_name_map.end();
+  for (auto iter = function_name_map.begin(); iter != function_name_map.end();
        ++iter) {
     function_set->emplace(iter->first, iter->second.get());
   }
