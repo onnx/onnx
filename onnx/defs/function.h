@@ -31,7 +31,7 @@ class IFunctionBuilderRegistry {
  public:
   virtual ~IFunctionBuilderRegistry() = default;
 
-  virtual std::unique_ptr<FunctionProto> GetFunction(
+  virtual const FunctionProto* GetFunction(
       const std::string& func_name,
       const int maxInclusiveVersion,
       const std::string& domain = ONNX_DOMAIN) const = 0;
@@ -47,10 +47,9 @@ class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
   Common::Status GetFunctions(
       const std::string& domain,
       /*out*/
-      std::multimap<std::string, std::unique_ptr<FunctionProto>>* function_set)
-      const;
+      std::multimap<std::string, const FunctionProto*>* function_set) const;
 
-  std::unique_ptr<FunctionProto> GetFunction(
+  const FunctionProto* GetFunction(
       const std::string& func_name,
       const int maxInclusiveVersion,
       const std::string& domain = ONNX_DOMAIN) const override;
@@ -59,6 +58,10 @@ class FunctionBuilderRegistry : public IFunctionBuilderRegistry {
 
  private:
   std::vector<FunctionBuilder> function_builders;
+  std::unordered_map<
+      std::string,
+      std::multimap<std::string, std::unique_ptr<FunctionProto>>>
+      domain_functions_map;
   std::mutex mutex_;
 };
 
