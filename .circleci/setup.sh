@@ -2,18 +2,10 @@ set -ex
 
 export MAX_JOBS=8
 
-TOP_DIR="$PWD"
-compilers=(
-    cc
-    c++
-    gcc
-    g++
-    x86_64-linux-gnu-gcc
-)
 if hash sccache 2>/dev/null; then
-    SCCACHE_BIN_DIR="$TOP_DIR/sccache"
+    SCCACHE_BIN_DIR="/tmp/sccache"
     mkdir -p "$SCCACHE_BIN_DIR"
-    for compiler in "${compilers[@]}"; do
+    for compiler in cc c++ gcc g++ x86_64-linux-gnu-gcc; do
         (
             echo "#!/bin/sh"
             echo "exec $(which sccache) $(which $compiler) \"\$@\""
