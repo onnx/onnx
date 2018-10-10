@@ -97,13 +97,14 @@ Common::Status FunctionBuilderRegistry::GetFunctions(
       (RegisterOnnxFunctionBuilder(), false);
 #endif
 
-  const std::multimap<std::string, std::unique_ptr<FunctionProto>>&
-      function_name_map = domain_functions_map.at(domain);
-  for (auto iter = function_name_map.begin(); iter != function_name_map.end();
-       ++iter) {
-    function_set->emplace(iter->first, iter->second.get());
+  auto function_name_map_iter = domain_functions_map.find(domain);
+  if (function_name_map_iter != domain_functions_map.end()) {
+    for (auto iter = function_name_map_iter->second.begin();
+         iter != function_name_map_iter->second.end();
+         ++iter) {
+      function_set->emplace(iter->first, iter->second.get());
+    }
   }
-
   return Common::Status::OK();
 }
 
