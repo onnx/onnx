@@ -61,13 +61,11 @@ linux_default: &linux_default
       name: Build
       no_output_timeout: "1h"
       command: |
-        set -ex
         docker exec -e CIRCLE_JOB=${CIRCLE_JOB} -e SCCACHE_BUCKET=${SCCACHE_BUCKET} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -u jenkins $(cat .docker_pid) .circleci/build.sh
   - run:
       name: Test
       no_output_timeout: "1h"
       command: |
-        set -ex
         docker exec -e CIRCLE_JOB=${CIRCLE_JOB} -u jenkins $(cat .docker_pid) .circleci/test.sh
 
 jobs:
