@@ -223,20 +223,23 @@ void check_attribute(
 #undef check_singular_field
 #undef check_repeated_field
 
-  if (ctx.is_main_graph()) {
-    if (used_fields != 1) {
-      fail_check(
-          "Attribute (name: ",
-          attr.name(),
-          ") should contain one and only one value field.");
-    }
-  } else {
+  // Normally, used_fields is expected to be 1.
+  // In proto3, when the value to be set is type default value (say 0 for int), used_fields may be 0.
+  if (used_fields > 1) {
+	  fail_check(
+		  "Attribute (name: ",
+		  attr.name(),
+		  ") should contain less than one value field.");
+  }
+
+  if (!ctx.is_main_graph()) {
     // It's an attribute of a node in function body.
-    if (used_fields != 1 && (used_fields != 0 || !attr.has_ref_attr_name())) {
+    if (attr.has_ref_attr_name() && used_fields != 0) {
+	  // The attribute proto is supposed to refer to data outside and does not have its own value field set.
       fail_check(
           "Attribute (name: ",
           attr.name(),
-          ") should contain one value field or refer to attribute declared in function.");
+          ") should refer to attribute in parent node.");
     }
   }
 
