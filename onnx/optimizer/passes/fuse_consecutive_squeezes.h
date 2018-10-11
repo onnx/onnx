@@ -62,7 +62,8 @@ struct FuseConsecutiveSqueezes final : public PredicateBasedPass {
     return node->kind() == kSqueeze &&
         node->input()->node()->kind() == kSqueeze;
   }
-  bool runTransform(Node* n, Graph& graph, bool& destroy_current) override {
+  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+      override {
     auto orig_input = n->input();
     n->is_(
         kaxes, compose_squeezes(orig_input->node()->is(kaxes), n->is(kaxes)));
@@ -70,7 +71,7 @@ struct FuseConsecutiveSqueezes final : public PredicateBasedPass {
     if (orig_input->uses().size() == 0) {
       orig_input->node()->destroy();
     }
-    destroy_current = false;
+    destroy_current = NodeDestroyType::NoDestroy;
     return true;
   }
 };

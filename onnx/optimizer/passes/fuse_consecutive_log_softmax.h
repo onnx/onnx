@@ -23,8 +23,10 @@ struct FuseConsecutiveLogSoftmax final : public PredicateBasedPass {
     return node->kind() == kLog && node->input()->node()->kind() == kSoftmax &&
         node->input()->uses().size() == 1;
   }
-  bool runTransform(Node* log_node, Graph& graph, bool& destroy_current)
-      override {
+  bool runTransform(
+      Node* log_node,
+      Graph& graph,
+      NodeDestroyType& destroy_current) override {
     Value* log_node_output = log_node->output();
     Node* softmax_node = log_node->inputs()[0]->node();
     auto orig_input = log_node->input();
@@ -39,7 +41,7 @@ struct FuseConsecutiveLogSoftmax final : public PredicateBasedPass {
 
     log_node->replaceAllUsesWith(log_softmax_node);
     log_node->removeAllInputs();
-    destroy_current = true;
+    destroy_current = NodeDestroyType::StrongDestroy;
     return true;
   }
 };

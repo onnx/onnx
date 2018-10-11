@@ -31,12 +31,13 @@ struct ExtractConstantToInitializer final : public PredicateBasedPass {
     return node->kind() == kConstant;
   }
 
-  bool runTransform(Node* node, Graph& graph, bool& destroy_current) override {
+  bool runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current)
+      override {
     const auto name = node->output()->uniqueName();
     Tensor t = node->t(kvalue);
     Value* new_init = graph.addInitializerAndInput(t, name);
     node->output()->replaceAllUsesWith(new_init);
-    destroy_current = true;
+    destroy_current = NodeDestroyType::WeakDestroy;
     return true;
   }
 };

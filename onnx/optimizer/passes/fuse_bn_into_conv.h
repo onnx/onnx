@@ -163,13 +163,14 @@ struct FuseBNIntoConv final : public PredicateBasedPass {
     return node->kind() == kBatchNormalization &&
         node->inputs()[0]->node()->kind() == kConv;
   }
-  bool runTransform(Node* n, Graph& graph, bool& destroy_current) override {
+  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+      override {
     Node* bn = n;
     Node* conv = n->inputs()[0]->node();
     auto origInput = bn->inputs()[0];
     if (origInput->uses().size() > 1 || bn->outputs().size() > 1 ||
         !modify_conv(conv, bn, graph)) {
-      destroy_current = false;
+      destroy_current = NodeDestroyType::NoDestroy;
       return false;
     }
     for (int i = 4; i >= 1; --i) {
@@ -180,7 +181,7 @@ struct FuseBNIntoConv final : public PredicateBasedPass {
       }
     }
     bn->output()->replaceAllUsesWith(origInput);
-    destroy_current = true;
+    destroy_current = NodeDestroyType::WeakDestroy;
     return true;
   }
 };

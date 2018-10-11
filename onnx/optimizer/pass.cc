@@ -57,18 +57,16 @@ unsigned int PredicateBasedPass::_runPassInternal(Graph& graph) {
     auto* n = *it;
     num_changes += this->DescendOnGraphAttributesAndCount(
         n, [this](Graph& g) { return _runPassInternal(g); });
-
     if (this->patternMatchPredicate(n)) {
-      bool destroy_current = false;
-      num_changes += this->runTransform(n, graph, destroy_current);
+      NodeDestroyType destroy_type = NodeDestroyType::NoDestroy;
+      num_changes += this->runTransform(n, graph, destroy_type);
 
-      if (destroy_current) {
+      if (destroy_type == NodeDestroyType::WeakDestroy) {
         it.destroyCurrent();
-        try {
-          it.destroyCurrent();
-        } catch (const assert_error error) {
-          continue;
-        }
+      }
+      if (destroy_type == NodeDestroyType::StrongDestroy) {
+        it.destroyCurrent();
+        it.destroyCurrent();
       }
     }
   }

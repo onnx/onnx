@@ -41,18 +41,19 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
         node->input()->node()->kind() == kTranspose;
   }
 
-  bool runTransform(Node* n, Graph& graph, bool& destroy_current) override {
+  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+      override {
     auto origInput = n->input();
     if (!n->hasAttribute(kperm) && !origInput->node()->hasAttribute(kperm)) {
       // One special case (two consecutive transposes with no perm,
       // since we do not have the shape information here, we have
       // to eliminate two transpose together.
       n->replaceAllUsesWith(origInput->node()->input()->node());
-      destroy_current = true;
+      destroy_current = NodeDestroyType::StrongDestroy;
       return true;
     }
     if (!n->hasAttribute(kperm) || !origInput->node()->hasAttribute(kperm)) {
-      destroy_current = false;
+      destroy_current = NodeDestroyType::NoDestroy;
       return false;
     }
     n->is_(
@@ -61,7 +62,7 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
     if (origInput->uses().size() == 0) {
       origInput->node()->destroy();
     }
-    destroy_current = false;
+    destroy_current = NodeDestroyType::NoDestroy;
     return false;
   }
 };

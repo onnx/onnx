@@ -26,9 +26,10 @@ struct EliminateDeadEnd final : public FullGraphBasedPass {
     }
     return nodes_removed;
   }
-  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) {
-    return std::shared_ptr<PostPassAnalysis>(new CountBasedPassAnalysis(
-        this, this->EliminateDead(graph), false, false));
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
+    auto nodes_removed = this->EliminateDead(graph);
+    return std::shared_ptr<PostPassAnalysis>(
+        new CountBasedPassAnalysis(this, nodes_removed, false, false));
   }
 };
 } // namespace optimization

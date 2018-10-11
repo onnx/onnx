@@ -54,6 +54,15 @@ enum PassOptimizationType {
   Stability = 4
 };
 
+enum NodeDestroyType {
+  // Does not destroy node
+  NoDestroy = 0,
+  // Equivalent to calling it.destroyCurrent() once.
+  WeakDestroy = 1,
+  // Equivalent to calling it.destroyCurrent() twice.
+  StrongDestroy = 2
+};
+
 // Base class for all optimizations within ONNX. A pass must contain the
 // annotations described above. Furthermore each pass is given the ability to
 // initialize and finalize it's pass. Each pass must have a unique name that
@@ -115,9 +124,9 @@ class ImmutablePass : Pass {
 
 // Pass Analysis done after a predicate based pass.
 struct CountBasedPassAnalysis : PostPassAnalysis {
-  // Have to use raw pointer here. The idea is that the pass will pass <this> as a
-  // parameter to the constructor. We could use std::enable_shared_from_this but
-  // this complicates the memory model. Also since all passes come from
+  // Have to use raw pointer here. The idea is that the pass will pass <this> as
+  // a parameter to the constructor. We could use std::enable_shared_from_this
+  // but this complicates the memory model. Also since all passes come from
   // GlobalPassRegistry which already utilizes smart pointers we don't have to
   // worry about memory leaks from passes.
   Pass* pass;
@@ -163,7 +172,7 @@ class PredicateBasedPass : public Pass {
 
   virtual bool patternMatchPredicate(Node* node) = 0;
   virtual bool
-  runTransform(Node* node, Graph& graph, bool& destroy_current) = 0;
+  runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current) = 0;
 
   std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override;
 
