@@ -22,13 +22,13 @@ class MaxUnpool(Base):
             strides=[2, 2]
         )
         xT = np.array([[[[1, 2],
-                         [3, 4]]]], dtype = np.float32)
+                         [3, 4]]]], dtype=np.float32)
         xI = np.array([[[[5, 7],
-                         [13, 15]]]], dtype = np.int64)
+                         [13, 15]]]], dtype=np.int64)
         y = np.array([[[[0, 0, 0, 0],
                         [0, 1, 0, 2],
                         [0, 0, 0, 0],
-                        [0, 3, 0, 4]]]], dtype = np.float32)
+                        [0, 3, 0, 4]]]], dtype=np.float32)
         expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_output_shape')
 
     @staticmethod
@@ -41,13 +41,13 @@ class MaxUnpool(Base):
             strides=[2, 2]
         )
         xT = np.array([[[[5, 6],
-                         [7, 8]]]], dtype = np.float32)
+                         [7, 8]]]], dtype=np.float32)
         xI = np.array([[[[5, 7],
-                         [13, 15]]]], dtype = np.int64)
-        output_shape = np.array((1, 1, 5, 5), dtype = np.int64)
+                         [13, 15]]]], dtype=np.int64)
+        output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
         y = np.array([[[[0, 0, 0, 0, 0],
                         [0, 5, 0, 6, 0],
                         [0, 0, 0, 0, 0],
                         [0, 7, 0, 8, 0],
-                        [0, 0, 0, 0, 0]]]], dtype = np.float32)
+                        [0, 0, 0, 0, 0]]]], dtype=np.float32)
         expect(node, inputs=[xT, xI, output_shape], outputs=[y], name='test_maxunpool_export_with_output_shape')
