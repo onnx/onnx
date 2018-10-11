@@ -20,4 +20,4 @@ python setup.py develop
 
 if hash sccache 2>/dev/null; then
     sccache --show-stats
-endif
+fi
