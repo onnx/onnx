@@ -2,4 +2,6 @@
 
 set -ex
 
-exec "$PYTORCH_DIR/scripts/onnx/test.sh"
+source /tmp/venv/bin/activate
+cd /tmp/pytorch
+CI=1 exec "scripts/onnx/test.sh"

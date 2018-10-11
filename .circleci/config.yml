@@ -23,6 +23,12 @@ merge_with_master: &merge_with_master
       git merge --no-edit --no-ff ${GIT_MERGE_TARGET}
     fi
 
+update_submodule: &update_submodule
+  name: Update Submodule
+  command: |
+    git submodule sync
+    git submodule update --recursive --init
+
 linux_default: &linux_default
   resource_class: large
   machine:
@@ -32,23 +38,35 @@ linux_default: &linux_default
   - run:
       <<: *merge_with_master
   - run:
-      name: Build and Test
+      <<: *update_submodule
+  - run:
+      name: Launch Docker Container
       no_output_timeout: "1h"
       command: |
         set -e
-        export SCCACHE_BUCKET=ossci-compiler-cache-circleci-v2
-        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_ECR_READ_WRITE}
-        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_ECR_READ_WRITE}
-
         sudo pip install awscli -qqq
-        eval $(aws ecr get-login --region us-east-1 --no-include-email)
+        AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_ECR_READ_WRITE} AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_ECR_READ_WRITE} eval $(aws ecr get-login --region us-east-1 --no-include-email)
 
         docker pull ${DOCKER_IMAGE}
+
         sudo pkill -SIGHUP dockerd
-        export pid=$(docker run -t -d -w /var/lib/jenkins ${DOCKER_IMAGE})
-        export WORKDIR=/var/lib/jenkins/workspace
+        WORKDIR=/var/lib/jenkins/workspace
+        pid=$(docker run -t -d -w $WORKDIR ${DOCKER_IMAGE})
         docker cp /home/circleci/project/. "$pid:$WORKDIR"
-        (echo "sudo chown -R jenkins $WORKDIR && cd $WORKDIR && git submodule sync && git submodule update --recursive --init && source $WORKDIR/.circleci/setup.sh && $WORKDIR/.circleci/build.sh && $WORKDIR/.circleci/test.sh") | docker exec -e SCCACHE_BUCKET=${SCCACHE_BUCKET} -e CIRCLE_JOB=${CIRCLE_JOB} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -u jenkins -i ${pid} bash
+        docker exec -u jenkins ${pid} sudo chown -R jenkins ${WORKDIR}
+        echo ${pid} > .docker_pid
+  - run:
+      name: Build
+      no_output_timeout: "1h"
+      command: |
+        set -ex
+        docker exec -e CIRCLE_JOB=${CIRCLE_JOB} -e SCCACHE_BUCKET=${SCCACHE_BUCKET} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -u jenkins $(cat .docker_pid) .circleci/build.sh
+  - run:
+      name: Test
+      no_output_timeout: "1h"
+      command: |
+        set -ex
+        docker exec -e CIRCLE_JOB=${CIRCLE_JOB} -u jenkins $(cat .docker_pid) .circleci/test.sh
 
 jobs:
   py2-gcc7-ubuntu16.04:
