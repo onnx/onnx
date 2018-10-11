@@ -27,8 +27,10 @@ class Reshape_5_4 final : public Adapter {
           ONNX_ASSERTM(raw_data.size() != 0 && raw_data.size() % 8 == 0,
               "Raw Data must be non-empty and size must be a multiple of 8");
           int64_t* raw = (int64_t*) raw_data.c_str();
-          node->is_(kshape, std::vector<int64_t>(raw, raw + (sizeof(raw)/sizeof(
-                    raw[0]))));
+          node->is_(
+              kshape,
+              std::vector<int64_t>(
+                  raw, raw + node_ptr->t(kvalue).size_from_dim(0)));
         } else {
           node->is_(kshape, std::forward<const std::vector<int64_t>>(int64s));
         }

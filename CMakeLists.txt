@@ -278,6 +278,21 @@ target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
 
 if (MSVC)
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    set(EXTRA_FLAGS
+          "-Wno-implicit-function-declaration"
+          "-Wno-undefined-inline"
+          "-Wno-incompatible-pointer-types"
+          "-Wno-dllexport-explicit-instantiation-decl"
+          "-Wno-microsoft-unqualified-friend"
+          "-Wno-absolute-value"
+          "-Wno-unused-variable"
+          "-Wno-unknown-argument"
+          "-Wno-writable-strings"
+          "-Qunused-arguments")
+  else()
+    set(EXTRA_FLAGS "")
+  endif()
   if (BUILD_SHARED_LIBS OR ONNX_BUILD_MAIN_LIB)
     set(ONNX_API_DEFINE "-DONNX_API=__declspec(dllexport)")
   else()
@@ -368,27 +383,11 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-      set(MP_FLAG "-Xclang" "-fopenmp")
-      set(EXTRA_FLAGS
-          "-Wno-implicit-function-declaration"
-          "-Wno-undefined-inline"
-          "-Wno-incompatible-pointer-types"
-          "-Wno-dllexport-explicit-instantiation-decl"
-          "-Wno-microsoft-unqualified-friend"
-          "-Wno-absolute-value"
-          "-Wno-unused-variable"
-          "-Wno-writable-strings"
-          "-Qunused-arguments")
-    else()
-      set(MP_FLAG "/MP")
-      set(EXTRA_FLAGS "")
-    endif()
     find_package(PythonInterp ${PY_VERSION} REQUIRED)
     find_package(PythonLibs ${PY_VERSION} REQUIRED)
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
-                           PRIVATE ${MP_FLAG}
+                           PRIVATE /MP
                                    /WX
                                    /wd4800 # disable warning type' : forcing
                                            # value to bool 'true' or 'false'
@@ -435,7 +434,7 @@ endif()
 
 if(MSVC)
   target_compile_options(onnx_proto
-                         PRIVATE ${MP_FLAG}
+                         PRIVATE /MP
                                  /WX
                                  /wd4800 # disable warning type' : forcing value
                                          # to bool 'true' or 'false'
@@ -448,7 +447,7 @@ if(MSVC)
                                          # ite.h
                                  ${EXTRA_FLAGS})
   target_compile_options(onnx
-                         PRIVATE ${MP_FLAG}
+                         PRIVATE /MP
                                  /WX
                                  /wd4800 # disable warning type' : forcing value
                                          # to bool 'true' or 'false'
