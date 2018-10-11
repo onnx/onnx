@@ -229,7 +229,7 @@ void check_attribute(
 	  fail_check(
 		  "Attribute (name: ",
 		  attr.name(),
-		  ") should contain less than one value field.");
+		  ") should not contain more than one value field.");
   }
 
   if (!ctx.is_main_graph()) {
