@@ -45,7 +45,9 @@ linux_default: &linux_default
       command: |
         set -e
         sudo pip install awscli -qqq
-        AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_ECR_READ_WRITE} AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_ECR_READ_WRITE} eval $(aws ecr get-login --region us-east-1 --no-include-email)
+        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_ECR_READ_WRITE}
+        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_ECR_READ_WRITE}
+        eval $(aws ecr get-login --region us-east-1 --no-include-email)
 
         docker pull ${DOCKER_IMAGE}
 
