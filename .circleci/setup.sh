@@ -1,5 +1,7 @@
 set -ex
 
+export CI=1
+
 export MAX_JOBS=8
 
 if hash sccache 2>/dev/null; then
