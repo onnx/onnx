@@ -39,7 +39,8 @@ cp -r "$PWD" "$ONNX_DIR"
 pip install ninja
 
 # install everything
-exec "$PYTORCH_DIR/scripts/onnx/install-develop.sh"
+cd $PYTORCH_DIR
+./scripts/onnx/install-develop.sh
 
 # report sccache hit/miss stats
 if hash sccache 2>/dev/null; then
