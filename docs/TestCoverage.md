@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 96/104 (92.31%, 5 generators excluded) common operators.
+Node tests have covered 101/109 (92.66%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -57,6 +57,32 @@ x = np.random.rand(3, 4, 5).astype(np.float32)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
+```
+
+</details>
+
+
+### Acosh
+There are 1 test cases, listed as following:
+<details>
+<summary>acosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh_example')
+
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh')
 ```
 
 </details>
@@ -360,6 +386,32 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Asinh
+There are 1 test cases, listed as following:
+<details>
+<summary>asinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arcsinh(x)  # expected output [-0.88137358,  0.,  0.88137358]
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arcsinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh')
+```
+
+</details>
+
+
 ### Atan
 There are 1 test cases, listed as following:
 <details>
@@ -381,6 +433,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.arctan(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_atan')
+```
+
+</details>
+
+
+### Atanh
+There are 1 test cases, listed as following:
+<details>
+<summary>atanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arctanh(x)  # expected output [-0.54930615,  0.,  0.54930615]
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh_example')
+
+x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
+y = np.arctanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh')
 ```
 
 </details>
@@ -1554,6 +1632,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cos')
+```
+
+</details>
+
+
+### Cosh
+There are 1 test cases, listed as following:
+<details>
+<summary>cosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cosh(x)  # expected output [1.54308069,  1.,  1.54308069]
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh')
 ```
 
 </details>
@@ -5112,6 +5216,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.sin(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_sin')
+```
+
+</details>
+
+
+### Sinh
+There are 1 test cases, listed as following:
+<details>
+<summary>sinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sinh(x)  # expected output [-1.17520118,  0.,  1.17520118]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh')
 ```
 
 </details>
