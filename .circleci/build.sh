@@ -8,16 +8,14 @@ git clone --recursive --quiet https://github.com/pytorch/pytorch.git "$PYTORCH_D
 rm -rf "$ONNX_DIR"
 cp -r "$PWD" "$ONNX_DIR"
 
+# install ninja to speedup the build
 pip install ninja
 
-# install pytorch
-cd $PYTORCH_DIR
-pip install -r requirements.txt
-python setup.py build develop
-# install onnx
-cd $ONNX_DIR
-python setup.py develop
+# install everything
+cd "$PYTORCH_DIR"
+exec scripts/onnx/install-develop.sh
 
+# report sccache hit/miss stats
 if hash sccache 2>/dev/null; then
     sccache --show-stats
 fi
