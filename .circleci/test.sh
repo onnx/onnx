@@ -2,5 +2,4 @@
 
 set -ex
 
-cd "$PYTORCH_DIR"
-exec scripts/onnx/test.sh
+exec "$PYTORCH_DIR/scripts/onnx/test.sh"
