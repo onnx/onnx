@@ -48,7 +48,7 @@ linux_default: &linux_default
         export pid=$(docker run -t -d -w /var/lib/jenkins ${DOCKER_IMAGE})
         export WORKDIR=/var/lib/jenkins/workspace
         docker cp /home/circleci/project/. "$pid:$WORKDIR"
-        (echo "sudo chown -R jenkins $WORKDIR && cd $WORKDIR && git submodule sync && git submodule update --recursive --init && source $WORKDIR/.circleci/setup.sh && $WORKDIR/.circleci/build.sh | ts '[%H:%M:%S]' && sccache --show-stats && $WORKDIR/.circleci/test.sh | ts '[%H:%M:%S]'") | docker exec -e SCCACHE_BUCKET=${SCCACHE_BUCKET} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -u jenkins -i ${pid} bash
+        (echo "sudo chown -R jenkins $WORKDIR && cd $WORKDIR && git submodule sync && git submodule update --recursive --init && source $WORKDIR/.circleci/setup.sh && $WORKDIR/.circleci/build.sh && sccache --show-stats && $WORKDIR/.circleci/test.sh") | docker exec -e SCCACHE_BUCKET=${SCCACHE_BUCKET} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -u jenkins -i ${pid} bash
 
 jobs:
   py2-gcc7-ubuntu16.04:
