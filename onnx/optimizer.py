@@ -44,8 +44,7 @@ def optimize(model, passes=None, fixed_point=False):  # type: (ModelProto, Optio
         passes = ['eliminate_nop_transpose',
                   'eliminate_nop_pad',
                   'fuse_consecutive_transposes',
-                  'fuse_transpose_into_gemm',
-                  'eliminate_deadend']
+                  'fuse_transpose_into_gemm']
     if not isinstance(model, ModelProto):
         raise ValueError('Optimizer only accepts ModelProto, incorrect type: {}'.format(type(model)))
 
