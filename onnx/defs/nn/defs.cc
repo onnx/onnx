@@ -337,7 +337,9 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
     fail_shape_inference("Attribute kernel_shape must be specified");
   }
 
-  if (!hasNInputShapes(ctx, 3)) {
+  if (hasNInputShapes(ctx, 3)) {
+    // If the third input, output_size, is specified then use that instead 
+    // of inferring shape from inputs.
     auto output_shape = ctx.getInputType(2)->tensor_type().shape();
     if (output_shape.dim_size() != input_shape.dim_size()) {
         fail_shape_inference("output_shape must be the same size as the shape of input tensor X.");
