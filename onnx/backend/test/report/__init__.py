@@ -22,7 +22,7 @@ def _add_mark(mark, bucket):  # type: (Any, Text) -> None
 
 
 def pytest_runtest_call(item):  # type: (pytest.nodes.Item) -> None
-    mark = item.get_marker('onnx_coverage')
+    mark = item.get_closest_marker('onnx_coverage')
     if mark:
         assert item.nodeid not in _marks
         _marks[item.nodeid] = mark
