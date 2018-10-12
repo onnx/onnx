@@ -45,6 +45,15 @@ struct InferenceContext {
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
+
+  // Run inferencing for a GraphProto attribute.
+  // Provide the attribute name that contains the GraphProto, and the
+  // input type/shape information for that graph.
+  // Returns the inferred output type/shape information for each graph output.
+  virtual std::vector<const TypeProto*> doGraphAttributeInferencing(
+      const std::string& attribute_name,
+      const std::vector<const TypeProto*>& input_types) = 0;
+
   virtual ~InferenceContext() {}
 };
 
