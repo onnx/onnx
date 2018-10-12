@@ -7,6 +7,7 @@
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
+#include "onnx/optimizer/passes/eliminate_nop_monotone_argmax.h"
 #include "onnx/optimizer/passes/eliminate_nop_pad.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
@@ -33,6 +34,7 @@ struct Optimizer {
     registerOptimizer<EliminateIdentity>();
     registerOptimizer<EliminateNopTranspose>();
     registerOptimizer<EliminateNopPad>();
+    registerOptimizer<EliminateNopMonotoneArgmax>();
     registerOptimizer<EliminateUnusedInitializer>();
     registerOptimizer<ExtractConstantToInitializer>();
     registerOptimizer<FuseConsecutiveSqueezes>();
