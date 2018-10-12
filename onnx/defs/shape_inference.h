@@ -410,10 +410,10 @@ Values are merged into target from source.
 If target has no shape information, copy from source.
 If source has no shape information, ignore source.
 If both have shape information:
- - merge each TensorShapeProto_Dimension separately
- - Prefer values over params.
- - Prefer target value over source value if mismatched.
-Fail if there are mismatches in number of dimensions or dimensions values.
+ - merge each TensorShapeProto_Dimension separately.
+ - Prefer values over params. If both have values, values must match.
+ - Prefer target param over source param if mismatched.
+Fail if there are mismatches in number of dimensions or dimension values.
 */
 inline void mergeInShapeInfo(
     const TypeProto_Tensor& source,
