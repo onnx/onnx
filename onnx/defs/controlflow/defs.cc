@@ -9,10 +9,7 @@ static void UpdateValueFromDim(
     int64_t& current_value,
     const TensorShapeProto_Dimension& dim) {
   if (current_value == -1 && dim.has_dim_value()) {
-    auto value = dim.dim_value();
-    if (value != -1) {
-      current_value = value;
-    }
+    current_value = dim.dim_value();
   }
 }
 
