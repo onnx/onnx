@@ -54,7 +54,7 @@ class Compress(Base):
         node = onnx.helper.make_node(
             'Compress',
             inputs=['input', 'condition'],
-            outputs=['output']
+            outputs=['output'],
         )
         input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
         condition = np.array([0, 1, 0, 0, 1])
