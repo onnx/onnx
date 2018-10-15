@@ -63,4 +63,4 @@ class Compress(Base):
         #[ 2., 5.]
 
         expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
-               name='export_compress_default_axis')
+               name='test_compress_default_axis')
