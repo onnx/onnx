@@ -37,11 +37,14 @@ void TestDriver::SetDefaultDir(const std::string& s) {
  *	It is possible that case_dir is not a dir.
  *	But it does not affect the result.
  */
-void TestDriver::FetchSingleTestCase(const std::string& case_dir) {
+void TestDriver::FetchSingleTestCase(
+    const std::string& case_dir,
+    const std::string& test_case_name) {
   std::string model_name = case_dir;
   model_name += "model.onnx";
   if (FileExists(model_name)) {
     UnsolvedTestCase test_case;
+    test_case.test_case_name_ = test_case_name;
     test_case.model_filename_ = model_name;
     test_case.model_dirname_ = case_dir;
     for (int case_count = 0;; case_count++) {
@@ -98,9 +101,10 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
     try {
       do {
         std::string entry_dname = file.name;
+        std::string full_entry_dname;
         if (entry_dname != "." && entry_dname != "..") {
-          entry_dname = target_dir + "/" + entry_dname + "/";
-          FetchSingleTestCase(entry_dname);
+          full_entry_dname = target_dir + "/" + entry_dname + "/";
+          FetchSingleTestCase(full_entry_dname, entry_dname);
         }
       } while (_findnext(lf, &file) == 0);
     } catch (const std::exception& e) {
@@ -133,10 +137,11 @@ bool TestDriver::FetchAllTestCases(const std::string& target) {
           break;
         }
       }
+      std::string full_entry_dname;
       std::string entry_dname = entry->d_name;
       if (entry_dname != "." && entry_dname != "..") {
-        entry_dname = target_dir + "/" + entry_dname + "/";
-        FetchSingleTestCase(entry_dname);
+        full_entry_dname = target_dir + "/" + entry_dname + "/";
+        FetchSingleTestCase(full_entry_dname, entry_dname);
       }
     }
   } catch (const std::exception& e) {
@@ -191,6 +196,7 @@ ResolvedTestCase LoadSingleTestCase(const UnsolvedTestCase& t) {
   ResolvedTestCase st;
   std::string raw_model;
   LoadSingleFile(t.model_filename_, raw_model);
+  st.test_case_name_ = t.test_case_name_;
   ONNX_NAMESPACE::ParseProtoFromBytes(
       &st.model_, raw_model.c_str(), raw_model.size());
 
