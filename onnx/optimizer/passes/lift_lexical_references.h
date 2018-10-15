@@ -63,6 +63,9 @@ namespace optimization {
 //          unresolved_references.insert(input)
 //      if node is a control flow operator:
 //        for each sub-graph g:
+//          for each output in g's body:
+//            if output is defined in current scope:
+//              control_inputs.insert(output)
 //          refs = liftreferences(g)
 //          for each ref in refs:
 //            if ref is in this frame or any parent frame (control_inputs):
@@ -156,14 +159,28 @@ struct LiftLexicalReferences : public FullGraphBasedPass {
       }
 
       std::set<std::string> local_unresolved;
+
+      //if a graph body output has already already been emitted outside of the
+      //subgraph scope, then it must be added as an input to the subgraph
+      auto add_subgraph_outputs = [&](Graph * body_graph) {
+        for (auto *out: body_graph->outputs()) {
+          if (environment_stack->findInAnyFrame(out->uniqueName())) {
+            local_unresolved.insert(out->uniqueName());
+          }
+        }
+      };
+
       if (n->kind() == ONNX_NAMESPACE::kLoop) {
         auto* body_graph = n->g(ONNX_NAMESPACE::kbody).get();
         local_unresolved = liftReferences(body_graph);
+        add_subgraph_outputs(body_graph);
       } else if (n->kind() == ONNX_NAMESPACE::kIf) {
-        auto* then_graph = n->g(ONNX_NAMESPACE::kthen_branch).get();
+        auto *then_graph = n->g(ONNX_NAMESPACE::kthen_branch).get();
+        add_subgraph_outputs(then_graph);
         auto then_unresolved = liftReferences(then_graph);
         local_unresolved.insert(then_unresolved.begin(), then_unresolved.end());
-        auto* else_graph = n->g(ONNX_NAMESPACE::kelse_branch).get();
+        auto *else_graph = n->g(ONNX_NAMESPACE::kelse_branch).get();
+        add_subgraph_outputs(else_graph);
         auto else_unresolved = liftReferences(else_graph);
         local_unresolved.insert(else_unresolved.begin(), else_unresolved.end());
       }
