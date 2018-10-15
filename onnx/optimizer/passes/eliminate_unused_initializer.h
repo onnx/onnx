@@ -30,6 +30,10 @@ struct EliminateUnusedInitializer final : public FullGraphBasedPass {
     return "eliminate_unused_initializer";
   }
 
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::Empty;
+  }
+
   void erase_used_initializers(
       Graph& g,
       std::unordered_set<std::string>* initializer_names) {
@@ -66,7 +70,7 @@ struct EliminateUnusedInitializer final : public FullGraphBasedPass {
     }
   }
 
-  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) {
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
     eliminate_unused_initializer(graph);
     return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }

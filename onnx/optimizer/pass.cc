@@ -58,19 +58,23 @@ unsigned int PredicateBasedPass::_runPassInternal(Graph& graph) {
     num_changes += this->DescendOnGraphAttributesAndCount(
         n, [this](Graph& g) { return _runPassInternal(g); });
     if (this->patternMatchPredicate(n)) {
-      NodeDestroyType destroy_type = NodeDestroyType::NoDestroy;
+      NodeDestroyType destroy_type = NodeDestroyType::DestroyZero;
       num_changes += this->runTransform(n, graph, destroy_type);
 
-      if (destroy_type == NodeDestroyType::WeakDestroy) {
+      if (destroy_type == NodeDestroyType::DestroyOne) {
         it.destroyCurrent();
       }
-      if (destroy_type == NodeDestroyType::StrongDestroy) {
+      if (destroy_type == NodeDestroyType::DestroyTwo) {
         it.destroyCurrent();
         it.destroyCurrent();
       }
     }
   }
   return num_changes;
+}
+
+PassAnalysisType PredicateBasedPass::getPassAnalysisType() const {
+  return PassAnalysisType::CountBased;
 }
 
 std::shared_ptr<PostPassAnalysis> PredicateBasedPass::runPass(Graph& graph) {

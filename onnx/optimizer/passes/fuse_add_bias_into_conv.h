@@ -37,8 +37,8 @@ struct FuseAddBiasIntoConv final : public PredicateBasedPass {
   bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
       override {
     // due to current broadcasting's constraint, Conv has to be the first
-    // oprand
-    destroy_current = NodeDestroyType::NoDestroy;
+    // operand
+    destroy_current = NodeDestroyType::DestroyZero;
     auto orig_conv = n->inputs()[0];
     auto orig_bias = n->inputs()[1];
     // check if bias is Const or in graph's initializers
@@ -148,7 +148,7 @@ struct FuseAddBiasIntoConv final : public PredicateBasedPass {
       orig_conv->setElemType(n->output()->elemType());
     }
     n->replaceAllUsesWith(orig_conv->node());
-    destroy_current = NodeDestroyType::WeakDestroy;
+    destroy_current = NodeDestroyType::DestroyOne;
     return true;
   }
 };

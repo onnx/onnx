@@ -154,7 +154,7 @@ struct FuseBNIntoConv final : public PredicateBasedPass {
       default:
         return false;
     }
-
+#undef DO_COMPUTATION
     replace_inputs(W, bc, conv, graph);
     return true;
   }
@@ -170,7 +170,7 @@ struct FuseBNIntoConv final : public PredicateBasedPass {
     auto origInput = bn->inputs()[0];
     if (origInput->uses().size() > 1 || bn->outputs().size() > 1 ||
         !modify_conv(conv, bn, graph)) {
-      destroy_current = NodeDestroyType::NoDestroy;
+      destroy_current = NodeDestroyType::DestroyZero;
       return false;
     }
     for (int i = 4; i >= 1; --i) {
@@ -181,7 +181,7 @@ struct FuseBNIntoConv final : public PredicateBasedPass {
       }
     }
     bn->output()->replaceAllUsesWith(origInput);
-    destroy_current = NodeDestroyType::WeakDestroy;
+    destroy_current = NodeDestroyType::DestroyOne;
     return true;
   }
 };

@@ -37,7 +37,7 @@ struct ExtractConstantToInitializer final : public PredicateBasedPass {
     Tensor t = node->t(kvalue);
     Value* new_init = graph.addInitializerAndInput(t, name);
     node->output()->replaceAllUsesWith(new_init);
-    destroy_current = NodeDestroyType::WeakDestroy;
+    destroy_current = NodeDestroyType::DestroyOne;
     return true;
   }
 };

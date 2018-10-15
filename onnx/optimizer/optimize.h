@@ -40,7 +40,7 @@ struct Optimizer {
   }
 
  private:
-  PassManager* pass_manager;
+  std::shared_ptr<PassManager> pass_manager;
 };
 
 const std::vector<std::string> GetAvailablePasses();

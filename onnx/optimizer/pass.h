@@ -29,6 +29,15 @@ enum PassType {
   Other = 4
 };
 
+// Enum that represents the return type of the analysis.
+enum PassAnalysisType {
+  // An empty analysis is returned. Most likely will return PostPassAnalysis.
+  Empty = 0,
+  // A count based analysis is returned. Most likely of type
+  // CountBasedPassAnalysis
+  CountBased = 1
+};
+
 enum PassEfficiency {
   // A partially efficient optimization pass cannot guarantee that running two
   // consecutive passes
@@ -56,11 +65,11 @@ enum PassOptimizationType {
 
 enum NodeDestroyType {
   // Does not destroy node
-  NoDestroy = 0,
+  DestroyZero = 0,
   // Equivalent to calling it.destroyCurrent() once.
-  WeakDestroy = 1,
+  DestroyOne = 1,
   // Equivalent to calling it.destroyCurrent() twice.
-  StrongDestroy = 2
+  DestroyTwo = 2
 };
 
 // Base class for all optimizations within ONNX. A pass must contain the
@@ -89,6 +98,7 @@ class Pass {
   PassOptimizationType getPassOptimizationType() const {
     return this->pass_optimization_type;
   }
+  virtual PassAnalysisType getPassAnalysisType() const = 0;
   virtual std::string getPassName() const = 0;
 
   virtual bool initializePass(Graph& graph) {
@@ -157,7 +167,7 @@ struct CountBasedPassAnalysis : PostPassAnalysis {
 
 // A pass that is based on pattern matching. The majority of passes will
 // implement this pass. In order for the pass to work the patternMatchPredicate
-// function must be implemented matches a subgraph to the respective
+// function must be implemented witch matches a subgraph to the respective
 // optimization pass. Lastly the runTransform method must also be implemented
 // which simply implements the pass on any node which passes
 // patternMatchPredicate.
@@ -171,10 +181,17 @@ class PredicateBasedPass : public Pass {
   ~PredicateBasedPass() override;
 
   virtual bool patternMatchPredicate(Node* node) = 0;
+  // Run transform is given the current node in the iterator, a reference to the
+  // current graph as well as a reference describing how to treat the current
+  // node in the iterator post transform. Run transform is then responsible for
+  // running the actual transform as well as describing how to treat the
+  // iterator node. By default the current node will not call destroy. Do not
+  // internally delete node instead set the correct destroy_current type.
   virtual bool
   runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current) = 0;
 
   std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override;
+  PassAnalysisType getPassAnalysisType() const override;
 
  private:
   unsigned int _runPassInternal(Graph& graph);

@@ -12,18 +12,18 @@ Optimizer::Optimizer(
     const std::vector<std::string>& names,
     const bool fixed_point) {
   if (fixed_point) {
-    this->pass_manager = new FixedPointPassManager();
+    this->pass_manager =
+        std::shared_ptr<FixedPointPassManager>(new FixedPointPassManager());
   } else {
-    this->pass_manager = new GeneralPassManager();
+    this->pass_manager =
+        std::shared_ptr<GeneralPassManager>(new GeneralPassManager());
   }
   for (const auto& name : names) {
     auto pass = passes.find(name);
     this->pass_manager->add(pass);
   }
 }
-Optimizer::~Optimizer() {
-  delete this->pass_manager;
-}
+Optimizer::~Optimizer() {}
 
 ModelProto Optimize(
     const ModelProto& mp_in,

@@ -27,12 +27,14 @@ std::shared_ptr<PassManagerAnalysis> FixedPointPassManager::run(Graph& graph) {
     fixed_point_optimization_done = false;
     for (std::shared_ptr<Pass> pass : this->passes) {
       std::shared_ptr<PostPassAnalysis> analysis = pass->runPass(graph);
+      if (pass->getPassAnalysisType() == PassAnalysisType::Empty) {
+        continue;
+      }
       std::shared_ptr<CountBasedPassAnalysis> count_analysis =
-          std::dynamic_pointer_cast<CountBasedPassAnalysis>(analysis);
+          std::static_pointer_cast<CountBasedPassAnalysis>(analysis);
 
-      while (nullptr != count_analysis &&
-             count_analysis->fixedPointOptimizationNeeded()) {
-        count_analysis = std::dynamic_pointer_cast<CountBasedPassAnalysis>(
+      while (count_analysis->fixedPointOptimizationNeeded()) {
+        count_analysis = std::static_pointer_cast<CountBasedPassAnalysis>(
             pass->runPass(graph));
         fixed_point_optimization_done = true;
       }
@@ -41,6 +43,5 @@ std::shared_ptr<PassManagerAnalysis> FixedPointPassManager::run(Graph& graph) {
 
   return std::shared_ptr<PassManagerAnalysis>(new EmptyPassManagerAnalysis());
 }
-
 } // namespace optimization
 } // namespace ONNX_NAMESPACE

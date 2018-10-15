@@ -197,7 +197,9 @@ struct SplitInit final : public FullGraphBasedPass {
   std::string getPassName() const override {
     return "split_init";
   }
-
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::Empty;
+  }
   std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
     split_init_and_predict(graph, true, false);
     return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
@@ -213,7 +215,9 @@ struct SplitPredict final : public FullGraphBasedPass {
   std::string getPassName() const override {
     return "split_predict";
   }
-
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::Empty;
+  }
   std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
     split_init_and_predict(graph, false, true);
     return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());

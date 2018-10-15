@@ -49,11 +49,11 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
       // since we do not have the shape information here, we have
       // to eliminate two transpose together.
       n->replaceAllUsesWith(origInput->node()->input()->node());
-      destroy_current = NodeDestroyType::StrongDestroy;
+      destroy_current = NodeDestroyType::DestroyTwo;
       return true;
     }
     if (!n->hasAttribute(kperm) || !origInput->node()->hasAttribute(kperm)) {
-      destroy_current = NodeDestroyType::NoDestroy;
+      destroy_current = NodeDestroyType::DestroyZero;
       return false;
     }
     n->is_(
@@ -62,7 +62,7 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
     if (origInput->uses().size() == 0) {
       origInput->node()->destroy();
     }
-    destroy_current = NodeDestroyType::NoDestroy;
+    destroy_current = NodeDestroyType::DestroyZero;
     return false;
   }
 };

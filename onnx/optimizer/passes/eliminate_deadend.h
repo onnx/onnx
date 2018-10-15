@@ -14,6 +14,9 @@ struct EliminateDeadEnd final : public FullGraphBasedPass {
   std::string getPassName() const override {
     return "eliminate_deadend";
   }
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::CountBased;
+  }
   unsigned int EliminateDead(Graph& graph) {
     unsigned int nodes_removed = 0;
     auto nodes = graph.nodes().reverse();

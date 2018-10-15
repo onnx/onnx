@@ -71,7 +71,7 @@ struct FuseConsecutiveSqueezes final : public PredicateBasedPass {
     if (orig_input->uses().size() == 0) {
       orig_input->node()->destroy();
     }
-    destroy_current = NodeDestroyType::NoDestroy;
+    destroy_current = NodeDestroyType::DestroyZero;
     return true;
   }
 };

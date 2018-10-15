@@ -23,7 +23,7 @@ struct FuseTransposeIntoGemm final : public PredicateBasedPass {
   bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
       override {
     const std::vector<int64_t> simple_trans_perm({1, 0});
-    destroy_current = NodeDestroyType::NoDestroy;
+    destroy_current = NodeDestroyType::DestroyZero;
     bool ret_val = false;
     for (size_t i : {0, 1}) {
       auto inp = n->inputs()[i];
