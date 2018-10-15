@@ -67,27 +67,22 @@ ISSUE: define type compatibility rules either here or under model versioning - p
 
 ONNX is defined such that the IR can evolve independently from the set of operators. In ONNX, operators represent both the signature and semantics of a given operation.  Operators are abstract interfaces in that they do not imply a specific implementation; rather, they are simply the contract between a model author and the implementations that model may execute on.
 
-A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`).  Nodes in graphs always refer to operators by their three-part identifier.
+A given operator is identified by a three-tuple: `(domain, op_type, and op_version)`. This is written as `domain.op_type:op_version` in prose (e.g., `com.acme.FastConv:3`).  Nodes in graphs always refer to operators by their three-part identifier. Breaking opset changes include:
 
-The semantics of an operator MAY be extended in a backwards-compatible
-way without requiring the `op_version` of an operator to be increased.
-A backwards compatible semantics change is defined to be a change to
-operator semantics such that all operator definitions which were defined
-in the previous operator definition have exactly same semantics as
-in the previous version.  The following are examples of
-backwards-compatible extensions:
+* Adding/removing/renaming an attribute. This even includes the case of adding a new optional attribute, where omitting the attribute would imply a default value yielding semantics identical to the previous operator version.
 
-* Adding an optional attribute, such that when the attribute is omitted,
-  the semantics are identical.
+* Adding/removing/reordering inputs or outputs.
 
-* Adding an optional input, such that when the input is omitted, the
-  semantics are identical.
+* Adding/removing types supported by inputs and outputs, and changing types used by attributes.
+
+* Supporting new behavior even when the existing parameter signature is otherwise identical (e.g. implicitly supporting tensor broadcasting in the Mean operator).
+
+The following are not breaking:
 
 * Clarifications of specification ambiguities to match prevailing
   implementation practice.
 
-If the semantics of an operator is changed in a backwards-incompatible
-way, you MUST create a new operator; the `op_version` of the new
+If the semantics of an operator or function are changed, you MUST create a new operator; the `op_version` of the new
 operator id MUST be greater than any extant `op_version` for the
 `domain`.
 
@@ -140,3 +135,13 @@ ISSUE: what's our policy when a model takes a dependency on new `IR_VERSION` cha
 ### Accuracy or performance changes
 
 Assuming that there are no breaking changes to the signature of the model's graph or any operator dependencies, the shape and contents of the graph can change freely provided there are no semantic changes to the model. However, changes to the shape and contents of the graph can impact model accuracy and/or model performance.
+
+## Released Versions
+
+ONNX version|File format version|Operator set version ai.onnx|Operator set version ai.onnx.ml
+------------|-------------------|----------------------------|-------------------------------
+1.0|3|1|1
+1.1|3|5|1
+1.1.2|3|6|1
+1.2|3|7|1
+1.3|3|8|1

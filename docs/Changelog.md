@@ -8339,10 +8339,16 @@ This version of the operator has been available since version 8 of the default O
 </dl>
 
 ## Version 9 of the default ONNX operator set
+<<<<<<< HEAD
 ### <a name="Compress-9"></a>**Compress-9**</a>
 
   Compress a tensor that behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
       
+=======
+### <a name="Constant-9"></a>**Constant-9**</a>
+
+  A constant tensor.
+>>>>>>> origin
 
 #### Version
 
@@ -8351,24 +8357,36 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
+<<<<<<< HEAD
 <dt><tt>axis</tt> : int (default is 0)</dt>
 <dd>Axis along which to take slices.</dd>
+=======
+<dt><tt>value</tt> : tensor (required)</dt>
+<dd>The value for the elements of the output tensor.</dd>
+>>>>>>> origin
 </dl>
 
 #### Inputs
 
+<<<<<<< HEAD
 <dl>
 <dt><tt>input</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>condition</tt> : T1</dt>
 <dd>Rank 1 tensor of booleans to indicate which slices to be selected.</dd>
 </dl>
+=======
+>>>>>>> origin
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
+<<<<<<< HEAD
 <dd>Tensor of rank r.</dd>
+=======
+<dd>Output tensor containing the same value of the provided tensor.</dd>
+>>>>>>> origin
 </dl>
 
 #### Type Constraints
@@ -8376,8 +8394,11 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+<<<<<<< HEAD
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains to boolean tensors.</dd>
+=======
+>>>>>>> origin
 </dl>
 
 ### <a name="ConstantLike-9"></a>**ConstantLike-9**</a>
@@ -8399,8 +8420,8 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>dtype</tt> : int (default is 1)</dt>
-<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also notspecified, then type defaults to 'float'.</dd>
+<dt><tt>dtype</tt> : int</dt>
+<dd>(Optional) The data type for the elements of the output tensor. If not specified,the data type of the input tensor T1 is used. If input tensor T1 is also not specified, then output tensor type defaults to 'float'.</dd>
 <dt><tt>shape</tt> : list of ints</dt>
 <dd>(Optional) The shape of the output tensor. If input tensor T1 is provided, then 'shape' attribute is ignored and the output follows the shape of the input. One of either input tensor T1 or 'shape' attribute must be provided.</dd>
 <dt><tt>value</tt> : float (default is 0.0)</dt>
@@ -8544,6 +8565,101 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain output types. Strings and complex are not supported.</dd>
 </dl>
 
+### <a name="Flatten-9"></a>**Flatten-9**</a>
+
+  Flattens the input tensor into a 2D matrix. If input tensor has shape
+  (d_0, d_1, ... d_n) then the output will have shape
+  (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 1)</dt>
+<dd>Indicate up to which input dimensions (exclusive) should be flattened to the outer dimension of the output. The value for axis must be in the range [0, R], where R is the rank of the input tensor. When axis = 0, the shape of the output tensor is (1, (d_0 X d_1 ... d_n), where the shape of the input tensor is (d_0, d_1, ... d_n). </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>A tensor of rank >= axis.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>A 2D tensor with the contents of the input tensor, with input dimensions up to axis flattened to the outer dimension of the output and remaining input dimensions flattened into the inner dimension of the output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output to all tensor types.</dd>
+</dl>
+
+### <a name="Gemm-9"></a>**Gemm-9**</a>
+
+  General Matrix multiplication:
+  https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+  
+  A' = transpose(A) if transA else A
+  
+  B' = transpose(B) if transB else B
+  
+  Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
+  input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
+  and output tensor Y has shape (M, N). A will be transposed before doing the
+  computation if attribute transA is non-zero, same for B and transB.
+  This operator supports **unidirectional broadcasting** (tensor C should be unidirectional broadcastable to tensor A * B); for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>alpha</tt> : float (default is 1.0)</dt>
+<dd>Scalar multiplier for the product of input tensors A * B.</dd>
+<dt><tt>beta</tt> : float (default is 1.0)</dt>
+<dd>Scalar multiplier for input tensor C.</dd>
+<dt><tt>transA</tt> : int (default is 0)</dt>
+<dd>Whether A should be transposed</dd>
+<dt><tt>transB</tt> : int (default is 0)</dt>
+<dd>Whether B should be transposed</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>Input tensor A. The shape of A should be (M, K) if transA is 0, or (K, M) if transA is non-zero.</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Input tensor B. The shape of B should be (K, N) if transB is 0, or (N, K) if transB is non-zero.</dd>
+<dt><tt>C</tt> : T</dt>
+<dd>Input tensor C. The shape of C should be unidirectional broadcastable to (M, N).</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor of shape (M, N).</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
+</dl>
+
 ### <a name="Greater-9"></a>**Greater-9**</a>
 
   Returns the tensor resulted from performing the `greater` logical operation
@@ -8614,5 +8730,70 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrains input to float tensors.</dd>
 <dt><tt>T1</tt> : tensor(bool)</dt>
 <dd>Constrains output to boolean tensor.</dd>
+</dl>
+
+### <a name="MatMul-9"></a>**MatMul-9**</a>
+
+  Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>A</tt> : T</dt>
+<dd>N-dimensional matrix A</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>N-dimensional matrix B</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Matrix multiply results from A * B</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
+</dl>
+
+### <a name="PRelu-9"></a>**PRelu-9**</a>
+
+  PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
+  output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
+  `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+  This operator supports **unidirectional broadcasting** (tensor slope should be unidirectional broadcastable to input tensor X); for more details please check [the doc](Broadcasting.md).
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input tensor</dd>
+<dt><tt>slope</tt> : T</dt>
+<dd>Slope tensor. The shape of slope can be smaller then first input X; if so, its shape must be unidirectional broadcastable to X</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Output tensor (same size as X)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double), tensor(uint32), tensor(uint64), tensor(int32), tensor(int64)</dt>
+<dd>Constrain input and output types to float/int tensors.</dd>
 </dl>
 

@@ -1123,7 +1123,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Compress_ver1_doc = R"DOC(
-    Compress a tensor that behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+    Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index. 
+    In case axis is not provided, input is flattened before elements are selected.  
+    Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
     )DOC";
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
@@ -1132,12 +1134,13 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Compress_ver1_doc)
         .Attr(
             "axis",
-            "Axis along which to take slices.",
+            "(Optional) Axis along which to take slices. If not specified,"
+            "input is flattened before elements being selected.",
             AttributeProto::INT,
-            static_cast<int64_t>(0))
+            OPTIONAL)
         .Input(0, "input", "Tensor of rank r >= 1.", "T")
         .Input(1, "condition", "Rank 1 tensor of booleans to indicate which slices to be selected.", "T1")
-        .Output(0, "output", "Tensor of rank r.", "T")
+        .Output(0, "output", "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.", "T")
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),

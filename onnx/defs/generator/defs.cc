@@ -3,13 +3,13 @@
 
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
+static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    1,
+    9,
     OpSchema()
-        .SetDoc(Constant_ver1_doc)
+        .SetDoc(Constant_ver9_doc)
         .Attr(
             "value",
             "The value for the elements of the output tensor.",
@@ -21,14 +21,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto attr_proto = ctx.getAttribute("value");
-          if (nullptr == attr_proto)
-            return; // attribute not present
-          if (!attr_proto->has_t())
-            return; // attribute has no tensor value
+          if (nullptr == attr_proto || !attr_proto->has_t())
+            fail_shape_inference(
+                "Attribute 'value' of Constant node must exist with 'Tensor' data.");
           const TensorProto& tensor_proto = attr_proto->t();
           updateOutputElemType(ctx, 0, tensor_proto.data_type());
           updateOutputShape(ctx, 0, tensor_proto);
@@ -59,17 +58,17 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor. If not specified,"
-            "the data type of the input tensor T1 is used. If input tensor T1 is also not" 
-            "specified, then type defaults to 'float'.",
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not "
+            "specified, then output tensor type defaults to 'float'.",
             AttributeProto::INT,
-            static_cast<int64_t>(TensorProto::FLOAT))
+            OPTIONAL)
         .Attr(
             "shape",
             "(Optional) The shape of the output tensor. If input tensor T1 is provided, then"
             " 'shape' attribute is ignored and the output follows the shape of the input."
             " One of either input tensor T1 or 'shape' attribute must be provided.",
-             AttributeProto::INTS,
-             OPTIONAL)
+            AttributeProto::INTS,
+            OPTIONAL)
         .Input(
             0,
             "input",
@@ -96,7 +95,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)"},
-             "Constrain input types. Strings and complex are not supported.")
+            "Constrain input types. Strings and complex are not supported.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -111,9 +110,15 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)"},
-             "Constrain output types. Strings and complex are not supported.")
+            "Constrain output types. Strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          if (ctx.getAttribute("dtype") != nullptr) {
+            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          } else {
+            if (hasNInputShapes(ctx, 1)) {
+              propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            }
+          }
           if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
@@ -137,7 +142,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(EyeLike_ver9_doc)
         .Attr(
             "k",
-            "(Optional) Index of the diagonal to be populated with ones. Default is 0." 
+            "(Optional) Index of the diagonal to be populated with ones. Default is 0."
             " If T2 is the output, this op sets T2[i, i+k] = 1. k = 0 populates the main diagonal, "
             "k > 0 populates an upper diagonal,  and k < 0 populates a lower diagonal.",
             AttributeProto::INT,
@@ -145,7 +150,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "dtype",
             "(Optional) The data type for the elements of the output tensor. If not specified,"
-            "the data type of the input tensor T1 is used. If input tensor T1 is also not" 
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not"
             "specified, then type defaults to 'float'.",
             AttributeProto::INT,
             OPTIONAL)
@@ -173,7 +178,7 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)"},
-             "Constrain input types. Strings and complex are not supported.")
+            "Constrain input types. Strings and complex are not supported.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
@@ -188,17 +193,16 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint32)",
              "tensor(uint64)",
              "tensor(bool)"},
-             "Constrain output types. Strings and complex are not supported.")
+            "Constrain output types. Strings and complex are not supported.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("dtype") != nullptr) {
             propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-          }
-          else {
-            propagateElemTypeFromInputToOutput(ctx, 0, 0);  
+          } else {
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
           }
           if (hasInputShape(ctx, 0)) {
             auto& input_shape = getInputShape(ctx, 0);
-            if (input_shape.dim_size() != 2) {         
+            if (input_shape.dim_size() != 2) {
               fail_shape_inference("Input tensor must be 2-dimensional");
             }
           }
