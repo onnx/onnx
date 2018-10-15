@@ -8339,16 +8339,9 @@ This version of the operator has been available since version 8 of the default O
 </dl>
 
 ## Version 9 of the default ONNX operator set
-<<<<<<< HEAD
-### <a name="Compress-9"></a>**Compress-9**</a>
-
-  Compress a tensor that behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
-      
-=======
 ### <a name="Constant-9"></a>**Constant-9**</a>
 
   A constant tensor.
->>>>>>> origin
 
 #### Version
 
@@ -8357,36 +8350,18 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<<<<<<< HEAD
-<dt><tt>axis</tt> : int (default is 0)</dt>
-<dd>Axis along which to take slices.</dd>
-=======
 <dt><tt>value</tt> : tensor (required)</dt>
 <dd>The value for the elements of the output tensor.</dd>
->>>>>>> origin
 </dl>
 
 #### Inputs
 
-<<<<<<< HEAD
-<dl>
-<dt><tt>input</tt> : T</dt>
-<dd>Tensor of rank r >= 1.</dd>
-<dt><tt>condition</tt> : T1</dt>
-<dd>Rank 1 tensor of booleans to indicate which slices to be selected.</dd>
-</dl>
-=======
->>>>>>> origin
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<<<<<<< HEAD
-<dd>Tensor of rank r.</dd>
-=======
 <dd>Output tensor containing the same value of the provided tensor.</dd>
->>>>>>> origin
 </dl>
 
 #### Type Constraints
@@ -8394,11 +8369,6 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
-<<<<<<< HEAD
-<dt><tt>T1</tt> : tensor(bool)</dt>
-<dd>Constrains to boolean tensors.</dd>
-=======
->>>>>>> origin
 </dl>
 
 ### <a name="ConstantLike-9"></a>**ConstantLike-9**</a>
