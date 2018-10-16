@@ -438,7 +438,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "This tensor is typically the second output of the MaxPool op."
             "Dimensions must be the same as input tensor X. "
             "The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, "
-            "and the indices do not consider padding. "
+            "assuming row-major storage. Also, the linear indices should not consider padding. "
             "So the values in indices are in the range [0, N x C x D1 x ... x Dn).",
             "T2")
         .Input(
