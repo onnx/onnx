@@ -6,7 +6,7 @@
 namespace ONNX_NAMESPACE {
 namespace Test {
 TEST(FunctionAPITest, Get_All_Functions) {
-  std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_map;
+  std::multimap<std::string, const FunctionProto*> temp_map;
   FunctionBuilderRegistry& function_registry =
       FunctionBuilderRegistry::OnnxInstance();
   Common::Status status =

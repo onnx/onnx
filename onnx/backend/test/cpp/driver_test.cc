@@ -31,16 +31,42 @@ class CompareOnnxifiData {
         ((x - y) < onnxifi_testdata_eps);
   }
 };
+
 class ONNXCppDriverTest
     : public testing::TestWithParam<ONNX_NAMESPACE::testing::ResolvedTestCase> {
+ public:
+  struct PrintToStringParamName {
+    template <class T>
+    std::string operator()(const testing::TestParamInfo<T>& t) const {
+      auto test_case =
+          static_cast<ONNX_NAMESPACE::testing::ResolvedTestCase>(t.param);
+      /**
+       *  We pick folder name instead of model.graph().name as test case name
+       * here mostly for two reasons:
+       *  1. Name of proto graph can be empty or ruined.
+       *  2. Compares to the complex logic of protobuf, folder name is easier to
+       * parse, to modify and to use.
+       */
+      return test_case.test_case_name_;
+    }
+  };
+
  protected:
   std::vector<ONNX_NAMESPACE::testing::ResolvedTestData> protos_;
   ONNX_NAMESPACE::ModelProto model_;
+
+  // A memory pool of shape information of onnxTensorDescriptorV1 used in this
+  // test driver.
+  std::vector<std::vector<uint64_t>> shape_pool;
+  // A memory pool of raw_data of backend output in onnxTensorDescriptorV1.
+  std::vector<std::vector<uint8_t>> data_pool;
+
   void SetUp() override {
     ONNX_NAMESPACE::testing::ResolvedTestCase t = GetParam();
     protos_ = t.proto_test_data_;
     model_ = t.model_;
   }
+
   uint64_t GetDescriptorSize(const onnxTensorDescriptorV1* t) {
     uint64_t d_size = 1;
     for (int i = 0; i < t->dimensions; i++) {
@@ -48,6 +74,20 @@ class ONNXCppDriverTest
     }
     return d_size;
   }
+
+  bool IsGtestAssertMemorySafeSuccess(
+      onnxStatus x,
+      onnxGraph* graph_pointer,
+      onnxifi_library& lib) {
+    if (x != ONNXIFI_STATUS_SUCCESS) {
+      if (graph_pointer != NULL) {
+        lib.onnxReleaseGraph(*graph_pointer);
+      }
+    }
+    bool result = (x == ONNXIFI_STATUS_SUCCESS);
+    return result;
+  }
+
   bool IsUnsupported(onnxStatus s, std::string& msg) {
     if (s == ONNXIFI_STATUS_UNSUPPORTED_VERSION) {
       msg = "Unsupported version of ONNX or operator.";
@@ -74,6 +114,7 @@ class ONNXCppDriverTest
     }
     return false;
   }
+
   bool IsDescriptorEqual(
       const onnxTensorDescriptorV1& x,
       const onnxTensorDescriptorV1& y) {
@@ -160,6 +201,7 @@ class ONNXCppDriverTest
     }
     return true;
   }
+
   void RunAndVerify(
       onnxifi_library& lib,
       onnxBackend& backend,
@@ -184,12 +226,11 @@ class ONNXCppDriverTest
       if (weightCount != 0) {
         weightDescriptors =
             ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
-                model_.graph().initializer(0));
+                model_.graph().initializer(0), shape_pool);
         weightDescriptors_pointer = &weightDescriptors;
       }
       std::string serialized_model;
       model_.SerializeToString(&serialized_model);
-      std::cout << model_.graph().name() << std::endl;
       auto is_compatible = lib.onnxGetBackendCompatibility(
           backendID, serialized_model.size(), serialized_model.data());
       std::string error_msg;
@@ -199,8 +240,8 @@ class ONNXCppDriverTest
         GTEST_SKIP();
         return;
       }
-      ASSERT_EQ(is_compatible, ONNXIFI_STATUS_SUCCESS);
-      ASSERT_EQ(
+      ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(is_compatible, NULL, lib));
+      ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
           lib.onnxInitGraph(
               backend,
               NULL,
@@ -209,64 +250,79 @@ class ONNXCppDriverTest
               weightCount,
               weightDescriptors_pointer,
               &graph),
-          ONNXIFI_STATUS_SUCCESS);
+          NULL,
+          lib));
       for (const auto& proto_test_data : protos_) {
         std::vector<onnxTensorDescriptorV1> input_descriptor, output_descriptor,
             result_descriptor;
         for (const auto& input : proto_test_data.inputs_) {
           input_descriptor.push_back(
-              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(input));
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
+                  input, shape_pool));
         }
         int output_count = 0;
         for (auto& output : proto_test_data.outputs_) {
           output_count++;
           output_descriptor.push_back(
-              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(output));
+              ONNX_NAMESPACE::testing::ProtoToOnnxTensorDescriptor(
+                  output, shape_pool));
           onnxTensorDescriptorV1 result;
           result.tag = ONNXIFI_TAG_TENSOR_DESCRIPTOR_V1;
-          std::string name_string =
-              "output_" + ONNX_NAMESPACE::to_string(output_count);
+          std::string name_string = output_descriptor[output_count - 1].name;
           result.name = name_string.c_str();
           result.dataType = output.data_type();
           result.memoryType = ONNXIFI_MEMORY_TYPE_CPU;
           std::vector<uint64_t> shape_values(
               output.dims().begin(), output.dims().end());
-          result.dimensions = shape_values.size();
-          result.shape = shape_values.data();
+          shape_pool.emplace_back(std::move(shape_values));
+          result.dimensions = shape_pool.back().size();
+          result.shape = shape_pool.back().data();
           std::vector<uint8_t> raw_data(output.raw_data().size(), 0);
-          result.buffer = (onnxPointer)raw_data.data();
+          data_pool.emplace_back(std::move(raw_data));
+          result.buffer = (onnxPointer)data_pool.back().data();
           result_descriptor.emplace_back(std::move(result));
         }
-        ASSERT_EQ(
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
             lib.onnxSetGraphIO(
                 graph,
                 input_descriptor.size(),
                 input_descriptor.data(),
                 result_descriptor.size(),
                 result_descriptor.data()),
-            ONNXIFI_STATUS_SUCCESS);
+            &graph,
+            lib));
 
         onnxMemoryFenceV1 inputFence, outputFence;
         inputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
         outputFence.tag = ONNXIFI_TAG_MEMORY_FENCE_V1;
         inputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
         outputFence.type = ONNXIFI_SYNCHRONIZATION_EVENT;
-
-        ASSERT_EQ(
-            lib.onnxRunGraph(graph, &inputFence, &outputFence),
-            ONNXIFI_STATUS_SUCCESS);
-        ASSERT_EQ(lib.onnxWaitEvent(outputFence.event), ONNXIFI_STATUS_SUCCESS);
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+            lib.onnxInitEvent(backend, &inputFence.event), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+            lib.onnxInitEvent(backend, &outputFence.event), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+            lib.onnxSignalEvent(inputFence.event), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+            lib.onnxRunGraph(graph, &inputFence, &outputFence), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+            lib.onnxWaitEvent(outputFence.event), &graph, lib));
+        lib.onnxReleaseEvent(outputFence.event);
+        lib.onnxReleaseEvent(inputFence.event);
+        ASSERT_EQ(output_descriptor.size(), result_descriptor.size());
         for (int i = 0; i < output_descriptor.size(); i++) {
           auto output_size = GetDescriptorSize(&output_descriptor[i]);
+          auto result_size = GetDescriptorSize(&result_descriptor[i]);
+          ASSERT_EQ(output_size, result_size);
           for (int j = 0; j < output_size; j++) {
             EXPECT_EQ(
                 IsDescriptorEqual(output_descriptor[i], result_descriptor[i]),
                 true);
-            ;
           }
         }
       }
-      ASSERT_EQ(lib.onnxReleaseGraph(graph), ONNXIFI_STATUS_SUCCESS);
+      ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+          lib.onnxReleaseGraph(graph), NULL, lib));
     }
   }
 };
@@ -307,7 +363,9 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
     RunAndVerify(lib, backend, NULL);
   }
 }
+
 INSTANTIATE_TEST_CASE_P(
     ONNXCppAllTest,
     ONNXCppDriverTest,
-    testing::ValuesIn(GetTestCases()));
+    testing::ValuesIn(GetTestCases()),
+    ONNXCppDriverTest::PrintToStringParamName());
