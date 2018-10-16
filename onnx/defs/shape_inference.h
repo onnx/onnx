@@ -450,8 +450,8 @@ inline void mergeInShapeInfo(
       auto* target_dims = mutable_target_shape->mutable_dim();
 
       for (int i = 0, end = source_dims.size(); i < end; ++i) {
-        auto& source_dim = source_dims[i];
-        auto& target_dim = (*target_dims)[i];
+        auto& source_dim = source_dims.Get(i);
+        auto& target_dim = *target_dims->Mutable(i);
 
         // if source has value, merge into target
         // else if target has value, preserve it
