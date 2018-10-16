@@ -24,7 +24,7 @@ static TypeProto RemoveDimensionsFromShape(
 
   // skip batch size and sequence length dimensions
   for (int j = num_dimensions, end = dims.size(); j < end; ++j) {
-    (*mutable_shape->add_dim()) = dims[j];
+    (*mutable_shape->add_dim()) = dims.Get(j);
   }
 
   return t;
@@ -97,8 +97,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         const auto& shape = input_type->tensor_type().shape();
         if (shape.dim_size() > 2) {
           const auto& dims = shape.dim();
-          UpdateValueFromDim(batch_size, dims[0]);
-          UpdateValueFromDim(sequence_len, dims[1]);
+          UpdateValueFromDim(batch_size, dims.Get(0));
+          UpdateValueFromDim(sequence_len, dims.Get(1));
         }
       } else {
         subgraph_input_types.push_back(input_type);
