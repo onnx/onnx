@@ -27,4 +27,5 @@ ExternalProject_Add(googletest
         -DBUILD_GMOCK:BOOL=OFF
         -DBUILD_GTEST:BOOL=ON
         -Dgtest_force_shared_crt:BOOL=OFF
+    BUILD_BYPRODUCTS ${googletest_STATIC_LIBRARIES}
 )
