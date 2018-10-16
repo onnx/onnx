@@ -176,14 +176,14 @@ inline void propagateElemTypeFromInputToOutput(
   }
 }
 
-inline bool hasInputShape(InferenceContext& ctx, int n) {
+inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
       ctx.getInputType(n)->has_tensor_type() &&
       ctx.getInputType(n)->tensor_type().has_shape();
 }
 
-inline bool hasNInputShapes(InferenceContext& ctx, int n) {
-  for (int i = 0; i < n; i++) {
+inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
+  for (size_t i = 0; i < n; i++) {
     if (!hasInputShape(ctx, i)) {
       return false;
     }

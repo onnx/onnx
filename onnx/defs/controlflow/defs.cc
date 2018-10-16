@@ -54,10 +54,15 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   int64_t batch_size = -1;
   int64_t sequence_len = -1;
 
-  for (auto i = 1; i < num_inputs; ++i) {
+  for (size_t i = 1; i < num_inputs; ++i) {
     bool is_loop_state_var = (i - 1) < num_loop_state_vars;
     bool has_shape = hasInputShape(ctx, i);
     const auto* input_type = ctx.getInputType(i);
+
+    // Enforce type constraint for inputs
+    if (!input_type || !input_type->has_tensor_type()) {
+      fail_type_inference("Scan input ", i, " was not a tensor.");
+    }
 
     if (is_loop_state_var) {
       // If it's a loop state variable we can propagate type and shape 1:1 to
@@ -84,7 +89,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       if (has_shape) {
         // remove batch size and sequence length dimensions and add to
         // subgraph_input_types
-        temporary_type_protos.emplace_back(
+        temporary_type_protos.push_back(
             RemoveDimensionsFromShape(*input_type, 2));
         subgraph_input_types.push_back(&temporary_type_protos.back());
 
@@ -117,10 +122,17 @@ void ScanInferenceFunction(InferenceContext& ctx) {
     }
 
     // propagate type/shape information for loop state variables and outputs
-    for (auto i = 0; i < num_outputs; ++i) {
+    for (size_t i = 0; i < num_outputs; ++i) {
       const bool is_loop_state_var = i < num_loop_state_vars;
       auto* subgraph_output_type = output_types[i];
       auto* scan_output_type = ctx.getOutputType(i);
+
+      if (!subgraph_output_type->has_tensor_type()) {
+        fail_type_inference(
+            "Scan 'body' subgraph outputs should all be tensors but output ",
+            i,
+            " was not");
+      }
 
       // propagate output type. loop state vars were done in the above code.
       if (!is_loop_state_var) {
