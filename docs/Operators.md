@@ -96,6 +96,7 @@
   * <a href="#Relu">Relu</a>
   * <a href="#Reshape">Reshape</a>
   * <a href="#Scan">Scan</a>
+  * <a href="#Scatter">Scatter</a>
   * <a href="#Selu">Selu</a>
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
@@ -9821,6 +9822,53 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">Scan-8</a>
 <dd>Int64 tensor</dd>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
+</dl>
+
+
+### <a name="Scatter"></a><a name="scatter">**Scatter**</a>
+
+  Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
+  into `data` along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
+  For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
+  for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case, 
+  data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1.
+  
+  Example 1:
+    data = [
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0],
+    ]
+    indices = [
+        [1, 0, 2],
+        [0, 2, 1],
+    ]
+    updates = [
+        [1.0, 1.1, 1.2],
+        [2.0, 2.1, 2.2],
+    ]
+    output = [
+        [2.0, 1.1, 0.0]
+        [1.0, 0.0, 2.2]
+        [0.0, 2.1, 1.2]
+    ]
+  
+  Example 2:
+    data = [[1.0, 2.0, 3.0, 4.0, 5.0]]
+    indices = [[1, 3]]
+    updates = [[1.1, 2.1]]
+    axis = 1
+    output = [[1.0, 1.1, 3.0, 2.1, 5.0]]
+
+#### Version
+
+This version of the operator has been available since version 1 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is 0)</dt>
+<dd>Which axis to scatter on. Negative value means counting dimensions from the back. Accepted range in [-r, r-1]</dd>
 </dl>
 
 
