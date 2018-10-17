@@ -5,8 +5,8 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
-struct Nop final : public FullGraphBasedPass {
-  explicit Nop()
+struct NopEmptyPass final : public FullGraphBasedPass {
+  explicit NopEmptyPass()
       : FullGraphBasedPass(
             PassType::Nop,
             PassEfficiency::Complete,
@@ -15,15 +15,12 @@ struct Nop final : public FullGraphBasedPass {
   std::string getPassName() const override {
     return "nop";
   }
-
   PassAnalysisType getPassAnalysisType() const override {
     return PassAnalysisType::Empty;
   }
-
   std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) {
     return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
-
 } // namespace optimization
 } // namespace ONNX_NAMESPACE

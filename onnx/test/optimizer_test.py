@@ -758,6 +758,21 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].attribute[0].i == 2
         assert optimized_model.graph.node[1].op_type == "Exp"
 
+    def test_preserve_value_info(self):  # type: () -> None
+        trans1 = helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2])
+        trans2 = helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1])
+        trans3 = helper.make_node("Transpose", ["Z"], ["A"], perm=[2, 0, 1])
+        graph = helper.make_graph(
+            [trans1, trans2, trans3],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (2, 4, 3))])
+        vi = helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))
+        graph.value_info.extend([vi])
+        optimized_model = self._optimized(graph, ["nop"])
+        assert list(optimized_model.graph.value_info) == [vi]
+        assert len(list(optimized_model.graph.node)) == 3
+
     def test_split(self):  # type: () -> None
         node = onnx.helper.make_node(
             'Constant',

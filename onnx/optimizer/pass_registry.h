@@ -35,6 +35,7 @@ struct GlobalPassRegistry {
 
   GlobalPassRegistry() {
     // Register the optimization passes to the optimizer.
+    registerPass<NopEmptyPass>();
     registerPass<EliminateDeadEnd>();
     registerPass<EliminateIdentity>();
     registerPass<EliminateNopPad>();
