@@ -446,8 +446,6 @@ message TypeProto {
     optional string domain = 1;
     // The name is optional but significant when provided.
     optional string name = 2;
-    // parameters that help defining the type
-    repeated TypeProto parameters = 3;
   }
 
 // #endif
