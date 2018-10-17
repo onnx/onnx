@@ -1,22 +1,26 @@
-#ifndef NOP_H
-#define NOP_H
+#pragma once
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-struct Nop final : public OptimizePass {
-  explicit Nop()
-    : OptimizePass("nop", API_TYPE::IR) {
+struct NopEmptyPass final : public FullGraphBasedPass {
+  explicit NopEmptyPass()
+      : FullGraphBasedPass(
+            PassType::Nop,
+            PassEfficiency::Complete,
+            PassOptimizationType::None) {}
+
+  std::string getPassName() const override {
+    return "nop";
   }
-
-  void optimize(Graph& /*graph*/) override {
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::Empty;
   }
-
-  void optimize(ONNX_NAMESPACE::ModelProto& /*mp*/) override {
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) {
+    return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
-
-}} // namespace ONNX_NAMESPACE::optimization
-
-#endif
+} // namespace optimization
+} // namespace ONNX_NAMESPACE
