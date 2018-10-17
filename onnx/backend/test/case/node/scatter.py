@@ -16,11 +16,11 @@ class Scatter(Base):
     def export_scatter_0():  # type: () -> None
         node = onnx.helper.make_node(
             'Scatter',
-            inputs=['data', 'indices','updates'],
+            inputs=['data', 'indices', 'updates'],
             outputs=['y'],
             axis=0,
         )
-        data = np.zeros((3,3))
+        data = np.zeros((3, 3))
         indices = np.array([[1, 0, 2], [0, 2, 1]])
         updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]])
 
@@ -37,7 +37,7 @@ class Scatter(Base):
     def export_scatter_1():  # type: () -> None
         node = onnx.helper.make_node(
             'Scatter',
-            inputs=['data', 'indices','updates'],
+            inputs=['data', 'indices', 'updates'],
             outputs=['y'],
             axis=1,
         )
