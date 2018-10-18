@@ -148,6 +148,7 @@ class cmake_build(setuptools.Command):
             os.makedirs(CMAKE_BUILD_DIR)
 
         with cd(CMAKE_BUILD_DIR):
+            build_type = 'Release'
             # configure
             cmake_args = [
                 CMAKE,
@@ -163,7 +164,7 @@ class cmake_build(setuptools.Command):
             if COVERAGE or DEBUG:
                 # in order to get accurate coverage information, the
                 # build needs to turn off optimizations
-                cmake_args.append('-DCMAKE_BUILD_TYPE=Debug')
+                build_type = 'Debug'
             if WINDOWS:
                 cmake_args.extend([
                     # we need to link with libpython on windows, so
@@ -191,6 +192,7 @@ class cmake_build(setuptools.Command):
 
             build_args = [CMAKE, '--build', os.curdir]
             if WINDOWS:
+                build_args.extend(['--config', build_type])
                 build_args.extend(['--', '/maxcpucount:{}'.format(self.jobs)])
             else:
                 build_args.extend(['--', '-j', str(self.jobs)])
