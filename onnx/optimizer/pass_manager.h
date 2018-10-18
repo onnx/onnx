@@ -2,7 +2,7 @@
 // ATTENTION: The code in this file is highly EXPERIMENTAL.
 // Adventurous users should note that the APIs will probably change.
 
-#include <set>
+#include <vector>
 #include "onnx/optimizer/pass.h"
 #include "onnx/optimizer/passes/eliminate_deadend.h"
 
@@ -35,7 +35,10 @@ class GeneralPassManager : public PassManager {
   std::shared_ptr<PassManagerAnalysis> run(Graph& graph) override;
 
  protected:
-  std::set<std::shared_ptr<Pass>> passes;
+  // use vector here to ensure the order of the passes
+  // for some pass, order is critical, for example,
+  // split_init and split_predict should be the last in the list
+  std::vector<std::shared_ptr<Pass>> passes;
 };
 
 // Exhibits the same behavior as GeneralPassManager but will instead check

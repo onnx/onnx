@@ -10,7 +10,7 @@ GeneralPassManager::~GeneralPassManager() {
   this->passes.clear();
 }
 void GeneralPassManager::add(std::shared_ptr<Pass> pass) {
-  this->passes.insert(pass);
+  this->passes.push_back(std::move(pass));
 }
 
 std::shared_ptr<PassManagerAnalysis> GeneralPassManager::run(Graph& graph) {
