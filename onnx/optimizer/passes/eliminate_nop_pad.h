@@ -3,39 +3,39 @@
 
 #pragma once
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-struct EliminateNopPad final : public OptimizePass {
+struct EliminateNopPad final : public PredicateBasedPass {
   explicit EliminateNopPad()
-    : OptimizePass("eliminate_nop_pad", API_TYPE::IR) {
-  }
+      : PredicateBasedPass(
+            PassType::Nop,
+            PassEfficiency::Complete,
+            PassOptimizationType::Compute) {}
 
-  static bool is_nop_pad(const std::vector<int64_t> & pads) {
+  std::string getPassName() const override {
+    return "eliminate_nop_pad";
+  }
+  static bool is_nop_pad(const std::vector<int64_t>& pads) {
     for (size_t i = 0; i < pads.size(); i++)
       if (pads[i] > 0)
         return false;
     return true;
   }
 
-  void eliminate_nop_pad(Graph& graph) {
-    for (auto it = graph.begin(); it != graph.end(); ++it) {
-      auto* n = *it;
-      DescendOnGraphAttributes(n, [this](Graph& g){eliminate_nop_pad(g);});
-      if (n->kind() == kPad && n->hasAttribute(kpads)) {
-        if (is_nop_pad(n->is(kpads))) {
-          n->output()->replaceAllUsesWith(n->input());
-          it.destroyCurrent();
-          continue;
-        }
-      }
-    }
+  bool patternMatchPredicate(Node* node) override {
+    return (node->kind() == kPad && node->hasAttribute(kpads)) &&
+        is_nop_pad(node->is(kpads));
   }
-
-  void optimize(Graph& graph) override {
-    eliminate_nop_pad(graph);
+  bool runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current)
+      override {
+    node->output()->replaceAllUsesWith(node->input());
+    destroy_current = NodeDestroyType::DestroyOne;
+    return true;
   }
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE

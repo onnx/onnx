@@ -3,61 +3,69 @@
 
 #pragma once
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-struct FuseConsecutiveTransposes final : public OptimizePass {
+struct FuseConsecutiveTransposes final : public PredicateBasedPass {
   explicit FuseConsecutiveTransposes()
-    : OptimizePass("fuse_consecutive_transposes", API_TYPE::IR) {
+      : PredicateBasedPass(
+            PassType::Fuse,
+            PassEfficiency::Complete,
+            PassOptimizationType::Compute) {}
+
+  std::string getPassName() const override {
+    return "fuse_consecutive_transposes";
   }
 
   // returns a vector `ret` such that transposing by `ret` is equivalent
   // to transposing by `t1` and then by `t2`
-  std::vector<int64_t> compose_transposes(const std::vector<int64_t> & t1,
-      const std::vector<int64_t> & t2) {
+  std::vector<int64_t> compose_transposes(
+      const std::vector<int64_t>& t1,
+      const std::vector<int64_t>& t2) {
     ONNX_ASSERT(t1.size() == t2.size());
     std::vector<int64_t> ret;
     ret.reserve(t1.size());
     for (size_t i = 0; i < t1.size(); i++) {
-      ONNX_ASSERT(   t1[i]  < static_cast<int64_t>(t2.size()));
-      ONNX_ASSERT(t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
+      ONNX_ASSERT(t1[i] < static_cast<int64_t>(t2.size()));
+      ONNX_ASSERT(
+          t2[static_cast<size_t>(t1[i])] < static_cast<int64_t>(t2.size()));
       ret.push_back(t2[static_cast<size_t>(t1[i])]);
     }
     return ret;
   }
 
-  void fuse_consecutive_transposes(Graph& graph) {
-    for (auto it = graph.begin(); it != graph.end(); ++it) {
-      auto* n = *it;
-      DescendOnGraphAttributes(n, [this](Graph& g){fuse_consecutive_transposes(g);});
-      if (n->kind() == kTranspose && n->input()->node()->kind() == kTranspose) {
-        auto origInput = n->input();
-        if (!n->hasAttribute(kperm) && !origInput->node()->hasAttribute(kperm)) {
-          // One special case (two consecutive transposes with no perm,
-          // since we do not have the shape information here, we have
-          // to eliminate two transpose together.
-          n->replaceAllUsesWith(origInput->node()->input()->node());
-          it.destroyCurrent();
-          it.destroyCurrent();
-          continue;
-        }
-        if (!n->hasAttribute(kperm) || !origInput->node()->hasAttribute(kperm)) {
-          continue;
-        }
-        n->is_(kperm, compose_transposes(origInput->node()->is(kperm), n->is(kperm)));
-        n->replaceInput(0, origInput->node()->input());
-        if (origInput->uses().size() == 0) {
-          origInput->node()->destroy();
-        }
-        continue;
-      }
-    }
+  bool patternMatchPredicate(Node* node) override {
+    return node->kind() == kTranspose &&
+        node->input()->node()->kind() == kTranspose;
   }
 
-  void optimize(Graph& graph) override {
-    fuse_consecutive_transposes(graph);
+  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+      override {
+    auto origInput = n->input();
+    if (!n->hasAttribute(kperm) && !origInput->node()->hasAttribute(kperm)) {
+      // One special case (two consecutive transposes with no perm,
+      // since we do not have the shape information here, we have
+      // to eliminate two transpose together.
+      n->replaceAllUsesWith(origInput->node()->input()->node());
+      destroy_current = NodeDestroyType::DestroyTwo;
+      return true;
+    }
+    if (!n->hasAttribute(kperm) || !origInput->node()->hasAttribute(kperm)) {
+      destroy_current = NodeDestroyType::DestroyZero;
+      return false;
+    }
+    n->is_(
+        kperm, compose_transposes(origInput->node()->is(kperm), n->is(kperm)));
+    n->replaceInput(0, origInput->node()->input());
+    if (origInput->uses().size() == 0) {
+      origInput->node()->destroy();
+    }
+    destroy_current = NodeDestroyType::DestroyZero;
+    return false;
   }
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE
