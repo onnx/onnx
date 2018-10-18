@@ -13,12 +13,11 @@ from . import expect
 class Scatter(Base):
 
     @staticmethod
-    def export_scatter_0():  # type: () -> None
+    def export_scatter_without_axis():  # type: () -> None
         node = onnx.helper.make_node(
             'Scatter',
             inputs=['data', 'indices', 'updates'],
             outputs=['y'],
-            axis=0,
         )
         data = np.zeros((3, 3))
         indices = np.array([[1, 0, 2], [0, 2, 1]])
@@ -31,10 +30,10 @@ class Scatter(Base):
         ])
 
         expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
-               name='test_scatter_0')
+               name='test_scatter_without_axis')
 
     @staticmethod
-    def export_scatter_1():  # type: () -> None
+    def export_scatter_with_axis():  # type: () -> None
         node = onnx.helper.make_node(
             'Scatter',
             inputs=['data', 'indices', 'updates'],
@@ -48,4 +47,4 @@ class Scatter(Base):
         y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]])
 
         expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
-               name='test_scatter_1')
+               name='test_scatter_with_axis')

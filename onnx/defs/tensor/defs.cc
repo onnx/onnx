@@ -606,7 +606,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* Scatter_ver1_doc = R"DOC(
+static const char* Scatter_ver9_doc = R"DOC(
 Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
 into `data` along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
 For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
@@ -643,9 +643,9 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scatter,
-    1,
+    9,
     OpSchema()
-        .SetDoc(Scatter_ver1_doc)
+        .SetDoc(Scatter_ver9_doc)
         .Attr(
             "axis",
             "Which axis to scatter on. Negative value means "
@@ -668,7 +668,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T",
             OpSchema::all_tensor_types(),
-            "Constrain input and output types to any tensor type.")
+            "Input and output types can be of any tensor type.")
         .TypeConstraint(
             "Tind",
             {"tensor(int32)", "tensor(int64)"},
@@ -683,9 +683,6 @@ ONNX_OPERATOR_SET_SCHEMA(
 
           int out_rank = r;
 
-          if (out_rank == 0) {
-            ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
-          }
           for (int i = 0; i < out_rank; ++i) {
             ctx.getOutputType(0)
                 ->mutable_tensor_type()

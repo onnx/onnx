@@ -9862,7 +9862,7 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">Scan-8</a>
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
 #### Attributes
 
