@@ -35,7 +35,7 @@ class GeneralPassManager : public PassManager {
   std::shared_ptr<PassManagerAnalysis> run(Graph& graph) override;
 
  protected:
-  std::set<std::shared_ptr<Pass>> passes;
+  std::vector<std::shared_ptr<Pass>> passes;
 };
 
 // Exhibits the same behavior as GeneralPassManager but will instead check
