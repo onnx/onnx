@@ -139,12 +139,14 @@ std::string DataTypeUtils::ToString(
     case TypeProto::ValueCase::kOpaqueType: {
       static const std::string empty;
       std::string result;
-      std::string param_str;
       const auto& op_type = type_proto.opaque_type();
       result.append(left).append("opaque(");
-      result.append(op_type.has_domain() ? op_type.domain() : empty)
-          .append(",");
-      result.append(op_type.has_name() ? op_type.name() : empty);
+      if (op_type.has_domain() && !op_type.domain().empty()) {
+        result.append(op_type.domain()).append(",");
+      }
+      if (op_type.has_name() && !op_type.name().empty()) {
+        result.append(op_type.name());
+      }
       result.append(")").append(right);
       return result;
     }
@@ -191,14 +193,14 @@ void DataTypeUtils::FromString(
   } else if (s.LStrip("opaque")) {
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
-    // Check if we have domain which is positionally first
-    size_t cm = s.Find(',');
-    // Otherwise, this is invalid form
-    if (cm != std::string::npos) {
-      if (cm > 0) {
-        opaque_type->mutable_domain()->assign(s.Data(), cm);
+    if (!s.Empty()) {
+      size_t cm = s.Find(',');
+      if (cm != std::string::npos) {
+        if (cm > 0) {
+          opaque_type->mutable_domain()->assign(s.Data(), cm);
+        }
+        s.LStrip(cm + 1); // skip comma
       }
-      s.LStrip(cm + 1); // skip comma
       if (!s.Empty()) {
         opaque_type->mutable_name()->assign(s.Data(), s.Size());
       }
