@@ -5187,32 +5187,7 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 ### Scatter
 There are 2 test cases, listed as following:
 <details>
-<summary>scatter_0</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Scatter',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-    axis=0,
-)
-data = np.zeros((3, 3))
-indices = np.array([[1, 0, 2], [0, 2, 1]])
-updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]])
-
-y = np.array([
-    [2.0, 1.1, 0.0],
-    [1.0, 0.0, 2.2],
-    [0.0, 2.1, 1.2]
-])
-
-expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
-       name='test_scatter_0')
-```
-
-</details>
-<details>
-<summary>scatter_1</summary>
+<summary>scatter_with_axis</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -5228,7 +5203,31 @@ updates = np.array([[1.1, 2.1]])
 y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]])
 
 expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
-       name='test_scatter_1')
+       name='test_scatter_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3))
+indices = np.array([[1, 0, 2], [0, 2, 1]])
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]])
+
+y = np.array([
+    [2.0, 1.1, 0.0],
+    [1.0, 0.0, 2.2],
+    [0.0, 2.1, 1.2]
+])
+
+expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
+       name='test_scatter_without_axis')
 ```
 
 </details>
