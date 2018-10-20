@@ -18,7 +18,7 @@ struct NopEmptyPass final : public FullGraphBasedPass {
   PassAnalysisType getPassAnalysisType() const override {
     return PassAnalysisType::Empty;
   }
-  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) {
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
     return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
