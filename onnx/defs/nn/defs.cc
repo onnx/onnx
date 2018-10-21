@@ -879,7 +879,7 @@ output_shape can also be explicitly specified in which case pads values are auto
     schema.Input(
         2,
         "B",
-        "Optional 1D bias to be added to the convolution, has size of C.",
+        "Optional 1D bias to be added to the convolution, has size of M.",
         "T",
         OpSchema::Optional);
     schema.Output(
