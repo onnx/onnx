@@ -1122,7 +1122,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Compress_ver1_doc = R"DOC(
+static const char* Compress_ver9_doc = R"DOC(
     Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index. 
     In case axis is not provided, input is flattened before elements are selected.  
     Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
@@ -1131,7 +1131,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Compress,
     9,
     OpSchema()
-        .SetDoc(Compress_ver1_doc)
+        .SetDoc(Compress_ver9_doc)
         .Attr(
             "axis",
             "(Optional) Axis along which to take slices. If not specified,"
