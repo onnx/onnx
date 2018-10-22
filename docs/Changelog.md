@@ -8341,8 +8341,8 @@ This version of the operator has been available since version 8 of the default O
 ## Version 9 of the default ONNX operator set
 ### <a name="Compress-9"></a>**Compress-9**</a>
 
-  Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index. 
-      In case axis is not provided, input is flattened before elements are selected.  
+  Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+      In case axis is not provided, input is flattened before elements are selected.
       Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
       
 
@@ -8354,7 +8354,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int</dt>
-<dd>(Optional) Axis along which to take slices. If not specified,input is flattened before elements being selected.</dd>
+<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected.</dd>
 </dl>
 
 #### Inputs
@@ -8363,7 +8363,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>input</tt> : T</dt>
 <dd>Tensor of rank r >= 1.</dd>
 <dt><tt>condition</tt> : T1</dt>
-<dd>Rank 1 tensor of booleans to indicate which slices to be selected.</dd>
+<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length alone the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
 </dl>
 
 #### Outputs
