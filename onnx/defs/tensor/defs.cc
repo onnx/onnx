@@ -1127,6 +1127,7 @@ static const char* Compress_ver9_doc = R"DOC(
     In case axis is not provided, input is flattened before elements are selected.
     Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
     )DOC";
+
 ONNX_OPERATOR_SET_SCHEMA(
     Compress,
     9,
