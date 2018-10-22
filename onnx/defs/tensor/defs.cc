@@ -1137,4 +1137,39 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Compress_ver9_doc = R"DOC(
+    Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+    In case axis is not provided, input is flattened before elements are selected.
+    Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+    )DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Compress,
+    9,
+    OpSchema()
+        .SetDoc(Compress_ver9_doc)
+        .Attr(
+            "axis",
+            "(Optional) Axis along which to take slices. If not specified, "
+            "input is flattened before elements being selected.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(0, "input", "Tensor of rank r >= 1.", "T")
+        .Input(1,
+            "condition",
+            "Rank 1 tensor of booleans to indicate which slices or data elements to be selected. "
+            "Its length can be less than the input length alone the axis "
+            "or the flattened input size if axis is not specified. "
+            "In such cases data slices or elements exceeding the condition length are discarded.",
+            "T1")
+        .Output(0, "output", "Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "T1",
+            {"tensor(bool)"},
+            "Constrains to boolean tensors."));
 } // namespace ONNX_NAMESPACE

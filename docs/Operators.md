@@ -17,6 +17,7 @@
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
+  * <a href="#Compress">Compress</a>
   * <a href="#Concat">Concat</a>
   * <a href="#Constant">Constant</a>
   * <a href="#ConstantLike">ConstantLike</a>
@@ -1645,6 +1646,123 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+
+
+### <a name="Compress"></a><a name="compress">**Compress**</a>
+
+  Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+      In case axis is not provided, input is flattened before elements are selected.
+      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+      
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>condition</tt> : T1</dt>
+<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length alone the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+
+
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+
+
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
 ```
 
 </details>
