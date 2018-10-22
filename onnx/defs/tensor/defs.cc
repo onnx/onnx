@@ -661,7 +661,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "updates",
-            "Tensor of rank r >=1 (same rank and type as input data)",
+            "Tensor of rank r >=1 (same rank and shape as indices)",
             "T"
         )
         .Output(0, "output", "Tensor of rank r >= 1 (same rank as input).", "T")
