@@ -8,6 +8,7 @@ import numpy as np  # type: ignore
 
 from onnx import checker, helper
 from onnx import TensorProto
+from onnx import mapping
 
 
 class TestChecker(unittest.TestCase):
@@ -138,6 +139,27 @@ class TestChecker(unittest.TestCase):
 
         tensor.raw_data = np.random.randn(2, 3).astype(np.float32).tobytes()
         self.assertRaises(checker.ValidationError, checker.check_tensor, tensor)
+
+    def test_check_all_tensor_types(self):  # type: () -> None
+        for tensorType, npType in mapping.TENSOR_TYPE_TO_NP_TYPE.items():
+            shape = (2, 3)
+            np_array = np.random.standard_normal(shape).astype(npType)
+            if npType == np.float16:
+                # Float 16 needs to be bit-wise converted to uint16
+                np_array = np.frombuffer(np_array.tobytes(), dtype=np.uint16)
+            elif npType == np.str:
+                # Need bytes for strings
+                np_array = [x.encode() for x in np_array.flat]
+            elif npType == np.bool:
+                np_array = np_array.astype(np.int)
+            print(tensorType, npType)
+            tensor = helper.make_tensor(
+                name='test',
+                data_type=tensorType,
+                dims=shape,
+                vals=np_array.flat if isinstance(np_array, np.ndarray) else np_array
+            )
+            checker.check_tensor(tensor)
 
     def test_check_string_tensor(self):  # type: () -> None
         tensor = TensorProto()
