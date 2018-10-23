@@ -621,8 +621,8 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (32, 10)),
              helper.make_tensor_value_info("Y", TensorProto.FLOAT, (8, 16)),
-             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1,16))],
-            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (32,16))]
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1, 16))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (32, 16))]
         )
         optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
         print(helper.make_model(graph, producer_name='onnx-test'))
