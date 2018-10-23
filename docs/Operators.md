@@ -17,6 +17,7 @@
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
+  * <a href="#Compress">Compress</a>
   * <a href="#Concat">Concat</a>
   * <a href="#Constant">Constant</a>
   * <a href="#ConstantLike">ConstantLike</a>
@@ -58,6 +59,7 @@
   * <a href="#Max">Max</a>
   * <a href="#MaxPool">MaxPool</a>
   * <a href="#MaxRoiPool">MaxRoiPool</a>
+  * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
@@ -1644,6 +1646,123 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+
+
+### <a name="Compress"></a><a name="compress">**Compress**</a>
+
+  Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+      In case axis is not provided, input is flattened before elements are selected.
+      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+      
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>condition</tt> : T1</dt>
+<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length alone the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+
+
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+
+
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
 ```
 
 </details>
@@ -6114,6 +6233,124 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
+
+
+### <a name="MaxUnpool"></a><a name="maxunpool">**MaxUnpool**</a>
+
+  MaxUnpool essentially computes the partial inverse of the MaxPool op.
+   The input information to this op is typically the the output information from a MaxPool op. The first
+   input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+   to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
+   The third (optional) input is a tensor that specifies the output size of the unpooling operation.
+  
+  MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
+   values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
+   the result of an unpooling operation should give back the original input to the unpooling op.
+  
+  MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
+   The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
+   known/predictable size.
+  
+  In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
+   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+   pooling op that the unpooling op is trying to invert.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor that has to be unpooled. This tensor is typically the first output of the MaxPool op.Dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non-image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>I</tt> : T2</dt>
+<dd>Input data tensor containing the indices corresponding to elements in the first input tensor X.This tensor is typically the second output of the MaxPool op.Dimensions must be the same as input tensor X. The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, assuming row-major storage. Also, the linear indices should not consider padding. So the values in indices are in the range [0, N x C x D1 x ... x Dn).</dd>
+<dt><tt>output_shape</tt> (optional) : T2</dt>
+<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, 'pads' values are ignored.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output data tensor that contains the result of the unpooling.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI', 'output_shape'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[5, 6],
+                 [7, 8]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0, 0],
+                [0, 5, 0, 6, 0],
+                [0, 0, 0, 0, 0],
+                [0, 7, 0, 8, 0],
+                [0, 0, 0, 0, 0]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI, output_shape], outputs=[y], name='test_maxunpool_export_with_output_shape')
+```
+
+</details>
+
+
+<details>
+<summary>without_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[1, 2],
+                 [3, 4]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0],
+                [0, 1, 0, 2],
+                [0, 0, 0, 0],
+                [0, 3, 0, 4]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_output_shape')
+```
+
+</details>
 
 
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
