@@ -613,6 +613,23 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == 'Conv'
         assert optimized_model.graph.node[1].op_type == 'Add'
 
+    def test_fuse_matmul_add_bias_into_gemm(self):
+        matmul = helper.make_node("MatMul", ["X", "Y"], ["Z"])
+        add = helper.make_node("Add", ["Z", "A"], ["B"])
+        graph = helper.make_graph(
+            [matmul, add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (32, 10)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (8, 16)),
+             helper.make_tensor_value_info("A", TensorProto.FLOAT, (1,16))],
+            [helper.make_tensor_value_info("B", TensorProto.FLOAT, (32,16))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
+        print(helper.make_model(graph, producer_name='onnx-test'))
+
+        assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Gemm"
+
     def test_fuse_consecutive_squeezes(self):  # type: () -> None
         nodes = [helper.make_node("Squeeze", ["X"], ["Y"], axes=[0, 4, 5]),
                  helper.make_node("Squeeze", ["Y"], ["Z"], axes=[0, 3])]
