@@ -5668,9 +5668,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
+<dt><tt>max</tt> : float (default is 3.40282346639e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
+<dt><tt>min</tt> : float (default is -3.40282346639e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -8235,6 +8235,7 @@ This version of the operator has been available since version 8 of the default O
   
   
   *Sample usage: Encoding RNN using a Scan*
+  
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
