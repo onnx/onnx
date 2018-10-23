@@ -1533,9 +1533,9 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.40282346639e+38)</dt>
+<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.40282346639e+38)</dt>
+<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
