@@ -706,14 +706,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           }
           for (int i = 0; i < out_rank; ++i) {
-            ctx.getOutputType(0)
+            auto* newdim = ctx.getOutputType(0)
                 ->mutable_tensor_type()
                 ->mutable_shape()
-                ->add_dim()
-                ->set_dim_value(
-                (i < axis) ? data_shape.dim(i).dim_value() :                             // i < axis < r
-                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis).dim_value() :  // i - axis < q
-                data_shape.dim(i - q + 1).dim_value());                                  // i < out_rank < q + r - 1
+                ->add_dim();
+            const auto& dim =
+                (i < axis) ? data_shape.dim(i) :                             // i < axis < r
+                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis) :  // i - axis < q
+                data_shape.dim(i - q + 1);                                   // i < out_rank < q + r - 1
+            if (dim.has_dim_value()) {
+              newdim->set_dim_value(dim.dim_value());
+            }
+            if (dim.has_dim_param()) {
+              newdim->set_dim_param(dim.dim_param());
+            }
+            if (dim.has_denotation()) {
+              newdim->set_denotation(dim.denotation());
+            }
           }
         }));
 
