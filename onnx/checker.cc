@@ -151,8 +151,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         break;
 
       case TensorProto::INT32:
-      case TensorProto::UINT8:
+      case TensorProto::INT16:
+      case TensorProto::INT8:
       case TensorProto::UINT16:
+      case TensorProto::UINT8:
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
@@ -235,10 +237,10 @@ void check_attribute(
   // In proto3, when the value to be set is type default value (say 0 for int),
   // used_fields may be 0.
   if (used_fields > 1) {
-    fail_check(
-        "Attribute (name: ",
-        attr.name(),
-        ") should not contain more than one value field.");
+	  fail_check(
+		  "Attribute (name: ",
+		  attr.name(),
+		  ") should not contain more than one value field.");
   }
 
   if (!ctx.is_main_graph()) {
