@@ -76,7 +76,7 @@ struct FuseMatMulAddBiasIntoGemm final : public PredicateBasedPass {
         orig_matmul->node()->inputs(),
         n->outputs().size());
     gemm->addInput(n->inputs()[1]);
-    for (int i = 0; i < gemm->outputs().size(); ++i) {
+    for (int i = 0; i < static_cast<int64_t>(gemm->outputs().size()); ++i) {
       gemm->outputs()[i]->copyMetadata(n->outputs()[i]);
     }
     gemm->f_(kalpha, 1.0);
