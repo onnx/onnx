@@ -127,6 +127,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
     }
     return;
   } else {
+    bool isChecked = false;
 #define check_field(field)               \
   if (nelem != 0 && !has_##field) {      \
     fail_check(                          \
@@ -137,7 +138,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         "' instead of '",                \
         value_field,                     \
         "'");                            \
-  }
+  }                                      \
+  isChecked = true;
 
     switch (tensor.data_type()) {
       case TensorProto::FLOAT:
@@ -174,7 +176,12 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         check_field(string_data);
         break;
 
-      default:
+      case TensorProto::UNDEFINED:
+        // Fail afterwards
+        break;
+
+    }
+    if (!isChecked) {
         fail_check(
             "Unrecognized data_type (tensor name: ",
             tensor.name(),
