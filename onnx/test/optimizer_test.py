@@ -613,7 +613,7 @@ class TestOptimizer(unittest.TestCase):
         assert optimized_model.graph.node[0].op_type == 'Conv'
         assert optimized_model.graph.node[1].op_type == 'Add'
 
-    def test_fuse_matmul_add_bias_into_gemm(self):
+    def test_fuse_matmul_add_bias_into_gemm(self):  # type: () -> None
         matmul = helper.make_node("MatMul", ["X", "Y"], ["Z"])
         add = helper.make_node("Add", ["Z", "A"], ["B"])
         graph = helper.make_graph(
