@@ -76,6 +76,15 @@ struct InferenceContextImpl : public InferenceContext {
     }
     return &allOutputTypes_[index];
   }
+
+  std::vector<const TypeProto*> doGraphAttributeInferencing(
+      const std::string& attribute_name,
+      const std::vector<const TypeProto*>& input_types) override {
+    // Return an empty vector to indicate type/shape inferencing of the
+    // sub-graph represented by the GraphProto in attribute_name was skipped.
+    return {};
+  }
+
   std::vector<const TensorProto*> allInputData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
