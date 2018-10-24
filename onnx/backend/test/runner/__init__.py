@@ -106,8 +106,8 @@ class Runner(object):
         for category, items_map in self._test_items.items():
             filtered[category] = {}
             for name, item in items_map.items():
-                if (self._include_patterns and
-                    (not any(include.search(name)
+                if (self._include_patterns
+                    and (not any(include.search(name)
                              for include in self._include_patterns))):
                     item.func = unittest.skip(
                         'no matched include pattern'

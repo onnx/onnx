@@ -30,8 +30,8 @@ def get_output_shape(auto_pad,  # type: Text
             out_shape[i] = int(
                 np.ceil(
                     float(
-                        input_spatial_shape[i]) /
-                    float(
+                        input_spatial_shape[i])
+                    / float(
                         strides_spatial[i])))
     elif auto_pad == 'VALID':
         for i in range(len(input_spatial_shape)):
