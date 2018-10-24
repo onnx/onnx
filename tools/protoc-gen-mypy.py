@@ -283,8 +283,7 @@ class PkgWriter(object):
 def is_scalar(fd):
     # type: (d.FileDescriptorProto) -> bool
     return not (
-        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE or
-        fd.type == d.FieldDescriptorProto.TYPE_GROUP
+        fd.type == d.FieldDescriptorProto.TYPE_MESSAGE or fd.type == d.FieldDescriptorProto.TYPE_GROUP
     )
 
 

@@ -157,8 +157,7 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    if (data_type == TensorProto.COMPLEX64 or
-            data_type == TensorProto.COMPLEX128):
+    if (data_type == TensorProto.COMPLEX64 or data_type == TensorProto.COMPLEX128):
         vals = split_complex_to_pairs(vals)
     if raw:
         tensor.raw_data = vals

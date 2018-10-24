@@ -51,8 +51,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
             dtype=np_dtype).reshape(dims)
     else:
         data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
-        if (tensor_dtype == TensorProto.COMPLEX64 or
-                tensor_dtype == TensorProto.COMPLEX128):
+        if (tensor_dtype == TensorProto.COMPLEX64 or tensor_dtype == TensorProto.COMPLEX128):
             data = combine_pairs_to_complex(data)
         return (
             np.asarray(
