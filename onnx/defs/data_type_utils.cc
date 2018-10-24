@@ -98,13 +98,16 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
 
 DataType DataTypeUtils::ToType(const std::string& type_str) {
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
-  auto iter = GetTypeStrToProtoMap().find(type_str);
+  auto& map = GetTypeStrToProtoMap();
+  auto iter = map.find(type_str);
   if (iter == GetTypeStrToProtoMap().end()) {
     TypeProto type;
     FromString(type_str, type);
-    GetTypeStrToProtoMap()[type_str] = type;
+    auto result = map.insert({type_str, type});
+    return &(result.first->first);
+  } else {
+    return &(iter->first);
   }
-  return &(iter->first);
 }
 
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
