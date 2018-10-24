@@ -29,7 +29,9 @@ def pytest_runtest_call(item):  # type: (pytest.nodes.Item) -> None
 
 
 def pytest_runtest_logreport(report):  # type: (Any) -> None
-    if (report.when == 'call' and report.outcome == 'passed' and report.nodeid in _marks):
+    if (report.when == 'call'
+        and report.outcome == 'passed'
+            and report.nodeid in _marks):
         mark = _marks[report.nodeid]
         _add_mark(mark, 'passed')
 
