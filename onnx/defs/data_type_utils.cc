@@ -95,8 +95,8 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
   auto typeStr = ToString(type_proto);
   std::lock_guard<std::mutex> lock(GetTypeStrLock());
   if (GetTypeStrToProtoMap().find(typeStr) == GetTypeStrToProtoMap().end()) {
-	TypeProto type;
-	FromString(typeStr, type);
+    TypeProto type;
+    FromString(typeStr, type);
     GetTypeStrToProtoMap()[typeStr] = type;
   }
   return &(GetTypeStrToProtoMap().find(typeStr)->first);
