@@ -92,20 +92,19 @@ std::mutex& DataTypeUtils::GetTypeStrLock() {
 }
 
 DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
-  auto typeStr = ToString(type_proto);
-  std::lock_guard<std::mutex> lock(GetTypeStrLock());
-  if (GetTypeStrToProtoMap().find(typeStr) == GetTypeStrToProtoMap().end()) {
-	// the <type_proto> is not used here because it may carry more than type information,
-	// say, shape, annotation which are not taken as part of type system.
-    GetTypeStrToProtoMap()[typeStr] = ToTypeProto(ToType(typeStr));
-  }
-  return &(GetTypeStrToProtoMap().find(typeStr)->first);
+  auto type_str = ToString(type_proto);
+  return ToType(type_str);
 }
 
 DataType DataTypeUtils::ToType(const std::string& type_str) {
-  TypeProto type;
-  FromString(type_str, type);
-  return ToType(type);
+  std::lock_guard<std::mutex> lock(GetTypeStrLock());
+  auto iter = GetTypeStrToProtoMap().find(type_str);
+  if (iter == GetTypeStrToProtoMap().end()) {
+    TypeProto type;
+    FromString(type_str, type);
+    GetTypeStrToProtoMap()[type_str] = type;
+  }
+  return &(iter->first);
 }
 
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
@@ -209,7 +208,7 @@ void DataTypeUtils::FromString(
     }
   } else
 #endif
-  if (s.LStrip("tensor")) {
+      if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
     TensorProto::DataType e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
