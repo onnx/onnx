@@ -62,7 +62,7 @@ struct FuseConsecutiveSqueezes final : public PredicateBasedPass {
     return node->kind() == kSqueeze &&
         node->input()->node()->kind() == kSqueeze;
   }
-  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+  bool runTransform(Node* n, Graph&, NodeDestroyType& destroy_current)
       override {
     auto orig_input = n->input();
     n->is_(

@@ -41,7 +41,7 @@ struct FuseConsecutiveTransposes final : public PredicateBasedPass {
         node->input()->node()->kind() == kTranspose;
   }
 
-  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+  bool runTransform(Node* n, Graph&, NodeDestroyType& destroy_current)
       override {
     auto origInput = n->input();
     if (!n->hasAttribute(kperm) && !origInput->node()->hasAttribute(kperm)) {
