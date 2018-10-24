@@ -15,9 +15,9 @@ import unittest
 
 class TestOptimizer(unittest.TestCase):
 
-    def _optimized(self, graph, opts):  # type: (GraphProto, Sequence[Text]) -> ModelProto
+    def _optimized(self, graph, opts, fixed_point=False):  # type: (GraphProto, Sequence[Text], bool) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test')
-        optimized_model = onnx.optimizer.optimize(orig_model, opts)
+        optimized_model = onnx.optimizer.optimize(orig_model, opts, fixed_point)
         checker.check_model(optimized_model)
         return optimized_model
 
@@ -768,11 +768,8 @@ class TestOptimizer(unittest.TestCase):
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (2, 3, 4))],
             [helper.make_tensor_value_info("A", TensorProto.FLOAT, (2, 4, 3))])
         vi = helper.make_tensor_value_info("Y", TensorProto.FLOAT, (3, 2, 4))
-
         graph.value_info.extend([vi])
-
         optimized_model = self._optimized(graph, ["nop"])
-
         assert list(optimized_model.graph.value_info) == [vi]
         assert len(list(optimized_model.graph.node)) == 3
 
@@ -900,6 +897,34 @@ class TestOptimizer(unittest.TestCase):
             np.testing.assert_almost_equal((B - mean) * f + b, new_b)
             np.testing.assert_almost_equal(
                 W * f[:, np.newaxis, np.newaxis, np.newaxis], new_W)
+
+    def _internal_test_deadend_elimination(self, fixed):  # type: (bool) -> None
+        softmax = helper.make_node("Softmax", ["X"], ["Y"], axis=2)
+        log = helper.make_node("Log", ["Y"], ["Z"])
+        exp = helper.make_node("Exp", ["Z"], ["Z1"])
+        exp1 = helper.make_node("Log", ["Z"], ["Z2"])
+        exp2 = helper.make_node("Sqrt", ["Z1"], ["Z3"])
+        graph = helper.make_graph(
+            [softmax, log, exp, exp1, exp2],
+            "test",
+            [helper.make_tensor_value_info(
+                "X", TensorProto.FLOAT, (5, 7, 11))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+        optimized_model = self._optimized(
+            graph, ["eliminate_deadend"], fixed)
+        assert len(optimized_model.graph.output) == 1
+        assert len(optimized_model.graph.node) == 2
+        assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+        assert optimized_model.graph.node[0].op_type == "Softmax"
+        assert optimized_model.graph.node[0].attribute[0].name == "axis"
+        assert optimized_model.graph.node[0].attribute[0].i == 2
+        assert optimized_model.graph.node[1].op_type == "Log"
+
+    def test_deadend_elimination_simple(self):  # type: () -> None
+        self._internal_test_deadend_elimination(False)
+
+    def test_deadend_elimination_simple_fixed(self):  # type: () -> None
+        self._internal_test_deadend_elimination(True)
 
 
 if __name__ == '__main__':
