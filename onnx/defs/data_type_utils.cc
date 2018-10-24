@@ -97,6 +97,8 @@ DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
   if (GetTypeStrToProtoMap().find(typeStr) == GetTypeStrToProtoMap().end()) {
     TypeProto type;
     FromString(typeStr, type);
+	// <type_proto> is not used in case it carries non-type related information,
+	// for example, shape information, annotation, etc.
     GetTypeStrToProtoMap()[typeStr] = type;
   }
   return &(GetTypeStrToProtoMap().find(typeStr)->first);
