@@ -5196,13 +5196,13 @@ node = onnx.helper.make_node(
     outputs=['y'],
     axis=1,
 )
-data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]])
-indices = np.array([[1, 3]])
-updates = np.array([[1.1, 2.1]])
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
 
-y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]])
+y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
 
-expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
+expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_with_axis')
 ```
 
@@ -5216,68 +5216,18 @@ node = onnx.helper.make_node(
     inputs=['data', 'indices', 'updates'],
     outputs=['y'],
 )
-data = np.zeros((3, 3))
-indices = np.array([[1, 0, 2], [0, 2, 1]])
-updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]])
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
 
 y = np.array([
     [2.0, 1.1, 0.0],
     [1.0, 0.0, 2.2],
     [0.0, 2.1, 1.2]
-])
+], dtype=np.float32)
 
-expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
+expect(node, inputs=[data, indices, updates], outputs=[y],
        name='test_scatter_without_axis')
-```
-
-</details>
-
-
-### Scatter
-There are 2 test cases, listed as following:
-<details>
-<summary>scatter_0</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Scatter',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-    axis=0,
-)
-data = np.zeros((3, 3))
-indices = np.array([[1, 0, 2], [0, 2, 1]])
-updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]])
-
-y = np.array([
-    [2.0, 1.1, 0.0],
-    [1.0, 0.0, 2.2],
-    [0.0, 2.1, 1.2]
-])
-
-expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
-       name='test_scatter_0')
-```
-
-</details>
-<details>
-<summary>scatter_1</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Scatter',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-    axis=1,
-)
-data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]])
-indices = np.array([[1, 3]])
-updates = np.array([[1.1, 2.1]])
-
-y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]])
-
-expect(node, inputs=[data, indices.astype(np.int64), updates], outputs=[y],
-       name='test_scatter_1')
 ```
 
 </details>
