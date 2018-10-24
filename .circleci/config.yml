@@ -46,7 +46,7 @@ linux_default: &linux_default
         set -e
         export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_ECR_READ_WRITE}
         export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_ECR_READ_WRITE}
-        sudo pip install awscli -qqq
+        sudo pip install awscli==1.16.35 -qqq
         eval $(aws ecr get-login --region us-east-1 --no-include-email)
 
         docker pull ${DOCKER_IMAGE}
@@ -71,7 +71,7 @@ linux_default: &linux_default
 jobs:
   py2-gcc7-ubuntu16.04:
     environment:
-      DOCKER_IMAGE: "308535385114.dkr.ecr.us-east-1.amazonaws.com/caffe2/py2-gcc7-ubuntu16.04:206"
+      DOCKER_IMAGE: "308535385114.dkr.ecr.us-east-1.amazonaws.com/caffe2/py2-gcc7-ubuntu16.04:213"
     <<: *linux_default
 
 workflows:

@@ -3,23 +3,43 @@
 
 #include "onnx/optimizer/optimize.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-// TODO: Remove this static reference
-static Optimizer _optimizer;
+GlobalPassRegistry Optimizer::passes;
+
+Optimizer::Optimizer(
+    const std::vector<std::string>& names,
+    const bool fixed_point) {
+  if (fixed_point) {
+    this->pass_manager =
+        std::shared_ptr<FixedPointPassManager>(new FixedPointPassManager());
+  } else {
+    this->pass_manager =
+        std::shared_ptr<GeneralPassManager>(new GeneralPassManager());
+  }
+  for (const auto& name : names) {
+    auto pass = passes.find(name);
+    this->pass_manager->add(pass);
+  }
+}
+Optimizer::~Optimizer() {}
 
 ModelProto Optimize(
     const ModelProto& mp_in,
     const std::vector<std::string>& names) {
-  return _optimizer.optimize(mp_in, names);
+  Optimizer current_opt(names, false);
+  return current_opt.optimize(mp_in);
 }
-
+ModelProto OptimizeFixed(
+    const ModelProto& mp_in,
+    const std::vector<std::string>& names) {
+  Optimizer current_opt(names, true);
+  return current_opt.optimize(mp_in);
+}
 const std::vector<std::string> GetAvailablePasses() {
-  std::vector<std::string> names;
-  for (const auto& pass : _optimizer.passes) {
-    names.push_back(pass.first);
-  }
-  return names;
+  return Optimizer::passes.GetAvailablePasses();
 }
 
-}} // namespace ONNX_NAMESPACE:optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE
