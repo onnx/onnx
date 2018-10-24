@@ -92,22 +92,20 @@ std::mutex& DataTypeUtils::GetTypeStrLock() {
 }
 
 DataType DataTypeUtils::ToType(const TypeProto& type_proto) {
-  auto type_str = ToString(type_proto);
-  return ToType(type_str);
+  auto typeStr = ToString(type_proto);
+  std::lock_guard<std::mutex> lock(GetTypeStrLock());
+  if (GetTypeStrToProtoMap().find(typeStr) == GetTypeStrToProtoMap().end()) {
+    TypeProto type;
+    FromString(typeStr, type);
+    GetTypeStrToProtoMap()[typeStr] = type;
+  }
+  return &(GetTypeStrToProtoMap().find(typeStr)->first);
 }
 
 DataType DataTypeUtils::ToType(const std::string& type_str) {
-  std::lock_guard<std::mutex> lock(GetTypeStrLock());
-  auto& map = GetTypeStrToProtoMap();
-  auto iter = map.find(type_str);
-  if (iter == GetTypeStrToProtoMap().end()) {
-    TypeProto type;
-    FromString(type_str, type);
-    auto result = map.insert({type_str, type});
-    return &(result.first->first);
-  } else {
-    return &(iter->first);
-  }
+  TypeProto type;
+  FromString(type_str, type);
+  return ToType(type);
 }
 
 const TypeProto& DataTypeUtils::ToTypeProto(const DataType& data_type) {
@@ -143,15 +141,18 @@ std::string DataTypeUtils::ToString(
     case TypeProto::ValueCase::kOpaqueType: {
       static const std::string empty;
       std::string result;
+      std::string param_str;
       const auto& op_type = type_proto.opaque_type();
+      const auto param_size = op_type.parameters_size();
+      for (int p = 0; p < param_size; ++p) {
+        const auto& param_proto = op_type.parameters(p);
+        param_str.append(ToString(param_proto, (p == 0) ? empty : ",", empty));
+      }
       result.append(left).append("opaque(");
-      if (op_type.has_domain() && !op_type.domain().empty()) {
-        result.append(op_type.domain()).append(",");
-      }
-      if (op_type.has_name() && !op_type.name().empty()) {
-        result.append(op_type.name());
-      }
-      result.append(")").append(right);
+      result.append(op_type.has_domain() ? op_type.domain() : empty)
+          .append(",");
+      result.append(op_type.has_name() ? op_type.name() : empty).append(",");
+      result.append("p(").append(param_str).append("))").append(right);
       return result;
     }
 #endif
@@ -194,19 +195,36 @@ void DataTypeUtils::FromString(
     return FromString(
         std::string(v.Data(), v.Size()),
         *type_proto.mutable_map_type()->mutable_value_type());
-  } else if (s.LStrip("opaque")) {
+  } else if (s.LStrip("opaque(")) {
+    // Possible to have an Opaque type w/o parameters
+    // so we make sure it exists
     auto* opaque_type = type_proto.mutable_opaque_type();
     s.ParensWhitespaceStrip();
-    if (!s.Empty()) {
-      size_t cm = s.Find(',');
-      if (cm != std::string::npos) {
-        if (cm > 0) {
-          opaque_type->mutable_domain()->assign(s.Data(), cm);
-        }
-        s.LStrip(cm + 1); // skip comma
+    // Check if we have domain which is positionally first
+    size_t cm = s.Find(',');
+    if (cm > 0) {
+      opaque_type->mutable_domain()->assign(s.Data(), cm);
+    }
+    s.LStrip(cm + 1);
+    cm = s.Find(',');
+    if (cm > 0) {
+      opaque_type->mutable_name()->assign(s.Data(), cm);
+    }
+    s.LStrip(cm + 1);
+    if (s.LStrip("p(")) {
+      s.ParensWhitespaceStrip();
+      auto param_size = s.Find(',');
+      while (param_size != std::string::npos) {
+        // Means there are multiple params
+        std::string param(s.Data(), param_size);
+        FromString(param, *opaque_type->add_parameters());
+        s.LStrip(param_size);
+        s.LStrip(",");
+        param_size = s.Find(',');
       }
       if (!s.Empty()) {
-        opaque_type->mutable_name()->assign(s.Data(), s.Size());
+        std::string param(s.Data(), s.Size());
+        FromString(param, *opaque_type->add_parameters());
       }
     }
   } else
@@ -225,7 +243,7 @@ void DataTypeUtils::FromString(
     // Call mutable_shape() to initialize a shape with no dimension.
     t->mutable_shape();
   }
-} // namespace Utils
+}
 
 bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
