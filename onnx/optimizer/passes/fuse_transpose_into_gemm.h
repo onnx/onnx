@@ -20,7 +20,7 @@ struct FuseTransposeIntoGemm final : public PredicateBasedPass {
   bool patternMatchPredicate(Node* node) override {
     return node->kind() == kGemm;
   }
-  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+  bool runTransform(Node* n, Graph&, NodeDestroyType& destroy_current)
       override {
     const std::vector<int64_t> simple_trans_perm({1, 0});
     destroy_current = NodeDestroyType::DestroyZero;

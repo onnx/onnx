@@ -11,7 +11,7 @@ struct BatchNormalization_6_7 final : public Adapter {
     : Adapter("BatchNormalization", OpSetID(6), OpSetID(7)) {
     }
 
-  void adapt_batch_normalization_6_7(std::shared_ptr<Graph> graph, Node* node) const {
+  void adapt_batch_normalization_6_7(std::shared_ptr<Graph>, Node* node) const {
     if (node->hasAttribute(kis_test)) {
       ONNX_ASSERTM(node->i(kis_test) != 0,
           "ONNX currently only supports inference, not training.");
