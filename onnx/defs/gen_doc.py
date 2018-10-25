@@ -320,8 +320,8 @@ def main(args):  # type: (Type[Args]) -> None
             s = ""
             for function in function_list:
                 s += '## Version {} of domain {}\n'.format(version, domain_display_name)
-                name_with_ver = '{}-{}'.format(domain_prefix +
-                                               fn_name, function.since_version)
+                name_with_ver = '{}-{}'.format(domain_prefix
+                                               + fn_name, function.since_version)
                 s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
                 available_versions = [func.since_version for func in all_functions[function.name]]
                 s += display_function(function, available_versions, domain_prefix)
