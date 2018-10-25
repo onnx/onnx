@@ -29,7 +29,6 @@ struct FuseConsecutiveLogSoftmax final : public PredicateBasedPass {
       NodeDestroyType& destroy_current) override {
     Value* log_node_output = log_node->output();
     Node* softmax_node = log_node->inputs()[0]->node();
-    auto orig_input = log_node->input();
     Node* log_softmax_node = graph.create(kLogSoftmax, 1);
 
     // log_softmax_node construction
