@@ -8,14 +8,40 @@
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
+struct GraphInferenceContext {
+  const std::unordered_map<std::string, int> opset_imports;
+  const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
+  const IFunctionBuilderRegistry* func_registry =
+      &FunctionBuilderRegistry::OnnxInstance();
+};
+
+class GraphInfererImpl : public GraphInferencer {
+ public:
+  GraphInfererImpl(GraphProto& g, const GraphInferenceContext& context)
+      : g_{&g}, context_{&context} {}
+
+  std::vector<const TypeProto*> doInferencing(
+      const std::vector<const TypeProto*>& inferredInputTypes) override;
+
+ private:
+  GraphProto* g_;
+  const GraphInferenceContext* context_;
+};
+
 struct InferenceContextImpl : public InferenceContext {
   InferenceContextImpl(
-      const NodeProto& n,
+      NodeProto& n,
       const std::unordered_map<std::string, TypeProto*>& valueTypesByName,
       const std::unordered_map<std::string, const TensorProto*>&
-          inputDataByName) {
-    for (const auto& attr : n.attribute()) {
+          inputDataByName,
+      const GraphInferenceContext* graphInferenceContext = nullptr)
+      : graphInferenceContext_{graphInferenceContext} {
+    for (auto& attr : *n.mutable_attribute()) {
       attributesByName_[attr.name()] = &attr;
+      if (attr.has_g()) {
+        // need a mutable GraphProto to run inferencing on this attribute
+        graphProtoAttributesByName_[attr.name()] = attr.mutable_g();
+      }
     }
 
     for (const auto& input : n.input()) {
@@ -45,6 +71,7 @@ struct InferenceContextImpl : public InferenceContext {
       return iter->second;
     }
   }
+
   size_t getNumInputs() const override {
     return allInputTypes_.size();
   }
@@ -77,18 +104,46 @@ struct InferenceContextImpl : public InferenceContext {
     return &allOutputTypes_[index];
   }
 
-  std::vector<const TypeProto*> doGraphAttributeInferencing(
-      const std::string& attribute_name,
-      const std::vector<const TypeProto*>& input_types) override {
-    // Return an empty vector to indicate type/shape inferencing of the
-    // sub-graph represented by the GraphProto in attribute_name was skipped.
-    return {};
+  const GraphInferencer* getGraphAttributeInferer(
+      const std::string& attr_name) const override {
+    if (!graphInferenceContext_) {
+      fail_type_inference(
+          "GraphProto attribute inferencing is not enabled in this InferenceContextImpl instance.");
+    }
+
+    GraphInferencer* inferer = nullptr;
+
+    auto entry = graphAttributeInferers_.find(attr_name);
+    if (entry == graphAttributeInferers_.cend()) {
+      // create GraphInferencer instance
+      auto attrNameToGraphProto = graphProtoAttributesByName_.find(attr_name);
+      if (attrNameToGraphProto == graphProtoAttributesByName_.cend()) {
+        fail_type_inference(
+            "Attribute ", attr_name, " does not contain a graph.");
+      }
+
+      std::unique_ptr<GraphInferencer> new_inferer =
+          std::make_unique<GraphInfererImpl>(
+              *attrNameToGraphProto->second, *graphInferenceContext_);
+      inferer = new_inferer.get();
+      graphAttributeInferers_.insert({attr_name, std::move(new_inferer)});
+    } else {
+      inferer = entry->second.get();
+    }
+
+    return inferer;
   }
 
   std::vector<const TensorProto*> allInputData_;
   std::unordered_map<std::string, const AttributeProto*> attributesByName_;
+  std::unordered_map<std::string, GraphProto*> graphProtoAttributesByName_;
   std::vector<const TypeProto*> allInputTypes_;
   std::vector<TypeProto> allOutputTypes_;
+  const GraphInferenceContext* graphInferenceContext_;
+
+  // mutable as internal cache of GraphInferencer instances
+  mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>>
+      graphAttributeInferers_;
 };
 
 void checkShapesAndTypes(

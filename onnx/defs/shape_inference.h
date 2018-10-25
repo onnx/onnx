@@ -6,6 +6,13 @@
 
 namespace ONNX_NAMESPACE {
 
+class GraphInferencer {
+  // Perform inferencing on the graph contained in GraphInferencer.
+  // Returns the graph output types post-inferencing.
+  virtual std::vector<const TypeProto*> doInferencing(
+      const std::vector<const TypeProto*>& inputTypes) = 0;
+};
+
 // Exception class used for handling errors in type and shape inference
 
 class InferenceError final : public std::runtime_error {
@@ -45,21 +52,8 @@ struct InferenceContext {
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
-
-  // Allow the IR level to run type/shape inferencing for a sub-graph found in a
-  // GraphProto attribute of the current Node.
-  // Provides the attribute name that contains the GraphProto, and the
-  // type/shape information for the sub-graph inputs. The sub-graph input
-  // TypeProto values are post-inferencing at the ONNX level.
-  // The implementer should return the output type/shape information for each
-  // output from the sub-graph, after running type/shape inferencing on the
-  // nodes in the sub-graph.
-  // Returning an empty vector signifies that type/shape
-  // inferencing for the sub-graph was skipped.
-  virtual std::vector<const TypeProto*> doGraphAttributeInferencing(
-      const std::string& attribute_name,
-      const std::vector<const TypeProto*>& input_types) = 0;
-
+  virtual const GraphInferencer* getGraphAttributeInferer(
+      const std::string& attribute_name) const = 0;
   virtual ~InferenceContext() {}
 };
 
