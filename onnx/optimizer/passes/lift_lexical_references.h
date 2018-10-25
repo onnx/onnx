@@ -1,9 +1,10 @@
 #pragma once
 
-#include "onnx/optimizer/passes/optimize_pass.h"
 #include <set>
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
 // Lift lexically-scoped references within control operators to be inputs of the
 // ops themselves. This transformation yields a graph that does not conform to
@@ -34,7 +35,8 @@ namespace ONNX_NAMESPACE { namespace optimization {
 //   %Y = Identity(%X)
 //   %trip_count = Constant[value = <Scalar Tensor [10]>]()
 //   %condition = Constant[value = <Scalar Tensor [1]>]()
-//   %Y2, %Y3 = Loop[__control_inputs = ['X', 'Y'], body = <graph body_graph>](%trip_count, %condition, %)
+//   %Y2, %Y3 = Loop[__control_inputs = ['X', 'Y'], body = <graph
+//   body_graph>](%trip_count, %condition, %)
 //                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 //   return %Y, %Y2
 // }
@@ -54,8 +56,8 @@ namespace ONNX_NAMESPACE { namespace optimization {
 //      -> a set of unresolved reference strings:
 //    unresolved_references = {}
 //
-//    symbol_table_stack.push(new symbol table containing inputs for this sub-graph)
-//    for each node in the graph:
+//    symbol_table_stack.push(new symbol table containing inputs for this
+//    sub-graph) for each node in the graph:
 //      for input in node.inputs:
 //        if input is not in this frame:
 //          unresolved_references.insert(input)
@@ -74,9 +76,18 @@ namespace ONNX_NAMESPACE { namespace optimization {
 //        for output in node.outputs:
 //          symbol_table_stack.top()[output] = Value*
 //    return unresolved_references
-struct LiftLexicalReferences : public OptimizePass {
+struct LiftLexicalReferences : public FullGraphBasedPass {
   explicit LiftLexicalReferences()
-    : OptimizePass("lift_lexical_references", API_TYPE::IR) {
+      : FullGraphBasedPass(
+            PassType::Seperate,
+            PassEfficiency::Complete,
+            PassOptimizationType::Memory) {}
+
+  std::string getPassName() const override {
+    return "lift_lexical_references";
+  }
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::Empty;
   }
 
   using ValueTable = std::unordered_map<std::string, Value*>;
@@ -84,8 +95,7 @@ struct LiftLexicalReferences : public OptimizePass {
   // Environment stack, please to store value table and
   // controlled inputs
   struct Environment {
-    Environment(std::shared_ptr<Environment> next = nullptr)
-        : next(next) {}
+    Environment(std::shared_ptr<Environment> next = nullptr) : next(next) {}
 
     std::shared_ptr<Environment> next;
 
@@ -103,7 +113,7 @@ struct LiftLexicalReferences : public OptimizePass {
 
     Value* findInAnyFrame(const std::string& name) {
       for (auto runner = this; runner; runner = runner->next.get()) {
-        if(auto r = runner->findInThisFrame(name)) {
+        if (auto r = runner->findInThisFrame(name)) {
           return r;
         }
       }
@@ -114,9 +124,8 @@ struct LiftLexicalReferences : public OptimizePass {
       value_table[name] = value;
     }
 
-
-    private:
-      ValueTable value_table;
+   private:
+    ValueTable value_table;
   };
 
   std::shared_ptr<Environment> environment_stack;
@@ -135,17 +144,17 @@ struct LiftLexicalReferences : public OptimizePass {
   std::set<std::string> liftReferences(Graph* g) {
     std::set<std::string> unresolved_references;
     pushFrame();
-    for (auto &inp : g->inputs()) {
+    for (auto& inp : g->inputs()) {
       environment_stack->setVar(inp->uniqueName(), inp);
     }
 
-    for (auto *n : g->nodes()) {
+    for (auto* n : g->nodes()) {
       // Skip optional input/captured value node.
       if (n->kind() == ONNX_NAMESPACE::kUndefined ||
-            n->kind() == ONNX_NAMESPACE::kCaptured) {
+          n->kind() == ONNX_NAMESPACE::kCaptured) {
         continue;
       }
-      for (auto *inp : n->inputs()) {
+      for (auto* inp : n->inputs()) {
         // Empty string is 0-input variadic argument. Skip that one.
         if (!inp->uniqueName().empty() &&
             !environment_stack->findInThisFrame(inp->uniqueName())) {
@@ -155,10 +164,10 @@ struct LiftLexicalReferences : public OptimizePass {
 
       std::set<std::string> local_unresolved;
 
-      //if a graph body output has already already been emitted outside of the
-      //subgraph scope, then it must be added as an input to the subgraph
-      auto add_subgraph_outputs = [&](Graph * body_graph) {
-        for (auto *out: body_graph->outputs()) {
+      // if a graph body output has already already been emitted outside of the
+      // subgraph scope, then it must be added as an input to the subgraph
+      auto add_subgraph_outputs = [&](Graph* body_graph) {
+        for (auto* out : body_graph->outputs()) {
           if (environment_stack->findInAnyFrame(out->uniqueName())) {
             local_unresolved.insert(out->uniqueName());
           }
@@ -166,22 +175,22 @@ struct LiftLexicalReferences : public OptimizePass {
       };
 
       if (n->kind() == ONNX_NAMESPACE::kLoop) {
-        auto *body_graph = n->g(ONNX_NAMESPACE::kbody).get();
+        auto* body_graph = n->g(ONNX_NAMESPACE::kbody).get();
         local_unresolved = liftReferences(body_graph);
         add_subgraph_outputs(body_graph);
       } else if (n->kind() == ONNX_NAMESPACE::kIf) {
-        auto *then_graph = n->g(ONNX_NAMESPACE::kthen_branch).get();
+        auto* then_graph = n->g(ONNX_NAMESPACE::kthen_branch).get();
         add_subgraph_outputs(then_graph);
         auto then_unresolved = liftReferences(then_graph);
         local_unresolved.insert(then_unresolved.begin(), then_unresolved.end());
-        auto *else_graph = n->g(ONNX_NAMESPACE::kelse_branch).get();
+        auto* else_graph = n->g(ONNX_NAMESPACE::kelse_branch).get();
         add_subgraph_outputs(else_graph);
         auto else_unresolved = liftReferences(else_graph);
         local_unresolved.insert(else_unresolved.begin(), else_unresolved.end());
       }
 
       std::vector<std::string> control_inputs;
-      for (auto &unresolved : local_unresolved) {
+      for (auto& unresolved : local_unresolved) {
         if (environment_stack->findInAnyFrame(unresolved)) {
           control_inputs.push_back(unresolved);
         } else {
@@ -195,7 +204,7 @@ struct LiftLexicalReferences : public OptimizePass {
         n->ss_(ONNX_NAMESPACE::k__control_inputs, std::move(control_inputs));
       }
 
-      for (auto *out : n->outputs()) {
+      for (auto* out : n->outputs()) {
         environment_stack->setVar(out->uniqueName(), out);
       }
     }
@@ -204,8 +213,7 @@ struct LiftLexicalReferences : public OptimizePass {
     return unresolved_references;
   }
 
-
-  void optimize(Graph& graph) override {
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
     auto unresolved = liftReferences(&graph);
 
     if (unresolved.size()) {
@@ -215,7 +223,9 @@ struct LiftLexicalReferences : public OptimizePass {
       }
       throw std::runtime_error(errmsg);
     }
+    return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE

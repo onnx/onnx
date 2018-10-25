@@ -294,6 +294,178 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(int64)"},
             "Constrain index tensor to int64"));
 
+void maxUnpoolShapeInference(InferenceContext& ctx) {
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+
+  // we need at least two inputs to have a shape for this inference.
+  if (!hasNInputShapes(ctx, 2)) {
+    fail_shape_inference("MaxUnpool op must have atleast 2 inputs.");
+  }
+
+  auto input_shape = ctx.getInputType(0)->tensor_type().shape();
+  if (input_shape.dim_size() < 2) {
+    fail_shape_inference("Input tensor X must have atleast 2 dimensions.");
+  }
+
+  // first dim is the batch axis and the next is the number of channels.
+  size_t n_input_dims = static_cast<size_t>(input_shape.dim_size() - 2);
+
+  std::vector<int64_t> pads;
+  if (getRepeatedAttribute(ctx, "pads", pads)) {
+    if (pads.size() != n_input_dims * 2) {
+      fail_shape_inference("Attribute pads has incorrect size");
+    }
+  } else {
+    pads.assign(n_input_dims * 2, 0);
+  }
+
+  std::vector<int64_t> strides;
+  if (getRepeatedAttribute(ctx, "strides", strides)) {
+    if (strides.size() != n_input_dims) {
+      fail_shape_inference("Attribute strides has incorrect size");
+    }
+  } else {
+    strides.assign(n_input_dims, 1);
+  }
+
+  std::vector<int64_t> kernel_shape;
+  if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
+    if (kernel_shape.size() != n_input_dims) {
+      fail_shape_inference("Attribute kernel_shape has incorrect size");
+    }
+  } else {
+    fail_shape_inference("Attribute kernel_shape must be specified");
+  }
+
+  if (hasNInputShapes(ctx, 3)) {
+    // If the third input, output_size, is specified then use that instead 
+    // of inferring shape from inputs.
+    auto output_shape = ctx.getInputType(2)->tensor_type().shape();
+    if (output_shape.dim_size() != input_shape.dim_size()) {
+        fail_shape_inference("output_shape must be the same size as the shape of input tensor X.");
+    }
+    else
+      return; // output_shape is specified as input. Actual shape will be detrermined at runtime.
+  }
+
+  auto final_output_shape =
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+
+  *final_output_shape->add_dim() = input_shape.dim(0);
+  *final_output_shape->add_dim() =
+      ctx.getInputType(1)->tensor_type().shape().dim(
+          1); // channels should be the second dim of second input.
+
+  int kernel_shape_size = static_cast<int>(kernel_shape.size());
+  for (int i = 0; i < kernel_shape_size; ++i) {
+    auto newdim = final_output_shape->add_dim();
+    if (!input_shape.dim(2 + i).has_dim_value()) {
+      continue;
+    }
+
+    int64_t newdim_value =
+        strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
+    newdim_value += kernel_shape[i];
+    newdim_value -= pads[i];
+    newdim_value -= pads[i + kernel_shape_size];
+
+    // add in the initial position
+    newdim->set_dim_value(newdim_value);
+  }
+}
+
+static const char* MaxUnpool_ver9_doc = R"DOC(
+MaxUnpool essentially computes the partial inverse of the MaxPool op.
+ The input information to this op is typically the the output information from a MaxPool op. The first
+ input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
+ from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+ to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
+ The third (optional) input is a tensor that specifies the output size of the unpooling operation.
+
+MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
+ values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
+ the result of an unpooling operation should give back the original input to the unpooling op.
+
+MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
+ The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
+ known/predictable size.
+
+In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
+ which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+ pooling op that the unpooling op is trying to invert.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MaxUnpool,
+    9,
+    OpSchema()
+        .SetDoc(MaxUnpool_ver9_doc)
+        .Attr(
+            "kernel_shape",
+            "The size of the kernel along each axis.",
+            AttributeProto::INTS)
+        .Attr(
+            "strides",
+            "Stride along each axis.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "pads",
+            pads_doc,
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Input(
+            0,
+            "X",
+            "Input data tensor that has to be unpooled. "
+            "This tensor is typically the first output of the MaxPool op."
+            "Dimensions for image case are (N x C x H x W), "
+            "where N is the batch size, C is the number of "
+            "channels, and H and W are the height and the "
+            "width of the data. For non-image case, the "
+            "dimensions are in the form of "
+            "(N x C x D1 x D2 ... Dn), where N is the batch "
+            "size. Optionally, if dimension denotation is "
+            "in effect, the operation expects the input "
+            "data tensor to arrive with the dimension denotation "
+            "of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].",
+            "T1")
+        .Input(
+            1,
+            "I",
+            "Input data tensor containing the indices corresponding to "
+            "elements in the first input tensor X."
+            "This tensor is typically the second output of the MaxPool op."
+            "Dimensions must be the same as input tensor X. "
+            "The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, "
+            "assuming row-major storage. Also, the linear indices should not consider padding. "
+            "So the values in indices are in the range [0, N x C x D1 x ... x Dn).",
+            "T2")
+        .Input(
+            2,
+            "output_shape",
+            "The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, "
+            "'pads' values are ignored.",
+            "T2",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "output",
+            "Output data tensor that contains the result of the unpooling.",
+            "T1")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int64)"},
+            "Constrain index tensor to int64")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          maxUnpoolShapeInference(ctx);
+        }));
 } // namespace ONNX_NAMESPACE
 
 namespace ONNX_NAMESPACE {

@@ -3,29 +3,32 @@
 
 #pragma once
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-struct EliminateIdentity final : public OptimizePass {
+struct EliminateIdentity final : public PredicateBasedPass {
   explicit EliminateIdentity()
-    : OptimizePass("eliminate_identity", API_TYPE::IR) {
+      : PredicateBasedPass(
+            PassType::Nop,
+            PassEfficiency::Complete,
+            PassOptimizationType::Compute) {}
+
+  std::string getPassName() const override {
+    return "eliminate_identity";
   }
 
-  void eliminate_identity(Graph& graph) {
-    for (auto it = graph.begin(); it != graph.end(); ++it) {
-      auto* n = *it;
-      DescendOnGraphAttributes(n, [this](Graph& g){eliminate_identity(g);});
-      if (n->kind() == kIdentity) {
-        n->output()->replaceAllUsesWith(n->input());
-        it.destroyCurrent();
-      }
-    }
+  bool patternMatchPredicate(Node* node) override {
+    return node->kind() == kIdentity;
   }
-
-  void optimize(Graph& graph) override {
-    eliminate_identity(graph);
+  bool runTransform(Node* node, Graph&, NodeDestroyType& destroy_current)
+      override {
+    node->output()->replaceAllUsesWith(node->input());
+    destroy_current = NodeDestroyType::DestroyOne;
+    return true;
   }
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE
