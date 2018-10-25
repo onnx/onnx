@@ -93,7 +93,7 @@ Common::Status FunctionBuilderRegistry::GetFunctions(
   }
 
 #ifndef __ONNX_DISABLE_STATIC_REGISTRATION
-  static bool functionBuilder_registerer =
+  static bool ONNX_UNUSED functionBuilder_registerer =
       (RegisterOnnxFunctionBuilder(), false);
 #endif
 
@@ -166,7 +166,6 @@ void FunctionExpandHelper(
   }
   std::string node_name =
       node.has_name() ? node.name() : func.name() + uniq_prefix;
-  int version = (int)func.since_version();
   std::unordered_map<std::string, std::string> input_names_map;
   std::unordered_map<std::string, std::string> output_names_map;
   std::unordered_map<std::string, AttributeProto> attr_map;

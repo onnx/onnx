@@ -101,10 +101,10 @@ class Pass {
   virtual PassAnalysisType getPassAnalysisType() const = 0;
   virtual std::string getPassName() const = 0;
 
-  virtual bool initializePass(Graph& graph) {
+  virtual bool initializePass(Graph&) {
     return false;
   }
-  virtual bool finalizePass(Graph& graph) {
+  virtual bool finalizePass(Graph&) {
     return false;
   }
   virtual std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) = 0;
