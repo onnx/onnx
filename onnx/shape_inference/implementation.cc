@@ -281,9 +281,10 @@ void InferShapeForFunctionNode(
   }
 }
 
-std::vector<const TypeProto*> GraphInfererImpl::doInferencing(
-    const std::vector<const TypeProto*>& inferredGraphInputs) {
-  int numInputs = int(inferredGraphInputs.size());
+std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
+    const std::vector<const TypeProto*>& inputTypes,
+    const std::vector<const TensorProto*>& inputData) {
+  int numInputs = int(inputTypes.size());
 
   if (g_->input_size() != numInputs)
     fail_shape_inference(
@@ -294,7 +295,7 @@ std::vector<const TypeProto*> GraphInfererImpl::doInferencing(
         " were provided");
 
   for (int i = 0, end = numInputs; i < end; ++i) {
-    const TypeProto* inferredInput = inferredGraphInputs[i];
+    const TypeProto* inferredInput = inputTypes[i];
     TypeProto* graphInput = g_->mutable_input(i)->mutable_type();
 
     if (!graphInput->has_tensor_type()) {
@@ -318,6 +319,10 @@ std::vector<const TypeProto*> GraphInfererImpl::doInferencing(
 
     mergeShapesAndTypes(inferredType, graphInput->mutable_tensor_type());
   }
+
+  // future: pass inputData into InferShapes either directly, or indirectly by
+  // updating initializers that match subgraph inputs.
+  (void)inputData;
 
   InferShapes(
       g_,
