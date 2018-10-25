@@ -111,7 +111,13 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
-    output_types = graphInferencer->doInferencing(subgraph_input_types);
+    std::vector<const TensorProto*> input_data;
+    for (size_t i = 1; i < num_inputs; ++i) {
+      input_data.push_back(ctx.getInputData(i));
+    }
+
+    output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
   }
 
   // if empty(), assume inferencing was skipped
