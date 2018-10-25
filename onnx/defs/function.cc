@@ -93,11 +93,8 @@ Common::Status FunctionBuilderRegistry::GetFunctions(
   }
 
 #ifndef __ONNX_DISABLE_STATIC_REGISTRATION
-  static bool registred = false;
-  if (!registred) {
-    RegisterOnnxFunctionBuilder();
-    registred = true;
-  }
+  static bool ONNX_UNUSED functionBuilder_registerer =
+      (RegisterOnnxFunctionBuilder(), false);
 #endif
 
   auto function_name_map_iter = domain_functions_map.find(domain);
