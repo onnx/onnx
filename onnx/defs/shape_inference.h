@@ -11,7 +11,8 @@ class GraphInferencer {
   // Perform inferencing on the graph contained in GraphInferencer.
   // Returns the graph output types post-inferencing.
   virtual std::vector<const TypeProto*> doInferencing(
-      const std::vector<const TypeProto*>& inputTypes) = 0;
+      const std::vector<const TypeProto*>& inputTypes,
+      const std::vector<const TensorProto*>& inputData) = 0;
 };
 
 // Exception class used for handling errors in type and shape inference
