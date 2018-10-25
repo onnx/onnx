@@ -281,7 +281,7 @@ void InferShapeForFunctionNode(
   }
 }
 
-std::vector<const TypeProto*> GraphInfererImpl::doInferencing(
+std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
     const std::vector<const TypeProto*>& inferredGraphInputs) {
   int numInputs = int(inferredGraphInputs.size());
 

@@ -107,8 +107,12 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   }
 
   // Run inferencing on the subgraph
-  std::vector<const TypeProto*> output_types =
-      ctx.doGraphAttributeInferencing("body", subgraph_input_types);
+  std::vector<const TypeProto*> output_types;
+
+  GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
+  if (graphInferencer) {
+    output_types = graphInferencer->doInferencing(subgraph_input_types);
+  }
 
   // if empty(), assume inferencing was skipped
   if (!output_types.empty()) {

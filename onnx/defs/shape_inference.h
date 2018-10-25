@@ -7,6 +7,7 @@
 namespace ONNX_NAMESPACE {
 
 class GraphInferencer {
+ public:
   // Perform inferencing on the graph contained in GraphInferencer.
   // Returns the graph output types post-inferencing.
   virtual std::vector<const TypeProto*> doInferencing(
@@ -52,8 +53,8 @@ struct InferenceContext {
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
-  virtual const GraphInferencer* getGraphAttributeInferer(
-      const std::string& attribute_name) const = 0;
+  virtual GraphInferencer* getGraphAttributeInferencer(
+      const std::string& attribute_name) = 0;
   virtual ~InferenceContext() {}
 };
 

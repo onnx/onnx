@@ -22,9 +22,9 @@ struct GraphInferenceContext {
   const IFunctionBuilderRegistry* func_registry;
 };
 
-class GraphInfererImpl : public GraphInferencer {
+class GraphInferencerImpl : public GraphInferencer {
  public:
-  GraphInfererImpl(GraphProto& g, const GraphInferenceContext& context)
+  GraphInferencerImpl(GraphProto& g, const GraphInferenceContext& context)
       : g_{&g}, context_{&context} {}
 
   std::vector<const TypeProto*> doInferencing(
@@ -111,17 +111,17 @@ struct InferenceContextImpl : public InferenceContext {
     return &allOutputTypes_[index];
   }
 
-  const GraphInferencer* getGraphAttributeInferer(
-      const std::string& attr_name) const override {
+  GraphInferencer* getGraphAttributeInferencer(
+      const std::string& attr_name) override {
     if (!graphInferenceContext_) {
       fail_type_inference(
           "GraphProto attribute inferencing is not enabled in this InferenceContextImpl instance.");
     }
 
-    GraphInferencer* inferer = nullptr;
+    GraphInferencer* inferencer = nullptr;
 
-    auto entry = graphAttributeInferers_.find(attr_name);
-    if (entry == graphAttributeInferers_.cend()) {
+    auto entry = graphAttributeInferencers_.find(attr_name);
+    if (entry == graphAttributeInferencers_.cend()) {
       // create GraphInferencer instance
       auto attrNameToGraphProto = graphProtoAttributesByName_.find(attr_name);
       if (attrNameToGraphProto == graphProtoAttributesByName_.cend()) {
@@ -129,16 +129,16 @@ struct InferenceContextImpl : public InferenceContext {
             "Attribute ", attr_name, " does not contain a graph.");
       }
 
-      std::unique_ptr<GraphInferencer> new_inferer{new GraphInfererImpl(
+      std::unique_ptr<GraphInferencer> new_inferencer{new GraphInferencerImpl(
           *attrNameToGraphProto->second, *graphInferenceContext_)};
 
-      inferer = new_inferer.get();
-      graphAttributeInferers_.emplace(attr_name, std::move(new_inferer));
+      inferencer = new_inferencer.get();
+      graphAttributeInferencers_.emplace(attr_name, std::move(new_inferencer));
     } else {
-      inferer = entry->second.get();
+      inferencer = entry->second.get();
     }
 
-    return inferer;
+    return inferencer;
   }
 
   std::vector<const TensorProto*> allInputData_;
@@ -150,7 +150,7 @@ struct InferenceContextImpl : public InferenceContext {
 
   // mutable as internal cache of GraphInferencer instances
   mutable std::unordered_map<std::string, std::unique_ptr<GraphInferencer>>
-      graphAttributeInferers_;
+      graphAttributeInferencers_;
 };
 
 void checkShapesAndTypes(
