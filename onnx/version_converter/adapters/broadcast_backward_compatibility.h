@@ -11,7 +11,7 @@ class BroadcastBackwardCompatibility final : public Adapter {
     explicit BroadcastBackwardCompatibility(const std::string& op_name, const OpSetID&
       initial, const OpSetID& target): Adapter(op_name, initial, target) {}
 
-    void adapt_broadcast_backward_compatibility(std::shared_ptr<Graph> graph, Node* node) const {
+    void adapt_broadcast_backward_compatibility(std::shared_ptr<Graph>, Node* node) const {
       // Verify that broadcasts are allowed in limited spec of opset version 6
       // Multidirectional broadcasting, as defined in Broadcasting.md
       // MathDocGenerator provides differences

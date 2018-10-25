@@ -394,7 +394,7 @@ void check_graph(
 void check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex) {
+    const LexicalScopeContext& /*parent_lex*/) {
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 

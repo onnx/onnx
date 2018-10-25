@@ -29,7 +29,7 @@ struct EliminateNopPad final : public PredicateBasedPass {
     return (node->kind() == kPad && node->hasAttribute(kpads)) &&
         is_nop_pad(node->is(kpads));
   }
-  bool runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current)
+  bool runTransform(Node* node, Graph&, NodeDestroyType& destroy_current)
       override {
     node->output()->replaceAllUsesWith(node->input());
     destroy_current = NodeDestroyType::DestroyOne;
