@@ -32,15 +32,24 @@ struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
     }
     if (monotone_node_axis_kind.find(node->kind()) !=
         monotone_node_axis_kind.end()) {
-      return axis == node->i(kaxis);
+      if (node->hasAttribute(kaxis)) {
+        return axis == node->i(kaxis);
+      }
     }
     return false;
   }
 
   bool patternMatchPredicate(Node* node) override {
-    return node->kind() == kArgMax && node->inputs().size() == 1 &&
-        satisfies_monotone_condition(node->i(kaxis), node->input()->node());
+    if (node->kind() == kArgMax) {
+      if (node->hasAttribute(kaxis)) {
+        auto node_axis = node->i(kaxis);
+        return node->inputs().size() == 1 &&
+            satisfies_monotone_condition(node_axis, node->input()->node());
+      }
+    }
+    return false;
   }
+
   bool runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current)
       override {
     Node* monotone_node = node->input()->node();
@@ -52,5 +61,6 @@ struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
     return false;
   }
 };
+
 } // namespace optimization
 } // namespace ONNX_NAMESPACE

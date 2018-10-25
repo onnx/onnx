@@ -191,4 +191,5 @@ struct hash<ONNX_NAMESPACE::Symbol> {
     return std::hash<uint32_t>()(static_cast<uint32_t>(s));
   }
 };
+
 } // namespace std
