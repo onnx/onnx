@@ -9315,6 +9315,7 @@ for test_name, shape in test_cases.items():
   
   
   *Sample usage: Encoding RNN using a Scan*
+  
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
