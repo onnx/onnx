@@ -283,7 +283,7 @@ void InferShapeForFunctionNode(
 
 std::vector<const TypeProto*> GraphInfererImpl::doInferencing(
     const std::vector<const TypeProto*>& inferredGraphInputs) {
-  size_t numInputs = inferredGraphInputs.size();
+  int numInputs = int(inferredGraphInputs.size());
 
   if (g_->input_size() != numInputs)
     fail_shape_inference(
@@ -293,7 +293,7 @@ std::vector<const TypeProto*> GraphInfererImpl::doInferencing(
         numInputs,
         " were provided");
 
-  for (int i = 0, end = int(numInputs); i < end; ++i) {
+  for (int i = 0, end = numInputs; i < end; ++i) {
     const TypeProto* inferredInput = inferredGraphInputs[i];
     TypeProto* graphInput = g_->mutable_input(i)->mutable_type();
 

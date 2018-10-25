@@ -10,10 +10,17 @@ namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
 struct GraphInferenceContext {
+  GraphInferenceContext(
+      const std::unordered_map<std::string, int> opset_imports_in,
+      const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
+      const IFunctionBuilderRegistry* func_registry_in =
+          &FunctionBuilderRegistry::OnnxInstance())
+      : opset_imports{opset_imports_in},
+        schema_registry{schema_registry_in},
+        func_registry{func_registry_in} {}
   const std::unordered_map<std::string, int> opset_imports;
-  const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance();
-  const IFunctionBuilderRegistry* func_registry =
-      &FunctionBuilderRegistry::OnnxInstance();
+  const ISchemaRegistry* schema_registry;
+  const IFunctionBuilderRegistry* func_registry;
 };
 
 class GraphInfererImpl : public GraphInferencer {
@@ -123,9 +130,9 @@ struct InferenceContextImpl : public InferenceContext {
             "Attribute ", attr_name, " does not contain a graph.");
       }
 
-      std::unique_ptr<GraphInferencer> new_inferer =
-          make_unique<GraphInfererImpl>(
-              *attrNameToGraphProto->second, *graphInferenceContext_);
+      std::unique_ptr<GraphInferencer> new_inferer{new GraphInfererImpl(
+          *attrNameToGraphProto->second, *graphInferenceContext_)};
+
       inferer = new_inferer.get();
       graphAttributeInferers_.insert({attr_name, std::move(new_inferer)});
     } else {
