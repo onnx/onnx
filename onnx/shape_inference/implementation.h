@@ -5,6 +5,8 @@
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
+#include <memory>
+
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 
