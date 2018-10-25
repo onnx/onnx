@@ -1,11 +1,10 @@
 #pragma once
 
+#include "onnx/common/stl_backports.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
-
-#include <memory>
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
@@ -125,7 +124,7 @@ struct InferenceContextImpl : public InferenceContext {
       }
 
       std::unique_ptr<GraphInferencer> new_inferer =
-          std::make_unique<GraphInfererImpl>(
+          make_unique<GraphInfererImpl>(
               *attrNameToGraphProto->second, *graphInferenceContext_);
       inferer = new_inferer.get();
       graphAttributeInferers_.insert({attr_name, std::move(new_inferer)});
