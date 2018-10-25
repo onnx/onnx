@@ -1,6 +1,5 @@
 #pragma once
 
-#include "onnx/common/stl_backports.h"
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/proto_utils.h"
@@ -134,7 +133,7 @@ struct InferenceContextImpl : public InferenceContext {
           *attrNameToGraphProto->second, *graphInferenceContext_)};
 
       inferer = new_inferer.get();
-      graphAttributeInferers_.insert({attr_name, std::move(new_inferer)});
+      graphAttributeInferers_.emplace(attr_name, std::move(new_inferer));
     } else {
       inferer = entry->second.get();
     }
