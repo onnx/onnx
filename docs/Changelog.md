@@ -8827,7 +8827,7 @@ This version of the operator has been available since version 9 of the default O
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T2</dt>
+<dt><tt>output</tt> : T1</dt>
 <dd>Output data tensor that contains the result of the unpooling.</dd>
 </dl>
 
