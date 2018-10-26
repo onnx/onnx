@@ -31,7 +31,7 @@ struct EliminateNopTranspose final : public PredicateBasedPass {
         is_nop_transpose(node->is(kperm));
   }
 
-  bool runTransform(Node* node, Graph& graph, NodeDestroyType& destroy_current)
+  bool runTransform(Node* node, Graph&, NodeDestroyType& destroy_current)
       override {
     node->output()->replaceAllUsesWith(node->input());
     destroy_current = NodeDestroyType::DestroyOne;

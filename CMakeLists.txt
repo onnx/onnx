@@ -470,8 +470,9 @@ if(MSVC)
 elseif(APPLE)
 
 else()
+  target_compile_options(onnx PRIVATE -Wall -Wextra)
   if(${ONNX_WERROR})
-    target_compile_options(onnx PRIVATE -Werror=sign-compare -Werror=conversion)
+    target_compile_options(onnx PRIVATE -Werror)
   endif()
 endif()
 

@@ -11,7 +11,7 @@ class MaxPool_8_7 final : public Adapter {
     explicit MaxPool_8_7()
       : Adapter("MaxPool", OpSetID(8), OpSetID(7)) {}
 
-    void adapt_maxpool_8_7(std::shared_ptr<Graph> graph, Node* node) const {
+    void adapt_maxpool_8_7(std::shared_ptr<Graph>, Node* node) const {
       const ArrayRef<Value*>& outputs = node->outputs();
       ONNX_ASSERTM(outputs.size() != 2,
           "Opset version 7 of MaxPool cannot include Indices output");

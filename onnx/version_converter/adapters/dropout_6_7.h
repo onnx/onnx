@@ -10,7 +10,7 @@ class Dropout_6_7 final : public Adapter {
   public:
     explicit Dropout_6_7(): Adapter("Dropout", OpSetID(6), OpSetID(7)) {}
 
-    void adapt_dropout_6_7(std::shared_ptr<Graph> graph, Node* node) const {
+    void adapt_dropout_6_7(std::shared_ptr<Graph>, Node* node) const {
       if (node->hasAttribute(kis_test)) {
         ONNX_ASSERTM(node->i(kis_test) == 1, "Training is not supported with Dropout Op");
         node->removeAttribute(kis_test);

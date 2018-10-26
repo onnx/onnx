@@ -9,7 +9,7 @@ GTEST_API_ int main(int argc, char** argv) {
   argc--;
   std::string target_dir = argv[argc];
   auto testcases = ONNX_NAMESPACE::testing::LoadAllTestCases(target_dir);
-  GetTestCases() = testcases;
+  ONNX_NAMESPACE::testing::GetTestCases() = testcases;
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
