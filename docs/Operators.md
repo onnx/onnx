@@ -11081,15 +11081,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>mode</tt> : string (default is nearest)</dt>
 <dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
-<dt><tt>scales</tt> : list of floats (required)</dt>
-<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>
 
 #### Inputs
@@ -11097,6 +11097,8 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>N-D tensor</dd>
+<dt><tt>scales</tt> : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>
 
 #### Outputs
@@ -11110,7 +11112,7 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 </dl>
 
 
@@ -11122,9 +11124,8 @@ This version of the operator has been available since version 7 of the default O
 ```python
 node = onnx.helper.make_node(
     'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
+    inputs=['X', 'scales'],
+    outputs=['Y'],
     mode='nearest',
 )
 
@@ -11133,6 +11134,8 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
     [1, 1, 1, 2, 2, 2],
@@ -11140,7 +11143,7 @@ output = np.array([[[
     [3, 3, 3, 4, 4, 4],
 ]]], dtype=np.float32)
 
-expect(node, inputs=[data], outputs=[output],
+expect(node, inputs=[data, scales], outputs=[output],
        name='test_upsample_nearest')
 ```
 
