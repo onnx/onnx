@@ -8,6 +8,7 @@
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_deadend.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
+#include "onnx/optimizer/passes/eliminate_nop_monotone_argmax.h"
 #include "onnx/optimizer/passes/eliminate_nop_pad.h"
 #include "onnx/optimizer/passes/eliminate_nop_transpose.h"
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
@@ -38,6 +39,7 @@ struct GlobalPassRegistry {
     registerPass<NopEmptyPass>();
     registerPass<EliminateDeadEnd>();
     registerPass<EliminateIdentity>();
+    registerPass<EliminateNopMonotoneArgmax>();
     registerPass<EliminateNopPad>();
     registerPass<EliminateNopTranspose>();
     registerPass<EliminateUnusedInitializer>();
