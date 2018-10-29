@@ -28,6 +28,7 @@ namespace ONNX_NAMESPACE {
   _(Concat)                       \
   _(Softmax)                      \
   _(LogSoftmax)                   \
+  _(Dropout)                      \
   _(Tanh)                         \
   _(mul)                          \
   _(neg)                          \
@@ -75,6 +76,7 @@ namespace ONNX_NAMESPACE {
   _(dilation)                     \
   _(broadcast)                    \
   _(axis)                         \
+  _(ratio)                        \
   _(size)                         \
   _(dim)                          \
   _(perm)                         \
