@@ -625,7 +625,6 @@ class TestOptimizer(unittest.TestCase):
             [helper.make_tensor_value_info("B", TensorProto.FLOAT, (32, 16))]
         )
         optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
-        print(helper.make_model(graph, producer_name='onnx-test'))
 
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Gemm"
