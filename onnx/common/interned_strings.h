@@ -25,6 +25,7 @@ namespace ONNX_NAMESPACE {
   _(Pow)                          \
   _(Sigmoid)                      \
   _(ArgMax)                       \
+  _(Concat)                       \
   _(Softmax)                      \
   _(LogSoftmax)                   \
   _(Dropout)                      \
