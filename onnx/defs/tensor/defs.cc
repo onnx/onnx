@@ -686,20 +686,33 @@ ONNX_OPERATOR_SET_SCHEMA(
           if (!hasNInputShapes(ctx, 2)) {
             return;
           }
-
-          int r = ctx.getInputType(0)->tensor_type().shape().dim_size();
-          int q = ctx.getInputType(1)->tensor_type().shape().dim_size();
-
+          const TensorShapeProto& data_shape = ctx.getInputType(0)->tensor_type().shape();
+          const TensorShapeProto& indices_shape = ctx.getInputType(1)->tensor_type().shape();
+          int r = data_shape.dim_size();
+          if (r < 1) {
+            fail_shape_inference("data tensor must have rank >= 1");
+          }
+          int q = indices_shape.dim_size();
+          int axis = static_cast<int>(getAttribute(ctx, "axis", 0));
+          if (axis < -r || axis >= r) {
+            fail_shape_inference("axis must be in [-r, r-1]");
+          }
+          if (axis < 0) {
+            axis += r;
+          }
           int out_rank = q + r - 1;
 
           if (out_rank == 0) {
             ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
           }
           for (int i = 0; i < out_rank; ++i) {
-            ctx.getOutputType(0)
+            *ctx.getOutputType(0)
                 ->mutable_tensor_type()
                 ->mutable_shape()
-                ->add_dim();
+                ->add_dim() =
+                (i < axis) ? data_shape.dim(i) :                             // i < axis < r
+                (i >= axis && i < axis + q) ? indices_shape.dim(i - axis) :  // i - axis < q
+                data_shape.dim(i - q + 1);                                   // i < out_rank < q + r - 1
           }
         }));
 

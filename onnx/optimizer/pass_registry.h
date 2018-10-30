@@ -7,6 +7,7 @@
 #include "onnx/common/ir_pb_converter.h"
 #include "onnx/common/stl_backports.h"
 #include "onnx/optimizer/passes/eliminate_deadend.h"
+#include "onnx/optimizer/passes/eliminate_nop_dropout.h"
 #include "onnx/optimizer/passes/eliminate_identity.h"
 #include "onnx/optimizer/passes/eliminate_nop_monotone_argmax.h"
 #include "onnx/optimizer/passes/eliminate_nop_pad.h"
@@ -15,6 +16,7 @@
 #include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
 #include "onnx/optimizer/passes/fuse_bn_into_conv.h"
+#include "onnx/optimizer/passes/fuse_consecutive_concats.h"
 #include "onnx/optimizer/passes/fuse_consecutive_log_softmax.h"
 #include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
@@ -38,6 +40,7 @@ struct GlobalPassRegistry {
     // Register the optimization passes to the optimizer.
     registerPass<NopEmptyPass>();
     registerPass<EliminateDeadEnd>();
+    registerPass<EliminateNopDropout>();
     registerPass<EliminateIdentity>();
     registerPass<EliminateNopMonotoneArgmax>();
     registerPass<EliminateNopPad>();
@@ -46,6 +49,7 @@ struct GlobalPassRegistry {
     registerPass<ExtractConstantToInitializer>();
     registerPass<FuseAddBiasIntoConv>();
     registerPass<FuseBNIntoConv>();
+    registerPass<FuseConsecutiveConcats>();
     registerPass<FuseConsecutiveLogSoftmax>();
     registerPass<FuseConsecutiveSqueezes>();
     registerPass<FuseConsecutiveTransposes>();
