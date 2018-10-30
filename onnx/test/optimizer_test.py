@@ -682,9 +682,7 @@ class TestOptimizer(unittest.TestCase):
         )
         optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
 
-        assert len(list(optimized_model.graph.node)) == 2
-        assert optimized_model.graph.node[0].op_type == 'MatMul'
-        assert optimized_model.graph.node[1].op_type == 'Add'
+        assert optimized_model.graph == graph
 
     def test_fuse_matmul_add_bias_into_gemm_multiple_use_no_fuse(self):  # type: () -> None
         matmul = helper.make_node("MatMul", ["X", "Y"], ["Z"])
@@ -701,10 +699,7 @@ class TestOptimizer(unittest.TestCase):
         )
         optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
 
-        assert len(list(optimized_model.graph.node)) == 3
-        assert optimized_model.graph.node[0].op_type == 'MatMul'
-        assert optimized_model.graph.node[1].op_type == 'Add'
-        assert optimized_model.graph.node[2].op_type == 'Identity'
+        assert optimized_model.graph == graph
 
     def test_fuse_matmul_add_bias_into_gemm_bias_shape_no_fuse(self):  # type: () -> None
         matmul = helper.make_node("MatMul", ["X", "Y"], ["Z"])
@@ -719,9 +714,7 @@ class TestOptimizer(unittest.TestCase):
         )
         optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
 
-        assert len(list(optimized_model.graph.node)) == 2
-        assert optimized_model.graph.node[0].op_type == 'MatMul'
-        assert optimized_model.graph.node[1].op_type == 'Add'
+        assert optimized_model.graph == graph
 
     def test_fuse_consecutive_squeezes(self):  # type: () -> None
         nodes = [helper.make_node("Squeeze", ["X"], ["Y"], axes=[0, 4, 5]),
