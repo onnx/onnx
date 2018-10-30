@@ -30,8 +30,7 @@ struct FuseMatMulAddBiasIntoGemm final : public PredicateBasedPass {
   }
   bool patternMatchPredicate(Node* node) override {
     return node->kind() == kAdd &&
-        node->inputs()[0]->node()->kind() == kMatMul &&
-        node->inputs()[0]->node()->inputs().size() == 2;
+        node->inputs()[0]->node()->kind() == kMatMul;
   }
   bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
       override {
