@@ -6,6 +6,14 @@
 
 namespace ONNX_NAMESPACE {
 
+class GraphInferencer {
+  // Perform inferencing on the graph contained in GraphInferencer.
+  // Returns the graph output types post-inferencing.
+  virtual std::vector<const TypeProto*> doInferencing(
+      const std::vector<const TypeProto*>& inputTypes,
+      const std::vector<const TensorProto*>& inputData) = 0;
+};
+
 // Exception class used for handling errors in type and shape inference
 
 class InferenceError final : public std::runtime_error {
@@ -45,6 +53,8 @@ struct InferenceContext {
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
+  virtual GraphInferencer* getGraphAttributeInferencer(
+      const std::string& attribute_name) = 0;
   virtual ~InferenceContext() {}
 };
 
@@ -395,13 +405,13 @@ inline void multidirectionalBroadcastShapeInference(
 }
 
 inline void bidirectionalBroadcastShapeInference(
-	const TensorShapeProto& shapeL,
-	const TensorShapeProto& shapeR,
-	TensorShapeProto& resultShape) {
-	std::vector<const TensorShapeProto*> shapes;
-	shapes.push_back(&shapeL);
-	shapes.push_back(&shapeR);
-	multidirectionalBroadcastShapeInference(shapes, resultShape);
+    const TensorShapeProto& shapeL,
+    const TensorShapeProto& shapeR,
+    TensorShapeProto& resultShape) {
+  std::vector<const TensorShapeProto*> shapes;
+  shapes.push_back(&shapeL);
+  shapes.push_back(&shapeR);
+  multidirectionalBroadcastShapeInference(shapes, resultShape);
 }
 
 } // namespace ONNX_NAMESPACE
