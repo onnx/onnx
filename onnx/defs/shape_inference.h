@@ -7,6 +7,7 @@
 namespace ONNX_NAMESPACE {
 
 class GraphInferencer {
+ public:
   // Perform inferencing on the graph contained in GraphInferencer.
   // Returns the graph output types post-inferencing.
   virtual std::vector<const TypeProto*> doInferencing(
@@ -177,14 +178,14 @@ inline void propagateElemTypeFromInputToOutput(
   }
 }
 
-inline bool hasInputShape(InferenceContext& ctx, int n) {
+inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
       ctx.getInputType(n)->has_tensor_type() &&
       ctx.getInputType(n)->tensor_type().has_shape();
 }
 
-inline bool hasNInputShapes(InferenceContext& ctx, int n) {
-  for (int i = 0; i < n; i++) {
+inline bool hasNInputShapes(InferenceContext& ctx, size_t n) {
+  for (size_t i = 0; i < n; i++) {
     if (!hasInputShape(ctx, i)) {
       return false;
     }
@@ -412,6 +413,81 @@ inline void bidirectionalBroadcastShapeInference(
   shapes.push_back(&shapeL);
   shapes.push_back(&shapeR);
   multidirectionalBroadcastShapeInference(shapes, resultShape);
+}
+
+/*
+Merge the shape information from two TypeProto_Tensor instances.
+Values are merged into target from source.
+If target has no shape information, copy from source.
+If source has no shape information, ignore source.
+If both have shape information:
+ - merge each TensorShapeProto_Dimension separately.
+ - Prefer values over params. If both have values, values must match.
+ - Prefer target param over source param if mismatched.
+Fail if there are mismatches in number of dimensions or dimension values.
+*/
+inline void mergeInShapeInfo(
+    const TypeProto_Tensor& source,
+    TypeProto_Tensor& target) {
+  bool source_has_shape = source.has_shape();
+  bool target_has_shape = target.has_shape();
+
+  if (target_has_shape) {
+    if (source_has_shape) {
+      // merge with existing info.
+      const auto& source_shape = source.shape();
+      auto* mutable_target_shape = target.mutable_shape();
+      auto num_source_dims = source_shape.dim_size();
+      auto num_target_dims = mutable_target_shape->dim_size();
+
+      if (num_source_dims != num_target_dims) {
+        fail_shape_inference(
+            "Mismatch between number of source and target dimensions. Source=",
+            num_source_dims,
+            " Target=",
+            num_target_dims);
+      }
+
+      auto& source_dims = source_shape.dim();
+      auto* target_dims = mutable_target_shape->mutable_dim();
+
+      for (int i = 0, end = source_dims.size(); i < end; ++i) {
+        auto& source_dim = source_dims.Get(i);
+        auto& target_dim = *target_dims->Mutable(i);
+
+        // if source has value, merge into target
+        // else if target has value, preserve it
+        // else merge params
+        if (source_dim.has_dim_value()) {
+          auto source_value = source_dim.dim_value();
+          if (target_dim.has_dim_value()) {
+            auto target_value = target_dim.dim_value();
+            if (target_value != source_value) {
+              fail_shape_inference(
+                  "Can't merge shape info. "
+                  "Both source and target dimension have values but they differ. Source=",
+                  source_value,
+                  " Target=",
+                  target_value,
+                  " Dimension=",
+                  i);
+            }
+          } else {
+            target_dim.set_dim_value(source_value);
+          }
+        } else if (target_dim.has_dim_value()) {
+          // if target has a value we preserve it so do nothing
+        } else if (target_dim.has_dim_param()) {
+          // prefer target param over source
+        } else if (source_dim.has_dim_param()) {
+          target_dim.set_dim_param(source_dim.dim_param());
+        }
+      }
+    }
+  } else if (source_has_shape) {
+    // copy to target
+    (*target.mutable_shape()) = source.shape();
+  }
 }
 
 } // namespace ONNX_NAMESPACE
