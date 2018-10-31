@@ -216,9 +216,11 @@ class TestShapeInference(unittest.TestCase):
 
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.INT32, (2, 4, 3, 5))],
-            [make_node("Upsample", ['x'], ['y'], scales=[1.0, 1.1, 1.3, 1.9])],
-            [])
+            [('x', TensorProto.INT32, (2, 4, 3, 5)),
+             ('scales', TensorProto.FLOAT, (4,))],
+            [make_node("Upsample", ['x', 'scales'], ['y'])],
+            [],
+            initializer=[make_tensor('scales', TensorProto.FLOAT, (4,), (1.0, 1.1, 1.3, 1.9))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT32, (2, 4, 3, 9))])
 
     def test_shape(self):  # type: () -> None
@@ -237,11 +239,19 @@ class TestShapeInference(unittest.TestCase):
 
     def test_gather(self):  # type: () -> None
         graph = self._make_graph(
-            [('x', TensorProto.FLOAT, (3, 2)),
+            [('x', TensorProto.FLOAT, (4, 3)),
              ('i', TensorProto.INT64, (2,))],
             [make_node("Gather", ['x', 'i'], ['y'])],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (None, None))])  # type: ignore
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (2, 3))])  # type: ignore
+
+    def test_gather_axis1(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (4, 3, 5)),
+             ('i', TensorProto.INT64, (1, 2))],
+            [make_node("Gather", ['x', 'i'], ['y'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (4, 1, 2, 5))])  # type: ignore
 
     def test_gather_into_scalar(self):  # type: () -> None
         graph = self._make_graph(

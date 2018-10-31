@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 94/102 (92.16%, 5 generators excluded) common operators.
+Node tests have covered 95/103 (92.23%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -961,6 +961,75 @@ x = np.array([-1, 0, 1]).astype(np.float32)
 y = np.array([-1, 0, 1]).astype(np.float32)
 expect(node, inputs=[x], outputs=[y],
        name='test_clip_default_inbounds')
+```
+
+</details>
+
+
+### Compress
+There are 3 test cases, listed as following:
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
 ```
 
 </details>
@@ -5722,9 +5791,8 @@ There are 1 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
+    inputs=['X', 'scales'],
+    outputs=['Y'],
     mode='nearest',
 )
 
@@ -5733,6 +5801,8 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
     [1, 1, 1, 2, 2, 2],
@@ -5740,7 +5810,7 @@ output = np.array([[[
     [3, 3, 3, 4, 4, 4],
 ]]], dtype=np.float32)
 
-expect(node, inputs=[data], outputs=[output],
+expect(node, inputs=[data, scales], outputs=[output],
        name='test_upsample_nearest')
 ```
 

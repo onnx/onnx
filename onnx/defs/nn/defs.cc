@@ -452,7 +452,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "output",
             "Output data tensor that contains the result of the unpooling.",
-            "T2")
+            "T1")
         .TypeConstraint(
             "T1",
             {"tensor(float16)",

@@ -346,6 +346,46 @@ class TestOptimizer(unittest.TestCase):
         self.assertEqual(
             [n.op_type for n in optimized_model.graph.node], ['Conv', 'Add'])
 
+    def test_fuse_concats(self):  # type: () -> None
+        nodes = [helper.make_node("Concat", ["A", "B", "C"], ["X"], axis=0),
+                 helper.make_node("Concat", ["D", "E", "F"], ["Y"], axis=0),
+                 helper.make_node("Concat", ["X", "Y"], ["Z"], axis=0)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (2, 3, 4)),
+            helper.make_tensor_value_info("B", TensorProto.FLOAT, (4, 3, 4)),
+            helper.make_tensor_value_info("C", TensorProto.FLOAT, (2, 3, 4)),
+            helper.make_tensor_value_info("D", TensorProto.FLOAT, (4, 3, 4)),
+            helper.make_tensor_value_info("E", TensorProto.FLOAT, (2, 3, 4)),
+            helper.make_tensor_value_info("F", TensorProto.FLOAT, (4, 3, 4))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (18, 3, 4))])
+        optimized_model = self._optimized(
+            graph, ["fuse_consecutive_concats"], True)  # two passes are needed to simplify the graph to its simplest state.
+
+        assert len(optimized_model.graph.node) == 1
+        assert len(optimized_model.graph.node[0].input) == 6
+        assert optimized_model.graph.node[0].op_type == "Concat"
+
+    def test_fuse_concats_different_axis(self):  # type: () -> None
+        nodes = [helper.make_node("Concat", ["A", "B", "C"], ["X"], axis=0),
+                 helper.make_node("Concat", ["D", "E", "F"], ["Y"], axis=1),
+                 helper.make_node("Concat", ["X", "Y"], ["Z"], axis=2)]
+        graph = helper.make_graph(
+            nodes,
+            "test",
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (2, 3, 4)),
+            helper.make_tensor_value_info("B", TensorProto.FLOAT, (4, 3, 4)),
+            helper.make_tensor_value_info("C", TensorProto.FLOAT, (2, 3, 4)),
+            helper.make_tensor_value_info("D", TensorProto.FLOAT, (4, 3, 4)),
+            helper.make_tensor_value_info("E", TensorProto.FLOAT, (4, 3, 4)),
+            helper.make_tensor_value_info("F", TensorProto.FLOAT, (4, 3, 4))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (18, 3, 4))])
+        optimized_model = self._optimized(
+            graph, ["fuse_consecutive_concats"], True)  # two passes are needed to simplify the graph to its simplest state.
+
+        assert optimized_model.graph == graph
+
     def test_fuse_transpose(self):  # type: () -> None
         nodes = [helper.make_node("Transpose", ["X"], ["Y"], perm=[1, 0, 2]),
                  helper.make_node("Transpose", ["Y"], ["Z"], perm=[2, 0, 1]),
@@ -925,6 +965,160 @@ class TestOptimizer(unittest.TestCase):
 
     def test_deadend_elimination_simple_fixed(self):  # type: () -> None
         self._internal_test_deadend_elimination(True)
+
+    def test_eliminate_nop_monotone_argmax_basic_no_node_axis(self):  # type: () -> None
+        for node_name in ["Log", "Exp", "Sqrt"]:
+            for axis in range(3):
+                node = helper.make_node(node_name, ["X"], ["Y"])
+                argmax = helper.make_node("ArgMax", ["Y"], ["Z"], axis=axis)
+                graph = helper.make_graph(
+                    [node, argmax],
+                    "test",
+                    [helper.make_tensor_value_info(
+                        "X", TensorProto.FLOAT, (5, 7, 11))],
+                    [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+                optimized_model = self._optimized(
+                    graph, ["eliminate_nop_monotone_argmax"])
+                assert len(optimized_model.graph.output) == 1
+                assert len(optimized_model.graph.node) == 1
+                assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                assert optimized_model.graph.node[0].op_type == "ArgMax"
+                assert optimized_model.graph.node[0].attribute[0].name == "axis"
+                assert optimized_model.graph.node[0].attribute[0].i == axis
+
+    def test_eliminate_nop_monotone_argmax_basic_with_node_axis(self):  # type: () -> None
+        for node_name in ["Softmax", "LogSoftmax"]:
+            for axis_n in range(3):
+                for axis_max in range(3):
+                    node = helper.make_node(node_name, ["X"], ["Y"], axis=axis_n)
+                    argmax = helper.make_node("ArgMax", ["Y"], ["Z"], axis=axis_max)
+                    graph = helper.make_graph(
+                        [node, argmax],
+                        "test",
+                        [helper.make_tensor_value_info(
+                            "X", TensorProto.FLOAT, (5, 7, 11))],
+                        [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+                    optimized_model = self._optimized(
+                        graph, ["eliminate_nop_monotone_argmax"])
+                    if axis_max == axis_n:
+                        assert len(optimized_model.graph.output) == 1
+                        assert len(optimized_model.graph.node) == 1
+                        assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                        assert optimized_model.graph.node[0].op_type == "ArgMax"
+                        assert optimized_model.graph.node[0].attribute[0].name == "axis"
+                        assert optimized_model.graph.node[0].attribute[0].i == axis_max
+                    else:
+                        assert optimized_model.graph == graph
+
+    def test_eliminate_nop_monotone_argmax_multiple_out(self):  # type: () -> None
+        for node_name in ["Log", "Exp", "Sqrt"]:
+            for axis in range(3):
+                node = helper.make_node(node_name, ["X"], ["Y"])
+                node2 = helper.make_node(node_name, ["Y"], ["Z1"])
+                argmax = helper.make_node("ArgMax", ["Y"], ["Z"], axis=axis)
+                graph = helper.make_graph(
+                    [node, node2, argmax],
+                    "test",
+                    [helper.make_tensor_value_info(
+                        "X", TensorProto.FLOAT, (5, 7, 11))],
+                    [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11)),
+                     helper.make_tensor_value_info("Z1", TensorProto.FLOAT, (5, 7, 11))])
+                optimized_model = self._optimized(
+                    graph, ["eliminate_nop_monotone_argmax"])
+                assert optimized_model.graph == graph
+
+    def test_eliminate_nop_monotone_argmax_consecutive(self):  # type: () -> None
+        def _assertion(graph, optimized_model, axis_aligned, true_axis):  # type: (GraphProto, ModelProto, bool, int) -> None
+            if axis_aligned:
+                assert len(optimized_model.graph.output) == 1
+                assert len(optimized_model.graph.node) == 1
+                assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                assert optimized_model.graph.node[0].op_type == "ArgMax"
+                assert optimized_model.graph.node[0].attribute[0].name == "axis"
+                assert optimized_model.graph.node[0].attribute[0].i == true_axis
+            else:
+                assert optimized_model.graph == graph
+        # no axis X no axis test
+        for node_name_0 in ["Log", "Exp", "Sqrt"]:
+            for node_name_1 in ["Log", "Exp", "Sqrt"]:
+                for axis in range(3):
+                    node = helper.make_node(node_name_0, ["X"], ["Y"])
+                    node2 = helper.make_node(node_name_1, ["Y"], ["Y1"])
+                    argmax = helper.make_node("ArgMax", ["Y1"], ["Z"], axis=axis)
+                    graph = helper.make_graph(
+                        [node, node2, argmax],
+                        "test",
+                        [helper.make_tensor_value_info(
+                            "X", TensorProto.FLOAT, (5, 7, 11))],
+                        [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+                    optimized_model = self._optimized(
+                        graph, ["eliminate_nop_monotone_argmax"], True)
+                    _assertion(graph, optimized_model, True, axis)
+        # no axis X axis test
+        for node_name_0 in ["Log", "Exp", "Sqrt"]:
+            for node_name_1 in ["Softmax", "LogSoftmax"]:
+                for axis_0 in range(3):
+                    for axis_1 in range(3):
+                        node = helper.make_node(node_name_0, ["X"], ["Y"])
+                        node2 = helper.make_node(node_name_1, ["Y"], ["Y1"], axis=axis_0)
+                        argmax = helper.make_node("ArgMax", ["Y1"], ["Z"], axis=axis_1)
+                        graph = helper.make_graph(
+                            [node, node2, argmax],
+                            "test",
+                            [helper.make_tensor_value_info(
+                                "X", TensorProto.FLOAT, (5, 7, 11))],
+                            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+                        optimized_model = self._optimized(
+                            graph, ["eliminate_nop_monotone_argmax"], True)
+                        _assertion(graph, optimized_model, axis_0 == axis_1, axis_1)
+        # axis X axis test
+        for node_name_0 in ["Softmax", "LogSoftmax"]:
+            for node_name_1 in ["Softmax", "LogSoftmax"]:
+                for axis_0 in range(3):
+                    for axis_1 in range(3):
+                        for axis_2 in range(3):
+                            node = helper.make_node(node_name_0, ["X"], ["Y"], axis=axis_0)
+                            node2 = helper.make_node(node_name_1, ["Y"], ["Y1"], axis=axis_1)
+                            argmax = helper.make_node("ArgMax", ["Y1"], ["Z"], axis=axis_2)
+                            graph = helper.make_graph(
+                                [node, node2, argmax],
+                                "test",
+                                [helper.make_tensor_value_info(
+                                    "X", TensorProto.FLOAT, (5, 7, 11))],
+                                [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7, 11))])
+                            optimized_model = self._optimized(
+                                graph, ["eliminate_nop_monotone_argmax"], True)
+                            if axis_0 == axis_1:  # we can reduce both of the monotonic ops
+                                _assertion(graph, optimized_model, axis_1 == axis_2, axis_2)
+                            elif axis_1 == axis_2:  # we can reduce one of the monotonic ops
+                                assert len(optimized_model.graph.output) == 1
+                                assert len(optimized_model.graph.node) == 2
+                                assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                                assert optimized_model.graph.node[-1].op_type == "ArgMax"
+                                assert optimized_model.graph.node[-1].attribute[0].name == "axis"
+                                assert optimized_model.graph.node[-1].attribute[0].i == axis_2
+                            else:  # we can't reduce anything
+                                assert optimized_model.graph == graph
+
+    def test_eliminate_nop_dropout(self):  # type: () -> None
+        for ratio in [0.0, 0.5]:
+            node = helper.make_node("Dropout", ["X"], ["Y"], ratio=ratio)
+            node1 = helper.make_node("Log", ["Y"], ["Z"])
+            graph = helper.make_graph(
+                [node, node1],
+                "test",
+                [helper.make_tensor_value_info(
+                    "X", TensorProto.FLOAT, (5, 7))],
+                [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 7))])
+            optimized_model = self._optimized(
+                graph, ["eliminate_nop_dropout"], False)
+
+            if ratio > 0.0:
+                assert optimized_model.graph == graph
+            else:
+                assert len(optimized_model.graph.output) == 1
+                assert len(optimized_model.graph.node) == 1
+                assert optimized_model.graph.node[0].op_type == "Log"
 
 
 if __name__ == '__main__':

@@ -20,6 +20,8 @@
 #define ONNXIFI_TESTDATA_EPS 1e-5
 #endif
 
+namespace ONNX_NAMESPACE {
+namespace testing {
 const float onnxifi_testdata_eps = ONNXIFI_TESTDATA_EPS;
 
 template <typename T>
@@ -32,12 +34,12 @@ class CompareOnnxifiData {
   }
 };
 
-class ONNXCppDriverTest
-    : public testing::TestWithParam<ONNX_NAMESPACE::testing::ResolvedTestCase> {
+class ONNXCppDriverTest : public ::testing::TestWithParam<
+                              ONNX_NAMESPACE::testing::ResolvedTestCase> {
  public:
   struct PrintToStringParamName {
     template <class T>
-    std::string operator()(const testing::TestParamInfo<T>& t) const {
+    std::string operator()(const ::testing::TestParamInfo<T>& t) const {
       auto test_case =
           static_cast<ONNX_NAMESPACE::testing::ResolvedTestCase>(t.param);
       /**
@@ -367,5 +369,7 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 INSTANTIATE_TEST_CASE_P(
     ONNXCppAllTest,
     ONNXCppDriverTest,
-    testing::ValuesIn(GetTestCases()),
+    ::testing::ValuesIn(GetTestCases()),
     ONNXCppDriverTest::PrintToStringParamName());
+} // namespace testing
+} // namespace ONNX_NAMESPACE
