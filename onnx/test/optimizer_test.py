@@ -1120,6 +1120,34 @@ class TestOptimizer(unittest.TestCase):
                 assert len(optimized_model.graph.node) == 1
                 assert optimized_model.graph.node[0].op_type == "Log"
 
+    def test_fuse_reduction_unsqueeze(self):  # type: () -> None
+        for reduction in ["ReduceL1", "ReduceL2", "ReduceLogSum",
+                          "ReduceLogSumExp", "ReduceMax", "ReduceMean",
+                          "ReduceMin", "ReduceProd", "ReduceSum", "ReduceSumSquare"]:
+            for axes1 in [[1], [1, 2]]:
+                for axes2 in [[1], [1, 2]]:
+                    for keepdim in [False, True]:
+                        node = helper.make_node(reduction, ["X"], ["Y"], axes=axes1, keepdims=keepdim)
+                        node1 = helper.make_node("Unsqueeze", ["Y"], ["Z"], axes=axes2)
+                        graph = helper.make_graph(
+                            [node, node1],
+                            "test",
+                            [helper.make_tensor_value_info(
+                                "X", TensorProto.FLOAT, (5, 7, 9))],
+                            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 9))])
+                        optimized_model = self._optimized(
+                            graph, ["fuse_consecutive_reduce_unsqueeze"], False)
+
+                        if keepdim or axes1 != axes2:
+                            assert optimized_model.graph == graph
+                        else:
+                            assert len(optimized_model.graph.output) == 1
+                            assert len(optimized_model.graph.node) == 1
+                            assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                            assert optimized_model.graph.node[-1].op_type == reduction
+                            assert optimized_model.graph.node[-1].attribute[0].name == "axes"
+                            assert optimized_model.graph.node[-1].attribute[0].ints == axes1
+
 
 if __name__ == '__main__':
     unittest.main()
