@@ -5,11 +5,14 @@
 
 // Before:
 //   Z = MatMul(X, Y)
-//   B = Z + A
+//   A = Z + Bias
 // After:
-//   B = Gemm(X, Y, A)
+//   A = Gemm(X, Y, Bias)
 //
-// the pass can handle the case when A is 1D tensor and A.dim[0] == Z.dim[1]
+// the pass can handle the case when:
+//   case 1: Bias is 1D tensor and Bias.dim[0] == Z.dim[1]
+//   case 2: Bias is 2D tensor and Bias.dim[0] == Z.dim[0] or 1
+//           and Bias.dim[1] = Z.dim[1]
 
 #include <numeric>
 
@@ -48,29 +51,40 @@ struct FuseMatMulAddBiasIntoGemm final : public PredicateBasedPass {
     if (orig_matmul->uses().size() > 1) {
       return false;
     }
-    auto bias_shape = orig_bias->sizes();
-    auto weight_shape = orig_matmul->node()->inputs()[1]->sizes();
-    int64_t M = -1;
-    // try to get feature M from weight_shape
-    if (static_cast<int64_t>(weight_shape.size()) == 2 &&
-        weight_shape[1].is_int) {
-      M = weight_shape[1].dim;
+    auto x_shape = orig_matmul->node()->inputs()[0]->sizes();
+    auto y_shape = orig_matmul->node()->inputs()[1]->sizes();
+    int64_t z_N = -1;
+    int64_t z_M = -1;
+    // try to get feature N from x_shape
+    if (static_cast<int64_t>(x_shape.size()) == 2 && x_shape[0].is_int) {
+      z_N = x_shape[0].dim;
+    } else {
+      return false;
+    }
+    // try to get feature M from y_shape
+    if (static_cast<int64_t>(y_shape.size()) == 2 && y_shape[1].is_int) {
+      z_M = y_shape[1].dim;
     } else {
       return false;
     }
     // check if bias_shape is compatible
-    int64_t num_el = 1;
-    for (int i = 0; i < static_cast<int64_t>(bias_shape.size()); ++i) {
-      if (bias_shape[i].is_int) {
-        num_el *= bias_shape[i].dim;
-      } else {
-        num_el = -1;
+    auto bias_shape = orig_bias->sizes();
+    auto bias_dim = static_cast<int64_t>(bias_shape.size());
+    int64_t bias_N = -1;
+    int64_t bias_M = -1;
+    if (bias_dim == 1 && bias_shape[0].is_int) {
+      bias_N = 1;
+      bias_M = bias_shape[0].dim;
+    } else if (bias_dim == 2 && bias_shape[0].is_int && bias_shape[1].is_int) {
+      bias_N = bias_shape[0].dim;
+      bias_M = bias_shape[1].dim;
+    } else {
         return false;
-      }
     }
-    if (num_el != M || bias_shape.back().dim != M) {
-      return false;
+    if (bias_N != z_N && bias_N != 1 || bias_M != z_M) {
+        return false;
     }
+    // proceed to fuse MatMul and Add into Gemm
     Node* gemm = graph.create(kGemm,
         orig_matmul->node()->inputs(),
         n->outputs().size());
