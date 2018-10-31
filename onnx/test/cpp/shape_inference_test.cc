@@ -1,9 +1,17 @@
 #include <iostream>
 #include "gtest/gtest.h"
-#include "onnx/onnx_pb.h"
+#include "onnx/defs/schema.h"
 #include "onnx/defs/shape_inference.h"
+#include "onnx/onnx_pb.h"
+
+#include "onnx/shape_inference/implementation.h"
+
+using namespace ONNX_NAMESPACE::shape_inference;
 
 namespace ONNX_NAMESPACE {
+// onnx/defs/controlflow/defs.cc
+void ScanInferenceFunction(InferenceContext& ctx);
+
 namespace Test {
 
 static void CreateDims(TypeProto_Tensor& proto, int num_dims) {
@@ -14,7 +22,9 @@ static void CreateDims(TypeProto_Tensor& proto, int num_dims) {
     mutable_shape->add_dim();
 }
 
-static void SetDimValues(TypeProto_Tensor& proto, const std::vector<int>& values) {
+static void SetDimValues(
+    TypeProto_Tensor& proto,
+    const std::vector<int>& values) {
   auto* mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
 
@@ -26,7 +36,9 @@ static void SetDimValues(TypeProto_Tensor& proto, const std::vector<int>& values
   }
 }
 
-static void SetDimParams(TypeProto_Tensor& proto, const std::vector<const std::string*>& values) {
+static void SetDimParams(
+    TypeProto_Tensor& proto,
+    const std::vector<const std::string*>& values) {
   auto mutable_shape = proto.mutable_shape();
   EXPECT_TRUE(mutable_shape->dim_size() == values.size());
 
@@ -138,8 +150,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim(0).dim_value() == 1 &&
-                shape.dim(1).dim_value() == 2);
+    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
   }
 
   // prefer value over param,
@@ -152,7 +163,8 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 
     CreateDims(target, 2);
     SetDimValues(target, {1, 0});
-    // replace second dim with a param. the value from the source should be preferred
+    // replace second dim with a param. the value from the source should be
+    // preferred
     const std::string param = "A";
     target.mutable_shape()->mutable_dim(1)->set_dim_param(param);
 
@@ -160,8 +172,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_CombineShapes) {
 
     Dump(target);
     auto& shape = target.shape();
-    EXPECT_TRUE(shape.dim(0).dim_value() == 1 &&
-                shape.dim(1).dim_value() == 2);
+    EXPECT_TRUE(shape.dim(0).dim_value() == 1 && shape.dim(1).dim_value() == 2);
   }
 }
 
@@ -177,7 +188,8 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
     CreateDims(target, 3);
     SetDimValues(target, {1, -1, 1});
 
-    EXPECT_THROW(mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
+    EXPECT_THROW(
+        mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
   }
 
   // mismatched dim values
@@ -191,7 +203,8 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
     CreateDims(target, 2);
     SetDimValues(target, {2, 1});
 
-    EXPECT_THROW(mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
+    EXPECT_THROW(
+        mergeInShapeInfo(source, target), ONNX_NAMESPACE::InferenceError);
   }
 
   // mismatched param value. prefer target
@@ -212,6 +225,157 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
     auto& shape = target.shape();
     EXPECT_TRUE(shape.dim(0).dim_param() == "B");
   }
+}
+
+// Check subgraph inferencing via GraphInferencer using a Scan node
+TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
+  auto* schemaRegistry = OpSchemaRegistry::Instance();
+  GraphProto subgraph;
+
+  // simple tensor without shape info
+  TypeProto simple_tensor_no_shape;
+  auto* tensor_type = simple_tensor_no_shape.mutable_tensor_type();
+  tensor_type->set_elem_type(TensorProto_DataType_FLOAT);
+
+  // simple tensor with shape info
+  TypeProto simple_tensor = simple_tensor_no_shape;
+  simple_tensor.mutable_tensor_type()
+      ->mutable_shape()
+      ->add_dim()
+      ->set_dim_value(2);
+
+  // setup simple graph that can be used with Scan containing two Identity
+  // nodes. one for the loop state variable. one for the scan output.
+  {
+    NodeProto loop_state_identity;
+    loop_state_identity.set_name("loop_state_identity");
+    loop_state_identity.set_domain(ONNX_DOMAIN);
+    loop_state_identity.set_op_type("Identity");
+    loop_state_identity.set_doc_string("loop state identity");
+    loop_state_identity.add_input("loop_state_in");
+    loop_state_identity.add_output("loop_state_out");
+
+    *subgraph.add_node() = loop_state_identity;
+
+    NodeProto scan_in_out_identity;
+    scan_in_out_identity.set_name("scan_in_out_identity");
+    scan_in_out_identity.set_domain(ONNX_DOMAIN);
+    scan_in_out_identity.set_op_type("Identity");
+    scan_in_out_identity.set_doc_string("scan identity");
+    scan_in_out_identity.add_input("scan_in");
+    scan_in_out_identity.add_output("scan_out");
+    *subgraph.add_node() = scan_in_out_identity;
+
+    ValueInfoProto loop_state_in;
+    loop_state_in.set_name("loop_state_in");
+    *loop_state_in.mutable_type() = simple_tensor;
+    *subgraph.add_input() = loop_state_in;
+
+    ValueInfoProto scan_in;
+    scan_in.set_name("scan_in");
+    *scan_in.mutable_type() = simple_tensor;
+    *subgraph.add_input() = scan_in;
+
+    ValueInfoProto loop_state_out = loop_state_in;
+    loop_state_out.set_name("loop_state_out");
+    *loop_state_out.mutable_type() = simple_tensor_no_shape;
+    *subgraph.add_output() = loop_state_out;
+
+    ValueInfoProto scan_state_out = scan_in;
+    scan_state_out.set_name("scan_out");
+    *scan_state_out.mutable_type() = simple_tensor_no_shape;
+    *subgraph.add_output() = scan_state_out;
+  }
+
+  std::unordered_map<std::string, int> opset_imports;
+  opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
+
+  GraphInferenceContext graphInfCtx(opset_imports);
+  GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
+
+  // loop_state_in and scan_in are the two inputs.
+  // order in subgraphInputTypes matches their order as graph inputs.
+  std::vector<const TypeProto*> subgraphInputTypes = {&simple_tensor,
+                                                      &simple_tensor};
+
+  std::vector<const TensorProto*> subgraphInputData = {};
+  auto output =
+      graphInferencer.doInferencing(subgraphInputTypes, subgraphInputData);
+
+  // check the subgraph outputs had their shape inferred when we called
+  // doInferencing directly
+  EXPECT_TRUE(output.size() == 2);
+
+  auto checkType = [](const TypeProto& type, const TypeProto_Tensor& expect) {
+    auto checkDims = [](const TensorShapeProto& l, const TensorShapeProto& r) {
+      EXPECT_TRUE(l.dim_size() == r.dim_size());
+
+      for (int i = 0, end = l.dim_size(); i < end; ++i) {
+        // if (l.dim().Get(i).dim_value() != r.dim().Get(i).dim_value())
+        //  break;
+        EXPECT_TRUE(l.dim().Get(i).dim_value() == r.dim().Get(i).dim_value());
+      }
+    };
+
+    EXPECT_TRUE(type.has_tensor_type());
+    EXPECT_TRUE(type.tensor_type().elem_type() == expect.elem_type());
+    checkDims(type.tensor_type().shape(), expect.shape());
+  };
+
+  checkType(*output[0], simple_tensor.tensor_type());
+  checkType(*output[1], simple_tensor.tensor_type());
+
+  // setup Scan node to test subgraph inferencing works as expected when called
+  // from the operators type/shape inferencing function
+  NodeProto scan;
+  {
+    AttributeProto num_scan_inputs;
+    num_scan_inputs.set_name("num_scan_inputs");
+    num_scan_inputs.set_i(1);
+
+    AttributeProto body;
+    body.set_name("body");
+    *body.mutable_g() = subgraph;
+
+    *scan.add_attribute() = num_scan_inputs;
+    *scan.add_attribute() = body;
+
+    scan.set_name("Scan");
+    scan.set_domain(ONNX_DOMAIN);
+    scan.set_doc_string("Scan node");
+    scan.set_op_type("Scan");
+    scan.add_input(""); // optional sequence lens
+    scan.add_input("loop_state_start");
+    scan.add_input("scan_op_in");
+    scan.add_output("loop_state_final");
+    scan.add_output("scan_op_out");
+  }
+
+  TypeProto loop_state_in_tensor = simple_tensor_no_shape;
+  auto* shape = loop_state_in_tensor.mutable_tensor_type()->mutable_shape();
+  shape->add_dim()->set_dim_value(1); // batch size
+  shape->add_dim()->set_dim_value(2); // input size. must match subgraph
+
+  TypeProto loop_state_out_tensor = loop_state_in_tensor; // should be unchanged
+
+  TypeProto scan_in_tensor = simple_tensor_no_shape;
+  shape = scan_in_tensor.mutable_tensor_type()->mutable_shape();
+  shape->add_dim()->set_dim_value(1); // batch size
+  shape->add_dim()->set_dim_value(1); // sequence length
+  shape->add_dim()->set_dim_value(2); // input size. must match subgraph
+
+  TypeProto scan_out_tensor = scan_in_tensor; // should be unchanged
+
+  std::unordered_map<std::string, TypeProto*> valueTypesByName;
+  valueTypesByName["loop_state_start"] = &loop_state_in_tensor;
+  valueTypesByName["scan_op_in"] = &scan_in_tensor;
+
+  InferenceContextImpl ctx(scan, valueTypesByName, {}, &graphInfCtx);
+  ScanInferenceFunction(ctx);
+
+  EXPECT_TRUE(ctx.getNumOutputs() == 2);
+  checkType(*ctx.getOutputType(0), loop_state_out_tensor.tensor_type());
+  checkType(*ctx.getOutputType(1), scan_out_tensor.tensor_type());
 }
 } // namespace Test
 } // namespace ONNX_NAMESPACE
