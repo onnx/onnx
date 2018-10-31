@@ -947,7 +947,7 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
-    def test_scan(self):
+    def test_scan(self):    # type: () -> None
         batch_size = 1
         seq_len = 1
         input_size = 2
