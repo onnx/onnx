@@ -81,7 +81,7 @@ struct FuseMatMulAddBiasIntoGemm final : public PredicateBasedPass {
     } else {
         return false;
     }
-    if (bias_N != z_N && bias_N != 1 || bias_M != z_M) {
+    if ((bias_N != z_N && bias_N != 1) || bias_M != z_M) {
         return false;
     }
     // proceed to fuse MatMul and Add into Gemm
