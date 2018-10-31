@@ -6,6 +6,8 @@
 
 #include "onnx/shape_inference/implementation.h"
 
+#include <fstream>
+
 using namespace ONNX_NAMESPACE::shape_inference;
 
 namespace ONNX_NAMESPACE {
@@ -376,6 +378,15 @@ TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
   EXPECT_TRUE(ctx.getNumOutputs() == 2);
   checkType(*ctx.getOutputType(0), loop_state_out_tensor.tensor_type());
   checkType(*ctx.getOutputType(1), scan_out_tensor.tensor_type());
+}
+
+TEST(TEMP, TestPythonModel) {
+  ModelProto model;
+  std::ifstream model_file("D:\\src\\github\\onnx.skottmckay\\scan_model.bin");
+  model.ParseFromIstream(&model_file);
+
+  auto* schemaRegistry = OpSchemaRegistry::Instance();
+  InferShapes(model, schemaRegistry);
 }
 } // namespace Test
 } // namespace ONNX_NAMESPACE

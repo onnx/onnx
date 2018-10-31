@@ -45,6 +45,7 @@ class TestShapeInference(unittest.TestCase):
 
     def _inferred(self, graph):  # type: (GraphProto) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test')
+
         inferred_model = onnx.shape_inference.infer_shapes(orig_model)
         checker.check_model(inferred_model)
         return inferred_model
@@ -947,6 +948,44 @@ class TestShapeInference(unittest.TestCase):
         )
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 48, 16, 16))])
 
+    def test_scan(self):
+        batch_size = 1
+        seq_len = 1
+        input_size = 2
+        loop_state_size = 3
+
+        # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
+        # this breaks the subgraph inferencing as it expects the number of inputs passed from Scan to match
+        # the GraphProto, but Scan knows nothing about the additional inputs.
+        value_infos = [make_tensor_value_info('loop_state_in', TensorProto.FLOAT, (loop_state_size,)),
+                       make_tensor_value_info('input', TensorProto.FLOAT, (input_size,))]
+
+        input_value_infos = [make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, None),
+                             make_tensor_value_info('input', TensorProto.UNDEFINED, None)]
+        output_value_infos = [make_tensor_value_info('loop_state_out', TensorProto.UNDEFINED, None),
+                              make_tensor_value_info('output', TensorProto.UNDEFINED, None)]
+
+        subgraph = helper.make_graph(
+            [make_node('Identity', ['loop_state_in'], ['loop_state_out']),
+             make_node('Identity', ['input'], ['output'])],
+            "subgraph",
+            input_value_infos,
+            output_value_infos, 
+            value_info=value_infos
+        )
+
+        graph = self._make_graph(
+            [('loop_state_orig', TensorProto.FLOAT, (batch_size, loop_state_size)),
+             ('scan_input', TensorProto.FLOAT, (batch_size, seq_len, input_size))],
+            [make_node('Scan', ['', 'loop_state_orig', 'scan_input'], ['loop_state_final', 'scan_output'],
+                               num_scan_inputs=1, body=subgraph)],
+            []
+        )
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (batch_size, loop_state_size)),
+             make_tensor_value_info('scan_output', TensorProto.FLOAT, (batch_size, seq_len, input_size))])
 
 if __name__ == '__main__':
     unittest.main()

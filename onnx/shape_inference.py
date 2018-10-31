@@ -33,5 +33,9 @@ def infer_shapes(model):  # type: (ModelProto) -> ModelProto
                          'incorrect type: {}'.format(type(model)))
 
     model_str = model.SerializeToString()
+    with open('d:/src/github/onnx.skottmckay/scan_model.bin', 'wb') as f:
+        f.write(model_str)
     inferred_model_str = C.infer_shapes(model_str)
+    with open('d:/src/github/onnx.skottmckay/inferred_scan_model.bin', 'wb') as f:
+        f.write(inferred_model_str)
     return onnx.load_from_string(inferred_model_str)
