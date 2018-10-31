@@ -969,7 +969,7 @@ class TestShapeInference(unittest.TestCase):
              make_node('Identity', ['input'], ['output'])],
             "subgraph",
             input_value_infos,
-            output_value_infos, 
+            output_value_infos,
             value_info=value_infos
         )
 
@@ -985,6 +985,7 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (batch_size, loop_state_size)),
              make_tensor_value_info('scan_output', TensorProto.FLOAT, (batch_size, seq_len, input_size))])
+
 
 if __name__ == '__main__':
     unittest.main()
