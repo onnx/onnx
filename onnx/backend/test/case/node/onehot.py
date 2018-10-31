@@ -10,7 +10,7 @@ from ..base import Base
 from . import expect
 
 
-def one_hot(indices, depth, axis=-1, dtype=np.float32):
+def one_hot(indices, depth, axis=-1, dtype=np.float32):  # type: ignore
     ''' Compute one hot from indices at a specific axis '''
     values = np.asarray(indices)
     rank = len(values.shape)
