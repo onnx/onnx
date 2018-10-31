@@ -63,18 +63,11 @@ void mergeShapesAndTypes(
     }
   }
 
-  auto* existingShape = existingType->mutable_shape();
-  auto existingDims = existingShape->dim_size();
-
   for (int i = 0; i < inferredType.shape().dim_size(); ++i) {
     const auto& inferredDim = inferredType.shape().dim(i);
-    if (i < existingDims) {
-      auto* existingDim = existingShape->mutable_dim(i);
-      if (!existingDim->has_dim_value()) {
-        *existingDim = inferredDim;
-      }
-    } else {
-      *existingShape->add_dim() = inferredDim;
+    auto* existingDim = existingType->mutable_shape()->mutable_dim(i);
+    if (!existingDim->has_dim_value()) {
+      *existingDim = inferredDim;
     }
   }
 }

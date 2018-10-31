@@ -45,7 +45,6 @@ class TestShapeInference(unittest.TestCase):
 
     def _inferred(self, graph):  # type: (GraphProto) -> ModelProto
         orig_model = helper.make_model(graph, producer_name='onnx-test')
-
         inferred_model = onnx.shape_inference.infer_shapes(orig_model)
         checker.check_model(inferred_model)
         return inferred_model
