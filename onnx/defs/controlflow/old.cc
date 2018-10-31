@@ -5,7 +5,7 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-static void UpdateValueFromDim(
+static void UpdateValueFromDim_ver1(
     int64_t& current_value,
     const TensorShapeProto_Dimension& dim) {
   if (current_value == -1 && dim.has_dim_value()) {
@@ -13,7 +13,7 @@ static void UpdateValueFromDim(
   }
 }
 
-static TypeProto RemoveDimensionsFromShape(
+static TypeProto RemoveDimensionsFromShape_ver1(
     const TypeProto& proto,
     int num_dimensions) {
   TypeProto t(proto);
@@ -33,17 +33,17 @@ static TypeProto RemoveDimensionsFromShape(
 // copied from GSL:
 // https://github.com/Microsoft/GSL/blob/master/include/gsl/gsl_util
 template <class T, class U>
-static constexpr T narrow_cast(U&& u) noexcept {
+static constexpr T narrow_cast_ver1(U&& u) noexcept {
   return static_cast<T>(std::forward<U>(u));
 }
 
-void ScanInferenceFunction(InferenceContext& ctx) {
+void ScanInferenceFunction_ver1(InferenceContext& ctx) {
   // NOTE:
   // The first input to Scan is sequence_lens. We skip that when processing
   // inputs in many places below, so the - 1 in multiple places is due to that.
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs =
-      narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
+      narrow_cast_ver1<size_t>(ctx.getAttribute("num_scan_inputs")->i());
   auto num_loop_state_vars = num_inputs - 1 - num_scan_inputs;
 
   std::vector<TypeProto> temporary_type_protos;
@@ -76,7 +76,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
         // remove batch size dimension and add to subgraph_input_types
         temporary_type_protos.push_back(
-            RemoveDimensionsFromShape(*input_type, 1));
+            RemoveDimensionsFromShape_ver1(*input_type, 1));
         subgraph_input_types.push_back(&temporary_type_protos.back());
       } else {
         subgraph_input_types.push_back(input_type);
@@ -90,15 +90,15 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         // remove batch size and sequence length dimensions and add to
         // subgraph_input_types
         temporary_type_protos.push_back(
-            RemoveDimensionsFromShape(*input_type, 2));
+            RemoveDimensionsFromShape_ver1(*input_type, 2));
         subgraph_input_types.push_back(&temporary_type_protos.back());
 
         // update batch_size and sequence_len if a value is available
         const auto& shape = input_type->tensor_type().shape();
         if (shape.dim_size() > 2) {
           const auto& dims = shape.dim();
-          UpdateValueFromDim(batch_size, dims.Get(0));
-          UpdateValueFromDim(sequence_len, dims.Get(1));
+          UpdateValueFromDim_ver1(batch_size, dims.Get(0));
+          UpdateValueFromDim_ver1(sequence_len, dims.Get(1));
         }
       } else {
         subgraph_input_types.push_back(input_type);
@@ -189,195 +189,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   }
 }
 
-ONNX_OPERATOR_SET_SCHEMA(
-    If,
-    1,
-    OpSchema()
-        .SetDoc("If conditional")
-        .Input(0, "cond", "Condition for the if", "B")
-        .Output(
-            0,
-            "outputs",
-            "Values that are live-out to the enclosing scope. The return values in "
-            "the `then_branch` and `else_branch` must be of the same shape and same "
-            "data type.",
-            "V",
-            OpSchema::Variadic)
-        .Attr(
-            "then_branch",
-            "Graph to run if condition is true. Has N outputs: values you wish to "
-            "be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the else_branch.",
-            AttributeProto::GRAPH)
-        .Attr(
-            "else_branch",
-            "Graph to run if condition is false. Has N outputs: values you wish to"
-            " be live-out to the enclosing scope. The number of outputs must match"
-            " the number of outputs in the then_branch.",
-            AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
-
-static const char* Loop_ver1_doc = R"DOC(
-Generic Looping construct. This loop has multiple termination conditions:
-
-1) Trip count. Iteration count specified at runtime. Set by
-   specifying the input M. Optional. Set to empty string to omit.
-   Note that a static trip count (specified at graph construction time) can be
-   specified by passing in a constant node for input M.
-2) Loop termination condition. This is an input to the op that determines
-   whether to run the first iteration and also a loop-carried dependency for
-   the body graph. The body graph must yield a value for the condition variable,
-   whether this input is provided or not.
-
-This table summarizes the operating modes of this operator with equivalent
-C-style code:
-
-    Operator inputs defined as (max_trip_count, condition_var).
-
-    input ("", ""):
-        for (int i=0; ; ++i) {
-          cond = ... // Note this value is ignored, but is required in the body
-        }
-
-    input ("", cond) // Note this is analogous to a while loop
-        bool cond = ...;
-        for (int i=0; cond; ++i) {
-          cond = ...;
-        }
-
-    input ("", 1) // Note this is analogous to a do-while loop
-        bool cond = true
-        for (int i=0; cond; ++i) {
-          cond = ...;
-        }
-
-    input (trip_count, "") // Note this is analogous to a for loop
-        int trip_count = ...
-        for (int i=0; i < trip_count; ++i) {
-          cond = ...; // ignored
-        }
-
-    input (trip_count, cond)
-        int trip_count = ...;
-        bool cond = ...;
-        for (int i=0; i < trip_count && cond; ++i) {
-          cond = ...;
-        }
-
-
-*Sample usage - cond as well as trip count*
-
-    graph predict-net {
-      %a = Constant[value = <Scalar Tensor [3]>]()
-      %b = Constant[value = <Scalar Tensor [6]>]()
-      %keepgoing = Constant[value = <Scalar Tensor [1]>]()
-      %max_trip_count = Constant[value = <Scalar Tensor [10]>]()
-      %keepgoing_out, %b_out, %user_defined_vals = Loop[body = <graph body-net>](%max_trip_count, %keepgoing, %b)
-      return
-    }
-
-    graph body-net (
-      %i[INT32, scalar]
-      %keepgoing[BOOL, scalar]
-      %b[INT32, scalar]
-    ) {
-      %my_local = Add(%a, %b)
-      %b_out = Sub(%a, %b)
-      %keepgoing_out = Greater(%my_local, %b_out)
-      %user_defined_vals = Add(%b, %b)
-      return %keepgoing_out, %b_out, %user_defined_vals
-    }
-
-*Sample equivalent C code*
-
-    {
-      /* User-defined code (enclosing scope) */
-      int a = 3, b = 6;
-      bool keepgoing = true; // Analogous to input cond
-      /* End user-defined code */
-
-      /* Implicitly-defined code */
-      const int max_trip_count = 10; // Analogous to input M
-      int user_defined_vals[]; // Imagine this is resizable
-      /* End implicitly-defined code */
-      for (int i=0; i < max_trip_count && keepgoing; ++i) {
-        /* User-defined code (loop body) */
-        int my_local = a + b; // Reading values in the enclosing scope is fine
-        b = a - b; // writes fine if we specify b as a loop-carried dependency
-        keepgoing = my_local > b; // keepgoing is a loop-carried dependency
-        user_defined_vals[i] = b + b;
-        /* End user-defined code */
-      }
-      // my_local = 123; // Can't do this. my_local was defined in the the body
-
-      // These below values are live-out from the loop and therefore accessible
-      b_out; user_defined_vals; keepgoing_out;
-    }
-
-There are several things of note in this code snippet:
-
-1) Values from the enclosing scope (i.e. variable a here) are in scope and can
-   be referenced in the inputs of the loop.
-2) Any variables which you wish to make available in the enclosing scope (i.e.
-   the variables b and keepgoing) must be declared as either loop-carried
-   dependencies (both at the op inputs and output and at the body net input and
-   output) or scan_outputs.
-3) Values created in the body cannot be accessed in the enclosing scope.
-
-Note that the semantics of this op support "diagonal" or "wavefront" execution.
-(See Step 3 here for an example:
-https://devblogs.nvidia.com/optimizing-recurrent-neural-networks-cudnn-5/).
-Frontends should emit multi-layer RNNs as a series of While operators (with
-time being the inner looping dimension), with each successive layer consuming
-the scan_outputs from the previous layer, possibly going through several
-point-wise operators (e.g. dropout, residual connections, linear layer).
-)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Loop,
-    1,
-    OpSchema()
-        .SetDoc(Loop_ver1_doc)
-        .Input(
-            0,
-            "M",
-            "A maximum trip-count for the loop specified at runtime. Optional."
-            " pass empty string to skip.",
-            "I")
-        .Input(
-            1,
-            "cond",
-            "A boolean termination condition. Pass empty string to skip.",
-            "B")
-        .Input(
-            2,
-            "v_initial",
-            "The initial values of any loop-carried dependencies (values that "
-            "change across loop iterations)",
-            "V",
-            OpSchema::Variadic)
-        .Output(
-            0,
-            "v_final_and_scan_outputs",
-            "Final N loop carried dependency values then K scan_outputs",
-            "V",
-            OpSchema::Variadic)
-        .Attr(
-            "body",
-            "The graph run each iteration. It has 2+N inputs: (iteration_num, "
-            "condition, loop carried dependencies...). It has 1+N+K outputs: "
-            "(condition, loop carried dependencies..., scan_outputs...). Each "
-            "scan_output is created by concatenating the value of the specified "
-            "output value at the end of each iteration of the loop. It is an error"
-            " if the dimensions or data type of these scan_outputs change across loop"
-            " iterations.",
-            AttributeProto::GRAPH)
-        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("I", {"int64"}, "Only int64")
-        .TypeConstraint("B", {"bool"}, "Only bool"));
-
-static const char* scan_9_doc = R"DOC(
+static const char* scan_ver1_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip and is intended to enable
@@ -417,12 +229,6 @@ The optional attribute directions can be used to scan a sequence in the reverse 
 If this attribute is omitted, all sequences are scanned in the forward direction.
 A bidirectional scan be performed by specifying the same tensor input twice in the
 scan_inputs, once with a forward direction, and once with a backward direction.
-
-The scan_output of the operation is produced by concatenating the scan_output_element
-values produced by the body in each iteration. By default, the scan_output_element is
-appended to the scan_output in each iteration. The optional attribute scan_output_directions
-can be used to change the order in which scan_output is constructed (by prepending the
-scan_output_element to scan_output in each iteration.)
 
 Note that because of the ONNX restriction that only the last parameter of an operator can
 be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -513,9 +319,9 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    9,
+    8,
     OpSchema()
-        .SetDoc(scan_9_doc)
+        .SetDoc(scan_ver1_doc)
         .Input(
             0,
             "sequence_lens",
@@ -560,18 +366,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If omitted, all scan_input tensors will be scanned in the forward direction.",
             AttributeProto::INTS,
             false)
-        .Attr(
-            "scan_output_directions",
-            "An optional list of K flags, one for each scan_output. The i-th element of the list "
-            "specifies whether the i-th scan_output should be constructed by appending or "
-            "prepending a new value in each iteration: 0 indicates appending and 1 "
-            "indicates prepending. "
-            "If omitted, all scan_output tensors will be produced by appending a value "
-            "in each iteration.",
-            AttributeProto::INTS,
-            false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunction));
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction_ver1));
 
 } // namespace ONNX_NAMESPACE
