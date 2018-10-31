@@ -9262,6 +9262,12 @@ for test_name, shape in test_cases.items():
   A bidirectional scan be performed by specifying the same tensor input twice in the
   scan_inputs, once with a forward direction, and once with a backward direction.
   
+  The scan_output of the operation is produced by concatenating the scan_output_element
+  values produced by the body in each iteration. By default, the scan_output_element is
+  appended to the scan_output in each iteration. The optional attribute scan_output_directions
+  can be used to change the order in which scan_output is constructed (by prepending the
+  scan_output_element to scan_output in each iteration.)
+  
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
   Similarly, the final-states and scan-outputs are listed together as one output parameter.
@@ -9350,7 +9356,9 @@ for test_name, shape in test_cases.items():
 
 #### Version
 
-This version of the operator has been available since version 8 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Scan-8">Scan-8</a>
 
 #### Attributes
 
@@ -9361,6 +9369,8 @@ This version of the operator has been available since version 8 of the default O
 <dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_output_directions</tt> : list of ints</dt>
+<dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
 </dl>
 
 #### Inputs (2 - &#8734;)
