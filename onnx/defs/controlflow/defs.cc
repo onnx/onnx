@@ -145,7 +145,6 @@ void ScanInferenceFunction(InferenceContext& ctx) {
             i,
             " was not");
       }
-
       
       if (is_loop_state_var) {
         // output and input loop_state must have same/compatible shapes
@@ -461,7 +460,7 @@ is equivalent to the following pseudo-code:
 
     for (int batch = 0; batch < batch_size; ++batch) {
         // initialize state-variables
-        st_1 = init_1; ... st_n = init_n;
+        st_1 = init_1[batch]; ... st_n = init_n[batch];
         // initialize scan-output variables: [] denotes an empty tensor
         scan_out_1 = []; ...; scan_out_k = [];
         // identify number of iterations:
