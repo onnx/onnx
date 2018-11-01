@@ -8899,10 +8899,13 @@ This version of the operator has been available since version 9 of the default O
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
   
-  The operation supports batching, and the batch-axis is required to be 0.
-  When multiple scan_input tensors are used, they must all have the same batch-size,
-  and they must all have the same maximum-sequence-length (the dimensionality of the
-  sequence axis or scan axis). The sequence axis or scan axis is required to be 1.
+  The operation optionally supports batching. If the attribute handle_batch has a value of
+  1, axis 0 is treated as the batch-axis and handled by the scan op and the ops in the body
+  will not see any batched input. When multiple scan_input tensors are used, they must all
+  have the same batch-size, and they must all have the same maximum-sequence-length (the
+  dimensionality of the sequence axis or scan axis). The sequence axis or scan axis is
+  axis 0 when attribute handle_batch has a value 0, and the sequence axis is axis 1
+  when handle_batch is 1.
   
   The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
   allow variable length sequences of length <= the maximum-sequence-length. If this
@@ -8911,10 +8914,10 @@ This version of the operator has been available since version 9 of the default O
   will consist of a sequence of same length as the input, padded to the
   maximum-sequence-length.
   
-  The optional attribute directions can be used to scan a sequence in the reverse direction.
-  If this attribute is omitted, all sequences are scanned in the forward direction.
-  A bidirectional scan be performed by specifying the same tensor input twice in the
-  scan_inputs, once with a forward direction, and once with a backward direction.
+  The optional attribute scan_input_directions can be used to scan a sequence in the
+  reverse direction. If this attribute is omitted, all sequences are scanned in the forward
+  direction. A bidirectional scan may be performed by specifying the same tensor input twice
+  in the scan_inputs, once with a forward direction, and once with a backward direction.
   
   The scan_output of the operation is produced by concatenating the scan_output_element
   values produced by the body in each iteration. By default, the scan_output_element is
@@ -9017,10 +9020,12 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
-<dt><tt>directions</tt> : list of ints</dt>
-<dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>handle_batch</tt> : int (default is 1)</dt>
+<dd>A flag with a value of 0 or 1. A value of 1 indicates that axis 0 is a batch axis and should be handled by the scan op.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_directions</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
 <dt><tt>scan_output_directions</tt> : list of ints</dt>
 <dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
 </dl>

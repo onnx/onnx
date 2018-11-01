@@ -45,6 +45,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   auto num_scan_inputs =
       narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
   auto num_loop_state_vars = num_inputs - 1 - num_scan_inputs;
+  bool has_batch = (getAttribute(ctx, "handle_batch", 1) != 0);
 
   std::vector<TypeProto> temporary_type_protos;
   temporary_type_protos.reserve(num_inputs);
@@ -87,19 +88,20 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       // We can pass through the type and shape to the subgraph inputs but need
       // to remove the batch size and sequence length dimensions from the shape.
       if (has_shape) {
-        // remove batch size and sequence length dimensions and add to
+        // remove (optional) batch size and sequence length dimensions and add to
         // subgraph_input_types
         temporary_type_protos.push_back(
-            RemoveDimensionsFromShape(*input_type, 2));
+            RemoveDimensionsFromShape(*input_type, has_batch ? 2 : 1));
         subgraph_input_types.push_back(&temporary_type_protos.back());
 
         // update batch_size and sequence_len if a value is available
         const auto& shape = input_type->tensor_type().shape();
-        if (shape.dim_size() > 2) {
+        if (has_batch && (shape.dim_size() > 2)) {
           const auto& dims = shape.dim();
           UpdateValueFromDim(batch_size, dims.Get(0));
           UpdateValueFromDim(sequence_len, dims.Get(1));
-        }
+        } else if ((!has_batch) && (shape.dim_size() > 1))
+          UpdateValueFromDim(sequence_len, shape.dim().Get(0));
       } else {
         subgraph_input_types.push_back(input_type);
       }
@@ -163,9 +165,11 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
         mutable_inferred_shape->clear_dim();
 
-        auto* batch_size_dim = mutable_inferred_shape->add_dim();
-        if (batch_size != -1) {
-          batch_size_dim->set_dim_value(batch_size);
+        if (has_batch) {
+          auto* batch_size_dim = mutable_inferred_shape->add_dim();
+          if (batch_size != -1) {
+            batch_size_dim->set_dim_value(batch_size);
+          }
         }
 
         if (!is_loop_state_var) {
@@ -185,6 +189,9 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         mergeInShapeInfo(
             *mutable_inferred_tensor_type, *mutable_scan_output_tensor_type);
       }
+
+      // Note: for loop_state_vars, subgraph's output shape must match input shape.
+      // We can check for their equality here.
     }
   }
 }
@@ -401,10 +408,13 @@ hidden-state values of RNN-like constructs).
 The scan operation returns the final values of the state_variables as well as the
 scan_outputs.
 
-The operation supports batching, and the batch-axis is required to be 0.
-When multiple scan_input tensors are used, they must all have the same batch-size,
-and they must all have the same maximum-sequence-length (the dimensionality of the
-sequence axis or scan axis). The sequence axis or scan axis is required to be 1.
+The operation optionally supports batching. If the attribute handle_batch has a value of
+1, axis 0 is treated as the batch-axis and handled by the scan op and the ops in the body
+will not see any batched input. When multiple scan_input tensors are used, they must all
+have the same batch-size, and they must all have the same maximum-sequence-length (the
+dimensionality of the sequence axis or scan axis). The sequence axis or scan axis is
+axis 0 when attribute handle_batch has a value 0, and the sequence axis is axis 1
+when handle_batch is 1.
 
 The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
 allow variable length sequences of length <= the maximum-sequence-length. If this
@@ -413,10 +423,10 @@ maximum-sequence-length. For variable length input sequences, the scan_outputs
 will consist of a sequence of same length as the input, padded to the
 maximum-sequence-length.
 
-The optional attribute directions can be used to scan a sequence in the reverse direction.
-If this attribute is omitted, all sequences are scanned in the forward direction.
-A bidirectional scan be performed by specifying the same tensor input twice in the
-scan_inputs, once with a forward direction, and once with a backward direction.
+The optional attribute scan_input_directions can be used to scan a sequence in the
+reverse direction. If this attribute is omitted, all sequences are scanned in the forward
+direction. A bidirectional scan may be performed by specifying the same tensor input twice
+in the scan_inputs, once with a forward direction, and once with a backward direction.
 
 The scan_output of the operation is produced by concatenating the scan_output_element
 values produced by the body in each iteration. By default, the scan_output_element is
@@ -553,7 +563,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             true)
         .Attr(
-            "directions",
+            "scan_input_directions",
             "An optional list of M flags. The i-th element of the list specifies the direction "
             "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
             "indicates reverse direction. "
@@ -570,6 +580,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             "in each iteration.",
             AttributeProto::INTS,
             false)
+        .Attr(
+            "handle_batch",
+            "A flag with a value of 0 or 1. A value of 1 indicates that axis 0 is a batch axis "
+            "and should be handled by the scan op.",
+            AttributeProto::INT,
+            static_cast<int64_t>(1))
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
