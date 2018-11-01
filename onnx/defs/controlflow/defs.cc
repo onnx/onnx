@@ -146,8 +146,14 @@ void ScanInferenceFunction(InferenceContext& ctx) {
             " was not");
       }
 
-      // propagate output type. loop state vars were done in the above code.
-      if (!is_loop_state_var) {
+      
+      if (is_loop_state_var) {
+        // output and input loop_state must have same/compatible shapes
+        auto& input_type = ctx.getInputType(i+1)->tensor_type();
+        checkShapeCompatibility(subgraph_output_type->tensor_type(), input_type);
+      } else {
+        // propagate subgraph output type to scan's output.
+        // loop state vars were done in the above code.
         scan_output_type->mutable_tensor_type()->set_elem_type(
             subgraph_output_type->tensor_type().elem_type());
       }
@@ -189,9 +195,6 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         mergeInShapeInfo(
             *mutable_inferred_tensor_type, *mutable_scan_output_tensor_type);
       }
-
-      // Note: for loop_state_vars, subgraph's output shape must match input shape.
-      // We can check for their equality here.
     }
   }
 }

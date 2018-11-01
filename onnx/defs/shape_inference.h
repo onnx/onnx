@@ -490,4 +490,13 @@ inline void mergeInShapeInfo(
   }
 }
 
+inline void checkShapeCompatibility(
+    const TypeProto_Tensor& type1,
+    const TypeProto_Tensor& type2) {
+  // Create temporary copy of type1 and use mergeInShapeInfo to do the check.
+  // We do not use the merged shape
+  TypeProto_Tensor temp(type2);
+  mergeInShapeInfo(type1, temp);
+}
+
 } // namespace ONNX_NAMESPACE
