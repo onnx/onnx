@@ -1251,8 +1251,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // auto hasTwoInputs = hasNInputShapes(ctx, 2);
-          auto hasThreeInputs = hasNInputShapes(ctx, 3);
           // Check that the node has two or three onputs.
           if (!hasNInputShapes(ctx, 3)) {
             fail_shape_inference(
