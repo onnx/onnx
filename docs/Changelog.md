@@ -8845,13 +8845,12 @@ This version of the operator has been available since version 9 of the default O
   Produces a one-hot tensor based on inputs.
       The locations represented by the index values in the 'indices' input tensor will have the 'on_value' 
       and the other locations will have the 'off_value' in the output tensor, where 'on_value' and 'off_value' 
-      are specified as part of input argument 'values', which is a two-element tensor of format [off_value, on_value]. 
+      are specified as part of required input argument 'values', which is a two-element tensor of format [off_value, on_value]. 
       The rank of the output tensor will be one greater than the rank of the input tensor. The additional 
       dimension is for one-hot representation. The additional dimension will be inserted at the position 
       specified by 'axis'. If 'axis' is not specified then then additional dimension will be inserted as 
       the innermost dimension, i.e. axis=-1. The size of the additional dimension is specified by required 
-      scalar input 'depth'. The type of the output tensor can be specified by 'dtype' attribute. If 'dtype' 
-      is not provided, then the type of the output tensor is the same as the type of the 'values' input.
+      scalar input 'depth'. The type of the output tensor is the same as the type of the 'values' input.
       Any entries in the 'indices' input tensor with values outside the range [0, depth) will result 
       in one-hot representation with all 'off_value' values in the output tensor.
 
@@ -8864,26 +8863,24 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1.</dd>
-<dt><tt>dtype</tt> : int</dt>
-<dd>(Optional) The data type for the elements of the output tensor. If not specified, the type of inputs 'values' is used. If neither is provided, the output tensor type defaults to tensor(float32). If 'dtype' is string, then input 'values' must be provided.</dd>
 </dl>
 
-#### Inputs (2 - 3)
+#### Inputs
 
 <dl>
 <dt><tt>indices</tt> : T1</dt>
 <dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> : T1</dt>
 <dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor and the values in the 'indices' input tensor are expected to be in the range [0, depth). TheIn case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
-<dt><tt>values</tt> (optional) : T2</dt>
-<dd>(Default: [0, 1]) Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. The type of 'values' should be the same as 'dtype', if 'dtype' is specified. Note: If the desired output datatype is tensor(string), then 'values' input must be provided. </dd>
+<dt><tt>values</tt> : T2</dt>
+<dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T2</dt>
-<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is specified by 'dtype'. If 'dtype' is not specified, the type of input 'values' is used. If neither is provided, the output tensor type defaults to tensor(float32).</dd>
+<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
 </dl>
 
 #### Type Constraints
@@ -8892,7 +8889,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrains input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
+<dd>Constrain to any tensor type.</dd>
 </dl>
 
 ### <a name="PRelu-9"></a>**PRelu-9**</a>

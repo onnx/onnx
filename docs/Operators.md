@@ -6754,13 +6754,12 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
   Produces a one-hot tensor based on inputs.
       The locations represented by the index values in the 'indices' input tensor will have the 'on_value' 
       and the other locations will have the 'off_value' in the output tensor, where 'on_value' and 'off_value' 
-      are specified as part of input argument 'values', which is a two-element tensor of format [off_value, on_value]. 
+      are specified as part of required input argument 'values', which is a two-element tensor of format [off_value, on_value]. 
       The rank of the output tensor will be one greater than the rank of the input tensor. The additional 
       dimension is for one-hot representation. The additional dimension will be inserted at the position 
       specified by 'axis'. If 'axis' is not specified then then additional dimension will be inserted as 
       the innermost dimension, i.e. axis=-1. The size of the additional dimension is specified by required 
-      scalar input 'depth'. The type of the output tensor can be specified by 'dtype' attribute. If 'dtype' 
-      is not provided, then the type of the output tensor is the same as the type of the 'values' input.
+      scalar input 'depth'. The type of the output tensor is the same as the type of the 'values' input.
       Any entries in the 'indices' input tensor with values outside the range [0, depth) will result 
       in one-hot representation with all 'off_value' values in the output tensor.
 
@@ -6773,26 +6772,24 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
 <dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1.</dd>
-<dt><tt>dtype</tt> : int</dt>
-<dd>(Optional) The data type for the elements of the output tensor. If not specified, the type of inputs 'values' is used. If neither is provided, the output tensor type defaults to tensor(float32). If 'dtype' is string, then input 'values' must be provided.</dd>
 </dl>
 
-#### Inputs (2 - 3)
+#### Inputs
 
 <dl>
 <dt><tt>indices</tt> : T1</dt>
 <dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
 <dt><tt>depth</tt> : T1</dt>
 <dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor and the values in the 'indices' input tensor are expected to be in the range [0, depth). TheIn case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
-<dt><tt>values</tt> (optional) : T2</dt>
-<dd>(Default: [0, 1]) Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. The type of 'values' should be the same as 'dtype', if 'dtype' is specified. Note: If the desired output datatype is tensor(string), then 'values' input must be provided. </dd>
+<dt><tt>values</tt> : T2</dt>
+<dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T2</dt>
-<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is specified by 'dtype'. If 'dtype' is not specified, the type of input 'values' is used. If neither is provided, the output tensor type defaults to tensor(float32).</dd>
+<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
 </dl>
 
 #### Type Constraints
@@ -6801,41 +6798,20 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrains input to only numeric types.</dd>
 <dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
+<dd>Constrain to any tensor type.</dd>
 </dl>
 
 
 #### Examples
 
 <details>
-<summary>with_axis_with_dtype</summary>
-
-```python
-axisValue = 0
-node = onnx.helper.make_node(
-    'OneHot',
-    inputs=['indices', 'depth'],
-    outputs=['y'],
-    axis=axisValue,
-    dtype=onnx.TensorProto.INT64
-)
-indices = np.array([[0, 3],
-                    [5, 2]], dtype=np.int32)
-depth = np.array([10], dtype=np.float32)
-y = one_hot(indices, depth, axis=axisValue, dtype=np.int64)
-expect(node, inputs=[indices, depth], outputs=[y], name='test_onehot_with_axis_with_dtype')
-```
-
-</details>
-
-
-<details>
-<summary>with_values</summary>
+<summary>with_axis</summary>
 
 ```python
 axisValue = 1
 on_value = 3
 off_value = 1
+output_type = np.float32
 node = onnx.helper.make_node(
     'OneHot',
     inputs=['indices', 'depth', 'values'],
@@ -6845,48 +6821,33 @@ node = onnx.helper.make_node(
 indices = np.array([[1, 9],
                     [2, 4]], dtype=np.float32)
 depth = np.array([10], dtype=np.float32)
-values = np.array([off_value, on_value], dtype=np.int32)
-y = one_hot(indices, depth, axis=axisValue, dtype=np.int32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
-expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_values')
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
 ```
 
 </details>
 
 
 <details>
-<summary>without_axis_with_dtype</summary>
+<summary>without_axis</summary>
 
 ```python
+on_value = 5
+off_value = 2
+output_type = np.int32
 node = onnx.helper.make_node(
     'OneHot',
-    inputs=['indices', 'depth'],
-    outputs=['y'],
-    dtype=onnx.TensorProto.DOUBLE
-)
-indices = np.array([0, 7], dtype=np.int64)
-depth = np.array([12], dtype=np.float32)
-y = one_hot(indices, depth, dtype=np.float64)
-expect(node, inputs=[indices, depth], outputs=[y], name='test_onehot_without_axis_with_dtype')
-```
-
-</details>
-
-
-<details>
-<summary>without_axis_without_dtype</summary>
-
-```python
-node = onnx.helper.make_node(
-    'OneHot',
-    inputs=['indices', 'depth'],
+    inputs=['indices', 'depth', 'values'],
     outputs=['y']
 )
-indices = np.array([[1, 2],
-                    [3, 4]], dtype=np.float32)
-depth = np.array([5], dtype=np.float32)
-y = one_hot(indices, depth, dtype=np.float32)
-expect(node, inputs=[indices, depth], outputs=[y], name='test_onehot_without_axis_without_dtype')
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.array([12], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
 ```
 
 </details>

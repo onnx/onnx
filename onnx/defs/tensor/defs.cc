@@ -1188,17 +1188,17 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* OneHot_ver9_doc = R"DOC(
     Produces a one-hot tensor based on inputs.
-    The locations represented by the index values in the 'indices' input tensor will have the 'on_value' 
-    and the other locations will have the 'off_value' in the output tensor, where 'on_value' and 'off_value' 
-    are specified as part of input argument 'values', which is a two-element tensor of format [off_value, on_value]. 
-    The rank of the output tensor will be one greater than the rank of the input tensor. The additional 
-    dimension is for one-hot representation. The additional dimension will be inserted at the position 
-    specified by 'axis'. If 'axis' is not specified then then additional dimension will be inserted as 
-    the innermost dimension, i.e. axis=-1. The size of the additional dimension is specified by required 
-    scalar input 'depth'. The type of the output tensor can be specified by 'dtype' attribute. If 'dtype' 
-    is not provided, then the type of the output tensor is the same as the type of the 'values' input.
-    Any entries in the 'indices' input tensor with values outside the range [0, depth) will result 
-    in one-hot representation with all 'off_value' values in the output tensor.
+    The locations represented by the index values in the 'indices' input tensor will have 'on_value' 
+    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value' 
+    are specified as part of required input argument 'values', which is a two-element tensor of format  
+    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the 
+    input tensor. The additional dimension is for one-hot representation. The additional dimension will 
+    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional 
+    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional 
+    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same 
+    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside 
+    the range [0, depth) will result in one-hot representation with all 'off_value' values in the 
+    output tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -1211,13 +1211,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             "(Optional) Axis along which one-hot representation in added. Default: axis=-1.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
-        .Attr(
-            "dtype",
-            "(Optional) The data type for the elements of the output tensor. If not specified, the type of "
-            "inputs 'values' is used. If neither is provided, the output tensor type defaults to tensor(float32). "
-            "If 'dtype' is string, then input 'values' must be provided.",
-            AttributeProto::INT,
-            OPTIONAL)
         .Input(
             0,
             "indices",
@@ -1238,20 +1231,16 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             2,
             "values",
-            "(Default: [0, 1]) Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], "
+            "Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], "
             "where 'on_value' is the value used for filling locations specified in 'indices' input "
             "tensor, and 'off_value' is the value used for filling locations other than those specified "
-            "in 'indices' input tensor. "
-            "The type of 'values' should be the same as 'dtype', if 'dtype' is specified. "
-            "Note: If the desired output datatype is tensor(string), then 'values' input must be provided. ",
-            "T2",
-            OpSchema::Optional)
+            "in 'indices' input tensor. ",
+            "T2")
         .Output(0,
             "output",
             "Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. "
-            "The data type for the elements of the output tensor is specified by 'dtype'. If 'dtype' is not "
-            "specified, the type of input 'values' is used. If neither is provided, the output tensor type "
-            "defaults to tensor(float32).",
+            "The data type for the elements of the output tensor is the same as the type of input 'values' "
+            "is used.",
             "T2")
         .TypeConstraint(
             "T1",
@@ -1260,76 +1249,39 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "T2",
             OpSchema::all_tensor_types(),
-            "Constrain to any tensor type. If the dtype attribute is not provided this must be a valid output type.")
+            "Constrain to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          auto hasTwoInputs = hasNInputShapes(ctx, 2);
+          // auto hasTwoInputs = hasNInputShapes(ctx, 2);
           auto hasThreeInputs = hasNInputShapes(ctx, 3);
           // Check that the node has two or three onputs.
-          if (!(hasTwoInputs || hasThreeInputs)) {
+          if (!hasNInputShapes(ctx, 3)) {
             fail_shape_inference(
-                  "OneHot node must have either two or three inputs.");
+                  "OneHot node must have three inputs.");
           }
-
-          // If input 'values' is specified, it must be a two-element vector.
-          if (hasThreeInputs) {
-            auto& input_shape = getInputShape(ctx, 2);
-            if (input_shape.dim_size() != 1) {
-              fail_type_inference(
-                    "Input 'values' must be rank 1 tensor.");
-            }
-            if (!input_shape.dim((int)0).has_dim_value() ||
-              (input_shape.dim((int)0).has_dim_value() &&
-                input_shape.dim((int)0).dim_value() != 2)) {
-                  fail_type_inference(
-                        "Input 'values' must have exactly two elements.");
-            }
+          // If input 'values' is specified, it must be a two-element vector.          
+          auto& input_shape = getInputShape(ctx, 2);
+          if (input_shape.dim_size() != 1) {
+            fail_type_inference(
+                  "Input 'values' must be rank 1 tensor.");
           }
-
-          // Set output tensor type, and do some additional checks.
-          auto dtype_attr_proto = ctx.getAttribute("dtype");
-          if (dtype_attr_proto != nullptr) {
-            // Set the output type to be the same as 'dtype'.
-            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
-            // If input 'values' is provided, check that it is the same type as 'dtype' attribute.
-            if (!dtype_attr_proto->has_i()) {
-              fail_type_inference(
-                  "Attribute 'dtype' should be of integer type and specify a type.");
-            }
-            auto attr_value = dtype_attr_proto->i();
-            auto elem_type = static_cast<TensorProto_DataType>(attr_value);
-            if (hasThreeInputs) {
-              if (ctx.getInputData(2)->data_type() != elem_type) {
-               fail_type_inference(
-                    "Input 'values' must be the same type as attribute 'dtype'.");
-              }
-            } else { // Two inputs only, 'values' not provided as input.
-              if (elem_type == TensorProto::STRING) {
+          if (!input_shape.dim((int)0).has_dim_value() ||
+            (input_shape.dim((int)0).has_dim_value() &&
+              input_shape.dim((int)0).dim_value() != 2)) {
                 fail_type_inference(
-                    "If 'dtype' is string, input 'values' must be provided.");
-              }
-            }
-          } else {
-            // When attribute 'dtype' is not provided, and input 'values' is
-            // provided, set output type to be the same as 'values' type. If
-            // values is also not provided, default to tensor(float32).
-            if (hasThreeInputs) {
-                propagateElemTypeFromInputToOutput(ctx, 2, 0);
-              } else {
-                ctx.getOutputType(0)->mutable_tensor_type()->set_elem_type(
-                  TensorProto::FLOAT);
-            }
+                      "Input 'values' must have exactly two elements.");
           }
-
+          // Set output type to be the same as the third input, 'values'.
+          propagateElemTypeFromInputToOutput(ctx, 2, 0);
           // Set the output shape
           const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
           int r = indices_shape.dim_size();
           if (r < 1) {
-            fail_shape_inference("indices tensor must have rank >= 1");
+            fail_shape_inference("Indices tensor must have rank >= 1");
           }
           int out_rank = r + 1;
           int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
           if (axis < -out_rank || axis >= out_rank) {
-            fail_shape_inference("axis must be in [-rank(indices)-1, rank(indices)]");
+            fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
           }
           if (axis < 0) {
             axis += out_rank;

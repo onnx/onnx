@@ -3550,34 +3550,15 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 
 
 ### OneHot
-There are 4 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
-<summary>with_axis_with_dtype</summary>
-
-```python
-axisValue = 0
-node = onnx.helper.make_node(
-    'OneHot',
-    inputs=['indices', 'depth'],
-    outputs=['y'],
-    axis=axisValue,
-    dtype=onnx.TensorProto.INT64
-)
-indices = np.array([[0, 3],
-                    [5, 2]], dtype=np.int32)
-depth = np.array([10], dtype=np.float32)
-y = one_hot(indices, depth, axis=axisValue, dtype=np.int64)
-expect(node, inputs=[indices, depth], outputs=[y], name='test_onehot_with_axis_with_dtype')
-```
-
-</details>
-<details>
-<summary>with_values</summary>
+<summary>with_axis</summary>
 
 ```python
 axisValue = 1
 on_value = 3
 off_value = 1
+output_type = np.float32
 node = onnx.helper.make_node(
     'OneHot',
     inputs=['indices', 'depth', 'values'],
@@ -3587,44 +3568,31 @@ node = onnx.helper.make_node(
 indices = np.array([[1, 9],
                     [2, 4]], dtype=np.float32)
 depth = np.array([10], dtype=np.float32)
-values = np.array([off_value, on_value], dtype=np.int32)
-y = one_hot(indices, depth, axis=axisValue, dtype=np.int32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
 y = y * (on_value - off_value) + off_value
-expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_values')
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
 ```
 
 </details>
 <details>
-<summary>without_axis_with_dtype</summary>
+<summary>without_axis</summary>
 
 ```python
+on_value = 5
+off_value = 2
+output_type = np.int32
 node = onnx.helper.make_node(
     'OneHot',
-    inputs=['indices', 'depth'],
-    outputs=['y'],
-    dtype=onnx.TensorProto.DOUBLE
-)
-indices = np.array([0, 7], dtype=np.int64)
-depth = np.array([12], dtype=np.float32)
-y = one_hot(indices, depth, dtype=np.float64)
-expect(node, inputs=[indices, depth], outputs=[y], name='test_onehot_without_axis_with_dtype')
-```
-
-</details>
-<details>
-<summary>without_axis_without_dtype</summary>
-
-```python
-node = onnx.helper.make_node(
-    'OneHot',
-    inputs=['indices', 'depth'],
+    inputs=['indices', 'depth', 'values'],
     outputs=['y']
 )
-indices = np.array([[1, 2],
-                    [3, 4]], dtype=np.float32)
-depth = np.array([5], dtype=np.float32)
-y = one_hot(indices, depth, dtype=np.float32)
-expect(node, inputs=[indices, depth], outputs=[y], name='test_onehot_without_axis_without_dtype')
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.array([12], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
 ```
 
 </details>

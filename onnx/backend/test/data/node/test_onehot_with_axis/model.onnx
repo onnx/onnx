@@ -1,9 +1,9 @@
-backend-test:ª
+backend-test:¨
 0
 indices
 depth
 valuesy"OneHot*
-axis test_onehot_with_valuesZ
+axis test_onehot_with_axisZ
 indices
 
 
@@ -14,10 +14,10 @@
 Z
 values
 
-
+
 b
 y
-
+
 
 
 
