@@ -986,7 +986,7 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (batch_size, loop_state_size)),
              make_tensor_value_info('scan_output', TensorProto.FLOAT, (batch_size, seq_len, input_size))])
 
-    def test_if(self):  #type: () -> None
+    def test_if(self):  # type: () -> None
 
         # Create a simple If node where the 'then' subgraph adds to the current value, and the 'else' subgraph
         # subtracts.
@@ -995,14 +995,14 @@ class TestShapeInference(unittest.TestCase):
         then_subgraph = helper.make_graph(
             [make_node('Add', ['current_value', 'add_value'], ['then_output'])],
             "then_subgraph",
-            [], # no inputs
+            [],  # no inputs
             [make_tensor_value_info('then_output', TensorProto.UNDEFINED, None)],
         )
 
         else_subgraph = helper.make_graph(
             [make_node('Sub', ['current_value', 'sub_value'], ['else_output'])],
             "else_subgraph",
-            [], # no inputs
+            [],  # no inputs
             [make_tensor_value_info('else_output', TensorProto.UNDEFINED, None)],
         )
 
