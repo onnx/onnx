@@ -88,8 +88,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       // We can pass through the type and shape to the subgraph inputs but need
       // to remove the batch size and sequence length dimensions from the shape.
       if (has_shape) {
-        // remove (optional) batch size and sequence length dimensions and add to
-        // subgraph_input_types
+        // remove (optional) batch size and sequence length dimensions and add
+        // to subgraph_input_types
         temporary_type_protos.push_back(
             RemoveDimensionsFromShape(*input_type, has_batch ? 2 : 1));
         subgraph_input_types.push_back(&temporary_type_protos.back());
@@ -145,14 +145,15 @@ void ScanInferenceFunction(InferenceContext& ctx) {
             i,
             " was not");
       }
-      
+
       if (is_loop_state_var) {
-        // output and input loop_state must have same/compatible shapes
-        auto& input_type = ctx.getInputType(i+1)->tensor_type();
-        checkShapeCompatibility(subgraph_output_type->tensor_type(), input_type);
+        // type and shape of loop state vars were propagated earlier in the
+        // above code. We check compatibility here, to ensure that the
+        // subgraph's output and input loop_state have same/compatible shapes
+        auto& input_type = ctx.getInputType(i + 1)->tensor_type();
+        checkShapeCompatibility(scan_output_type->tensor_type(), input_type);
       } else {
         // propagate subgraph output type to scan's output.
-        // loop state vars were done in the above code.
         scan_output_type->mutable_tensor_type()->set_elem_type(
             subgraph_output_type->tensor_type().elem_type());
       }
