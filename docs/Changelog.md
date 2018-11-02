@@ -8863,7 +8863,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>axis</tt> : int (default is -1)</dt>
-<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1.</dd>
+<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
 </dl>
 
 #### Inputs

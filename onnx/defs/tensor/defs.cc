@@ -1208,7 +1208,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(OneHot_ver9_doc)
         .Attr(
             "axis",
-            "(Optional) Axis along which one-hot representation in added. Default: axis=-1.",
+            "(Optional) Axis along which one-hot representation in added. Default: axis=-1. "
+            "axis=-1 means that the additional dimension will be inserted as the "
+            "innermost/last dimension in the output tensor.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Input(
@@ -1251,54 +1253,69 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
-          // Check that the node has two or three onputs.
-          if (!hasNInputShapes(ctx, 3)) {
-            fail_shape_inference(
-                  "OneHot node must have three inputs.");
+          // Check that the node has three inputs.
+          if (ctx.getNumInputs() != 3) {
+            return;
           }
-          // If input 'values' is specified, it must be a two-element vector.          
-          auto& input_shape = getInputShape(ctx, 2);
-          if (input_shape.dim_size() != 1) {
-            fail_type_inference(
-                  "Input 'values' must be rank 1 tensor.");
+          // Input 'depth' must be a single-element vector.
+          if (hasInputShape(ctx, 1)) {
+            auto& depth_shape = getInputShape(ctx, 1);
+            if (depth_shape.dim_size() != 1) {
+              fail_type_inference(
+                    "Input 'depth' must be rank 1 tensor.");
+            }
+            if (depth_shape.dim((int)0).has_dim_value() &&
+                depth_shape.dim((int)0).dim_value() != 1) {
+              fail_type_inference(
+                      "Input 'depth' must have exactly one element.");
+            }
           }
-          if (!input_shape.dim((int)0).has_dim_value() ||
-            (input_shape.dim((int)0).has_dim_value() &&
-              input_shape.dim((int)0).dim_value() != 2)) {
-                fail_type_inference(
+          // Input 'values' must be a two-element vector.
+          if (hasInputShape(ctx, 2)) {
+            auto& values_shape = getInputShape(ctx, 2);
+            if (values_shape.dim_size() != 1) {
+              fail_type_inference(
+                    "Input 'values' must be rank 1 tensor.");
+            }
+            if (values_shape.dim((int)0).has_dim_value() &&
+                values_shape.dim((int)0).dim_value() != 2) {
+              fail_type_inference(
                       "Input 'values' must have exactly two elements.");
+            }
           }
           // Set output type to be the same as the third input, 'values'.
           propagateElemTypeFromInputToOutput(ctx, 2, 0);
-          // Set the output shape
-          const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
-          int r = indices_shape.dim_size();
-          if (r < 1) {
-            fail_shape_inference("Indices tensor must have rank >= 1");
-          }
-          int out_rank = r + 1;
-          int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
-          if (axis < -out_rank || axis >= out_rank) {
-            fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
-          }
-          if (axis < 0) {
-            axis += out_rank;
-          }
-          auto* output_shape = getOutputShape(ctx, 0);
-          for (int i = 0; i < out_rank; ++i) {
-            auto* dim = output_shape->add_dim();
-            if (i < axis) {
-              if (indices_shape.dim(i).has_dim_value()) {
-                dim->set_dim_value(indices_shape.dim(i).dim_value());
-              } else if (indices_shape.dim(i).has_dim_param()) {
-                dim->set_dim_param(indices_shape.dim(i).dim_param());
-              }
+          // Set the output shape, if input 0 (indices) shape is available.
+          if (hasInputShape(ctx, 0)) {
+            const TensorShapeProto& indices_shape = ctx.getInputType(0)->tensor_type().shape();
+            int r = indices_shape.dim_size();
+            if (r < 1) {
+              fail_shape_inference("Indices tensor must have rank >= 1");
             }
-            else if(i > axis) {
-              if (indices_shape.dim(i - 1).has_dim_value()) {
-                dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
-              } else if (indices_shape.dim(i - 1).has_dim_param()) {
-                dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
+            int out_rank = r + 1;
+            int axis = static_cast<int>(getAttribute(ctx, "axis", -1));
+            if (axis < -out_rank || axis >= out_rank) {
+              fail_shape_inference("'axis' must be in [-rank(indices)-1, rank(indices)]");
+            }
+            if (axis < 0) {
+              axis += out_rank;
+            }
+            auto* output_shape = getOutputShape(ctx, 0);
+            for (int i = 0; i < out_rank; ++i) {
+              auto* dim = output_shape->add_dim();
+              if (i < axis) {
+                if (indices_shape.dim(i).has_dim_value()) {
+                  dim->set_dim_value(indices_shape.dim(i).dim_value());
+                } else if (indices_shape.dim(i).has_dim_param()) {
+                  dim->set_dim_param(indices_shape.dim(i).dim_param());
+                }
+              }
+              else if(i > axis) {
+                if (indices_shape.dim(i - 1).has_dim_value()) {
+                  dim->set_dim_value(indices_shape.dim(i - 1).dim_value());
+                } else if (indices_shape.dim(i - 1).has_dim_param()) {
+                  dim->set_dim_param(indices_shape.dim(i - 1).dim_param());
+                }
               }
             }
           }
