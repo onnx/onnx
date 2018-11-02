@@ -318,7 +318,7 @@ def make_tensor_value_info(
 
         for i, d in enumerate(shape):
             dim = tensor_shape_proto.dim.add()
-            if d is None:
+            if d is None or d < 0:
                 pass
             elif isinstance(d, integer_types):
                 dim.dim_value = d
