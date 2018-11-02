@@ -114,8 +114,10 @@ static void InferShapesImpl(
 
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
+
     InferenceContextImpl ctx(
         n, valueTypesByName, initializersByName, &graphInferenceContext);
+
     if (!schema) {
       if (nullptr == func_registry) {
         continue;
@@ -186,8 +188,10 @@ void InferShapes(
     const std::unordered_map<std::string, int>& opset_imports,
     const ISchemaRegistry* schema_registry,
     const IFunctionBuilderRegistry* func_registry) {
+  // empty initially but this instance is used to accumulate within
+  // InferShapesImpl
   const std::unordered_map<std::string, TypeProto*>
-      outer_scope_value_types_by_name; // empty
+      outer_scope_value_types_by_name;
   InferShapesImpl(
       g,
       outer_scope_value_types_by_name,
@@ -206,8 +210,12 @@ void InferShapes(
         static_cast<int>(opset_import.version());
   }
   auto* g = m.mutable_graph();
+
+  // empty initially but this instance is used to accumulate within
+  // InferShapesImpl
   const std::unordered_map<std::string, TypeProto*>
-      outer_scope_value_types_by_name; // empty
+      outer_scope_value_types_by_name;
+
   InferShapesImpl(
       g,
       outer_scope_value_types_by_name,
@@ -353,7 +361,7 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   InferShapesImpl(
       g_,
-      context_->outer_scope_value_types_by_name,
+      *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
       context_->schema_registry,
       context_->func_registry);
