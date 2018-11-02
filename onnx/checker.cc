@@ -325,7 +325,17 @@ void check_graph(
     check_value_info(value_info, ctx);
   }
 
-  std::unordered_set<std::string> output_names{};
+  std::unordered_set<std::string> node_input_names{}, node_output_names{};
+  for (auto &node : graph.node())
+  {
+      node_input_names.insert(node.input().begin(), node.input().end());
+      node_output_names.insert(node.output().begin(), node.output().end());
+  }
+
+  std::for_each(node_output_names.cbegin(), node_output_names.cend(),
+      [&node_input_names](const std::string &name) {node_input_names.erase(name); });
+
+  std::unordered_set<std::string> output_names;
   // Inherit values avaiailable in outer scope
   // Note that we do not allow shadowing, so the presence of an already-defined
   // name is always an error.
@@ -338,13 +348,14 @@ void check_graph(
     }
     output_names.insert(value_info.name());
   }
-  output_names.insert(
-      parent_lex.output_names.begin(), parent_lex.output_names.end());
+
+  std::unordered_set<std::string> initializer_names{};
   for (const auto& init : graph.initializer()) {
-    if (!output_names.count(init.name())) {
+    if (!output_names.count(init.name()) && !node_input_names.count(init.name())) {
       fail_check(init.name() + " in initializer but not in graph input");
     }
     check_tensor(init, ctx);
+    initializer_names.insert(init.name());
   }
 
   for (const auto& node : graph.node()) {
@@ -354,7 +365,9 @@ void check_graph(
       if (input.empty()) {
         continue;
       }
-      if (!output_names.count(input)) {
+      if (!output_names.count(input) && 
+          !parent_lex.output_names.count(input) &&
+          !initializer_names.count(input)) {
         fail_check(
             "Nodes in a graph must be topologically sorted, however input '",
             input,
@@ -367,7 +380,9 @@ void check_graph(
     // find that outputs from control flow ops are colliding with names in the
     // inner block
     LexicalScopeContext lex_ctx;
-    lex_ctx.output_names = output_names;
+    lex_ctx.output_names = parent_lex.output_names;
+    lex_ctx.output_names.insert(output_names.begin(), output_names.end());
+
     try {
       check_node(node, ctx, lex_ctx);
     } catch (ValidationError& ex) {
