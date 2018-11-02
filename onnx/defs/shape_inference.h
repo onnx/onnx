@@ -13,6 +13,7 @@ class GraphInferencer {
   virtual std::vector<const TypeProto*> doInferencing(
       const std::vector<const TypeProto*>& inputTypes,
       const std::vector<const TensorProto*>& inputData) = 0;
+  virtual ~GraphInferencer() = default;
 };
 
 // Exception class used for handling errors in type and shape inference
