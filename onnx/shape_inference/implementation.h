@@ -21,7 +21,7 @@ struct GraphInferenceContext {
         schema_registry{schema_registry_in},
         func_registry{func_registry_in} {}
 
-  const std::unordered_map<std::string, TypeProto*>&
+  const std::unordered_map<std::string, TypeProto*>
       outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
