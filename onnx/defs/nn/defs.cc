@@ -340,12 +340,22 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   if (hasNInputShapes(ctx, 3)) {
     // If the third input, output_size, is specified then use that instead 
     // of inferring shape from inputs.
-    auto output_shape = ctx.getInputType(2)->tensor_type().shape();
-    if (output_shape.dim_size() != input_shape.dim_size()) {
-        fail_shape_inference("output_shape must be the same size as the shape of input tensor X.");
+    auto& output_shape = getInputShape(ctx, 2);
+    if (output_shape.dim_size() != 1) {
+      fail_type_inference(
+            "'output_shape' must be rank 1 tensor.");
     }
-    else
-      return; // output_shape is specified as input. Actual shape will be detrermined at runtime.
+    if (!output_shape.dim((int)0).has_dim_value()) {
+      fail_type_inference(
+            "'output_shape' must not be empty.");
+    }
+    else {
+      if (static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
+        fail_shape_inference(
+                "'output_shape' must have same number of elements as the shape of input tensor X.");
+      }
+    }
+    return; // output_shape is specified as input. Actual shape will be detrermined at runtime.
   }
 
   auto final_output_shape =
