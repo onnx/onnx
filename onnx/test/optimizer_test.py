@@ -1127,14 +1127,18 @@ class TestOptimizer(unittest.TestCase):
             for axes1 in [[1], [1, 2]]:
                 for axes2 in [[1], [1, 2]]:
                     for keepdim in [False, True]:
+                        input_shape = (5, 7, 9)
+                        output_shape = input_shape  # type: Tuple[int, ...]
+                        if not keepdim and axes1 == axes2:
+                            output_shape = tuple([x for i, x in enumerate(output_shape) if i not in axes1])
                         node = helper.make_node(reduction, ["X"], ["Y"], axes=axes1, keepdims=keepdim)
                         node1 = helper.make_node("Unsqueeze", ["Y"], ["Z"], axes=axes2)
                         graph = helper.make_graph(
                             [node, node1],
                             "test",
                             [helper.make_tensor_value_info(
-                                "X", TensorProto.FLOAT, (5, 7, 9))],
-                            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (5, 9))])
+                                "X", TensorProto.FLOAT, input_shape)],
+                            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, output_shape)])
                         optimized_model = self._optimized(
                             graph, ["fuse_consecutive_reduce_unsqueeze"], False)
 

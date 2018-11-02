@@ -54,9 +54,7 @@ struct FuseConsecutiveReduceUnsqueeze final : public PredicateBasedPass {
           prev_node->hasAttribute(kaxes) && prev_node->hasAttribute(kkeepdims);
       if (reduction_node_check) {
         // insure that keepdims is set to false currently
-        return prev_node->i(kkeepdims) != 1 &&
-            FuseConsecutiveReduceUnsqueeze::axes_match(
-                   node->is(kaxes), prev_node->is(kaxes));
+        return prev_node->i(kkeepdims) == 0 && node->is(kaxes) == prev_node->is(kaxes);
       }
     }
     return false;
