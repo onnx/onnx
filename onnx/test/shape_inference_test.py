@@ -1042,7 +1042,7 @@ class TestShapeInference(unittest.TestCase):
              ('values', TensorProto.FLOAT, (2, ))],
             [make_node('OneHot', ['indices', 'depth', 'values'], 'Y')],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, 2, -1))])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, 2, None))])  # type: ignore
 
     def test_onehot_with_axis(self):  # type: () -> None
         graph = self._make_graph(
@@ -1051,7 +1051,7 @@ class TestShapeInference(unittest.TestCase):
              ('values', TensorProto.FLOAT, (2, ))],
             [make_node('OneHot', ['indices', 'depth', 'values'], 'Y', axis=1)],
             [])
-        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, -1, 3, 5))])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, None, 3, 5))])  # type: ignore
 
 
 if __name__ == '__main__':
