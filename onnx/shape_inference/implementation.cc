@@ -72,15 +72,20 @@ void mergeShapesAndTypes(
   }
 }
 
-void InferShapes(
+static void InferShapesImpl(
     GraphProto* g,
+    const std::unordered_map<std::string, TypeProto*>&
+        outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
-    const ISchemaRegistry* schema_registry,
-    const IFunctionBuilderRegistry* func_registry) {
-  GraphInferenceContext graphInferenceContext{
-      opset_imports, schema_registry, func_registry};
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const IFunctionBuilderRegistry* func_registry =
+        &FunctionBuilderRegistry::OnnxInstance()) {
+  std::unordered_map<std::string, TypeProto*> valueTypesByName{
+      outer_scope_value_types_by_name};
 
-  std::unordered_map<std::string, TypeProto*> valueTypesByName;
+  GraphInferenceContext graphInferenceContext{
+      valueTypesByName, opset_imports, schema_registry, func_registry};
+
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type())
       valueTypesByName[vi.name()] = vi.mutable_type();
@@ -177,6 +182,21 @@ void InferShapes(
 }
 
 void InferShapes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry,
+    const IFunctionBuilderRegistry* func_registry) {
+  const std::unordered_map<std::string, TypeProto*>
+      outer_scope_value_types_by_name;
+  InferShapesImpl(
+      g,
+      outer_scope_value_types_by_name,
+      opset_imports,
+      schema_registry,
+      func_registry);
+}
+
+void InferShapes(
     ModelProto& m,
     const ISchemaRegistry* schema_registry,
     const IFunctionBuilderRegistry* func_registry) {
@@ -186,7 +206,15 @@ void InferShapes(
         static_cast<int>(opset_import.version());
   }
   auto* g = m.mutable_graph();
-  InferShapes(g, opset_imports, schema_registry, func_registry);
+  const std::unordered_map<std::string, TypeProto*>
+      outer_scope_value_types_by_name;
+
+  InferShapesImpl(
+      g,
+      outer_scope_value_types_by_name,
+      opset_imports,
+      schema_registry,
+      func_registry);
 }
 
 void InferShapeForFunctionNode(
@@ -324,8 +352,9 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
   // updating initializers that match subgraph inputs.
   (void)inputData;
 
-  InferShapes(
+  InferShapesImpl(
       g_,
+      *context_->outer_scope_value_types_by_name, // never null
       context_->opset_imports,
       context_->schema_registry,
       context_->func_registry);
