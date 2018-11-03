@@ -1255,7 +1255,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           // Check that the node has three inputs.
           if (ctx.getNumInputs() != 3) {
-            return;
+            fail_type_inference(
+                    "OneHot node must have three inputs.");
           }
           // Input 'depth' must be a single-element vector.
           if (hasInputShape(ctx, 1)) {
