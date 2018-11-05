@@ -1018,6 +1018,23 @@ class TestShapeInference(unittest.TestCase):
 
         self._assert_inferred(graph, [make_tensor_value_info('if_output', TensorProto.FLOAT, (1,))])
 
+    def test_maxunpool_shape_without_output_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('xT', TensorProto.FLOAT, (1, 1, 2, 2)),
+             ('xI', TensorProto.FLOAT, (1, 1, 2, 2))],
+            [make_node('MaxUnpool', ['xT', 'xI'], 'Y', kernel_shape=[2, 2], strides=[2, 2])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (1, 1, 4, 4))])
+
+    def test_maxunpool_shape_with_output_shape(self):  # type: () -> None
+        graph = self._make_graph(
+            [('xT', TensorProto.FLOAT, (1, 1, 2, 2)),
+             ('xI', TensorProto.FLOAT, (1, 1, 2, 2)),
+             ('output_shape', TensorProto.FLOAT, (4, ))],
+            [make_node('MaxUnpool', ['xT', 'xI', 'output_shape'], 'Y', kernel_shape=[2, 2], strides=[2, 2])],
+            [make_tensor_value_info("Y", TensorProto.FLOAT, None)])
+        self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)])
+
 
 if __name__ == '__main__':
     unittest.main()
