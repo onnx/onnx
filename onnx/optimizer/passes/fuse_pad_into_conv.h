@@ -52,7 +52,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     }
     float value = 0.0;
     if (pad->hasAttribute(kvalue)) {
-      value = pad->f(kvalue);
+      value = static_cast<float>(pad->f(kvalue));
     }
 
     // check if Pad is used to zero-pad the input
