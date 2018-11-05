@@ -61,7 +61,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     }
 
     std::vector<int64_t> pads = pad->is(kpads);
-    int64_t pads_size = static_cast<int64_t>(pads.size());
+    int pads_size = static_cast<int>(pads.size());
 
     // check if padding is applied only on feature dims
     if (pads[0] != 0 || pads[1] != 0 ||
@@ -75,14 +75,14 @@ struct FusePadIntoConv final : public PredicateBasedPass {
       return false;
     }
 
-    int64_t conv_pads_size = pads_size - 4;
+    int conv_pads_size = pads_size - 4;
     std::vector<int64_t> conv_pads(conv_pads_size, 0);
     // Fuse into existing padding, if available
     if (conv->hasAttribute(kpads)) {
       conv_pads = conv->is(kpads);
     }
     
-    for (int64_t i = 2, j = 0; i < pads_size / 2; ++i, j++) {
+    for (int i = 2, j = 0; i < pads_size / 2; ++i, ++j) {
       conv_pads[j] += pads[i];
       conv_pads[conv_pads_size / 2 + j] += pads[pads_size / 2 + i];
     }
