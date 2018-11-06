@@ -1031,6 +1031,24 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info("Y", TensorProto.FLOAT, None)])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)])
 
+    def test_onehot_without_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('indices', TensorProto.INT64, (2, 2)),
+             ('depth', TensorProto.INT64, (1, )),
+             ('values', TensorProto.FLOAT, (2, ))],
+            [make_node('OneHot', ['indices', 'depth', 'values'], 'Y')],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, 2, None))])  # type: ignore
+
+    def test_onehot_with_axis(self):  # type: () -> None
+        graph = self._make_graph(
+            [('indices', TensorProto.INT64, (2, 3, 5)),
+             ('depth', TensorProto.INT64, (1, )),
+             ('values', TensorProto.FLOAT, (2, ))],
+            [make_node('OneHot', ['indices', 'depth', 'values'], 'Y', axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (2, None, 3, 5))])  # type: ignore
+
     def test_loop(self):    # type: () -> None
         # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
         # this breaks the subgraph inferencing as it expects the number of inputs passed from Loop to match
