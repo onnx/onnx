@@ -29,18 +29,6 @@ struct FuseConsecutiveReduceUnsqueeze final : public PredicateBasedPass {
   std::string getPassName() const override {
     return "fuse_consecutive_reduce_unsqueeze";
   }
-  static bool axes_match(
-      const std::vector<int64_t>& left,
-      const std::vector<int64_t>& right) {
-    if (left.size() != right.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < left.size(); i++)
-      if (left[i] != right[i]) {
-        return false;
-      }
-    return true;
-  }
   bool patternMatchPredicate(Node* node) override {
     // check that the current node is of type Unsqueeze and has defined axes
     bool cur_node_check =
