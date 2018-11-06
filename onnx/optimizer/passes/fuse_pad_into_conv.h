@@ -32,7 +32,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
   bool patternMatchPredicate(Node* node) override {
     return node->kind() == kConv && node->inputs()[0]->node()->kind() == kPad;
   }
-  bool runTransform(Node* n, Graph& graph, NodeDestroyType& destroy_current)
+  bool runTransform(Node* n, Graph& /*graph*/, NodeDestroyType& destroy_current)
       override {
     destroy_current = NodeDestroyType::DestroyZero;
 
