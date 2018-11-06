@@ -324,6 +324,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   for (int i = 0, end = numInputs; i < end; ++i) {
     const TypeProto* inferredInput = inputTypes[i];
+
+    if (!inferredInput)
+      continue;
+
     TypeProto* graphInput = g_->mutable_input(i)->mutable_type();
 
     if (!graphInput->has_tensor_type()) {

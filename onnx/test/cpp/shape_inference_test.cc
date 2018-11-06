@@ -6,6 +6,9 @@
 
 #include "onnx/shape_inference/implementation.h"
 
+#include <fstream>
+#include "onnx/checker.h"
+
 using namespace ONNX_NAMESPACE::shape_inference;
 
 namespace ONNX_NAMESPACE {
@@ -377,6 +380,35 @@ TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
   EXPECT_TRUE(ctx.getNumOutputs() == 2);
   checkType(*ctx.getOutputType(0), loop_state_out_tensor.tensor_type());
   checkType(*ctx.getOutputType(1), scan_out_tensor.tensor_type());
+}
+
+TEST(TEMP, TestPythonModel) {
+  {
+    ModelProto model;
+    std::ifstream model_file(
+        "D:\\src\\github\\onnx.skottmckay\\orig_model.onnx");
+    ASSERT_TRUE(model_file.good() && !model_file.eof());
+
+    model.ParseFromIstream(&model_file);
+
+    auto* schemaRegistry = OpSchemaRegistry::Instance();
+    InferShapes(model, schemaRegistry);
+
+    checker::check_model(model);
+  }
+  {
+    ModelProto model;
+    std::ifstream model_file(
+        "D:\\src\\github\\onnx.skottmckay\\inferred_model.onnx");
+    ASSERT_TRUE(model_file.good() && !model_file.eof());
+
+    model.ParseFromIstream(&model_file);
+
+    auto* schemaRegistry = OpSchemaRegistry::Instance();
+    InferShapes(model, schemaRegistry);
+
+    checker::check_model(model);
+  }
 }
 } // namespace Test
 } // namespace ONNX_NAMESPACE

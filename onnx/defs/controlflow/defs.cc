@@ -272,6 +272,107 @@ void IfInferenceFunction(InferenceContext& ctx) {
   }
 }
 
+void LoopInferenceFunction(InferenceContext& ctx) {
+  auto num_inputs = ctx.getNumInputs();
+  auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
+
+  std::vector<const TypeProto*> subgraph_input_types;
+  subgraph_input_types.push_back(nullptr); // iteration number. not inferred.
+  subgraph_input_types.push_back(ctx.getInputType(1)); // 'cond' value.
+
+  // loop state values get propagated to outputs
+  for (size_t i = 2; i < num_inputs; ++i) {
+    auto input_type = ctx.getInputType(i);
+    subgraph_input_types.push_back(input_type);
+
+    propagateElemTypeFromInputToOutput(ctx, i, i - 2);
+
+    if (hasInputShape(ctx, i)) {
+      propagateShapeFromInputToOutput(ctx, i, i - 2);
+    }
+  }
+
+  // Run inferencing on the subgraph
+  std::vector<const TypeProto*> subgraph_output_types;
+
+  GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
+  if (graphInferencer) {
+    std::vector<const TensorProto*> input_data;
+    input_data.push_back(nullptr); // iteration number
+    for (size_t i = 1; i < num_inputs; ++i) {
+      input_data.push_back(ctx.getInputData(i));
+    }
+
+    subgraph_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  // if empty(), assume inferencing was skipped
+  if (!subgraph_output_types.empty()) {
+    auto num_outputs = ctx.getNumOutputs();
+
+    // subgraph outputs the condition value first but that is only used
+    // internally and not returned by Loop.
+    if (subgraph_output_types.size() != num_outputs + 1) {
+      fail_type_inference(
+          "Graph attribute inferencing returned type information for ",
+          subgraph_output_types.size(),
+          " outputs. Expected ",
+          num_outputs + 1);
+    }
+
+    // check loop state values match. we should already have type/shape info
+    for (size_t i = 0; i < num_outputs; ++i) {
+      auto* subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
+      auto* loop_output_type = ctx.getOutputType(i);
+
+      const bool is_loop_state_var = i < num_loop_state_vars;
+
+      if (!subgraph_output_type->has_tensor_type()) {
+        fail_type_inference(
+            "Loop 'body' subgraph outputs should all be tensors but output ",
+            i,
+            " was ",
+            subgraph_output_type->value_case());
+      }
+
+      // if there's an existing type check it matches. otherwise propagate
+      propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
+
+      if (is_loop_state_var) {
+        // merge in shape, mainly for validation as it should match what's
+        // already there.
+        mergeInShapeInfo(
+            subgraph_output_type->tensor_type(),
+            *loop_output_type->mutable_tensor_type());
+      } else {
+        // per iteration output. first dimension will be number of iterations
+        // but we don't know that value yet
+        TypeProto inferred_type(*subgraph_output_type);
+        auto* mutable_inferred_tensor_type =
+            inferred_type.mutable_tensor_type();
+        auto* mutable_inferred_shape =
+            mutable_inferred_tensor_type->mutable_shape();
+
+        mutable_inferred_shape->clear_dim();
+
+        // add empty dimension for number of iterations
+        mutable_inferred_shape->add_dim();
+
+        // add dimensions from subgraph output shape
+        for (const auto& dim :
+             subgraph_output_type->tensor_type().shape().dim()) {
+          (*mutable_inferred_shape->add_dim()) = dim;
+        }
+
+        mergeInShapeInfo(
+            *mutable_inferred_tensor_type,
+            *loop_output_type->mutable_tensor_type());
+      }
+    }
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     If,
     1,
@@ -427,13 +528,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "M",
             "A maximum trip-count for the loop specified at runtime. Optional."
-            " pass empty string to skip.",
-            "I")
+            " Pass empty string to skip.",
+            "I",
+            OpSchema::Optional)
         .Input(
             1,
             "cond",
-            "A boolean termination condition. Pass empty string to skip.",
-            "B")
+            "A boolean termination condition. Optional. Pass empty string to skip.",
+            "B",
+            OpSchema::Optional)
         .Input(
             2,
             "v_initial",
@@ -459,7 +562,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeConstraint("I", {"int64"}, "Only int64")
-        .TypeConstraint("B", {"bool"}, "Only bool"));
+        .TypeConstraint("B", {"bool"}, "Only bool")
+        .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 static const char* scan_ver1_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,

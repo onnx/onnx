@@ -956,9 +956,6 @@ class TestShapeInference(unittest.TestCase):
         # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
         # this breaks the subgraph inferencing as it expects the number of inputs passed from Scan to match
         # the GraphProto, but Scan knows nothing about the additional inputs.
-        value_infos = [make_tensor_value_info('loop_state_in', TensorProto.FLOAT, (loop_state_size,)),
-                       make_tensor_value_info('input', TensorProto.FLOAT, (input_size,))]
-
         input_value_infos = [make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, None),
                              make_tensor_value_info('input', TensorProto.UNDEFINED, None)]
         output_value_infos = [make_tensor_value_info('loop_state_out', TensorProto.UNDEFINED, None),
@@ -969,15 +966,14 @@ class TestShapeInference(unittest.TestCase):
              make_node('Identity', ['input'], ['output'])],
             "subgraph",
             input_value_infos,
-            output_value_infos,
-            value_info=value_infos
+            output_value_infos
         )
 
         graph = self._make_graph(
             [('loop_state_orig', TensorProto.FLOAT, (batch_size, loop_state_size)),
              ('scan_input', TensorProto.FLOAT, (batch_size, seq_len, input_size))],
             [make_node('Scan', ['', 'loop_state_orig', 'scan_input'], ['loop_state_final', 'scan_output'],
-                               num_scan_inputs=1, body=subgraph)],
+                       num_scan_inputs=1, body=subgraph)],
             []
         )
 
@@ -1034,6 +1030,40 @@ class TestShapeInference(unittest.TestCase):
             [make_node('MaxUnpool', ['xT', 'xI', 'output_shape'], 'Y', kernel_shape=[2, 2], strides=[2, 2])],
             [make_tensor_value_info("Y", TensorProto.FLOAT, None)])
         self._assert_inferred(graph, [make_tensor_value_info("Y", TensorProto.FLOAT, None)])
+
+    def test_loop(self):    # type: () -> None
+        # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
+        # this breaks the subgraph inferencing as it expects the number of inputs passed from Loop to match
+        # the GraphProto, but Loop knows nothing about the additional inputs.
+        input_value_infos = [make_tensor_value_info('iter_num_in', TensorProto.FLOAT, (1,)),
+                             make_tensor_value_info('cond_in', TensorProto.UNDEFINED, None),
+                             make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, None)]
+        output_value_infos = [make_tensor_value_info('cond_out', TensorProto.UNDEFINED, None),
+                              make_tensor_value_info('loop_state_out', TensorProto.UNDEFINED, None),
+                              make_tensor_value_info('output', TensorProto.FLOAT, (3,))]
+
+        subgraph = helper.make_graph(
+            [make_node('Identity', ['cond_in'], ['cond_out']),
+             make_node('Identity', ['loop_state_in'], ['loop_state_out']),
+             make_node('Identity', ['outer_scope_input'], ['output'])],
+            "subgraph",
+            input_value_infos,
+            output_value_infos
+        )
+
+        graph = self._make_graph(
+            [('cond_orig', TensorProto.FLOAT, (1,)),
+             ('loop_state_orig', TensorProto.FLOAT, (2,)),
+             ('outer_scope_input', TensorProto.FLOAT, (3,))],
+            [make_node('Loop', ['', 'cond_orig', 'loop_state_orig'], ['loop_state_final', 'loop_output'],
+                       body=subgraph)],
+            []
+        )
+
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (2,)),
+             make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])
 
 
 if __name__ == '__main__':
