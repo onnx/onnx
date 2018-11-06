@@ -290,7 +290,8 @@ TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
   std::unordered_map<std::string, int> opset_imports;
   opset_imports[ONNX_DOMAIN] = 8; // Scan is v8
 
-  GraphInferenceContext graphInfCtx(opset_imports);
+  const std::unordered_map<std::string, TypeProto*> outer_scope_value_types;
+  GraphInferenceContext graphInfCtx(outer_scope_value_types, opset_imports);
   GraphInferencerImpl graphInferencer(subgraph, graphInfCtx);
 
   // loop_state_in and scan_in are the two inputs.
