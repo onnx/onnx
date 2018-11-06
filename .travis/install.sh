@@ -3,4 +3,15 @@
 script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[1]))" "${BASH_SOURCE[0]}")
 source "${script_path%/*}/setup.sh"
 
-time CMAKE_ARGS="-DONNX_WERROR=ON" ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -v .
+export ONNX_BUILD_TESTS=1
+pip install protobuf numpy
+
+export CMAKE_ARGS="-DONNX_WERROR=ON"
+if [[ -n "USE_LITE_PROTO" ]]; then
+    export CMAKE_ARGS="${CMAKE_ARGS} -DONNX_USE_LITE_PROTO=ON"
+fi
+export CMAKE_ARGS="${CMAKE_ARGS} -DONNXIFI_DUMMY_BACKEND=ON"
+export ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI
+
+time python setup.py bdist_wheel --universal --dist-dir .
+find . -maxdepth 1 -name "*.whl" -ls -exec pip install {} \;

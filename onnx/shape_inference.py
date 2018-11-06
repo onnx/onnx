@@ -27,7 +27,7 @@ Return:
 """
 
 
-def infer_shapes(model):
+def infer_shapes(model):  # type: (ModelProto) -> ModelProto
     if not isinstance(model, ModelProto):
         raise ValueError('Shape inference only accepts ModelProto, '
                          'incorrect type: {}'.format(type(model)))

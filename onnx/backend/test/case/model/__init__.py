@@ -52,7 +52,7 @@ def collect_testcases():  # type: () -> List[TestCase]
         ('test_shufflenet', 'shufflenet'),
         ('test_squeezenet', 'squeezenet'),
         ('test_vgg19', 'vgg19'),
-        ('test_zfnet', 'zfnet'),
+        ('test_zfnet512', 'zfnet512'),
     ]
 
     for test_name, model_name in model_tests:

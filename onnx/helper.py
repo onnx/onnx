@@ -7,7 +7,7 @@ import collections
 import numbers
 from six import text_type, integer_types, binary_type
 
-import google.protobuf.message  # type: ignore
+import google.protobuf.message
 from onnx import TensorProto, AttributeProto, ValueInfoProto, TensorShapeProto, \
     NodeProto, ModelProto, GraphProto, OperatorSetIdProto, TypeProto, IR_VERSION
 import onnx.defs as defs
@@ -50,6 +50,22 @@ def make_node(
             make_attribute(key, value)
             for key, value in sorted(kwargs.items()))
     return node
+
+
+def make_operatorsetid(
+        domain,  # type: Text
+        version,  # type: int
+):  # type: (...) -> OperatorSetIdProto
+    """Construct an OperatorSetIdProto.
+
+    Arguments:
+        domain (string): The domain of the operator set id
+        version (integer): Version of operator set id
+    """
+    operatorsetid = OperatorSetIdProto()
+    operatorsetid.domain = domain
+    operatorsetid.version = version
+    return operatorsetid
 
 
 def make_graph(
@@ -141,8 +157,8 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    if (data_type == TensorProto.COMPLEX64 or
-            data_type == TensorProto.COMPLEX128):
+    if (data_type == TensorProto.COMPLEX64
+            or data_type == TensorProto.COMPLEX128):
         vals = split_complex_to_pairs(vals)
     if raw:
         tensor.raw_data = vals
@@ -217,7 +233,7 @@ def make_attribute(
             attr.ints.extend(int(v) for v in value)
             attr.type = AttributeProto.INTS
         elif all(byte_array):
-            attr.strings.extend(byte_array)
+            attr.strings.extend(cast(List[bytes], byte_array))
             attr.type = AttributeProto.STRINGS
         elif all(isinstance(v, TensorProto) for v in value):
             attr.tensors.extend(value)
@@ -260,7 +276,7 @@ def get_attribute_value(attr):  # type: (AttributeProto) -> Any
         raise ValueError("Unsupported ONNX attribute: {}".format(attr))
 
 
-def make_empty_tensor_value_info(name):
+def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
     value_info_proto = ValueInfoProto()
     value_info_proto.name = name
     return value_info_proto
@@ -269,9 +285,9 @@ def make_empty_tensor_value_info(name):
 def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: TensorProto.DataType
-        shape,  # type: Sequence[int]
+        shape,  # type: Optional[Sequence[int]]
         doc_string="",  # type: Text
-        shape_denotation=None,  # type: Optional[Text]
+        shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
     """Makes a ValueInfoProto based on the data type and shape."""
     value_info_proto = ValueInfoProto()

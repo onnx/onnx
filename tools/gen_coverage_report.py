@@ -5,8 +5,12 @@ import os
 import subprocess
 import tempfile
 
+MYPY = False
+if MYPY:
+    from typing import Text
 
-def parse_args():
+
+def parse_args():  # type: () -> argparse.Namespace
     parser = argparse.ArgumentParser(os.path.basename(__file__))
     parser.add_argument('-r', '--root',
                         default=os.path.dirname(
@@ -17,7 +21,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def gen_trace_file(root_dir, out_path):
+def gen_trace_file(root_dir, out_path):  # type: (Text, Text) -> None
     subprocess.check_output([
         'lcov',
         '-c',
@@ -47,7 +51,7 @@ def gen_trace_file(root_dir, out_path):
     ])
 
 
-def gen_html_files(root_dir, trace_path, out_dir):
+def gen_html_files(root_dir, trace_path, out_dir):  # type: (Text, Text, Text) -> None
     subprocess.check_output([
         'genhtml',
         trace_path,
@@ -58,7 +62,7 @@ def gen_html_files(root_dir, trace_path, out_dir):
     ])
 
 
-def main():
+def main():  # type: () -> None
     args = parse_args()
 
     root = os.path.abspath(args.root)

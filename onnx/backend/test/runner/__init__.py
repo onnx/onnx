@@ -12,6 +12,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
+import time
 import unittest
 
 import numpy as np  # type: ignore
@@ -30,9 +31,27 @@ class BackendIsNotSupposedToImplementIt(unittest.SkipTest):
     pass
 
 
+def retry_excute(times):  # type: (int) -> Callable[[Callable[..., Any]], Callable[..., Any]]
+    assert times >= 1
+
+    def wrapper(func):  # type: (Callable[..., Any]) -> Callable[..., Any]
+        @functools.wraps(func)
+        def wrapped(*args, **kwargs):  # type: (*Any, **Any) -> Any
+            for i in range(1, times + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception:
+                    print('{} times tried'.format(i))
+                    if i == times:
+                        raise
+                    time.sleep(5 * i)
+        return wrapped
+    return wrapper
+
+
 class Runner(object):
 
-    def __init__(self, backend, parent_module=None):  # type: (Backend, Optional[str]) -> None
+    def __init__(self, backend, parent_module=None):  # type: (Type[Backend], Optional[str]) -> None
         self.backend = backend
         self._parent_module = parent_module
         self._include_patterns = set()  # type: Set[Pattern[Text]]
@@ -78,7 +97,7 @@ class Runner(object):
 
         for category, items_map in self._test_items.items():
             for name, item in items_map.items():
-                item.func = pytest.mark.onnx_coverage(item.proto)(item.func)
+                item.func = pytest.mark.onnx_coverage(item.proto, category)(item.func)
         return self
 
     @property
@@ -87,8 +106,8 @@ class Runner(object):
         for category, items_map in self._test_items.items():
             filtered[category] = {}
             for name, item in items_map.items():
-                if (self._include_patterns and
-                    (not any(include.search(name)
+                if (self._include_patterns
+                    and (not any(include.search(name)
                              for include in self._include_patterns))):
                     item.func = unittest.skip(
                         'no matched include pattern'
@@ -127,7 +146,7 @@ class Runner(object):
         '''
         suite = unittest.TestSuite()
         for case in sorted(self.test_cases.values()):
-            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))  # type: ignore
+            suite.addTests(unittest.defaultTestLoader.loadTestsFromTestCase(case))
         return suite
 
     # For backward compatibility (we used to expose `.tests`)
@@ -155,7 +174,30 @@ class Runner(object):
                 rtol=1e-3,
                 atol=1e-7)
 
-    def _prepare_model_data(self, model_test):  # type: (TestCase) -> Text
+    @staticmethod
+    @retry_excute(3)
+    def _download_model(model_test, model_dir, models_dir):  # type: (TestCase, Text, Text) -> None
+        # On Windows, NamedTemporaryFile can not be opened for a
+        # second time
+        download_file = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            download_file.close()
+            print('Start downloading model {} from {}'.format(
+                model_test.model_name,
+                model_test.url))
+            urlretrieve(model_test.url, download_file.name)
+            print('Done')
+            with tarfile.open(download_file.name) as t:
+                t.extractall(models_dir)
+        except Exception as e:
+            print('Failed to prepare data for model {}: {}'.format(
+                model_test.model_name, e))
+            raise
+        finally:
+            os.remove(download_file.name)
+
+    @staticmethod
+    def _prepare_model_data(model_test):  # type: (TestCase) -> Text
         onnx_home = os.path.expanduser(os.getenv('ONNX_HOME', os.path.join('~', '.onnx')))
         models_dir = os.getenv('ONNX_MODELS',
                                os.path.join(onnx_home, 'models'))
@@ -172,23 +214,7 @@ class Runner(object):
                     break
             os.makedirs(model_dir)
 
-            # On Windows, NamedTemporaryFile can not be opened for a
-            # second time
-            download_file = tempfile.NamedTemporaryFile(delete=False)
-            try:
-                download_file.close()
-                print('Start downloading model {} from {}'.format(
-                    model_test.model_name, model_test.url))
-                urlretrieve(model_test.url, download_file.name)
-                print('Done')
-                with tarfile.open(download_file.name) as t:
-                    t.extractall(models_dir)
-            except Exception as e:
-                print('Failed to prepare data for model {}: {}'.format(
-                    model_test.model_name, e))
-                raise
-            finally:
-                os.remove(download_file.name)
+            Runner._download_model(model_test=model_test, model_dir=model_dir, models_dir=models_dir)
         return model_dir
 
     def _add_test(self,
@@ -210,11 +236,11 @@ class Runner(object):
                     'Duplicated test name "{}" in category "{}"'.format(
                         device_test_name, category))
 
-            @unittest.skipIf(
+            @unittest.skipIf(  # type: ignore
                 not self.backend.supports_device(device),
                 "Backend doesn't support device {}".format(device))
             @functools.wraps(test_func)
-            def device_test_func(*args, **kwargs):
+            def device_test_func(*args, **kwargs):  # type: (*Any, **Any) -> Any
                 try:
                     return test_func(*args, device=device, **kwargs)
                 except BackendIsNotSupposedToImplementIt as e:
@@ -236,12 +262,16 @@ class Runner(object):
 
         def run(test_self, device):  # type: (Any, Text) -> None
             if model_test.model_dir is None:
-                model_dir = self._prepare_model_data(model_test)
+                model_dir = Runner._prepare_model_data(model_test)
             else:
                 model_dir = model_test.model_dir
             model_pb_path = os.path.join(model_dir, 'model.onnx')
             model = onnx.load(model_pb_path)
             model_marker[0] = model
+            if hasattr(self.backend, 'is_compatible') \
+               and callable(self.backend.is_compatible) \
+               and not self.backend.is_compatible(model):
+                raise unittest.SkipTest('Not compatible with backend')
             prepared_model = self.backend.prepare(model, device)
             assert prepared_model is not None
 

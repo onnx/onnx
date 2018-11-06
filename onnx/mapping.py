@@ -21,6 +21,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     TensorProto.COMPLEX128: np.dtype('complex128'),
     TensorProto.UINT32: np.dtype('uint32'),
     TensorProto.UINT64: np.dtype('uint64'),
+    TensorProto.STRING: np.dtype('str'),
 }
 
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()}
@@ -35,9 +36,10 @@ TENSOR_TYPE_TO_STORAGE_TENSOR_TYPE = {
     TensorProto.INT64: TensorProto.INT64,
     TensorProto.BOOL: TensorProto.INT32,
     TensorProto.FLOAT16: TensorProto.UINT16,
+    TensorProto.BFLOAT16: TensorProto.UINT16,
     TensorProto.DOUBLE: TensorProto.DOUBLE,
     TensorProto.COMPLEX64: TensorProto.FLOAT,
-    TensorProto.COMPLEX128: TensorProto.FLOAT,
+    TensorProto.COMPLEX128: TensorProto.DOUBLE,
     TensorProto.UINT32: TensorProto.UINT32,
     TensorProto.UINT64: TensorProto.UINT64,
     TensorProto.STRING: TensorProto.STRING,
@@ -50,7 +52,7 @@ STORAGE_TENSOR_TYPE_TO_FIELD = {
     TensorProto.UINT16: 'int32_data',
     TensorProto.DOUBLE: 'double_data',
     TensorProto.COMPLEX64: 'float_data',
-    TensorProto.COMPLEX128: 'float_data',
+    TensorProto.COMPLEX128: 'double_data',
     TensorProto.UINT32: 'uint64_data',
     TensorProto.UINT64: 'uint64_data',
     TensorProto.STRING: 'string_data',

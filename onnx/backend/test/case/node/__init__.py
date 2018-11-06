@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 
 import sys
 
-from typing import Any, List
+from typing import List, Text, Sequence
+import numpy as np  # type: ignore
 
 import onnx
 import onnx.mapping
@@ -16,18 +17,24 @@ from ..test_case import TestCase
 _NodeTestCases = []
 
 
-def _extract_value_info(arr, name):
+def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
     return onnx.helper.make_tensor_value_info(
         name=name,
         elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
         shape=arr.shape)
 
 
-def expect(node, inputs, outputs, name):
+def expect(node,  # type: onnx.NodeProto
+           inputs,  # type: Sequence[np.ndarray]
+           outputs,  # type: Sequence[np.ndarray]
+           name,  # type: Text
+           ):  # type: (...) -> None
+    present_inputs = [x for x in node.input if (x != '')]
+    present_outputs = [x for x in node.output if (x != '')]
     inputs_vi = [_extract_value_info(arr, arr_name)
-                 for arr, arr_name in zip(inputs, node.input)]
+                 for arr, arr_name in zip(inputs, present_inputs)]
     outputs_vi = [_extract_value_info(arr, arr_name)
-                  for arr, arr_name in zip(outputs, node.output)]
+                  for arr, arr_name in zip(outputs, present_outputs)]
     graph = onnx.helper.make_graph(
         nodes=[node],
         name=name,

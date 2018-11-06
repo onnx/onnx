@@ -19,7 +19,7 @@ from onnx import (ValueInfoProto,
                   IR_VERSION)
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
-from google.protobuf.message import Message  # type: ignore
+from google.protobuf.message import Message
 from typing import TypeVar, Callable, Any, Type, cast
 
 
