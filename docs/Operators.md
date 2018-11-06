@@ -1534,9 +1534,9 @@ Other versions of this operator: <a href="Changelog.md#Clip-1">Clip-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>max</tt> : float (default is 3.4028234663852886e+38)</dt>
+<dt><tt>max</tt> : float (default is 3.40282346639e+38)</dt>
 <dd>Maximum value, above which element is replaced by max</dd>
-<dt><tt>min</tt> : float (default is -3.4028234663852886e+38)</dt>
+<dt><tt>min</tt> : float (default is -3.40282346639e+38)</dt>
 <dd>Minimum value, under which element is replaced by min</dd>
 </dl>
 
@@ -9493,6 +9493,50 @@ This version of the operator has been available since version 8 of the default O
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
 </dl>
+
+
+#### Examples
+
+<details>
+<summary>scan</summary>
+
+```python
+# create graph to represent scan body
+# This graph takes inputs sum_in and next and returns their sum as sum_out
+sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
+sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['sum_in', 'next'],
+    outputs=['sum_out']
+)
+scan_body = onnx.helper.make_graph(
+    [add_node],
+    'scan_body',
+    [sum_in, next],
+    [sum_out]
+)
+# create scan op node
+no_sequence_lens = ''   # optional input, not supplied
+node = onnx.helper.make_node(
+    'Scan',
+    inputs=[no_sequence_lens, 'initial', 'x'],
+    outputs=['y'],
+    num_scan_inputs=1,
+    body=scan_body
+)
+# create inputs for batch-size 1, sequence-length 3, inner dimension 2
+initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((1, 3, 2))
+# output computed = [1 + 3 + 5, 2 + 4 + 6]
+y = np.array([9, 12]).astype(np.float32).reshape((1, 2))
+
+expect(node, inputs=[initial, x], outputs=[y],
+       name='test_scan_sum')
+```
+
+</details>
 
 
 ### <a name="Selu"></a><a name="selu">**Selu**</a>
