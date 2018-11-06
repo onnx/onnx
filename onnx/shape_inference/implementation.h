@@ -10,13 +10,19 @@ namespace shape_inference {
 
 struct GraphInferenceContext {
   GraphInferenceContext(
+      const std::unordered_map<std::string, TypeProto*>&
+          outer_scope_value_types_by_name_in,
       const std::unordered_map<std::string, int> opset_imports_in,
       const ISchemaRegistry* schema_registry_in = OpSchemaRegistry::Instance(),
       const IFunctionBuilderRegistry* func_registry_in =
           &FunctionBuilderRegistry::OnnxInstance())
-      : opset_imports{opset_imports_in},
+      : outer_scope_value_types_by_name{&outer_scope_value_types_by_name_in},
+        opset_imports{opset_imports_in},
         schema_registry{schema_registry_in},
         func_registry{func_registry_in} {}
+
+  const std::unordered_map<std::string, TypeProto*>*
+      outer_scope_value_types_by_name;
   const std::unordered_map<std::string, int> opset_imports;
   const ISchemaRegistry* schema_registry;
   const IFunctionBuilderRegistry* func_registry;

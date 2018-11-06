@@ -295,13 +295,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain index tensor to int64"));
 
 void maxUnpoolShapeInference(InferenceContext& ctx) {
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-
   // we need at least two inputs to have a shape for this inference.
-  if (!hasNInputShapes(ctx, 2)) {
-    fail_shape_inference("MaxUnpool op must have atleast 2 inputs.");
+  if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {
+    fail_type_inference(
+            "MaxUnpool op must have either two or three inputs.");
   }
-
+  propagateElemTypeFromInputToOutput(ctx, 0, 0);
+  if (!hasInputShape(ctx, 0)) {
+    return; // If first input does not have shape, we cannot infer much.
+  }
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     fail_shape_inference("Input tensor X must have atleast 2 dimensions.");
@@ -313,7 +315,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-      fail_shape_inference("Attribute pads has incorrect size");
+      fail_shape_inference("Attribute pads has incorrect size.");
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -322,7 +324,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> strides;
   if (getRepeatedAttribute(ctx, "strides", strides)) {
     if (strides.size() != n_input_dims) {
-      fail_shape_inference("Attribute strides has incorrect size");
+      fail_shape_inference("Attribute strides has incorrect size.");
     }
   } else {
     strides.assign(n_input_dims, 1);
@@ -331,21 +333,28 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   std::vector<int64_t> kernel_shape;
   if (getRepeatedAttribute(ctx, "kernel_shape", kernel_shape)) {
     if (kernel_shape.size() != n_input_dims) {
-      fail_shape_inference("Attribute kernel_shape has incorrect size");
+      fail_shape_inference("Attribute kernel_shape has incorrect size.");
     }
   } else {
-    fail_shape_inference("Attribute kernel_shape must be specified");
+    fail_shape_inference("Attribute kernel_shape must be specified.");
   }
 
-  if (hasNInputShapes(ctx, 3)) {
-    // If the third input, output_size, is specified then use that instead 
+  if (ctx.getNumInputs() == 3) {
+    // If the third input, output_size, is specified, then use that instead 
     // of inferring shape from inputs.
-    auto output_shape = ctx.getInputType(2)->tensor_type().shape();
-    if (output_shape.dim_size() != input_shape.dim_size()) {
-        fail_shape_inference("output_shape must be the same size as the shape of input tensor X.");
+    if (hasInputShape(ctx, 2)) {
+      auto& output_shape = getInputShape(ctx, 2);
+      if (output_shape.dim_size() != 1) {
+        fail_type_inference(
+              "'output_shape' must be rank 1 tensor.");
+      }
+      if (output_shape.dim((int)0).has_dim_value() && 
+          static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
+          fail_shape_inference(
+                  "'output_shape' must have same number of elements as the shape of input tensor X.");
+      }
     }
-    else
-      return; // output_shape is specified as input. Actual shape will be detrermined at runtime.
+    return; // 'output_shape' is specified as input. Actual shape will be determined at runtime.
   }
 
   auto final_output_shape =
@@ -879,7 +888,7 @@ output_shape can also be explicitly specified in which case pads values are auto
     schema.Input(
         2,
         "B",
-        "Optional 1D bias to be added to the convolution, has size of C.",
+        "Optional 1D bias to be added to the convolution, has size of M.",
         "T",
         OpSchema::Optional);
     schema.Output(
