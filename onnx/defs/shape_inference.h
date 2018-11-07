@@ -274,7 +274,6 @@ inline void propagateShapeFromInputToOutput(
       TypeProto::kTensorType != output_type->value_case()) {
     throw std::runtime_error(ONNX_NAMESPACE::to_string(
         ctx.getInputType(inputIndex)->tensor_type().shape().dim_size()));
-    return;
   }
 
   *ctx.getOutputType(outputIndex)->mutable_tensor_type()->mutable_shape() =
