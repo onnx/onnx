@@ -427,13 +427,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "M",
             "A maximum trip-count for the loop specified at runtime. Optional."
-            " pass empty string to skip.",
-            "I")
+            " Pass empty string to skip.",
+            "I",
+            OpSchema::Optional)
         .Input(
             1,
             "cond",
-            "A boolean termination condition. Pass empty string to skip.",
-            "B")
+            "A boolean termination condition. Optional. Pass empty string to skip.",
+            "B",
+            OpSchema::Optional)
         .Input(
             2,
             "v_initial",
@@ -458,8 +460,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             " iterations.",
             AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("I", {"int64"}, "Only int64")
-        .TypeConstraint("B", {"bool"}, "Only bool"));
+        .TypeConstraint(
+            "I",
+            {"tensor(int64)"},
+            "tensor of int64, which should be a scalar.")
+        .TypeConstraint(
+            "B",
+            {"tensor(bool)"},
+            "tensor of bool, which should be a scalar."));
 
 static const char* scan_ver1_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
