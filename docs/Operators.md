@@ -5691,10 +5691,10 @@ This version of the operator has been available since version 1 of the default O
 #### Inputs (3 - &#8734;)
 
 <dl>
-<dt><tt>M</tt> : I</dt>
-<dd>A maximum trip-count for the loop specified at runtime. Optional. pass empty string to skip.</dd>
-<dt><tt>cond</tt> : B</dt>
-<dd>A boolean termination condition. Pass empty string to skip.</dd>
+<dt><tt>M</tt> (optional) : I</dt>
+<dd>A maximum trip-count for the loop specified at runtime. Optional. Pass empty string to skip.</dd>
+<dt><tt>cond</tt> (optional) : B</dt>
+<dd>A boolean termination condition. Optional. Pass empty string to skip.</dd>
 <dt><tt>v_initial</tt> (variadic) : V</dt>
 <dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
 </dl>
@@ -5711,10 +5711,10 @@ This version of the operator has been available since version 1 of the default O
 <dl>
 <dt><tt>V</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>All Tensor types</dd>
-<dt><tt>I</tt> : int64</dt>
-<dd>Only int64</dd>
-<dt><tt>B</tt> : bool</dt>
-<dd>Only bool</dd>
+<dt><tt>I</tt> : tensor(int64)</dt>
+<dd>tensor of int64, which should be a scalar.</dd>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>tensor of bool, which should be a scalar.</dd>
 </dl>
 
 
