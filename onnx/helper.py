@@ -23,7 +23,7 @@ def make_node(
         outputs,  # type: Sequence[Text]
         name=None,  # type: Optional[Text]
         doc_string=None,  # type: Optional[Text]
-        domain=None, # type: Optional[Text]
+        domain=None,  # type: Optional[Text]
         **kwargs  # type: Any
 ):  # type: (...) -> NodeProto
     """Construct a NodeProto.
