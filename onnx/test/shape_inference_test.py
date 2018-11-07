@@ -1053,7 +1053,7 @@ class TestShapeInference(unittest.TestCase):
         # can't use self._make_graph for the subgraph as it add more inputs for the Reshape operations it inserts.
         # this breaks the subgraph inferencing as it expects the number of inputs passed from Loop to match
         # the GraphProto, but Loop knows nothing about the additional inputs.
-        input_value_infos = [make_tensor_value_info('iter_num_in', TensorProto.FLOAT, (1,)),
+        input_value_infos = [make_tensor_value_info('iter_num_in', TensorProto.INT64, (1,)),
                              make_tensor_value_info('cond_in', TensorProto.UNDEFINED, None),
                              make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, ())]
         output_value_infos = [make_tensor_value_info('cond_out', TensorProto.UNDEFINED, None),
