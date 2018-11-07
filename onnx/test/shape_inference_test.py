@@ -1070,10 +1070,11 @@ class TestShapeInference(unittest.TestCase):
         )
 
         graph = self._make_graph(
-            [('cond_orig', TensorProto.FLOAT, (1,)),
+            [('max_trip_count', TensorProto.INT64, (1,)),
+             ('cond_orig', TensorProto.FLOAT, (1,)),
              ('loop_state_orig', TensorProto.FLOAT, (2,)),
              ('outer_scope_input', TensorProto.FLOAT, (3,))],
-            [make_node('Loop', ['', 'cond_orig', 'loop_state_orig'], ['loop_state_final', 'loop_output'],
+            [make_node('Loop', ['max_trip_count', 'cond_orig', 'loop_state_orig'], ['loop_state_final', 'loop_output'],
                        body=subgraph)],
             []
         )

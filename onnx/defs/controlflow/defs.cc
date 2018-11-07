@@ -528,15 +528,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "M",
             "A maximum trip-count for the loop specified at runtime. Optional."
-            " Pass empty string to skip.",
-            "I",
-            OpSchema::Optional)
+            " pass empty string to skip.",
+            "I")
         .Input(
             1,
             "cond",
-            "A boolean termination condition. Optional. Pass empty string to skip.",
-            "B",
-            OpSchema::Optional)
+            "A boolean termination condition. Pass empty string to skip.",
+            "B")
         .Input(
             2,
             "v_initial",
