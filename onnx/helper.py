@@ -48,7 +48,7 @@ def make_node(
         node.name = name
     if doc_string:
         node.doc_string = doc_string
-    if domain:
+    if domain is not None:
         node.domain = domain
     if kwargs:
         node.attribute.extend(
