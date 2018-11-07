@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 96/104 (92.31%, 5 generators excluded) common operators.
+Node tests have covered 97/104 (93.27%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -4984,6 +4984,61 @@ for test_name, shape in test_cases.items():
 </details>
 
 
+### Scan
+There are 1 test cases, listed as following:
+<details>
+<summary>scan</summary>
+
+```python
+# Given an input sequence [x1, ..., xN], sum up its elements using a scan
+# returning the final state (x1+x2+...+xN) as well the scan_output
+# [x1, x1+x2, ..., x1+x2+...+xN]
+#
+# create graph to represent scan body
+sum_in = onnx.helper.make_tensor_value_info('sum_in', onnx.TensorProto.FLOAT, [2])
+next = onnx.helper.make_tensor_value_info('next', onnx.TensorProto.FLOAT, [2])
+sum_out = onnx.helper.make_tensor_value_info('sum_out', onnx.TensorProto.FLOAT, [2])
+scan_out = onnx.helper.make_tensor_value_info('scan_out', onnx.TensorProto.FLOAT, [2])
+add_node = onnx.helper.make_node(
+    'Add',
+    inputs=['sum_in', 'next'],
+    outputs=['sum_out']
+)
+id_node = onnx.helper.make_node(
+    'Identity',
+    inputs=['sum_out'],
+    outputs=['scan_out']
+)
+scan_body = onnx.helper.make_graph(
+    [add_node, id_node],
+    'scan_body',
+    [sum_in, next],
+    [sum_out, scan_out]
+)
+# create scan op node
+no_sequence_lens = ''   # optional input, not supplied
+node = onnx.helper.make_node(
+    'Scan',
+    inputs=[no_sequence_lens, 'initial', 'x'],
+    outputs=['y', 'z'],
+    num_scan_inputs=1,
+    body=scan_body
+)
+# create inputs for batch-size 1, sequence-length 3, inner dimension 2
+initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
+x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((1, 3, 2))
+# final state computed = [1 + 3 + 5, 2 + 4 + 6]
+y = np.array([9, 12]).astype(np.float32).reshape((1, 2))
+# scan-output computed
+z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((1, 3, 2))
+
+expect(node, inputs=[initial, x], outputs=[y, z],
+       name='test_scan_sum')
+```
+
+</details>
+
+
 ### Selu
 There are 2 test cases, listed as following:
 <details>
@@ -5986,9 +6041,6 @@ expect(node, inputs=[x, y], outputs=[z],
 ### RandomUniformLike (random generator operator)
 
 
-### Scan (call for test cases)
-
-
 ### SpaceToDepth (call for test cases)
 
 
@@ -6209,12 +6261,12 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 1
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6243,12 +6295,16 @@ strides: 1
 
 ## densenet121
 
-densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+densenet121 has 668 nodes. Of these, 668 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
+<details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
 <details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
@@ -6259,7 +6315,7 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -6281,12 +6337,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 1
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6311,9 +6367,8 @@ storage_order: 0
 strides: 1
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
-axes: 1
 </details>
 </details>
 
@@ -6327,6 +6382,10 @@ inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6336,7 +6395,7 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -6358,12 +6417,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6388,21 +6447,24 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
-axes: 1
 </details>
 </details>
 
 
 ## inception_v2
 
-inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+inception_v2 has 371 nodes. Of these, 371 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
+<details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
 <details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
@@ -6413,7 +6475,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -6435,12 +6497,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6465,9 +6527,8 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
-axes: 1
 </details>
 </details>
 
@@ -6481,6 +6542,10 @@ resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6490,7 +6555,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -6512,12 +6577,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6542,9 +6607,8 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+<summary>Mul: 2 out of 0 attributes covered</summary>
 
-axes: 1
 </details>
 </details>
 
@@ -6558,6 +6622,10 @@ shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6567,7 +6635,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -6589,12 +6657,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6619,14 +6687,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
-
-axes: 1
 </details>
 </details>
 
@@ -6640,6 +6707,10 @@ squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6649,7 +6720,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -6671,12 +6742,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6701,14 +6772,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
-
-axes: 1
 </details>
 </details>
 
@@ -6722,6 +6792,10 @@ vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6731,7 +6805,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -6753,12 +6827,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6783,14 +6857,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
-
-axes: 1
 </details>
 </details>
 
@@ -6804,6 +6877,10 @@ zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
+<summary>Add: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6813,7 +6890,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -6835,12 +6912,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 1 out of 1 attributes covered</summary>
+<summary>Dropout: 2 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 1 out of 4 attributes covered</summary>
+<summary>Gemm: 2 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6865,14 +6942,13 @@ storage_order: 0
 strides: 2
 </details>
 <details>
+<summary>Mul: 2 out of 0 attributes covered</summary>
+
+</details>
+<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
-</details>
-<details>
-<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
-
-axes: 1
 </details>
 </details>
 
