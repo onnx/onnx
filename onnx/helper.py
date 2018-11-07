@@ -23,6 +23,7 @@ def make_node(
         outputs,  # type: Sequence[Text]
         name=None,  # type: Optional[Text]
         doc_string=None,  # type: Optional[Text]
+        domain=None, # type: Optional[Text]
         **kwargs  # type: Any
 ):  # type: (...) -> NodeProto
     """Construct a NodeProto.
@@ -33,6 +34,7 @@ def make_node(
         outputs (list of string): list of output names
         name (string, default None): optional unique identifier for NodeProto
         doc_string (string, default None): optional documentation string for NodeProto
+        domain (string, default None): optional domain for NodeProto
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
     """
@@ -45,6 +47,8 @@ def make_node(
         node.name = name
     if doc_string:
         node.doc_string = doc_string
+    if domain:
+        node.domain = domain
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
