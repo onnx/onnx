@@ -6,12 +6,15 @@
 * ai.onnx (default)
   * <a href="#Abs">Abs</a>
   * <a href="#Acos">Acos</a>
+  * <a href="#Acosh">Acosh</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
   * <a href="#ArgMin">ArgMin</a>
   * <a href="#Asin">Asin</a>
+  * <a href="#Asinh">Asinh</a>
   * <a href="#Atan">Atan</a>
+  * <a href="#Atanh">Atanh</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
   * <a href="#Cast">Cast</a>
@@ -24,6 +27,7 @@
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
+  * <a href="#Cosh">Cosh</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
@@ -66,6 +70,7 @@
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
   * <a href="#Not">Not</a>
+  * <a href="#OneHot">OneHot</a>
   * <a href="#Or">Or</a>
   * <a href="#PRelu">PRelu</a>
   * <a href="#Pad">Pad</a>
@@ -93,6 +98,7 @@
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
   * <a href="#Sin">Sin</a>
+  * <a href="#Sinh">Sinh</a>
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
@@ -232,6 +238,62 @@ x = np.random.rand(3, 4, 5).astype(np.float32)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
+```
+
+</details>
+
+
+### <a name="Acosh"></a><a name="acosh">**Acosh**</a>
+
+  Calculates the hyperbolic arccosine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arccosine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>acosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh_example')
+
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh')
 ```
 
 </details>
@@ -736,6 +798,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Asinh"></a><a name="asinh">**Asinh**</a>
+
+  Calculates the hyperbolic arcsine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arcsine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>asinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arcsinh(x)  # expected output [-0.88137358,  0.,  0.88137358]
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arcsinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh')
+```
+
+</details>
+
+
 ### <a name="Atan"></a><a name="atan">**Atan**</a>
 
   Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
@@ -787,6 +905,62 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.arctan(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_atan')
+```
+
+</details>
+
+
+### <a name="Atanh"></a><a name="atanh">**Atanh**</a>
+
+  Calculates the hyperbolic arctangent of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arctangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>atanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arctanh(x)  # expected output [-0.54930615,  0.,  0.54930615]
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh_example')
+
+x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
+y = np.arctanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh')
 ```
 
 </details>
@@ -2576,6 +2750,62 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cos')
+```
+
+</details>
+
+
+### <a name="Cosh"></a><a name="cosh">**Cosh**</a>
+
+  Calculates the hyperbolic cosine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic cosine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cosh(x)  # expected output [1.54308069,  1.,  1.54308069]
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh')
 ```
 
 </details>
@@ -6748,6 +6978,111 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 </details>
 
 
+### <a name="OneHot"></a><a name="onehot">**OneHot**</a>
+
+  Produces a one-hot tensor based on inputs.
+      The locations represented by the index values in the 'indices' input tensor will have 'on_value' 
+      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value' 
+      are specified as part of required input argument 'values', which is a two-element tensor of format  
+      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the 
+      input tensor. The additional dimension is for one-hot representation. The additional dimension will 
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional 
+      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional 
+      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same 
+      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside 
+      the range [0, depth) will result in one-hot representation with all 'off_value' values in the 
+      output tensor.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>indices</tt> : T1</dt>
+<dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
+<dt><tt>depth</tt> : T1</dt>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor and the values in the 'indices' input tensor are expected to be in the range [0, depth). TheIn case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dt><tt>values</tt> : T2</dt>
+<dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_axis</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>without_axis</summary>
+
+```python
+on_value = 5
+off_value = 2
+output_type = np.int32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y']
+)
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.array([12], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
+```
+
+</details>
+
+
 ### <a name="Or"></a><a name="or">**Or**</a>
 
   Returns the tensor resulted from performing the `or` logical operation
@@ -9659,6 +9994,62 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.sin(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_sin')
+```
+
+</details>
+
+
+### <a name="Sinh"></a><a name="sinh">**Sinh**</a>
+
+  Calculates the hyperbolic sine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic sine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sinh(x)  # expected output [-1.17520118,  0.,  1.17520118]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh')
 ```
 
 </details>
