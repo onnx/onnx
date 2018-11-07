@@ -34,7 +34,8 @@ def make_node(
         outputs (list of string): list of output names
         name (string, default None): optional unique identifier for NodeProto
         doc_string (string, default None): optional documentation string for NodeProto
-        domain (string, default None): optional domain for NodeProto
+        domain (string, default None): optional domain for NodeProto.
+            If it's none, we will just use default domain (which is empty)
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
     """
