@@ -277,19 +277,26 @@ void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;
+
+  std::vector<TypeProto> temporary_type_protos;
+  temporary_type_protos.reserve(num_inputs - 2);
+
   subgraph_input_types.push_back(nullptr); // iteration number. not inferred.
   subgraph_input_types.push_back(ctx.getInputType(1)); // 'cond' value.
 
-  // loop state values get propagated to outputs
+  // loop state value types get propagated to outputs, but shape may change
+  // across iterations so don't propagate it to the outputs and don't pass it
+  // into the subgraph inferencing
   for (size_t i = 2; i < num_inputs; ++i) {
-    auto input_type = ctx.getInputType(i);
-    subgraph_input_types.push_back(input_type);
-
     propagateElemTypeFromInputToOutput(ctx, i, i - 2);
 
-    if (hasInputShape(ctx, i)) {
-      propagateShapeFromInputToOutput(ctx, i, i - 2);
-    }
+    // copy so we can remove the shape before passing to the subgraph
+    // inferencing
+    temporary_type_protos.push_back(*ctx.getInputType(i));
+    auto& input_type = temporary_type_protos.back();
+    input_type.mutable_tensor_type()->clear_shape();
+
+    subgraph_input_types.push_back(&input_type);
   }
 
   // Run inferencing on the subgraph
@@ -340,11 +347,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
       propagateElemTypeWithValidation(subgraph_output_type, loop_output_type);
 
       if (is_loop_state_var) {
-        // merge in shape, mainly for validation as it should match what's
-        // already there.
-        mergeInShapeInfo(
-            subgraph_output_type->tensor_type(),
-            *loop_output_type->mutable_tensor_type());
+        // shape may change across iterations so ignore.
       } else {
         // per iteration output. first dimension will be number of iterations
         // but we don't know that value yet

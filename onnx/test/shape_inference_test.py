@@ -1055,7 +1055,7 @@ class TestShapeInference(unittest.TestCase):
         # the GraphProto, but Loop knows nothing about the additional inputs.
         input_value_infos = [make_tensor_value_info('iter_num_in', TensorProto.FLOAT, (1,)),
                              make_tensor_value_info('cond_in', TensorProto.UNDEFINED, None),
-                             make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, None)]
+                             make_tensor_value_info('loop_state_in', TensorProto.UNDEFINED, ())]
         output_value_infos = [make_tensor_value_info('cond_out', TensorProto.UNDEFINED, None),
                               make_tensor_value_info('loop_state_out', TensorProto.UNDEFINED, None),
                               make_tensor_value_info('output', TensorProto.FLOAT, (3,))]
@@ -1081,8 +1081,8 @@ class TestShapeInference(unittest.TestCase):
 
         self._assert_inferred(
             graph,
-            [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, (2,)),
-             make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])
+            [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, None),  # shape may change between iterations
+             make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
 
 
 if __name__ == '__main__':
