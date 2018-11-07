@@ -281,8 +281,15 @@ void LoopInferenceFunction(InferenceContext& ctx) {
   std::vector<TypeProto> temporary_type_protos;
   temporary_type_protos.reserve(num_inputs - 2);
 
-  subgraph_input_types.push_back(nullptr); // iteration number. not inferred.
-  subgraph_input_types.push_back(ctx.getInputType(1)); // 'cond' value.
+  // create TypeProto to validate iteration number type is the same as the
+  // optional 'M' input for max iterations.
+  TypeProto iter_num_type;
+  iter_num_type.mutable_tensor_type()->set_elem_type(
+      TensorProto_DataType_INT64);
+  subgraph_input_types.push_back(&iter_num_type);
+
+  // 'cond'
+  subgraph_input_types.push_back(ctx.getInputType(1));
 
   // loop state value types get propagated to outputs, but shape may change
   // across iterations so don't propagate it to the outputs and don't pass it

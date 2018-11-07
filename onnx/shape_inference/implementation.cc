@@ -44,9 +44,16 @@ void checkShapesAndTypes(
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     TypeProto_Tensor* existingType) {
-  if (inferredType.elem_type() != TensorProto::UNDEFINED &&
-      existingType->elem_type() == TensorProto::UNDEFINED) {
-    existingType->set_elem_type(inferredType.elem_type());
+  if (inferredType.elem_type() != TensorProto::UNDEFINED) {
+    if (existingType->elem_type() == TensorProto::UNDEFINED) {
+      existingType->set_elem_type(inferredType.elem_type());
+    } else if (existingType->elem_type() != inferredType.elem_type()) {
+      fail_type_inference(
+          "type mismatch. existing=",
+          existingType->elem_type(),
+          " inferred=",
+          inferredType.elem_type());
+    }
   }
 
   if (!inferredType.has_shape()) {
