@@ -169,7 +169,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           std::string bytes;
           if (!iter->second->SerializeToString(&bytes)) {
             throw std::runtime_error(
-                "Failed to serilize registered function for '" + iter->first +
+                "Failed to serialize registered function for '" + iter->first +
                 "'!");
           }
           temp_map[iter->first].emplace_back(py::bytes(bytes));

@@ -5,6 +5,273 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
+static void UpdateValueFromDim(
+    int64_t& current_value,
+    const TensorShapeProto_Dimension& dim) {
+  if (current_value == -1 && dim.has_dim_value()) {
+    current_value = dim.dim_value();
+  }
+}
+
+static TypeProto RemoveDimensionsFromShape(
+    const TypeProto& proto,
+    int num_dimensions) {
+  TypeProto t(proto);
+  auto mutable_shape = t.mutable_tensor_type()->mutable_shape();
+  mutable_shape->clear_dim();
+
+  const auto& dims = proto.tensor_type().shape().dim();
+
+  // skip batch size and sequence length dimensions
+  for (int j = num_dimensions, end = dims.size(); j < end; ++j) {
+    (*mutable_shape->add_dim()) = dims.Get(j);
+  }
+
+  return t;
+}
+
+// copied from GSL:
+// https://github.com/Microsoft/GSL/blob/master/include/gsl/gsl_util
+template <class T, class U>
+static constexpr T narrow_cast(U&& u) noexcept {
+  return static_cast<T>(std::forward<U>(u));
+}
+
+void ScanInferenceFunction(InferenceContext& ctx) {
+  // NOTE:
+  // The first input to Scan is sequence_lens. We skip that when processing
+  // inputs in many places below, so the - 1 in multiple places is due to that.
+  auto num_inputs = ctx.getNumInputs();
+  auto num_scan_inputs =
+      narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
+  auto num_loop_state_vars = num_inputs - 1 - num_scan_inputs;
+
+  std::vector<TypeProto> temporary_type_protos;
+  temporary_type_protos.reserve(num_inputs);
+
+  std::vector<const TypeProto*> subgraph_input_types;
+
+  int64_t batch_size = -1;
+  int64_t sequence_len = -1;
+
+  for (size_t i = 1; i < num_inputs; ++i) {
+    bool is_loop_state_var = (i - 1) < num_loop_state_vars;
+    bool has_shape = hasInputShape(ctx, i);
+    const auto* input_type = ctx.getInputType(i);
+
+    // Enforce type constraint for inputs
+    if (!input_type || !input_type->has_tensor_type()) {
+      fail_type_inference("Scan input ", i, " was not a tensor.");
+    }
+
+    if (is_loop_state_var) {
+      // If it's a loop state variable we can propagate type and shape 1:1 to
+      // the matching Scan output.
+      // We can also pass through the type and shape to the subgraph but need to
+      // remove the batch size dimension from the shape.
+      propagateElemTypeFromInputToOutput(ctx, i, i - 1);
+
+      if (has_shape) {
+        propagateShapeFromInputToOutput(ctx, i, i - 1);
+
+        // remove batch size dimension and add to subgraph_input_types
+        temporary_type_protos.push_back(
+            RemoveDimensionsFromShape(*input_type, 1));
+        subgraph_input_types.push_back(&temporary_type_protos.back());
+      } else {
+        subgraph_input_types.push_back(input_type);
+      }
+    } else {
+      // For other inputs there is no fixed relationships to the Scan outputs,
+      // so we don't propagate type/shape information.
+      // We can pass through the type and shape to the subgraph inputs but need
+      // to remove the batch size and sequence length dimensions from the shape.
+      if (has_shape) {
+        // remove batch size and sequence length dimensions and add to
+        // subgraph_input_types
+        temporary_type_protos.push_back(
+            RemoveDimensionsFromShape(*input_type, 2));
+        subgraph_input_types.push_back(&temporary_type_protos.back());
+
+        // update batch_size and sequence_len if a value is available
+        const auto& shape = input_type->tensor_type().shape();
+        if (shape.dim_size() > 2) {
+          const auto& dims = shape.dim();
+          UpdateValueFromDim(batch_size, dims.Get(0));
+          UpdateValueFromDim(sequence_len, dims.Get(1));
+        }
+      } else {
+        subgraph_input_types.push_back(input_type);
+      }
+    }
+  }
+
+  // Run inferencing on the subgraph
+  std::vector<const TypeProto*> output_types;
+
+  GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
+  if (graphInferencer) {
+    std::vector<const TensorProto*> input_data;
+    for (size_t i = 1; i < num_inputs; ++i) {
+      input_data.push_back(ctx.getInputData(i));
+    }
+
+    output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  // if empty(), assume inferencing was skipped
+  if (!output_types.empty()) {
+    auto num_outputs = ctx.getNumOutputs();
+    if (output_types.size() != num_outputs) {
+      fail_type_inference(
+          "Graph attribute inferencing returned type information for ",
+          output_types.size(),
+          " outputs. Expected ",
+          num_outputs);
+    }
+
+    // propagate type/shape information for loop state variables and outputs
+    for (size_t i = 0; i < num_outputs; ++i) {
+      const bool is_loop_state_var = i < num_loop_state_vars;
+      auto* subgraph_output_type = output_types[i];
+      auto* scan_output_type = ctx.getOutputType(i);
+
+      if (!subgraph_output_type->has_tensor_type()) {
+        fail_type_inference(
+            "Scan 'body' subgraph outputs should all be tensors but output ",
+            i,
+            " was not");
+      }
+
+      // propagate output type. loop state vars were done in the above code.
+      if (!is_loop_state_var) {
+        scan_output_type->mutable_tensor_type()->set_elem_type(
+            subgraph_output_type->tensor_type().elem_type());
+      }
+
+      // propagate shape
+      if (subgraph_output_type->tensor_type().has_shape()) {
+        // we need to add in the batch size and sequence length values if
+        // available before merging with any existing info. Create a copy of the
+        // inferred type info from the subgraph to do that.
+        TypeProto inferred_type(*subgraph_output_type);
+        auto* mutable_inferred_tensor_type =
+            inferred_type.mutable_tensor_type();
+        auto* mutable_inferred_shape =
+            mutable_inferred_tensor_type->mutable_shape();
+
+        mutable_inferred_shape->clear_dim();
+
+        auto* batch_size_dim = mutable_inferred_shape->add_dim();
+        if (batch_size != -1) {
+          batch_size_dim->set_dim_value(batch_size);
+        }
+
+        if (!is_loop_state_var) {
+          auto* seq_len_dim = mutable_inferred_shape->add_dim();
+          if (sequence_len != -1)
+            seq_len_dim->set_dim_value(sequence_len);
+        }
+
+        for (const auto& dim :
+             subgraph_output_type->tensor_type().shape().dim()) {
+          (*mutable_inferred_shape->add_dim()) = dim;
+        }
+
+        auto* mutable_scan_output_tensor_type =
+            scan_output_type->mutable_tensor_type();
+
+        mergeInShapeInfo(
+            *mutable_inferred_tensor_type, *mutable_scan_output_tensor_type);
+      }
+    }
+  }
+}
+
+void IfInferenceFunction(InferenceContext& ctx) {
+  // there are no inputs so we just need to run the subgraph inferencing for
+  // then/else subgraphs and apply those to the outputs.
+  std::vector<const TypeProto*> subgraph_input_types; // none
+  std::vector<const TensorProto*> input_data; // none
+
+  std::vector<const TypeProto*> then_output_types;
+  std::vector<const TypeProto*> else_output_types;
+
+  // Run inferencing on the subgraph
+  GraphInferencer* graphInferencer =
+      ctx.getGraphAttributeInferencer("then_branch");
+  if (graphInferencer) {
+    then_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  graphInferencer = ctx.getGraphAttributeInferencer("else_branch");
+  if (graphInferencer) {
+    else_output_types =
+        graphInferencer->doInferencing(subgraph_input_types, input_data);
+  }
+
+  auto num_outputs = ctx.getNumOutputs();
+  auto num_then_outputs = then_output_types.size();
+  auto num_else_outputs = else_output_types.size();
+
+  // the output types for then and else should be the same
+  if (num_then_outputs != num_else_outputs) {
+    fail_type_inference(
+        "then_branch and else_branch produce different number of outputs. ",
+        num_then_outputs,
+        " != ",
+        num_else_outputs);
+  }
+
+  if (num_then_outputs != num_outputs) {
+    fail_type_inference(
+        "If node has ",
+        num_outputs,
+        " but subgraphs produce ",
+        num_then_outputs);
+  }
+
+  for (size_t i = 0, end = then_output_types.size(); i < end; ++i) {
+    auto then_output = then_output_types[i];
+    auto else_output = else_output_types[i];
+
+    if (then_output->value_case() != else_output->value_case()) {
+      fail_type_inference(
+          "Mismatched type for output ",
+          i,
+          " then=",
+          then_output->value_case(),
+          " else=",
+          else_output->value_case());
+    }
+
+    auto* if_output = ctx.getOutputType(i);
+    *if_output = *then_output;
+
+    if (then_output->has_tensor_type()) {
+      auto then_elem_type = then_output->tensor_type().elem_type();
+      auto else_elem_type = else_output->tensor_type().elem_type();
+
+      if (then_elem_type != else_elem_type) {
+        fail_type_inference(
+            "Mismatched tensor element type for output ",
+            i,
+            " then=",
+            then_elem_type,
+            " else=",
+            else_elem_type);
+      }
+
+      // merge the 'else' shape information to check it's consistent and augment
+      // the 'if' output if possible
+      mergeInShapeInfo(
+          else_output->tensor_type(), *if_output->mutable_tensor_type());
+    }
+  }
+}
+
 ONNX_OPERATOR_SET_SCHEMA(
     If,
     1,
@@ -32,7 +299,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             " the number of outputs in the then_branch.",
             AttributeProto::GRAPH)
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeConstraint("B", {"tensor(bool)"}, "Only bool"));
+        .TypeConstraint("B", {"tensor(bool)"}, "Only bool")
+        .TypeAndShapeInferenceFunction(IfInferenceFunction));
 
 static const char* Loop_ver1_doc = R"DOC(
 Generic Looping construct. This loop has multiple termination conditions:
@@ -322,55 +590,56 @@ values are computed in the outer graph, they need to be passed in as extra state
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	Scan,
-	8,
-	OpSchema()
-	.SetDoc(scan_ver1_doc)
-	.Input(
-		0,
-		"sequence_lens",
-		"Optional tensor specifying lengths of the sequences in a batch. "
-		"If this input is not specified, all sequences are assumed to be of "
-		"the maximum sequence length (the dimension of the sequence axis of "
-		"the scan_input tensors).",
-		"I",
-		OpSchema::Optional)
-	.Input(
-		1,
-		"initial_state_and_scan_inputs",
-		"Initial values of the loop's N state variables followed by M scan_inputs",
-		"V",
-		OpSchema::Variadic)
-	.Output(
-		0,
-		"final_state_and_scan_outputs",
-		"Final values of the loop's N state variables followed by K scan_outputs",
-		"V",
-		OpSchema::Variadic)
-	.Attr(
-		"body",
-		"The graph run each iteration. It has N+M inputs: "
-		"(loop state variables..., scan_input_elts...). It has N+K outputs: "
-		"(loop state variables..., scan_output_elts...). Each "
-		"scan_output is created by concatenating the value of the specified "
-		"scan_output_elt value at the end of each iteration of the loop. It is an error"
-		" if the dimensions of these values change across loop iterations.",
-		AttributeProto::GRAPH,
-		true)
-	.Attr(
-		"num_scan_inputs",
-		"An attribute specifying the number of scan_inputs M. ",
-		AttributeProto::INT,
-		true)
-	.Attr(
-		"directions",
-		"An optional list of M flags. The i-th element of the list specifies the direction "
-		"to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
-		"indicates reverse direction. "
-		"If omitted, all scan_input tensors will be scanned in the forward direction.",
-		AttributeProto::INTS,
-		false)
-	.TypeConstraint("I", { "tensor(int64)" }, "Int64 tensor")
-	.TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types"));
+    Scan,
+    8,
+    OpSchema()
+        .SetDoc(scan_ver1_doc)
+        .Input(
+            0,
+            "sequence_lens",
+            "Optional tensor specifying lengths of the sequences in a batch. "
+            "If this input is not specified, all sequences are assumed to be of "
+            "the maximum sequence length (the dimension of the sequence axis of "
+            "the scan_input tensors).",
+            "I",
+            OpSchema::Optional)
+        .Input(
+            1,
+            "initial_state_and_scan_inputs",
+            "Initial values of the loop's N state variables followed by M scan_inputs",
+            "V",
+            OpSchema::Variadic)
+        .Output(
+            0,
+            "final_state_and_scan_outputs",
+            "Final values of the loop's N state variables followed by K scan_outputs",
+            "V",
+            OpSchema::Variadic)
+        .Attr(
+            "body",
+            "The graph run each iteration. It has N+M inputs: "
+            "(loop state variables..., scan_input_elts...). It has N+K outputs: "
+            "(loop state variables..., scan_output_elts...). Each "
+            "scan_output is created by concatenating the value of the specified "
+            "scan_output_elt value at the end of each iteration of the loop. It is an error"
+            " if the dimensions of these values change across loop iterations.",
+            AttributeProto::GRAPH,
+            true)
+        .Attr(
+            "num_scan_inputs",
+            "An attribute specifying the number of scan_inputs M. ",
+            AttributeProto::INT,
+            true)
+        .Attr(
+            "directions",
+            "An optional list of M flags. The i-th element of the list specifies the direction "
+            "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
+            "indicates reverse direction. "
+            "If omitted, all scan_input tensors will be scanned in the forward direction.",
+            AttributeProto::INTS,
+            false)
+        .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
+        .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
+        .TypeAndShapeInferenceFunction(ScanInferenceFunction));
 
 } // namespace ONNX_NAMESPACE

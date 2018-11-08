@@ -72,12 +72,20 @@ void mergeShapesAndTypes(
   }
 }
 
-void InferShapes(
+static void InferShapesImpl(
     GraphProto* g,
+    const std::unordered_map<std::string, TypeProto*>&
+        outer_scope_value_types_by_name,
     const std::unordered_map<std::string, int>& opset_imports,
-    const ISchemaRegistry* schema_registry,
-    const IFunctionBuilderRegistry* func_registry) {
-  std::unordered_map<std::string, TypeProto*> valueTypesByName;
+    const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
+    const IFunctionBuilderRegistry* func_registry =
+        &FunctionBuilderRegistry::OnnxInstance()) {
+  std::unordered_map<std::string, TypeProto*> valueTypesByName{
+      outer_scope_value_types_by_name};
+
+  GraphInferenceContext graphInferenceContext{
+      valueTypesByName, opset_imports, schema_registry, func_registry};
+
   for (auto& vi : *g->mutable_value_info()) {
     if (vi.has_type())
       valueTypesByName[vi.name()] = vi.mutable_type();
@@ -96,7 +104,7 @@ void InferShapes(
     initializersByName[tp.name()] = &tp;
   }
 
-  for (const auto& n : g->node()) {
+  for (auto& n : *g->mutable_node()) {
     // Resolve domain for node
     auto dit = opset_imports.find(n.domain());
     if (dit == opset_imports.end()) {
@@ -106,7 +114,8 @@ void InferShapes(
 
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
-    InferenceContextImpl ctx(n, valueTypesByName, initializersByName);
+    InferenceContextImpl ctx(
+        n, valueTypesByName, initializersByName, &graphInferenceContext);
     if (!schema) {
       if (nullptr == func_registry) {
         continue;
@@ -149,7 +158,7 @@ void InferShapes(
       }
 
       // Find any pre-existing type and shape info. If there is such,
-      // then check for compatability with the inferred
+      // then check for compatibility with the inferred
       // information. Otherwise, initialize it in an empty state.
       auto iter = valueTypesByName.find(n.output(i));
       TypeProto* existingType = nullptr;
@@ -166,10 +175,25 @@ void InferShapes(
       // further need for error-checking.
       mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
 
-      // Make merged info available to futher inference.
+      // Make merged info available to further inference.
       valueTypesByName[n.output(i)] = existingType;
     }
   }
+}
+
+void InferShapes(
+    GraphProto* g,
+    const std::unordered_map<std::string, int>& opset_imports,
+    const ISchemaRegistry* schema_registry,
+    const IFunctionBuilderRegistry* func_registry) {
+  const std::unordered_map<std::string, TypeProto*>
+      outer_scope_value_types_by_name;
+  InferShapesImpl(
+      g,
+      outer_scope_value_types_by_name,
+      opset_imports,
+      schema_registry,
+      func_registry);
 }
 
 void InferShapes(
@@ -182,7 +206,15 @@ void InferShapes(
         static_cast<int>(opset_import.version());
   }
   auto* g = m.mutable_graph();
-  InferShapes(g, opset_imports, schema_registry, func_registry);
+  const std::unordered_map<std::string, TypeProto*>
+      outer_scope_value_types_by_name;
+
+  InferShapesImpl(
+      g,
+      outer_scope_value_types_by_name,
+      opset_imports,
+      schema_registry,
+      func_registry);
 }
 
 void InferShapeForFunctionNode(
@@ -191,14 +223,14 @@ void InferShapeForFunctionNode(
     InferenceContext& ctx) {
   int domain_version = (int)func.since_version();
   GraphProto g;
-  // Get a temproary tensor-shape map
+  // Get a temporary tensor-shape map
   std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
   std::vector<TypeProto> temp_types_cache;
   for (int i = 0; i < func.input_size(); ++i) {
     temp_types_cache.push_back(*ctx.getInputType(i));
     temp_valueTypesByName[func.input().Get(i)] = &temp_types_cache.back();
   }
-  // Get a temproary initial value map
+  // Get a temporary initial value map
   std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
   for (int i = 0; i < (const int)(ctx.getNumInputs()); ++i) {
     if (ctx.getInputData(i) != nullptr && i < func.input_size()) {
@@ -219,7 +251,7 @@ void InferShapeForFunctionNode(
       return;
     }
     NodeProto copy_n(n);
-    // Add attribute information into the temproary node
+    // Add attribute information into the temporary node
     copy_n.clear_attribute();
     for (auto attr : n.attribute()) {
       if (attr.has_ref_attr_name()) {
@@ -254,13 +286,13 @@ void InferShapeForFunctionNode(
         checkShapesAndTypes(inferredType, existingType->tensor_type());
       } else {
         // Store the inferred type info in the
-        // subgraph temproarily
+        // subgraph temporarily
         auto vi = g.add_value_info();
         vi->set_name(copy_n.output(i));
         existingType = vi->mutable_type();
       }
       mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
-      // Make merged info available to futher inference.
+      // Make merged info available to further inference.
       temp_valueTypesByName[copy_n.output(i)] = existingType;
     }
   }
@@ -275,6 +307,64 @@ void InferShapeForFunctionNode(
     auto type = ctx.getOutputType(i)->mutable_tensor_type();
     type->CopyFrom(temp_valueTypesByName[output_name]->tensor_type());
   }
+}
+
+std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
+    const std::vector<const TypeProto*>& inputTypes,
+    const std::vector<const TensorProto*>& inputData) {
+  int numInputs = int(inputTypes.size());
+
+  if (g_->input_size() != numInputs)
+    fail_shape_inference(
+        "Graph has ",
+        g_->input_size(),
+        " inputs but ",
+        numInputs,
+        " were provided");
+
+  for (int i = 0, end = numInputs; i < end; ++i) {
+    const TypeProto* inferredInput = inputTypes[i];
+    TypeProto* graphInput = g_->mutable_input(i)->mutable_type();
+
+    if (!graphInput->has_tensor_type()) {
+      continue;
+    }
+
+    if (!inferredInput->has_tensor_type())
+      fail_type_inference(
+          "Graph input #",
+          i,
+          " is tensor type, but provided type is ",
+          inferredInput->value_case());
+
+    const auto& inferredType = inferredInput->tensor_type();
+
+    // Bail out early if shape inference does nothing useful.
+    if (inferredType.elem_type() == TensorProto::UNDEFINED &&
+        !inferredType.has_shape()) {
+      continue;
+    }
+
+    mergeShapesAndTypes(inferredType, graphInput->mutable_tensor_type());
+  }
+
+  // future: pass inputData into InferShapes either directly, or indirectly by
+  // updating initializers that match subgraph inputs.
+  (void)inputData;
+
+  InferShapesImpl(
+      g_,
+      *context_->outer_scope_value_types_by_name, // never null
+      context_->opset_imports,
+      context_->schema_registry,
+      context_->func_registry);
+
+  std::vector<const TypeProto*> graphOutputTypes;
+  for (const ValueInfoProto& output : g_->output()) {
+    graphOutputTypes.push_back(&output.type());
+  }
+
+  return graphOutputTypes;
 }
 
 } // namespace shape_inference
