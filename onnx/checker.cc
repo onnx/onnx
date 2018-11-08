@@ -144,6 +144,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         break;
 
       case TensorProto::INT32:
+      case TensorProto::UINT8:
       case TensorProto::UINT16:
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
