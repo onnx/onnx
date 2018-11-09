@@ -14,7 +14,7 @@ pip install pytest nbval
 pytest
 
 # lint python code
-pip install flake8
+pip install --quiet flake8
 flake8
 
 # Mypy only works with Python 3
