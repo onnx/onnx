@@ -924,6 +924,8 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       The input and output shapes of Label Encoder are the same. The output
       element's type is determined by the specified 'classes_*' field. Notice
       that only one 'classes_*' should be set at one time.<br>
+      For float look-up, bit-wise comparision is used so even NaN can be
+      mapped to an integer.
 
 #### Version
 
