@@ -893,3 +893,78 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
 <dd>The output will be a sequence of string or integer maps to float.</dd>
 </dl>
 
+### <a name="ai.onnx.ml.LabelEncoder-2"></a>**ai.onnx.ml.LabelEncoder-2**</a>
+
+  Encode values as integers or map integers to other values.<br>
+      Label Encoder has two operation modes. The first mode, named
+      indexing mode, only works if and only if the input is an integer
+      tensor. Indexing mode uses each input element as an index to retrieve
+      the associated value in the specified 'classes_*' field. For example, if
+      input is [1, 0, 2, 0], 'classes_floats' is [5.5, 6.6], and
+      'default_float' is -8.7, the expected output would be [6.6, 5.5, -8.7,
+      5.5]. Let's consider another example. Assume that input is [1, 2, 2, 0]
+      and 'classes_strings' is ["Sally", "Dori", "Amy"]. The output would be
+      ["Dori", "Amy", "Amy", "Sally"]. The other mode maps non-integer types
+      to integer types, called loop-up mode. Each element in the input
+      tensor is used as a position index to the associated 'classes_*'
+      attribute. Let ["A", "B", "B", "C"] be the input, 'classes_strings' be
+      ["C", "B"], 'default_int64' be -99. Then, the corresponding output
+      should be [-99, 1, 1, 0] because "C" and "B" are respectively the first
+      (indexed by 0) and the second (indexed by 1) elements in
+      'classes_strings' while "A" cannot be found in 'classes_strings'.<br>
+      Under loop-up mode, only default_int64 can be set because it is the
+      integer value used whenever indexing fails (e.g., when an integer
+      larger than the size of 'classes_* is given). In the meanwhile, input
+      type is identical to the element type of the specified 'classes_' while
+      output is always an integer tensor. For indexing mode, the input type
+      is always integer tensor and the output type is identical to the
+      specified specified 'classes_*'. The 'default_*' field is the output
+      value whenever loop-up fails for an element. Note that only one of
+      'classes_*' fields can be set at one time.<br>
+      The input and output shapes of Label Encoder are the same. The output
+      element's type is determined by the specified 'classes_*' field. Notice
+      that only one 'classes_*' should be set at one time.<br>
+
+#### Version
+
+This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>classes_strings</tt> : list of strings</dt>
+<dd>A list of values. Only one of 'classes_*' can be set.</dd>
+<dt><tt>classes_int64s</tt> : list of ints</dt>
+<dd>A list of values.</dd>
+<dt><tt>classes_floats</tt> : list of strings</dt>
+<dd>A list of values.</dd>
+<dt><tt>default_int64</tt> : int (default is -1)</dt>
+<dd>An integer.</dd>
+<dt><tt>default_string</tt> : string (default is _UNKNOWN_)</dt>
+<dd>A string.</dd>
+<dt><tt>default_float</tt> : float (default is 0)</dt>
+<dd>An float.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>Output data. Under look-up mode, the output values are integers. Under indexing mode, the output type is determined by the specified 'classes_*'.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dd>The input type is a tensor of any shape.</dd>
+<dt><tt>T2</tt> : tensor(string), tensor(int64), tensor(float)</dt>
+<dd>Output type is determined by the input and the specified attributes.</dd>
+</dl>
