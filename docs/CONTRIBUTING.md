@@ -53,7 +53,7 @@ For implementors in the ONNX community to be able to effectively implement any n
 ONNX uses [pytest](https://docs.pytest.org) as a test driver. To run tests, you'll first need to install pytest:
 
 ```
-pip install pytest-cov nbval
+pip install pytest nbval
 ```
 
 After installing pytest, run
