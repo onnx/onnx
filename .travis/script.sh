@@ -27,7 +27,7 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
 
   pip uninstall -y onnx
   rm -rf .setuptools-cmake-build
-  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -v .
+  time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install .
 fi
 
 # check line endings to be UNIX
