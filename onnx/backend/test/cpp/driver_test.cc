@@ -353,7 +353,9 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
 
     for (int i = 0; i < numBackends; i++) {
       const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
-      lib.onnxInitBackend(backendIDs[i], backendProperties, &backend);
+      ASSERT_EQ(
+          lib.onnxInitBackend(backendIDs[i], backendProperties, &backend),
+          ONNXIFI_STATUS_SUCCESS);
       char infovalue[max_info_size];
       size_t infoValueSize = max_info_size;
       ASSERT_EQ(
