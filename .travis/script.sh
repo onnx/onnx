@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH="${top_dir}/.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
 
 # onnx python API tests
-pip install pytest-cov nbval
+pip install pytest nbval
 pytest
 
 # lint python code
@@ -23,7 +23,7 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
   pip uninstall -y onnx
   time ONNX_NAMESPACE=ONNX_NAMESPACE_FOO_BAR_FOR_CI pip install -e .[mypy]
 
-  time python setup.py typecheck
+  time python setup.py --quiet typecheck
 
   pip uninstall -y onnx
   rm -rf .setuptools-cmake-build
@@ -31,7 +31,7 @@ if [ "${PYTHON_VERSION}" != "python2" ]; then
 fi
 
 # check line endings to be UNIX
-find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix
+find . -type f -regextype posix-extended -regex '.*\.(py|cpp|md|h|cc|proto|proto3|in)' | xargs dos2unix --quiet
 git status
 git diff --exit-code
 
