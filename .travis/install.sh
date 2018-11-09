@@ -4,7 +4,7 @@ script_path=$(python -c "import os; import sys; print(os.path.realpath(sys.argv[
 source "${script_path%/*}/setup.sh"
 
 export ONNX_BUILD_TESTS=1
-pip install protobuf numpy
+pip install --quiet protobuf numpy
 
 export CMAKE_ARGS="-DONNX_WERROR=ON"
 if [[ -n "USE_LITE_PROTO" ]]; then

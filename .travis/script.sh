@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH="${top_dir}/.setuptools-cmake-build/:$LD_LIBRARY_PATH"
 ./.setuptools-cmake-build/onnxifi_test_driver_gtests onnx/backend/test/data/node
 
 # onnx python API tests
-pip install pytest nbval
+pip install --quiet pytest nbval
 pytest
 
 # lint python code
