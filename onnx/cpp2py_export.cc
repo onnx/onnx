@@ -169,7 +169,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           std::string bytes;
           if (!iter->second->SerializeToString(&bytes)) {
             throw std::runtime_error(
-                "Failed to serilize registered function for '" + iter->first +
+                "Failed to serialize registered function for '" + iter->first +
                 "'!");
           }
           temp_map[iter->first].emplace_back(py::bytes(bytes));
@@ -258,6 +258,17 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         return py::bytes(out);
       });
 
+  optimizer.def(
+      "optimize_fixedpoint",
+      [](const py::bytes& bytes, const std::vector<std::string>& names) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        auto const result =
+            optimization::OptimizeFixed(std::move(proto), names);
+        std::string out;
+        result.SerializeToString(&out);
+        return py::bytes(out);
+      });
   optimizer.def("get_available_passes", &optimization::GetAvailablePasses);
 
   // Submodule `version_converter`

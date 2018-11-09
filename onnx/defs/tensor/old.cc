@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 
 #include "onnx/defs/schema.h"
+#include <cmath>
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver1_doc = R"DOC(
@@ -284,4 +285,51 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(double)"},
             "Constrain output types to bool, int32, int64, float16, float, double tensors.")
         .SetDoc(Upsample_ver1_doc));
+
+static const char* Upsample_ver7_doc = R"DOC(
+Upsample the input tensor.
+Each dimension value of the output tensor is:
+  output_dimension = floor(input_dimension * scale).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Upsample,
+    7,
+    OpSchema()
+        .Attr(
+            "scales",
+            "The scale array along each dimension. It takes value greater than or equal to 1."
+            " The number of elements of 'scales' should be the same as the rank of input 'X'.",
+            AttributeProto::FLOATS)
+        .Attr(
+            "mode",
+            "Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)",
+            AttributeProto::STRING,
+            std::string("nearest"))
+        .Input(0, "X", "N-D tensor", "T")
+        .Output(0, "Y", "N-D tensor after resizing", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .SetDoc(Upsample_ver7_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (!hasNInputShapes(ctx, 1)) {
+            return;
+          }
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          auto& input_shape = getInputShape(ctx, 0);
+          auto* output_shape = getOutputShape(ctx, 0);
+          auto* scale_attr = ctx.getAttribute("scales");
+          if (input_shape.dim_size() != scale_attr->floats_size()) {
+            fail_shape_inference(
+                "Upsample: Input dims != attribute 'scales' dims");
+          }
+          for (int i = 0; i < input_shape.dim_size(); ++i) {
+            float dim_value =
+                static_cast<float>(input_shape.dim(i).dim_value());
+            output_shape->add_dim()->set_dim_value(static_cast<int64_t>(
+                std::floor(dim_value * scale_attr->floats(i))));
+          }
+        }));
 } // namespace ONNX_NAMESPACE

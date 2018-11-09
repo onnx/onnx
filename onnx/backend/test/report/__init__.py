@@ -22,16 +22,16 @@ def _add_mark(mark, bucket):  # type: (Any, Text) -> None
 
 
 def pytest_runtest_call(item):  # type: (pytest.nodes.Item) -> None
-    mark = item.get_marker('onnx_coverage')
+    mark = item.get_closest_marker('onnx_coverage')
     if mark:
         assert item.nodeid not in _marks
         _marks[item.nodeid] = mark
 
 
 def pytest_runtest_logreport(report):  # type: (Any) -> None
-    if (report.when == 'call' and
-        report.outcome == 'passed' and
-            report.nodeid in _marks):
+    if (report.when == 'call'
+        and report.outcome == 'passed'
+            and report.nodeid in _marks):
         mark = _marks[report.nodeid]
         _add_mark(mark, 'passed')
 

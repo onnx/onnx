@@ -6,23 +6,28 @@
 * ai.onnx (default)
   * <a href="#Abs">Abs</a>
   * <a href="#Acos">Acos</a>
+  * <a href="#Acosh">Acosh</a>
   * <a href="#Add">Add</a>
   * <a href="#And">And</a>
   * <a href="#ArgMax">ArgMax</a>
   * <a href="#ArgMin">ArgMin</a>
   * <a href="#Asin">Asin</a>
+  * <a href="#Asinh">Asinh</a>
   * <a href="#Atan">Atan</a>
+  * <a href="#Atanh">Atanh</a>
   * <a href="#AveragePool">AveragePool</a>
   * <a href="#BatchNormalization">BatchNormalization</a>
   * <a href="#Cast">Cast</a>
   * <a href="#Ceil">Ceil</a>
   * <a href="#Clip">Clip</a>
+  * <a href="#Compress">Compress</a>
   * <a href="#Concat">Concat</a>
   * <a href="#Constant">Constant</a>
   * <a href="#ConstantLike">ConstantLike</a>
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
+  * <a href="#Cosh">Cosh</a>
   * <a href="#DepthToSpace">DepthToSpace</a>
   * <a href="#Div">Div</a>
   * <a href="#Dropout">Dropout</a>
@@ -58,12 +63,14 @@
   * <a href="#Max">Max</a>
   * <a href="#MaxPool">MaxPool</a>
   * <a href="#MaxRoiPool">MaxRoiPool</a>
+  * <a href="#MaxUnpool">MaxUnpool</a>
   * <a href="#Mean">Mean</a>
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
   * <a href="#Not">Not</a>
+  * <a href="#OneHot">OneHot</a>
   * <a href="#Or">Or</a>
   * <a href="#PRelu">PRelu</a>
   * <a href="#Pad">Pad</a>
@@ -91,6 +98,7 @@
   * <a href="#Shape">Shape</a>
   * <a href="#Sigmoid">Sigmoid</a>
   * <a href="#Sin">Sin</a>
+  * <a href="#Sinh">Sinh</a>
   * <a href="#Size">Size</a>
   * <a href="#Slice">Slice</a>
   * <a href="#Softmax">Softmax</a>
@@ -230,6 +238,62 @@ x = np.random.rand(3, 4, 5).astype(np.float32)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
+```
+
+</details>
+
+
+### <a name="Acosh"></a><a name="acosh">**Acosh**</a>
+
+  Calculates the hyperbolic arccosine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arccosine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>acosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh_example')
+
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh')
 ```
 
 </details>
@@ -734,6 +798,62 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Asinh"></a><a name="asinh">**Asinh**</a>
+
+  Calculates the hyperbolic arcsine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arcsine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>asinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arcsinh(x)  # expected output [-0.88137358,  0.,  0.88137358]
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arcsinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh')
+```
+
+</details>
+
+
 ### <a name="Atan"></a><a name="atan">**Atan**</a>
 
   Calculates the arctangent (inverse of tangent) of the given input tensor, element-wise.
@@ -785,6 +905,62 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.arctan(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_atan')
+```
+
+</details>
+
+
+### <a name="Atanh"></a><a name="atanh">**Atanh**</a>
+
+  Calculates the hyperbolic arctangent of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic arctangent values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>atanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arctanh(x)  # expected output [-0.54930615,  0.,  0.54930615]
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh_example')
+
+x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
+y = np.arctanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh')
 ```
 
 </details>
@@ -1649,6 +1825,123 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="Compress"></a><a name="compress">**Compress**</a>
+
+  Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
+      In case axis is not provided, input is flattened before elements are selected.
+      Compress behaves like numpy.compress: https://docs.scipy.org/doc/numpy/reference/generated/numpy.compress.html
+      
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int</dt>
+<dd>(Optional) Axis along which to take slices. If not specified, input is flattened before elements being selected.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Tensor of rank r >= 1.</dd>
+<dt><tt>condition</tt> : T1</dt>
+<dd>Rank 1 tensor of booleans to indicate which slices or data elements to be selected. Its length can be less than the input length alone the axis or the flattened input size if axis is not specified. In such cases data slices or elements exceeding the condition length are discarded.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of rank r if axis is specified. Otherwise output is a Tensor of rank 1.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+<dt><tt>T1</tt> : tensor(bool)</dt>
+<dd>Constrains to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+
+
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+
+
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
+```
+
+</details>
+
+
 ### <a name="Concat"></a><a name="concat">**Concat**</a>
 
   Concatenate a list of tensors into a single tensor
@@ -2114,7 +2407,7 @@ This version of the operator has been available since version 1 of the default O
 <dt><tt>W</tt> : T</dt>
 <dd>The weight tensor that will be used in the convolutions; has size (C x M/group x kH x kW), where C is the number of channels, and kH and kW are the height and width of the kernel, and M is the number of feature maps. For more than 2 dimensions, the weight shape will be (C x M/group x k1 x k2 x ... x kn), where (k1 x k2 x ... x kn) is the dimension of the kernel. The number of channels in the output should be equal to W.shape[1] * group (assuming zero based indices of the shape array)</dd>
 <dt><tt>B</tt> (optional) : T</dt>
-<dd>Optional 1D bias to be added to the convolution, has size of C.</dd>
+<dd>Optional 1D bias to be added to the convolution, has size of M.</dd>
 </dl>
 
 #### Outputs
@@ -2457,6 +2750,62 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cos')
+```
+
+</details>
+
+
+### <a name="Cosh"></a><a name="cosh">**Cosh**</a>
+
+  Calculates the hyperbolic cosine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic cosine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>cosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cosh(x)  # expected output [1.54308069,  1.,  1.54308069]
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh')
 ```
 
 </details>
@@ -6116,6 +6465,124 @@ This version of the operator has been available since version 1 of the default O
 </dl>
 
 
+### <a name="MaxUnpool"></a><a name="maxunpool">**MaxUnpool**</a>
+
+  MaxUnpool essentially computes the partial inverse of the MaxPool op.
+   The input information to this op is typically the the output information from a MaxPool op. The first
+   input tensor X is the tensor that needs to be unpooled, which is typically the pooled tensor (first output)
+   from MaxPool. The second input tensor, I, contains the indices to the (locally maximal) elements corrsponding
+   to the elements in the first input tensor X. Input tensor I is typically the second output of the MaxPool op.
+   The third (optional) input is a tensor that specifies the output size of the unpooling operation.
+  
+  MaxUnpool is intended to do 'partial' inverse of the MaxPool op. 'Partial' because all the non-maximal
+   values from the original input to MaxPool are set to zero in the output of the MaxUnpool op. Pooling
+   the result of an unpooling operation should give back the original input to the unpooling op.
+  
+  MaxUnpool can produce the same output size for several input sizes, which makes unpooling op ambiguous.
+   The third input argument, output_size, is meant to disambiguate the op and produce output tensor of
+   known/predictable size.
+  
+  In addition to the inputs, MaxUnpool takes three attributes, namely kernel_shape, strides, and pads,
+   which define the exact unpooling op. The attributes typically have the same values as the corrsponding
+   pooling op that the unpooling op is trying to invert.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>kernel_shape</tt> : list of ints (required)</dt>
+<dd>The size of the kernel along each axis.</dd>
+<dt><tt>pads</tt> : list of ints</dt>
+<dd>Padding for the beginning and ending along each axis, it can take any value greater than or equal to 0. The value represent the number of pixels added to the beginning and end part of the corresponding axis. `pads` format should be as follow [x1_begin, x2_begin...x1_end, x2_end,...], where xi_begin the number of pixels added at the beginning of axis `i` and xi_end, the number of pixels added at the end of axis `i`. This attribute cannot be used simultaneously with auto_pad attribute. If not present, the padding defaults to 0 along start and end of each axis.</dd>
+<dt><tt>strides</tt> : list of ints</dt>
+<dd>Stride along each axis.</dd>
+</dl>
+
+#### Inputs (2 - 3)
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>Input data tensor that has to be unpooled. This tensor is typically the first output of the MaxPool op.Dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non-image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size. Optionally, if dimension denotation is in effect, the operation expects the input data tensor to arrive with the dimension denotation of [DATA_BATCH, DATA_CHANNEL, DATA_FEATURE, DATA_FEATURE ...].</dd>
+<dt><tt>I</tt> : T2</dt>
+<dd>Input data tensor containing the indices corresponding to elements in the first input tensor X.This tensor is typically the second output of the MaxPool op.Dimensions must be the same as input tensor X. The indices are linear, i.e. computed considering the tensor as flattened 1-D tensor, assuming row-major storage. Also, the linear indices should not consider padding. So the values in indices are in the range [0, N x C x D1 x ... x Dn).</dd>
+<dt><tt>output_shape</tt> (optional) : T2</dt>
+<dd>The shape of the output can be explicitly set which will cause pads values to be auto generated. If 'output_shape' is specified, 'pads' values are ignored.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T1</dt>
+<dd>Output data tensor that contains the result of the unpooling.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(int64)</dt>
+<dd>Constrain index tensor to int64</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI', 'output_shape'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[5, 6],
+                 [7, 8]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0, 0],
+                [0, 5, 0, 6, 0],
+                [0, 0, 0, 0, 0],
+                [0, 7, 0, 8, 0],
+                [0, 0, 0, 0, 0]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI, output_shape], outputs=[y], name='test_maxunpool_export_with_output_shape')
+```
+
+</details>
+
+
+<details>
+<summary>without_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[1, 2],
+                 [3, 4]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0],
+                [0, 1, 0, 2],
+                [0, 0, 0, 0],
+                [0, 3, 0, 4]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_output_shape')
+```
+
+</details>
+
+
 ### <a name="Mean"></a><a name="mean">**Mean**</a>
 
   Element-wise mean of each of the input tensors (with Numpy-style broadcasting support).
@@ -6506,6 +6973,111 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 expect(node, inputs=[x], outputs=[np.logical_not(x)],
        name='test_not_4d')
+```
+
+</details>
+
+
+### <a name="OneHot"></a><a name="onehot">**OneHot**</a>
+
+  Produces a one-hot tensor based on inputs.
+      The locations represented by the index values in the 'indices' input tensor will have 'on_value' 
+      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value' 
+      are specified as part of required input argument 'values', which is a two-element tensor of format  
+      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the 
+      input tensor. The additional dimension is for one-hot representation. The additional dimension will 
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional 
+      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional 
+      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same 
+      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside 
+      the range [0, depth) will result in one-hot representation with all 'off_value' values in the 
+      output tensor.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>axis</tt> : int (default is -1)</dt>
+<dd>(Optional) Axis along which one-hot representation in added. Default: axis=-1. axis=-1 means that the additional dimension will be inserted as the innermost/last dimension in the output tensor.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>indices</tt> : T1</dt>
+<dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
+<dt><tt>depth</tt> : T1</dt>
+<dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor and the values in the 'indices' input tensor are expected to be in the range [0, depth). TheIn case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
+<dt><tt>values</tt> : T2</dt>
+<dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to any tensor type.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>with_axis</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+```
+
+</details>
+
+
+<details>
+<summary>without_axis</summary>
+
+```python
+on_value = 5
+off_value = 2
+output_type = np.int32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y']
+)
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.array([12], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
 ```
 
 </details>
@@ -9078,6 +9650,7 @@ for test_name, shape in test_cases.items():
   
   
   *Sample usage: Encoding RNN using a Scan*
+  
   The following example shows how a simple RNN over an input tensor %X, with weight tensor %Wi,
   recurrence weight tensor %Ri, bias tensors %Wbi and %Rbi, and initial hidden-state %H_0 can
   be encoded as a ScanLoop. Note that the loop-body is a nested graph, and it directly computes
@@ -9421,6 +9994,62 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.sin(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_sin')
+```
+
+</details>
+
+
+### <a name="Sinh"></a><a name="sinh">**Sinh**</a>
+
+  Calculates the hyperbolic sine of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The hyperbolic sine values of the input tensor computed element-wise</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>sinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sinh(x)  # expected output [-1.17520118,  0.,  1.17520118]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh')
 ```
 
 </details>
@@ -10843,15 +11472,15 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+Other versions of this operator: <a href="Changelog.md#Upsample-7">Upsample-7</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>mode</tt> : string (default is nearest)</dt>
 <dd>Two interpolation modes: nearest (default), and linear (including bilinear, trilinear, etc)</dd>
-<dt><tt>scales</tt> : list of floats (required)</dt>
-<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>
 
 #### Inputs
@@ -10859,6 +11488,8 @@ This version of the operator has been available since version 7 of the default O
 <dl>
 <dt><tt>X</tt> : T</dt>
 <dd>N-D tensor</dd>
+<dt><tt>scales</tt> : tensor(float)</dt>
+<dd>The scale array along each dimension. It takes value greater than or equal to 1. The number of elements of 'scales' should be the same as the rank of input 'X'.</dd>
 </dl>
 
 #### Outputs
@@ -10872,7 +11503,7 @@ This version of the operator has been available since version 7 of the default O
 
 <dl>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
-<dd>Constrain input and output types to all tensor types.</dd>
+<dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 </dl>
 
 
@@ -10884,9 +11515,8 @@ This version of the operator has been available since version 7 of the default O
 ```python
 node = onnx.helper.make_node(
     'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
+    inputs=['X', 'scales'],
+    outputs=['Y'],
     mode='nearest',
 )
 
@@ -10895,6 +11525,8 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
     [1, 1, 1, 2, 2, 2],
@@ -10902,7 +11534,7 @@ output = np.array([[[
     [3, 3, 3, 4, 4, 4],
 ]]], dtype=np.float32)
 
-expect(node, inputs=[data], outputs=[output],
+expect(node, inputs=[data, scales], outputs=[output],
        name='test_upsample_nearest')
 ```
 

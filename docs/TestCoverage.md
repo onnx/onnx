@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 93/101 (92.08%, 5 generators excluded) common operators.
+Node tests have covered 101/109 (92.66%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -57,6 +57,32 @@ x = np.random.rand(3, 4, 5).astype(np.float32)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
+```
+
+</details>
+
+
+### Acosh
+There are 1 test cases, listed as following:
+<details>
+<summary>acosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh_example')
+
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh')
 ```
 
 </details>
@@ -360,6 +386,32 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Asinh
+There are 1 test cases, listed as following:
+<details>
+<summary>asinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arcsinh(x)  # expected output [-0.88137358,  0.,  0.88137358]
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arcsinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh')
+```
+
+</details>
+
+
 ### Atan
 There are 1 test cases, listed as following:
 <details>
@@ -381,6 +433,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.arctan(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_atan')
+```
+
+</details>
+
+
+### Atanh
+There are 1 test cases, listed as following:
+<details>
+<summary>atanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arctanh(x)  # expected output [-0.54930615,  0.,  0.54930615]
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh_example')
+
+x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
+y = np.arctanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh')
 ```
 
 </details>
@@ -966,6 +1044,75 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Compress
+There are 3 test cases, listed as following:
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
+```
+
+</details>
+
+
 ### Concat
 There are 1 test cases, listed as following:
 <details>
@@ -1485,6 +1632,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cos')
+```
+
+</details>
+
+
+### Cosh
+There are 1 test cases, listed as following:
+<details>
+<summary>cosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cosh(x)  # expected output [1.54308069,  1.,  1.54308069]
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh')
 ```
 
 </details>
@@ -3247,6 +3420,58 @@ expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_preco
 </details>
 
 
+### MaxUnpool
+There are 2 test cases, listed as following:
+<details>
+<summary>with_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI', 'output_shape'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[5, 6],
+                 [7, 8]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0, 0],
+                [0, 5, 0, 6, 0],
+                [0, 0, 0, 0, 0],
+                [0, 7, 0, 8, 0],
+                [0, 0, 0, 0, 0]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI, output_shape], outputs=[y], name='test_maxunpool_export_with_output_shape')
+```
+
+</details>
+<details>
+<summary>without_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[1, 2],
+                 [3, 4]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0],
+                [0, 1, 0, 2],
+                [0, 0, 0, 0],
+                [0, 3, 0, 4]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_output_shape')
+```
+
+</details>
+
+
 ### Mean
 There are 1 test cases, listed as following:
 <details>
@@ -3423,6 +3648,55 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 expect(node, inputs=[x], outputs=[np.logical_not(x)],
        name='test_not_4d')
+```
+
+</details>
+
+
+### OneHot
+There are 2 test cases, listed as following:
+<details>
+<summary>with_axis</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+```
+
+</details>
+<details>
+<summary>without_axis</summary>
+
+```python
+on_value = 5
+off_value = 2
+output_type = np.int32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y']
+)
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.array([12], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
 ```
 
 </details>
@@ -4947,6 +5221,32 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Sinh
+There are 1 test cases, listed as following:
+<details>
+<summary>sinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sinh(x)  # expected output [-1.17520118,  0.,  1.17520118]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh')
+```
+
+</details>
+
+
 ### Size
 There are 1 test cases, listed as following:
 <details>
@@ -5670,9 +5970,8 @@ There are 1 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
+    inputs=['X', 'scales'],
+    outputs=['Y'],
     mode='nearest',
 )
 
@@ -5681,6 +5980,8 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
     [1, 1, 1, 2, 2, 2],
@@ -5688,7 +5989,7 @@ output = np.array([[[
     [3, 3, 3, 4, 4, 4],
 ]]], dtype=np.float32)
 
-expect(node, inputs=[data], outputs=[output],
+expect(node, inputs=[data, scales], outputs=[output],
        name='test_upsample_nearest')
 ```
 
