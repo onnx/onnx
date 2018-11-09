@@ -343,16 +343,20 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
   if (!ONNXIFI_DUMMY_BACKEND) {
     ASSERT_TRUE(onnxifi_load(1, NULL, &lib));
     size_t numBackends = 0;
-    lib.onnxGetBackendIDs(backendIDs, &numBackends);
+    ASSERT_EQ(
+        lib.onnxGetBackendIDs(backendIDs, &numBackends),
+        ONNXIFI_STATUS_SUCCESS);
     backendIDs = (void**)malloc(numBackends * sizeof(onnxBackendID));
-    lib.onnxGetBackendIDs(backendIDs, &numBackends);
+    ASSERT_EQ(
+        lib.onnxGetBackendIDs(backendIDs, &numBackends),
+        ONNXIFI_STATUS_SUCCESS);
 
     for (int i = 0; i < numBackends; i++) {
       const uint64_t backendProperties[] = {ONNXIFI_BACKEND_PROPERTY_NONE};
       lib.onnxInitBackend(backendIDs[i], backendProperties, &backend);
       char infovalue[max_info_size];
       size_t infoValueSize = max_info_size;
-      EXPECT_EQ(
+      ASSERT_EQ(
           lib.onnxGetBackendInfo(
               backendIDs[i], ONNXIFI_BACKEND_NAME, infovalue, &infoValueSize),
           ONNXIFI_STATUS_SUCCESS);
