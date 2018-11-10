@@ -423,7 +423,7 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             "default_string",
             "A string.",
             AttributeProto::STRING,
-            std::string(""))
+            std::string("\"\", empty string"))
         .Attr(
             "default_int64",
             "An integer.",
