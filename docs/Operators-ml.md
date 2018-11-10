@@ -364,30 +364,30 @@ This version of the operator has been available since version 1 of the 'ai.onnx.
       The input and output shapes of Label Encoder are the same. The output
       element's type is determined by the specified 'classes_*' field. Notice
       that only one 'classes_*' should be set at one time.<br>
-      For float look-up, bit-wise comparision is used so even NaN can be
+      For look-up, bit-wise comparision is used so even a float NaN can be
       mapped to an integer.
 
 #### Version
 
 This version of the operator has been available since version 2 of the 'ai.onnx.ml' operator set.
 
-Other versions of this operator: <a href="Changelog-ml.md#LabelEncoder-1">LabelEncoder-1</a>
+Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncoder-1">ai.onnx.ml.LabelEncoder-1</a>
 
 #### Attributes
 
 <dl>
-<dt><tt>classes_strings</tt> : list of strings</dt>
-<dd>A list of values. Only one of 'classes_*' can be set.</dd>
-<dt><tt>classes_int64s</tt> : list of ints</dt>
-<dd>A list of values.</dd>
 <dt><tt>classes_floats</tt> : list of floats</dt>
-<dd>A list of values.</dd>
+<dd>A list of floats.</dd>
+<dt><tt>classes_int64s</tt> : list of ints</dt>
+<dd>A list of ints.</dd>
+<dt><tt>classes_strings</tt> : list of strings</dt>
+<dd>A list of strings. One and only one of classes_* should be set.</dd>
+<dt><tt>default_float</tt> : float (default is -0.0)</dt>
+<dd>A float.</dd>
 <dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer.</dd>
-<dt><tt>default_string</tt> : string (default is _UNKNOWN_)</dt>
+<dt><tt>default_string</tt> : string (default is )</dt>
 <dd>A string.</dd>
-<dt><tt>default_float</tt> : float (default is 0)</dt>
-<dd>An float.</dd>
 </dl>
 
 #### Inputs
