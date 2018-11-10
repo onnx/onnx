@@ -451,6 +451,13 @@ message TypeProto {
     // repeated TypeProto parameters = 3;
   }
 
+  message SparseTensor { 
+    // This field MUST NOT have the value of UNDEFINED 
+    // This field MUST be present for this version of the IR. 
+    optional TensorProto.DataType elem_type = 1;
+    optional TensorShapeProto shape = 2;
+  }
+
 // #endif
 
   oneof value {
@@ -471,6 +478,8 @@ message TypeProto {
     Map map_type = 5;
 
     Opaque opaque_type = 7;
+
+    SparseTensor sparse_tensor_type = 8;
 
 // #endif
   }
