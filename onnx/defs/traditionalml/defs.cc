@@ -452,13 +452,13 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           // must be TensorProto::INT64 below.
           std::vector<std::string> class_strings;
           bool class_strings_result = getRepeatedAttribute(
-              ctx, "class_strings", class_strings);
+              ctx, "classes_strings", class_strings);
           std::vector<int64_t> class_int64s;
           bool class_int64s_result = getRepeatedAttribute(
-              ctx, "class_int64s", class_int64s);
+              ctx, "classes_int64s", class_int64s);
           std::vector<float> class_floats;
           bool class_floats_result = getRepeatedAttribute(
-              ctx, "class_floats", class_floats);
+              ctx, "classes_floats", class_floats);
 
           if (static_cast<int64_t>(class_strings_result) +
             static_cast<int64_t>(class_int64s_result) +
