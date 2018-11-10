@@ -462,8 +462,8 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
 
           if (static_cast<int64_t>(class_strings_result) +
             static_cast<int64_t>(class_int64s_result) +
-            static_cast<int64_t>(class_floats_result) != 2)
-            fail_shape_inference("Only one of class_* can be set for label encoder.");
+            static_cast<int64_t>(class_floats_result) != 1)
+            fail_shape_inference("Only one of class_* can be set in label encoder.");
 
           if (class_strings_result)
             output_elem_type->set_elem_type(TensorProto::STRING);
