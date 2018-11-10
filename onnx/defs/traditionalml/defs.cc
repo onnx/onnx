@@ -355,6 +355,124 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* LabelEncoder_ver2_doc = R"DOC(
+    Encode values as integers or map integers to other values.<br>
+    Label Encoder has two operation modes. The first mode, named
+    indexing mode, only works if and only if the input is an integer
+    tensor. Indexing mode uses each input element as an index to retrieve
+    the associated value in the specified 'classes_*' field. For example, if
+    input is [1, 0, 2, 0], 'classes_floats' is [5.5, 6.6], and
+    'default_float' is -8.7, the expected output would be [6.6, 5.5, -8.7,
+    5.5]. Let's consider another example. Assume that input is [1, 2, 2, 0]
+    and 'classes_strings' is ["Sally", "Dori", "Amy"]. The output would be
+    ["Dori", "Amy", "Amy", "Sally"]. The other mode maps non-integer types
+    to integer types, called loop-up mode. Each element in the input
+    tensor is used as a position index to the associated 'classes_*'
+    attribute. Let ["A", "B", "B", "C"] be the input, 'classes_strings' be
+    ["C", "B"], 'default_int64' be -99. Then, the corresponding output
+    should be [-99, 1, 1, 0] because "C" and "B" are respectively the first
+    (indexed by 0) and the second (indexed by 1) elements in
+    'classes_strings' while "A" cannot be found in 'classes_strings'.<br>
+    Under loop-up mode, only default_int64 can be set because it is the
+    integer value used whenever indexing fails (e.g., when an integer
+    larger than the size of 'classes_* is given). In the meanwhile, input
+    type is identical to the element type of the specified 'classes_' while
+    output is always an integer tensor. For indexing mode, the input type
+    is always integer tensor and the output type is identical to the
+    specified specified 'classes_*'. The 'default_*' field is the output
+    value whenever loop-up fails for an element. Note that only one of
+    'classes_*' fields can be set at one time.<br>
+    The input and output shapes of Label Encoder are the same. The output
+    element's type is determined by the specified 'classes_*' field. Notice
+    that only one 'classes_*' should be set at one time.<br>
+    For look-up, bit-wise comparision is used so even a float NaN can be
+    mapped to an integer.
+)DOC";
+
+ONNX_ML_OPERATOR_SET_SCHEMA(
+    LabelEncoder,
+    2,
+    OpSchema()
+        .SetDoc(LabelEncoder_ver2_doc)
+        .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
+        .Output(0, "Y", "Output data. Under look-up mode, the output values are integers. Under indexing mode, the output type is determined by the specified 'classes_*'.", "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            "The input type is a tensor of any shape.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            "Output type is determined by the input and the specified attributes.")
+        .Attr(
+            "classes_strings",
+            "A list of strings. One and only one of classes_* should be set.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Attr(
+            "classes_int64s",
+            "A list of ints.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "classes_floats",
+            "A list of floats.",
+            AttributeProto::FLOATS,
+            OPTIONAL)
+        .Attr(
+            "default_string",
+            "A string.",
+            AttributeProto::STRING,
+            std::string(""))
+        .Attr(
+            "default_int64",
+            "An integer.",
+            AttributeProto::INT,
+            static_cast<int64_t>(-1))
+        .Attr(
+            "default_float",
+            "A float.",
+            AttributeProto::FLOAT,
+            -0.f)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Input and output shapes are the same but their types can be
+          // different.
+          propagateShapeAndTypeFromFirstInput(ctx);
+
+          auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+          auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
+
+          // Look-up mode so output must be ints
+          if (TensorProto::INT64 != input_elem_type) {
+            output_elem_type->set_elem_type(TensorProto::INT64);
+            return;
+          }
+
+          // The following code is for indexing mode because input_elem_type
+          // must be TensorProto::INT64 below.
+          std::vector<std::string> class_strings;
+          bool class_strings_result = getRepeatedAttribute(
+              ctx, "class_strings", class_strings);
+          std::vector<int64_t> class_int64s;
+          bool class_int64s_result = getRepeatedAttribute(
+              ctx, "class_int64s", class_int64s);
+          std::vector<float> class_floats;
+          bool class_floats_result = getRepeatedAttribute(
+              ctx, "class_floats", class_floats);
+
+          if (static_cast<int64_t>(class_strings_result) +
+            static_cast<int64_t>(class_int64s_result) +
+            static_cast<int64_t>(class_floats_result) != 2)
+            fail_shape_inference("Only one of class_* can be set for label encoder.");
+
+          if (class_strings_result)
+            output_elem_type->set_elem_type(TensorProto::STRING);
+          if (class_int64s_result)
+            output_elem_type->set_elem_type(TensorProto::INT64);
+          if (class_floats_result)
+            output_elem_type->set_elem_type(TensorProto::FLOAT);
+        }));
+
 static const char* LinearClassifier_ver1_doc = R"DOC(
     Linear classifier
 )DOC";

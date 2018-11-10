@@ -380,7 +380,7 @@ Other versions of this operator: <a href="Changelog-ml.md#LabelEncoder-1">LabelE
 <dd>A list of values. Only one of 'classes_*' can be set.</dd>
 <dt><tt>classes_int64s</tt> : list of ints</dt>
 <dd>A list of values.</dd>
-<dt><tt>classes_floats</tt> : list of strings</dt>
+<dt><tt>classes_floats</tt> : list of floats</dt>
 <dd>A list of values.</dd>
 <dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer.</dd>
