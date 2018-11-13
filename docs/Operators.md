@@ -7009,16 +7009,16 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>indices</tt> : T1</dt>
 <dd>Input tensor containing indices. The values must be non-negative integers. Any entries in the 'indices' input tensor with values outside the range [0, depth) will result in one-hot representation with all 'off_value' values in the output tensor.In case 'indices' is of non-integer type, the values will be casted to int64 before use.</dd>
-<dt><tt>depth</tt> : T1</dt>
+<dt><tt>depth</tt> : T2</dt>
 <dd>Scalar specifying the number of classes in one-hot tensor. This is also the size of the one-hot dimension (specified by 'axis' attribute) added on in the output tensor and the values in the 'indices' input tensor are expected to be in the range [0, depth). TheIn case 'depth' is of non-integer type, it will be casted to int64 before use.</dd>
-<dt><tt>values</tt> : T2</dt>
+<dt><tt>values</tt> : T3</dt>
 <dd>Rank 1 tensor containing exactly two elements, in the format [off_value, on_value], where 'on_value' is the value used for filling locations specified in 'indices' input tensor, and 'off_value' is the value used for filling locations other than those specified in 'indices' input tensor. </dd>
 </dl>
 
 #### Outputs
 
 <dl>
-<dt><tt>output</tt> : T2</dt>
+<dt><tt>output</tt> : T3</dt>
 <dd>Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. The data type for the elements of the output tensor is the same as the type of input 'values' is used.</dd>
 </dl>
 
@@ -7027,7 +7027,9 @@ This version of the operator has been available since version 9 of the default O
 <dl>
 <dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrains input to only numeric types.</dd>
-<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dt><tt>T2</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
+<dt><tt>T3</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain to any tensor type.</dd>
 </dl>
 
