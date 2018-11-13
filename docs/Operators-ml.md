@@ -386,7 +386,7 @@ Other versions of this operator: <a href="Changelog-ml.md#ai.onnx.ml.LabelEncode
 <dd>A float.</dd>
 <dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer.</dd>
-<dt><tt>default_string</tt> : string (default is "", empty string)</dt>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
 </dl>
 

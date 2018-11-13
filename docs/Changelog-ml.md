@@ -945,7 +945,7 @@ This version of the operator has been available since version 2 of the 'ai.onnx.
 <dd>A float.</dd>
 <dt><tt>default_int64</tt> : int (default is -1)</dt>
 <dd>An integer.</dd>
-<dt><tt>default_string</tt> : string (default is "", empty string)</dt>
+<dt><tt>default_string</tt> : string (default is _Unused)</dt>
 <dd>A string.</dd>
 </dl>
 
