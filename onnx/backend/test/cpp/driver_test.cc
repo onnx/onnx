@@ -304,9 +304,9 @@ class ONNXCppDriverTest : public ::testing::TestWithParam<
         ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
             lib.onnxInitEvent(backend, &outputFence.event), &graph, lib));
         ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
-            lib.onnxSignalEvent(inputFence.event), &graph, lib));
-        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
             lib.onnxRunGraph(graph, &inputFence, &outputFence), &graph, lib));
+        ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
+            lib.onnxSignalEvent(inputFence.event), &graph, lib));
         ASSERT_TRUE(IsGtestAssertMemorySafeSuccess(
             lib.onnxWaitEvent(outputFence.event), &graph, lib));
         lib.onnxReleaseEvent(outputFence.event);
