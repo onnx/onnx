@@ -397,7 +397,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "data type.",
             "V",
             OpSchema::Variadic,
-			false)
+            false)
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
@@ -553,14 +553,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "change across loop iterations)",
             "V",
             OpSchema::Variadic,
-			false)
+            false)
         .Output(
             0,
             "v_final_and_scan_outputs",
             "Final N loop carried dependency values then K scan_outputs",
             "V",
             OpSchema::Variadic,
-			false)
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -724,14 +724,14 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
             OpSchema::Variadic,
-			false)
+            false)
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
             OpSchema::Variadic,
-			false)
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
