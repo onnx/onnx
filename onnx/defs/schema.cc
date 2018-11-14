@@ -32,22 +32,26 @@ OpSchema::FormalParameter::FormalParameter(
     DataTypeSet allowed_type_set,
     std::string type_str,
     std::string description,
-    FormalParameterOption param_option)
+    FormalParameterOption param_option,
+	bool is_homogeneous)
     : name_(std::move(name)),
       type_set_(std::move(allowed_type_set)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
-      param_option_(param_option) {}
+      param_option_(param_option),
+      is_homogeneous_(is_homogeneous) {}
 
 OpSchema::FormalParameter::FormalParameter(
     std::string name,
     std::string description,
     std::string type_str,
-    FormalParameterOption param_option)
+    FormalParameterOption param_option,
+	bool is_homogeneous)
     : name_(std::move(name)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
-      param_option_(param_option) {}
+      param_option_(param_option),
+	  is_homogeneous_(is_homogeneous) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -71,6 +75,10 @@ const std::string& OpSchema::FormalParameter::GetDescription() const {
 
 OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
   return param_option_;
+}
+
+bool OpSchema::FormalParameter::GetIsHomogeneous() const {
+  return is_homogeneous_;
 }
 
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
@@ -491,7 +499,8 @@ OpSchema& OpSchema::Input(
     std::string name,
     std::string description,
     std::string type_str,
-    OpSchema::FormalParameterOption param_option) {
+    OpSchema::FormalParameterOption param_option,
+	bool is_homogeneous) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
@@ -499,7 +508,8 @@ OpSchema& OpSchema::Input(
       std::move(name),
       std::move(description),
       std::move(type_str),
-      param_option);
+      param_option,
+	  is_homogeneous);
   return *this;
 }
 
@@ -508,13 +518,15 @@ OpSchema& OpSchema::Input(
     const char* name,
     const char* description,
     const char* type_str,
-    FormalParameterOption param_option) {
+    FormalParameterOption param_option,
+	bool is_homogeneous) {
   return Input(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
-      param_option);
+      param_option,
+	  is_homogeneous);
 }
 
 OpSchema& OpSchema::Output(
@@ -522,7 +534,8 @@ OpSchema& OpSchema::Output(
     std::string name,
     std::string description,
     std::string type_str,
-    OpSchema::FormalParameterOption param_option) {
+    OpSchema::FormalParameterOption param_option,
+	bool is_homogeneous) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
@@ -530,7 +543,8 @@ OpSchema& OpSchema::Output(
       std::move(name),
       std::move(description),
       std::move(type_str),
-      param_option);
+      param_option,
+	  is_homogeneous);
   return *this;
 }
 
@@ -539,13 +553,15 @@ OpSchema& OpSchema::Output(
     const char* name,
     const char* description,
     const char* type_str,
-    FormalParameterOption param_option) {
+    FormalParameterOption param_option,
+	bool is_homogeneous) {
   return Output(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
-      param_option);
+      param_option,
+	  is_homogeneous);
 }
 
 OpSchema& OpSchema::TypeConstraint(
