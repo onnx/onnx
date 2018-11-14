@@ -33,7 +33,7 @@ class SingleRelu(Base):
                name='test_single_relu_model')
 
     @staticmethod
-    def export():  # type: () -> None
+    def export_with_threshold():  # type: () -> None
 
         node = onnx.helper.make_node(
             'Relu',
