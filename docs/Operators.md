@@ -9435,14 +9435,23 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_keep
 ### <a name="Relu"></a><a name="relu">**Relu**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
-  the tensor elementwise.
+  (Tensor<T>). For each element x in input, if x > threshold then y = x;
+  else y = value. By default the value and threshold all equal to 0.
 
 #### Version
 
 This version of the operator has been available since version 6 of the default ONNX operator set.
 
 Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
+
+#### Attributes
+
+<dl>
+<dt><tt>threshold</tt> : float (default is 0.0)</dt>
+<dd>the threshold of relu, if x > threshold, then y = x.</dd>
+<dt><tt>value</tt> : float (default is 0.0)</dt>
+<dd>the inactivation value, if x <= threshold, then y = value</dd>
+</dl>
 
 #### Inputs
 
@@ -9482,6 +9491,27 @@ y = np.clip(x, 0, np.inf)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_relu')
+```
+
+</details>
+
+
+<details>
+<summary>with_attrs</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Relu',
+    threshold=1.0,
+    value=1.0,
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 1, np.inf)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_relu_thresholded')
 ```
 
 </details>

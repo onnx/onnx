@@ -6352,12 +6352,21 @@ This version of the operator has been available since version 6 of the default O
 ### <a name="Relu-6"></a>**Relu-6**</a>
 
   Relu takes one input data (Tensor<T>) and produces one output data
-  (Tensor<T>) where the rectified linear function, y = max(0, x), is applied to
-  the tensor elementwise.
+  (Tensor<T>). For each element x in input, if x > threshold then y = x;
+  else y = value. By default the value and threshold all equal to 0.
 
 #### Version
 
 This version of the operator has been available since version 6 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>threshold</tt> : float (default is 0.0)</dt>
+<dd>the threshold of relu, if x > threshold, then y = x.</dd>
+<dt><tt>value</tt> : float (default is 0.0)</dt>
+<dd>the inactivation value, if x <= threshold, then y = value</dd>
+</dl>
 
 #### Inputs
 
