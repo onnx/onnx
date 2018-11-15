@@ -9888,7 +9888,10 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="Shrink"></a><a name="shrink">**Shrink**</a>
 
-  lalala
+  Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+  having same datatype and shape with input. It has two attributes, lambd and
+  bias. The formula of this operator is: If x < -lambd, y = x + bias;
+  If x > lambd, y = x - bias; Otherwise, y = 0.
 
 #### Version
 

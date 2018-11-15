@@ -9047,7 +9047,10 @@ This version of the operator has been available since version 9 of the default O
 
 ### <a name="Shrink-9"></a>**Shrink-9**</a>
 
-  lalala
+  Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+  having same datatype and shape with input. It has two attributes, lambd and
+  bias. The formula of this operator is: If x < -lambd, y = x + bias;
+  If x > lambd, y = x - bias; Otherwise, y = 0.
 
 #### Version
 

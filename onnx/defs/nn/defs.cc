@@ -1287,7 +1287,10 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Shrink_ver9_doc = R"DOC(
-lalala
+Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+having same datatype and shape with input. It has two attributes, lambd and
+bias. The formula of this operator is: If x < -lambd, y = x + bias;
+If x > lambd, y = x - bias; Otherwise, y = 0.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
