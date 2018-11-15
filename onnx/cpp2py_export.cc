@@ -81,7 +81,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
       .def_property_readonly(
           "description", &OpSchema::FormalParameter::GetDescription)
-      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption);
+      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
+      .def_property_readonly(
+          "isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous);
 
   py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
       .value("FLOAT", AttributeProto::FLOAT)

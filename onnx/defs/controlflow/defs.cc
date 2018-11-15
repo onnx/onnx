@@ -396,7 +396,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the `then_branch` and `else_branch` must be of the same shape and same "
             "data type.",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
@@ -551,13 +552,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The initial values of any loop-carried dependencies (values that "
             "change across loop iterations)",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Output(
             0,
             "v_final_and_scan_outputs",
             "Final N loop carried dependency values then K scan_outputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -720,13 +723,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "initial_state_and_scan_inputs",
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
