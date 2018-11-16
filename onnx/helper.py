@@ -290,7 +290,7 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
 def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: TensorProto.DataType
-        shape,  # type: Optional[Sequence[TypeVar['dimension', Text, int]]]
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto
