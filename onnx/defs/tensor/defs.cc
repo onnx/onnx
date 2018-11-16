@@ -1229,7 +1229,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "tensor and the values in the 'indices' input tensor are expected to be "
             "in the range [0, depth). The"
             "In case 'depth' is of non-integer type, it will be casted to int64 before use.",
-            "T1")
+            "T2")
         .Input(
             2,
             "values",
@@ -1237,19 +1237,23 @@ ONNX_OPERATOR_SET_SCHEMA(
             "where 'on_value' is the value used for filling locations specified in 'indices' input "
             "tensor, and 'off_value' is the value used for filling locations other than those specified "
             "in 'indices' input tensor. ",
-            "T2")
+            "T3")
         .Output(0,
             "output",
             "Tensor of rank one greater than input tensor 'indices', i.e. rank(output) = rank(indices) + 1. "
             "The data type for the elements of the output tensor is the same as the type of input 'values' "
             "is used.",
-            "T2")
+            "T3")
         .TypeConstraint(
             "T1",
             OpSchema::all_numeric_types(),
             "Constrains input to only numeric types.")
         .TypeConstraint(
             "T2",
+            OpSchema::all_numeric_types(),
+            "Constrains input to only numeric types.")
+        .TypeConstraint(
+            "T3",
             OpSchema::all_tensor_types(),
             "Constrain to any tensor type.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
