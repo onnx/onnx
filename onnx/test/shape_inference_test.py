@@ -188,6 +188,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (2, 2, 4))])
 
+    def test_concat_param(self):  # type: () -> None
+        graph = self._make_graph(
+            [("x", TensorProto.FLOAT, ("a", 2)),
+             ("y", TensorProto.FLOAT, ("a", 3))],
+            [make_node("Concat", ['x', 'y'], ['z'], axis=1)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, ("a", 5))])
+
     def test_reshape_dynamic_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.UINT8, (2, 4, 3)),
@@ -434,6 +442,14 @@ class TestShapeInference(unittest.TestCase):
             [make_node('Sum', ['x', 'y', 'z'], ['out'])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, (30, 4, 5))])
+
+    def test_sum_broadcasting_param(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, ("a", 1, 5)),
+             ('y', TensorProto.FLOAT, ("a", 4, 1))],
+            [make_node('Sum', ['x', 'y'], ['out'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('out', TensorProto.FLOAT, ("a", 4, 5))])
 
     def test_random_normal(self):  # type: () -> None
         graph = self._make_graph(
@@ -1083,7 +1099,6 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, None),  # shape may change between iterations
              make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
-
 
 if __name__ == '__main__':
     unittest.main()
