@@ -51,8 +51,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
   std::vector<const TypeProto*> subgraph_input_types;
 
-  int64_t batch_size = -1;
-  int64_t sequence_len = -1;
+  const TensorShapeProto_Dimension* batch_size = nullptr;
+  const TensorShapeProto_Dimension* sequence_len = nullptr;
 
   for (size_t i = 1; i < num_inputs; ++i) {
     bool is_loop_state_var = (i - 1) < num_loop_state_vars;
@@ -97,8 +97,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         const auto& shape = input_type->tensor_type().shape();
         if (shape.dim_size() > 2) {
           const auto& dims = shape.dim();
-          UpdateValueFromDim(batch_size, dims.Get(0));
-          UpdateValueFromDim(sequence_len, dims.Get(1));
+          batch_size = &dims.Get(0);
+          sequence_len = &dims.Get(1);
         }
       } else {
         subgraph_input_types.push_back(input_type);
@@ -164,14 +164,14 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         mutable_inferred_shape->clear_dim();
 
         auto* batch_size_dim = mutable_inferred_shape->add_dim();
-        if (batch_size != -1) {
-          batch_size_dim->set_dim_value(batch_size);
+        if (batch_size) {
+          *batch_size_dim = *batch_size;
         }
 
         if (!is_loop_state_var) {
           auto* seq_len_dim = mutable_inferred_shape->add_dim();
-          if (sequence_len != -1)
-            seq_len_dim->set_dim_value(sequence_len);
+          if (sequence_len)
+            *seq_len_dim = *sequence_len;
         }
 
         for (const auto& dim :
