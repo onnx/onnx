@@ -1100,5 +1100,6 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, None),  # shape may change between iterations
              make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
 
+
 if __name__ == '__main__':
     unittest.main()
