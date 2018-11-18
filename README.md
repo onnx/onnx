@@ -12,7 +12,7 @@ data types. Initially we focus on the capabilities needed for inferencing (evalu
 
 Caffe2, PyTorch, Microsoft Cognitive Toolkit, Apache MXNet and other tools are developing ONNX support. Enabling interoperability between different
 frameworks and streamlining the path from research to production will increase the speed of innovation in
-the AI community. We are an early stage and we invite the community to submit feedback and help us further
+the AI community. We are at an early stage and we invite the community to submit feedback and help us further
 evolve ONNX.
 
 # Use ONNX
