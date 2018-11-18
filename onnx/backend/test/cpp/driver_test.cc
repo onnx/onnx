@@ -345,7 +345,7 @@ TEST_P(ONNXCppDriverTest, ONNXCppDriverUnitTest){
     size_t numBackends = 0;
     ASSERT_EQ(
         lib.onnxGetBackendIDs(backendIDs, &numBackends),
-        ONNXIFI_STATUS_SUCCESS);
+        ONNXIFI_STATUS_FALLBACK);
     backendIDs = (void**)malloc(numBackends * sizeof(onnxBackendID));
     ASSERT_EQ(
         lib.onnxGetBackendIDs(backendIDs, &numBackends),
