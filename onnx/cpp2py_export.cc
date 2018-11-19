@@ -279,12 +279,12 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   version_converter.doc() = "VersionConverter submodule";
 
   version_converter.def(
-      "convert_version", [](const py::bytes& bytes, const py::int_ target) {
+      "convert_version", [](const py::bytes& bytes, py::int_ target) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         shape_inference::InferShapes(proto);
-        auto const result =
-            version_conversion::ConvertVersion(std::move(proto), target);
+        auto result =
+            version_conversion::ConvertVersion(proto, target);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);
