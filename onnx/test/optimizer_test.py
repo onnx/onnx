@@ -1163,5 +1163,6 @@ class TestOptimizer(unittest.TestCase):
                             optimized_output_shape = tuple(x.dim_value for x in optimized_model.graph.output[0].type.tensor_type.shape.dim)
                             assert optimized_output_shape == output_shape
 
+
 if __name__ == '__main__':
     unittest.main()
