@@ -75,7 +75,7 @@ will throw errors.
         0,
         "output",
         "The output values with the same "
-        "shape as input tensor.",
+        "shape as input tensor (the original size without coercion).",
         "T");
     schema.TypeConstraint(
         "T",
