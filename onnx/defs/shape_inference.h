@@ -151,6 +151,50 @@ multiplyDims(const TensorShapeProto& shape, int from, int upto_exclusive) {
   return dim;
 }
 
+// propagate the element type from an input type to an output type.
+// if an existing output element type exists, validate it matches.
+inline void propagateElemTypeWithValidation(
+    const TypeProto* input_type,
+    TypeProto* output_type) {
+  if (nullptr == input_type) {
+    fail_type_inference("Input type was null");
+  }
+
+  if (input_type->value_case() != TypeProto::kTensorType) {
+    fail_type_inference(
+        "Input was expected to have tensor type. Got ",
+        input_type->value_case());
+  }
+
+  if (input_type->tensor_type().elem_type() == TensorProto::UNDEFINED) {
+    fail_type_inference("Element type of input was unknown");
+  }
+
+  if (output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+    output_type->mutable_tensor_type()->set_elem_type(
+        input_type->tensor_type().elem_type());
+  } else if (output_type->value_case() == TypeProto::kTensorType) {
+    if (output_type->tensor_type().has_elem_type()) {
+      if (input_type->tensor_type().elem_type() !=
+          output_type->tensor_type().elem_type()) {
+        fail_type_inference(
+            "Input element type of ",
+            input_type->tensor_type().elem_type(),
+            " does not match existing output type of ",
+            output_type->tensor_type().elem_type());
+      }
+    } else {
+      output_type->mutable_tensor_type()->set_elem_type(
+          input_type->tensor_type().elem_type());
+    }
+  } else {
+    // This is not expected to happen
+    fail_type_inference(
+        "Output was expected to have tensor type. Got ",
+        output_type->value_case());
+  }
+}
+
 // Note: for all methods below for propagating type or shape, callers are
 // responsible to handle optional inputs/outputs and ensure that the specified
 // index value is less than NumInputs/NumOutputs.

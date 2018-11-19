@@ -32,22 +32,26 @@ OpSchema::FormalParameter::FormalParameter(
     DataTypeSet allowed_type_set,
     std::string type_str,
     std::string description,
-    FormalParameterOption param_option)
+    FormalParameterOption param_option,
+    bool is_homogeneous)
     : name_(std::move(name)),
       type_set_(std::move(allowed_type_set)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
-      param_option_(param_option) {}
+      param_option_(param_option),
+      is_homogeneous_(is_homogeneous) {}
 
 OpSchema::FormalParameter::FormalParameter(
     std::string name,
     std::string description,
     std::string type_str,
-    FormalParameterOption param_option)
+    FormalParameterOption param_option,
+    bool is_homogeneous)
     : name_(std::move(name)),
       type_str_(std::move(type_str)),
       description_(std::move(description)),
-      param_option_(param_option) {}
+      param_option_(param_option),
+      is_homogeneous_(is_homogeneous) {}
 
 const std::string& OpSchema::FormalParameter::GetName() const {
   return name_;
@@ -73,6 +77,10 @@ OpSchema::FormalParameterOption OpSchema::FormalParameter::GetOption() const {
   return param_option_;
 }
 
+bool OpSchema::FormalParameter::GetIsHomogeneous() const {
+  return is_homogeneous_;
+}
+
 OpSchemaRegistry* OpSchemaRegistry::Instance() {
   static OpSchemaRegistry instance;
   return &instance;
@@ -80,7 +88,11 @@ OpSchemaRegistry* OpSchemaRegistry::Instance() {
 
 void OpSchema::Verify(const NodeProto& node) const {
   if (deprecated_) {
-    fail_check("Operator '", name_, "' has been deprecated since version ", since_version_);
+    fail_check(
+        "Operator '",
+        name_,
+        "' has been deprecated since version ",
+        since_version_);
   }
 
   // Check the number of inputs.
@@ -101,7 +113,9 @@ void OpSchema::Verify(const NodeProto& node) const {
     fail_check(
         "Node (",
         node.name(),
-        ") has input size ", node.input_size(), " not in allowed input sizes.");
+        ") has input size ",
+        node.input_size(),
+        " not in allowed input sizes.");
   }
 
   // Check the number of outputs.
@@ -122,7 +136,9 @@ void OpSchema::Verify(const NodeProto& node) const {
     fail_check(
         "Node (",
         node.name(),
-        "has output size ", node.output_size(), " not in allowed output sizes.");
+        "has output size ",
+        node.output_size(),
+        " not in allowed output sizes.");
   }
 
   // Check the values of inputs / outputs
@@ -203,7 +219,8 @@ void OpSchema::Verify(const NodeProto& node) const {
     } else if (allows_unchecked_attributes_ || isInternalSymbol(name)) {
       continue;
     } else {
-      fail_check("Unrecognized attribute: ", name, " for operator ", node.op_type());
+      fail_check(
+          "Unrecognized attribute: ", name, " for operator ", node.op_type());
     }
 
     if (attr_proto.has_ref_attr_name()) {
@@ -491,7 +508,8 @@ OpSchema& OpSchema::Input(
     std::string name,
     std::string description,
     std::string type_str,
-    OpSchema::FormalParameterOption param_option) {
+    OpSchema::FormalParameterOption param_option,
+    bool is_homogeneous) {
   if (int(inputs_.size()) <= n) {
     inputs_.resize(n + 1);
   }
@@ -499,7 +517,8 @@ OpSchema& OpSchema::Input(
       std::move(name),
       std::move(description),
       std::move(type_str),
-      param_option);
+      param_option,
+      is_homogeneous);
   return *this;
 }
 
@@ -508,13 +527,15 @@ OpSchema& OpSchema::Input(
     const char* name,
     const char* description,
     const char* type_str,
-    FormalParameterOption param_option) {
+    FormalParameterOption param_option,
+    bool is_homogeneous) {
   return Input(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
-      param_option);
+      param_option,
+      is_homogeneous);
 }
 
 OpSchema& OpSchema::Output(
@@ -522,7 +543,8 @@ OpSchema& OpSchema::Output(
     std::string name,
     std::string description,
     std::string type_str,
-    OpSchema::FormalParameterOption param_option) {
+    OpSchema::FormalParameterOption param_option,
+    bool is_homogeneous) {
   if (int(outputs_.size()) <= n) {
     outputs_.resize(n + 1);
   }
@@ -530,7 +552,8 @@ OpSchema& OpSchema::Output(
       std::move(name),
       std::move(description),
       std::move(type_str),
-      param_option);
+      param_option,
+      is_homogeneous);
   return *this;
 }
 
@@ -539,13 +562,15 @@ OpSchema& OpSchema::Output(
     const char* name,
     const char* description,
     const char* type_str,
-    FormalParameterOption param_option) {
+    FormalParameterOption param_option,
+    bool is_homogeneous) {
   return Output(
       n,
       std::string(name),
       std::string(description),
       std::string(type_str),
-      param_option);
+      param_option,
+      is_homogeneous);
 }
 
 OpSchema& OpSchema::TypeConstraint(
@@ -722,7 +747,8 @@ std::ostream& operator<<(std::ostream& out, const OpSchema& schema) {
   return out;
 }
 
-OpSchemaRegistry::DomainToVersionRange& OpSchemaRegistry::DomainToVersionRange::Instance() {
+OpSchemaRegistry::DomainToVersionRange&
+OpSchemaRegistry::DomainToVersionRange::Instance() {
   static DomainToVersionRange domain_to_version_range;
   return domain_to_version_range;
 };

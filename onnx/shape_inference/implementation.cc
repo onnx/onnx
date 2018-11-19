@@ -44,9 +44,16 @@ void checkShapesAndTypes(
 void mergeShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     TypeProto_Tensor* existingType) {
-  if (inferredType.elem_type() != TensorProto::UNDEFINED &&
-      existingType->elem_type() == TensorProto::UNDEFINED) {
-    existingType->set_elem_type(inferredType.elem_type());
+  if (inferredType.elem_type() != TensorProto::UNDEFINED) {
+    if (existingType->elem_type() == TensorProto::UNDEFINED) {
+      existingType->set_elem_type(inferredType.elem_type());
+    } else if (existingType->elem_type() != inferredType.elem_type()) {
+      fail_type_inference(
+          "type mismatch. existing=",
+          existingType->elem_type(),
+          " inferred=",
+          inferredType.elem_type());
+    }
   }
 
   if (!inferredType.has_shape()) {
@@ -225,9 +232,9 @@ void InferShapeForFunctionNode(
   GraphProto g;
   // Get a temporary tensor-shape map
   std::unordered_map<std::string, TypeProto*> temp_valueTypesByName;
-  std::vector<TypeProto> temp_types_cache;
+  std::vector<TypeProto> temp_types_cache(func.input_size());
   for (int i = 0; i < func.input_size(); ++i) {
-    temp_types_cache.push_back(*ctx.getInputType(i));
+    temp_types_cache[i] = *ctx.getInputType(i);
     temp_valueTypesByName[func.input().Get(i)] = &temp_types_cache.back();
   }
   // Get a temporary initial value map
@@ -324,6 +331,10 @@ std::vector<const TypeProto*> GraphInferencerImpl::doInferencing(
 
   for (int i = 0, end = numInputs; i < end; ++i) {
     const TypeProto* inferredInput = inputTypes[i];
+
+    if (!inferredInput)
+      continue;
+
     TypeProto* graphInput = g_->mutable_input(i)->mutable_type();
 
     if (!graphInput->has_tensor_type()) {
