@@ -384,8 +384,13 @@ if(BUILD_ONNX_PYTHON)
   target_link_libraries(onnx_cpp2py_export PRIVATE onnx)
 
   if(MSVC)
-    find_package(PythonInterp ${PY_VERSION} REQUIRED)
-    find_package(PythonLibs ${PY_VERSION} REQUIRED)
+    if(3.12<CMAKE_SYSTEM_VERSION)
+      find_package(PythonInterp ${PY_VERSION} REQUIRED)
+      find_package(PythonLibs ${PY_VERSION} REQUIRED)
+    else(CMAKE_SYSTEM_VERSION)
+      find_package(Python ${PY_VERSION} REQUIRED)
+    endif()
+    
     target_link_libraries(onnx_cpp2py_export PRIVATE ${PYTHON_LIBRARIES})
     target_compile_options(onnx_cpp2py_export
                            PRIVATE /MP
