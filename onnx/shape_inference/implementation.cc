@@ -87,9 +87,7 @@ static void InferShapesImpl(
     const ISchemaRegistry* schema_registry = OpSchemaRegistry::Instance(),
     const IFunctionBuilderRegistry* func_registry =
         &FunctionBuilderRegistry::OnnxInstance()) {
-  std::unordered_map<std::string, TypeProto*> valueTypesByName{
-      outer_scope_value_types_by_name};
-
+  std::unordered_map<std::string, TypeProto*> valueTypesByName;
   GraphInferenceContext graphInferenceContext{
       valueTypesByName, opset_imports, schema_registry, func_registry};
 
