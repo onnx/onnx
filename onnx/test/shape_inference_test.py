@@ -965,7 +965,7 @@ class TestShapeInference(unittest.TestCase):
 
     def test_scan(self):    # type: () -> None
         batch_size = 1
-        seq_len = 1
+        seq_len = 'sequence'
         input_size = 2
         loop_state_size = 3
 
