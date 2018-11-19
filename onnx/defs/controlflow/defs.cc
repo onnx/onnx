@@ -89,8 +89,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         const auto& shape = input_type->tensor_type().shape();
         if (shape.dim_size() > 2) {
           const auto& dims = shape.dim();
-          mergeInDimensionInfo(dims.Get(0), batch_size_dim);
-          mergeInDimensionInfo(dims.Get(1), sequence_len_dim);
+          mergeInDimensionInfo(dims.Get(0), batch_size_dim, 0);
+          mergeInDimensionInfo(dims.Get(1), sequence_len_dim, 1);
         }
       } else {
         subgraph_input_types.push_back(input_type);
@@ -157,7 +157,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         *mutable_inferred_shape->add_dim() = batch_size_dim;
 
         if (!is_loop_state_var) {
-          *mutable_inferred_shape->add_dim() = sequence_len_dim; 
+          *mutable_inferred_shape->add_dim() = sequence_len_dim;
         }
 
         for (const auto& dim :
@@ -178,8 +178,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 void IfInferenceFunction(InferenceContext& ctx) {
   // there are no inputs so we just need to run the subgraph inferencing for
   // then/else subgraphs and apply those to the outputs.
-  std::vector<const TypeProto*> subgraph_input_types; // none
-  std::vector<const TensorProto*> input_data; // none
+  std::vector<const TypeProto*> subgraph_input_types;  // none
+  std::vector<const TensorProto*> input_data;          // none
 
   std::vector<const TypeProto*> then_output_types;
   std::vector<const TypeProto*> else_output_types;
@@ -260,7 +260,7 @@ void IfInferenceFunction(InferenceContext& ctx) {
 
 void LoopInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
-  auto num_loop_state_vars = num_inputs - 2; // skip 'M' and 'cond'
+  auto num_loop_state_vars = num_inputs - 2;  // skip 'M' and 'cond'
 
   std::vector<const TypeProto*> subgraph_input_types;
 
@@ -298,7 +298,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    input_data.push_back(nullptr); // iteration number
+    input_data.push_back(nullptr);  // iteration number
     for (size_t i = 1; i < num_inputs; ++i) {
       input_data.push_back(ctx.getInputData(i));
     }
@@ -323,7 +323,7 @@ void LoopInferenceFunction(InferenceContext& ctx) {
 
     // check loop state values match. we should already have type/shape info
     for (size_t i = 0; i < num_outputs; ++i) {
-      auto* subgraph_output_type = subgraph_output_types[i + 1]; // skip 'cond'
+      auto* subgraph_output_type = subgraph_output_types[i + 1];  // skip 'cond'
       auto* loop_output_type = ctx.getOutputType(i);
 
       const bool is_loop_state_var = i < num_loop_state_vars;
@@ -745,4 +745,4 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
 
-} // namespace ONNX_NAMESPACE
+}  // namespace ONNX_NAMESPACE
