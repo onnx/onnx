@@ -152,7 +152,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             if OpSchema.FormalParameterOption.Optional == input.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == input.option:
-                option_str = " (variadic)"
+                if input.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
             s += '<dd>{}</dd>\n'.format(input.description)
         s += '</dl>\n'
@@ -171,7 +174,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             if OpSchema.FormalParameterOption.Optional == output.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == output.option:
-                option_str = " (variadic)"
+                if output.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
             s += '<dd>{}</dd>\n'.format(output.description)
         s += '</dl>\n'

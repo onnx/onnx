@@ -1160,7 +1160,8 @@ class TestOptimizer(unittest.TestCase):
                             assert optimized_model.graph.node[-1].op_type == reduction
                             assert optimized_model.graph.node[-1].attribute[0].name == "axes"
                             assert optimized_model.graph.node[-1].attribute[0].ints == axes1
-
+                            optimized_output_shape = tuple(x.dim_value for x in optimized_model.graph.output[0].type.tensor_type.shape.dim)
+                            assert optimized_output_shape == output_shape
 
 if __name__ == '__main__':
     unittest.main()
