@@ -276,7 +276,7 @@ add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
-  ${PROTOBUF_INCLUDE_DIRS})
+  $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
 
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -422,7 +422,7 @@ if(ONNX_BUILD_BENCHMARKS)
     $<BUILD_INTERFACE:${ONNX_ROOT}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
-    ${PROTOBUF_INCLUDE_DIRS})
+    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 
