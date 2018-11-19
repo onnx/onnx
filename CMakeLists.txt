@@ -387,7 +387,7 @@ if(BUILD_ONNX_PYTHON)
     if(3.12<CMAKE_SYSTEM_VERSION)
       find_package(PythonInterp ${PY_VERSION} REQUIRED)
       find_package(PythonLibs ${PY_VERSION} REQUIRED)
-    else(CMAKE_SYSTEM_VERSION)
+    else()
       find_package(Python ${PY_VERSION} REQUIRED)
     endif()
     
