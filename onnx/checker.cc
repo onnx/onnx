@@ -156,8 +156,6 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
-      case TensorProto::INT8:
-      case TensorProto::INT16:
         check_field(int32_data);
         break;
 
@@ -259,9 +257,9 @@ void check_attribute(
     check_tensor(attr.t(), ctx);
   }
 
-  //if (attr.has_g()) {
-  //  check_graph(attr.g(), ctx, lex_ctx);
-  //}
+  if (attr.has_g()) {
+    check_graph(attr.g(), ctx, lex_ctx);
+  }
 
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
