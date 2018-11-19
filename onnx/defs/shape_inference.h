@@ -543,7 +543,7 @@ inline void mergeInShapeInfo(
       for (int i = 0, end = source_dims.size(); i < end; ++i) {
         auto& source_dim = source_dims.Get(i);
         auto& target_dim = *target_dims->Mutable(i);
-		mergeInDimensionInfo(source_dim, target_dim, i);
+        mergeInDimensionInfo(source_dim, target_dim, i);
       }
     }
   } else if (source_has_shape) {
