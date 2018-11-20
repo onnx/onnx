@@ -4,7 +4,7 @@ namespace ONNX_NAMESPACE { namespace version_conversion {
 
 ModelProto ConvertVersion(
     const ModelProto& mp_in,
-    const int target_version) {
+    int target_version) {
   // Get initial_opsetid from mp_in
   OpSetID initial_struct(0);
   for (auto it = mp_in.opset_import().begin(); it != mp_in.opset_import().end(); ++it) {
