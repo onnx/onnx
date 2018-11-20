@@ -1455,7 +1455,7 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
-<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.</dd>
+<dd>If true, compute the mean and variance across per activation. If false, compute the mean and variance across per feature over each mini-batch.</dd>
 </dl>
 
 #### Inputs
@@ -1464,20 +1464,20 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 <dt><tt>scale</tt> : T</dt>
-<dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dd>If spatial is true, the dimension of scale is (C). If spatial is false, the dimensions of scale are (C x D1 x ... x Dn)</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dd>If spatial is true, the dimension of bias is (C). If spatial is false, the dimensions of bias are (C x D1 x ... x Dn)</dd>
 <dt><tt>mean</tt> : T</dt>
-<dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
+<dd>If spatial is true, the dimension of the running mean (training) or the estimated mean (testing) is (C). If spatial is false, the dimensions of the running mean (training) or the estimated mean (testing) are (C x D1 x ... x Dn).</dd>
 <dt><tt>var</tt> : T</dt>
-<dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
+<dd>If spatial is true, the dimension of the running variance(training) or the estimated variance (testing) is (C). If spatial is false, the dimensions of the running variance(training) or the estimated variance (testing) are (C x D1 x ... x Dn).</dd>
 </dl>
 
 #### Outputs (1 - 5)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>The output tensor of the same shape as X.</dd>
+<dd>The output tensor of the same shape as X</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
@@ -4541,7 +4541,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -5463,7 +5463,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -10347,7 +10347,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
