@@ -4541,7 +4541,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -5463,7 +5463,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -10347,7 +10347,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
