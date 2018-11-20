@@ -434,8 +434,10 @@ inline void multidirectionalBroadcastShapeInference(
       } else {
         if (num_symbolic_dims == 0) {
           symbolic_dim = dim_i_j;
+          ++num_symbolic_dims;
+        } else if (dim_i_j.dim_param() != symbolic_dim.dim_param()) {
+          ++num_symbolic_dims;
         }
-        ++num_symbolic_dims;
       }
     }
 
@@ -457,6 +459,49 @@ inline void bidirectionalBroadcastShapeInference(
   shapes.push_back(&shapeL);
   shapes.push_back(&shapeR);
   multidirectionalBroadcastShapeInference(shapes, resultShape);
+}
+
+/*
+Merge the dimension information from two TensorShapeProto_Dimension instances.
+Values are merged into target from source.
+If target has no dimension information, copy from source.
+If source has no dimension information, ignore source.
+If both have dimension information:
+ - Prefer values over params. If both have values, values must match.
+ - Prefer target param over source param if mismatched.
+Fail if there are mismatches in number of dimensions or dimension values.
+*/
+inline void mergeInDimensionInfo(
+    const TensorShapeProto_Dimension& source_dim,
+    TensorShapeProto_Dimension& target_dim,
+    int dim_index) {
+  // if source has value, merge into target
+  // else if target has value, preserve it
+  // else merge params
+  if (source_dim.has_dim_value()) {
+    auto source_value = source_dim.dim_value();
+    if (target_dim.has_dim_value()) {
+      auto target_value = target_dim.dim_value();
+      if (target_value != source_value) {
+        fail_shape_inference(
+            "Can't merge shape info. "
+            "Both source and target dimension have values but they differ. Source=",
+            source_value,
+            " Target=",
+            target_value,
+            " Dimension=",
+            dim_index);
+      }
+    } else {
+      target_dim.set_dim_value(source_value);
+    }
+  } else if (target_dim.has_dim_value()) {
+    // if target has a value we preserve it so do nothing
+  } else if (target_dim.has_dim_param()) {
+    // prefer target param over source
+  } else if (source_dim.has_dim_param()) {
+    target_dim.set_dim_param(source_dim.dim_param());
+  }
 }
 
 /*
@@ -498,34 +543,7 @@ inline void mergeInShapeInfo(
       for (int i = 0, end = source_dims.size(); i < end; ++i) {
         auto& source_dim = source_dims.Get(i);
         auto& target_dim = *target_dims->Mutable(i);
-
-        // if source has value, merge into target
-        // else if target has value, preserve it
-        // else merge params
-        if (source_dim.has_dim_value()) {
-          auto source_value = source_dim.dim_value();
-          if (target_dim.has_dim_value()) {
-            auto target_value = target_dim.dim_value();
-            if (target_value != source_value) {
-              fail_shape_inference(
-                  "Can't merge shape info. "
-                  "Both source and target dimension have values but they differ. Source=",
-                  source_value,
-                  " Target=",
-                  target_value,
-                  " Dimension=",
-                  i);
-            }
-          } else {
-            target_dim.set_dim_value(source_value);
-          }
-        } else if (target_dim.has_dim_value()) {
-          // if target has a value we preserve it so do nothing
-        } else if (target_dim.has_dim_param()) {
-          // prefer target param over source
-        } else if (source_dim.has_dim_param()) {
-          target_dim.set_dim_param(source_dim.dim_param());
-        }
+        mergeInDimensionInfo(source_dim, target_dim, i);
       }
     }
   } else if (source_has_shape) {
