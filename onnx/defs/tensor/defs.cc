@@ -330,16 +330,10 @@ ONNX_OPERATOR_SET_SCHEMA(
                 } else {
                   all_lengths_known = false;
                 }
-              } else if (shape.dim(j).has_dim_value()) {
-                if (output_shape->dim(j).has_dim_value()) {
-                  if (shape.dim(j).dim_value() !=
-                      output_shape->dim(j).dim_value()) {
-                    fail_shape_inference("Dimension mismatch");
-                    ;
-                  }
-                } else {
-                  *output_shape->mutable_dim(j) = shape.dim(j);
-                }
+              } else {
+                auto& output_dim = *output_shape->mutable_dim(j);
+                const auto& input_dim = shape.dim(j);
+                mergeInDimensionInfo(input_dim, output_dim, j);
               }
             }
           }
