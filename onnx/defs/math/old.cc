@@ -607,6 +607,33 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* PRelu_ver7_doc = R"DOC(
+PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
+output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
+`f(x) = x for x >= 0`., is applied to the data tensor elementwise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    PRelu,
+    7,
+    OpSchema()
+        .SetDoc(
+            PRelu_ver7_doc +
+            GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
+        .Input(0, "X", "Input tensor", "T")
+        .Input(
+            1,
+            "slope",
+            "Slope tensor. The shape of slope can be smaller then first input X; "
+            "if so, its shape must be unidirectional broadcastable to X",
+            "T")
+        .Output(0, "Y", "Output tensor (same size as X)", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* Sigmoid_ver1_doc = R"DOC(
 Sigmoid takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>) where the sigmoid function, y = 1 / (1 + exp(-x)), is applied to the
@@ -939,6 +966,94 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
+static const char* Gemm_ver7_doc = R"DOC(General Matrix multiplication:
+https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
+
+A' = transpose(A) if transA else A
+
+B' = transpose(B) if transB else B
+
+Compute Y = alpha * A' * B' + beta * C, where input tensor A has shape (M, K) or (K, M),
+input tensor B has shape (K, N) or (N, K), input tensor C is broadcastable to shape (M, N),
+and output tensor Y has shape (M, N). A will be transposed before doing the
+computation if attribute transA is non-zero, same for B and transB.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Gemm,
+    7,
+    OpSchema()
+        .SetDoc(
+            Gemm_ver7_doc +
+            GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
+        .Input(
+            0,
+            "A",
+            "Input tensor A. "
+            "The shape of A should be (M, K) if transA is 0, "
+            "or (K, M) if transA is non-zero.",
+            "T")
+        .Input(
+            1,
+            "B",
+            "Input tensor B. "
+            "The shape of B should be (K, N) if transB is 0, "
+            "or (N, K) if transB is non-zero.",
+            "T")
+        .Input(
+            2,
+            "C",
+            "Input tensor C. "
+            "The shape of C should be unidirectional broadcastable to (M, N).",
+            "T")
+        .Output(0, "Y", "Output tensor of shape (M, N).", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .Attr(
+            "transA",
+            "Whether A should be transposed",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "transB",
+            "Whether B should be transposed",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "alpha",
+            "Scalar multiplier for the product of input tensors A * B.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .Attr(
+            "beta",
+            "Scalar multiplier for input tensor C.",
+            AttributeProto::FLOAT,
+            1.0f)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (hasNInputShapes(ctx, 2)) {
+            auto transAAttr = ctx.getAttribute("transA");
+            bool transA =
+                transAAttr ? static_cast<int>(transAAttr->i()) != 0 : false;
+            auto transBAttr = ctx.getAttribute("transB");
+            bool transB =
+                transBAttr ? static_cast<int>(transBAttr->i()) != 0 : false;
+            auto& first_input_shape = getInputShape(ctx, 0);
+            auto& second_input_shape = getInputShape(ctx, 1);
+            if (first_input_shape.dim_size() != 2)
+              fail_shape_inference("First input does not have rank 2");
+            if (second_input_shape.dim_size() != 2)
+              fail_shape_inference("Second input does not have rank 2");
+            updateOutputShape(
+                ctx,
+                0,
+                {first_input_shape.dim(transA ? 1 : 0),
+                 second_input_shape.dim(transB ? 0 : 1)});
+          }
+        }));
+
 static const char* Max_ver6_doc = R"DOC(
 Element-wise max of each of the input tensors. All inputs and outputs must
 have the same shape and data type.
@@ -1015,4 +1130,95 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* MatMul_ver1_doc = R"DOC(
+Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MatMul,
+    1,
+    OpSchema()
+        .Input(0, "A", "N-dimensional matrix A", "T")
+        .Input(1, "B", "N-dimensional matrix B", "T")
+        .Output(0, "Y", "Matrix multiply results from A * B", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .SetDoc(MatMul_ver1_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          if (!hasNInputShapes(ctx, 2)) {
+            return;
+          }
+
+          const auto shape0 = ctx.getInputType(0)->tensor_type().shape();
+          const auto shape1 = ctx.getInputType(1)->tensor_type().shape();
+
+          if (shape0.dim_size() == 0 || shape1.dim_size() == 0) {
+            fail_shape_inference("Input tensors of wrong rank (0).");
+          }
+
+          TensorShapeProto shapeL, shapeR;
+
+          // First promote each shape to at least rank-2. This logic is
+          // specific to matmul, not generic broadcasting.
+          {
+            if (shape0.dim_size() == 1) {
+              shapeL.add_dim()->set_dim_value(1);
+              *shapeL.add_dim() = shape0.dim(0);
+            } else {
+              *shapeL.mutable_dim() = shape0.dim();
+            }
+            if (shape1.dim_size() == 1) {
+              *shapeR.add_dim() = shape1.dim(0);
+              shapeR.add_dim()->set_dim_value(1);
+            } else {
+              *shapeR.mutable_dim() = shape1.dim();
+            }
+          }
+
+          // Check for compatible matrix multiply dimensions
+          {
+            auto dimL = shapeL.dim(shapeL.dim_size() - 1);
+            auto dimR = shapeR.dim(shapeR.dim_size() - 2);
+            if (dimL.has_dim_value() && dimR.has_dim_value() &&
+                dimL.dim_value() != dimR.dim_value()) {
+              fail_shape_inference(
+                  "Incompatible dimensions for matrix multiplication");
+              ;
+            }
+          }
+
+          TensorShapeProto resultShape;
+
+          // Now call out to generic multidimensional broadcasting for
+          // the broadcastable prefixes.
+          {
+            TensorShapeProto prefixShapeL, prefixShapeR;
+            for (int i = 0; i < shapeL.dim_size() - 2; ++i) {
+              *prefixShapeL.add_dim() = shapeL.dim(i);
+            }
+            for (int i = 0; i < shapeR.dim_size() - 2; ++i) {
+              *prefixShapeR.add_dim() = shapeR.dim(i);
+            }
+            bidirectionalBroadcastShapeInference(
+                prefixShapeL, prefixShapeR, resultShape);
+          }
+
+          // Back to matmul-specific. Add the trailing dimensions back in.
+          {
+            if (shape0.dim_size() != 1) {
+              *resultShape.add_dim() = shapeL.dim(shapeL.dim_size() - 2);
+            }
+            if (shape1.dim_size() != 1) {
+              *resultShape.add_dim() = shapeR.dim(shapeR.dim_size() - 1);
+            }
+          }
+
+          *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape() =
+              resultShape;
+        }));
+
 } // namespace ONNX_NAMESPACE

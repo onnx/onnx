@@ -5,9 +5,9 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 91/96 (94.79%, 5 generators excluded) common operators.
+Node tests have covered 101/109 (92.66%, 5 generators excluded) common operators.
 
-Node tests have covered 1/15 (6.67%, 0 generators excluded) experimental operators.
+Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
 * [Covered Common Operators](#covered-common-operators)
 * [No Cover Common Operators](#no-cover-common-operators)
@@ -57,6 +57,32 @@ x = np.random.rand(3, 4, 5).astype(np.float32)
 y = np.arccos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_acos')
+```
+
+</details>
+
+
+### Acosh
+There are 1 test cases, listed as following:
+<details>
+<summary>acosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Acosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([10, np.e, 1]).astype(np.float32)
+y = np.arccosh(x)  # expected output [2.99322295,  1.65745449,  0.]
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh_example')
+
+x = np.random.uniform(1.0, 10.0, (3, 4, 5)).astype(np.float32)
+y = np.arccosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_acosh')
 ```
 
 </details>
@@ -360,6 +386,32 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Asinh
+There are 1 test cases, listed as following:
+<details>
+<summary>asinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Asinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.arcsinh(x)  # expected output [-0.88137358,  0.,  0.88137358]
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.arcsinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_asinh')
+```
+
+</details>
+
+
 ### Atan
 There are 1 test cases, listed as following:
 <details>
@@ -381,6 +433,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.arctan(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_atan')
+```
+
+</details>
+
+
+### Atanh
+There are 1 test cases, listed as following:
+<details>
+<summary>atanh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Atanh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-0.5, 0, 0.5]).astype(np.float32)
+y = np.arctanh(x)  # expected output [-0.54930615,  0.,  0.54930615]
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh_example')
+
+x = np.random.uniform(0.0, 1.0, (3, 4, 5)).astype(np.float32)
+y = np.arctanh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_atanh')
 ```
 
 </details>
@@ -966,6 +1044,75 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Compress
+There are 3 test cases, listed as following:
+<details>
+<summary>compress_0</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=0,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 1])
+output = np.compress(condition, input, axis=0)
+#print(output)
+#[[ 3.  4.]
+# [ 5.  6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_0')
+```
+
+</details>
+<details>
+<summary>compress_1</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+    axis=1,
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1])
+output = np.compress(condition, input, axis=1)
+#print(output)
+#[[ 2.]
+# [ 4.]
+# [ 6.]]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_1')
+```
+
+</details>
+<details>
+<summary>compress_default_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Compress',
+    inputs=['input', 'condition'],
+    outputs=['output'],
+)
+input = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.float32)
+condition = np.array([0, 1, 0, 0, 1])
+output = np.compress(condition, input)
+#print(output)
+#[ 2., 5.]
+
+expect(node, inputs=[input, condition.astype(np.bool)], outputs=[output],
+       name='test_compress_default_axis')
+```
+
+</details>
+
+
 ### Concat
 There are 1 test cases, listed as following:
 <details>
@@ -1020,6 +1167,62 @@ node = onnx.helper.make_node(
 
 expect(node, inputs=[], outputs=[values],
        name='test_constant')
+```
+
+</details>
+
+
+### ConstantLike
+There are 3 test cases, listed as following:
+<details>
+<summary>ones_with_input</summary>
+
+```python
+shape = (4, 3, 2)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=['x'],
+    outputs=['y'],
+    value=1.0,
+)
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.ones(shape, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
+```
+
+</details>
+<details>
+<summary>threes_with_shape_and_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    shape=shape,
+    inputs=[],
+    outputs=['y'],
+    value=3.0,
+    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
+)
+
+y = 3.0 * np.ones(shape, dtype=np.float64)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
+```
+
+</details>
+<details>
+<summary>zeros_without_input_dtype</summary>
+
+```python
+shape = (2, 5, 1)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=[],
+    outputs=['y'],
+    shape=shape,
+)
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 ```
 
 </details>
@@ -1346,7 +1549,7 @@ y = np.array([[[[0., 0., 1., 1., 3., 2., 2., 0.],  # (1, 2, 10, 8)
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
                              strides=[3, 2],
-                             output_shape=[1, 2, 10, 8])
+                             output_shape=[10, 8])
 expect(node, inputs=[x, W], outputs=[y], name='test_convtranspose_output_shape')
 
 node = onnx.helper.make_node("ConvTranspose", ["X", "W"], ["Y"],
@@ -1429,6 +1632,32 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.cos(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_cos')
+```
+
+</details>
+
+
+### Cosh
+There are 1 test cases, listed as following:
+<details>
+<summary>cosh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Cosh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.cosh(x)  # expected output [1.54308069,  1.,  1.54308069]
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.cosh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_cosh')
 ```
 
 </details>
@@ -1698,11 +1927,11 @@ node = onnx.helper.make_node(
     outputs=['expanded'],
 )
 shape = [3, 1]
-data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 #print(data)
 #[[1.], [2.], [3.]]
 new_shape = [2, 1, 6]
-expanded = data * np.ones(new_shape)
+expanded = data * np.ones(new_shape, dtype=np.float32)
 #print(expanded)
 #[[[1., 1., 1., 1., 1., 1.],
 #  [2., 2., 2., 2., 2., 2.],
@@ -1711,7 +1940,7 @@ expanded = data * np.ones(new_shape)
 # [[1., 1., 1., 1., 1., 1.],
 #  [2., 2., 2., 2., 2., 2.],
 #  [3., 3., 3., 3., 3., 3.]]]
-new_shape = np.array(new_shape)
+new_shape = np.array(new_shape, dtype=np.int64)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_changed')
 ```
@@ -1728,7 +1957,7 @@ node = onnx.helper.make_node(
 )
 shape = [3, 1]
 new_shape = [3, 4]
-data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float64), shape)
+data = np.reshape(np.arange(1, np.prod(shape) + 1, dtype=np.float32), shape)
 #print(data)
 #[[1.], [2.], [3.]]
 expanded = np.tile(data, 4)
@@ -1736,9 +1965,68 @@ expanded = np.tile(data, 4)
 #[[1., 1., 1., 1.],
 # [2., 2., 2., 2.],
 # [3., 3., 3., 3.]]
-new_shape = np.array(new_shape)
+new_shape = np.array(new_shape, dtype=np.int64)
 expect(node, inputs=[data, new_shape], outputs=[expanded],
        name='test_expand_dim_unchanged')
+```
+
+</details>
+
+
+### EyeLike
+There are 3 test cases, listed as following:
+<details>
+<summary>populate_off_main_diagonal</summary>
+
+```python
+shape = (4, 5)
+off_diagonal_offset = 1
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    k=off_diagonal_offset,
+    dtype=onnx.TensorProto.FLOAT,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], k=off_diagonal_offset, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_populate_off_main_diagonal')
+```
+
+</details>
+<details>
+<summary>with_dtype</summary>
+
+```python
+shape = (3, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+    dtype=onnx.TensorProto.DOUBLE,
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.float64)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_with_dtype')
+```
+
+</details>
+<details>
+<summary>without_dtype</summary>
+
+```python
+shape = (4, 4)
+node = onnx.helper.make_node(
+    'EyeLike',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.eye(shape[0], shape[1], dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_eyelike_without_dtype')
 ```
 
 </details>
@@ -3132,6 +3420,58 @@ expect(node, inputs=[x], outputs=[y, z], name='test_maxpool_with_argmax_2d_preco
 </details>
 
 
+### MaxUnpool
+There are 2 test cases, listed as following:
+<details>
+<summary>with_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI', 'output_shape'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[5, 6],
+                 [7, 8]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+output_shape = np.array((1, 1, 5, 5), dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0, 0],
+                [0, 5, 0, 6, 0],
+                [0, 0, 0, 0, 0],
+                [0, 7, 0, 8, 0],
+                [0, 0, 0, 0, 0]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI, output_shape], outputs=[y], name='test_maxunpool_export_with_output_shape')
+```
+
+</details>
+<details>
+<summary>without_output_shape</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MaxUnpool',
+    inputs=['xT', 'xI'],
+    outputs=['y'],
+    kernel_shape=[2, 2],
+    strides=[2, 2]
+)
+xT = np.array([[[[1, 2],
+                 [3, 4]]]], dtype=np.float32)
+xI = np.array([[[[5, 7],
+                 [13, 15]]]], dtype=np.int64)
+y = np.array([[[[0, 0, 0, 0],
+                [0, 1, 0, 2],
+                [0, 0, 0, 0],
+                [0, 3, 0, 4]]]], dtype=np.float32)
+expect(node, inputs=[xT, xI], outputs=[y], name='test_maxunpool_export_without_output_shape')
+```
+
+</details>
+
+
 ### Mean
 There are 1 test cases, listed as following:
 <details>
@@ -3308,6 +3648,55 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 x = (np.random.randn(3, 4, 5, 6) > 0).astype(np.bool)
 expect(node, inputs=[x], outputs=[np.logical_not(x)],
        name='test_not_4d')
+```
+
+</details>
+
+
+### OneHot
+There are 2 test cases, listed as following:
+<details>
+<summary>with_axis</summary>
+
+```python
+axisValue = 1
+on_value = 3
+off_value = 1
+output_type = np.float32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y'],
+    axis=axisValue
+)
+indices = np.array([[1, 9],
+                    [2, 4]], dtype=np.float32)
+depth = np.array([10], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, axis=axisValue, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_with_axis')
+```
+
+</details>
+<details>
+<summary>without_axis</summary>
+
+```python
+on_value = 5
+off_value = 2
+output_type = np.int32
+node = onnx.helper.make_node(
+    'OneHot',
+    inputs=['indices', 'depth', 'values'],
+    outputs=['y']
+)
+indices = np.array([0, 7, 8], dtype=np.int64)
+depth = np.array([12], dtype=np.float32)
+values = np.array([off_value, on_value], dtype=output_type)
+y = one_hot(indices, depth, dtype=output_type)
+y = y * (on_value - off_value) + off_value
+expect(node, inputs=[indices, depth, values], outputs=[y], name='test_onehot_without_axis')
 ```
 
 </details>
@@ -4832,6 +5221,32 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Sinh
+There are 1 test cases, listed as following:
+<details>
+<summary>sinh</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sinh',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([-1, 0, 1]).astype(np.float32)
+y = np.sinh(x)  # expected output [-1.17520118,  0.,  1.17520118]
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh_example')
+
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.sinh(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sinh')
+```
+
+</details>
+
+
 ### Size
 There are 1 test cases, listed as following:
 <details>
@@ -5528,7 +5943,7 @@ expect(node, inputs=[data], outputs=[transposed],
 ### Unsqueeze
 There are 1 test cases, listed as following:
 <details>
-<summary>squeeze</summary>
+<summary>unsqueeze</summary>
 
 ```python
 node = onnx.helper.make_node(
@@ -5555,9 +5970,8 @@ There are 1 test cases, listed as following:
 ```python
 node = onnx.helper.make_node(
     'Upsample',
-    inputs=['x'],
-    outputs=['y'],
-    scales=[1.0, 1.0, 2.0, 3.0],
+    inputs=['X', 'scales'],
+    outputs=['Y'],
     mode='nearest',
 )
 
@@ -5566,6 +5980,8 @@ data = np.array([[[
     [3, 4],
 ]]], dtype=np.float32)
 
+scales = np.array([1.0, 1.0, 2.0, 3.0], dtype=np.float32)
+
 output = np.array([[[
     [1, 1, 1, 2, 2, 2],
     [1, 1, 1, 2, 2, 2],
@@ -5573,7 +5989,7 @@ output = np.array([[[
     [3, 3, 3, 4, 4, 4],
 ]]], dtype=np.float32)
 
-expect(node, inputs=[data], outputs=[output],
+expect(node, inputs=[data, scales], outputs=[output],
        name='test_upsample_nearest')
 ```
 
@@ -5670,6 +6086,12 @@ expect(node, inputs=[x, y], outputs=[z],
 ### GlobalLpPool (call for test cases)
 
 
+### If (call for test cases)
+
+
+### Loop (call for test cases)
+
+
 ### LpNormalization (call for test cases)
 
 
@@ -5694,12 +6116,123 @@ expect(node, inputs=[x, y], outputs=[z],
 ### RandomUniformLike (random generator operator)
 
 
+### Scan (call for test cases)
+
+
 ### SpaceToDepth (call for test cases)
 
 
 <br/>
 
 ## &#x1F49A;Covered Experimental Operators
+### DynamicSlice
+There are 5 test cases, listed as following:
+<details>
+<summary>dynamic_slice</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+y = x[0:3, 0:10]
+starts = np.array([0, 0], dtype=np.long)
+ends = np.array([3, 10], dtype=np.long)
+axes = np.array([0, 1], dtype=np.long)
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_default_axes</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0, 0, 3], dtype=np.long)
+ends = np.array([20, 10, 4], dtype=np.long)
+y = x[:, :, 3:4]
+
+expect(node, inputs=[x, starts, ends], outputs=[y],
+       name='test_dynamic_slice_default_axes')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_end_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_end_out_of_bounds')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_neg</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([0], dtype=np.long)
+ends = np.array([-1], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 0:-1]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_neg')
+```
+
+</details>
+<details>
+<summary>dynamic_slice_start_out_of_bounds</summary>
+
+```python
+node = onnx.helper.make_node(
+    'DynamicSlice',
+    inputs=['x', 'starts', 'ends', 'axes'],
+    outputs=['y'],
+)
+
+x = np.random.randn(20, 10, 5).astype(np.float32)
+starts = np.array([1000], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
+y = x[:, 1000:1000]
+
+expect(node, inputs=[x, starts, ends, axes], outputs=[y],
+       name='test_dynamic_slice_start_out_of_bounds')
+```
+
+</details>
+
+
 ### ThresholdedRelu
 There are 2 test cases, listed as following:
 <details>
@@ -5772,19 +6305,7 @@ expect(node, inputs=[x], outputs=[y],
 ### GivenTensorFill (call for test cases)
 
 
-### If (call for test cases)
-
-
 ### ImageScaler (call for test cases)
-
-
-### Loop (call for test cases)
-
-
-### LoopIndexTensor (call for test cases)
-
-
-### MeanVarianceNormalization (call for test cases)
 
 
 ### ParametricSoftplus (call for test cases)
@@ -5799,6 +6320,692 @@ expect(node, inputs=[x], outputs=[y],
 <br/>
 
 # Model Test Coverage
-## To be filled.
+## bvlc_alexnet
+
+bvlc_alexnet has 24 nodes. Of these, 24 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 2
+storage_order: 0
+strides: 1
+</details>
+</details>
+
+
+## densenet121
+
+densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 1
+pads: 1
+strides: 1
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 1
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v1
+
+inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 2
+pads: 2
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## inception_v2
+
+inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 1
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## resnet50
+
+resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 1
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## shufflenet
+
+shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## squeezenet_old
+
+squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 1
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## vgg19
+
+vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 1
+beta: 1
+bias: 1
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
+## zfnet512
+
+zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
+
+
+<details>
+<summary>nodes</summary>
+
+<details>
+<summary>AveragePool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+count_include_pad: 0
+kernel_shape: 3
+pads: 3
+strides: 2
+</details>
+<details>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+
+epsilon: 2
+momentum: 0
+spatial: 0
+</details>
+<details>
+<summary>Concat: 1 out of 1 attributes covered</summary>
+
+axis: 1
+</details>
+<details>
+<summary>Conv: 4 out of 6 attributes covered</summary>
+
+auto_pad: 0
+dilations: 0
+group: 6
+kernel_shape: 5
+pads: 4
+strides: 3
+</details>
+<details>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
+
+ratio: 2
+</details>
+<details>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
+
+alpha: 0
+beta: 0
+transA: 0
+transB: 1
+</details>
+<details>
+<summary>LRN: 4 out of 4 attributes covered</summary>
+
+alpha: 2
+beta: 1
+bias: 2
+size: 1
+</details>
+<details>
+<summary>MaxPool: 3 out of 5 attributes covered</summary>
+
+auto_pad: 0
+kernel_shape: 2
+pads: 3
+storage_order: 0
+strides: 2
+</details>
+<details>
+<summary>Transpose: 1 out of 1 attributes covered</summary>
+
+perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
+</details>
+</details>
+
+
 # Overall Test Coverage
 ## To be filled.

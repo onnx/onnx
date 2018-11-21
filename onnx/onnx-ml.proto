@@ -292,13 +292,21 @@ message TensorProto {
     STRING = 8;  // string
     BOOL = 9;    // bool
 
-    // Advanced types
+    // IEEE754 half-precision floating-point format (16 bits wide).
+    // This format has 1 sign bit, 5 exponent bits, and 10 mantissa bits.
     FLOAT16 = 10;
+
     DOUBLE = 11;
     UINT32 = 12;
     UINT64 = 13;
     COMPLEX64 = 14;     // complex with float32 real and imaginary components
     COMPLEX128 = 15;    // complex with float64 real and imaginary components
+
+    // Non-IEEE floating-point format based on IEEE754 single-precision
+    // floating-point number truncated to 16 bits.
+    // This format has 1 sign bit, 8 exponent bits, and 7 mantissa bits.
+    BFLOAT16 = 16;
+
     // Future extensions go here.
   }
 
@@ -335,7 +343,7 @@ message TensorProto {
   // float16 values must be bit-wise converted to an uint16_t prior
   // to writing to the buffer.
   // When this field is present, the data_type field MUST be
-  // INT32, INT16, INT8, UINT16, INT8, BOOL, or FLOAT16
+  // INT32, INT16, INT8, UINT16, UINT8, BOOL, or FLOAT16
   repeated int32 int32_data = 5 [packed = true];
 
   // For strings.
@@ -373,7 +381,7 @@ message TensorProto {
   optional bytes raw_data = 9;
 
   // For double
-  // Complex64 tensors are encoded as a single array of doubles,
+  // Complex128 tensors are encoded as a single array of doubles,
   // with the real components appearing in odd numbered positions,
   // and the corresponding imaginary component apparing in the
   // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
@@ -421,19 +429,36 @@ message TypeProto {
 
   // repeated T
   message Sequence {
-  // The type and optional shape of each element of the sequence.
-  // This field MUST be present for this version of the IR.
+    // The type and optional shape of each element of the sequence.
+    // This field MUST be present for this version of the IR.
     optional TypeProto elem_type = 1;
   };
 
   // map<K,V>
   message Map {
-  // This field MUST be present for this version of the IR.
-  // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
+    // This field MUST be present for this version of the IR.
+    // This field MUST refer to an integral type ([U]INT{8|16|32|64}) or STRING
     optional TensorProto.DataType key_type = 1;
-  // This field MUST be present for this version of the IR.
+    // This field MUST be present for this version of the IR.
     optional TypeProto value_type = 2;
   };
+
+  message Opaque {
+    // When missing, the domain is the same as the model's.
+    optional string domain = 1;
+    // The name is optional but significant when provided.
+    optional string name = 2;
+    // parameters that help defining the type
+    // DEPRECATED do not use.
+    // repeated TypeProto parameters = 3;
+  }
+
+  message SparseTensor { 
+    // This field MUST NOT have the value of UNDEFINED 
+    // This field MUST be present for this version of the IR. 
+    optional TensorProto.DataType elem_type = 1;
+    optional TensorShapeProto shape = 2;
+  }
 
 
   oneof value {
@@ -451,6 +476,10 @@ message TypeProto {
 
     // The type of a map.
     Map map_type = 5;
+
+    Opaque opaque_type = 7;
+
+    SparseTensor sparse_tensor_type = 8;
 
   }
 

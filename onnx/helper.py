@@ -23,6 +23,7 @@ def make_node(
         outputs,  # type: Sequence[Text]
         name=None,  # type: Optional[Text]
         doc_string=None,  # type: Optional[Text]
+        domain=None,  # type: Optional[Text]
         **kwargs  # type: Any
 ):  # type: (...) -> NodeProto
     """Construct a NodeProto.
@@ -33,6 +34,8 @@ def make_node(
         outputs (list of string): list of output names
         name (string, default None): optional unique identifier for NodeProto
         doc_string (string, default None): optional documentation string for NodeProto
+        domain (string, default None): optional domain for NodeProto.
+            If it's None, we will just use default domain (which is empty)
         **kwargs (dict): the attributes of the node.  The acceptable values
             are documented in :func:`make_attribute`.
     """
@@ -45,6 +48,8 @@ def make_node(
         node.name = name
     if doc_string:
         node.doc_string = doc_string
+    if domain is not None:
+        node.domain = domain
     if kwargs:
         node.attribute.extend(
             make_attribute(key, value)
@@ -157,8 +162,8 @@ def make_tensor(
     if data_type == TensorProto.STRING:
         assert not raw, "Can not use raw_data to store string type"
 
-    if (data_type == TensorProto.COMPLEX64 or
-            data_type == TensorProto.COMPLEX128):
+    if (data_type == TensorProto.COMPLEX64
+            or data_type == TensorProto.COMPLEX128):
         vals = split_complex_to_pairs(vals)
     if raw:
         tensor.raw_data = vals
@@ -285,7 +290,7 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
 def make_tensor_value_info(
         name,  # type: Text
         elem_type,  # type: TensorProto.DataType
-        shape,  # type: Optional[Sequence[int]]
+        shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]
 ):  # type: (...) -> ValueInfoProto

@@ -8,9 +8,9 @@
 #include "onnx/defs/function.h"
 #include "onnx/defs/schema.h"
 #include "onnx/optimizer/optimize.h"
-#include "onnx/version_converter/convert.h"
 #include "onnx/py_utils.h"
 #include "onnx/shape_inference/implementation.h"
+#include "onnx/version_converter/convert.h"
 
 namespace ONNX_NAMESPACE {
 namespace py = pybind11;
@@ -30,6 +30,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly(
           "doc", &OpSchema::doc, py::return_value_policy::reference)
       .def_property_readonly("since_version", &OpSchema::since_version)
+      .def_property_readonly("deprecated", &OpSchema::deprecated)
       .def_property_readonly("domain", &OpSchema::domain)
       .def_property_readonly("name", &OpSchema::Name)
       .def_property_readonly("min_input", &OpSchema::min_input)
@@ -80,7 +81,9 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       .def_property_readonly("typeStr", &OpSchema::FormalParameter::GetTypeStr)
       .def_property_readonly(
           "description", &OpSchema::FormalParameter::GetDescription)
-      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption);
+      .def_property_readonly("option", &OpSchema::FormalParameter::GetOption)
+      .def_property_readonly(
+          "isHomogeneous", &OpSchema::FormalParameter::GetIsHomogeneous);
 
   py::enum_<AttributeProto::AttributeType>(op_schema, "AttrType")
       .value("FLOAT", AttributeProto::FLOAT)
@@ -152,7 +155,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       "get_all_functions",
       [](const std::string& domain)
           -> std::unordered_map<std::string, std::vector<py::bytes>> {
-        std::multimap<std::string, std::unique_ptr<FunctionProto>> temp_ptr_map;
+        std::multimap<std::string, const FunctionProto*> temp_ptr_map;
         std::unordered_map<std::string, std::vector<py::bytes>> temp_map;
         FunctionBuilderRegistry& function_registry =
             FunctionBuilderRegistry::OnnxInstance();
@@ -168,10 +171,10 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
           std::string bytes;
           if (!iter->second->SerializeToString(&bytes)) {
             throw std::runtime_error(
-                "Failed to serilize registered function for '" + iter->first +
+                "Failed to serialize registered function for '" + iter->first +
                 "'!");
           }
-          temp_map[iter->first].emplace_back(py::bytes(std::move(bytes)));
+          temp_map[iter->first].emplace_back(py::bytes(bytes));
         }
         return temp_map;
       });
@@ -257,19 +260,31 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         return py::bytes(out);
       });
 
+  optimizer.def(
+      "optimize_fixedpoint",
+      [](const py::bytes& bytes, const std::vector<std::string>& names) {
+        ModelProto proto{};
+        ParseProtoFromPyBytes(&proto, bytes);
+        auto const result =
+            optimization::OptimizeFixed(std::move(proto), names);
+        std::string out;
+        result.SerializeToString(&out);
+        return py::bytes(out);
+      });
   optimizer.def("get_available_passes", &optimization::GetAvailablePasses);
 
   // Submodule `version_converter`
-  auto version_converter = onnx_cpp2py_export.def_submodule("version_converter");
+  auto version_converter =
+      onnx_cpp2py_export.def_submodule("version_converter");
   version_converter.doc() = "VersionConverter submodule";
 
   version_converter.def(
-      "convert_version",
-      [](const py::bytes& bytes, const py::int_ target) {
+      "convert_version", [](const py::bytes& bytes, py::int_ target) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        auto const result = version_conversion::ConvertVersion(std::move(proto),
-          target);
+        shape_inference::InferShapes(proto);
+        auto result =
+            version_conversion::ConvertVersion(proto, target);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);

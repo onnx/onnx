@@ -1,34 +1,28 @@
 set(UT_NAME ${PROJECT_NAME}_gtests)
 set(ONNX_ROOT ${PROJECT_SOURCE_DIR})
+set(ONNXIFI_TEST_DRIVER onnxifi_test_driver_gtests)
 
 include(${ONNX_ROOT}/cmake/Utils.cmake)
 
 find_package(Threads)
 
-function(add_whole_archive_flag lib output_var)
-  if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set(${output_var} -Wl,-force_load,$<TARGET_FILE:${lib}> PARENT_SCOPE)
-  elseif(MSVC)
-    # In MSVC, we will add whole archive in default.
-    set(${output_var} -WHOLEARCHIVE:$<SHELL_PATH:$<TARGET_FILE:${lib}>>
-        PARENT_SCOPE)
-  else()
-    # Assume everything else is like gcc
-    set(${output_var}
-        "-Wl,--whole-archive $<TARGET_FILE:${lib}> -Wl,--no-whole-archive"
-        PARENT_SCOPE)
-  endif()
-endfunction()
-
 set(${UT_NAME}_libs ${googletest_STATIC_LIBRARIES})
+set(${ONNXIFI_TEST_DRIVER}_libs ${googletest_STATIC_LIBRARIES})
 
-add_whole_archive_flag(onnx tmp)
-list(APPEND ${UT_NAME}_libs ${tmp})
+list(APPEND ${UT_NAME}_libs onnx)
 list(APPEND ${UT_NAME}_libs onnx_proto)
 list(APPEND ${UT_NAME}_libs onnxifi_loader)
+list(APPEND ${UT_NAME}_libs onnxifi)
 list(APPEND ${UT_NAME}_libs ${PROTOBUF_LIBRARIES})
 
+list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx)
+list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnx_proto)
+list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi_loader)
+list(APPEND ${ONNXIFI_TEST_DRIVER}_libs ${PROTOBUF_LIBRARIES})
+list(APPEND ${ONNXIFI_TEST_DRIVER}_libs onnxifi)
+
 file(GLOB_RECURSE ${UT_NAME}_src "${ONNX_ROOT}/onnx/test/cpp/*.cc")
+file(GLOB_RECURSE ${ONNXIFI_TEST_DRIVER}_src "${ONNX_ROOT}/onnx/backend/test/cpp/*.h" "${ONNX_ROOT}/onnx/backend/test/cpp/*.cc")
 
 function(AddTest)
   cmake_parse_arguments(_UT "" "TARGET" "LIBS;SOURCES" ${ARGN})
@@ -67,6 +61,7 @@ function(AddTest)
                                            # unsigned from include\google\protob
                                            # uf\wire_format_lite.h
                            )
+
   endif()
 
   set(TEST_ARGS)
@@ -86,11 +81,4 @@ function(AddTest)
 endfunction(AddTest)
 
 addtest(TARGET ${UT_NAME} SOURCES ${${UT_NAME}_src} LIBS ${${UT_NAME}_libs})
-
-set(TEST_DATA_SRC ${ONNX_ROOT}/onnx/test/cpp/testdata)
-set(TEST_DATA_DES $<TARGET_FILE_DIR:${UT_NAME}>/testdata)
-
-# Copy test data from source to destination.
-add_custom_command(TARGET ${UT_NAME} POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory ${TEST_DATA_SRC}
-                           ${TEST_DATA_DES})
+addtest(TARGET ${ONNXIFI_TEST_DRIVER} SOURCES ${${ONNXIFI_TEST_DRIVER}_src} LIBS ${${ONNXIFI_TEST_DRIVER}_libs})

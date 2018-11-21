@@ -7,7 +7,6 @@
 #include "onnx/string_utils.h"
 
 namespace ONNX_NAMESPACE {
-using namespace Common;
 
 Common::Status BuildNode(
     const std::string& name,
@@ -18,7 +17,7 @@ Common::Status BuildNode(
     std::vector<std::string> const& outputs,
     NodeProto* node) {
   if (node == NULL) {
-    return Status(
+    return Common::Status(
         Common::CHECKER,
         Common::INVALID_ARGUMENT,
         "node_proto should not be nullptr.");
@@ -34,6 +33,6 @@ Common::Status BuildNode(
     node->add_output(output);
   }
 
-  return Status::OK();
+  return Common::Status::OK();
 }
 } // namespace ONNX_NAMESPACE

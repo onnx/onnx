@@ -4,14 +4,17 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import defaultdict
 import io
 import os
-from collections import defaultdict
+import sys
 
-from onnx import defs, FunctionProto, OperatorStatus
+import numpy as np  # type: ignore
+
+from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
-from typing import Text, Sequence, Dict, List, Type, Set, Tuple
+from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
@@ -92,7 +95,7 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
     # since version
     s += '\n#### Version\n'
-    s += '\nThis version of the operator has been available since version {}'.format(schema.since_version)
+    s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
     s += ' of {}.\n'.format(display_domain(schema.domain))
     if len(versions) > 1:
         # TODO: link to the Changelog.md
@@ -100,15 +103,39 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
                                            v.since_version) for v in versions[:-1]))
 
+    # If this schema is deprecated, don't display any of the following sections
+    if schema.deprecated:
+        return s
+
     # attributes
     if schema.attributes:
         s += '\n#### Attributes\n\n'
         s += '<dl>\n'
         for _, attr in sorted(schema.attributes.items()):
+            # option holds either required or default value
+            opt = ''
+            if attr.required:
+                opt = 'required'
+            elif attr.default_value.name:
+                default_value = helper.get_attribute_value(attr.default_value)
+
+                def format_value(value):  # type: (Any) -> Text
+                    if isinstance(value, float):
+                        value = np.round(value, 5)
+                    if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                        value = value.decode('utf-8')
+                    return str(value)
+
+                if isinstance(default_value, list):
+                    default_value = [format_value(val) for val in default_value]
+                else:
+                    default_value = format_value(default_value)
+                opt = 'default is {}'.format(default_value)
+
             s += '<dt><tt>{}</tt> : {}{}</dt>\n'.format(
                 attr.name,
                 display_attr_type(attr.type),
-                ' (required)' if attr.required else '')
+                ' ({})'.format(opt) if opt else '')
             s += '<dd>{}</dd>\n'.format(attr.description)
         s += '</dl>\n'
 
@@ -125,7 +152,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             if OpSchema.FormalParameterOption.Optional == input.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == input.option:
-                option_str = " (variadic)"
+                if input.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
             s += '<dd>{}</dd>\n'.format(input.description)
         s += '</dl>\n'
@@ -144,7 +174,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             if OpSchema.FormalParameterOption.Optional == output.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == output.option:
-                option_str = " (variadic)"
+                if output.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
             s += '<dd>{}</dd>\n'.format(output.description)
         s += '</dl>\n'
@@ -256,7 +289,7 @@ def main(args):  # type: (Type[Args]) -> None
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
                     name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
                                                    schema.since_version)
-                    s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
+                    s += ('### <a name="{}"></a>**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
 
@@ -293,8 +326,8 @@ def main(args):  # type: (Type[Args]) -> None
             s = ""
             for function in function_list:
                 s += '## Version {} of domain {}\n'.format(version, domain_display_name)
-                name_with_ver = '{}-{}'.format(domain_prefix +
-                                               fn_name, function.since_version)
+                name_with_ver = '{}-{}'.format(domain_prefix
+                                               + fn_name, function.since_version)
                 s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
                 available_versions = [func.since_version for func in all_functions[function.name]]
                 s += display_function(function, available_versions, domain_prefix)
@@ -358,7 +391,7 @@ def main(args):  # type: (Type[Args]) -> None
             for _, namemap in supportmap:
                 for op_type, schema, versions in namemap:
                     # op_type
-                    s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
+                    s = ('### {}<a name="{}"></a><a name="{}">**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(
                         support_level_str(schema.support_level),
                         format_name_with_domain(domain, op_type),
                         format_name_with_domain(domain, op_type.lower()),

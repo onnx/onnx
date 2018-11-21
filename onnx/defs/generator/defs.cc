@@ -3,13 +3,13 @@
 
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
-static const char* Constant_ver1_doc = R"DOC(A constant tensor.)DOC";
+static const char* Constant_ver9_doc = R"DOC(A constant tensor.)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     Constant,
-    1,
+    9,
     OpSchema()
-        .SetDoc(Constant_ver1_doc)
+        .SetDoc(Constant_ver9_doc)
         .Attr(
             "value",
             "The value for the elements of the output tensor.",
@@ -21,17 +21,192 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto attr_proto = ctx.getAttribute("value");
-          if (nullptr == attr_proto)
-            return; // attribute not present
-          if (!attr_proto->has_t())
-            return; // attribute has no tensor value
+          if (nullptr == attr_proto || !attr_proto->has_t())
+            fail_shape_inference(
+                "Attribute 'value' of Constant node must exist with 'Tensor' data.");
           const TensorProto& tensor_proto = attr_proto->t();
           updateOutputElemType(ctx, 0, tensor_proto.data_type());
           updateOutputShape(ctx, 0, tensor_proto);
+        }));
+
+static const char* ConstantLike_ver9_doc = R"DOC(
+Generate a tensor with specific constant value. The value can be specified by the 'value' 
+attribute. The shape of the output tensor is the same as the input tensor, if the input 
+tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
+the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
+argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
+tensor is also not specified, then the type defaults to 'float'.
+
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    ConstantLike,
+    9,
+    OpSchema()
+        .SetDoc(ConstantLike_ver9_doc)
+        .Attr(
+            "value",
+            "(Optional) The value for the elements of the output tensor.",
+            AttributeProto::FLOAT,
+            0.0f)
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor. If not specified,"
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not "
+            "specified, then output tensor type defaults to 'float'.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Attr(
+            "shape",
+            "(Optional) The shape of the output tensor. If input tensor T1 is provided, then"
+            " 'shape' attribute is ignored and the output follows the shape of the input."
+            " One of either input tensor T1 or 'shape' attribute must be provided.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Input(
+            0,
+            "input",
+            "Input tensor to copy shape, and optionally, type information from."
+            " One of either input tensor T1 or 'shape' attribute must be provided.",
+            "T1",
+            OpSchema::Optional)
+        .Output(
+            0,
+            "output",
+            "Output tensor, same shape as input tensor T1.",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+            "Constrain input types. Strings and complex are not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+            "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getAttribute("dtype") != nullptr) {
+            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          } else {
+            if (hasNInputShapes(ctx, 1)) {
+              propagateElemTypeFromInputToOutput(ctx, 0, 0);
+            }
+          }
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
+
+static const char* EyeLike_ver9_doc = R"DOC(
+Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D 
+tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the 
+same as the input tensor. The data type can be specified by the 'dtype' argument. If 
+'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal 
+is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
+
+The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
+TensorProto message and be valid as an output type.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    EyeLike,
+    9,
+    OpSchema()
+        .SetDoc(EyeLike_ver9_doc)
+        .Attr(
+            "k",
+            "(Optional) Index of the diagonal to be populated with ones. Default is 0."
+            " If T2 is the output, this op sets T2[i, i+k] = 1. k = 0 populates the main diagonal, "
+            "k > 0 populates an upper diagonal,  and k < 0 populates a lower diagonal.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0))
+        .Attr(
+            "dtype",
+            "(Optional) The data type for the elements of the output tensor. If not specified,"
+            "the data type of the input tensor T1 is used. If input tensor T1 is also not"
+            "specified, then type defaults to 'float'.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(
+            0,
+            "input",
+            "2D input tensor to copy shape, and optionally, type information from.",
+            "T1")
+        .Output(
+            0,
+            "output",
+            "Output tensor, same shape as input tensor T1.",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+            "Constrain input types. Strings and complex are not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+            "Constrain output types. Strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          if (ctx.getAttribute("dtype") != nullptr) {
+            propagateElemTypeFromAttributeToOutput(ctx, "dtype", 0);
+          } else {
+            propagateElemTypeFromInputToOutput(ctx, 0, 0);
+          }
+          if (hasInputShape(ctx, 0)) {
+            auto& input_shape = getInputShape(ctx, 0);
+            if (input_shape.dim_size() != 2) {
+              fail_shape_inference("Input tensor must be 2-dimensional");
+            }
+          }
+          propagateShapeFromInputToOutput(ctx, 0, 0);
         }));
 
 static const char* RandomUniform_ver1_doc = R"DOC(
@@ -50,12 +225,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomUniform_ver1_doc)
         .Attr(
             "low",
-            "Lower boundary of the output values. If not specified, default is 0.",
+            "Lower boundary of the output values.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "high",
-            "Upper boundary of the output values. If not specified, default is 1.",
+            "Upper boundary of the output values.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
@@ -100,12 +275,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomNormal_ver1_doc)
         .Attr(
             "mean",
-            "The mean of the normal distribution. If not specified, default is 0.",
+            "The mean of the normal distribution.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "scale",
-            "The standard deviation of the normal distribution. If not specified, default is 1.",
+            "The standard deviation of the normal distribution.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
@@ -150,12 +325,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomUniformLike_ver1_doc)
         .Attr(
             "low",
-            "Lower boundary of the output values. If not specified, default is 0.",
+            "Lower boundary of the output values.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "high",
-            "Upper boundary of the output values. If not specified, default is 1.",
+            "Upper boundary of the output values.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
@@ -215,12 +390,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(RandomNormalLike_ver1_doc)
         .Attr(
             "mean",
-            "The mean of the normal distribution. If not specified, default is 0.",
+            "The mean of the normal distribution.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "scale",
-            "The standard deviation of the normal distribution. If not specified, default is 1.",
+            "The standard deviation of the normal distribution.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(

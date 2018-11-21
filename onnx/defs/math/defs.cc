@@ -44,12 +44,12 @@ The operator computes the {name} ({description}) values for each layer in the ba
 (batch_size x input_feature_dimensions). The output tensor has the same shape
 and contains the {name} values of the corresponding input.
 
-X does not need to explicitly be a 2D vector; rather, it will be
+Input does not need to explicitly be a 2D vector; rather, it will be
 coerced into one. For an arbitrary n-dimensional tensor
-X \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
-the axis provided, then X will be coerced into a 2-dimensional tensor with
+input \in [a_0, a_1, ..., a_{k-1}, a_k, ..., a_{n-1}] and k is
+the axis provided, then input will be coerced into a 2-dimensional tensor with
 dimensions [a_0 * ... * a_{k-1}, a_k * ... * a_{n-1}]. For the default
-case where axis=1, this means the X tensor will be coerced into a 2D tensor
+case where axis=1, this means the input tensor will be coerced into a 2D tensor
 of dimensions [a_0, a_1 * ... * a_{n-1}], where a_0 is often the batch size.
 In this situation, we must have a_0 = N and a_1 * ... * a_{n-1} = D.
 Each of these dimensions must be matched correctly, or else the operator
@@ -60,7 +60,7 @@ will throw errors.
     schema.SetDoc(doc);
     schema.Attr(
         "axis",
-        "(int) default to 1; describes the axis of the inputs when coerced "
+        "Describes the axis of the inputs when coerced "
         "to 2D; defaults to one because the 0th axis most likely describes "
         "the batch_size",
         AttributeProto::INT,
@@ -75,7 +75,7 @@ will throw errors.
         0,
         "output",
         "The output values with the same "
-        "shape as input tensor.",
+        "shape as input tensor (the original size without coercion).",
         "T");
     schema.TypeConstraint(
         "T",
@@ -254,11 +254,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     LeakyRelu,
     6,
     OpSchema()
-        .Attr(
-            "alpha",
-            "Coefficient of leakage default to 0.01.",
-            AttributeProto::FLOAT,
-            0.01f)
+        .Attr("alpha", "Coefficient of leakage.", AttributeProto::FLOAT, 0.01f)
         .SetDoc(LeakyRelu_ver6_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
@@ -311,11 +307,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Elu,
     6,
     OpSchema()
-        .Attr(
-            "alpha",
-            "Coefficient of ELU default to 1.0.",
-            AttributeProto::FLOAT,
-            1.0f)
+        .Attr("alpha", "Coefficient of ELU.", AttributeProto::FLOAT, 1.0f)
         .SetDoc(Elu_ver6_doc)
         .Input(0, "X", "1D input tensor", "T")
         .Output(0, "Y", "1D input tensor", "T")
@@ -418,7 +410,7 @@ ONNX_OPERATOR_SET_SCHEMA(
                 *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
         }));
 
-static const char* PRelu_ver7_doc = R"DOC(
+static const char* PRelu_ver9_doc = R"DOC(
 PRelu takes input data (Tensor<T>) and slope tensor as input, and produces one
 output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 `f(x) = x for x >= 0`., is applied to the data tensor elementwise.
@@ -426,10 +418,10 @@ output data (Tensor<T>) where the function `f(x) = slope * x for x < 0`,
 
 ONNX_OPERATOR_SET_SCHEMA(
     PRelu,
-    7,
+    9,
     OpSchema()
         .SetDoc(
-            PRelu_ver7_doc +
+            PRelu_ver9_doc +
             GenerateBroadcastingDocUni("tensor slope", "input tensor X"))
         .Input(0, "X", "Input tensor", "T")
         .Input(
@@ -441,8 +433,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor (same size as X)", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Sigmoid_ver6_doc = R"DOC(
@@ -474,16 +472,8 @@ ONNX_OPERATOR_SET_SCHEMA(
     HardSigmoid,
     6,
     OpSchema()
-        .Attr(
-            "alpha",
-            "Value of alpha default to 0.2",
-            AttributeProto::FLOAT,
-            0.2f)
-        .Attr(
-            "beta",
-            "Value of beta default to 0.5",
-            AttributeProto::FLOAT,
-            0.5f)
+        .Attr("alpha", "Value of alpha.", AttributeProto::FLOAT, 0.2f)
+        .Attr("beta", "Value of beta.", AttributeProto::FLOAT, 0.5f)
         .SetDoc(HardSigmoid_ver6_doc)
         .Input(0, "X", "Input tensor", "T")
         .Output(0, "Y", "Output tensor", "T")
@@ -493,7 +483,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(const char* name) {
+std::function<void(OpSchema&)> ElementwiseMultiOpDocGenerator(
+    const char* name) {
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 Element-wise {name} of each of the input tensors (with Numpy-style broadcasting support).
@@ -642,7 +633,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Gemm_ver7_doc = R"DOC(General Matrix multiplication:
+static const char* Gemm_ver9_doc = R"DOC(General Matrix multiplication:
 https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms#Level_3
 
 A' = transpose(A) if transA else A
@@ -657,10 +648,10 @@ computation if attribute transA is non-zero, same for B and transB.
 
 ONNX_OPERATOR_SET_SCHEMA(
     Gemm,
-    7,
+    9,
     OpSchema()
         .SetDoc(
-            Gemm_ver7_doc +
+            Gemm_ver9_doc +
             GenerateBroadcastingDocUni("tensor C", "tensor A * B"))
         .Input(
             0,
@@ -685,8 +676,14 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(0, "Y", "Output tensor of shape (M, N).", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
         .Attr(
             "transA",
             "Whether A should be transposed",
@@ -699,12 +696,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             static_cast<int64_t>(0))
         .Attr(
             "alpha",
-            "Scalar multiplier for the product of input tensors A * B, and the default value is 1.0.",
+            "Scalar multiplier for the product of input tensors A * B.",
             AttributeProto::FLOAT,
             1.0f)
         .Attr(
             "beta",
-            "Scalar multiplier for input tensor C, and the default value is 1.0.",
+            "Scalar multiplier for input tensor C.",
             AttributeProto::FLOAT,
             1.0f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -730,22 +727,28 @@ ONNX_OPERATOR_SET_SCHEMA(
           }
         }));
 
-static const char* MatMul_ver6_doc = R"DOC(
+static const char* MatMul_ver9_doc = R"DOC(
 Matrix product that behaves like numpy.matmul: https://docs.scipy.org/doc/numpy-1.13.0/reference/generated/numpy.matmul.html
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     MatMul,
-    1,
+    9,
     OpSchema()
         .Input(0, "A", "N-dimensional matrix A", "T")
         .Input(1, "B", "N-dimensional matrix B", "T")
         .Output(0, "Y", "Matrix multiply results from A * B", "T")
         .TypeConstraint(
             "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .SetDoc(MatMul_ver6_doc)
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(int32)",
+             "tensor(int64)"},
+            "Constrain input and output types to float/int tensors.")
+        .SetDoc(MatMul_ver9_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
           if (!hasNInputShapes(ctx, 2)) {
@@ -867,8 +870,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             true)
         .Attr(
             "axis",
-            "Dimension on which to do the sort. Default -1, which indicates the last"
-            " axis",
+            "Dimension on which to do the sort.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
@@ -1056,4 +1058,114 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensors."));
+
+static const char* Sinh_ver9_doc = R"DOC(
+Calculates the hyperbolic sine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sinh,
+    9,
+    OpSchema()
+        .SetDoc(Sinh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic sine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Cosh_ver9_doc = R"DOC(
+Calculates the hyperbolic cosine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Cosh,
+    9,
+    OpSchema()
+        .SetDoc(Cosh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic cosine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Asinh_ver9_doc = R"DOC(
+Calculates the hyperbolic arcsine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Asinh,
+    9,
+    OpSchema()
+        .SetDoc(Asinh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arcsine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Acosh_ver9_doc = R"DOC(
+Calculates the hyperbolic arccosine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Acosh,
+    9,
+    OpSchema()
+        .SetDoc(Acosh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arccosine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Atanh_ver9_doc = R"DOC(
+Calculates the hyperbolic arctangent of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Atanh,
+    9,
+    OpSchema()
+        .SetDoc(Atanh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arctangent values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE

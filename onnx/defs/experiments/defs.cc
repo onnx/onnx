@@ -52,7 +52,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* ScaledTanh_ver1_doc = R"DOC(
 Calculates the scaled hyperbolic tangent of the given input tensor element-wise,
-alpha * tanh(beta * x). 
+alpha * tanh(beta * x).
     )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -127,7 +127,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(ConstantFill_ver1_doc)
         .Attr(
             "value",
-            "The value for the elements of the output tensor. Default is 0.",
+            "The value for the elements of the output tensor.",
             AttributeProto::FLOAT,
             0.0f)
         .Attr(
@@ -261,7 +261,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Scale_ver1_doc)
         .Attr(
             "scale",
-            "(float, default 1.0) the scale to apply.",
+            "The scale to apply.",
             AttributeProto::FLOAT,
             1.0f)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
@@ -352,36 +352,9 @@ ONNX_OPERATOR_SET_SCHEMA(
             OPTIONAL)
         .Attr(
             "scale",
-            "(float, default 1.0) the scale to apply.",
+            "The scale to apply.",
             AttributeProto::FLOAT,
             1.0f)
-        .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
-        .Output(0, "output", "Result, has same shape and type as input", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain input and output types to float tensors.")
-        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
-static const char* MeanVarianceNormalization_ver1_doc =
-    R"DOC(Perform mean variance normalization.)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    MeanVarianceNormalization,
-    1,
-    OpSchema()
-        .SetSupportLevel(SupportType::EXPERIMENTAL)
-        .SetDoc(MeanVarianceNormalization_ver1_doc)
-        .Attr(
-            "across_channels",
-            "If 1, mean and variance are computed across channels. Default is 0.",
-            AttributeProto::INT,
-            static_cast<int64_t>(0))
-        .Attr(
-            "normalize_variance",
-            "If 0, normalize the mean only.  Default is 1.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
         .Input(0, "input", "Input tensor of shape [N,C,H,W]", "T")
         .Output(0, "output", "Result, has same shape and type as input", "T")
         .TypeConstraint(
@@ -421,4 +394,60 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors."));
+
+
+static const char* DynamicSlice_ver1_doc = R"DOC(
+Produces a slice of the input tensor along multiple axes. Similar to numpy:
+https://docs.scipy.org/doc/numpy/reference/arrays.indexing.html
+Slices uses `axes`, `starts` and `ends` inputs to specify the start and end
+dimension for each axis in the list of axes, it uses this information to
+slice the input `data` tensor. If a negative value is passed for any of the
+start or end indices, it represent number of elements before the end of that
+dimension. If the value passed to start or end is larger than the `n` (the
+number of elements in this dimension), it represents `n`. For slicing to the
+end of a dimension with unknown size, it is recommended to pass in `INT_MAX`.
+If `axes` are omitted, they are set to `[0, ..., ndim-1]`.
+Example 1:
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  axes = [0, 1]
+  starts = [1, 0]
+  ends = [2, 3]
+  result = [
+      [5, 6, 7],
+  ]
+Example 2:
+  data = [
+      [1, 2, 3, 4],
+      [5, 6, 7, 8],
+  ]
+  starts = [0, 1]
+  ends = [-1, 1000]
+  result = [
+      [2, 3, 4],
+  ]
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    DynamicSlice,
+    9,
+    OpSchema()
+        .SetDoc(DynamicSlice_ver1_doc)
+        .SetSupportLevel(SupportType::EXPERIMENTAL)
+        .Input(0, "data", "Tensor of data to extract slices from.", "T")
+        .Input(1, "starts", "1-D tensor of starting indices of corresponding axis in `axes`", "Tind")
+        .Input(2, "ends", "1-D tensor of ending indices (exclusive) of corresponding axis in axes", "Tind")
+        .Input(3, "axes", "1-D tensor of axes that `starts` and `ends` apply to.", "Tind", OpSchema::Optional)
+        .Output(0, "output", "Sliced data tensor.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_tensor_types(),
+            "Constrain input and output types to all tensor types.")
+        .TypeConstraint(
+            "Tind",
+            {"tensor(int32)", "tensor(int64)"},
+            "Constrain indices to integer types"));
+
 } // namespace ONNX_NAMESPACE
