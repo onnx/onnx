@@ -1092,8 +1092,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "spatial",
-            "If true, compute the mean and variance across all spatial elements "
-            "If false, compute the mean and variance across per feature.",
+            "If true, compute the mean and variance across per activation. "
+            "If false, compute the mean and variance across per feature over "
+            "each mini-batch.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .Attr(
@@ -1122,28 +1123,38 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "scale",
-            "The scale as a 1-dimensional tensor of size C to be applied to the "
-            "output.",
+            "If spatial is true, the dimension of scale is (C). "
+            "If spatial is false, the dimensions of scale are "
+            "(C x D1 x ... x Dn)",
             "T")
         .Input(
             2,
             "B",
-            "The bias as a 1-dimensional tensor of size C to be applied to the "
-            "output.",
+            "If spatial is true, the dimension of bias is (C). "
+            "If spatial is false, the dimensions of bias are "
+            "(C x D1 x ... x Dn)",
             "T")
         .Input(
             3,
             "mean",
-            "The running mean (training) or the estimated mean (testing) "
-            "as a 1-dimensional tensor of size C.",
+            "If spatial is true, the dimension of the running mean "
+            "(training) or the estimated mean (testing) is (C). "
+            "If spatial is false, the dimensions of the running mean "
+            "(training) or the estimated mean (testing) are (C x D1 x ... x Dn).",
             "T")
         .Input(
             4,
             "var",
-            "The running variance (training) or the estimated "
-            "variance (testing) as a 1-dimensional tensor of size C.",
+            "If spatial is true, the dimension of the running variance"
+            "(training) or the estimated variance (testing) is (C). "
+            "If spatial is false, the dimensions of the running variance"
+            "(training) or the estimated variance (testing) are (C x D1 x ... x Dn).",
             "T")
-        .Output(0, "Y", "The output tensor of the same shape as X.", "T")
+        .Output(
+            0,
+            "Y",
+            "The output tensor of the same shape as X",
+            "T")
         .Output(
             1,
             "mean",

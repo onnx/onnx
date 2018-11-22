@@ -26,7 +26,10 @@ struct EliminateNopDropout final : public PredicateBasedPass {
 
   bool runTransform(Node* node, Graph&, NodeDestroyType& destroy_current)
       override {
-    node->output()->replaceAllUsesWith(node->input());
+    // Don't assume that theres only one output.
+    for (size_t i = 0; i < node->outputs().size(); ++i) {
+      node->outputs()[i]->replaceAllUsesWith(node->input());
+    }
     destroy_current = NodeDestroyType::DestroyOne;
     return true;
   }
