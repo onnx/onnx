@@ -79,6 +79,7 @@ namespace ONNX_NAMESPACE {
   _(ratio)                        \
   _(size)                         \
   _(dim)                          \
+  _(keepdims)                     \
   _(perm)                         \
   _(shape)                        \
   _(axes)                         \
@@ -146,7 +147,17 @@ namespace ONNX_NAMESPACE {
   _(__control_inputs)             \
   _(count_include_pad)            \
   _(storage_order)                \
-  _(Unsqueeze)
+  _(Unsqueeze)                    \
+  _(ReduceL1)                     \
+  _(ReduceL2)                     \
+  _(ReduceLogSum)                 \
+  _(ReduceLogSumExp)              \
+  _(ReduceMax)                    \
+  _(ReduceMean)                   \
+  _(ReduceMin)                    \
+  _(ReduceProd)                   \
+  _(ReduceSum)                    \
+  _(ReduceSumSquare)
 
 enum BuiltinSymbol {
 #define DEFINE_SYMBOL(s) k##s,
