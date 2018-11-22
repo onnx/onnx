@@ -5,49 +5,34 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-static TypeProto RemoveDimensionsFromShape(
-    const TypeProto& proto,
-    int num_dimensions) {
-  TypeProto t(proto);
-  auto mutable_shape = t.mutable_tensor_type()->mutable_shape();
-  mutable_shape->clear_dim();
-
-  const auto& dims = proto.tensor_type().shape().dim();
-
-  // skip batch size and sequence length dimensions
-  for (int j = num_dimensions, end = dims.size(); j < end; ++j) {
-    (*mutable_shape->add_dim()) = dims.Get(j);
-  }
-
-  return t;
-}
-
-// copied from GSL:
-// https://github.com/Microsoft/GSL/blob/master/include/gsl/gsl_util
-template <class T, class U>
-static constexpr T narrow_cast(U&& u) noexcept {
-  return static_cast<T>(std::forward<U>(u));
-}
-
 void ScanInferenceFunction(InferenceContext& ctx) {
-  // NOTE:
-  // The first input to Scan is sequence_lens. We skip that when processing
-  // inputs in many places below, so the - 1 in multiple places is due to that.
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs =
       narrow_cast<size_t>(ctx.getAttribute("num_scan_inputs")->i());
-  auto num_loop_state_vars = num_inputs - 1 - num_scan_inputs;
+  auto num_loop_state_vars = num_inputs - num_scan_inputs;
+
+  std::vector<int64_t> axes;
+  bool axes_specified = false;
+  if (getRepeatedAttribute(ctx, "axes", axes)) {
+    axes_specified = true;
+    if (axes.size() != num_scan_inputs)
+      fail_shape_inference(
+          "Number of axes specified (",
+          axes.size(),
+          ") is not equal to number of scan inputs (",
+          num_scan_inputs,
+          ").");
+  }
 
   std::vector<TypeProto> temporary_type_protos;
   temporary_type_protos.reserve(num_inputs);
 
   std::vector<const TypeProto*> subgraph_input_types;
 
-  TensorShapeProto_Dimension batch_size_dim;
   TensorShapeProto_Dimension sequence_len_dim;
 
-  for (size_t i = 1; i < num_inputs; ++i) {
-    bool is_loop_state_var = (i - 1) < num_loop_state_vars;
+  for (size_t i = 0; i < num_inputs; ++i) {
+    bool is_loop_state_var = i < num_loop_state_vars;
     bool has_shape = hasInputShape(ctx, i);
     const auto* input_type = ctx.getInputType(i);
 
@@ -61,37 +46,39 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       // the matching Scan output.
       // We can also pass through the type and shape to the subgraph but need to
       // remove the batch size dimension from the shape.
-      propagateElemTypeFromInputToOutput(ctx, i, i - 1);
+      propagateElemTypeFromInputToOutput(ctx, i, i);
+      if (has_shape)
+        propagateShapeFromInputToOutput(ctx, i, i);
 
-      if (has_shape) {
-        propagateShapeFromInputToOutput(ctx, i, i - 1);
-
-        // remove batch size dimension and add to subgraph_input_types
-        temporary_type_protos.push_back(
-            RemoveDimensionsFromShape(*input_type, 1));
-        subgraph_input_types.push_back(&temporary_type_protos.back());
-      } else {
-        subgraph_input_types.push_back(input_type);
-      }
+      subgraph_input_types.push_back(input_type);
     } else {
       // For other inputs there is no fixed relationships to the Scan outputs,
       // so we don't propagate type/shape information.
-      // We can pass through the type and shape to the subgraph inputs but need
-      // to remove the batch size and sequence length dimensions from the shape.
+      // We can pass through the type and shape to the subgraph inputs but
+      // need to remove the sequence length dimensions from the shape.
       if (has_shape) {
-        // remove batch size and sequence length dimensions and add to
-        // subgraph_input_types
+        // remove sequence length dimensions and add to subgraph_input_types
+        int axis = (axes_specified)
+            ? static_cast<int>(axes[i - num_loop_state_vars])
+            : 0;
+
+        // update sequence_len if a value is available
+        const auto& shape = input_type->tensor_type().shape();
+        if (axis >= shape.dim_size())
+          fail_shape_inference(
+              "Specified axis value (",
+              axis,
+              ") is >= rank (",
+              shape.dim_size(),
+              ").");
+
+        const auto& dims = shape.dim();
+        mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
+
         temporary_type_protos.push_back(
-            RemoveDimensionsFromShape(*input_type, 2));
+            RemoveIthDimensionFromShape(*input_type, axis));
         subgraph_input_types.push_back(&temporary_type_protos.back());
 
-        // update batch_size and sequence_len if a value is available
-        const auto& shape = input_type->tensor_type().shape();
-        if (shape.dim_size() > 2) {
-          const auto& dims = shape.dim();
-          mergeInDimensionInfo(dims.Get(0), batch_size_dim, 0);
-          mergeInDimensionInfo(dims.Get(1), sequence_len_dim, 1);
-        }
       } else {
         subgraph_input_types.push_back(input_type);
       }
@@ -144,9 +131,9 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
       // propagate shape
       if (subgraph_output_type->tensor_type().has_shape()) {
-        // we need to add in the batch size and sequence length values if
-        // available before merging with any existing info. Create a copy of the
-        // inferred type info from the subgraph to do that.
+        // we need to add in sequence length value if
+        // available before merging with any existing info. Create a copy of
+        // the inferred type info from the subgraph to do that.
         TypeProto inferred_type(*subgraph_output_type);
         auto* mutable_inferred_tensor_type =
             inferred_type.mutable_tensor_type();
@@ -154,7 +141,6 @@ void ScanInferenceFunction(InferenceContext& ctx) {
             mutable_inferred_tensor_type->mutable_shape();
 
         mutable_inferred_shape->clear_dim();
-        *mutable_inferred_shape->add_dim() = batch_size_dim;
 
         if (!is_loop_state_var) {
           *mutable_inferred_shape->add_dim() = sequence_len_dim;
@@ -250,8 +236,8 @@ void IfInferenceFunction(InferenceContext& ctx) {
             else_elem_type);
       }
 
-      // merge the 'else' shape information to check it's consistent and augment
-      // the 'if' output if possible
+      // merge the 'else' shape information to check it's consistent and
+      // augment the 'if' output if possible
       mergeInShapeInfo(
           else_output->tensor_type(), *if_output->mutable_tensor_type());
     }
@@ -562,7 +548,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint("B", {"bool"}, "Only bool")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
-static const char* scan_ver1_doc = R"DOC(
+static const char* scan_9_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip and is intended to enable
@@ -586,22 +572,21 @@ hidden-state values of RNN-like constructs).
 The scan operation returns the final values of the state_variables as well as the
 scan_outputs.
 
-The operation supports batching, and the batch-axis is required to be 0.
-When multiple scan_input tensors are used, they must all have the same batch-size,
-and they must all have the same maximum-sequence-length (the dimensionality of the
-sequence axis or scan axis). The sequence axis or scan axis is required to be 1.
+The optional attribute scan_input_directions specifies the direction (forward or backward)
+for each scan input. If this attribute is omitted, all sequences are scanned in the forward
+direction. A bidirectional scan may be performed by specifying the same tensor input twice
+in the scan_inputs, once with a forward direction, and once with a backward direction.
 
-The operation has an optional sequence_lens input (of shape [BATCH_SIZE]) to
-allow variable length sequences of length <= the maximum-sequence-length. If this
-input is not specified, all sequences are assumed to be of length equal to
-maximum-sequence-length. For variable length input sequences, the scan_outputs
-will consist of a sequence of same length as the input, padded to the
-maximum-sequence-length.
+The scan_output of the operation is produced by concatenating the scan_output_element
+values produced by the body in each iteration.  The optional attribute scan_output_directions
+specifies the direction in which scan_output is constructed (by appending or prepending the
+scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
+is omitted, the scan_output_element is appended to the scan_output in each iteration.
 
-The optional attribute directions can be used to scan a sequence in the reverse direction.
-If this attribute is omitted, all sequences are scanned in the forward direction.
-A bidirectional scan be performed by specifying the same tensor input twice in the
-scan_inputs, once with a forward direction, and once with a backward direction.
+The optional attribute axes specifies the axis to be scanned for each scan_input.
+If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
+batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
+Note that scanning a non-zero axis is less efficient than scanning axis zero.
 
 Note that because of the ONNX restriction that only the last parameter of an operator can
 be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -612,48 +597,36 @@ The behavior of
 
     Scan <
         num_scan_inputs = m,
-        body = loop-body
-    > (sequence_lengths, init_1, ..., init_n, scan_1, ..., scan_m)
+        body = loop-body,
+        axes = [axis_1, ..., axis_m]
+    > (init_1, ..., init_n, scan_1, ..., scan_m)
 
 is equivalent to the following pseudo-code:
 
-    // T.shape[0] denotes the batch-size of T
-    // The batch-size of scan_1, ..., scan_m are all required to be equal
-    batch_size = scan_1.shape[0];
-
     // scan_i.shape[1] denotes the (max) sequence-length of scan_i
     // scan_i.shape[1] is required to be equal to scan_j.shape[1] for all i,j.
-    max_sequence_length = scan_1.shape[1];
+    sequence_length = scan_1.shape[1];
 
-    for (int batch = 0; batch < batch_size; ++batch) {
-        // initialize state-variables
-        st_1 = init_1; ... st_n = init_n;
-        // initialize scan-output variables: [] denotes an empty tensor
-        scan_out_1 = []; ...; scan_out_k = [];
-        // identify number of iterations:
-        N = (sequence_lengths specified) ? sequence_lengths[batch] : max_sequence_length;
+    // initialize state-variables
+    st_1 = init_1; ... st_n = init_n;
+    // initialize scan-output variables: [] denotes an empty tensor
+    scan_out_1 = []; ...; scan_out_k = [];
+    // identify number of iterations:
 
-        // execute loop
-        for (int t = 0; t < N; ++t) {
-            // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
-            // of rank one less than T obtained by indexing T at position t along axis k.
-            si_1 = (scan_1<axis=0>[batch])<axis=1>[t];
-            ... ;
-            si_m = (scan_m<axis=0>[batch])<axis=1>[t];
-            // execute loop-body
-            st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
-            // accumulate the scan-output elements
-            scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
-        }
-        // accumulate the outputs for this batch:
-        bst_1[batch] = st_1; ..., bst_n[batch] = st_n;
-        // Note scan-outputs will have size max_sequence_length, but only first N values will be meaningful.
-        // The remaining values have an undefined value.
-        b_scan_out_1[batch] = scan_out_1; ...; b_scan_out_k[batch] = scan_out_k;
+    // execute loop
+    for (int t = 0; t < sequence_length; ++t) {
+        // generate the scan-input elements: the notation T<axis=k>[t] indicates the sub-tensor
+        // of rank one less than T obtained by indexing T at position t along axis k.
+        si_1 = scan_1<axis=axis_1>[t];
+        ... ;
+        si_m = scan_m<axis=axis_m>[t];
+        // execute loop-body
+        st_1, ..., st_n, so_1, ..., so_k = loop-body(st_1, ..., st_n, si_1, ..., si_m)
+        // accumulate the scan-output elements
+        scan_out_1 = Concat<axis=0>(scan_out_1, so_1); ... ; scan_out_k = Concat<axis=0>(scan_out_k, so_k);
     }
-    return bst_1, ..., bst_n, b_scan_out_1, ..., b_scan_out_k;
 
-
+    return st_1, ..., st_n, scan_out_1, ..., scan_out_k;
 
 *Sample usage: Encoding RNN using a Scan*
 
@@ -666,7 +639,7 @@ values are computed in the outer graph, they need to be passed in as extra state
     graph rnn-encoding {
       %H_0 = ... 
       %X = ...
-      %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1]("", %H_0, %X)
+      %Y_h, %Y = Scan[body = <graph rnn-cell-1>, num_scan_inputs=1](%H_0, %X)
       return %Y, %Y_h
     }
 
@@ -692,32 +665,21 @@ values are computed in the outer graph, they need to be passed in as extra state
 
 ONNX_OPERATOR_SET_SCHEMA(
     Scan,
-    8,
+    9,
     OpSchema()
-        .SetDoc(scan_ver1_doc)
+        .SetDoc(scan_9_doc)
         .Input(
             0,
-            "sequence_lens",
-            "Optional tensor specifying lengths of the sequences in a batch. "
-            "If this input is not specified, all sequences are assumed to be of "
-            "the maximum sequence length (the dimension of the sequence axis of "
-            "the scan_input tensors).",
-            "I",
-            OpSchema::Optional)
-        .Input(
-            1,
             "initial_state_and_scan_inputs",
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
-            OpSchema::Variadic,
-            false)
+            OpSchema::Variadic)
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
-            OpSchema::Variadic,
-            false)
+            OpSchema::Variadic)
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
@@ -734,15 +696,24 @@ ONNX_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             true)
         .Attr(
-            "directions",
+            "scan_input_directions",
             "An optional list of M flags. The i-th element of the list specifies the direction "
             "to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 "
             "indicates reverse direction. "
             "If omitted, all scan_input tensors will be scanned in the forward direction.",
             AttributeProto::INTS,
             false)
+        .Attr(
+            "scan_output_directions",
+            "An optional list of K flags, one for each scan_output. The i-th element of the list "
+            "specifies whether the i-th scan_output should be constructed by appending or "
+            "prepending a new value in each iteration: 0 indicates appending and 1 "
+            "indicates prepending. "
+            "If omitted, all scan_output tensors will be produced by appending a value "
+            "in each iteration.",
+            AttributeProto::INTS,
+            false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
         .TypeAndShapeInferenceFunction(ScanInferenceFunction));
-
 } // namespace ONNX_NAMESPACE
