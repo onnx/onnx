@@ -24,16 +24,16 @@ as a Function.
 
 ## Step 3: Define and polish the spec of the proposed operator.
 The spec should include:
-0. opset version of the added operator. Check out our
+1. opset version of the added operator. Check out our
 [versioning doc](https://github.com/fdwr/onnx/blob/master/docs/Versioning.md#operator-versioning)
 for more details
-1. description about the operators, should be with enough details to avoid
+2. description about the operators, should be with enough details to avoid
 ambiguity, adding the links to refs if necessary 
-2. inputs,
-3. outputs,
-4. attributes,
-5. type constraints about input and output tensors
-6. shape inference function Example:
+3. inputs,
+4. outputs,
+5. attributes,
+6. type constraints about input and output tensors
+7. shape inference function Example:
 https://github.com/onnx/onnx/blob/master/onnx/defs/nn/defs.cc#L1183
 
 Usually, if we can find similar functions in Numpy, we will try to align with
