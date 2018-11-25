@@ -39,12 +39,12 @@ https://github.com/onnx/onnx/blob/master/onnx/defs/nn/defs.cc#L1183
 Usually, if we can find similar functions in Numpy, we will try to align with
 numpy.
 
-## Step 4:
-Adding test cases for the new operators, and the testing examples will be
-extracted to the doc. Later, we also generate binary data for it. Example:
+## Step 4: Adding Test Cases for the New Operator.
+The testing examples will be extracted to the doc. Later, we also generate
+binary data for it. Example:
 https://github.com/onnx/onnx/blob/master/onnx/backend/test/case/node/abs.py
 
-## Step 5:
+## Step 5: Update the Doc and Generate the Test Data
 Running [the script](https://github.com/onnx/onnx/blob/master/tools/update_doc.sh)
 to update the doc and generate the test data.
 
