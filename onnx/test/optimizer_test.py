@@ -1120,6 +1120,49 @@ class TestOptimizer(unittest.TestCase):
                 assert len(optimized_model.graph.node) == 1
                 assert optimized_model.graph.node[0].op_type == "Log"
 
+    def test_fuse_reduction_unsqueeze(self):  # type: () -> None
+        def _calculate_post_transform_shape(input_shape, reduction_axes, unsqueeze_axes, keepdim):  # type: (Tuple[int, ...], List[int], List[int], bool) -> Tuple[int, ...]
+            post_reduce_shape = None
+            if keepdim:
+                post_reduce_shape = tuple([(x if i not in reduction_axes else 1) for i, x in enumerate(input_shape)])
+            else:
+                post_reduce_shape = tuple([x for i, x in enumerate(input_shape) if i not in reduction_axes])
+            post_unsqueeze_shape = list(post_reduce_shape)
+            for ax in unsqueeze_axes:
+                post_unsqueeze_shape.insert(ax, 1)
+            return tuple(post_unsqueeze_shape)
+
+        for reduction in ["ReduceL1", "ReduceL2", "ReduceLogSum",
+                          "ReduceLogSumExp", "ReduceMax", "ReduceMean",
+                          "ReduceMin", "ReduceProd", "ReduceSum", "ReduceSumSquare"]:
+            for axes1 in [[1], [1, 2], [2]]:
+                for axes2 in [[1], [1, 2], [2]]:
+                    for keepdim in [False, True]:
+                        input_shape = (5, 7, 9)
+                        output_shape = _calculate_post_transform_shape(input_shape, axes1, axes2, keepdim)  # type: Tuple[int, ...]
+                        node = helper.make_node(reduction, ["X"], ["Y"], axes=axes1, keepdims=keepdim)
+                        node1 = helper.make_node("Unsqueeze", ["Y"], ["Z"], axes=axes2)
+                        graph = helper.make_graph(
+                            [node, node1],
+                            "test",
+                            [helper.make_tensor_value_info(
+                                "X", TensorProto.FLOAT, input_shape)],
+                            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, output_shape)])
+                        optimized_model = self._optimized(
+                            graph, ["fuse_consecutive_reduce_unsqueeze"], False)
+
+                        if keepdim or axes1 != axes2:
+                            assert optimized_model.graph == graph
+                        else:
+                            assert len(optimized_model.graph.output) == 1
+                            assert len(optimized_model.graph.node) == 1
+                            assert optimized_model.graph.output[0].type.tensor_type.elem_type == TensorProto.FLOAT
+                            assert optimized_model.graph.node[-1].op_type == reduction
+                            assert optimized_model.graph.node[-1].attribute[0].name == "axes"
+                            assert optimized_model.graph.node[-1].attribute[0].ints == axes1
+                            optimized_output_shape = tuple(x.dim_value for x in optimized_model.graph.output[0].type.tensor_type.shape.dim)
+                            assert optimized_output_shape == output_shape
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -44,4 +44,8 @@ template<> inline std::vector<std::string> RetrieveValues(const AttributeProto& 
   return { attr.strings().begin(), attr.strings().end() };
 }
 
+template<> inline std::vector<float> RetrieveValues(const AttributeProto& attr) {
+  return { attr.floats().begin(), attr.floats().end() };
+}
+
 } // namespace ONNX_NAMESPACE

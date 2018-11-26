@@ -193,11 +193,9 @@ void InferShapes(
     const std::unordered_map<std::string, int>& opset_imports,
     const ISchemaRegistry* schema_registry,
     const IFunctionBuilderRegistry* func_registry) {
-  const std::unordered_map<std::string, TypeProto*>
-      outer_scope_value_types_by_name;
   InferShapesImpl(
       g,
-      outer_scope_value_types_by_name,
+      {},
       opset_imports,
       schema_registry,
       func_registry);
@@ -213,12 +211,9 @@ void InferShapes(
         static_cast<int>(opset_import.version());
   }
   auto* g = m.mutable_graph();
-  const std::unordered_map<std::string, TypeProto*>
-      outer_scope_value_types_by_name;
-
   InferShapesImpl(
       g,
-      outer_scope_value_types_by_name,
+      {},
       opset_imports,
       schema_registry,
       func_registry);
@@ -239,7 +234,7 @@ void InferShapeForFunctionNode(
   }
   // Get a temporary initial value map
   std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
-  for (int i = 0; i < (const int)(ctx.getNumInputs()); ++i) {
+  for (int i = 0; i < static_cast<int>(ctx.getNumInputs()); ++i) {
     if (ctx.getInputData(i) != nullptr && i < func.input_size()) {
       temp_initializersByName[func.input().Get(i)] = ctx.getInputData(i);
     }
