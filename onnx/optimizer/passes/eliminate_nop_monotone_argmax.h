@@ -7,13 +7,6 @@
 namespace ONNX_NAMESPACE {
 namespace optimization {
 
-const std::unordered_set<NodeKind> monotone_node_no_axis_kind{kLog,
-                                                              kExp,
-                                                              kSqrt};
-
-const std::unordered_set<NodeKind> monotone_node_axis_kind{kSoftmax,
-                                                           kLogSoftmax};
-
 struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
   explicit EliminateNopMonotoneArgmax()
       : PredicateBasedPass(
