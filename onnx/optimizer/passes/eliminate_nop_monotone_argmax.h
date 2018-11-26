@@ -25,18 +25,16 @@ struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
     return "eliminate_nop_monotone_argmax";
   }
 
-  static inline bool satisfies_monotone_condition(int64_t axis, Node* node) {
-    if (monotone_node_no_axis_kind.find(node->kind()) !=
-        monotone_node_no_axis_kind.end()) {
-      return true;
+  inline bool satisfies_monotone_condition(int64_t axis, Node* node) {
+    auto node_monotone =
+        node->containsOpAnnotation(
+            OpAnnotationFlag::ElementwiseWeakMonotonicIncreasing) ||
+        node->containsOpAnnotation(
+            OpAnnotationFlag::ElementwiseStrictMonotonicIncreasing);
+    if (node_monotone && node->hasAttribute(kaxis)) {
+      return node_monotone && axis == node->i(kaxis);
     }
-    if (monotone_node_axis_kind.find(node->kind()) !=
-        monotone_node_axis_kind.end()) {
-      if (node->hasAttribute(kaxis)) {
-        return axis == node->i(kaxis);
-      }
-    }
-    return false;
+    return node_monotone;
   }
 
   bool patternMatchPredicate(Node* node) override {

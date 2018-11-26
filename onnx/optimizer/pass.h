@@ -109,7 +109,6 @@ class Pass {
     return false;
   }
   virtual std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) = 0;
-  inline bool containsOpAnnotation(Node* node, OpAnnotationFlag flag) const;
 
  protected:
   // Iterates through the elements in the graph and counts the number of
