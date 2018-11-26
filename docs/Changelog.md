@@ -9167,6 +9167,8 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
+<dt><tt>axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis). If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
@@ -9180,14 +9182,14 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs (1 - &#8734;)
 
 <dl>
-<dt><tt>initial_state_and_scan_inputs</tt> (variadic) : V</dt>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Initial values of the loop's N state variables followed by M scan_inputs</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>final_state_and_scan_outputs</tt> (variadic) : V</dt>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Final values of the loop's N state variables followed by K scan_outputs</dd>
 </dl>
 

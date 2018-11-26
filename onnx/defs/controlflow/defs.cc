@@ -673,13 +673,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "initial_state_and_scan_inputs",
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "
@@ -711,6 +713,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             "indicates prepending. "
             "If omitted, all scan_output tensors will be produced by appending a value "
             "in each iteration.",
+            AttributeProto::INTS,
+            false)
+        .Attr(
+            "axes",
+            "An optional list of M flags. The i-th element of the list specifies the axis "
+            "to be scanned (the sequence axis). If omitted, 0 will be used as the scan "
+            "axis for every scan_input.",
             AttributeProto::INTS,
             false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
