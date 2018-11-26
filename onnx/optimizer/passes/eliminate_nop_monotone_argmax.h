@@ -50,8 +50,7 @@ struct EliminateNopMonotoneArgmax final : public PredicateBasedPass {
     return false;
   }
 
-  bool runTransform(Node* node, Graph&, NodeDestroyType&)
-      override {
+  bool runTransform(Node* node, Graph&, NodeDestroyType&) override {
     Node* monotone_node = node->input()->node();
     if (monotone_node->output()->uses().size() == 1) {
       monotone_node->output()->replaceAllUsesWith(monotone_node->input());

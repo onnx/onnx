@@ -5,6 +5,7 @@
 
 #include <string>
 #include "onnx/common/ir.h"
+#include "onnx/defs/schema.h"
 #include "onnx/onnx_pb.h"
 
 namespace ONNX_NAMESPACE {
@@ -108,10 +109,11 @@ class Pass {
     return false;
   }
   virtual std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) = 0;
+  inline bool containsOpAnnotation(Node* node, OpAnnotationFlag flag) const;
 
  protected:
-  // Iterates through the elements in the graph and counts the number of times
-  // the transform is succesfully run.
+  // Iterates through the elements in the graph and counts the number of
+  // times the transform is succesfully run.
   unsigned int DescendOnGraphAttributesAndCount(
       Node* n,
       std::function<unsigned int(Graph&)> fn);

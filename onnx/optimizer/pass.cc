@@ -15,6 +15,16 @@ Pass::Pass(
 
 Pass::~Pass() {}
 
+inline bool Pass::containsOpAnnotation(Node* node, OpAnnotationFlag flag)
+    const {
+  auto node_name = node->kind().toString();
+  auto op_schema = OpSchemaRegistry::Instance()->Schema(node_name);
+  if (nullptr != op_schema) {
+    return op_schema->ContainsOpAnnotation(flag);
+  }
+  return false;
+}
+
 unsigned int Pass::DescendOnGraphAttributesAndCount(
     Node* n,
     std::function<unsigned int(Graph&)> fn) {
