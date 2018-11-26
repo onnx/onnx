@@ -718,8 +718,8 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "axes",
             "An optional list of M flags. The i-th element of the list specifies the axis "
-            "to be scanned (the sequence axis). If omitted, 0 will be used as the scan "
-            "axis for every scan_input.",
+            "to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will "
+            "be used as the scan axis for every scan_input.",
             AttributeProto::INTS,
             false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")

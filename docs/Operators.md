@@ -9682,7 +9682,7 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">Scan-8</a>
 
 <dl>
 <dt><tt>axes</tt> : list of ints</dt>
-<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis). If omitted, 0 will be used as the scan axis for every scan_input.</dd>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
