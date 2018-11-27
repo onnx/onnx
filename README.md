@@ -46,6 +46,9 @@ You can join [one of the working groups](https://github.com/onnx/onnx/wiki/%5BAn
 Check out our [contribution guide](https://github.com/onnx/onnx/blob/master/docs/CONTRIBUTING.md)
 and [call for contributions](https://github.com/onnx/onnx/issues/426) to get started.
 
+If you think some operator should be added to ONNX specification, please read
+[this document](docs/AddNewOp.md).
+
 # Discuss
 We encourage you to open [Issues](https://github.com/onnx/onnx/issues), or use Gitter for more real-time discussion:
 [![Join the chat at https://gitter.im/onnx/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/onnx/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
