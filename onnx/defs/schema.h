@@ -622,7 +622,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
       map_[ONNX_DOMAIN] = std::make_pair(1, 9);
-      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
