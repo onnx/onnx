@@ -1329,7 +1329,7 @@ ONNX_OPERATOR_SET_SCHEMA(
       .Output(0, "Y", "output", "T2")
       .TypeConstraint(
           "T1",
-          ONNX_NAMESPACE::OpSchema::numeric_types_for_math_reduction(),
+          {"tensor(float16)","tensor(float)","tensor(double)"},
           "Constrain to any numeric tensor type. If the dtype attribute is not provided this must be a valid output type.")
       .TypeConstraint(
           "T2",
