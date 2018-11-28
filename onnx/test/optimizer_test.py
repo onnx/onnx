@@ -677,6 +677,22 @@ class TestOptimizer(unittest.TestCase):
             "test",
             [helper.make_tensor_value_info("X", TensorProto.FLOAT, (32, 10)),
              helper.make_tensor_value_info("Y", TensorProto.FLOAT, (10, 16)),
+             helper.make_tensor_value_info("B", TensorProto.FLOAT, (1, 16))],
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (32, 16))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
+
+        assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Gemm"
+
+    def test_fuse_matmul_add_bias_into_gemm_2d_bias_same_shape(self):  # type: () -> None
+        matmul = helper.make_node("MatMul", ["X", "Y"], ["Z"])
+        add = helper.make_node("Add", ["Z", "B"], ["A"])
+        graph = helper.make_graph(
+            [matmul, add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (32, 10)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (10, 16)),
              helper.make_tensor_value_info("B", TensorProto.FLOAT, (32, 16))],
             [helper.make_tensor_value_info("A", TensorProto.FLOAT, (32, 16))]
         )
@@ -684,6 +700,21 @@ class TestOptimizer(unittest.TestCase):
 
         assert len(list(optimized_model.graph.node)) == 1
         assert optimized_model.graph.node[0].op_type == "Gemm"
+
+    def test_fuse_matmul_add_bias_into_gemm_2d_bias_bcast_no_fuse(self):  # type: () -> None
+        matmul = helper.make_node("MatMul", ["X", "Y"], ["Z"])
+        add = helper.make_node("Add", ["Z", "B"], ["A"])
+        graph = helper.make_graph(
+            [matmul, add],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 10)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (10, 16)),
+             helper.make_tensor_value_info("B", TensorProto.FLOAT, (16, 16))],
+            [helper.make_tensor_value_info("A", TensorProto.FLOAT, (16, 16))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_matmul_add_bias_into_gemm"])
+
+        assert optimized_model.graph == graph
 
     def test_fuse_matmul_add_bias_into_gemm_3d_matmul_no_fuse(self):  # type: () -> None
         matmul = helper.make_node("MatMul", ["X", "Y"], ["Z"])
