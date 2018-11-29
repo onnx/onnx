@@ -9565,9 +9565,8 @@ for test_name, shape in test_cases.items():
   generalizations of RNN-like constructs for sequence-to-sequence processing.
   Other tensors (referred to as state_variables here) can be used to carry a state
   when iterating from one element to another (similar to hidden-state in RNNs, also referred
-  to as loop-carried dependences in the context of loops). All these tensors are required to
-  have the same shape in each iteration of the loop (a restriction imposed to enable efficient
-  memory allocation). Many common usages involve a single scan_input tensor (where functionality
+  to as loop-carried dependences in the context of loops).
+  Many common usages involve a single scan_input tensor (where functionality
   similar to scan, fold and map can be obtained). When more than one scan_input is used,
   a behavior similar to zip is obtained.
   
@@ -9577,7 +9576,9 @@ for test_name, shape in test_cases.items():
   of the state_variables and zero or more scan_output_element tensors. The values of the
   scan_output_element tensors are concatenated over all the iterations to produce the
   scan_output values of the scan construct (similar to the concatenated intermediate
-  hidden-state values of RNN-like constructs).
+  hidden-state values of RNN-like constructs). All the output tensors (state_variables as
+  well as scan_output_element tensors) are required to have the same shape in each iteration
+  of the loop (a restriction imposed to enable efficient memory allocation).
   
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
@@ -9596,7 +9597,7 @@ for test_name, shape in test_cases.items():
   The optional attribute axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
-  Note that scanning a non-zero axis is less efficient than scanning axis zero.
+  Note that scanning a non-zero axis may be less efficient than scanning axis zero.
   
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -9613,9 +9614,9 @@ for test_name, shape in test_cases.items():
   
   is equivalent to the following pseudo-code:
   
-      // scan_i.shape[1] denotes the (max) sequence-length of scan_i
-      // scan_i.shape[1] is required to be equal to scan_j.shape[1] for all i,j.
-      sequence_length = scan_1.shape[1];
+      // scan_i.shape[axis_i] denotes the (max) sequence-length of scan_i
+      // scan_i.shape[axis_i] is required to be equal to scan_j.shape[axis_j] for all i,j.
+      sequence_length = scan_1.shape[axis_1];
   
       // initialize state-variables
       st_1 = init_1; ... st_n = init_n;
