@@ -229,6 +229,8 @@ static const char* Relu_ver6_doc = R"DOC(
 Relu takes one input data (Tensor<T>) and produces one output data
 (Tensor<T>). For each element x in input, if x > threshold then y = x;
 else y = value. By default the value and threshold all equal to 0.
+Attribute value and threshold should be a one-element tensor,
+and have the same type of input and output.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
@@ -238,12 +240,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "threshold",
             "the threshold of relu, if x > threshold, then y = x.",
-            AttributeProto::FLOAT,
+            AttributeProto::TENSOR,
             0.0f)
         .Attr(
             "value",
             "the inactivation value, if x <= threshold, then y = value",
-            AttributeProto::FLOAT,
+            AttributeProto::TENSOR,
             0.0f)
         .SetDoc(Relu_ver6_doc)
         .Input(0, "X", "Input tensor", "T")
