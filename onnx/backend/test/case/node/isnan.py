@@ -14,7 +14,6 @@ class IsNaN(Base):
 
     @staticmethod
     def export():  # type: () -> None
-        shape = (2, 2)
         node = onnx.helper.make_node(
             'IsNaN',
             inputs=['x'],

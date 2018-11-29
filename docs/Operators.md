@@ -4866,7 +4866,6 @@ This version of the operator has been available since version 9 of the default O
 <summary>isnan</summary>
 
 ```python
-shape = (2, 2)
 node = onnx.helper.make_node(
     'IsNaN',
     inputs=['x'],
