@@ -152,38 +152,44 @@ static void InferShapesImpl(
       }
     }
 
-    for (int i = 0; i < n.output_size(); ++i) {
-      if (!ctx.getOutputType(i)->has_tensor_type()) {
-        continue;
+    try {
+      for (int i = 0; i < n.output_size(); ++i) {
+        if (!ctx.getOutputType(i)->has_tensor_type()) {
+          continue;
+        }
+        const auto& inferredType = ctx.getOutputType(i)->tensor_type();
+
+        // Bail out early if shape inference does nothing useful.
+        if (inferredType.elem_type() == TensorProto::UNDEFINED &&
+            !inferredType.has_shape()) {
+          continue;
+        }
+
+        // Find any pre-existing type and shape info. If there is such,
+        // then check for compatibility with the inferred
+        // information. Otherwise, initialize it in an empty state.
+        auto iter = valueTypesByName.find(n.output(i));
+        TypeProto* existingType = nullptr;
+        if (iter != valueTypesByName.end()) {
+          existingType = iter->second;
+          checkShapesAndTypes(inferredType, existingType->tensor_type());
+        } else {
+          auto vi = g->add_value_info();
+          vi->set_name(n.output(i));
+          existingType = vi->mutable_type();
+        }
+
+        // Now we can merge pre-existing and inferred info, without
+        // further need for error-checking.
+        mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
+
+        // Make merged info available to further inference.
+        valueTypesByName[n.output(i)] = existingType;
       }
-      const auto& inferredType = ctx.getOutputType(i)->tensor_type();
-
-      // Bail out early if shape inference does nothing useful.
-      if (inferredType.elem_type() == TensorProto::UNDEFINED &&
-          !inferredType.has_shape()) {
-        continue;
-      }
-
-      // Find any pre-existing type and shape info. If there is such,
-      // then check for compatibility with the inferred
-      // information. Otherwise, initialize it in an empty state.
-      auto iter = valueTypesByName.find(n.output(i));
-      TypeProto* existingType = nullptr;
-      if (iter != valueTypesByName.end()) {
-        existingType = iter->second;
-        checkShapesAndTypes(inferredType, existingType->tensor_type());
-      } else {
-        auto vi = g->add_value_info();
-        vi->set_name(n.output(i));
-        existingType = vi->mutable_type();
-      }
-
-      // Now we can merge pre-existing and inferred info, without
-      // further need for error-checking.
-      mergeShapesAndTypes(inferredType, existingType->mutable_tensor_type());
-
-      // Make merged info available to further inference.
-      valueTypesByName[n.output(i)] = existingType;
+    } catch (const std::runtime_error& err) {
+      std::string op_name = n.has_name() ? n.name() : "no name";
+      std::cerr << "(op_type:" << n.op_type() << ", name:" << n.name() << "): " << err.what() << '\n';
+      throw;
     }
   }
 }
@@ -193,11 +199,9 @@ void InferShapes(
     const std::unordered_map<std::string, int>& opset_imports,
     const ISchemaRegistry* schema_registry,
     const IFunctionBuilderRegistry* func_registry) {
-  const std::unordered_map<std::string, TypeProto*>
-      outer_scope_value_types_by_name;
   InferShapesImpl(
       g,
-      outer_scope_value_types_by_name,
+      {},
       opset_imports,
       schema_registry,
       func_registry);
@@ -213,12 +217,9 @@ void InferShapes(
         static_cast<int>(opset_import.version());
   }
   auto* g = m.mutable_graph();
-  const std::unordered_map<std::string, TypeProto*>
-      outer_scope_value_types_by_name;
-
   InferShapesImpl(
       g,
-      outer_scope_value_types_by_name,
+      {},
       opset_imports,
       schema_registry,
       func_registry);
@@ -239,7 +240,7 @@ void InferShapeForFunctionNode(
   }
   // Get a temporary initial value map
   std::unordered_map<std::string, const TensorProto*> temp_initializersByName;
-  for (int i = 0; i < (const int)(ctx.getNumInputs()); ++i) {
+  for (int i = 0; i < static_cast<int>(ctx.getNumInputs()); ++i) {
     if (ctx.getInputData(i) != nullptr && i < func.input_size()) {
       temp_initializersByName[func.input().Get(i)] = ctx.getInputData(i);
     }
