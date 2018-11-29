@@ -1330,11 +1330,11 @@ ONNX_OPERATOR_SET_SCHEMA(
       .TypeConstraint(
           "T1",
           {"tensor(float16)","tensor(float)","tensor(double)"},
-          "Constrain to any numeric tensor type. If the dtype attribute is not provided this must be a valid output type.")
+          "Constrain input types to float tensors.")
       .TypeConstraint(
           "T2",
           {"tensor(bool)"},
-          "Constrain outputs to boolean tensor")
+          "Constrain output types to boolean tensors.")
       .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
 
 } // namespace ONNX_NAMESPACE

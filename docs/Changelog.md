@@ -8852,9 +8852,9 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
-<dd>Constrain to any numeric tensor type. If the dtype attribute is not provided this must be a valid output type.</dd>
+<dd>Constrain input types to float tensors.</dd>
 <dt><tt>T2</tt> : tensor(bool)</dt>
-<dd>Constrain outputs to boolean tensor</dd>
+<dd>Constrain output types to boolean tensors.</dd>
 </dl>
 
 ### <a name="Less-9"></a>**Less-9**</a>
