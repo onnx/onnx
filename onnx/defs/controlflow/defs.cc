@@ -5,14 +5,6 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-static void UpdateValueFromDim(
-    int64_t& current_value,
-    const TensorShapeProto_Dimension& dim) {
-  if (current_value == -1 && dim.has_dim_value()) {
-    current_value = dim.dim_value();
-  }
-}
-
 static TypeProto RemoveDimensionsFromShape(
     const TypeProto& proto,
     int num_dimensions) {
@@ -51,8 +43,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
   std::vector<const TypeProto*> subgraph_input_types;
 
-  int64_t batch_size = -1;
-  int64_t sequence_len = -1;
+  TensorShapeProto_Dimension batch_size_dim;
+  TensorShapeProto_Dimension sequence_len_dim;
 
   for (size_t i = 1; i < num_inputs; ++i) {
     bool is_loop_state_var = (i - 1) < num_loop_state_vars;
@@ -97,8 +89,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
         const auto& shape = input_type->tensor_type().shape();
         if (shape.dim_size() > 2) {
           const auto& dims = shape.dim();
-          UpdateValueFromDim(batch_size, dims.Get(0));
-          UpdateValueFromDim(sequence_len, dims.Get(1));
+          mergeInDimensionInfo(dims.Get(0), batch_size_dim, 0);
+          mergeInDimensionInfo(dims.Get(1), sequence_len_dim, 1);
         }
       } else {
         subgraph_input_types.push_back(input_type);
@@ -162,16 +154,10 @@ void ScanInferenceFunction(InferenceContext& ctx) {
             mutable_inferred_tensor_type->mutable_shape();
 
         mutable_inferred_shape->clear_dim();
-
-        auto* batch_size_dim = mutable_inferred_shape->add_dim();
-        if (batch_size != -1) {
-          batch_size_dim->set_dim_value(batch_size);
-        }
+        *mutable_inferred_shape->add_dim() = batch_size_dim;
 
         if (!is_loop_state_var) {
-          auto* seq_len_dim = mutable_inferred_shape->add_dim();
-          if (sequence_len != -1)
-            seq_len_dim->set_dim_value(sequence_len);
+          *mutable_inferred_shape->add_dim() = sequence_len_dim;
         }
 
         for (const auto& dim :
@@ -396,7 +382,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "the `then_branch` and `else_branch` must be of the same shape and same "
             "data type.",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Attr(
             "then_branch",
             "Graph to run if condition is true. Has N outputs: values you wish to "
@@ -551,13 +538,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "The initial values of any loop-carried dependencies (values that "
             "change across loop iterations)",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Output(
             0,
             "v_final_and_scan_outputs",
             "Final N loop carried dependency values then K scan_outputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has 2+N inputs: (iteration_num, "
@@ -720,13 +709,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "initial_state_and_scan_inputs",
             "Initial values of the loop's N state variables followed by M scan_inputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Output(
             0,
             "final_state_and_scan_outputs",
             "Final values of the loop's N state variables followed by K scan_outputs",
             "V",
-            OpSchema::Variadic)
+            OpSchema::Variadic,
+            false)
         .Attr(
             "body",
             "The graph run each iteration. It has N+M inputs: "

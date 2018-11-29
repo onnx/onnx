@@ -1773,7 +1773,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -1839,7 +1839,7 @@ This version of the operator has been available since version 1 of the default O
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>outputs</tt> (variadic) : V</dt>
+<dt><tt>outputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Values that are live-out to the enclosing scope. The return values in the `then_branch` and `else_branch` must be of the same shape and same data type.</dd>
 </dl>
 
@@ -2301,7 +2301,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -2445,14 +2445,14 @@ This version of the operator has been available since version 1 of the default O
 <dd>A maximum trip-count for the loop specified at runtime. Optional. pass empty string to skip.</dd>
 <dt><tt>cond</tt> : B</dt>
 <dd>A boolean termination condition. Pass empty string to skip.</dd>
-<dt><tt>v_initial</tt> (variadic) : V</dt>
+<dt><tt>v_initial</tt> (variadic, heterogeneous) : V</dt>
 <dd>The initial values of any loop-carried dependencies (values that change across loop iterations)</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>v_final_and_scan_outputs</tt> (variadic) : V</dt>
+<dt><tt>v_final_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Final N loop carried dependency values then K scan_outputs</dd>
 </dl>
 
@@ -4366,7 +4366,7 @@ This version of the operator has been available since version 1 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The output values with the same shape as input tensor.</dd>
+<dd>The output values with the same shape as input tensor (the original size without coercion).</dd>
 </dl>
 
 #### Type Constraints
@@ -6889,7 +6889,7 @@ This version of the operator has been available since version 7 of the default O
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
 <dt><tt>spatial</tt> : int (default is 1)</dt>
-<dd>If true, compute the mean and variance across all spatial elements If false, compute the mean and variance across per feature.</dd>
+<dd>If true, compute the mean and variance across per activation. If false, compute the mean and variance across per feature over each mini-batch.</dd>
 </dl>
 
 #### Inputs
@@ -6898,20 +6898,20 @@ This version of the operator has been available since version 7 of the default O
 <dt><tt>X</tt> : T</dt>
 <dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
 <dt><tt>scale</tt> : T</dt>
-<dd>The scale as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dd>If spatial is true, the dimension of scale is (C). If spatial is false, the dimensions of scale are (C x D1 x ... x Dn)</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>The bias as a 1-dimensional tensor of size C to be applied to the output.</dd>
+<dd>If spatial is true, the dimension of bias is (C). If spatial is false, the dimensions of bias are (C x D1 x ... x Dn)</dd>
 <dt><tt>mean</tt> : T</dt>
-<dd>The running mean (training) or the estimated mean (testing) as a 1-dimensional tensor of size C.</dd>
+<dd>If spatial is true, the dimension of the running mean (training) or the estimated mean (testing) is (C). If spatial is false, the dimensions of the running mean (training) or the estimated mean (testing) are (C x D1 x ... x Dn).</dd>
 <dt><tt>var</tt> : T</dt>
-<dd>The running variance (training) or the estimated variance (testing) as a 1-dimensional tensor of size C.</dd>
+<dd>If spatial is true, the dimension of the running variance(training) or the estimated variance (testing) is (C). If spatial is false, the dimensions of the running variance(training) or the estimated variance (testing) are (C x D1 x ... x Dn).</dd>
 </dl>
 
 #### Outputs (1 - 5)
 
 <dl>
 <dt><tt>Y</tt> : T</dt>
-<dd>The output tensor of the same shape as X.</dd>
+<dd>The output tensor of the same shape as X</dd>
 <dt><tt>mean</tt> (optional) : T</dt>
 <dd>The running mean after the BatchNormalization operator.</dd>
 <dt><tt>var</tt> (optional) : T</dt>
@@ -8297,14 +8297,14 @@ This version of the operator has been available since version 8 of the default O
 <dl>
 <dt><tt>sequence_lens</tt> (optional) : I</dt>
 <dd>Optional tensor specifying lengths of the sequences in a batch. If this input is not specified, all sequences are assumed to be of the maximum sequence length (the dimension of the sequence axis of the scan_input tensors).</dd>
-<dt><tt>initial_state_and_scan_inputs</tt> (variadic) : V</dt>
+<dt><tt>initial_state_and_scan_inputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Initial values of the loop's N state variables followed by M scan_inputs</dd>
 </dl>
 
 #### Outputs (1 - &#8734;)
 
 <dl>
-<dt><tt>final_state_and_scan_outputs</tt> (variadic) : V</dt>
+<dt><tt>final_state_and_scan_outputs</tt> (variadic, heterogeneous) : V</dt>
 <dd>Final values of the loop's N state variables followed by K scan_outputs</dd>
 </dl>
 
