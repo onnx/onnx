@@ -791,7 +791,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     auto second_input_shape = ctx.getInputType(1)->tensor_type().shape();
     for (int i = 2; i < second_input_shape.dim_size(); ++i) {
       if (!second_input_shape.dim(i).has_dim_value()) {
-          return;
+        return;
       }
       kernel_shape.push_back(second_input_shape.dim(i).dim_value());
     }
@@ -822,7 +822,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
       ctx.getInputType(1)->tensor_type().shape().dim(
-        1) * group; // channels should be the second dim of second input multiply group.
+          1) * group; // channels should be the second dim of second input multiply group.
 
   int size_of_output;
   if (output_shape_presented) {
@@ -830,13 +830,13 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     for (int i = 0; i < size_of_output; ++i) {
       if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
         // TODO: throw exception?
-        return; // output shape value cannot be smaller than the input
-                // shape value
+        return; // output shape value cannot be smaller than the input shape
+                // value
       }
 
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
-    return; // assume no need to proceed further when the output shape is given.
+    return;
   }
   else
   {
@@ -851,8 +851,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
       final_output_shape->add_dim()->set_dim_value(output_shape_dim);
     }
-    return; // assume no need to proceed further when the output shape is
-            // given.
+    return;
   }
 }
 
