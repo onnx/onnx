@@ -741,7 +741,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  int group = 1;
+  int64_t group = 1;
   if (ctx.getAttribute("group") != nullptr)
   {
     group = ctx.getAttribute("group")->i();
@@ -843,7 +843,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i)
     {
-      int output_shape_dim =
+      int64_t output_shape_dim =
           strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
           output_padding[i] + kernel_shape[i] - pads[i] -
           pads[i + n_input_dims];
