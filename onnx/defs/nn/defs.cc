@@ -730,26 +730,26 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 void convTransposeShapeInference(InferenceContext& ctx) {
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  
+
   // we need at least two inputs to have a shape for this inference.
   if (!hasNInputShapes(ctx, 2)) {
-      return;
+    return;
   }
 
   // don't bother with legacy auto_pad for now
   if (ctx.getAttribute("auto_pad")) {
-      return;
+    return;
   }
 
   int group = 1;
   if (ctx.getAttribute("group") != nullptr)
   {
-      group = ctx.getAttribute("group")->i();
+    group = ctx.getAttribute("group")->i();
   }
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
-      return; // Input tensor should have at least two dimensions.
+    return; // Input tensor should have at least two dimensions.
   }
 
   // first dim is the batch axis and the next is the number of channels.
@@ -757,17 +757,17 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-      for (auto i : dilations)
-      {
-          if (i != 1)
-              return; // we don't handle dialations not 1.
-      }
+    for (auto i : dilations)
+    {
+      if (i != 1)
+        return; // we don't handle dialations not 1.
+    }
   }
 
   std::vector<int64_t> pads;
   if (getRepeatedAttribute(ctx, "pads", pads)) {
     if (pads.size() != n_input_dims * 2) {
-        return;
+      return;
     }
   } else {
     pads.assign(n_input_dims * 2, 0);
@@ -817,12 +817,12 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   auto final_output_shape =
-    ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
+      ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape();
 
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
-    ctx.getInputType(1)->tensor_type().shape().dim(
-      1) * group; // channels should be the second dim of second input multiply group.
+      ctx.getInputType(1)->tensor_type().shape().dim(
+        1) * group; // channels should be the second dim of second input multiply group.
 
   int size_of_output;
   if (output_shape_presented) {
@@ -836,8 +836,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
-    return; // assume no need to proceed further when the output shape is
-            // given.
+    return; // assume no need to proceed further when the output shape is given.
   }
   else
   {
