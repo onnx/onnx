@@ -137,6 +137,7 @@ namespace ONNX_NAMESPACE {
   _(zeros)                        \
   _(exponent)                     \
   _(device)                       \
+  _(mode)                         \
   _(Identity)                     \
   _(Loop)                         \
   _(If)                           \

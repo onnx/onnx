@@ -763,6 +763,140 @@ class TestOptimizer(unittest.TestCase):
 
         assert optimized_model.graph == graph
 
+    def test_fuse_pad_into_conv(self):  # type: () -> None
+        pad = helper.make_node(
+            "Pad",
+            ["X"],
+            ["P"],
+            mode="constant",
+            pads=[0, 0, 0, 0, 0, 0, 1, 1]
+        )
+        conv = helper.make_node("Conv", ["P", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [pad, conv],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 2, 2)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1, 1))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_pad_into_conv"])
+
+        assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Conv"
+        assert optimized_model.graph.node[0].attribute[0].name == "pads"
+        assert list(optimized_model.graph.node[0].attribute[0].ints) == [0, 0, 1, 1]
+
+    def test_fuse_pad_into_con_1d(self):  # type: () -> None
+        pad = helper.make_node(
+            "Pad",
+            ["X"],
+            ["P"],
+            mode="constant",
+            pads=[0, 0, 1, 0, 0, 1]
+        )
+        conv = helper.make_node("Conv", ["P", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [pad, conv],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 30)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 32))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_pad_into_conv"])
+
+        assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Conv"
+        assert optimized_model.graph.node[0].attribute[0].name == "pads"
+        assert list(optimized_model.graph.node[0].attribute[0].ints) == [1, 1]
+
+    def test_fuse_pad_into_conv_existing_conv_pad(self):  # type: () -> None
+        pad = helper.make_node(
+            "Pad",
+            ["X"],
+            ["P"],
+            mode="constant",
+            pads=[0, 0, 0, 0, 0, 0, 1, 1]
+        )
+        conv = helper.make_node(
+            "Conv",
+            ["P", "Y"],
+            ["Z"],
+            pads=[1, 1, 0, 0]
+        )
+        graph = helper.make_graph(
+            [pad, conv],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 2, 2)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 4, 4))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1, 1))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_pad_into_conv"])
+
+        assert len(list(optimized_model.graph.node)) == 1
+        assert optimized_model.graph.node[0].op_type == "Conv"
+        assert optimized_model.graph.node[0].attribute[0].name == "pads"
+        assert list(optimized_model.graph.node[0].attribute[0].ints) == [1, 1, 1, 1]
+
+    def test_fuse_pad_into_conv_pad_feature_no_fuse(self):  # type: () -> None
+        pad = helper.make_node(
+            "Pad",
+            ["X"],
+            ["P"],
+            mode="constant",
+            pads=[0, 1, 0, 0, 0, 0, 0, 0]
+        )
+        conv = helper.make_node("Conv", ["P", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [pad, conv],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 4, 3, 3)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1, 1))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_pad_into_conv"])
+
+        assert optimized_model.graph == graph
+
+    def test_fuse_pad_into_conv_negative_pad_no_fuse(self):  # type: () -> None
+        pad = helper.make_node(
+            "Pad",
+            ["X"],
+            ["P"],
+            mode="constant",
+            pads=[0, 0, 0, 0, 0, 0, -1, -1]
+        )
+        conv = helper.make_node("Conv", ["P", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [pad, conv],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 4, 4)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1, 1))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_pad_into_conv"])
+
+        assert optimized_model.graph == graph
+
+    def test_fuse_pad_into_conv_reflection_pad_no_fuse(self):  # type: () -> None
+        pad = helper.make_node(
+            "Pad",
+            ["X"],
+            ["P"],
+            mode="reflect",
+            pads=[0, 0, 0, 0, 0, 0, 1, 1]
+        )
+        conv = helper.make_node("Conv", ["P", "Y"], ["Z"])
+        graph = helper.make_graph(
+            [pad, conv],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, (1, 5, 2, 2)),
+             helper.make_tensor_value_info("Y", TensorProto.FLOAT, (16, 5, 3, 3))],
+            [helper.make_tensor_value_info("Z", TensorProto.FLOAT, (1, 16, 1, 1))]
+        )
+        optimized_model = self._optimized(graph, ["fuse_pad_into_conv"])
+
+        assert optimized_model.graph == graph
+
     def test_fuse_consecutive_squeezes(self):  # type: () -> None
         nodes = [helper.make_node("Squeeze", ["X"], ["Y"], axes=[0, 4, 5]),
                  helper.make_node("Squeeze", ["Y"], ["Z"], axes=[0, 3])]
