@@ -1340,6 +1340,6 @@ ONNX_OPERATOR_SET_SCHEMA(
                                      if (hasInputShape(ctx, 0)) {
                                        propagateShapeFromInputToOutput(ctx, 0, 0);
                                      }}
-      );
+      ));
 
 } // namespace ONNX_NAMESPACE
