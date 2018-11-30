@@ -553,7 +553,7 @@ inline void mergeInShapeInfo(
 }
 
 // Return a copy of a type, with a specified dimension removed from its shape.
-static TypeProto RemoveIthDimensionFromShape(
+inline TypeProto RemoveIthDimensionFromShape(
     const TypeProto& proto,
     int removed_dim) {
   TypeProto t(proto);
@@ -572,7 +572,7 @@ static TypeProto RemoveIthDimensionFromShape(
 
 // Return a copy of a type, with specified number of dimensions removed from the
 // beginning.
-static TypeProto RemoveDimensionsFromShape(
+inline TypeProto RemoveDimensionsFromShape(
     const TypeProto& proto,
     int num_dimensions) {
   TypeProto t(proto);
