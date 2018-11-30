@@ -1324,17 +1324,22 @@ ONNX_OPERATOR_SET_SCHEMA(
     IsNaN,
     9,
     OpSchema()
-        .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
-      .Input(0, "X", "input", "T1")
-      .Output(0, "Y", "output", "T2")
-      .TypeConstraint(
-          "T1",
-          {"tensor(float16)","tensor(float)","tensor(double)"},
-          "Constrain input types to float tensors.")
-      .TypeConstraint(
-          "T2",
-          {"tensor(bool)"},
-          "Constrain output types to boolean tensors.")
-      .TypeAndShapeInferenceFunction(ONNX_NAMESPACE::propagateShapeAndTypeFromFirstInput));
+    .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
+    .Input(0, "X", "input", "T1")
+    .Output(0, "Y", "output", "T2")
+    .TypeConstraint(
+        "T1",
+        {"tensor(float16)","tensor(float)","tensor(double)"},
+        "Constrain input types to float tensors.")
+    .TypeConstraint(
+        "T2",
+        {"tensor(bool)"},
+        "Constrain output types to boolean tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+                                     updateOutputElemType(ctx, 0, TensorProto::BOOL);
+                                     if (hasInputShape(ctx, 0)) {
+                                       propagateShapeFromInputToOutput(ctx, 0, 0);
+                                     }}
+      );
 
 } // namespace ONNX_NAMESPACE
