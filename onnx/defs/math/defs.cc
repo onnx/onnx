@@ -240,12 +240,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Attr(
             "threshold",
             "the threshold of relu, if x > threshold, then y = x.",
-            AttributeProto::TENSOR,
+            AttributeProto::FLOAT,
             0.0f)
         .Attr(
             "value",
             "the inactivation value, if x <= threshold, then y = value",
-            AttributeProto::TENSOR,
+            AttributeProto::FLOAT,
             0.0f)
         .SetDoc(Relu_ver6_doc)
         .Input(0, "X", "Input tensor", "T")

@@ -6354,6 +6354,8 @@ This version of the operator has been available since version 6 of the default O
   Relu takes one input data (Tensor<T>) and produces one output data
   (Tensor<T>). For each element x in input, if x > threshold then y = x;
   else y = value. By default the value and threshold all equal to 0.
+  Attribute value and threshold should be a one-element tensor,
+  and have the same type of input and output.
 
 #### Version
 
