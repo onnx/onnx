@@ -6364,9 +6364,9 @@ This version of the operator has been available since version 6 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>threshold</tt> : float (default is 0.0)</dt>
+<dt><tt>threshold</tt> : tensor</dt>
 <dd>the threshold of relu, if x > threshold, then y = x.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
+<dt><tt>value</tt> : tensor</dt>
 <dd>the inactivation value, if x <= threshold, then y = value</dd>
 </dl>
 

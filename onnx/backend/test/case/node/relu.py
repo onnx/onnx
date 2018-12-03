@@ -29,8 +29,18 @@ class Relu(Base):
     def export_with_attrs():  # type: () -> None
         node = onnx.helper.make_node(
             'Relu',
-            threshold=1.0,
-            value=1.0,
+            threshold=onnx.helper.make_tensor(
+                name='relu_threshold',
+                data_type=onnx.TensorProto.FLOAT,
+                dims=[1],
+                vals=[1.0],
+            ),
+            value=onnx.helper.make_tensor(
+                name='relu_value',
+                data_type=onnx.TensorProto.FLOAT,
+                dims=[1],
+                vals=[1.0],
+            ),
             inputs=['x'],
             outputs=['y'],
         )

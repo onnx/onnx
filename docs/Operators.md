@@ -9449,9 +9449,9 @@ Other versions of this operator: <a href="Changelog.md#Relu-1">Relu-1</a>
 #### Attributes
 
 <dl>
-<dt><tt>threshold</tt> : float (default is 0.0)</dt>
+<dt><tt>threshold</tt> : tensor</dt>
 <dd>the threshold of relu, if x > threshold, then y = x.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
+<dt><tt>value</tt> : tensor</dt>
 <dd>the inactivation value, if x <= threshold, then y = value</dd>
 </dl>
 
@@ -9504,8 +9504,18 @@ expect(node, inputs=[x], outputs=[y],
 ```python
 node = onnx.helper.make_node(
     'Relu',
-    threshold=1.0,
-    value=1.0,
+    threshold=onnx.helper.make_tensor(
+        name='relu_threshold',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=[1],
+        vals=[1.0],
+    ),
+    value=onnx.helper.make_tensor(
+        name='relu_value',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=[1],
+        vals=[1.0],
+    ),
     inputs=['x'],
     outputs=['y'],
 )
