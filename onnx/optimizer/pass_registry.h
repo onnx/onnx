@@ -15,13 +15,14 @@
 #include "onnx/optimizer/passes/eliminate_unused_initializer.h"
 #include "onnx/optimizer/passes/extract_constant_to_initializer.h"
 #include "onnx/optimizer/passes/fuse_add_bias_into_conv.h"
-#include "onnx/optimizer/passes/fuse_pad_into_conv.h"
 #include "onnx/optimizer/passes/fuse_bn_into_conv.h"
 #include "onnx/optimizer/passes/fuse_consecutive_concats.h"
 #include "onnx/optimizer/passes/fuse_consecutive_log_softmax.h"
 #include "onnx/optimizer/passes/fuse_consecutive_reduce_unsqueeze.h"
 #include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
+#include "onnx/optimizer/passes/fuse_matmul_add_bias_into_gemm.h"
+#include "onnx/optimizer/passes/fuse_pad_into_conv.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
@@ -50,13 +51,14 @@ struct GlobalPassRegistry {
     registerPass<EliminateUnusedInitializer>();
     registerPass<ExtractConstantToInitializer>();
     registerPass<FuseAddBiasIntoConv>();
-    registerPass<FusePadIntoConv>();
     registerPass<FuseBNIntoConv>();
     registerPass<FuseConsecutiveConcats>();
     registerPass<FuseConsecutiveLogSoftmax>();
     registerPass<FuseConsecutiveReduceUnsqueeze>();
     registerPass<FuseConsecutiveSqueezes>();
     registerPass<FuseConsecutiveTransposes>();
+    registerPass<FuseMatMulAddBiasIntoGemm>();
+    registerPass<FusePadIntoConv>();
     registerPass<FuseTransposeIntoGemm>();
     registerPass<LiftLexicalReferences>();
     registerPass<SplitInit>();
