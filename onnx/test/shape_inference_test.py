@@ -222,6 +222,17 @@ class TestShapeInference(unittest.TestCase):
             initializer=[make_tensor('shape', TensorProto.INT64, (3,), (0, 3, -1))])
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.UINT8, (2, 3, 4))])
 
+    def test_reshape_static_shape_constant(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.UINT8, (2, 4, 3))],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (2,), (3, 8))),
+             make_node("Reshape", ['x', 'shape'], ['y'])],
+            [])
+        self._assert_inferred(graph, [
+            make_tensor_value_info('shape', TensorProto.INT64, (2,)),
+            make_tensor_value_info('y', TensorProto.UINT8, (3, 8))])
+
     def test_upsample(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.INT32, (2, 4, 3, 5)),
