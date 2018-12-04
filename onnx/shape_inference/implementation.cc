@@ -106,9 +106,22 @@ static void InferShapesImpl(
       valueTypesByName[vi.name()] = vi.mutable_type();
   }
 
-  std::unordered_map<std::string, const TensorProto*> initializersByName;
+  std::unordered_map<std::string, const TensorProto*> inputDataByName;
   for (const auto& tp : g->initializer()) {
-    initializersByName[tp.name()] = &tp;
+    inputDataByName[tp.name()] = &tp;
+  }
+  // Collect data from constant nodes.
+  for (const auto& n : g->node()) {
+      if (n.op_type() != "Constant" || n.output().size() != 1) {
+          continue;
+      }
+      for (const auto& attr : n.attribute()) {
+          if (attr.name() == "value" &&
+              attr.type() == AttributeProto::TENSOR &&
+              attr.has_t()) {
+              inputDataByName[n.output(0)] = &attr.t();
+          }
+      }
   }
 
   for (auto& n : *g->mutable_node()) {
@@ -122,7 +135,7 @@ static void InferShapesImpl(
     const auto schema =
         schema_registry->GetSchema(n.op_type(), domain_version, n.domain());
     InferenceContextImpl ctx(
-        n, valueTypesByName, initializersByName, &graphInferenceContext);
+        n, valueTypesByName, inputDataByName, &graphInferenceContext);
     if (!schema) {
       if (nullptr == func_registry) {
         continue;
