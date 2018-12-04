@@ -10021,7 +10021,7 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>output</tt> : T</dt>
-<dd>The sign of the input tensor computed element-wise</dd>
+<dd>The sign of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
 </dl>
 
 #### Type Constraints
