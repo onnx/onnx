@@ -10,7 +10,7 @@ using namespace ONNX_NAMESPACE::shape_inference;
 
 namespace ONNX_NAMESPACE {
 // onnx/defs/controlflow/old.cc
-void ScanInferenceFunctionV1(InferenceContext& ctx);
+void ScanInferenceFunctionOpset8(InferenceContext& ctx);
 // onnx/defs/controlflow/defs.cc
 void ScanInferenceFunction(InferenceContext& ctx);
 
@@ -230,7 +230,7 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
 }
 
 // Check subgraph inferencing via GraphInferencer using a Scan
-static void doInferencingTest(bool use_scan_v1) {
+static void doInferencingTest(bool use_scan_opset8) {
   auto* schemaRegistry = OpSchemaRegistry::Instance();
   GraphProto subgraph;
 
@@ -347,7 +347,7 @@ static void doInferencingTest(bool use_scan_v1) {
     scan.set_domain(ONNX_DOMAIN);
     scan.set_doc_string("Scan node");
     scan.set_op_type("Scan");
-    if (use_scan_v1)
+    if (use_scan_opset8)
       scan.add_input(""); // optional sequence lens
     scan.add_input("loop_state_start");
     scan.add_input("scan_op_in");
@@ -357,7 +357,7 @@ static void doInferencingTest(bool use_scan_v1) {
 
   TypeProto loop_state_in_tensor = simple_tensor_no_shape;
   auto* shape = loop_state_in_tensor.mutable_tensor_type()->mutable_shape();
-  if (use_scan_v1)
+  if (use_scan_opset8)
     shape->add_dim()->set_dim_value(1); // batch size
   shape->add_dim()->set_dim_value(2); // input size. must match subgraph
 
@@ -365,7 +365,7 @@ static void doInferencingTest(bool use_scan_v1) {
 
   TypeProto scan_in_tensor = simple_tensor_no_shape;
   shape = scan_in_tensor.mutable_tensor_type()->mutable_shape();
-  if (use_scan_v1)
+  if (use_scan_opset8)
     shape->add_dim()->set_dim_value(1); // batch size
   shape->add_dim()->set_dim_value(1); // sequence length
   shape->add_dim()->set_dim_value(2); // input size. must match subgraph
@@ -377,8 +377,8 @@ static void doInferencingTest(bool use_scan_v1) {
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
   InferenceContextImpl ctx(scan, valueTypesByName, {}, &graphInfCtx);
-  if (use_scan_v1)
-    ScanInferenceFunctionV1(ctx);
+  if (use_scan_opset8)
+    ScanInferenceFunctionOpset8(ctx);
   else
     ScanInferenceFunction(ctx);
 

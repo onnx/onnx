@@ -5,7 +5,7 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-void ScanInferenceFunctionV1(InferenceContext& ctx) {
+void ScanInferenceFunctionOpset8(InferenceContext& ctx) {
   // NOTE:
   // The first input to Scan is sequence_lens. We skip that when processing
   // inputs in many places below, so the - 1 in multiple places is due to that.
@@ -151,7 +151,7 @@ void ScanInferenceFunctionV1(InferenceContext& ctx) {
   }
 }
 
-static const char* scan_ver1_doc = R"DOC(
+static const char* scan_opset8_doc = R"DOC(
 Scan can be used to iterate over one or more scan_input tensors,
 constructing zero or more scan_output tensors. It combines ideas from general recurrences,
 functional programming constructs such as scan, fold, map, and zip and is intended to enable
@@ -283,7 +283,7 @@ ONNX_OPERATOR_SET_SCHEMA(
     Scan,
     8,
     OpSchema()
-        .SetDoc(scan_ver1_doc)
+        .SetDoc(scan_opset8_doc)
         .Input(
             0,
             "sequence_lens",
@@ -332,6 +332,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             false)
         .TypeConstraint("I", {"tensor(int64)"}, "Int64 tensor")
         .TypeConstraint("V", OpSchema::all_tensor_types(), "All Tensor types")
-        .TypeAndShapeInferenceFunction(ScanInferenceFunctionV1));
+        .TypeAndShapeInferenceFunction(ScanInferenceFunctionOpset8));
 
 } // namespace ONNX_NAMESPACE
