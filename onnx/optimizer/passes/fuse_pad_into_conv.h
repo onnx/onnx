@@ -43,7 +43,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
 
     Node* conv = n;
     Node* pad = n->inputs()[0]->node();
-    
+
     std::string pad_mode;
     if (pad->hasAttribute(kmode)) {
       pad_mode = pad->s(kmode);
@@ -71,7 +71,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
 
     // check if padding is only positive
     if (std::any_of(pads.begin(), pads.end(),
-        [](int64_t value) { return value < 0; })) {
+        [](int64_t local_value) { return local_value < 0; })) {
       return false;
     }
 
@@ -81,7 +81,7 @@ struct FusePadIntoConv final : public PredicateBasedPass {
     if (conv->hasAttribute(kpads)) {
       conv_pads = conv->is(kpads);
     }
-    
+
     for (int i = 2, j = 0; i < pads_size / 2; ++i, ++j) {
       conv_pads[j] += pads[i];
       conv_pads[conv_pads_size / 2 + j] += pads[pads_size / 2 + i];
