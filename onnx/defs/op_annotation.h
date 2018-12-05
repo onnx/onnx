@@ -18,15 +18,47 @@ struct EnumHash {
   }
 };
 
-enum OpAnnotationFlag : uint16_t {
+// Optional Annotation of an OpSchema which provides a level of generalization
+// to the optimization framework. These are simple properties of the Op in
+// question. Some annotations hierarchically contain other annotations. For
+// example an ElementwiseIndependent annotation necessarily contains
+// ElementwiseAny. This hierarchy is expressed in the OpAnnotation class.
+//
+// If you're adding an extra flag please remember to add it to the registry
+// below.
+enum class OpAnnotationFlag : uint16_t {
+  // Op is applied elementwise to the input. The output shape exactly matches
+  // the input shape.
   ElementwiseAny,
+  // ElementwiseIndependent means the elementwise application of the Op does not
+  // rely on any other elements in that tensor. All unary mathematical offers
+  // are like this (e.g. Log, Exp, Sqrt).
   ElementwiseIndependent,
+  // ElementwiseDependent is also an elementwise, but the elementwise dependent
+  // Op relies on information outside the current value. The softmax family of
+  // operators is a good example of an ElementwiseDependent Op. Although softmax
+  // is applied elementwise the partition portion of the calculation requires a
+  // summation across axis, therefore utilizing information outside of the
+  // current value.
   ElementwiseDependent,
+  // Elementwise operation that is strictly monotonic increasing. In other words
+  // op(x) > op(y) iff x > y
   ElementwiseStrictMonotonicIncreasing,
+  // Elementwise operation that is strictly monotonic decreasing. In other words
+  // op(x) < op(y) iff x > y
   ElementwiseStrictMonotonicDecreasing,
+  // Elementwise operation that is weak monotonic increasing. In other words
+  // op(x) >= op(y) iff x > y
   ElementwiseWeakMonotonicIncreasing,
+  // Elementwise operation that is weak monotonic decreasing. In other words
+  // op(x) <= op(y) iff x > y
   ElementwiseWeakMonotonicDecreasing,
+  // Annotation denoting whether or not the Op is a reduction Op. Please check
+  // out onnx/defs/reduction for more information.
   Reduction,
+  // Annotation denoting that the tensor values are unchanged, while the shape
+  // or view is changed. Op's such as transpose and reshape qualify, but expand
+  // doesn't since it increases the number of elements in the tensor.
   ShapeTransform
 };
 
@@ -34,6 +66,11 @@ using OpAnnotationFlagSet = std::unordered_set<OpAnnotationFlag, EnumHash>;
 
 class OpAnnotationHash;
 
+// This class is a lightweight helper class over OpAnnotationFlag that allows us
+// to build hierarchies within the flags. For example if an OP is strictly
+// monotonic than it also satisfies the weak monotonic condition. So we can
+// append both annotations to the Op, if the first flag is used but not the
+// second.
 class OpAnnotation {
   friend OpAnnotationHash;
 
@@ -71,7 +108,7 @@ class OpAnnotation {
 class OpAnnotationHash {
  public:
   size_t operator()(const OpAnnotation& x) const {
-    return std::hash<uint16_t>()(x.top_level_flag_);
+    return EnumHash()(x.top_level_flag_);
   }
 };
 
@@ -144,17 +181,22 @@ using OpAnnotationRegistry_t = std::unordered_map<
     const std::shared_ptr<OpAnnotation>,
     EnumHash>;
 
+// Registry that contains a mapping from OpAnnotationFlag to OpAnnotation. This
+// also the user to use flags and automaticaly reap the benefit of hierarchies
+// of OpAnnotations provided by our library.
 class OpAnnotationRegistry final {
  public:
   static std::shared_ptr<OpAnnotationRegistry> GetInstance() {
     return OpAnnotationRegistry::instance_;
   }
+  // We work under the assumption that all flags are available in our registry.
+  // We fail if this is not the case.
   std::shared_ptr<OpAnnotation> GetOpAnnotation(
       const OpAnnotationFlag flag) const {
     auto element = this->op_flag_mapping_->find(flag);
     ONNX_ASSERTM(
         element != this->op_flag_mapping_->end(),
-        "Annotation is not found in registry");
+        "Annotation is not found in registry. Please add your flag to the registry.");
     return element->second;
   }
 
