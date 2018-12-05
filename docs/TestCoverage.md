@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 103/110 (93.64%, 5 generators excluded) common operators.
+Node tests have covered 104/111 (93.69%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -1884,6 +1884,27 @@ y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_equal_bcast')
+```
+
+</details>
+
+
+### Erf
+There are 1 test cases, listed as following:
+<details>
+<summary>erf</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Erf',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+y = np.vectorize(math.erf)(x).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_erf')
 ```
 
 </details>
