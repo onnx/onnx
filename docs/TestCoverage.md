@@ -5270,6 +5270,27 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### Sign
+There are 1 test cases, listed as following:
+<details>
+<summary>sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sign',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array(range(-5, 6)).astype(np.float32)
+y = np.sign(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sign')
+```
+
+</details>
+
+
 ### Sin
 There are 1 test cases, listed as following:
 <details>
