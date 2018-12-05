@@ -44,8 +44,8 @@ class Status {
     }
   }
 
-  Status(Status&& other) = default;
-  Status& operator=(Status&& other) = default;
+  Status(Status&&) = default;
+  Status& operator=(Status&&) = default;
   ~Status() = default;
 
   bool IsOK() const noexcept;
