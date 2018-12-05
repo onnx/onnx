@@ -51,6 +51,7 @@
   * <a href="#Identity">Identity</a>
   * <a href="#If">If</a>
   * <a href="#InstanceNormalization">InstanceNormalization</a>
+  * <a href="#IsNaN">IsNaN</a>
   * <a href="#LRN">LRN</a>
   * <a href="#LSTM">LSTM</a>
   * <a href="#LeakyRelu">LeakyRelu</a>
@@ -4880,6 +4881,58 @@ expect(node, inputs=[x, s, bias], outputs=[y],
 </details>
 
 
+### <a name="IsNaN"></a><a name="isnan">**IsNaN**</a>
+
+  Returns which elements of the input are NaN.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>output</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input types to float tensors.</dd>
+<dt><tt>T2</tt> : tensor(bool)</dt>
+<dd>Constrain output types to boolean tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>isnan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IsNaN',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name='test_isnan')
+```
+
+</details>
+
+
 ### <a name="LRN"></a><a name="lrn">**LRN**</a>
 
   Local Response Normalization proposed in the [AlexNet paper](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf).
@@ -7034,16 +7087,16 @@ expect(node, inputs=[x], outputs=[np.logical_not(x)],
 ### <a name="OneHot"></a><a name="onehot">**OneHot**</a>
 
   Produces a one-hot tensor based on inputs.
-      The locations represented by the index values in the 'indices' input tensor will have 'on_value' 
-      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value' 
-      are specified as part of required input argument 'values', which is a two-element tensor of format  
-      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the 
-      input tensor. The additional dimension is for one-hot representation. The additional dimension will 
-      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional 
-      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional 
-      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same 
-      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside 
-      the range [0, depth) will result in one-hot representation with all 'off_value' values in the 
+      The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+      and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+      are specified as part of required input argument 'values', which is a two-element tensor of format
+      [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+      input tensor. The additional dimension is for one-hot representation. The additional dimension will
+      be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+      dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+      dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+      as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+      the range [0, depth) will result in one-hot representation with all 'off_value' values in the
       output tensor.
 
 #### Version

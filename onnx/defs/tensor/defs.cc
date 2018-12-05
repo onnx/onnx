@@ -1182,16 +1182,16 @@ ONNX_OPERATOR_SET_SCHEMA(
 
 static const char* OneHot_ver9_doc = R"DOC(
     Produces a one-hot tensor based on inputs.
-    The locations represented by the index values in the 'indices' input tensor will have 'on_value' 
-    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value' 
-    are specified as part of required input argument 'values', which is a two-element tensor of format  
-    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the 
-    input tensor. The additional dimension is for one-hot representation. The additional dimension will 
-    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional 
-    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional 
-    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same 
-    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside 
-    the range [0, depth) will result in one-hot representation with all 'off_value' values in the 
+    The locations represented by the index values in the 'indices' input tensor will have 'on_value'
+    and the other locations will have 'off_value' in the output tensor, where 'on_value' and 'off_value'
+    are specified as part of required input argument 'values', which is a two-element tensor of format
+    [off_value, on_value]. The rank of the output tensor will be one greater than the rank of the
+    input tensor. The additional dimension is for one-hot representation. The additional dimension will
+    be inserted at the position specified by 'axis'. If 'axis' is not specified then then additional
+    dimension will be inserted as the innermost dimension, i.e. axis=-1. The size of the additional
+    dimension is specified by required scalar input 'depth'. The type of the output tensor is the same
+    as the type of the 'values' input. Any entries in the 'indices' input tensor with values outside
+    the range [0, depth) will result in one-hot representation with all 'off_value' values in the
     output tensor.
 )DOC";
 
@@ -1319,4 +1319,27 @@ ONNX_OPERATOR_SET_SCHEMA(
             }
           }
         }));
+
+ONNX_OPERATOR_SET_SCHEMA(
+    IsNaN,
+    9,
+    OpSchema()
+    .SetDoc(R"DOC(Returns which elements of the input are NaN.)DOC")
+    .Input(0, "X", "input", "T1")
+    .Output(0, "Y", "output", "T2")
+    .TypeConstraint(
+        "T1",
+        {"tensor(float16)","tensor(float)","tensor(double)"},
+        "Constrain input types to float tensors.")
+    .TypeConstraint(
+        "T2",
+        {"tensor(bool)"},
+        "Constrain output types to boolean tensors.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+                                     updateOutputElemType(ctx, 0, TensorProto::BOOL);
+                                     if (hasInputShape(ctx, 0)) {
+                                       propagateShapeFromInputToOutput(ctx, 0, 0);
+                                     }}
+      ));
+
 } // namespace ONNX_NAMESPACE

@@ -2633,6 +2633,26 @@ expect(node, inputs=[x, s, bias], outputs=[y],
 </details>
 
 
+### IsNaN
+There are 1 test cases, listed as following:
+<details>
+<summary>isnan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IsNaN',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name='test_isnan')
+```
+
+</details>
+
+
 ### LRN
 There are 2 test cases, listed as following:
 <details>
