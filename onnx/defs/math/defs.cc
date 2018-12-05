@@ -1059,6 +1059,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensors."));
 
+static const char* Celu_ver9_doc = R"DOC(
+Calculate the Celu of input tensor element-wise.
+Celu(x) = max(x, 0) + min(0, alpha * (exp(x/alpha) - 1)).
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	Celu,
+	9,
+	OpSchema()
+        .Attr(
+            "alpha",
+            "Alpha value in Celu formula, by default it is 1.0",
+            AttributeProto::FLOAT,
+			1.0f)
+		.SetDoc(Celu_ver9_doc)
+		.Input(0, "input", "Input tensor", "T")
+		.Output(0, "output", "Output tensor", "T")
+		.TypeConstraint(
+			"T",
+			{"tensor(float16)", "tensor(float)", "tensor(double)"},
+			"Constrain input and output types to float tensors.")
+		.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 static const char* Sinh_ver9_doc = R"DOC(
 Calculates the hyperbolic sine of the given input tensor element-wise.
 )DOC";
