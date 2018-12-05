@@ -26,13 +26,23 @@ Return:
 
 Supported pass names:
     -- nop
+    -- eliminate_deadend
     -- eliminate_identity
-    -- eliminate_nop_transpose
+    -- eliminate_nop_dropout
+    -- eliminate_nop_monotone_argmax
     -- eliminate_nop_pad
+    -- eliminate_nop_transpose
     -- eliminate_unused_initializer
+    -- extract_constant_to_initializer
+    -- fuse_add_bias_into_conv
+    -- fuse_bn_into_conv
+    -- fuse_consecutive_concats
+    -- fuse_consecutive_log_softmax
+    -- fuse_consecutive_reduce_unsqueeze
     -- fuse_consecutive_squeezes
     -- fuse_consecutive_transposes
-    -- fuse_add_bias_into_conv
+    -- fuse_matmul_add_bias_into_gemm
+    -- fuse_pad_into_conv
     -- fuse_transpose_into_gemm
 """
 
@@ -45,8 +55,10 @@ def optimize(model, passes=None, fixed_point=False):  # type: (ModelProto, Optio
                   'eliminate_nop_pad',
                   'fuse_consecutive_transposes',
                   'fuse_transpose_into_gemm']
+
     if not isinstance(model, ModelProto):
-        raise ValueError('Optimizer only accepts ModelProto, incorrect type: {}'.format(type(model)))
+        raise ValueError(
+            'Optimizer only accepts ModelProto, incorrect type: {}'.format(type(model)))
 
     model_str = model.SerializeToString()
     if fixed_point:
