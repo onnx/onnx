@@ -552,4 +552,48 @@ inline void mergeInShapeInfo(
   }
 }
 
+// Return a copy of a type, with a specified dimension removed from its shape.
+inline TypeProto RemoveIthDimensionFromShape(
+    const TypeProto& proto,
+    int removed_dim) {
+  TypeProto t(proto);
+  auto mutable_shape = t.mutable_tensor_type()->mutable_shape();
+  mutable_shape->clear_dim();
+
+  const auto& dims = proto.tensor_type().shape().dim();
+
+  for (int j = 0, end = dims.size(); j < end; ++j) {
+    if (j != removed_dim)
+      (*mutable_shape->add_dim()) = dims.Get(j);
+  }
+
+  return t;
+}
+
+// Return a copy of a type, with specified number of dimensions removed from the
+// beginning.
+inline TypeProto RemoveDimensionsFromShape(
+    const TypeProto& proto,
+    int num_dimensions) {
+  TypeProto t(proto);
+  auto mutable_shape = t.mutable_tensor_type()->mutable_shape();
+  mutable_shape->clear_dim();
+
+  const auto& dims = proto.tensor_type().shape().dim();
+
+  // skip first num_dimensions
+  for (int j = num_dimensions, end = dims.size(); j < end; ++j) {
+    (*mutable_shape->add_dim()) = dims.Get(j);
+  }
+
+  return t;
+}
+
+// copied from GSL:
+// https://github.com/Microsoft/GSL/blob/master/include/gsl/gsl_util
+template <class T, class U>
+static constexpr T narrow_cast(U&& u) noexcept {
+  return static_cast<T>(std::forward<U>(u));
+}
+
 } // namespace ONNX_NAMESPACE
