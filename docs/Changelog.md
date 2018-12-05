@@ -9203,6 +9203,36 @@ This version of the operator has been available since version 9 of the default O
 <dd>All Tensor types</dd>
 </dl>
 
+### <a name="Sign-9"></a>**Sign-9**</a>
+
+  Calculate the sign of the given input tensor element-wise.
+  If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The sign of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
 ### <a name="Sinh-9"></a>**Sinh-9**</a>
 
   Calculates the hyperbolic sine of the given input tensor element-wise.

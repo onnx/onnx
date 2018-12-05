@@ -1168,4 +1168,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+
+static const char* Sign_ver9_doc = R"DOC(
+Calculate the sign of the given input tensor element-wise.
+If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	Sign,
+	9,
+	OpSchema()
+		.SetDoc(Sign_ver9_doc)
+		.Input(0, "input", "Input tensor", "T")
+		.Output(
+			0,
+			"output",
+			"The sign of the input tensor "
+			"computed element-wise. It has the same shape and type of the input.",
+			"T")
+		.TypeConstraint(
+			"T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numeric tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE
