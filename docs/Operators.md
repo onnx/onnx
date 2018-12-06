@@ -33,6 +33,7 @@
   * <a href="#Dropout">Dropout</a>
   * <a href="#Elu">Elu</a>
   * <a href="#Equal">Equal</a>
+  * <a href="#Erf">Erf</a>
   * <a href="#Exp">Exp</a>
   * <a href="#Expand">Expand</a>
   * <a href="#EyeLike">EyeLike</a>
@@ -3247,6 +3248,57 @@ y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_equal_bcast')
+```
+
+</details>
+
+
+### <a name="Erf"></a><a name="erf">**Erf**</a>
+
+  Computes the error function of the given input tensor element-wise.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>Input tensor</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The error function of the input tensor computed element-wise. It has the same shape and type of the input.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to all numeric tensors.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>erf</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Erf',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+y = np.vectorize(math.erf)(x).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_erf')
 ```
 
 </details>
