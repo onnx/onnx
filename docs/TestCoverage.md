@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 103/110 (93.64%, 5 generators excluded) common operators.
+Node tests have covered 104/111 (93.69%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -2607,6 +2607,26 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias], outputs=[y],
        name='test_instancenorm_epsilon')
+```
+
+</details>
+
+
+### IsNaN
+There are 1 test cases, listed as following:
+<details>
+<summary>isnan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IsNaN',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name='test_isnan')
 ```
 
 </details>
