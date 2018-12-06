@@ -9266,10 +9266,11 @@ This version of the operator has been available since version 9 of the default O
 ### <a name="Scatter-9"></a>**Scatter-9**</a>
 
   Given `data`, `updates` and `indices` input tensors of rank r >= 1, write the values provided by `updates` 
-  into `data` along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
+  into the first input, `data`, along `axis` dimension of `data` (by default outer-most one as axis=0) at corresponding `indices`. 
   For each entry in `updates`, the target index in `data` is specified by corresponding entry in `indices`
-  for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case, 
-    data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1, where i and j are loop counters from 0 up to the respective size in `updates` - 1.
+  for dimension = axis, and index in source for dimension != axis. For instance, in a 2-D tensor case,
+  data[indices[i][j]][j] = updates[i][j] if axis = 0, or data[i][indices[i][j]] = updates[i][j] if axis = 1,
+  where i and j are loop counters from 0 up to the respective size in `updates` - 1.
   
   Example 1:
     data = [
