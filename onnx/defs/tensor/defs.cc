@@ -676,7 +676,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain indices to integer types")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           propagateElemTypeFromInputToOutput(ctx, 0, 0);
-          if (hasNInputShapes(ctx, 3)) {
+          if (hasNInputShapes(ctx, 1)) {
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         }));
