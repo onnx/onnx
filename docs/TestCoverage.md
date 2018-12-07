@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 105/112 (93.75%, 5 generators excluded) common operators.
+Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -5179,6 +5179,55 @@ z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((1, 3, 2))
 
 expect(node, inputs=[initial, x], outputs=[y, z],
        name='test_scan_sum')
+```
+
+</details>
+
+
+### Scatter
+There are 2 test cases, listed as following:
+<details>
+<summary>scatter_with_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = np.array([
+    [2.0, 1.1, 0.0],
+    [1.0, 0.0, 2.2],
+    [0.0, 2.1, 1.2]
+], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_without_axis')
 ```
 
 </details>
