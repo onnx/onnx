@@ -491,6 +491,8 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Celu);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, IsNaN);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Sign);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Scan);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Erf);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Scatter);
 
 // Iterate over schema from ai.onnx version 9
 class OpSet_Onnx_ver9 {
@@ -513,6 +515,7 @@ class OpSet_Onnx_ver9 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, PRelu)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Gemm)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Flatten)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Scatter)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Sinh)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Cosh)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Asinh)>());
@@ -522,6 +525,7 @@ class OpSet_Onnx_ver9 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, IsNaN)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Sign)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Scan)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Erf)>());
   }
   static void ForEachFunctionBuilder(
       std::function<void(FunctionBuilder&&)> fn) {

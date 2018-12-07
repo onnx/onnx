@@ -1215,4 +1215,26 @@ ONNX_OPERATOR_SET_SCHEMA(
             OpSchema::all_numeric_types(),
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Erf_ver9_doc = R"DOC(
+Computes the error function of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	Erf,
+	9,
+	OpSchema()
+		.SetDoc(Erf_ver9_doc)
+		.Input(0, "input", "Input tensor", "T")
+		.Output(
+			0,
+			"output",
+			"The error function of the input tensor "
+			"computed element-wise. It has the same shape and type of the input.",
+			"T")
+		.TypeConstraint(
+			"T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numeric tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE
