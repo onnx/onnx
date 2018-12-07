@@ -312,6 +312,7 @@ message TensorProto {
   repeated int64 dims = 1;
 
   // The data type of the tensor.
+  // This field MUST have a valid TensorProto.DataType value
   int32 data_type = 2;
 
   // For very large tensors, we may want to store them in chunks, in which
@@ -419,6 +420,7 @@ message TypeProto {
 
   message Tensor {
     // This field MUST NOT have the value of UNDEFINED
+    // This field MUST have a valid TensorProto.DataType value
     // This field MUST be present for this version of the IR.
     int32 elem_type = 1;
     TensorShapeProto shape = 2;
