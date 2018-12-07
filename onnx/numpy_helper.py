@@ -5,11 +5,12 @@ from __future__ import unicode_literals
 
 import sys
 
-import numpy as np
-
+import numpy as np  # type: ignore
+from onnx import TensorProto
 from onnx import mapping
+from typing import Sequence, Any, Optional, Text
+
 from onnx.external_data_helper import load_external_data, runtime_to_persistence
-from onnx.onnx_pb import TensorProto
 
 if sys.byteorder != 'little':
     raise RuntimeError(
@@ -17,11 +18,11 @@ if sys.byteorder != 'little':
         'systems yet.')
 
 
-def combine_pairs_to_complex(fa):
+def combine_pairs_to_complex(fa):  # type: (Sequence[int]) -> Sequence[np.complex64]
     return [complex(fa[i * 2], fa[i * 2 + 1]) for i in range(len(fa) // 2)]
 
 
-def to_array(tensor):
+def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
     """Converts a tensor def object to a numpy array.
 
     Inputs:
@@ -57,9 +58,9 @@ def to_array(tensor):
         tensor.external_data = runtime_to_persistence(tensor.external_data)
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
     else:
-        data = getattr(tensor, storage_field),
-        if (tensor_dtype == TensorProto.COMPLEX64 or
-                tensor_dtype == TensorProto.COMPLEX128):
+        data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
+        if (tensor_dtype == TensorProto.COMPLEX64
+                or tensor_dtype == TensorProto.COMPLEX128):
             data = combine_pairs_to_complex(data)
         return (
             np.asarray(
@@ -70,7 +71,7 @@ def to_array(tensor):
         )
 
 
-def from_array(arr, name=None):
+def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> TensorProto
     """Converts a numpy array to a tensor def.
 
     Inputs:

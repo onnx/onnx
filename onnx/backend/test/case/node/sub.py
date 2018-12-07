@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Sub(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'Sub',
             inputs=['x', 'y'],
@@ -33,12 +33,11 @@ class Sub(Base):
                name='test_sub')
 
     @staticmethod
-    def export_sub_broadcast():
+    def export_sub_broadcast():  # type: () -> None
         node = onnx.helper.make_node(
             'Sub',
             inputs=['x', 'y'],
             outputs=['z'],
-            broadcast=1,
         )
 
         x = np.random.randn(3, 4, 5).astype(np.float32)

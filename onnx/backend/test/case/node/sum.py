@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Sum(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         data_0 = np.array([3, 0, 2]).astype(np.float32)
         data_1 = np.array([1, 3, 4]).astype(np.float32)
         data_2 = np.array([2, 6, 6]).astype(np.float32)

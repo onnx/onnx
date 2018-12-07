@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class HardSigmoid(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'HardSigmoid',
             inputs=['x'],
@@ -33,7 +33,7 @@ class HardSigmoid(Base):
                name='test_hardsigmoid')
 
     @staticmethod
-    def export_hardsigmoid_default():
+    def export_hardsigmoid_default():  # type: () -> None
         default_alpha = 0.2
         default_beta = 0.5
         node = onnx.helper.make_node(

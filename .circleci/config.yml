@@ -1,0 +1,81 @@
+version: 2
+
+# NOTE: We only perform the merge in build step and not in test step, because
+# all source files will be shared from build to test
+merge_with_master: &merge_with_master
+  name: Merge Onto Master
+  command: |
+    if [[ "${CIRCLE_BRANCH}" != "master" ]]; then
+      git config --global user.email "circleci.ossci@gmail.com"
+      git config --global user.name "CircleCI"
+
+      git config remote.origin.url "$CIRCLE_REPOSITORY_URL"
+      git config --add remote.origin.fetch +refs/heads/master:refs/remotes/origin/master
+      git fetch --tags --progress "$CIRCLE_REPOSITORY_URL" +refs/heads/master:refs/remotes/origin/master --depth=50 --quiet
+
+      export GIT_MERGE_TARGET=`git log -n 1 --pretty=format:"%H" origin/master`
+      echo "GIT_MERGE_TARGET: " ${GIT_MERGE_TARGET}
+      export GIT_COMMIT=${CIRCLE_SHA1}
+      echo "GIT_COMMIT: " ${GIT_COMMIT}
+
+      git checkout -f ${GIT_COMMIT}
+      git reset --hard ${GIT_COMMIT}
+      git merge --no-edit --no-ff ${GIT_MERGE_TARGET}
+    fi
+
+update_submodule: &update_submodule
+  name: Update Submodule
+  command: |
+    git submodule sync
+    git submodule update --recursive --init
+
+linux_default: &linux_default
+  resource_class: large
+  machine:
+    image: default
+  steps:
+  - checkout
+  - run:
+      <<: *merge_with_master
+  - run:
+      <<: *update_submodule
+  - run:
+      name: Launch Docker Container
+      no_output_timeout: "1h"
+      command: |
+        set -e
+        export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_ECR_READ_WRITE}
+        export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_ECR_READ_WRITE}
+        sudo pip install awscli==1.16.35 -qqq
+        eval $(aws ecr get-login --region us-east-1 --no-include-email)
+
+        docker pull ${DOCKER_IMAGE}
+
+        sudo pkill -SIGHUP dockerd
+        WORKDIR=/var/lib/jenkins/workspace
+        pid=$(docker run -t -d -w $WORKDIR ${DOCKER_IMAGE})
+        docker cp /home/circleci/project/. "$pid:$WORKDIR"
+        docker exec -u jenkins ${pid} sudo chown -R jenkins ${WORKDIR}
+        echo ${pid} > .docker_pid
+  - run:
+      name: Build
+      no_output_timeout: "1h"
+      command: |
+        docker exec -e CIRCLE_JOB=${CIRCLE_JOB} -e SCCACHE_BUCKET=${SCCACHE_BUCKET} -e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY_FOR_SCCACHE_S3_BUCKET} -u jenkins $(cat .docker_pid) .circleci/build.sh
+  - run:
+      name: Test
+      no_output_timeout: "1h"
+      command: |
+        docker exec -e CIRCLE_JOB=${CIRCLE_JOB} -u jenkins $(cat .docker_pid) .circleci/test.sh
+
+jobs:
+  py2-gcc7-ubuntu16.04:
+    environment:
+      DOCKER_IMAGE: "308535385114.dkr.ecr.us-east-1.amazonaws.com/caffe2/py2-gcc7-ubuntu16.04:230"
+    <<: *linux_default
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - py2-gcc7-ubuntu16.04

@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <unordered_set>
+#include "onnx/defs/function.h"
+#include "onnx/defs/schema.h"
+#include "onnx/onnx-operators_pb.h"
 #include "onnx/onnx_pb.h"
 #include "onnx/string_utils.h"
 
@@ -26,27 +29,56 @@ class ValidationError final : public std::runtime_error {
   std::string expanded_message_;
 };
 
-#define fail_check(...) \
-  throw ONNX_NAMESPACE::checker::ValidationError(ONNX_NAMESPACE::MakeString(__VA_ARGS__));
+#define fail_check(...)                           \
+  throw ONNX_NAMESPACE::checker::ValidationError( \
+      ONNX_NAMESPACE::MakeString(__VA_ARGS__));
 
 class CheckerContext final {
-  int ir_version;
-  std::unordered_map<std::string, int> opset_imports;
-
  public:
   int get_ir_version() const {
-    return ir_version;
+    return ir_version_;
   }
   void set_ir_version(int v) {
-    ir_version = v;
+    ir_version_ = v;
   }
   const std::unordered_map<std::string, int>& get_opset_imports() const {
-    return opset_imports;
+    return opset_imports_;
   }
   void set_opset_imports(std::unordered_map<std::string, int> imps) {
-    opset_imports = std::move(imps);
+    opset_imports_ = std::move(imps);
   }
-  explicit CheckerContext() : ir_version(-1) {}
+  bool is_main_graph() const {
+    return is_main_graph_;
+  }
+  void set_is_main_graph(bool is_main_graph) {
+    is_main_graph_ = is_main_graph;
+  }
+
+  void set_schema_registry(const ISchemaRegistry* schema_registry) {
+    schema_registry_ = schema_registry;
+  }
+
+  const ISchemaRegistry* get_schema_registry() const {
+    return schema_registry_;
+  }
+
+  void set_func_registry(const IFunctionBuilderRegistry* func_registry) {
+    func_registry_ = func_registry;
+  }
+
+  const IFunctionBuilderRegistry* get_func_registry() const {
+    return func_registry_;
+  }
+
+  explicit CheckerContext() : ir_version_(-1) {}
+
+ private:
+  int ir_version_;
+  std::unordered_map<std::string, int> opset_imports_;
+  bool is_main_graph_ = true;
+  const ISchemaRegistry* schema_registry_ = OpSchemaRegistry::Instance();
+  const IFunctionBuilderRegistry* func_registry_ =
+      &FunctionBuilderRegistry::OnnxInstance();
 };
 
 struct LexicalScopeContext final {
@@ -68,6 +100,18 @@ void check_graph(
     const GraphProto& graph,
     const CheckerContext&,
     const LexicalScopeContext&);
+void check_function(
+    const FunctionProto& function,
+    const CheckerContext&,
+    const LexicalScopeContext&);
+
 void check_model(const ModelProto& model);
+
+void VerifyFunctionNode(
+    const NodeProto&,
+    const FunctionProto&,
+    const CheckerContext&,
+    const LexicalScopeContext&);
+
 } // namespace checker
 } // namespace ONNX_NAMESPACE

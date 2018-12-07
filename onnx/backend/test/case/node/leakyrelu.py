@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class LeakyRelu(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'LeakyRelu',
             inputs=['x'],
@@ -33,7 +33,7 @@ class LeakyRelu(Base):
                name='test_leakyrelu')
 
     @staticmethod
-    def export_leakyrelu_default():
+    def export_leakyrelu_default():  # type: () -> None
         default_alpha = 0.01
         node = onnx.helper.make_node(
             'LeakyRelu',

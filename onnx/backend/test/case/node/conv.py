@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class Conv(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
 
         x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 5, 5) input tensor
                         [5., 6., 7., 8., 9.],
@@ -57,7 +57,7 @@ class Conv(Base):
                name='test_basic_conv_without_padding')
 
     @staticmethod
-    def export_conv_with_strides():
+    def export_conv_with_strides():  # type: () -> None
 
         x = np.array([[[[0., 1., 2., 3., 4.],  # (1, 1, 7, 5) input tensor
                         [5., 6., 7., 8., 9.],

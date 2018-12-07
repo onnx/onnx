@@ -4,16 +4,22 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from collections import defaultdict
 import io
 import os
-from collections import defaultdict
+import sys
 
-from onnx import defs
-from onnx.defs import OpSchema
+import numpy as np  # type: ignore
+
+from onnx import defs, FunctionProto, helper, OperatorStatus
+from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
+from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
+
 
 SNIPPETS = collect_snippets()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
+
 
 if ONNX_ML:
     ext = '-ml.md'
@@ -21,49 +27,64 @@ else:
     ext = '.md'
 
 
-def display_number(v):
+def display_number(v):  # type: (int) -> Text
     if defs.OpSchema.is_infinite(v):
         return '&#8734;'
-    return str(v)
+    return Text(v)
 
 
-def should_render_domain(domain):
-    if domain == 'ai.onnx.ml' and not ONNX_ML:
+def should_render_domain(domain):  # type: (Text) -> bool
+    if domain == ONNX_ML_DOMAIN and not ONNX_ML:
         return False
-    elif ONNX_ML and domain != 'ai.onnx.ml':
+    elif ONNX_ML and domain != ONNX_ML_DOMAIN:
         return False
     return True
 
 
-def display_attr_type(v):
+def format_name_with_domain(domain, schema_name):  # type: (Text, Text) -> Text
+    if domain:
+        return '{}.{}'.format(domain, schema_name)
+    else:
+        return schema_name
+
+
+def display_attr_type(v):  # type: (OpSchema.AttrType) -> Text
     assert isinstance(v, OpSchema.AttrType)
-    s = str(v)
+    s = Text(v)
     s = s[s.rfind('.') + 1:].lower()
     if s[-1] == 's':
         s = 'list of ' + s
     return s
 
 
-def display_domain(domain):
+def display_domain(domain):  # type: (Text) -> Text
     if domain:
-        return "operator set '{}'".format(domain)
+        return "the '{}' operator set".format(domain)
     else:
         return "the default ONNX operator set"
 
 
-def display_version_link(name, version):
+def display_domain_short(domain):  # type: (Text) -> Text
+    if domain:
+        return domain
+    else:
+        return 'ai.onnx (default)'
+
+
+def display_version_link(name, version):  # type: (Text, int) -> Text
     changelog_md = 'Changelog' + ext
     name_with_ver = '{}-{}'.format(name, version)
     return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
 
 
-def display_schema(schema, versions):
-    s = ''
+def display_function_version_link(name, version):  # type: (Text, int) -> Text
+    changelog_md = 'FunctionsChangelog' + ext
+    name_with_ver = '{}-{}'.format(name, version)
+    return '<a href="{}#{}">{}</a>'.format(changelog_md, name_with_ver, name_with_ver)
 
-    if schema.domain:
-        domain_prefix = '{}.'.format(schema.domain)
-    else:
-        domain_prefix = ''
+
+def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) -> Text
+    s = ''
 
     # doc
     if schema.doc:
@@ -73,31 +94,48 @@ def display_schema(schema, versions):
         s += '\n'
 
     # since version
-    s += '\n#### Versioning\n'
-    s += '\nThis operator is used if you are using version {} '.format(schema.since_version)
-    s += 'of {} until the next BC-breaking change to this operator; e.g., it will be used if your protobuf has:\n\n'.format(
-        display_domain(schema.domain))
-    s += '~~~~\n'
-    s += 'opset_import {\n'
-    s += '  version = {}\n'.format(schema.since_version)
-    if schema.domain:
-        s += "  domain = '{}'\n".format(schema.domain)
-    s += '}\n'
-    s += '~~~~\n'
+    s += '\n#### Version\n'
+    s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
+    s += ' of {}.\n'.format(display_domain(schema.domain))
     if len(versions) > 1:
         # TODO: link to the Changelog.md
         s += '\nOther versions of this operator: {}\n'.format(
-            ', '.join(display_version_link(domain_prefix + s.name, s.since_version) for s in versions[:-1]))
+            ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
+                                           v.since_version) for v in versions[:-1]))
+
+    # If this schema is deprecated, don't display any of the following sections
+    if schema.deprecated:
+        return s
 
     # attributes
     if schema.attributes:
         s += '\n#### Attributes\n\n'
         s += '<dl>\n'
         for _, attr in sorted(schema.attributes.items()):
+            # option holds either required or default value
+            opt = ''
+            if attr.required:
+                opt = 'required'
+            elif attr.default_value.name:
+                default_value = helper.get_attribute_value(attr.default_value)
+
+                def format_value(value):  # type: (Any) -> Text
+                    if isinstance(value, float):
+                        value = np.round(value, 5)
+                    if isinstance(value, (bytes, bytearray)) and sys.version_info[0] == 3:
+                        value = value.decode('utf-8')
+                    return str(value)
+
+                if isinstance(default_value, list):
+                    default_value = [format_value(val) for val in default_value]
+                else:
+                    default_value = format_value(default_value)
+                opt = 'default is {}'.format(default_value)
+
             s += '<dt><tt>{}</tt> : {}{}</dt>\n'.format(
                 attr.name,
                 display_attr_type(attr.type),
-                ' (required)' if attr.required else '')
+                ' ({})'.format(opt) if opt else '')
             s += '<dd>{}</dd>\n'.format(attr.description)
         s += '</dl>\n'
 
@@ -114,7 +152,10 @@ def display_schema(schema, versions):
             if OpSchema.FormalParameterOption.Optional == input.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == input.option:
-                option_str = " (variadic)"
+                if input.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
             s += '<dd>{}</dd>\n'.format(input.description)
         s += '</dl>\n'
@@ -133,7 +174,10 @@ def display_schema(schema, versions):
             if OpSchema.FormalParameterOption.Optional == output.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == output.option:
-                option_str = " (variadic)"
+                if output.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
             s += '<dd>{}</dd>\n'.format(output.description)
         s += '</dl>\n'
@@ -157,12 +201,69 @@ def display_schema(schema, versions):
     return s
 
 
-def support_level_str(level):
+def display_function(function, versions, domain=ONNX_DOMAIN):  # type: (FunctionProto, List[int], Text) -> Text
+    s = ''
+
+    if domain:
+        domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
+    else:
+        domain_prefix = ''
+
+    # doc
+    if function.doc_string:
+        s += '\n'
+        s += '\n'.join('  ' + line
+                       for line in function.doc_string.lstrip().splitlines())
+        s += '\n'
+
+    # since version
+    s += '\n#### Version\n'
+    s += '\nThis version of the function has been available since version {}'.format(function.since_version)
+    s += ' of {}.\n'.format(display_domain(domain_prefix))
+    if len(versions) > 1:
+        s += '\nOther versions of this function: {}\n'.format(
+            ', '.join(display_function_version_link(domain_prefix + function.name, v) for v in versions if v != function.since_version))
+
+    # inputs
+    s += '\n#### Inputs'
+    s += '\n\n'
+    if function.input:
+        s += '<dl>\n'
+        for input in function.input:
+            s += '<dt>{}; </dt>\n'.format(input)
+        s += '<br/></dl>\n'
+
+    # outputs
+    s += '\n#### Outputs'
+    s += '\n\n'
+    if function.output:
+        s += '<dl>\n'
+        for output in function.output:
+            s += '<dt>{}; </dt>\n'.format(output)
+        s += '<br/></dl>\n'
+
+        # attributes
+    if function.attribute:
+        s += '\n#### Attributes\n\n'
+        s += '<dl>\n'
+        for attr in function.attribute:
+            s += '<dt>{};<br/></dt>\n'.format(attr)
+        s += '</dl>\n'
+
+    return s
+
+
+def support_level_str(level):  # type: (OpSchema.SupportType) -> Text
     return \
         "<sub>experimental</sub> " if level == OpSchema.SupportType.EXPERIMENTAL else ""
 
 
-def main(args):
+def function_status_str(status=OperatorStatus.Value("EXPERIMENTAL")):  # type: ignore
+    return \
+        "<sub>experimental</sub> " if status == OperatorStatus.Value('EXPERIMENTAL') else ""  # type: ignore
+
+
+def main(args):  # type: (Type[Args]) -> None
     with io.open(args.changelog, 'w', newline='') as fout:
         fout.write('## Operator Changelog\n')
         fout.write(
@@ -171,32 +272,66 @@ def main(args):
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> version -> [schema]
-        index = defaultdict(lambda: defaultdict(list))
+        dv_index = defaultdict(lambda: defaultdict(list))  # type: Dict[Text, Dict[int, List[OpSchema]]]
         for schema in defs.get_all_schemas_with_history():
-            index[schema.domain][schema.since_version].append(schema)
+            dv_index[schema.domain][schema.since_version].append(schema)
 
         fout.write('\n')
 
-        for domain, versionmap in sorted(index.items()):
+        for domain, versionmap in sorted(dv_index.items()):
             if not should_render_domain(domain):
                 continue
 
-            if domain:
-                s = '# {}\n'.format(domain)
-                domain_prefix = '{}.'.format(domain)
-            else:
-                s = '# ai.onnx (default)\n'
-                domain_prefix = ''
+            s = '# {}\n'.format(display_domain_short(domain))
 
             for version, unsorted_schemas in sorted(versionmap.items()):
                 s += '## Version {} of {}\n'.format(version, display_domain(domain))
                 for schema in sorted(unsorted_schemas, key=lambda s: s.name):
-                    name_with_ver = '{}-{}'.format(domain_prefix +
-                                                   schema.name, schema.since_version)
-                    s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
+                    name_with_ver = '{}-{}'.format(format_name_with_domain(domain, schema.name),
+                                                   schema.since_version)
+                    s += ('### <a name="{}"></a>**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(name_with_ver, name_with_ver)
                     s += display_schema(schema, [schema])
                     s += '\n'
 
+            fout.write(s)
+
+    with io.open(args.fn_changelog, 'w', newline='') as fout:
+        fout.write('## Function Changelog\n')
+        fout.write(
+            "*This file is automatically generated from the\n"
+            "            [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).\n"
+            "            Do not modify directly and instead edit function definitions.*\n")
+
+        if os.getenv('ONNX_ML'):
+            all_functions = defs.get_functions(ONNX_ML_DOMAIN)
+        else:
+            all_functions = defs.get_functions('')
+
+        changelog_versionmap = defaultdict(list)  # type: Dict[int, List[FunctionProto]]
+        for fn_name, functions in sorted(all_functions.items()):
+            for func in functions:
+                changelog_versionmap[func.since_version].append(func)
+
+        if os.getenv('ONNX_ML'):
+            s = '## {}\n'.format(ONNX_ML_DOMAIN)
+            domain_display_name = ONNX_ML_DOMAIN
+            domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
+        else:
+            s = '# ai.onnx (default)\n'
+            domain_display_name = 'ai.onnx (default)'
+            domain_prefix = ''
+        fout.write(s)
+
+        for version, function_list in sorted(changelog_versionmap.items()):
+            s = ""
+            for function in function_list:
+                s += '## Version {} of domain {}\n'.format(version, domain_display_name)
+                name_with_ver = '{}-{}'.format(domain_prefix
+                                               + fn_name, function.since_version)
+                s += '### <a name="{}"></a>**{}**</a>\n'.format(name_with_ver, name_with_ver)
+                available_versions = [func.since_version for func in all_functions[function.name]]
+                s += display_function(function, available_versions, domain_prefix)
+                s += '\n'
             fout.write(s)
 
     with io.open(args.output, 'w', newline='') as fout:
@@ -207,58 +342,60 @@ def main(args):
             "            Do not modify directly and instead edit operator definitions.*\n")
 
         # domain -> support level -> name -> [schema]
-        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+        index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))  # type: Dict[Text, Dict[int, Dict[Text, List[OpSchema]]]]
         for schema in defs.get_all_schemas_with_history():
             index[schema.domain][int(schema.support_level)][schema.name].append(schema)
 
         fout.write('\n')
 
-        # Table of contents
-        for domain, supportmap in sorted(index.items()):
+        # Preprocess the Operator Schemas
+        # [(domain, [(support_level, [(schema name, current schema, all versions schemas)])])]
+        operator_schemas = list()  # type: List[Tuple[Text, List[Tuple[int, List[Tuple[Text, OpSchema, List[OpSchema]]]]]]]
+        exsting_ops = set()  # type: Set[Text]
+        for domain, _supportmap in sorted(index.items()):
             if not should_render_domain(domain):
                 continue
 
-            if domain:
-                s = '* {}\n'.format(domain)
-                domain_prefix = '{}.'.format(domain)
-            else:
-                s = '* ai.onnx (default)\n'
-                domain_prefix = ''
-            fout.write(s)
-
-            for _, namemap in sorted(supportmap.items()):
-                for n, unsorted_versions in sorted(namemap.items()):
+            processed_supportmap = list()
+            for _support, _namemap in sorted(_supportmap.items()):
+                processed_namemap = list()
+                for n, unsorted_versions in sorted(_namemap.items()):
                     versions = sorted(unsorted_versions, key=lambda s: s.since_version)
                     schema = versions[-1]
+                    if schema.name in exsting_ops:
+                        continue
+                    exsting_ops.add(schema.name)
+                    processed_namemap.append((n, schema, versions))
+                processed_supportmap.append((_support, processed_namemap))
+            operator_schemas.append((domain, processed_supportmap))
+
+        # Table of contents
+        for domain, supportmap in operator_schemas:
+            s = '* {}\n'.format(display_domain_short(domain))
+            fout.write(s)
+
+            for _, namemap in supportmap:
+                for n, schema, versions in namemap:
                     s = '  * {}<a href="#{}">{}</a>\n'.format(
                         support_level_str(schema.support_level),
-                        domain_prefix + n, domain_prefix + n)
+                        format_name_with_domain(domain, n),
+                        format_name_with_domain(domain, n))
                     fout.write(s)
 
         fout.write('\n')
 
-        for domain, supportmap in sorted(index.items()):
-            if not should_render_domain(domain):
-                continue
-
-            if domain:
-                s = '## {}\n'.format(domain)
-                domain_prefix = '{}.'.format(domain)
-            else:
-                s = '## ai.onnx (default)\n'
-                domain_prefix = ''
+        for domain, supportmap in operator_schemas:
+            s = '## {}\n'.format(display_domain_short(domain))
             fout.write(s)
 
-            for _support, namemap in sorted(supportmap.items()):
-                for op_type, unsorted_versions in sorted(namemap.items()):
-                    versions = sorted(unsorted_versions, key=lambda s: s.since_version)
-                    schema = versions[-1]
-
+            for _, namemap in supportmap:
+                for op_type, schema, versions in namemap:
                     # op_type
-                    s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
+                    s = ('### {}<a name="{}"></a><a name="{}">**{}**' + (' (deprecated)' if schema.deprecated else '') + '</a>\n').format(
                         support_level_str(schema.support_level),
-                        domain_prefix + op_type, domain_prefix + op_type.lower(),
-                        domain_prefix + op_type)
+                        format_name_with_domain(domain, op_type),
+                        format_name_with_domain(domain, op_type.lower()),
+                        format_name_with_domain(domain, op_type))
 
                     s += display_schema(schema, versions)
 
@@ -274,6 +411,54 @@ def main(args):
                             s += '\n\n'
                     fout.write(s)
 
+    with io.open(args.function_output, 'w', newline='') as fout:
+        fout.write('## Functions\n')
+        fout.write(
+            "*This file is automatically generated from the\n"
+            "            [def files](/onnx/defs) via [this script](/onnx/defs/gen_doc.py).\n"
+            "            Do not modify directly and instead edit function definitions.*\n")
+
+        if os.getenv('ONNX_ML'):
+            all_functions = defs.get_functions(ONNX_ML_DOMAIN)
+        else:
+            all_functions = defs.get_functions('')
+
+        if all_functions:
+            if os.getenv('ONNX_ML'):
+                s = '## {}\n'.format(ONNX_ML_DOMAIN)
+                domain_prefix = '{}.'.format(ONNX_ML_DOMAIN)
+            else:
+                s = '## ai.onnx (default)\n'
+                domain_prefix = ''
+            fout.write(s)
+
+            existing_functions = set()  # type: Set[Text]
+            for function_name, functions in sorted(all_functions.items()):
+                for function in sorted(functions, key=lambda s: s.since_version, reverse=True):
+                    if function.name in existing_functions:
+                        continue
+                    existing_functions.add(function.name)
+                    s = '  * {}<a href="#{}">{}</a>\n'.format(
+                        function_status_str(function.status),
+                        domain_prefix + function.name, domain_prefix + function.name)
+                    fout.write(s)
+
+                fout.write('\n')
+
+            fout.write('\n\n')
+
+            for function_name, functions in sorted(all_functions.items()):
+                available_versions = [func.since_version for func in functions]
+                function = sorted(functions, key=lambda s: s.since_version, reverse=True)[0]
+                s = '### {}<a name="{}"></a><a name="{}">**{}**</a>\n'.format(
+                    function_status_str(function.status),
+                    domain_prefix + function.name, domain_prefix + function.name.lower(),
+                    domain_prefix + function.name)
+
+                s += display_function(function, available_versions, domain_prefix)
+                s += '\n\n'
+                fout.write(s)
+
 
 if __name__ == '__main__':
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -281,5 +466,7 @@ if __name__ == '__main__':
 
     class Args(object):
         output = os.path.join(docs_dir, 'Operators' + ext)
+        function_output = os.path.join(docs_dir, 'Functions' + ext)
         changelog = os.path.join(docs_dir, 'Changelog' + ext)
+        fn_changelog = os.path.join(docs_dir, 'FunctionsChangelog' + ext)
     main(Args)

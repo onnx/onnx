@@ -13,3 +13,8 @@ With the goal of democratizing AI, we envision empowering developers to select t
 By providing a common representation of the computation graph, ONNX helps developers choose the right framework for their task, allows authors to focus on innovative enhancements, and enables hardware vendors to streamline optimizations for their platforms.
 
 ONNX is designed to be an open format. We welcome contributions from the community and encourage everyone to adopt ONNX in their ecosystem.
+
+Why two variants?
+-----------------
+
+The base definition of ONNX includes the necessary support for machine learning algorithms based on neural network technologies. ONNX-ML includes additional types and standard operators commonly used in classical machine learning algorithms. The two variants were created in order to explicitly recognize the desire for some frameworks to go beyond neural network algorithms in a standardized fashion, while allowing other frameworks to support only neural networks.

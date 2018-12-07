@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class GlobalAveragePool(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         node = onnx.helper.make_node(
             'GlobalAveragePool',
             inputs=['x'],
@@ -27,7 +27,7 @@ class GlobalAveragePool(Base):
         expect(node, inputs=[x], outputs=[y], name='test_globalaveragepool')
 
     @staticmethod
-    def export_globalaveragepool_precomputed():
+    def export_globalaveragepool_precomputed():  # type: () -> None
 
         node = onnx.helper.make_node(
             'GlobalAveragePool',

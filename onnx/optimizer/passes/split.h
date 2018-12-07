@@ -3,18 +3,22 @@
 
 #pragma once
 
-#include "onnx/optimizer/passes/optimize_pass.h"
+#include "onnx/optimizer/pass.h"
 
-namespace ONNX_NAMESPACE { namespace optimization {
+namespace ONNX_NAMESPACE {
+namespace optimization {
 
-static const char* impure_operators[] = {
-  "RandomNormal",
-  "RandomNormalLike",
-  "RandomUniform",
-  "RandomUniformLike"
+static constexpr const char* impure_operators[] = {
+    "RandomNormal",
+    "RandomNormalLike",
+    "RandomUniform",
+    "RandomUniformLike",
+    "Loop",
+    "If",
+    "Scan",
 };
 
-static bool is_pure_operator(Node * n) {
+static bool is_pure_operator(Node* n) {
   for (auto x : impure_operators) {
     if (n->kind() == Symbol(x)) {
       return false;
@@ -50,33 +54,33 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
   // Any such Values belong to the predict net. Nodes belong to the
   // predict net if they are impure or if any of their inputs do.
 
-  std::unordered_set<Value *> predict_net_values;
+  std::unordered_set<Value*> predict_net_values;
 
-  auto value_belongs_to_predict_net = [&](Value * v) {
+  auto value_belongs_to_predict_net = [&](Value* v) {
     return predict_net_values.count(v) > 0;
   };
-  auto node_belongs_to_predict_net = [&](Node * n) {
+  auto node_belongs_to_predict_net = [&](Node* n) {
     return !is_pure_operator(n) ||
-        std::any_of(n->inputs().begin(),
-                    n->inputs().end(),
-                    value_belongs_to_predict_net);
+        std::any_of(
+            n->inputs().begin(),
+            n->inputs().end(),
+            value_belongs_to_predict_net);
   };
 
   {
     std::unordered_set<std::string> initializer_names(
-      graph.initializer_names().begin(),
-      graph.initializer_names().end());
+        graph.initializer_names().begin(), graph.initializer_names().end());
 
-    for (Value * v : graph.inputs()) {
+    for (Value* v : graph.inputs()) {
       if (initializer_names.count(v->uniqueName()) == 0) {
         predict_net_values.insert(v);
       }
     }
   }
 
-  for (Node * n : graph.nodes()) {
+  for (Node* n : graph.nodes()) {
     if (node_belongs_to_predict_net(n)) {
-      for (Value * v : n->outputs()) {
+      for (Value* v : n->outputs()) {
         predict_net_values.insert(v);
       }
     }
@@ -85,10 +89,10 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
   // Any Value which is not itself in the predict net, but which
   // is used by a Node which is, becomes an output of the init
   // graph and an input of the predict net
-  std::unordered_set<Value *> new_interface;
-  for (Node * n : graph.nodes()) {
+  std::unordered_set<Value*> new_interface;
+  for (Node* n : graph.nodes()) {
     if (node_belongs_to_predict_net(n)) {
-      for (Value * v : n->inputs()) {
+      for (Value* v : n->inputs()) {
         if (!value_belongs_to_predict_net(v)) {
           new_interface.insert(v);
         }
@@ -96,7 +100,7 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
     }
   }
 
-  for (Value * v : graph.outputs()) {
+  for (Value* v : graph.outputs()) {
     if (!value_belongs_to_predict_net(v)) {
       new_interface.insert(v);
     }
@@ -105,10 +109,10 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
   if (init) {
     // Add new outputs corresponding to the boundary between init and
     // predict nets, ensuring that we don't duplicate outputs.
-    for (Value * v : graph.outputs()) {
+    for (Value* v : graph.outputs()) {
       new_interface.erase(v);
     }
-    for (Value * v : new_interface) {
+    for (Value* v : new_interface) {
       if (v->node()->kind() == kUndefined) {
         continue;
       }
@@ -140,21 +144,21 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
     // When creating the predict net, 'undefined' nodes will
     // naturally go into the init net. We need to have a place to
     // copy the ones we want to keep in the predict net.
-    auto * optionalInputDummyNode = graph.create(kUndefined, 1);
+    auto* optionalInputDummyNode = graph.create(kUndefined, 1);
     graph.appendNode(optionalInputDummyNode);
     optionalInputDummyNode->outputs()[0]->setUniqueName("");
 
     // Add new inputs, ensuring that we don't introduce duplicates.
     // Also cut the boundary between init and predict net by replacing
     // the Values along the boundary with replaceAllUsesWith.
-    for (Value * v : graph.inputs()) {
+    for (Value* v : graph.inputs()) {
       new_interface.erase(v);
     }
-    for (Value * v : new_interface) {
+    for (Value* v : new_interface) {
       if (v->node()->kind() == kUndefined) {
         v->replaceAllUsesWith(optionalInputDummyNode->outputs()[0]);
       } else {
-        Value * newv = graph.addInput()->copyMetadata(v);
+        Value* newv = graph.addInput()->copyMetadata(v);
         v->replaceAllUsesWith(newv);
       }
     }
@@ -183,24 +187,42 @@ static void split_init_and_predict(Graph& graph, bool init, bool predict) {
   }
 }
 
-struct SplitInit : public OptimizePass {
+struct SplitInit final : public FullGraphBasedPass {
   explicit SplitInit()
-    : OptimizePass("split_init", API_TYPE::IR) {
-  }
+      : FullGraphBasedPass(
+            PassType::Seperate,
+            PassEfficiency::Complete,
+            PassOptimizationType::Memory) {}
 
-  virtual void optimize(Graph& graph) {
+  std::string getPassName() const override {
+    return "split_init";
+  }
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::Empty;
+  }
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
     split_init_and_predict(graph, true, false);
+    return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
 
-struct SplitPredict : public OptimizePass {
+struct SplitPredict final : public FullGraphBasedPass {
   explicit SplitPredict()
-    : OptimizePass("split_predict", API_TYPE::IR) {
+      : FullGraphBasedPass(
+            PassType::Seperate,
+            PassEfficiency::Complete,
+            PassOptimizationType::Memory) {}
+  std::string getPassName() const override {
+    return "split_predict";
   }
-
-  virtual void optimize(Graph& graph) {
+  PassAnalysisType getPassAnalysisType() const override {
+    return PassAnalysisType::Empty;
+  }
+  std::shared_ptr<PostPassAnalysis> runPass(Graph& graph) override {
     split_init_and_predict(graph, false, true);
+    return std::shared_ptr<PostPassAnalysis>(new PostPassAnalysis());
   }
 };
 
-}} // namespace ONNX_NAMESPACE::optimization
+} // namespace optimization
+} // namespace ONNX_NAMESPACE

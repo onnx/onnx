@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import numpy as np
+import numpy as np  # type: ignore
 
 import onnx
 from ..base import Base
@@ -13,7 +13,7 @@ from . import expect
 class DepthToSpace(Base):
 
     @staticmethod
-    def export():
+    def export():  # type: () -> None
         b, c, h, w = shape = (2, 8, 3, 3)
         blocksize = 2
         node = onnx.helper.make_node(
@@ -30,7 +30,7 @@ class DepthToSpace(Base):
                name='test_depthtospace')
 
     @staticmethod
-    def export_example():
+    def export_example():  # type: () -> None
         node = onnx.helper.make_node(
             'DepthToSpace',
             inputs=['x'],
