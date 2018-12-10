@@ -954,7 +954,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('ConvTranspose', ['X', 'W'], 'Y', kernel_shape=[3, 3], strides=[2, 2], pads=[1, 1, 2, 2])],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 30, 30))])
-    
+
     def test_conv_transpose_with_group(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
@@ -962,7 +962,7 @@ class TestShapeInference(unittest.TestCase):
             [make_node('ConvTranspose', ['X', 'W'], 'Y', strides=[2, 2], pads=[1, 1, 2, 2], group=2)],
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 64, 30, 30))])
-    
+
     def test_conv_transpose_with_group_and_output_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
