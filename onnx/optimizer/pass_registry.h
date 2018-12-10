@@ -21,6 +21,8 @@
 #include "onnx/optimizer/passes/fuse_consecutive_reduce_unsqueeze.h"
 #include "onnx/optimizer/passes/fuse_consecutive_squeezes.h"
 #include "onnx/optimizer/passes/fuse_consecutive_transposes.h"
+#include "onnx/optimizer/passes/fuse_matmul_add_bias_into_gemm.h"
+#include "onnx/optimizer/passes/fuse_pad_into_conv.h"
 #include "onnx/optimizer/passes/fuse_transpose_into_gemm.h"
 #include "onnx/optimizer/passes/lift_lexical_references.h"
 #include "onnx/optimizer/passes/nop.h"
@@ -55,6 +57,8 @@ struct GlobalPassRegistry {
     registerPass<FuseConsecutiveReduceUnsqueeze>();
     registerPass<FuseConsecutiveSqueezes>();
     registerPass<FuseConsecutiveTransposes>();
+    registerPass<FuseMatMulAddBiasIntoGemm>();
+    registerPass<FusePadIntoConv>();
     registerPass<FuseTransposeIntoGemm>();
     registerPass<LiftLexicalReferences>();
     registerPass<SplitInit>();
