@@ -3,4 +3,5 @@
 namespace ONNX_NAMESPACE {
 std::shared_ptr<OpAnnotationRegistry> OpAnnotationRegistry::instance_ =
     std::shared_ptr<OpAnnotationRegistry>(new OpAnnotationRegistry());
+
 } // namespace ONNX_NAMESPACE

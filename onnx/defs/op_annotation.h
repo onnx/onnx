@@ -114,7 +114,8 @@ class OpAnnotationHash {
 
 class ElementwiseAnyOpAnn final : public OpAnnotation {
  public:
-  ElementwiseAnyOpAnn() : OpAnnotation(OpAnnotationFlag::ElementwiseAny) {}
+  ElementwiseAnyOpAnn()
+      : OpAnnotation(OpAnnotationFlag::ElementwiseAny) {}
 };
 class ElementwiseIndependentOpAnn final : public OpAnnotation {
  public:

@@ -512,7 +512,6 @@ OpSchema& OpSchema::AddOpAnnotation(std::shared_ptr<OpAnnotation> annotation) {
 OpSchema& OpSchema::AddOpAnnotation(OpAnnotationFlag annotation_flag) {
   auto registry = OpAnnotationRegistry::GetInstance();
   return this->AddOpAnnotation(registry->GetOpAnnotation(annotation_flag));
-  return *this;
 }
 bool OpSchema::ContainsOpAnnotation(OpAnnotationFlag flag) const {
   return this->op_annotation_flags_.find(flag) !=

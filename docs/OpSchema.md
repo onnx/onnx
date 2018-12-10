@@ -48,9 +48,12 @@ struct InferenceContext {
   virtual ~InferenceContext() {}
 };
 ```
+
+For more information on Shape Inference please refer to the [shape inference documentation](https://github.com/onnx/onnx/blob/master/docs/ShapeInference.md).
+
 ## Annotation
 Op Annotations provide us with a way to explain the general properties of the Op. These annotations are completely optional but become very useful during the ONNX optimization problem. They provide a level of generalizability to our optimization framework by allowing us not to rely on individual ops but rather high level information about how they operate. In the example above, we annotate our LeakyRelu Op as being both elementwise and weak monotonic increasing. Because of our annotation we automatically reap the benefits of the `eliminate_nop_monotone_argmax` pass which removes any monotonic Op before an argmax.
 
 For a more detailed description of all the annotations available and their meaning, please refer to `onnx/defs/op_annotation.h`
 ## Documentation
-It is also neccessary to provide a documentation string per Op, which is done through the SetDoc function.
+It is also necessary to provide a documentation string per Op, which is done through the SetDoc function.
