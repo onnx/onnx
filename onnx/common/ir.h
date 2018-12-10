@@ -294,16 +294,16 @@ private:
   use_list uses_;
   bool has_unique_name_;
   std::string unique_name_;
-  ONNX_NAMESPACE::TensorProto_DataType elem_type_;
+  int32_t elem_type_;
   bool has_sizes_;
   std::vector<Dimension> sizes_;
 
 public:
-  Value* setElemType(ONNX_NAMESPACE::TensorProto_DataType elem_type) {
+  Value* setElemType(int32_t elem_type) {
     elem_type_ = elem_type;
     return this;
   }
-  ONNX_NAMESPACE::TensorProto_DataType elemType() const {
+  int32_t elemType() const {
     return elem_type_;
   }
   bool has_sizes() const { return has_sizes_; }
