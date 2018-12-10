@@ -291,7 +291,7 @@ inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
 inline void updateOutputElemType(
     InferenceContext& ctx,
     size_t outputIndex,
-    TensorProto_DataType elemType) {
+    int32_t elemType) {
   auto output_type = ctx.getOutputType(outputIndex);
   if ((output_type != nullptr) &&
       (output_type->value_case() == TypeProto::kTensorType ||
