@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 102/109 (93.58%, 5 generators excluded) common operators.
+Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -1889,6 +1889,27 @@ expect(node, inputs=[x, y], outputs=[z],
 </details>
 
 
+### Erf
+There are 1 test cases, listed as following:
+<details>
+<summary>erf</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Erf',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.random.randn(1, 3, 32, 32).astype(np.float32)
+y = np.vectorize(math.erf)(x).astype(np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_erf')
+```
+
+</details>
+
+
 ### Exp
 There are 1 test cases, listed as following:
 <details>
@@ -2607,6 +2628,26 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias], outputs=[y],
        name='test_instancenorm_epsilon')
+```
+
+</details>
+
+
+### IsNaN
+There are 1 test cases, listed as following:
+<details>
+<summary>isnan</summary>
+
+```python
+node = onnx.helper.make_node(
+    'IsNaN',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
+y = np.isnan(x)
+expect(node, inputs=[x], outputs=[y], name='test_isnan')
 ```
 
 </details>
@@ -5143,6 +5184,55 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 </details>
 
 
+### Scatter
+There are 2 test cases, listed as following:
+<details>
+<summary>scatter_with_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = np.array([
+    [2.0, 1.1, 0.0],
+    [1.0, 0.0, 2.2],
+    [0.0, 2.1, 1.2]
+], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_without_axis')
+```
+
+</details>
+
+
 ### Selu
 There are 2 test cases, listed as following:
 <details>
@@ -5245,6 +5335,27 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = 1.0 / (1.0 + np.exp(np.negative(x)))
 expect(node, inputs=[x], outputs=[y],
        name='test_sigmoid')
+```
+
+</details>
+
+
+### Sign
+There are 1 test cases, listed as following:
+<details>
+<summary>sign</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Sign',
+    inputs=['x'],
+    outputs=['y'],
+)
+
+x = np.array(range(-5, 6)).astype(np.float32)
+y = np.sign(x)
+expect(node, inputs=[x], outputs=[y],
+       name='test_sign')
 ```
 
 </details>
@@ -6191,9 +6302,9 @@ node = onnx.helper.make_node(
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[0:3, 0:10]
-starts = np.array([0, 0], dtype=np.long)
-ends = np.array([3, 10], dtype=np.long)
-axes = np.array([0, 1], dtype=np.long)
+starts = np.array([0, 0], dtype=np.int64)
+ends = np.array([3, 10], dtype=np.int64)
+axes = np.array([0, 1], dtype=np.int64)
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
        name='test_dynamic_slice')
@@ -6211,8 +6322,8 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0, 0, 3], dtype=np.long)
-ends = np.array([20, 10, 4], dtype=np.long)
+starts = np.array([0, 0, 3], dtype=np.int64)
+ends = np.array([20, 10, 4], dtype=np.int64)
 y = x[:, :, 3:4]
 
 expect(node, inputs=[x, starts, ends], outputs=[y],
@@ -6231,9 +6342,9 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1], dtype=np.long)
-ends = np.array([1000], dtype=np.long)
-axes = np.array([1], dtype=np.long)
+starts = np.array([1], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
 y = x[:, 1:1000]
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
@@ -6252,9 +6363,9 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0], dtype=np.long)
-ends = np.array([-1], dtype=np.long)
-axes = np.array([1], dtype=np.long)
+starts = np.array([0], dtype=np.int64)
+ends = np.array([-1], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
 y = x[:, 0:-1]
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
@@ -6273,9 +6384,9 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1000], dtype=np.long)
-ends = np.array([1000], dtype=np.long)
-axes = np.array([1], dtype=np.long)
+starts = np.array([1000], dtype=np.int64)
+ends = np.array([1000], dtype=np.int64)
+axes = np.array([1], dtype=np.int64)
 y = x[:, 1000:1000]
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
