@@ -741,11 +741,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
-  int64_t group = 1;
-  if (ctx.getAttribute("group") != nullptr)
-  {
-    group = ctx.getAttribute("group")->i();
-  }
+  int64_t group = getAttribute(ctx, "group", 1)
 
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
@@ -828,12 +824,13 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   if (output_shape_presented) {
     size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-        // TODO: throw exception?
-        return; // output shape value cannot be smaller than the input shape
-                // value
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
+          // TODO: throw exception?
+          return; // output shape value cannot be smaller than the input shape
+                  // value
+        }
       }
-
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
     return;
@@ -843,13 +840,20 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     size_of_output = input_shape.dim_size() - 2;
     for (int i = 0; i < size_of_output; ++i)
     {
-      int64_t output_shape_dim =
-          strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
-          output_padding[i] + kernel_shape[i] - pads[i] -
-          pads[i + n_input_dims];
-      
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        int64_t output_shape_dim =
+            strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
+            output_padding[i] + kernel_shape[i] - pads[i] -
+            pads[i + n_input_dims];
+        
 
-      final_output_shape->add_dim()->set_dim_value(output_shape_dim);
+        final_output_shape->add_dim()->set_dim_value(output_shape_dim);
+      } else if (input_shape.dim(i + 2).has_dim_param()){
+        final_output_shape->add_dim()->set_dim_param(input_shape.dim(i + 2).dim_param());
+      }else{
+        //input has no neither input_dim nor input_param return..?throw
+        return;
+      }
     }
     return;
   }
