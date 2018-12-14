@@ -9,6 +9,8 @@
 using namespace ONNX_NAMESPACE::shape_inference;
 
 namespace ONNX_NAMESPACE {
+// onnx/defs/controlflow/old.cc
+void ScanInferenceFunctionOpset8(InferenceContext& ctx);
 // onnx/defs/controlflow/defs.cc
 void ScanInferenceFunction(InferenceContext& ctx);
 
@@ -227,8 +229,8 @@ TEST(ShapeInferenceTest, mergeShapeInfo_Mismatches) {
   }
 }
 
-// Check subgraph inferencing via GraphInferencer using a Scan node
-TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
+// Check subgraph inferencing via GraphInferencer using a Scan
+static void doInferencingTest(bool use_scan_opset8) {
   auto* schemaRegistry = OpSchemaRegistry::Instance();
   GraphProto subgraph;
 
@@ -345,7 +347,8 @@ TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
     scan.set_domain(ONNX_DOMAIN);
     scan.set_doc_string("Scan node");
     scan.set_op_type("Scan");
-    scan.add_input(""); // optional sequence lens
+    if (use_scan_opset8)
+      scan.add_input(""); // optional sequence lens
     scan.add_input("loop_state_start");
     scan.add_input("scan_op_in");
     scan.add_output("loop_state_final");
@@ -354,14 +357,16 @@ TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
 
   TypeProto loop_state_in_tensor = simple_tensor_no_shape;
   auto* shape = loop_state_in_tensor.mutable_tensor_type()->mutable_shape();
-  shape->add_dim()->set_dim_value(1); // batch size
+  if (use_scan_opset8)
+    shape->add_dim()->set_dim_value(1); // batch size
   shape->add_dim()->set_dim_value(2); // input size. must match subgraph
 
   TypeProto loop_state_out_tensor = loop_state_in_tensor; // should be unchanged
 
   TypeProto scan_in_tensor = simple_tensor_no_shape;
   shape = scan_in_tensor.mutable_tensor_type()->mutable_shape();
-  shape->add_dim()->set_dim_value(1); // batch size
+  if (use_scan_opset8)
+    shape->add_dim()->set_dim_value(1); // batch size
   shape->add_dim()->set_dim_value(1); // sequence length
   shape->add_dim()->set_dim_value(2); // input size. must match subgraph
 
@@ -372,11 +377,25 @@ TEST(GraphInferencerImplTest, doInferencing_BasicTest) {
   valueTypesByName["scan_op_in"] = &scan_in_tensor;
 
   InferenceContextImpl ctx(scan, valueTypesByName, {}, &graphInfCtx);
-  ScanInferenceFunction(ctx);
+  if (use_scan_opset8)
+    ScanInferenceFunctionOpset8(ctx);
+  else
+    ScanInferenceFunction(ctx);
 
   EXPECT_TRUE(ctx.getNumOutputs() == 2);
   checkType(*ctx.getOutputType(0), loop_state_out_tensor.tensor_type());
   checkType(*ctx.getOutputType(1), scan_out_tensor.tensor_type());
 }
+
+// Check subgraph inferencing via GraphInferencer using a Scan (from opset 8)
+TEST(GraphInferencerImplTest, Scan8_BasicTest) {
+  doInferencingTest(true);
+}
+
+// Check subgraph inferencing via GraphInferencer using a Scan (from opset 9)
+TEST(GraphInferencerImplTest, Scan9_BasicTest) {
+  doInferencingTest(false);
+}
+
 } // namespace Test
 } // namespace ONNX_NAMESPACE

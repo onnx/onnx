@@ -45,7 +45,7 @@ class DataTypeUtils final {
 
   static void FromDataTypeString(
       const std::string& type_str,
-      TensorProto::DataType& tensor_data_type);
+      int32_t& tensor_data_type);
 
   static std::string ToString(
       const TypeProto& type_proto,
@@ -53,7 +53,7 @@ class DataTypeUtils final {
       const std::string& right = "");
 
   static std::string ToDataTypeString(
-      const TensorProto::DataType& tensor_data_type);
+      int32_t tensor_data_type);
 
   static bool IsValidDataTypeString(const std::string& type_str);
 
