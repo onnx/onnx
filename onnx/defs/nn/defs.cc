@@ -1452,15 +1452,15 @@ ONNX_OPERATOR_SET_SCHEMA(
             "valid_outputs",
             "Optional. A 0-D integer tensor representing the number of valid elements in selected_indices, with the valid elements appearing first.",
             "T2",
-            OPTIONAL)
+            OpSchema::Optional)
         .TypeConstraint(
             "T1",
-            {"tensor(float)""},
+            {"tensor(float)"},
             "Constrain input "
             " types to float tensors.")
         .TypeConstraint(
             "T2",
-            {"tensor(int32)""},
+            {"tensor(int32)"},
             "Constrain input "
             " types to int32 tensors.")
         .SetDoc(NonMaxSuppression_doc)
