@@ -1398,4 +1398,96 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(LRN_ver1_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
+static const char* NonMaxSuppression_doc = R"DOC(
+Pruning away boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+Bounding boxes with score less than score_threshold are removed. Bounding boxes are supplied as [y1, x1, y2, x2],
+where (y1, x1) and (y2, x2) are the coordinates of any diagonal pair of box corners and the coordinates
+can be provided as normalized (i.e., lying in the interval [0, 1]) or absolute.
+Note that this algorithm is agnostic to where the origin is in the coordinate system and more generally
+is invariant to orthogonal transformations and translations of the coordinate system;
+thus translating or reflections of the coordinate system result in the same boxes being selected by the algorithm.
+The output of this operation is a set of integers indexing into the input collection of bounding boxes representing the selected boxes.
+The bounding box coordinates corresponding to the selected indices can then be obtained using the gather operation.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NonMaxSuppression,
+    9,
+    OpSchema()
+        .Attr(
+            "max_output_size",
+            "Integer representing the maximum number of boxes to be selected by non max suppression.",
+            AttributeProto::INT)
+        .Attr(
+            "iou_threshold",
+            "Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Value range [0, 1]. The default is 0.0",
+            AttributeProto::FLOAT,
+            0.0f)
+        .Attr(
+            "score_threshold",
+            "Float tensor representing the threshold for deciding when to remove boxes based on score.",
+            AttributeProto::FLOAT)
+        .Attr(
+            "pad_to_max_output_size",
+            "Optional. 1(true) - the output selected_indices is padded to be of length max_output_size. Defaults to 0(false).",
+            AttributeProto::INT,
+            OPTIONAL)
+        .Input(
+            0,
+            "boxes",
+            "An input tensor. 2D tensor with shape [num_boxes, 4].",
+            "T1")
+        .Input(
+            1,
+            "scores",
+            "An input tensor. 1D tensor with shape [num_boxes].",
+            "T1")
+        .Output(
+            0,
+            "selected_indices",
+            "selected indices from the boxes tensor.",
+            "T2")
+        .Output(
+            1,
+            "valid_outputs",
+            "Optional. A 0-D integer tensor representing the number of valid elements in selected_indices, with the valid elements appearing first.",
+            "T2",
+            OPTIONAL)
+        .TypeConstraint(
+            "T1",
+            {"tensor(float)""},
+            "Constrain input "
+            " types to float tensors.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(int32)""},
+            "Constrain input "
+            " types to int32 tensors.")
+        .SetDoc(NonMaxSuppression_doc)
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
+            selected_indices_type->set_elem_type(TensorProto::INT32);
+
+            // If pad_to_max_output_size is set to 1, the output(0) selected_indices will has a fixed shape [max_output_size].
+            auto pad_to_max_output_size = ctx.getAttribute("pad_to_max_output_size");
+            if (pad_to_max_output_size && 1 == pad_to_max_output_size->i()) {
+                auto max_output_size = ctx.getAttribute("max_output_size")->i();
+                selected_indices_type
+                    ->mutable_shape()
+                    ->add_dim()
+                    ->set_dim_value(max_output_size);
+            }
+
+            // valid_outputs is optional, shape is [1]
+            auto num_outputs = ctx.getNumOutputs();
+            if (num_outputs > 1) {
+              auto valid_outputs_shape = ctx.getOutputType(1)->mutable_tensor_type();
+              valid_outputs_shape->set_elem_type(TensorProto::INT32);
+              valid_outputs_shape
+                  ->mutable_shape()
+                  ->add_dim()
+                  ->set_dim_value(1);
+            }
+        }));
+
 } // namespace ONNX_NAMESPACE
