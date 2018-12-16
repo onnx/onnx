@@ -203,7 +203,7 @@ class NonMaxSuppression(Base):
         selected_indices = np.array([0]).astype(np.int32)
 
         expect(node, inputs=[boxes, scores], outputs=[selected_indices], name='test_nonmaxsuppression_identical_boxes')
-        
+
     @staticmethod
     def export_nonmaxsuppression_pad_to_five_output():  # type: () -> None
         node = onnx.helper.make_node(
@@ -228,8 +228,8 @@ class NonMaxSuppression(Base):
         selected_indices = np.array([3, 0, 5, 0, 0]).astype(np.int32)
         valid_outputs = np.array([3]).astype(np.int32)
 
-        expect(node, inputs=[boxes, scores], outputs=[selected_indices], name='test_nonmaxsuppression_pad_to_five_output')
-        
+        expect(node, inputs=[boxes, scores], outputs=[selected_indices, valid_outputs], name='test_nonmaxsuppression_pad_to_five_output')
+
     @staticmethod
     def export_nonmaxsuppression_pad_to_six_output():  # type: () -> None
         node = onnx.helper.make_node(
@@ -254,5 +254,4 @@ class NonMaxSuppression(Base):
         selected_indices = np.array([3, 0, 0, 0, 0, 0]).astype(np.int32)
         valid_outputs = np.array([2]).astype(np.int32)
 
-        expect(node, inputs=[boxes, scores], outputs=[selected_indices], name='test_nonmaxsuppression_pad_to_six_output')
-
+        expect(node, inputs=[boxes, scores], outputs=[selected_indices, valid_outputs], name='test_nonmaxsuppression_pad_to_six_output')
