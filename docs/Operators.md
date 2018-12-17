@@ -7235,7 +7235,7 @@ scores = np.array([0.9, 0.75, 0.6, 0.95, 0.5, 0.3]).astype(np.float32)
 selected_indices = np.array([3, 0, 5, 0, 0]).astype(np.int32)
 valid_outputs = np.array([3]).astype(np.int32)
 
-expect(node, inputs=[boxes, scores], outputs=[selected_indices], name='test_nonmaxsuppression_pad_to_five_output')
+expect(node, inputs=[boxes, scores], outputs=[selected_indices, valid_outputs], name='test_nonmaxsuppression_pad_to_five_output')
 ```
 
 </details>
@@ -7267,7 +7267,7 @@ scores = np.array([0.9, 0.75, 0.6, 0.95, 0.5, 0.3]).astype(np.float32)
 selected_indices = np.array([3, 0, 0, 0, 0, 0]).astype(np.int32)
 valid_outputs = np.array([2]).astype(np.int32)
 
-expect(node, inputs=[boxes, scores], outputs=[selected_indices], name='test_nonmaxsuppression_pad_to_six_output')
+expect(node, inputs=[boxes, scores], outputs=[selected_indices, valid_outputs], name='test_nonmaxsuppression_pad_to_six_output')
 ```
 
 </details>
