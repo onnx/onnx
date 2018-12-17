@@ -12008,8 +12008,7 @@ expect(node, inputs=[x, y], outputs=[z],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Inputs (1 - &#8734;)
 
 <dl>
@@ -12040,8 +12039,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12096,8 +12094,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12145,8 +12142,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12214,8 +12210,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Inputs (3 - 4)
 
 <dl>
@@ -12373,8 +12368,7 @@ expect(node, inputs=[x, starts, ends, axes], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12414,8 +12408,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12458,8 +12451,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12499,8 +12491,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12539,8 +12530,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12578,8 +12568,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
@@ -12619,8 +12608,7 @@ This version of the operator has been available since version 1 of the default O
 
 #### Version
 
-This version of the operator has been available since version 1 of the default ONNX operator set.
-
+No versioning maintained for experimental ops.
 #### Attributes
 
 <dl>
