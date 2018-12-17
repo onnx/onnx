@@ -136,13 +136,18 @@ def set_model_props(model, dict_value):  # type: (ModelProto, Dict[Text, Text]) 
         # model.metadata_properties.append(entry)
 
 
-def set_external_data(tensor, location, offset=None, length=None, checksum=None, basepath=None):
-    # type: (TensorProto, Text, int, int, Text, Text) -> None
+def set_external_data(tensor,  # type: TensorProto
+                      location,  # type: Text
+                      offset=None,  # type: Optional[int]
+                      length=None,  # type: Optional[int]
+                      checksum=None,  # type: Optional[Text]
+                      basepath=None  # type: Optional[Text]
+                      ):  # type: (...) -> None
     del tensor.external_data[:]
     for (k, v) in {
         'location': location,
-        'offset': offset,
-        'length': length,
+        'offset': int(offset) if offset is not None else None,
+        'length': int(length) if length is not None else None,
         'checksum': checksum,
         'basepath': basepath
     }.items():

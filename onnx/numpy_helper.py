@@ -10,7 +10,7 @@ from onnx import TensorProto
 from onnx import mapping
 from typing import Sequence, Any, Optional, Text
 
-from onnx.external_data_helper import load_external_data
+from onnx.external_data_helper import load_external_data, uses_external_data
 
 if sys.byteorder != 'little':
     raise RuntimeError(
@@ -50,7 +50,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         return np.frombuffer(
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
-    elif tensor.HasField("data_location") and tensor.data_location == "external":
+    elif uses_external_data(tensor):
         # Read data from an external file.
         raw_data = load_external_data(tensor)
         return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)

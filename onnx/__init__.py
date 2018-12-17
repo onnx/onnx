@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 
 import os
 
-from onnx.external_data_helper import annotate_external_data_tensors, write_external_data_tensors
+from onnx.external_data_helper import add_basepath_to_external_data_tensors, \
+    write_external_data_tensors
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
 from .version import version as __version__  # noqa
@@ -40,12 +41,11 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
             writable.write(str)
 
 
-def _get_model_path(f):  # type: (Union[IO[bytes], Text]) -> str
-    if hasattr(f, 'name'):
-        return os.path.abspath(f.name)
-    else:
+# f should be either a readable file or a file path
+def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> str
+    if isinstance(f, Text):
         return os.path.abspath(f)
-
+    return os.path.abspath(f.name)
 
 
 def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) -> bytes
@@ -111,8 +111,8 @@ def load_model(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any])
     s = _load_bytes(f)
     model = load_model_from_string(s, format=format)
 
-    basepath = os.path.dirname(_get_model_path(f))
-    model = annotate_external_data_tensors(model, basepath)
+    basepath = os.path.dirname(_get_file_path(f))
+    model = add_basepath_to_external_data_tensors(model, basepath)
     return model
 
 
@@ -168,7 +168,10 @@ def save_model(proto, f, format=None):  # type: (Union[ModelProto, bytes], Union
     f can be a file-like object (has "write" function) or a string containing a file name
     format is for future use
     '''
-    basepath = os.path.dirname(_get_model_path(f))
+    if isinstance(proto, bytes):
+        proto = _deserialize(proto, ModelProto())
+
+    basepath = os.path.dirname(_get_file_path(f))
     proto = write_external_data_tensors(proto, basepath)
     s = _serialize(proto)
     _save_bytes(s, f)
