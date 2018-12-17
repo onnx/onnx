@@ -7048,7 +7048,7 @@ This version of the operator has been available since version 9 of the default O
 <dd>Float representing the threshold for deciding whether boxes overlap too much with respect to IOU. Value range [0, 1]. The default is 0.0</dd>
 <dt><tt>max_output_size</tt> : int (required)</dt>
 <dd>Integer representing the maximum number of boxes to be selected by non max suppression.</dd>
-<dt><tt>pad_to_max_output_size</tt> : int</dt>
+<dt><tt>pad_to_max_output_size</tt> : int (default is 0)</dt>
 <dd>Optional. 1(true) - the output selected_indices is padded to be of length max_output_size. Defaults to 0(false).</dd>
 <dt><tt>score_threshold</tt> : float (required)</dt>
 <dd>Float tensor representing the threshold for deciding when to remove boxes based on score.</dd>
@@ -7057,29 +7057,23 @@ This version of the operator has been available since version 9 of the default O
 #### Inputs
 
 <dl>
-<dt><tt>boxes</tt> : T1</dt>
+<dt><tt>boxes</tt> : tensor(float)</dt>
 <dd>An input tensor. 2D tensor with shape [num_boxes, 4].</dd>
-<dt><tt>scores</tt> : T1</dt>
+<dt><tt>scores</tt> : tensor(float)</dt>
 <dd>An input tensor. 1D tensor with shape [num_boxes].</dd>
 </dl>
 
 #### Outputs (1 - 2)
 
 <dl>
-<dt><tt>selected_indices</tt> : T2</dt>
+<dt><tt>selected_indices</tt> : tensor(int32)</dt>
 <dd>selected indices from the boxes tensor.</dd>
-<dt><tt>valid_outputs</tt> (optional) : T2</dt>
-<dd>Optional. A 0-D integer tensor representing the number of valid elements in selected_indices, with the valid elements appearing first.</dd>
+<dt><tt>valid_outputs</tt> (optional) : tensor(int32)</dt>
+<dd>Optional. A integer representing the number of valid elements in selected_indices. The valid elements appearing first.</dd>
 </dl>
 
 #### Type Constraints
 
-<dl>
-<dt><tt>T1</tt> : tensor(float)</dt>
-<dd>Constrain input  types to float tensors.</dd>
-<dt><tt>T2</tt> : tensor(int32)</dt>
-<dd>Constrain input  types to int32 tensors.</dd>
-</dl>
 
 
 #### Examples

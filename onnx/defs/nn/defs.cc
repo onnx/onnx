@@ -1431,38 +1431,28 @@ ONNX_OPERATOR_SET_SCHEMA(
             "pad_to_max_output_size",
             "Optional. 1(true) - the output selected_indices is padded to be of length max_output_size. Defaults to 0(false).",
             AttributeProto::INT,
-            OPTIONAL)
+            static_cast<int64_t>(0))
         .Input(
             0,
             "boxes",
             "An input tensor. 2D tensor with shape [num_boxes, 4].",
-            "T1")
+            "tensor(float)")
         .Input(
             1,
             "scores",
             "An input tensor. 1D tensor with shape [num_boxes].",
-            "T1")
+            "tensor(float)")
         .Output(
             0,
             "selected_indices",
             "selected indices from the boxes tensor.",
-            "T2")
+            "tensor(int32)")
         .Output(
             1,
             "valid_outputs",
-            "Optional. A 0-D integer tensor representing the number of valid elements in selected_indices, with the valid elements appearing first.",
-            "T2",
+            "Optional. A integer representing the number of valid elements in selected_indices. The valid elements appearing first.",
+            "tensor(int32)",
             OpSchema::Optional)
-        .TypeConstraint(
-            "T1",
-            {"tensor(float)"},
-            "Constrain input "
-            " types to float tensors.")
-        .TypeConstraint(
-            "T2",
-            {"tensor(int32)"},
-            "Constrain input "
-            " types to int32 tensors.")
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
