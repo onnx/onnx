@@ -1456,12 +1456,12 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
-            selected_indices_type->set_elem_type(TensorProto::INT32);
 
             // If pad_to_max_output_size is set to 1, the output(0) selected_indices will has a fixed shape [max_output_size].
             auto pad_to_max_output_size = ctx.getAttribute("pad_to_max_output_size");
             if (pad_to_max_output_size && 1 == pad_to_max_output_size->i()) {
                 auto max_output_size = ctx.getAttribute("max_output_size")->i();
+                selected_indices_type->clear_shape();
                 selected_indices_type
                     ->mutable_shape()
                     ->add_dim()
@@ -1471,12 +1471,12 @@ ONNX_OPERATOR_SET_SCHEMA(
             // valid_outputs is optional, shape is [1]
             auto num_outputs = ctx.getNumOutputs();
             if (num_outputs > 1) {
-              auto valid_outputs_shape = ctx.getOutputType(1)->mutable_tensor_type();
-              valid_outputs_shape->set_elem_type(TensorProto::INT32);
-              valid_outputs_shape
-                  ->mutable_shape()
-                  ->add_dim()
-                  ->set_dim_value(1);
+                auto valid_outputs_shape = ctx.getOutputType(1)->mutable_tensor_type();
+                valid_outputs_shape->clear_shape();
+                valid_outputs_shape
+                    ->mutable_shape()
+                    ->add_dim()
+                    ->set_dim_value(1);
             }
         }));
 
