@@ -7069,7 +7069,7 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>selected_indices</tt> : tensor(int32)</dt>
 <dd>selected indices from the boxes tensor.</dd>
 <dt><tt>valid_outputs</tt> (optional) : tensor(int32)</dt>
-<dd>Optional. A integer representing the number of valid elements in selected_indices. The valid elements appearing first.</dd>
+<dd>Optional. A integer representing the number of valid elements in selected_indices. The valid elements appearing first. It is usefull when pad_to_max_output_size is set to 1.</dd>
 </dl>
 
 #### Type Constraints

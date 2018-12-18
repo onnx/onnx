@@ -1450,7 +1450,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Output(
             1,
             "valid_outputs",
-            "Optional. A integer representing the number of valid elements in selected_indices. The valid elements appearing first.",
+            "Optional. A integer representing the number of valid elements in selected_indices. The valid elements appearing first. It is usefull when pad_to_max_output_size is set to 1.",
             "tensor(int32)",
             OpSchema::Optional)
         .SetDoc(NonMaxSuppression_doc)
