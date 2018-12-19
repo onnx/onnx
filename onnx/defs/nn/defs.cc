@@ -1456,6 +1456,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(NonMaxSuppression_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
             auto selected_indices_type = ctx.getOutputType(0)->mutable_tensor_type();
+            selected_indices_type->set_elem_type(TensorProto::INT32);
 
             // If pad_to_max_output_size is set to 1, the output(0) selected_indices will has a fixed shape [max_output_size].
             auto pad_to_max_output_size = ctx.getAttribute("pad_to_max_output_size");
@@ -1472,6 +1473,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto num_outputs = ctx.getNumOutputs();
             if (num_outputs > 1) {
                 auto valid_outputs_shape = ctx.getOutputType(1)->mutable_tensor_type();
+                valid_outputs_shape->set_elem_type(TensorProto::INT32);
                 valid_outputs_shape->clear_shape();
                 valid_outputs_shape
                     ->mutable_shape()

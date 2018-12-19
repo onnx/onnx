@@ -1202,6 +1202,20 @@ class TestShapeInference(unittest.TestCase):
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, None),  # shape may change between iterations
              make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
 
+    def test_non_max_suppression(self):  # type: () -> None
+        graph = self._make_graph(
+            [('boxes', TensorProto.FLOAT, (5, 4)),
+             ('scores', TensorProto.FLOAT, (5,))],
+            [make_node("NonMaxSuppression", ['boxes', 'scores'], ['selected_indices', 'valid_outputs'],
+             max_output_size=5, score_threshold=1.0, pad_to_max_output_size=1)],
+            []
+        )
+            
+        self._assert_inferred(
+            graph,
+            [make_tensor_value_info('selected_indices', TensorProto.INT32, (5,)),
+            make_tensor_value_info('valid_outputs', TensorProto.INT32, (1,))]
+        )
 
 if __name__ == '__main__':
     unittest.main()
