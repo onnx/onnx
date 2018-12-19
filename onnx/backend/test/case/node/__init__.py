@@ -18,15 +18,14 @@ _NodeTestCases = []
 
 
 def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
-    if "<U" in str(arr.dtype):
-        elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
-    else:
+    if arr.dtype in onnx.mapping.NP_TYPE_TO_TENSOR_TYPE:
         elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+    elif any(substr in str(arr.dtype) for substr in ["S", "<U"]):
+        elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
     return onnx.helper.make_tensor_value_info(
         name=name,
         elem_type=elem_type,
         shape=arr.shape)
-
 
 def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]

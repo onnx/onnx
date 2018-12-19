@@ -82,18 +82,18 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         raise NotImplementedError("Need to properly implement string.")
     # For numerical types, directly use numpy raw bytes.
     try:
-        if "<U" in str(arr.dtype):
+        dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+        tensor.data_type = dtype
+        tensor.raw_data = arr.tobytes()
+        # note: tobytes() is only after 1.9.
+    except KeyError:
+        if any(substr in str(arr.dtype) for substr in ["S", "<U"]):
             dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
             tensor.data_type = dtype
             for elem in arr:
                 tensor.string_data.append(elem.tobytes())
         else:
-            dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
-            tensor.data_type = dtype
-            tensor.raw_data = arr.tobytes()
-            # note: tobytes() is only after 1.9.
-    except KeyError:
-        raise RuntimeError(
-            "Numpy data type not understood yet: {}".format(str(arr.dtype)))
+            raise RuntimeError(
+                "Numpy data type not understood yet: {}".format(str(arr.dtype)))
 
     return tensor
