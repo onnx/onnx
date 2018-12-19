@@ -27,6 +27,7 @@ def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInf
         elem_type=elem_type,
         shape=arr.shape)
 
+
 def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
            outputs,  # type: Sequence[np.ndarray]
