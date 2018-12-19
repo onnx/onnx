@@ -36,7 +36,7 @@ class TestLoadExternalData(unittest.TestCase):
         with open(os.path.join(self.temp_dir, tensor_filename), 'wb') as data_file:
             data_file.write(tensor.raw_data)
         tensor.ClearField('raw_data')
-        tensor.data_location = "external"
+        tensor.data_location = onnx.TensorProto.EXTERNAL
         return tensor
 
     def create_test_model(self):
@@ -122,7 +122,7 @@ class TestLoadExternalDataSingleFile(unittest.TestCase):
                 tensor.name = tensor_name
                 set_external_data(tensor, location=tensor_filename, offset=next_offset, length=length_written)
                 tensor.ClearField("raw_data")
-                tensor.data_location = "external"
+                tensor.data_location = onnx.TensorProto.EXTERNAL
                 tensors.append(tensor)
                 next_offset = ((data_file.tell() // 4096) + 1) * 4096
 

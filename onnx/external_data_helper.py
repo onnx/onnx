@@ -8,9 +8,7 @@ from itertools import chain
 
 from typing import Iterable
 
-MYPY = False
-if MYPY:
-    from .onnx_pb import TensorProto, ModelProto
+from .onnx_pb import TensorProto, ModelProto
 
 
 class ExternalDataInfo(object):
@@ -126,7 +124,7 @@ def _sanitize_path(path):  # type: (str) -> str
 
 def uses_external_data(tensor):  # type: (TensorProto) -> bool
     """Return true if the tensor stores data in an external location."""
-    return tensor.HasField("data_location") and tensor.data_location == "external"
+    return tensor.HasField("data_location") and tensor.data_location == TensorProto.EXTERNAL
 
 
 def remove_external_data_field(tensor, field_key):  # type: (TensorProto, str) -> None
