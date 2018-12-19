@@ -1210,7 +1210,7 @@ class TestShapeInference(unittest.TestCase):
              max_output_size=5, score_threshold=1.0, pad_to_max_output_size=1)],
             []
         )
-            
+
         self._assert_inferred(
             graph,
             [make_tensor_value_info('selected_indices', TensorProto.INT32, (5,)),
