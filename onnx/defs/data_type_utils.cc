@@ -166,8 +166,7 @@ std::string DataTypeUtils::ToString(
   }
 }
 
-std::string DataTypeUtils::ToDataTypeString(
-    int32_t tensor_data_type) {
+std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
   assert(t.TensorDataTypeToTypeStr().end() != iter);
@@ -429,6 +428,7 @@ TypesWrapper::TypesWrapper() {
   // DataType strings. These should match the DataTypes defined in onnx.proto
   type_str_to_tensor_data_type_["float"] = TensorProto_DataType_FLOAT;
   type_str_to_tensor_data_type_["float16"] = TensorProto_DataType_FLOAT16;
+  type_str_to_tensor_data_type_["bfloat16"] = TensorProto_DataType_BFLOAT16;
   type_str_to_tensor_data_type_["double"] = TensorProto_DataType_DOUBLE;
   type_str_to_tensor_data_type_["int8"] = TensorProto_DataType_INT8;
   type_str_to_tensor_data_type_["int16"] = TensorProto_DataType_INT16;
