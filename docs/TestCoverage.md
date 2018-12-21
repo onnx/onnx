@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
+Node tests have covered 107/114 (93.86%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -3632,6 +3632,135 @@ y = np.random.randn(5).astype(np.float32)
 z = x * y
 expect(node, inputs=[x, y], outputs=[z],
        name='test_mul_bcast')
+```
+
+</details>
+
+
+### MurmurHash3
+There are 7 test cases, listed as following:
+<details>
+<summary>murmurhash3_array_data</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([3, 4]).astype(np.int32)
+Y = np.array([847579505, 1889779975]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_array_data')
+```
+
+</details>
+<details>
+<summary>murmurhash3_default_seed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y']
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([847579505]).astype(np.int32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_default_seed')
+```
+
+</details>
+<details>
+<summary>murmurhash3_non_zero_seed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=42
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([-1823081949]).astype(np.int32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_non_zero_seed')
+```
+
+</details>
+<details>
+<summary>murmurhash3_non_zero_seed_unint_result</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=42
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([2471885347]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_non_zero_seed_unint_result')
+```
+
+</details>
+<details>
+<summary>murmurhash3_zero_seed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([847579505]).astype(np.int32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed')
+```
+
+</details>
+<details>
+<summary>murmurhash3_zero_seed_uint_result</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([847579505]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed_uint_result')
+```
+
+</details>
+<details>
+<summary>murmurhash3_zero_seed_uint_result2</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([4]).astype(np.int32)
+Y = np.array([1889779975]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed_uint_result2')
 ```
 
 </details>

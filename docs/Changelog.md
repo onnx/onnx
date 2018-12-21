@@ -9003,6 +9003,45 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
+### <a name="MurmurHash3-9"></a>**MurmurHash3-9**</a>
+
+  DOC(The underlying implementation is MurmurHash3_x86_32 generating low latency 32bits hash
+  suitable for implementing lookup tables, Bloom filters, count min sketch or feature hashing.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>seed</tt> : int (default is 0)</dt>
+<dd>Seed for the hashing algorithm, unsigned 32-bit integer, default to 0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>An input tensor to hash.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>32-bit hash value.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint32), tensor(int32), tensor(string)</dt>
+<dd>Constrain input type to unsigned or signed 32-bit integer tensor, or string tensor. It should be utf-8 encoded if using unicode.</dd>
+<dt><tt>T2</tt> : tensor(uint32), tensor(int32)</dt>
+<dd>Constrain output type to unsigned or signed 32-bit integer tensor.</dd>
+</dl>
+
 ### <a name="OneHot-9"></a>**OneHot-9**</a>
 
   Produces a one-hot tensor based on inputs.

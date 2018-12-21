@@ -70,6 +70,7 @@
   * <a href="#Min">Min</a>
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
+  * <a href="#MurmurHash3">MurmurHash3</a>
   * <a href="#Neg">Neg</a>
   * <a href="#Not">Not</a>
   * <a href="#OneHot">OneHot</a>
@@ -6962,6 +6963,187 @@ This version of the operator has been available since version 7 of the default O
 <dt><tt>T2</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain output types to integral tensors.</dd>
 </dl>
+
+
+### <a name="MurmurHash3"></a><a name="murmurhash3">**MurmurHash3**</a>
+
+  DOC(The underlying implementation is MurmurHash3_x86_32 generating low latency 32bits hash
+  suitable for implementing lookup tables, Bloom filters, count min sketch or feature hashing.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>seed</tt> : int (default is 0)</dt>
+<dd>Seed for the hashing algorithm, unsigned 32-bit integer, default to 0.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T1</dt>
+<dd>An input tensor to hash.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T2</dt>
+<dd>32-bit hash value.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint32), tensor(int32), tensor(string)</dt>
+<dd>Constrain input type to unsigned or signed 32-bit integer tensor, or string tensor. It should be utf-8 encoded if using unicode.</dd>
+<dt><tt>T2</tt> : tensor(uint32), tensor(int32)</dt>
+<dd>Constrain output type to unsigned or signed 32-bit integer tensor.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>murmurhash3_array_data</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([3, 4]).astype(np.int32)
+Y = np.array([847579505, 1889779975]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_array_data')
+```
+
+</details>
+
+
+<details>
+<summary>murmurhash3_default_seed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y']
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([847579505]).astype(np.int32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_default_seed')
+```
+
+</details>
+
+
+<details>
+<summary>murmurhash3_non_zero_seed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=42
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([-1823081949]).astype(np.int32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_non_zero_seed')
+```
+
+</details>
+
+
+<details>
+<summary>murmurhash3_non_zero_seed_unint_result</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=42
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([2471885347]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_non_zero_seed_unint_result')
+```
+
+</details>
+
+
+<details>
+<summary>murmurhash3_zero_seed</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([847579505]).astype(np.int32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed')
+```
+
+</details>
+
+
+<details>
+<summary>murmurhash3_zero_seed_uint_result</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([3]).astype(np.int32)
+Y = np.array([847579505]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed_uint_result')
+```
+
+</details>
+
+
+<details>
+<summary>murmurhash3_zero_seed_uint_result2</summary>
+
+```python
+node = onnx.helper.make_node(
+    'MurmurHash3',
+    inputs=['X'],
+    outputs=['Y'],
+    seed=0
+
+)
+X = np.array([4]).astype(np.int32)
+Y = np.array([1889779975]).astype(np.uint32)
+
+expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed_uint_result2')
+```
+
+</details>
 
 
 ### <a name="Neg"></a><a name="neg">**Neg**</a>

@@ -1176,19 +1176,19 @@ If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	Sign,
-	9,
-	OpSchema()
-		.SetDoc(Sign_ver9_doc)
-		.Input(0, "input", "Input tensor", "T")
-		.Output(
-			0,
-			"output",
-			"The sign of the input tensor "
-			"computed element-wise. It has the same shape and type of the input.",
-			"T")
-		.TypeConstraint(
-			"T",
+    Sign,
+    9,
+    OpSchema()
+        .SetDoc(Sign_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The sign of the input tensor "
+            "computed element-wise. It has the same shape and type of the input.",
+            "T")
+        .TypeConstraint(
+            "T",
             OpSchema::all_numeric_types(),
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
@@ -1198,20 +1198,54 @@ Computes the error function of the given input tensor element-wise.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	Erf,
-	9,
-	OpSchema()
-		.SetDoc(Erf_ver9_doc)
-		.Input(0, "input", "Input tensor", "T")
-		.Output(
-			0,
-			"output",
-			"The error function of the input tensor "
-			"computed element-wise. It has the same shape and type of the input.",
-			"T")
-		.TypeConstraint(
-			"T",
+    Erf,
+    9,
+    OpSchema()
+        .SetDoc(Erf_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The error function of the input tensor "
+            "computed element-wise. It has the same shape and type of the input.",
+            "T")
+        .TypeConstraint(
+            "T",
             OpSchema::all_numeric_types(),
             "Constrain input and output types to all numeric tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* MurmurHash3_ver9_doc = R"DOC(
+DOC(The underlying implementation is MurmurHash3_x86_32 generating low latency 32bits hash
+suitable for implementing lookup tables, Bloom filters, count min sketch or feature hashing.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    MurmurHash3,
+    9,
+    OpSchema()
+        .SetDoc(MurmurHash3_ver9_doc)
+        .Attr(
+            "seed",
+            "Seed for the hashing algorithm, unsigned 32-bit integer, default to 0.",
+            AttributeProto::INT,
+            static_cast<int64_t>(0LL))
+        .Input(0, "X", "An input tensor to hash.", "T1")
+        .Output(0, "Y", "32-bit hash value.", "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(uint32)", "tensor(int32)", "tensor(string)"},
+            "Constrain input type to unsigned or signed 32-bit integer tensor, or string tensor. It should be utf-8 encoded if using unicode.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(uint32)", "tensor(int32)"},
+            "Constrain output type to unsigned or signed 32-bit integer tensor.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+            // Shape inference
+            if (!hasInputShape(ctx, 0))
+              return;
+            
+            auto& input_shape = getInputShape(ctx, 0);
+            updateOutputShape(ctx, 0, input_shape);
+        }));
 } // namespace ONNX_NAMESPACE
