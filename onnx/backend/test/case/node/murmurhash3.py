@@ -24,7 +24,7 @@ class MurmurHash3(Base):
         Y = np.array([847579505]).astype(np.int32)
 
         expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_default_seed')
-        
+
     @staticmethod
     def export_murmurhash3_zero_seed():  # type: () -> None
         node = onnx.helper.make_node(
@@ -38,7 +38,7 @@ class MurmurHash3(Base):
         Y = np.array([847579505]).astype(np.int32)
 
         expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed')
-        
+
     @staticmethod
     def export_murmurhash3_zero_seed_uint_result():  # type: () -> None
         node = onnx.helper.make_node(
@@ -52,7 +52,7 @@ class MurmurHash3(Base):
         Y = np.array([847579505]).astype(np.uint32)
 
         expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed_uint_result')
-        
+
     @staticmethod
     def export_murmurhash3_zero_seed_uint_result2():  # type: () -> None
         node = onnx.helper.make_node(
@@ -66,7 +66,7 @@ class MurmurHash3(Base):
         Y = np.array([1889779975]).astype(np.uint32)
 
         expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_zero_seed_uint_result2')
-        
+
     @staticmethod
     def export_murmurhash3_array_data():  # type: () -> None
         node = onnx.helper.make_node(
@@ -80,7 +80,7 @@ class MurmurHash3(Base):
         Y = np.array([847579505, 1889779975]).astype(np.uint32)
 
         expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_array_data')
-        
+
     @staticmethod
     def export_murmurhash3_non_zero_seed():  # type: () -> None
         node = onnx.helper.make_node(
@@ -94,7 +94,7 @@ class MurmurHash3(Base):
         Y = np.array([-1823081949]).astype(np.int32)
 
         expect(node, inputs=[X], outputs=[Y], name='test_murmurhash3_non_zero_seed')
-        
+
     @staticmethod
     def export_murmurhash3_non_zero_seed_unint_result():  # type: () -> None
         node = onnx.helper.make_node(
