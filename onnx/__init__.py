@@ -42,10 +42,12 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 
 
 # f should be either a readable file or a file path
-def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> str
+def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[str]
     if isinstance(f, Text):
         return os.path.abspath(f)
-    return os.path.abspath(f.name)
+    if hasattr(f, 'name'):
+        return os.path.abspath(f.name)
+    return None
 
 
 def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) -> bytes
@@ -111,8 +113,11 @@ def load_model(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any])
     s = _load_bytes(f)
     model = load_model_from_string(s, format=format)
 
-    basepath = os.path.dirname(_get_file_path(f))
-    model = add_basepath_to_external_data_tensors(model, basepath)
+    model_filepath = _get_file_path(f)
+    if model_filepath:
+        basepath = os.path.dirname(model_filepath)
+        model = add_basepath_to_external_data_tensors(model, basepath)
+
     return model
 
 
@@ -171,8 +176,11 @@ def save_model(proto, f, format=None):  # type: (Union[ModelProto, bytes], Union
     if isinstance(proto, bytes):
         proto = _deserialize(proto, ModelProto())
 
-    basepath = os.path.dirname(_get_file_path(f))
-    proto = write_external_data_tensors(proto, basepath)
+    model_filepath = _get_file_path(f)
+    if model_filepath:
+        basepath = os.path.dirname(model_filepath)
+        proto = write_external_data_tensors(proto, basepath)
+
     s = _serialize(proto)
     _save_bytes(s, f)
 
