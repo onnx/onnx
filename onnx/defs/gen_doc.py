@@ -14,10 +14,12 @@ import numpy as np  # type: ignore
 from onnx import defs, FunctionProto, helper, OperatorStatus
 from onnx.defs import OpSchema, ONNX_DOMAIN, ONNX_ML_DOMAIN
 from onnx.backend.test.case import collect_snippets
+from onnx.backend.sample.ops import collect_sample_implementations
 from typing import Any, Text, Sequence, Dict, List, Type, Set, Tuple
 
 
 SNIPPETS = collect_snippets()
+SAMPLE_IMPLEMENTATIONS = collect_sample_implementations()
 ONNX_ML = bool(os.getenv('ONNX_ML') == '1')
 
 
@@ -412,6 +414,13 @@ def main(args):  # type: (Type[Args]) -> None
                             s += '```python\n{}\n```\n\n'.format(code)
                             s += '</details>\n'
                             s += '\n\n'
+                    if op_type.lower() in SAMPLE_IMPLEMENTATIONS:
+                        s += '#### Sample Implementation\n\n'
+                        s += '<details>\n'
+                        s += '```python\n{}\n```\n\n'.format(SAMPLE_IMPLEMENTATIONS[op_type.lower()])
+                        s += '</details>\n'
+                        s += '\n\n'
+
                     fout.write(s)
 
     with io.open(args.function_output, 'w', newline='') as fout:
