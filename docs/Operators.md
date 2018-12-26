@@ -24,6 +24,7 @@
   * <a href="#Concat">Concat</a>
   * <a href="#Constant">Constant</a>
   * <a href="#ConstantLike">ConstantLike</a>
+  * <a href="#ConstantOfShape">ConstantOfShape</a>
   * <a href="#Conv">Conv</a>
   * <a href="#ConvTranspose">ConvTranspose</a>
   * <a href="#Cos">Cos</a>
@@ -2081,11 +2082,11 @@ expect(node, inputs=[], outputs=[values],
 
 ### <a name="ConstantLike"></a><a name="constantlike">**ConstantLike**</a>
 
-  Generate a tensor with specific constant value. The value can be specified by the 'value' 
-  attribute. The shape of the output tensor is the same as the input tensor, if the input 
-  tensor is provided, or the shape provided in the 'shape' attribute (if both are provided, 
-  the input tensor shape takes precendence). The data type can be specified by the 'dtype' 
-  argument. If 'dtype' is not specified, then the type of input tensor is used. If input 
+  Generate a tensor with specific constant value. The value can be specified by the 'value'
+  attribute. The shape of the output tensor is the same as the input tensor, if the input
+  tensor is provided, or the shape provided in the 'shape' attribute (if both are provided,
+  the input tensor shape takes precendence). The data type can be specified by the 'dtype'
+  argument. If 'dtype' is not specified, then the type of input tensor is used. If input
   tensor is also not specified, then the type defaults to 'float'.
   
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
@@ -2185,6 +2186,90 @@ node = onnx.helper.make_node(
 )
 y = np.zeros(shape, dtype=np.float32)
 expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
+```
+
+</details>
+
+
+### <a name="ConstantOfShape"></a><a name="constantofshape">**ConstantOfShape**</a>
+
+  Generate a tensor with given value and shape.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>value</tt> : tensor</dt>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. </dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T1</dt>
+<dd>1D tensor, The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T2</dt>
+<dd>Output tensor, using input as shape.If attribute 'value' exist, all value and datatype of output tensor equal to 'value'.Else, all value equal to 0, and datatype default to float32</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dd>Constrain input types. Shape must be unsigned integers.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
+<dd>Constrain output types to be numerics.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>float_ones</summary>
+
+```python
+x = np.array([4, 3, 2])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
+                                       [1], [1])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+
+y = np.ones(x, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_float_ones')
+```
+
+</details>
+
+
+<details>
+<summary>int_zeros</summary>
+
+```python
+x = np.array([10, 6])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
+                                       [1], [1])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+y = np.zeros(x, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_int_zeros')
 ```
 
 </details>
@@ -3464,12 +3549,11 @@ expect(node, inputs=[data, new_shape], outputs=[expanded],
 
 ### <a name="EyeLike"></a><a name="eyelike">**EyeLike**</a>
 
-  Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D 
-  tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the 
-  same as the input tensor. The data type can be specified by the 'dtype' argument. If 
-  'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal 
+  Generate a 2D tensor (matrix) with ones on the diagonal and zeros everywhere else. Only 2D
+  tensors are supported, i.e. input T1 must be of rank 2. The shape of the output tensor is the
+  same as the input tensor. The data type can be specified by the 'dtype' argument. If
+  'dtype' is not specified, then the type of input tensor is used. By default, the main diagonal
   is populated with ones, but attribute 'k' can be used to populate upper or lower diagonals.
-  
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
 
@@ -7878,11 +7962,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomNormalLike"></a><a name="randomnormallike">**RandomNormalLike**</a>
 
-  Generate a tensor with random values drawn from a normal distribution. 
-  The shape of the output tensor is copied from the shape of the input tensor, 
+  Generate a tensor with random values drawn from a normal distribution.
+  The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the normal distribution are specified by `mean` and `scale`.
   
-  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message, and be valid as an output type.
 
@@ -7975,11 +8059,11 @@ This version of the operator has been available since version 1 of the default O
 
 ### <a name="RandomUniformLike"></a><a name="randomuniformlike">**RandomUniformLike**</a>
 
-  Generate a tensor with random values drawn from a uniform distribution. 
-  The shape of the output tensor is copied from the shape of the input tensor, 
+  Generate a tensor with random values drawn from a uniform distribution.
+  The shape of the output tensor is copied from the shape of the input tensor,
   and the parameters of the uniform distribution are specified by `low` and `high`.
   
-  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided. 
+  The data type is specified by the 'dtype' argument, or copied from the input tensor if not provided.
   The 'dtype' argument must be one of the data types specified in the 'DataType' enum field in the
   TensorProto message and be valid as an output type.
 
