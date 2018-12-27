@@ -615,7 +615,7 @@ std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         "RoIs (Regions of Interest) to pool over. Should "
         "be a 2-D tensor of shape (num_rois, 5) given as "
         "[[batch_id, x1, y1, x2, y2], ...].",
-        "T");
+        "T1");
     schema.Output(
         0,
         "Y",
@@ -625,6 +625,10 @@ std::function<void(OpSchema&)> RoiPoolOpSchemaGenerator(const char* name) {
         "T",
         {"tensor(float16)", "tensor(float)", "tensor(double)"},
         "Constrain input and output types to float tensors.");
+    schema.TypeConstraint(
+        "T1",
+        {"tensor(int64)"},
+        "Constrain index tensor to int64");
     schema.TypeAndShapeInferenceFunction(
         [](InferenceContext& ctx) { roiPoolTypeShapeInference(ctx); });
   };
