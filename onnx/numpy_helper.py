@@ -4,6 +4,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
+import re
 
 import numpy as np  # type: ignore
 from onnx import TensorProto
@@ -87,7 +88,8 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         tensor.raw_data = arr.tobytes()
         # note: tobytes() is only after 1.9.
     except KeyError:
-        if any(substr in str(arr.dtype) for substr in ["S", "<U"]):
+        string_dtype_pattern = re.compile("^[<|>]?[US]\d+$")
+        if string_dtype_pattern.match(str(arr.dtype)):
             dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
             tensor.data_type = dtype
             for elem in arr:
