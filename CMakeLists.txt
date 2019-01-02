@@ -300,7 +300,10 @@ if (MSVC)
     set(ONNX_API_DEFINE "-DONNX_API=")
   endif()
 else()
-  set(ONNX_API_DEFINE "-DONNX_API=")
+  # On non-Windows, hide all symbols we don't need
+  set(ONNX_API_DEFINE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
+  set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 
