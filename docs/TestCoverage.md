@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
+Node tests have covered 107/114 (93.86%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -1231,6 +1231,49 @@ node = onnx.helper.make_node(
 )
 y = np.zeros(shape, dtype=np.float32)
 expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
+```
+
+</details>
+
+
+### ConstantOfShape
+There are 2 test cases, listed as following:
+<details>
+<summary>float_ones</summary>
+
+```python
+x = np.array([4, 3, 2])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
+                                       [1], [1])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+
+y = np.ones(x, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_float_ones')
+```
+
+</details>
+<details>
+<summary>int_zeros</summary>
+
+```python
+x = np.array([10, 6])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
+                                       [1], [1])
+node = onnx.helper.make_node(
+    'ConstantOfShape',
+    inputs=['x'],
+    outputs=['y'],
+    value=tensor_value,
+)
+y = np.zeros(x, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_int_zeros')
 ```
 
 </details>
