@@ -22,7 +22,7 @@ def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInf
     try:
         elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
     except KeyError:
-        string_dtype_pattern = re.compile("^[<|>]?[US]\d+$")
+        string_dtype_pattern = re.compile(r"^[<|>]?[US]\d+$")
         if string_dtype_pattern.match(str(arr.dtype)):
             elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
         else:

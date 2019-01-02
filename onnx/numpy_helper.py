@@ -88,7 +88,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         tensor.raw_data = arr.tobytes()
         # note: tobytes() is only after 1.9.
     except KeyError:
-        string_dtype_pattern = re.compile("^[<|>]?[US]\d+$")
+        string_dtype_pattern = re.compile(r"^[<|>]?[US]\d+$")
         if string_dtype_pattern.match(str(arr.dtype)):
             dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
             tensor.data_type = dtype
