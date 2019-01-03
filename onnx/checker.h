@@ -113,6 +113,5 @@ void VerifyFunctionNode(
     const CheckerContext&,
     const LexicalScopeContext&);
 
-
 } // namespace checker
 } // namespace ONNX_NAMESPACE

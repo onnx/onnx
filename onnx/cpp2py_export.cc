@@ -304,5 +304,4 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
   });
 }
 
-
 } // namespace ONNX_NAMESPACE
