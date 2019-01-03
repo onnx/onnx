@@ -82,7 +82,11 @@ class CheckerContext final {
 };
 
 struct LexicalScopeContext final {
+  // output_names: names defined and visible (and usable as inputs)
   std::unordered_set<std::string> output_names;
+  // used_names: names defined elsewhere that cannot be used for new values
+  // (outputs)
+  std::unordered_set<std::string> used_names;
 };
 
 using IR_VERSION_TYPE = decltype(Version::IR_VERSION);
@@ -91,15 +95,18 @@ void check_tensor(const TensorProto& tensor, const CheckerContext&);
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext&,
-    const LexicalScopeContext&);
+    const LexicalScopeContext&,
+    std::unordered_set<std::string>&);
 void check_node(
     const NodeProto& node,
     const CheckerContext&,
-    const LexicalScopeContext&);
+    const LexicalScopeContext&,
+    std::unordered_set<std::string>&);
 void check_graph(
     const GraphProto& graph,
     const CheckerContext&,
-    const LexicalScopeContext&);
+    const LexicalScopeContext&,
+    std::unordered_set<std::string>&);
 void check_function(
     const FunctionProto& function,
     const CheckerContext&,
