@@ -535,5 +535,6 @@ void VerifyFunctionNode(
 #undef enforce_has_repeated_field
 #undef enforce_non_empty_field
 
+
 } // namespace checker
 } // namespace ONNX_NAMESPACE
