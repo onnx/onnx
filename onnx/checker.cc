@@ -189,8 +189,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 void check_attribute(
     const AttributeProto& attr,
     const CheckerContext& ctx,
-    const LexicalScopeContext& lex_ctx,
-    std::unordered_set<std::string>& used_names) {
+    const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(attr, name);
 
   if (ctx.get_ir_version() >= 0x00000002) {
@@ -259,22 +258,21 @@ void check_attribute(
   }
 
   if (attr.has_g()) {
-    check_graph(attr.g(), ctx, lex_ctx, used_names);
+    check_graph(attr.g(), ctx, lex_ctx);
   }
 
   for (const auto& tensor : attr.tensors()) {
     check_tensor(tensor, ctx);
   }
   for (const auto& graph : attr.graphs()) {
-    check_graph(graph, ctx, lex_ctx, used_names);
+    check_graph(graph, ctx, lex_ctx);
   }
 }
 
 void check_node(
     const NodeProto& node,
     const CheckerContext& ctx,
-    const LexicalScopeContext& lex_ctx,
-    std::unordered_set<std::string>& used_names) {
+    const LexicalScopeContext& lex_ctx) {
   enforce_non_empty_field(node, op_type);
 
   if (node.input().empty() && node.output().empty()) {
@@ -295,7 +293,7 @@ void check_node(
   auto domain_version = dit->second;
 
   for (const auto& attr : node.attribute()) {
-    check_attribute(attr, ctx, lex_ctx, used_names);
+    check_attribute(attr, ctx, lex_ctx);
   }
 
   const auto* schema = ctx.get_schema_registry()->GetSchema(
@@ -327,8 +325,7 @@ void check_node(
 void check_graph(
     const GraphProto& graph,
     const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex,
-    std::unordered_set<std::string>& used_names) {
+    const LexicalScopeContext& parent_lex) {
   enforce_non_empty_field(graph, name);
 
   for (const auto& value_info : graph.input()) {
@@ -343,14 +340,13 @@ void check_graph(
   // Note that we do not allow shadowing, so the presence of an already-defined
   // name is always an error.
   for (const auto& value_info : graph.input()) {
-    if (used_names.count(value_info.name())) {
+    if (output_names.count(value_info.name())) {
       fail_check(
           "Graph must be in single static assignment (SSA) form, however '",
           value_info.name(),
           "' has been used as graph input names multiple times.");
     }
     output_names.insert(value_info.name());
-    used_names.insert(value_info.name());
   }
   output_names.insert(
       parent_lex.output_names.begin(), parent_lex.output_names.end());
@@ -383,7 +379,7 @@ void check_graph(
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
     try {
-      check_node(node, ctx, lex_ctx, used_names);
+      check_node(node, ctx, lex_ctx);
     } catch (ValidationError& ex) {
       ex.AppendContext("Bad node spec: " + ProtoDebugString(node));
       throw ex;
@@ -394,14 +390,13 @@ void check_graph(
       if (output.empty()) {
         continue;
       }
-      if (used_names.count(output)) {
+      if (output_names.count(output)) {
         fail_check(
             "Graph must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
       }
       output_names.insert(output);
-      used_names.insert(output);
     }
   }
 }
@@ -409,12 +404,11 @@ void check_graph(
 void check_function(
     const FunctionProto& function,
     const CheckerContext& ctx,
-    const LexicalScopeContext& parent_lex) {
+    const LexicalScopeContext& /*parent_lex*/) {
   enforce_non_empty_field(function, name);
   enforce_has_field(function, since_version);
 
   std::unordered_set<std::string> output_names;
-  std::unordered_set<std::string> used_names;
   for (const auto& input : function.input()) {
     auto result = output_names.insert(input);
     if (!result.second) {
@@ -423,7 +417,6 @@ void check_function(
           function.name(),
           ") should not have duplicate inputs specified.");
     }
-    used_names.insert(input);
   }
   std::unordered_set<std::string> outputs;
   for (const auto& output : function.output()) {
@@ -465,21 +458,20 @@ void check_function(
 
     LexicalScopeContext lex_ctx;
     lex_ctx.output_names = output_names;
-    check_node(node, ctx, lex_ctx, used_names);
+    check_node(node, ctx, lex_ctx);
     // check for SSA form
     for (const auto& output : node.output()) {
       // optional output
       if (output.empty()) {
         continue;
       }
-      if (used_names.count(output)) {
+      if (output_names.count(output)) {
         fail_check(
             "Function must be in single static assignment (SSA) form, however '",
             output,
             "' has been used as output names multiple times.");
       }
       output_names.insert(output);
-      used_names.insert(output);
     }
   }
 }
@@ -521,8 +513,7 @@ void check_model(const ModelProto& model) {
   }
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
-  std::unordered_set<std::string> used_names;
-  check_graph(model.graph(), ctx, lex_ctx, used_names);
+  check_graph(model.graph(), ctx, lex_ctx);
 }
 
 void VerifyFunctionNode(
@@ -536,8 +527,7 @@ void VerifyFunctionNode(
   // To Generate unique internal tensor names
   // while preserving node's input/output names
   FunctionExpandHelper(node, func, g);
-  std::unordered_set<std::string> used_names;
-  check_graph(g, ctx, lex_ctx, used_names);
+  check_graph(g, ctx, lex_ctx);
 }
 
 #undef fail_check

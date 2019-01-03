@@ -218,9 +218,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
       [](const py::bytes& bytes, const checker::CheckerContext& ctx) -> void {
         AttributeProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
-        std::unordered_set<std::string> used_names;
-        checker::check_attribute(
-            proto, ctx, checker::LexicalScopeContext(), used_names);
+        checker::check_attribute(proto, ctx, checker::LexicalScopeContext());
       });
 
   checker.def(
@@ -229,8 +227,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         NodeProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
-        std::unordered_set<std::string> used_names;
-        checker::check_node(proto, ctx, lex_ctx, used_names);
+        checker::check_node(proto, ctx, lex_ctx);
       });
 
   checker.def(
@@ -239,8 +236,7 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         GraphProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         checker::LexicalScopeContext lex_ctx;
-        std::unordered_set<std::string> used_names;
-        checker::check_graph(proto, ctx, lex_ctx, used_names);
+        checker::check_graph(proto, ctx, lex_ctx);
       });
 
   checker.def("check_model", [](const py::bytes& bytes) -> void {
@@ -287,7 +283,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
         ModelProto proto{};
         ParseProtoFromPyBytes(&proto, bytes);
         shape_inference::InferShapes(proto);
-        auto result = version_conversion::ConvertVersion(proto, target);
+        auto result =
+            version_conversion::ConvertVersion(proto, target);
         std::string out;
         result.SerializeToString(&out);
         return py::bytes(out);
