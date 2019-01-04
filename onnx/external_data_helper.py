@@ -6,7 +6,7 @@ from __future__ import unicode_literals
 import os
 from itertools import chain
 
-from typing import Iterable
+from typing import Iterable, Text
 
 from .onnx_pb import TensorProto, ModelProto
 
@@ -57,7 +57,7 @@ def load_external_data(tensor):  # type: (TensorProto) -> bytes
     return raw_data
 
 
-def save_external_data(tensor, base_path):  # type: (TensorProto, str) -> None
+def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
     """
     Write tensor data to an external file according to information in the `external_data` field.
 
@@ -114,7 +114,7 @@ def _get_attribute_tensors(onnx_model_proto):  # type: (ModelProto) -> Iterable[
                 yield tensor
 
 
-def _sanitize_path(path):  # type: (str) -> str
+def _sanitize_path(path):  # type: (Text) -> Text
     """Remove path components which would allow traversing up a directory tree from a base path.
 
     Note: This method is currently very basic and should be expanded.
@@ -127,7 +127,7 @@ def uses_external_data(tensor):  # type: (TensorProto) -> bool
     return tensor.HasField("data_location") and tensor.data_location == TensorProto.EXTERNAL
 
 
-def remove_external_data_field(tensor, field_key):  # type: (TensorProto, str) -> None
+def remove_external_data_field(tensor, field_key):  # type: (TensorProto, Text) -> None
     """
     Remove a field from a Tensor's external_data key-value store.
 
@@ -142,7 +142,7 @@ def remove_external_data_field(tensor, field_key):  # type: (TensorProto, str) -
             del tensor.external_data[i]
 
 
-def add_basepath_to_external_data_tensors(model, filepath):  # type: (ModelProto, str) -> ModelProto
+def add_basepath_to_external_data_tensors(model, filepath):  # type: (ModelProto, Text) -> ModelProto
     """
     Add basepath value to the external_data field of all tensors in model.
 
@@ -164,7 +164,7 @@ def add_basepath_to_external_data_tensors(model, filepath):  # type: (ModelProto
     return model
 
 
-def write_external_data_tensors(model, filepath):  # type: (ModelProto, str) -> ModelProto
+def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) -> ModelProto
     """
     Write external data of all tensors to files on disk.
 

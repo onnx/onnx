@@ -2,32 +2,35 @@ import tempfile
 import unittest
 import uuid
 
-import numpy as np
+import numpy as np # type: ignore
 import shutil
 
 import os
+import os.path as Path
 
 import onnx
 from onnx import helper
+from onnx import TensorProto
 from onnx.helper import set_external_data
 from onnx.numpy_helper import to_array, from_array
+from typing import Any, AnyStr, Tuple, Text, List, IO, BinaryIO
 
 
 class TestLoadExternalData(unittest.TestCase):
 
-    def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+    def setUp(self): # type: () -> None
+        self.temp_dir = tempfile.mkdtemp() # type: Text
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model_filename = self.create_test_model()
 
-    def tearDown(self):
+    def tearDown(self): # type: () -> None
         shutil.rmtree(self.temp_dir)
 
-    def get_temp_model_filename(self):
+    def get_temp_model_filename(self): # type: () -> Text
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
 
-    def create_external_data_tensor(self, value, tensor_name):
+    def create_external_data_tensor(self, value, tensor_name): # type: (List[Any], Text) -> TensorProto
         tensor = from_array(np.array(value))
         tensor.name = tensor_name
         tensor_filename = "{}.bin".format(tensor_name)
@@ -39,7 +42,7 @@ class TestLoadExternalData(unittest.TestCase):
         tensor.data_location = onnx.TensorProto.EXTERNAL
         return tensor
 
-    def create_test_model(self):
+    def create_test_model(self): # type: () -> Text
 
         constant_node = onnx.helper.make_node(
             'Constant',
@@ -64,7 +67,7 @@ class TestLoadExternalData(unittest.TestCase):
 
         return model_filename
 
-    def test_load_external_data(self):
+    def test_load_external_data(self): # type: () -> None
         model = onnx.load_model(self.model_filename)
         initializer_tensor = model.graph.initializer[0]
         self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
@@ -72,7 +75,7 @@ class TestLoadExternalData(unittest.TestCase):
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
-    def test_save_external_data(self):
+    def test_save_external_data(self): # type: () -> None
         model = onnx.load_model(self.model_filename)
 
         temp_dir = os.path.join(self.temp_dir, "save_copy")
@@ -90,25 +93,25 @@ class TestLoadExternalData(unittest.TestCase):
 
 class TestLoadExternalDataSingleFile(unittest.TestCase):
 
-    def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+    def setUp(self): # type: () -> None
+        self.temp_dir = tempfile.mkdtemp() #type: Text
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model_filename = self.create_test_model()
 
-    def tearDown(self):
+    def tearDown(self): # type: () -> None
         shutil.rmtree(self.temp_dir)
 
-    def get_temp_model_filename(self):
+    def get_temp_model_filename(self): # type: () -> Text
         return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
 
-    def pad_file_to_size(self, data_file, required_size):
+    def pad_file_to_size(self, data_file, required_size): # type: (BinaryIO, int) -> None
         data_file.seek(0, 2)
         file_size = data_file.tell()
         if required_size > file_size:
             data_file.write(b"\0" * (required_size - file_size))
 
-    def create_external_data_tensors(self, tensors_data):
+    def create_external_data_tensors(self, tensors_data): # type: (List[Tuple[List[Any],Any]]) -> List[TensorProto]
         tensor_filename = "tensors.bin"
         tensors = []
         next_offset = 0
@@ -128,7 +131,7 @@ class TestLoadExternalDataSingleFile(unittest.TestCase):
 
         return tensors
 
-    def create_test_model(self):
+    def create_test_model(self): # type: () -> Text
         tensors = self.create_external_data_tensors([
             (self.attribute_value, "attribute_value"),
             (self.initializer_value, "input_value"),
@@ -155,7 +158,7 @@ class TestLoadExternalDataSingleFile(unittest.TestCase):
             model_file.write(model.SerializeToString())
         return model_filename
 
-    def test_load_external_single_file_data(self):
+    def test_load_external_single_file_data(self): # type: () -> None
         model = onnx.load_model(self.model_filename)
 
         initializer_tensor = model.graph.initializer[0]
@@ -164,7 +167,7 @@ class TestLoadExternalDataSingleFile(unittest.TestCase):
         attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
-    def test_save_external_single_file_data(self):
+    def test_save_external_single_file_data(self): # type: () -> None
         model = onnx.load_model(self.model_filename)
 
         temp_dir = os.path.join(self.temp_dir, "save_copy")

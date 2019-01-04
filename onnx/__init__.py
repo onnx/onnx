@@ -42,7 +42,7 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 
 
 # f should be either a readable file or a file path
-def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[str]
+def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
     if isinstance(f, Text):
         return os.path.abspath(f)
     if hasattr(f, 'name'):
