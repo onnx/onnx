@@ -55,7 +55,7 @@ class TestChecker(unittest.TestCase):
         graph.initializer.extend([self._sample_float_tensor])
 
         graph.initializer[0].name = 'no-exist'
-        self.assertRaises(checker.ValidationError, checker.check_graph, graph)
+        checker.check_graph(graph)
 
         graph.initializer[0].name = 'X'
         checker.check_graph(graph)

@@ -351,9 +351,9 @@ void check_graph(
   output_names.insert(
       parent_lex.output_names.begin(), parent_lex.output_names.end());
   for (const auto& init : graph.initializer()) {
-    if (!output_names.count(init.name())) {
-      fail_check(init.name() + " in initializer but not in graph input");
-    }
+    // An initializer is allowed to have the same name as an input,
+    // but is not required to.
+    output_names.insert(init.name());
     check_tensor(init, ctx);
   }
 
