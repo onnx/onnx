@@ -233,7 +233,7 @@ def main():
     else:
         fname = os.path.join(docs_dir, 'TestCoverage.md')
 
-    with open(fname, 'w+') as f:
+    with open(fname, 'w+', newline='') as f:
         gen_outlines(f, ml)
         gen_node_test_coverage(schemas, f, ml)
         gen_model_test_coverage(schemas, f, ml)
