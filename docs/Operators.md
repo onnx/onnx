@@ -1563,7 +1563,9 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
   The operator casts the elements of a given input tensor to a data type
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
-  in the 'DataType' enum field in the TensorProto message.
+  in the 'DataType' enum field in the TensorProto message. Litrals string 'NaN' 
+  and 'INF' are defined to be supported in a case-insensitive manner when cast from
+  string tensor. 
 
 #### Version
 
@@ -1629,7 +1631,7 @@ for from_type, to_type in test_cases:
     else:
         input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
            ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
-           ['0.14634249', '0.6888254', '0.37667033', '0.51449734']], dtype=np.dtype('str'))
+           ['0.14634249', '0.6888254', 'NaN', 'INF']], dtype=np.dtype('str'))
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',

@@ -11,7 +11,9 @@ static const char* Cast_ver9_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
-in the 'DataType' enum field in the TensorProto message.
+in the 'DataType' enum field in the TensorProto message. Litrals string 'NaN' 
+and 'INF' are defined to be supported in a case-insensitive manner when cast from
+string tensor. 
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
