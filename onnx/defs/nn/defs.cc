@@ -845,14 +845,9 @@ void convTransposeShapeInference(InferenceContext& ctx) {
             strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
             output_padding[i] + kernel_shape[i] - pads[i] -
             pads[i + n_input_dims];
-        
-
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
-      } else if (input_shape.dim(i + 2).has_dim_param()){
-        final_output_shape->add_dim()->set_dim_param(input_shape.dim(i + 2).dim_param());
-      }else{
-        //input has no neither input_dim nor input_param return..?throw
-        return;
+      } else{
+        final_output_shape->add_dim();
       }
     }
     return;
