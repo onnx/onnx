@@ -409,6 +409,14 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 50, 6, 6, 6))])
 
+    def test_conv_group(self):  # type: () -> None
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 8, 8, 8)),
+             ('y', TensorProto.FLOAT, (4, 1, 8, 8, 8))],
+            [make_node('Conv', ['x', 'y'], 'z', group=4)],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('z', TensorProto.FLOAT, (30, 4, 1, 1, 1))])
+
     def test_conv_only_one_pos(self):  # type: () -> None
         graph = self._make_graph(
             [('x', TensorProto.FLOAT, (30, 4, 5)),
@@ -977,7 +985,7 @@ class TestShapeInference(unittest.TestCase):
             [])
         self._assert_inferred(graph, [make_tensor_value_info('Y', TensorProto.FLOAT, (25, 32, 36, 36))])
 
-    def test_conv_transpose_with_kernal_shape(self):  # type: () -> None
+    def test_conv_transpose_with_kernel_shape(self):  # type: () -> None
         graph = self._make_graph(
             [('X', TensorProto.FLOAT, (25, 48, 16, 16)),
              ('W', TensorProto.FLOAT, (48, 32, None, None))],
@@ -1201,6 +1209,23 @@ class TestShapeInference(unittest.TestCase):
             graph,
             [make_tensor_value_info('loop_state_final', TensorProto.FLOAT, None),  # shape may change between iterations
              make_tensor_value_info('loop_output', TensorProto.FLOAT, (None, 3))])  # type: ignore
+
+    def test_constantofshape_with_input_shape(self):  # type: () -> None
+        graph = self._make_graph([],
+            [make_node("Constant", [], ['shape'],
+                       value=make_tensor('shape', TensorProto.INT64, (3,), (3, 4, 5))),
+             make_node("ConstantOfShape", ['shape'], ['y'], value=make_tensor('value', TensorProto.INT32, (1, ), (2, )))],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('shape', TensorProto.INT64, (3,)),
+             make_tensor_value_info('y', TensorProto.INT32, (3, 4, 5))])  # type: ignore
+
+    def test_constantofshape_without_input_shape(self):  # type: () -> None
+        graph = self._make_graph([('shape', TensorProto.INT64, (3, ))],
+            [make_node("ConstantOfShape", ['shape'], ['y'], value=make_tensor('value', TensorProto.UINT8, (1, ), (2, )))],
+            [])
+        self._assert_inferred(graph,
+            [make_tensor_value_info('y', TensorProto.UINT8, (None, None, None))])  # type: ignore
 
 
 if __name__ == '__main__':
