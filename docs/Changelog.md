@@ -8568,27 +8568,27 @@ This version of the operator has been available since version 9 of the default O
 
 <dl>
 <dt><tt>value</tt> : tensor</dt>
-<dd>(Optional) The value of the output elements.Should be a one-element tensor. </dd>
+<dd>(Optional) The value of the output elements.Should be a one-element tensor. If not specified, it defaults to a tensor of value 0 and datatype float32</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>input</tt> : T1</dt>
-<dd>1D tensor, The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.</dd>
+<dd>1D tensor. The shape of the expected output tensor. If empty tensor is given, the output would be a scalar.</dd>
 </dl>
 
 #### Outputs
 
 <dl>
 <dt><tt>output</tt> : T2</dt>
-<dd>Output tensor, using input as shape.If attribute 'value' exist, all value and datatype of output tensor equal to 'value'.Else, all value equal to 0, and datatype default to float32</dd>
+<dd>Output tensor of shape specified by 'input'.If attribute 'value' is specified, the value and datatype of the output tensor is taken from 'value'.If attribute 'value' is not specified, the value in the output defaults to 0, and the datatype defaults to float32.</dd>
 </dl>
 
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64)</dt>
+<dt><tt>T1</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(int64)</dt>
 <dd>Constrain input types. Shape must be unsigned integers.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
 <dd>Constrain output types to be numerics.</dd>
