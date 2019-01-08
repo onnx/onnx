@@ -143,7 +143,7 @@ def split_complex_to_pairs(ca):  # type: (Sequence[np.complex64]) -> Sequence[in
 
 def make_tensor(
         name,  # type: Text
-        data_type,  # type: TensorProto.DataType
+        data_type,  # type: int
         dims,  # type: Sequence[int]
         vals,  # type: Any
         raw=False  # type: bool
@@ -289,7 +289,7 @@ def make_empty_tensor_value_info(name):  # type: (Text) -> ValueInfoProto
 
 def make_tensor_value_info(
         name,  # type: Text
-        elem_type,  # type: TensorProto.DataType
+        elem_type,  # type: int
         shape,  # type: Optional[Sequence[Union[Text, int]]]
         doc_string="",  # type: Text
         shape_denotation=None,  # type: Optional[List[Text]]

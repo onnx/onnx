@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 105/112 (93.75%, 5 generators excluded) common operators.
+Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -1172,57 +1172,44 @@ expect(node, inputs=[], outputs=[values],
 </details>
 
 
-### ConstantLike
-There are 3 test cases, listed as following:
+### ConstantOfShape
+There are 2 test cases, listed as following:
 <details>
-<summary>ones_with_input</summary>
+<summary>float_ones</summary>
 
 ```python
-shape = (4, 3, 2)
+x = np.array([4, 3, 2])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
+                                       [1], [1])
 node = onnx.helper.make_node(
-    'ConstantLike',
+    'ConstantOfShape',
     inputs=['x'],
     outputs=['y'],
-    value=1.0,
+    value=tensor_value,
 )
-x = np.random.randint(0, 100, size=shape, dtype=np.int32)
-y = np.ones(shape, dtype=np.int32)
-expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
+
+y = np.ones(x, dtype=np.float32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_float_ones')
 ```
 
 </details>
 <details>
-<summary>threes_with_shape_and_dtype</summary>
+<summary>int_zeros</summary>
 
 ```python
-shape = (3, 4)
+x = np.array([10, 6])
+tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
+                                       [1], [1])
 node = onnx.helper.make_node(
-    'ConstantLike',
-    shape=shape,
-    inputs=[],
+    'ConstantOfShape',
+    inputs=['x'],
     outputs=['y'],
-    value=3.0,
-    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
+    value=tensor_value,
 )
-
-y = 3.0 * np.ones(shape, dtype=np.float64)
-expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
-```
-
-</details>
-<details>
-<summary>zeros_without_input_dtype</summary>
-
-```python
-shape = (2, 5, 1)
-node = onnx.helper.make_node(
-    'ConstantLike',
-    inputs=[],
-    outputs=['y'],
-    shape=shape,
-)
-y = np.zeros(shape, dtype=np.float32)
-expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
+y = np.zeros(x, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y],
+       name='test_constantofshape_int_zeros')
 ```
 
 </details>
@@ -5179,6 +5166,55 @@ z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((1, 3, 2))
 
 expect(node, inputs=[initial, x], outputs=[y, z],
        name='test_scan_sum')
+```
+
+</details>
+
+
+### Scatter
+There are 2 test cases, listed as following:
+<details>
+<summary>scatter_with_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+    axis=1,
+)
+data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
+indices = np.array([[1, 3]], dtype=np.int64)
+updates = np.array([[1.1, 2.1]], dtype=np.float32)
+
+y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_with_axis')
+```
+
+</details>
+<details>
+<summary>scatter_without_axis</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Scatter',
+    inputs=['data', 'indices', 'updates'],
+    outputs=['y'],
+)
+data = np.zeros((3, 3), dtype=np.float32)
+indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
+updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
+
+y = np.array([
+    [2.0, 1.1, 0.0],
+    [1.0, 0.0, 2.2],
+    [0.0, 2.1, 1.2]
+], dtype=np.float32)
+
+expect(node, inputs=[data, indices, updates], outputs=[y],
+       name='test_scatter_without_axis')
 ```
 
 </details>

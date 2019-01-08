@@ -39,7 +39,7 @@ Nothing in this specification should be construed as advocating one implementati
 
 ## ONNX Versioning
 
-Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Futhermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
+Versioning features in several places in ONNX -- the IR specification itself, the version of a model, and the version of an operator set. Furthermore, each individual operator indicates which version of its containing operator set it was introduced or stabilized in.
 
 Version numbers can be used as a simple number, or used to encode semantic versions. If using semver, the convention is to use the two most significant bytes for the major number, the next two bytes for the minor number, and the least significant four bytes for the build/bugfix number. When using semver versioning, at least one of the major/minor numbers MUST be non-zero.
 
@@ -160,7 +160,7 @@ initializer|Tensor[]|A list of named tensor values, used to specify default valu
 doc_string|string|A human-readable documentation for this model. Markdown is allowed.
 input|ValueInfo[]|The input “parameters” of the graph, possibly initialized by a default value found in ‘initializer.’
 output|ValueInfo[]|The output parameters of the graph. Once all output parameters have been written to by a graph execution, the execution is complete.
-value_info|ValueInfo|Used to store the type and shape information of values that are not inputs or outputs.
+value_info|ValueInfo[]|Used to store the type and shape information of values that are not inputs or outputs.
 
 Each graph MUST define the names and types of its inputs and outputs, which are specified as ‘value info’ structures, having the following properties:
 
@@ -234,7 +234,7 @@ Input and output values are found as graph inputs, outputs, and initializers, an
 
 #### Attributes
 
-Attribute values are only found in nodes, passed to operators by name association. Attribute values are runtime constants, in that their values are determined when a model graph is constructed and therfore not computed at runtime. A common use for attributes is to represent coefficients established during model training.
+Attribute values are only found in nodes, passed to operators by name association. Attribute values are runtime constants, in that their values are determined when a model graph is constructed and therefore not computed at runtime. A common use for attributes is to represent coefficients established during model training.
 
 Attributes have the following properties:
 

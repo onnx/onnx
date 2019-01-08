@@ -223,6 +223,38 @@ inline void propagateElemTypeFromInputToOutput(
   }
 }
 
+inline void propagateElemTypeFromDtypeToOutput(
+    InferenceContext& ctx,
+    const int& data_type,
+    size_t outputIndex) {
+  auto attribute_tensor_datatype = data_type;
+  auto output_type = ctx.getOutputType(outputIndex);
+  if (output_type->value_case() == TypeProto::kTensorType ||
+      output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+    output_type->mutable_tensor_type()->set_elem_type(
+        attribute_tensor_datatype);
+  } else {
+    // This is not expected to happen
+    fail_type_inference(
+        "Output ", outputIndex, " expected to have tensor type");
+  }
+}
+
+inline void propagateElemTypeFromDtypeToOutput(
+    InferenceContext& ctx,
+    const AttributeProto* attr,
+    size_t outputIndex) {
+  if (attr->type() != AttributeProto::TENSOR) {
+    fail_type_inference("Attribute expected to have tensor type");
+  }
+  if (attr->t().dims().size() != 1) {
+    fail_type_inference("Attribute expected to have a one-dim tensor");
+  }
+  auto attribute_tensor_datatype = attr->t().data_type();
+  propagateElemTypeFromDtypeToOutput(
+      ctx, attribute_tensor_datatype, outputIndex);
+}
+
 inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
       ctx.getInputType(n)->has_tensor_type() &&
@@ -291,7 +323,7 @@ inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
 inline void updateOutputElemType(
     InferenceContext& ctx,
     size_t outputIndex,
-    TensorProto_DataType elemType) {
+    int32_t elemType) {
   auto output_type = ctx.getOutputType(outputIndex);
   if ((output_type != nullptr) &&
       (output_type->value_case() == TypeProto::kTensorType ||
