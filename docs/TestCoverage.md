@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 107/114 (93.86%, 5 generators excluded) common operators.
+Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -1175,62 +1175,6 @@ node = onnx.helper.make_node(
 
 expect(node, inputs=[], outputs=[values],
        name='test_constant')
-```
-
-</details>
-
-
-### ConstantLike
-There are 3 test cases, listed as following:
-<details>
-<summary>ones_with_input</summary>
-
-```python
-shape = (4, 3, 2)
-node = onnx.helper.make_node(
-    'ConstantLike',
-    inputs=['x'],
-    outputs=['y'],
-    value=1.0,
-)
-x = np.random.randint(0, 100, size=shape, dtype=np.int32)
-y = np.ones(shape, dtype=np.int32)
-expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
-```
-
-</details>
-<details>
-<summary>threes_with_shape_and_dtype</summary>
-
-```python
-shape = (3, 4)
-node = onnx.helper.make_node(
-    'ConstantLike',
-    shape=shape,
-    inputs=[],
-    outputs=['y'],
-    value=3.0,
-    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
-)
-
-y = 3.0 * np.ones(shape, dtype=np.float64)
-expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
-```
-
-</details>
-<details>
-<summary>zeros_without_input_dtype</summary>
-
-```python
-shape = (2, 5, 1)
-node = onnx.helper.make_node(
-    'ConstantLike',
-    inputs=[],
-    outputs=['y'],
-    shape=shape,
-)
-y = np.zeros(shape, dtype=np.float32)
-expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 ```
 
 </details>
