@@ -312,7 +312,8 @@ message TensorProto {
   repeated int64 dims = 1;
 
   // The data type of the tensor.
-  optional DataType data_type = 2;
+  // This field MUST have a valid TensorProto.DataType value
+  optional int32 data_type = 2;
 
   // For very large tensors, we may want to store them in chunks, in which
   // case the following fields will specify the segment that is stored in
@@ -441,8 +442,9 @@ message TypeProto {
 
   message Tensor {
     // This field MUST NOT have the value of UNDEFINED
+    // This field MUST have a valid TensorProto.DataType value
     // This field MUST be present for this version of the IR.
-    optional TensorProto.DataType elem_type = 1;
+    optional int32 elem_type = 1;
     optional TensorShapeProto shape = 2;
   }
 
