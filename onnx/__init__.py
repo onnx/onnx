@@ -43,17 +43,9 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 
 # f should be either a readable file or a file path
 def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
-    if isinstance(f, Text):
-        return os.path.abspath(f)
-    try:
-        basestring
-    except NameError:
-        basestring = str
-    if isinstance(f, basestring):
-        return os.path.abspath(f)
     if hasattr(f, 'name'):
         return os.path.abspath(f.name)
-    return None
+    return os.path.abspath(f)
 
 
 def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) -> bytes
