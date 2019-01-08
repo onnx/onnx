@@ -8488,7 +8488,8 @@ This version of the operator has been available since version 9 of the default O
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message. Litrals string 'NaN' 
   and 'INF' are defined to be supported in a case-insensitive manner when cast from
-  string tensor. 
+  string tensor. Other unconvertable strings may cause undefined behaviors from 
+  different frameworks.
 
 #### Version
 

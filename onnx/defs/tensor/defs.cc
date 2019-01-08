@@ -13,7 +13,8 @@ specified by the 'to' argument and returns an output tensor of the same size in
 the converted type. The 'to' argument must be one of the data types specified
 in the 'DataType' enum field in the TensorProto message. Litrals string 'NaN' 
 and 'INF' are defined to be supported in a case-insensitive manner when cast from
-string tensor. 
+string tensor. Other unconvertable strings may cause undefined behaviors from 
+different frameworks.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
