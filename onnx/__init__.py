@@ -45,6 +45,10 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
     if isinstance(f, Text):
         return os.path.abspath(f)
+    try:
+        basestring
+    except NameError:
+        basestring = str
     if isinstance(f, basestring):
         return os.path.abspath(f)
     if hasattr(f, 'name'):

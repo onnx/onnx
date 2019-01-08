@@ -15,10 +15,11 @@ from onnx.helper import set_external_data
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, AnyStr, Tuple, Text, List, IO, BinaryIO
 
+
 class TestLoadExternalData(unittest.TestCase):
 
     def setUp(self):  # type: () -> None
-        self.temp_dir = tempfile.mkdtemp() # type: Text
+        self.temp_dir = tempfile.mkdtemp()  # type: Text
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model_filename = self.create_test_model()
@@ -93,7 +94,7 @@ class TestLoadExternalData(unittest.TestCase):
 class TestLoadExternalDataSingleFile(unittest.TestCase):
 
     def setUp(self):  # type: () -> None
-        self.temp_dir = tempfile.mkdtemp() #type: Text
+        self.temp_dir = tempfile.mkdtemp()  #type: Text
         self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
         self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
         self.model_filename = self.create_test_model()
