@@ -19,6 +19,7 @@ import onnx.defs  # noqa
 import google.protobuf.message
 
 from typing import Union, Text, IO, Optional, cast, TypeVar, Any
+from six import string_types
 
 
 # f should be either readable or a file path
@@ -43,9 +44,11 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
 
 # f should be either a readable file or a file path
 def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
+    if isinstance(f, string_types):
+        return os.path.abspath(f)
     if hasattr(f, 'name'):
         return os.path.abspath(f.name)
-    return os.path.abspath(f)
+    return None
 
 
 def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) -> bytes

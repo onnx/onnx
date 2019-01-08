@@ -390,15 +390,14 @@ message TensorProto {
   repeated StringStringEntryProto external_data = 13;
 
   // Location of the data for this tensor. MUST be one of:
-  // - MESSAGE - data stored in type-specific fields inside the protobuf message.
-  // - RAW - data stored in raw_data field.
+  // - DEFAULT - data stored inside the protobuf message. Data is stored in raw_data (if set) otherwise in type-specified field.
   // - EXTERNAL - data stored in an external location as described by external_data field.
-  // - value not set - legacy value. Assume data is stored in raw_data (if set) otherwise in message.
   enum DataLocation {
-    MESSAGE = 0;
-    RAW = 1;
-    EXTERNAL = 2;
+    DEFAULT = 0;
+    EXTERNAL = 1;
   }
+
+  // If value not set, data is stored in raw_data (if set) otherwise in type-specified field.
   optional DataLocation data_location = 14;
 
   // For double
