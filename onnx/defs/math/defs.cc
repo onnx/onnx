@@ -75,7 +75,7 @@ will throw errors.
         0,
         "output",
         "The output values with the same "
-        "shape as input tensor.",
+        "shape as input tensor (the original size without coercion).",
         "T");
     schema.TypeConstraint(
         "T",
@@ -1058,4 +1058,160 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T",
             OpSchema::all_tensor_types(),
             "Constrain input and output types to all tensors."));
+
+static const char* Sinh_ver9_doc = R"DOC(
+Calculates the hyperbolic sine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Sinh,
+    9,
+    OpSchema()
+        .SetDoc(Sinh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic sine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Cosh_ver9_doc = R"DOC(
+Calculates the hyperbolic cosine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Cosh,
+    9,
+    OpSchema()
+        .SetDoc(Cosh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic cosine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Asinh_ver9_doc = R"DOC(
+Calculates the hyperbolic arcsine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Asinh,
+    9,
+    OpSchema()
+        .SetDoc(Asinh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arcsine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Acosh_ver9_doc = R"DOC(
+Calculates the hyperbolic arccosine of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Acosh,
+    9,
+    OpSchema()
+        .SetDoc(Acosh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arccosine values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Atanh_ver9_doc = R"DOC(
+Calculates the hyperbolic arctangent of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Atanh,
+    9,
+    OpSchema()
+        .SetDoc(Atanh_ver9_doc)
+        .Input(0, "input", "Input tensor", "T")
+        .Output(
+            0,
+            "output",
+            "The hyperbolic arctangent values of the input tensor "
+            "computed element-wise",
+            "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain input and output types to float tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+
+static const char* Sign_ver9_doc = R"DOC(
+Calculate the sign of the given input tensor element-wise.
+If input > 0, output 1. if input < 0, output -1. if input == 0, output 0.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	Sign,
+	9,
+	OpSchema()
+		.SetDoc(Sign_ver9_doc)
+		.Input(0, "input", "Input tensor", "T")
+		.Output(
+			0,
+			"output",
+			"The sign of the input tensor "
+			"computed element-wise. It has the same shape and type of the input.",
+			"T")
+		.TypeConstraint(
+			"T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numeric tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Erf_ver9_doc = R"DOC(
+Computes the error function of the given input tensor element-wise.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	Erf,
+	9,
+	OpSchema()
+		.SetDoc(Erf_ver9_doc)
+		.Input(0, "input", "Input tensor", "T")
+		.Output(
+			0,
+			"output",
+			"The error function of the input tensor "
+			"computed element-wise. It has the same shape and type of the input.",
+			"T")
+		.TypeConstraint(
+			"T",
+            OpSchema::all_numeric_types(),
+            "Constrain input and output types to all numeric tensors.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 } // namespace ONNX_NAMESPACE

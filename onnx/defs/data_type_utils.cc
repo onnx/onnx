@@ -18,9 +18,9 @@ class TypesWrapper final {
 
   std::unordered_set<std::string>& GetAllowedDataTypes();
 
-  std::unordered_map<std::string, int>& TypeStrToTensorDataType();
+  std::unordered_map<std::string, int32_t>& TypeStrToTensorDataType();
 
-  std::unordered_map<int, std::string>& TensorDataTypeToTypeStr();
+  std::unordered_map<int32_t, std::string>& TensorDataTypeToTypeStr();
 
   ~TypesWrapper() = default;
   TypesWrapper(const TypesWrapper&) = delete;
@@ -152,6 +152,13 @@ std::string DataTypeUtils::ToString(
       result.append(")").append(right);
       return result;
     }
+    case TypeProto::ValueCase::kSparseTensorType: {
+      // Note: We do not distinguish tensors with zero rank (a shape consisting
+      // of an empty sequence of dimensions) here.
+      return left + "sparse_tensor(" +
+          ToDataTypeString(type_proto.sparse_tensor_type().elem_type()) + ")" +
+          right;
+    }
 #endif
     default:
       assert(false);
@@ -159,8 +166,7 @@ std::string DataTypeUtils::ToString(
   }
 }
 
-std::string DataTypeUtils::ToDataTypeString(
-    const TensorProto::DataType& tensor_data_type) {
+std::string DataTypeUtils::ToDataTypeString(int32_t tensor_data_type) {
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
   auto iter = t.TensorDataTypeToTypeStr().find(tensor_data_type);
   assert(t.TensorDataTypeToTypeStr().end() != iter);
@@ -186,7 +192,7 @@ void DataTypeUtils::FromString(
     s.LStrip(key_size);
     s.LStrip(",");
     StringRange v(s.Data(), s.Size());
-    TensorProto::DataType key_type;
+    int32_t key_type;
     FromDataTypeString(key, key_type);
     type_proto.mutable_map_type()->set_key_type(key_type);
     return FromString(
@@ -207,16 +213,21 @@ void DataTypeUtils::FromString(
         opaque_type->mutable_name()->assign(s.Data(), s.Size());
       }
     }
+  } else if (s.LStrip("sparse_tensor")) {
+    s.ParensWhitespaceStrip();
+    int32_t e;
+    FromDataTypeString(std::string(s.Data(), s.Size()), e);
+    type_proto.mutable_sparse_tensor_type()->set_elem_type(e);
   } else
 #endif
-  if (s.LStrip("tensor")) {
+      if (s.LStrip("tensor")) {
     s.ParensWhitespaceStrip();
-    TensorProto::DataType e;
+    int32_t e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
     type_proto.mutable_tensor_type()->set_elem_type(e);
   } else {
     // Scalar
-    TensorProto::DataType e;
+    int32_t e;
     FromDataTypeString(std::string(s.Data(), s.Size()), e);
     TypeProto::Tensor* t = type_proto.mutable_tensor_type();
     t->set_elem_type(e);
@@ -233,12 +244,11 @@ bool DataTypeUtils::IsValidDataTypeString(const std::string& type_str) {
 
 void DataTypeUtils::FromDataTypeString(
     const std::string& type_str,
-    TensorProto::DataType& tensor_data_type) {
+    int32_t& tensor_data_type) {
   assert(IsValidDataTypeString(type_str));
 
   TypesWrapper& t = TypesWrapper::GetTypesWrapper();
-  tensor_data_type =
-      (TensorProto::DataType)t.TypeStrToTensorDataType()[type_str];
+  tensor_data_type = t.TypeStrToTensorDataType()[type_str];
 }
 
 StringRange::StringRange() : data_(""), size_(0), start_(data_), end_(data_) {}
@@ -418,6 +428,7 @@ TypesWrapper::TypesWrapper() {
   // DataType strings. These should match the DataTypes defined in onnx.proto
   type_str_to_tensor_data_type_["float"] = TensorProto_DataType_FLOAT;
   type_str_to_tensor_data_type_["float16"] = TensorProto_DataType_FLOAT16;
+  type_str_to_tensor_data_type_["bfloat16"] = TensorProto_DataType_BFLOAT16;
   type_str_to_tensor_data_type_["double"] = TensorProto_DataType_DOUBLE;
   type_str_to_tensor_data_type_["int8"] = TensorProto_DataType_INT8;
   type_str_to_tensor_data_type_["int16"] = TensorProto_DataType_INT16;

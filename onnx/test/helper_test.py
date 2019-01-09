@@ -202,6 +202,11 @@ class TestHelperNodeFunctions(unittest.TestCase):
             node_def.attribute[0],
             helper.make_attribute("arg_value", 1))
 
+    def test_node_domain(self):  # type: () -> None
+        node_def = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test", doc_string="doc", domain="test.domain")
+        self.assertEqual(node_def.domain, "test.domain")
+
     def test_graph(self):  # type: () -> None
         node_def1 = helper.make_node(
             "Relu", ["X"], ["Y"])

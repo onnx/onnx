@@ -55,6 +55,13 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
       enforce_has_field(type, key_type);
       enforce_has_field(type, value_type);
     } break;
+    case TypeProto::kOpaqueType:
+      break;
+    case TypeProto::kSparseTensorType: {
+      const auto& type = value_info.type().sparse_tensor_type();
+      enforce_has_field(type, elem_type);
+      enforce_has_field(type, shape);
+    } break;
 #endif
     default:
       fail_check(
@@ -144,6 +151,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         break;
 
       case TensorProto::INT32:
+      case TensorProto::UINT8:
       case TensorProto::UINT16:
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
@@ -224,18 +232,20 @@ void check_attribute(
 #undef check_repeated_field
 
   // Normally, used_fields is expected to be 1.
-  // In proto3, when the value to be set is type default value (say 0 for int), used_fields may be 0.
+  // In proto3, when the value to be set is type default value (say 0 for int),
+  // used_fields may be 0.
   if (used_fields > 1) {
-	  fail_check(
-		  "Attribute (name: ",
-		  attr.name(),
-		  ") should not contain more than one value field.");
+    fail_check(
+        "Attribute (name: ",
+        attr.name(),
+        ") should not contain more than one value field.");
   }
 
   if (!ctx.is_main_graph()) {
     // It's an attribute of a node in function body.
     if (attr.has_ref_attr_name() && used_fields != 0) {
-	  // The attribute proto is supposed to refer to data outside and does not have its own value field set.
+      // The attribute proto is supposed to refer to data outside and does not
+      // have its own value field set.
       fail_check(
           "Attribute (name: ",
           attr.name(),

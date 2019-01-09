@@ -171,5 +171,5 @@ class DefaultVersionConverter : public BaseVersionConverter {
 
 ModelProto ConvertVersion(
     const ModelProto& mp_in,
-    const int target_version);
+    int target_version);
 }} // namespace ONNX_NAMESPACE::version_conversion

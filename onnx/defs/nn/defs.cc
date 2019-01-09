@@ -741,6 +741,8 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
+  int64_t group = getAttribute(ctx, "group", 1);
+
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return; // Input tensor should have at least two dimensions.
@@ -751,7 +753,11 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    return; // we don't handle the dialations.
+    for (auto i : dilations)
+    {
+      if (i != 1)
+        return; // we don't handle dialations not 1.
+    }
   }
 
   std::vector<int64_t> pads;
@@ -788,10 +794,13 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   std::vector<int64_t> output_shape;
+  bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
     if (output_shape.size() != n_input_dims) {
       return;
     }
+  } else {
+    output_shape_presented = false;
   }
 
   std::vector<int64_t> output_padding;
@@ -809,37 +818,39 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
       ctx.getInputType(1)->tensor_type().shape().dim(
-          1); // channels should be the second dim of second input.
+          1) * group; // channels should be the second dim of second input multiply group.
 
-  int size_of_output = static_cast<int>(output_shape.size());
-  if (size_of_output > 0) {
+  int size_of_output;
+  if (output_shape_presented) {
+    size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-        // TODO: throw exception?
-        return; // output shape value cannot be smaller than the input shape
-                // value
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
+          // TODO: throw exception?
+          return; // output shape value cannot be smaller than the input shape
+                  // value
+        }
       }
-
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
-    return; // assume no need to proceed further when the output shape is given.
+    return;
   }
-
-  int kernel_shape_size = static_cast<int>(kernel_shape.size());
-  for (int i = 0; i < kernel_shape_size; ++i) {
-    auto newdim = final_output_shape->add_dim();
-    if (!input_shape.dim(2 + i).has_dim_value()) {
-      continue;
+  else
+  {
+    size_of_output = input_shape.dim_size() - 2;
+    for (int i = 0; i < size_of_output; ++i)
+    {
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        int64_t output_shape_dim =
+            strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
+            output_padding[i] + kernel_shape[i] - pads[i] -
+            pads[i + n_input_dims];
+        final_output_shape->add_dim()->set_dim_value(output_shape_dim);
+      } else{
+        final_output_shape->add_dim();
+      }
     }
-
-    int64_t newdim_value =
-        strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += (output_padding[i] + kernel_shape[i]);
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
-
-    // add in the initial position
-    newdim->set_dim_value(newdim_value);
+    return;
   }
 }
 
@@ -1092,8 +1103,9 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "spatial",
-            "If true, compute the mean and variance across all spatial elements "
-            "If false, compute the mean and variance across per feature.",
+            "If true, compute the mean and variance across per activation. "
+            "If false, compute the mean and variance across per feature over "
+            "each mini-batch.",
             AttributeProto::INT,
             static_cast<int64_t>(1))
         .Attr(
@@ -1122,28 +1134,38 @@ ONNX_OPERATOR_SET_SCHEMA(
         .Input(
             1,
             "scale",
-            "The scale as a 1-dimensional tensor of size C to be applied to the "
-            "output.",
+            "If spatial is true, the dimension of scale is (C). "
+            "If spatial is false, the dimensions of scale are "
+            "(C x D1 x ... x Dn)",
             "T")
         .Input(
             2,
             "B",
-            "The bias as a 1-dimensional tensor of size C to be applied to the "
-            "output.",
+            "If spatial is true, the dimension of bias is (C). "
+            "If spatial is false, the dimensions of bias are "
+            "(C x D1 x ... x Dn)",
             "T")
         .Input(
             3,
             "mean",
-            "The running mean (training) or the estimated mean (testing) "
-            "as a 1-dimensional tensor of size C.",
+            "If spatial is true, the dimension of the running mean "
+            "(training) or the estimated mean (testing) is (C). "
+            "If spatial is false, the dimensions of the running mean "
+            "(training) or the estimated mean (testing) are (C x D1 x ... x Dn).",
             "T")
         .Input(
             4,
             "var",
-            "The running variance (training) or the estimated "
-            "variance (testing) as a 1-dimensional tensor of size C.",
+            "If spatial is true, the dimension of the running variance"
+            "(training) or the estimated variance (testing) is (C). "
+            "If spatial is false, the dimensions of the running variance"
+            "(training) or the estimated variance (testing) are (C x D1 x ... x Dn).",
             "T")
-        .Output(0, "Y", "The output tensor of the same shape as X.", "T")
+        .Output(
+            0,
+            "Y",
+            "The output tensor of the same shape as X",
+            "T")
         .Output(
             1,
             "mean",

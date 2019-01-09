@@ -37,6 +37,7 @@ file(READ "${PROJECT_SOURCE_DIR}/VERSION_NUMBER" ONNX_VERSION)
 string(STRIP "${ONNX_VERSION}" ONNX_VERSION)
 
 if(NOT MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wnon-virtual-dtor")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
   if(ONNX_COVERAGE)
@@ -275,7 +276,7 @@ add_library(onnx_proto ${ONNX_PROTO_SRCS} ${ONNX_PROTO_HDRS})
 target_include_directories(onnx_proto PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
-  ${PROTOBUF_INCLUDE_DIRS})
+  $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
 
 if (MSVC)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -299,7 +300,10 @@ if (MSVC)
     set(ONNX_API_DEFINE "-DONNX_API=")
   endif()
 else()
-  set(ONNX_API_DEFINE "-DONNX_API=")
+  # On non-Windows, hide all symbols we don't need
+  set(ONNX_API_DEFINE "-DONNX_API=__attribute__\(\(__visibility__\(\"default\"\)\)\)")
+  set_target_properties(onnx_proto PROPERTIES CXX_VISIBILITY_PRESET hidden)
+  set_target_properties(onnx_proto PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
 endif()
 target_compile_definitions(onnx_proto PRIVATE ${ONNX_API_DEFINE})
 
@@ -421,7 +425,7 @@ if(ONNX_BUILD_BENCHMARKS)
     $<BUILD_INTERFACE:${ONNX_ROOT}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:include>
-    ${PROTOBUF_INCLUDE_DIRS})
+    $<BUILD_INTERFACE:${PROTOBUF_INCLUDE_DIRS}>)
   target_link_libraries(protobuf-bench onnx_proto benchmark)
 endif()
 

@@ -102,13 +102,15 @@ class OpSchema final {
         DataTypeSet type_set,
         std::string type_str,
         std::string description,
-        FormalParameterOption param_option = Single);
+        FormalParameterOption param_option = Single,
+        bool is_homogeneous = true);
 
     explicit FormalParameter(
         std::string name,
         std::string description,
         std::string type_str,
-        FormalParameterOption param_option = Single);
+        FormalParameterOption param_option = Single,
+        bool is_homogeneous = true);
 
     // Get formal parameter name.
     const std::string& GetName() const;
@@ -124,6 +126,9 @@ class OpSchema final {
 
     // Get the parameter option, it could be Single, Optional or Variadic.
     FormalParameterOption GetOption() const;
+
+    // Get whether a variadic parameter requires all to be of same type
+    bool GetIsHomogeneous() const;
 
    private:
     friend class OpSchema;
@@ -147,6 +152,10 @@ class OpSchema final {
 
     // Formal parameter option.
     FormalParameterOption param_option_;
+
+    // For variadic parameters, a flag indicating if all parameters must be of
+    // same type
+    bool is_homogeneous_;
   };
 
   enum class SupportType : uint8_t {
@@ -221,7 +230,9 @@ class OpSchema final {
    */
   OpSchema& Deprecate();
 
-  bool Deprecated() const { return deprecated_; }
+  bool Deprecated() const {
+    return deprecated_;
+  }
 
   /**
    * @brief Input could be one of the values specified in allowed_input_nums.
@@ -395,7 +406,8 @@ class OpSchema final {
       std::string name,
       std::string description,
       std::string type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Input(
@@ -403,13 +415,16 @@ class OpSchema final {
       const char* name,
       const char* description,
       const char* type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
+
   OpSchema& Output(
       int n,
       std::string name,
       std::string description,
       std::string type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
 
   // Non-STL wrapper to reduce binary size
   OpSchema& Output(
@@ -417,7 +432,9 @@ class OpSchema final {
       const char* name,
       const char* description,
       const char* type_str,
-      FormalParameterOption param_option = Single);
+      FormalParameterOption param_option = Single,
+      bool is_homogeneous = true);
+
   OpSchema& TypeConstraint(
       std::string type_str,
       std::vector<std::string> constraints,
@@ -605,7 +622,7 @@ class OpSchemaRegistry final : public ISchemaRegistry {
       // operator schema on specific domain. Update the lowest version when it's
       // determined to remove too old version history.
       map_[ONNX_DOMAIN] = std::make_pair(1, 9);
-      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 1);
+      map_[AI_ONNX_ML_DOMAIN] = std::make_pair(1, 2);
     }
 
     const std::unordered_map<std::string, std::pair<int, int>>& Map() const {
