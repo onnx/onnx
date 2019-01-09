@@ -95,13 +95,16 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
 
     # since version
     s += '\n#### Version\n'
-    s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
-    s += ' of {}.\n'.format(display_domain(schema.domain))
-    if len(versions) > 1:
-        # TODO: link to the Changelog.md
-        s += '\nOther versions of this operator: {}\n'.format(
-            ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
-                                           v.since_version) for v in versions[:-1]))
+    if schema.support_level == OpSchema.SupportType.EXPERIMENTAL:
+        s += '\nNo versioning maintained for experimental ops.'
+    else:
+        s += '\nThis version of the operator has been ' + ('deprecated' if schema.deprecated else 'available') + ' since version {}'.format(schema.since_version)
+        s += ' of {}.\n'.format(display_domain(schema.domain))
+        if len(versions) > 1:
+            # TODO: link to the Changelog.md
+            s += '\nOther versions of this operator: {}\n'.format(
+                ', '.join(display_version_link(format_name_with_domain(v.domain, v.name),
+                                               v.since_version) for v in versions[:-1]))
 
     # If this schema is deprecated, don't display any of the following sections
     if schema.deprecated:
@@ -152,7 +155,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             if OpSchema.FormalParameterOption.Optional == input.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == input.option:
-                option_str = " (variadic)"
+                if input.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(input.name, option_str, input.typeStr)
             s += '<dd>{}</dd>\n'.format(input.description)
         s += '</dl>\n'
@@ -171,7 +177,10 @@ def display_schema(schema, versions):  # type: (OpSchema, Sequence[OpSchema]) ->
             if OpSchema.FormalParameterOption.Optional == output.option:
                 option_str = " (optional)"
             elif OpSchema.FormalParameterOption.Variadic == output.option:
-                option_str = " (variadic)"
+                if output.isHomogeneous:
+                    option_str = " (variadic)"
+                else:
+                    option_str = " (variadic, heterogeneous)"
             s += '<dt><tt>{}</tt>{} : {}</dt>\n'.format(output.name, option_str, output.typeStr)
             s += '<dd>{}</dd>\n'.format(output.description)
         s += '</dl>\n'

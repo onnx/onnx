@@ -302,57 +302,152 @@ ONNX_ML_OPERATOR_SET_SCHEMA(
             AttributeProto::INT,
             static_cast<int64_t>(0)));
 
-static const char* LabelEncoder_ver1_doc = R"DOC(
-    Converts strings to integers and vice versa.<br>
-    If the string default value is set, it will convert integers to strings.
-    If the int default value is set, it will convert strings to integers.<br>
-    Each operator converts either integers to strings or strings to integers, depending 
-    on which default value attribute is provided. Only one default value attribute
-    should be defined.<br>
-    When converting from integers to strings, the string is fetched from the
-    'classes_strings' list, by simple indexing.<br>
-    When converting from strings to integers, the string is looked up in the list
-    and the index at which it is found is used as the converted value.
+static const char* LabelEncoder_ver2_doc = R"DOC(
+    Maps each element in the input tensor to another value.<br>
+    The mapping is determined by the two parallel attributes, 'keys_*' and
+    'values_*' attribute. The i-th value in the specified 'keys_*' attribute
+    would be mapped to the i-th value in the specified 'values_*' attribute. It
+    implies that input's element type and the element type of the specified
+    'keys_*' should be identical while the output type is identical to the
+    specified 'values_*' attribute. If an input element can not be found in the
+    specified 'keys_*' attribute, the 'default_*' that matches the specified
+    'values_*' attribute may be used as its output value.<br>
+    Let's consider an example which maps a string tensor to an integer tensor.
+    Assume and 'keys_strings' is ["Amy", "Sally"], 'values_int64s' is [5, 6],
+    and 'default_int64' is '-1'.  The input ["Dori", "Amy", "Amy", "Sally",
+    "Sally"] would be mapped to [-1, 5, 5, 6, 6].<br>
+    Since this operator is an one-to-one mapping, its input and output shapes
+    are the same. Notice that only one of 'keys_*'/'values_*' can be set.<br>
+    For key look-up, bit-wise comparison is used so even a float NaN can be
+    mapped to a value in 'values_*' attribute.<br>
 )DOC";
 
 ONNX_ML_OPERATOR_SET_SCHEMA(
     LabelEncoder,
-    1,
+    2,
     OpSchema()
-        .SetDoc(LabelEncoder_ver1_doc)
-        .Input(0, "X", "Input data.", "T1")
-        .Output(0, "Y", "Output data. If strings are input, the output values are integers, and vice versa.", "T2")
+        .SetDoc(LabelEncoder_ver2_doc)
+        .Input(0, "X", "Input data. It can be either tensor or scalar.", "T1")
+        .Output(0, "Y", "Output data.", "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(string)", "tensor(int64)"},
-            "The input type must be a tensor of integers or strings, of any shape.")
+            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            "The input type is a tensor of any shape.")
         .TypeConstraint(
             "T2",
-            {"tensor(string)", "tensor(int64)"},
-            "The output type will be a tensor of strings or integers, and will have the same shape as the input.")
+            {"tensor(string)", "tensor(int64)", "tensor(float)"},
+            "Output type is determined by the specified 'values_*' attribute.")
         .Attr(
-            "classes_strings",
-            "A list of labels.",
+            "keys_strings",
+            "A list of strings. One and only one of 'keys_*'s should be set.",
             AttributeProto::STRINGS,
             OPTIONAL)
         .Attr(
+            "keys_int64s",
+            "A list of ints.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "keys_floats",
+            "A list of floats.",
+            AttributeProto::FLOATS,
+            OPTIONAL)
+        .Attr(
+            "values_strings",
+            "A list of strings. One and only one of 'value_*'s should be set.",
+            AttributeProto::STRINGS,
+            OPTIONAL)
+        .Attr(
+            "values_int64s",
+            "A list of ints.",
+            AttributeProto::INTS,
+            OPTIONAL)
+        .Attr(
+            "values_floats",
+            "A list of floats.",
+            AttributeProto::FLOATS,
+            OPTIONAL)
+        .Attr(
+            "default_string",
+            "A string.",
+            AttributeProto::STRING,
+            std::string("_Unused"))
+        .Attr(
             "default_int64",
-            "An integer to use when an input string value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",
+            "An integer.",
             AttributeProto::INT,
             static_cast<int64_t>(-1))
         .Attr(
-            "default_string",
-            "A string to use when an input integer value is not found in the map.<br>One and only one of the 'default_*' attributes must be defined.",
-            AttributeProto::STRING,
-            std::string("_Unused"))
+            "default_float",
+            "A float.",
+            AttributeProto::FLOAT,
+            -0.f)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          // Label encoder is one-to-one mapping.
+          if (ctx.getNumInputs() != 1)
+            fail_shape_inference("Label encoder has only one input.");
+          if (ctx.getNumOutputs() != 1)
+            fail_shape_inference("Label encoder has only one output.");
+
+          // Input and output shapes are the same.
+          propagateShapeFromInputToOutput(ctx, 0, 0);
+
+          // Load all key_* attributes.
+          std::vector<std::string> keys_strings;
+          bool keys_strings_result = getRepeatedAttribute(
+              ctx, "keys_strings", keys_strings);
+          std::vector<int64_t> keys_int64s;
+          bool keys_int64s_result = getRepeatedAttribute(
+              ctx, "keys_int64s", keys_int64s);
+          std::vector<float> keys_floats;
+          bool keys_floats_result = getRepeatedAttribute(
+              ctx, "keys_floats", keys_floats);
+
+          // Check if only one keys_* attribute is set.
+          if (static_cast<int>(keys_strings_result) +
+                  static_cast<int>(keys_int64s_result) +
+                  static_cast<int>(keys_floats_result) != 1)
+            fail_shape_inference(
+                "Only one of keys_*'s can be set in label encoder.");
+
+          // Check if the specified keys_* matches input type.
           auto input_elem_type = ctx.getInputType(0)->tensor_type().elem_type();
+          if (keys_strings_result && input_elem_type != TensorProto::STRING)
+            fail_shape_inference(
+                "Input type is not string tensor but key_strings is set");
+          if (keys_int64s_result && input_elem_type != TensorProto::INT64)
+            fail_shape_inference(
+                "Input type is not int64 tensor but keys_int64s is set");
+          if (keys_floats_result && input_elem_type != TensorProto::FLOAT)
+            fail_shape_inference(
+                "Input type is not float tensor but keys_floats is set");
+
+          // Load all values_* attributes.
+          std::vector<std::string> values_strings;
+          bool values_strings_result = getRepeatedAttribute(
+              ctx, "values_strings", values_strings);
+          std::vector<int64_t> values_int64s;
+          bool values_int64s_result = getRepeatedAttribute(
+              ctx, "values_int64s", values_int64s);
+          std::vector<float> values_floats;
+          bool values_floats_result = getRepeatedAttribute(
+              ctx, "values_floats", values_floats);
+
+          // Check if only one values_* attribute is set.
+          if (static_cast<int>(values_strings_result) +
+                  static_cast<int>(values_int64s_result) +
+                  static_cast<int>(values_floats_result) != 1)
+            fail_shape_inference(
+                "Only one of values_*'s can be set in label encoder.");
+
+          // Assign output type based on the specified values_*.
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
-          if (TensorProto::STRING == input_elem_type) {
-            output_elem_type->set_elem_type(TensorProto::INT64);
-          } else if (TensorProto::INT64 == input_elem_type) {
+          if (values_strings_result)
             output_elem_type->set_elem_type(TensorProto::STRING);
-          }
+          if (values_int64s_result)
+            output_elem_type->set_elem_type(TensorProto::INT64);
+          if (values_floats_result)
+            output_elem_type->set_elem_type(TensorProto::FLOAT);
         }));
 
 static const char* LinearClassifier_ver1_doc = R"DOC(
@@ -509,7 +604,7 @@ static const char* OneHotEncoder_ver1_doc = R"DOC(
     For example, if we pass a tensor with a single value of 4, and a category count of 8, 
     the output will be a tensor with ``[0,0,0,0,1,0,0,0]``.<br>
     This operator assumes every input feature is from the same set of categories.<br>
-	If the input is a tensor of float, int32, or double, the data will be cast
+    If the input is a tensor of float, int32, or double, the data will be cast
     to integers and the cats_int64s category list will be used for the lookups.
 )DOC";
 
