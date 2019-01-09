@@ -21,7 +21,7 @@ conversion methods, dependent on the nature of relevant breaking changes.
 
 The version converter may be invoked either via C++ or Python. The Python API
 is described, with example,
-[here](docs/PythonAPIOverview.md#converting-opset-version-of-an-onnx-model).
+[here](PythonAPIOverview.md#converting-opset-version-of-an-onnx-model).
 
 The C++ API consists of a single function
 
