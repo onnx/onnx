@@ -5,6 +5,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import os
+import io
 
 from onnx import defs, load, AttributeProto
 from onnx.backend.test.case import collect_snippets
@@ -233,7 +234,7 @@ def main():
     else:
         fname = os.path.join(docs_dir, 'TestCoverage.md')
 
-    with open(fname, 'w+') as f:
+    with io.open(fname, 'w+', newline='') as f:  # type: ignore
         gen_outlines(f, ml)
         gen_node_test_coverage(schemas, f, ml)
         gen_model_test_coverage(schemas, f, ml)
