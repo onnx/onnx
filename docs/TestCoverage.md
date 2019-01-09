@@ -5,8 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 102/110 (92.73%, 5 generators excluded) common operators.
-Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
+Node tests have covered 102/109 (93.58%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -1173,44 +1172,57 @@ expect(node, inputs=[], outputs=[values],
 </details>
 
 
-### ConstantOfShape
-There are 2 test cases, listed as following:
+### ConstantLike
+There are 3 test cases, listed as following:
 <details>
-<summary>float_ones</summary>
+<summary>ones_with_input</summary>
 
 ```python
-x = np.array([4, 3, 2])
-tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.FLOAT,
-                                       [1], [1])
+shape = (4, 3, 2)
 node = onnx.helper.make_node(
-    'ConstantOfShape',
+    'ConstantLike',
     inputs=['x'],
     outputs=['y'],
-    value=tensor_value,
+    value=1.0,
 )
-
-y = np.ones(x, dtype=np.float32)
-expect(node, inputs=[x], outputs=[y],
-       name='test_constantofshape_float_ones')
+x = np.random.randint(0, 100, size=shape, dtype=np.int32)
+y = np.ones(shape, dtype=np.int32)
+expect(node, inputs=[x], outputs=[y], name='test_constantlike_ones_with_input')
 ```
 
 </details>
 <details>
-<summary>int_zeros</summary>
+<summary>threes_with_shape_and_dtype</summary>
 
 ```python
-x = np.array([10, 6])
-tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
-                                       [1], [1])
+shape = (3, 4)
 node = onnx.helper.make_node(
-    'ConstantOfShape',
-    inputs=['x'],
+    'ConstantLike',
+    shape=shape,
+    inputs=[],
     outputs=['y'],
-    value=tensor_value,
+    value=3.0,
+    dtype=onnx.TensorProto.DOUBLE,  # 11: DOUBLE
 )
-y = np.zeros(x, dtype=np.int32)
-expect(node, inputs=[x], outputs=[y],
-       name='test_constantofshape_int_zeros')
+
+y = 3.0 * np.ones(shape, dtype=np.float64)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_threes_with_shape_and_dtype')
+```
+
+</details>
+<details>
+<summary>zeros_without_input_dtype</summary>
+
+```python
+shape = (2, 5, 1)
+node = onnx.helper.make_node(
+    'ConstantLike',
+    inputs=[],
+    outputs=['y'],
+    shape=shape,
+)
+y = np.zeros(shape, dtype=np.float32)
+expect(node, inputs=[], outputs=[y], name='test_constantlike_zeros_without_input_dtype')
 ```
 
 </details>
@@ -1872,27 +1884,6 @@ y = (np.random.randn(5) * 10).astype(np.int32)
 z = np.equal(x, y)
 expect(node, inputs=[x, y], outputs=[z],
        name='test_equal_bcast')
-```
-
-</details>
-
-
-### Erf
-There are 1 test cases, listed as following:
-<details>
-<summary>erf</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Erf',
-    inputs=['x'],
-    outputs=['y'],
-)
-
-x = np.random.randn(1, 3, 32, 32).astype(np.float32)
-y = np.vectorize(math.erf)(x).astype(np.float32)
-expect(node, inputs=[x], outputs=[y],
-       name='test_erf')
 ```
 
 </details>
@@ -2616,26 +2607,6 @@ node = onnx.helper.make_node(
 # output size: (2, 3, 4, 5)
 expect(node, inputs=[x, s, bias], outputs=[y],
        name='test_instancenorm_epsilon')
-```
-
-</details>
-
-
-### IsNaN
-There are 1 test cases, listed as following:
-<details>
-<summary>isnan</summary>
-
-```python
-node = onnx.helper.make_node(
-    'IsNaN',
-    inputs=['x'],
-    outputs=['y'],
-)
-
-x = np.array([3.0, np.nan, 4.0, np.nan], dtype=np.float32)
-y = np.isnan(x)
-expect(node, inputs=[x], outputs=[y], name='test_isnan')
 ```
 
 </details>
@@ -5066,7 +5037,7 @@ expect(node, inputs=[data], outputs=[reduced], name='test_reduce_sum_square_keep
 
 
 ### Relu
-There are 1 test cases, listed as following:
+There are 2 test cases, listed as following:
 <details>
 <summary>relu</summary>
 
@@ -5081,6 +5052,35 @@ y = np.clip(x, 0, np.inf)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_relu')
+```
+
+</details>
+<details>
+<summary>with_attrs</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Relu',
+    threshold=onnx.helper.make_tensor(
+        name='relu_threshold',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=[1],
+        vals=[1.0],
+    ),
+    value=onnx.helper.make_tensor(
+        name='relu_value',
+        data_type=onnx.TensorProto.FLOAT,
+        dims=[1],
+        vals=[1.0],
+    ),
+    inputs=['x'],
+    outputs=['y'],
+)
+x = np.random.randn(3, 4, 5).astype(np.float32)
+y = np.clip(x, 1, np.inf)
+
+expect(node, inputs=[x], outputs=[y],
+       name='test_relu_thresholded')
 ```
 
 </details>
@@ -5172,55 +5172,6 @@ expect(node, inputs=[initial, x], outputs=[y, z],
 </details>
 
 
-### Scatter
-There are 2 test cases, listed as following:
-<details>
-<summary>scatter_with_axis</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Scatter',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-    axis=1,
-)
-data = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]], dtype=np.float32)
-indices = np.array([[1, 3]], dtype=np.int64)
-updates = np.array([[1.1, 2.1]], dtype=np.float32)
-
-y = np.array([[1.0, 1.1, 3.0, 2.1, 5.0]], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='test_scatter_with_axis')
-```
-
-</details>
-<details>
-<summary>scatter_without_axis</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Scatter',
-    inputs=['data', 'indices', 'updates'],
-    outputs=['y'],
-)
-data = np.zeros((3, 3), dtype=np.float32)
-indices = np.array([[1, 0, 2], [0, 2, 1]], dtype=np.int64)
-updates = np.array([[1.0, 1.1, 1.2], [2.0, 2.1, 2.2]], dtype=np.float32)
-
-y = np.array([
-    [2.0, 1.1, 0.0],
-    [1.0, 0.0, 2.2],
-    [0.0, 2.1, 1.2]
-], dtype=np.float32)
-
-expect(node, inputs=[data, indices, updates], outputs=[y],
-       name='test_scatter_without_axis')
-```
-
-</details>
-
-
 ### Selu
 There are 2 test cases, listed as following:
 <details>
@@ -5302,45 +5253,6 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
-### Shrink
-There are 2 test cases, listed as following:
-<details>
-<summary>hard_shrink</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Shrink',
-    inputs=['x'],
-    outputs=['y'],
-    lambd=1.5,
-)
-X = np.arange(-2.0, 2.1, dtype=np.float32)
-Y = np.array([-2, 0, 0, 0, 2], dtype=np.float32)
-expect(node, inputs=[X], outputs=[Y],
-       name='test_shrink_hard')
-```
-
-</details>
-<details>
-<summary>soft_shrink</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Shrink',
-    inputs=['x'],
-    outputs=['y'],
-    lambd=1.5,
-    bias=1.5,
-)
-X = np.arange(-2.0, 2.1,  dtype=np.float32)
-Y = np.array([-0.5, 0, 0, 0, 0.5], dtype=np.float32)
-expect(node, inputs=[X], outputs=[Y],
-       name='test_shrink_soft')
-```
-
-</details>
-
-
 ### Sigmoid
 There are 1 test cases, listed as following:
 <details>
@@ -5362,27 +5274,6 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = 1.0 / (1.0 + np.exp(np.negative(x)))
 expect(node, inputs=[x], outputs=[y],
        name='test_sigmoid')
-```
-
-</details>
-
-
-### Sign
-There are 1 test cases, listed as following:
-<details>
-<summary>sign</summary>
-
-```python
-node = onnx.helper.make_node(
-    'Sign',
-    inputs=['x'],
-    outputs=['y'],
-)
-
-x = np.array(range(-5, 6)).astype(np.float32)
-y = np.sign(x)
-expect(node, inputs=[x], outputs=[y],
-       name='test_sign')
 ```
 
 </details>
@@ -6329,9 +6220,9 @@ node = onnx.helper.make_node(
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
 y = x[0:3, 0:10]
-starts = np.array([0, 0], dtype=np.int64)
-ends = np.array([3, 10], dtype=np.int64)
-axes = np.array([0, 1], dtype=np.int64)
+starts = np.array([0, 0], dtype=np.long)
+ends = np.array([3, 10], dtype=np.long)
+axes = np.array([0, 1], dtype=np.long)
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
        name='test_dynamic_slice')
@@ -6349,8 +6240,8 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0, 0, 3], dtype=np.int64)
-ends = np.array([20, 10, 4], dtype=np.int64)
+starts = np.array([0, 0, 3], dtype=np.long)
+ends = np.array([20, 10, 4], dtype=np.long)
 y = x[:, :, 3:4]
 
 expect(node, inputs=[x, starts, ends], outputs=[y],
@@ -6369,9 +6260,9 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1], dtype=np.int64)
-ends = np.array([1000], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
+starts = np.array([1], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
 y = x[:, 1:1000]
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
@@ -6390,9 +6281,9 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([0], dtype=np.int64)
-ends = np.array([-1], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
+starts = np.array([0], dtype=np.long)
+ends = np.array([-1], dtype=np.long)
+axes = np.array([1], dtype=np.long)
 y = x[:, 0:-1]
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
@@ -6411,9 +6302,9 @@ node = onnx.helper.make_node(
 )
 
 x = np.random.randn(20, 10, 5).astype(np.float32)
-starts = np.array([1000], dtype=np.int64)
-ends = np.array([1000], dtype=np.int64)
-axes = np.array([1], dtype=np.int64)
+starts = np.array([1000], dtype=np.long)
+ends = np.array([1000], dtype=np.long)
+axes = np.array([1], dtype=np.long)
 y = x[:, 1000:1000]
 
 expect(node, inputs=[x, starts, ends, axes], outputs=[y],
@@ -6529,12 +6420,12 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 1
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6563,16 +6454,12 @@ strides: 1
 
 ## densenet121
 
-densenet121 has 668 nodes. Of these, 668 are covered by node tests (100.0%)
+densenet121 has 910 nodes. Of these, 910 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
-<details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
 <details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
@@ -6583,7 +6470,7 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -6605,12 +6492,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 1
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6635,8 +6522,9 @@ storage_order: 0
 strides: 1
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
 
+axes: 1
 </details>
 </details>
 
@@ -6650,10 +6538,6 @@ inception_v1 has 144 nodes. Of these, 144 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6663,7 +6547,7 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -6685,12 +6569,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6715,24 +6599,21 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
 
+axes: 1
 </details>
 </details>
 
 
 ## inception_v2
 
-inception_v2 has 371 nodes. Of these, 371 are covered by node tests (100.0%)
+inception_v2 has 509 nodes. Of these, 509 are covered by node tests (100.0%)
 
 
 <details>
 <summary>nodes</summary>
 
-<details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
 <details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
@@ -6743,7 +6624,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
@@ -6765,12 +6646,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6795,8 +6676,9 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
 
+axes: 1
 </details>
 </details>
 
@@ -6810,10 +6692,6 @@ resnet50 has 176 nodes. Of these, 176 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6823,7 +6701,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -6845,12 +6723,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6875,8 +6753,9 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
 
+axes: 1
 </details>
 </details>
 
@@ -6890,10 +6769,6 @@ shufflenet has 203 nodes. Of these, 203 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6903,7 +6778,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -6925,12 +6800,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -6955,13 +6830,14 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
 </details>
 </details>
 
@@ -6975,10 +6851,6 @@ squeezenet_old has 66 nodes. Of these, 66 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -6988,7 +6860,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -7010,12 +6882,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -7040,13 +6912,14 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
 </details>
 </details>
 
@@ -7060,10 +6933,6 @@ vgg19 has 46 nodes. Of these, 46 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -7073,7 +6942,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -7095,12 +6964,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -7125,13 +6994,14 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
 </details>
 </details>
 
@@ -7145,10 +7015,6 @@ zfnet512 has 22 nodes. Of these, 22 are covered by node tests (100.0%)
 <summary>nodes</summary>
 
 <details>
-<summary>Add: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>AveragePool: 3 out of 5 attributes covered</summary>
 
 auto_pad: 0
@@ -7158,7 +7024,7 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 2 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
@@ -7180,12 +7046,12 @@ pads: 4
 strides: 3
 </details>
 <details>
-<summary>Dropout: 2 out of 1 attributes covered</summary>
+<summary>Dropout: 1 out of 1 attributes covered</summary>
 
 ratio: 2
 </details>
 <details>
-<summary>Gemm: 2 out of 4 attributes covered</summary>
+<summary>Gemm: 1 out of 4 attributes covered</summary>
 
 alpha: 0
 beta: 0
@@ -7210,13 +7076,14 @@ storage_order: 0
 strides: 2
 </details>
 <details>
-<summary>Mul: 2 out of 0 attributes covered</summary>
-
-</details>
-<details>
 <summary>Transpose: 1 out of 1 attributes covered</summary>
 
 perm: 1
+</details>
+<details>
+<summary>Unsqueeze: 1 out of 1 attributes covered</summary>
+
+axes: 1
 </details>
 </details>
 
