@@ -20,7 +20,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Cast_ver1_doc)
         .Attr(
             "to",
-            "The data type to which the elements of the input tensor are cast."
+            "The data type to which the elements of the input tensor are cast. "
             "Strictly must be one of the types from DataType enum in TensorProto",
             AttributeProto::STRING)
         .Input(0, "input", "Input tensor to be cast.", "T1")
@@ -61,31 +61,6 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(bool)"},
             "Constrain output types. Casting to strings and complex are not supported."));
 
-static const char* Concat_ver1_doc =
-    R"DOC(Concatenate a list of tensors into a single tensor)DOC";
-
-ONNX_OPERATOR_SET_SCHEMA(
-    Concat,
-    1,
-    OpSchema()
-        .Attr(
-            "axis",
-            "Which axis to concat on.  Default value is 1.",
-            AttributeProto::INT,
-            OPTIONAL)
-        .SetDoc(Concat_ver1_doc)
-        .Input(
-            0,
-            "inputs",
-            "List of tensors for concatenation",
-            "T",
-            OpSchema::Variadic)
-        .Output(0, "concat_result", "Concatenated tensor", "T")
-        .TypeConstraint(
-            "T",
-            {"tensor(float16)", "tensor(float)", "tensor(double)"},
-            "Constrain output types to float tensors."));
-
 static const char* Cast_ver6_doc = R"DOC(
 The operator casts the elements of a given input tensor to a data type
 specified by the 'to' argument and returns an output tensor of the same size in
@@ -101,7 +76,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Cast_ver6_doc)
         .Attr(
             "to",
-            "The data type to which the elements of the input tensor are cast."
+            "The data type to which the elements of the input tensor are cast. "
             "Strictly must be one of the types from DataType enum in TensorProto",
             AttributeProto::INT)
         .Input(0, "input", "Input tensor to be cast.", "T1")
@@ -147,6 +122,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             propagateShapeFromInputToOutput(ctx, 0, 0);
           }
         }));
+
+static const char* Concat_ver1_doc =
+    R"DOC(Concatenate a list of tensors into a single tensor)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Concat,
+    1,
+    OpSchema()
+        .Attr(
+            "axis",
+            "Which axis to concat on.  Default value is 1.",
+            AttributeProto::INT,
+            OPTIONAL)
+        .SetDoc(Concat_ver1_doc)
+        .Input(
+            0,
+            "inputs",
+            "List of tensors for concatenation",
+            "T",
+            OpSchema::Variadic)
+        .Output(0, "concat_result", "Concatenated tensor", "T")
+        .TypeConstraint(
+            "T",
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
+            "Constrain output types to float tensors."));
 
 static const char* Split_ver1_doc =
     R"DOC(Split a tensor into a list of tensors, along the specified
