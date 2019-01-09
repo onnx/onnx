@@ -81,7 +81,7 @@ def check_graph(graph, ctx=DEFAULT_CONTEXT):  # type: (GraphProto, C.CheckerCont
 
 def check_model(model):  # type: (Union[ModelProto, Text]) -> None
     if isinstance(model, string_types):
-        C.check_model(model)
+        C.check_model_path(model)
     else:
         C.check_model(model.SerializeToString())
 
