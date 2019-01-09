@@ -553,8 +553,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .TypeConstraint(
             "B",
             {"tensor(bool)"},
-            "tensor of bool, which should be a scalar."));
-        .TypeConstraint("B", {"bool"}, "Only bool")
+            "tensor of bool, which should be a scalar.")
         .TypeAndShapeInferenceFunction(LoopInferenceFunction));
 
 static const char* scan_9_doc = R"DOC(
