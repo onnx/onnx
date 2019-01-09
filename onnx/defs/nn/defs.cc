@@ -1,7 +1,9 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
+#include <algorithm>
 #include "onnx/defs/schema.h"
+
 using namespace ONNX_NAMESPACE;
 
 namespace ONNX_NAMESPACE {
@@ -747,8 +749,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    for (auto i : dilations)
-    {
+    for (auto i : dilations) {
       if (i != 1)
         return; // we don't handle dialations not 1.
     }
@@ -811,8 +812,9 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
-      ctx.getInputType(1)->tensor_type().shape().dim(
-          1) * group; // channels should be the second dim of second input multiply group.
+      ctx.getInputType(1)->tensor_type().shape().dim(1) *
+      group; // channels should be the second dim of second input multiply
+             // group.
 
   int size_of_output;
   if (output_shape_presented) {
@@ -828,19 +830,16 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
     return;
-  }
-  else
-  {
+  } else {
     size_of_output = input_shape.dim_size() - 2;
-    for (int i = 0; i < size_of_output; ++i)
-    {
+    for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
         int64_t output_shape_dim =
             strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
             output_padding[i] + kernel_shape[i] - pads[i] -
             pads[i + n_input_dims];
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
-      } else{
+      } else {
         final_output_shape->add_dim();
       }
     }
