@@ -9,7 +9,7 @@ import os
 import os.path as Path
 
 import onnx
-from onnx import helper
+from onnx import checker, helper
 from onnx import TensorProto
 from onnx.helper import set_external_data
 from onnx.numpy_helper import to_array, from_array
@@ -66,6 +66,9 @@ class TestLoadExternalData(unittest.TestCase):
             model_file.write(model.SerializeToString())
 
         return model_filename
+
+    def test_check_model(self):  # type: () -> None
+        checker.check_model(self.model_filename)
 
     def test_load_external_data(self):  # type: () -> None
         model = onnx.load_model(self.model_filename)
@@ -152,6 +155,9 @@ class TestLoadExternalDataSingleFile(unittest.TestCase):
         with open(model_filename, "wb") as model_file:
             model_file.write(model.SerializeToString())
         return model_filename
+
+    def test_check_model(self):  # type: () -> None
+        checker.check_model(self.model_filename)
 
     def test_load_external_single_file_data(self):  # type: () -> None
         model = onnx.load_model(self.model_filename)
