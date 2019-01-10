@@ -54,6 +54,7 @@ struct InferenceContext {
   virtual const TypeProto* getInputType(size_t index) const = 0;
   virtual const TensorProto* getInputData(size_t index) const = 0;
   virtual size_t getNumOutputs() const = 0;
+  virtual bool hasOutput(size_t index) = 0;
   virtual TypeProto* getOutputType(size_t index) = 0;
   virtual GraphInferencer* getGraphAttributeInferencer(
       const std::string& attribute_name) = 0;
@@ -312,12 +313,24 @@ inline void propagateShapeFromInputToOutput(
       ctx.getInputType(inputIndex)->tensor_type().shape();
 }
 
-inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
-  propagateElemTypeFromInputToOutput(ctx, 0, 0);
-  if (!hasNInputShapes(ctx, 1)) {
+inline void propagateShapeAndTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
+  propagateElemTypeFromInputToOutput(ctx, inputIndex, outputIndex);
+  if (!hasNInputShapes(ctx, inputIndex + 1)) {
     return;
   }
-  propagateShapeFromInputToOutput(ctx, 0, 0);
+  propagateShapeFromInputToOutput(ctx, inputIndex, outputIndex);
+}
+
+inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
+  propagateShapeAndTypeFromInputToOutput(ctx, 0, 0);
+}
+
+inline void propagateShapeAndTypeFromFirstInputToAllOutputs(InferenceContext& ctx) {
+  for (int i = 0; i < static_cast<int>(ctx.getNumOutputs()); ++i) {
+    if(ctx.hasOutput(i)) {
+      propagateShapeAndTypeFromInputToOutput(ctx, 0, i);
+    }
+  }
 }
 
 inline void updateOutputElemType(

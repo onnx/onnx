@@ -771,7 +771,21 @@ class TestShapeInference(unittest.TestCase):
         self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.INT64, (24, 1, 11))])
 
     def test_dropout(self):  # type: () -> None
+        # No mask
         self._identity_prop('Dropout')
+        # With mask
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Dropout', 'x', ['y', 'mask'])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5)),
+                                      make_tensor_value_info('mask', TensorProto.FLOAT, (30, 4, 5))])
+        # Without mask but using empty string notation for optional output
+        graph = self._make_graph(
+            [('x', TensorProto.FLOAT, (30, 4, 5))],
+            [make_node('Dropout', 'x', ['y', ''])],
+            [])
+        self._assert_inferred(graph, [make_tensor_value_info('y', TensorProto.FLOAT, (30, 4, 5))])
 
     def test_LRN(self):  # type: () -> None
         self._identity_prop('LRN', alpha=0.5, beta=0.5, size=1)
