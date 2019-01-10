@@ -1643,7 +1643,7 @@ for from_type, to_type in test_cases:
     else:
         input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
            ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
-           ['0.14634249', '0.6888254', 'NaN', 'INF']], dtype=np.dtype('str'))
+           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype('str'))
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
