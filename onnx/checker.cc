@@ -127,6 +127,7 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
     }
     return;
   } else {
+    bool isChecked = false;
 #define check_field(field)               \
   if (nelem != 0 && !has_##field) {      \
     fail_check(                          \
@@ -137,7 +138,8 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         "' instead of '",                \
         value_field,                     \
         "'");                            \
-  }
+  }                                      \
+  isChecked = true;
 
     switch (tensor.data_type()) {
       case TensorProto::FLOAT:
@@ -151,8 +153,10 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         break;
 
       case TensorProto::INT32:
-      case TensorProto::UINT8:
+      case TensorProto::INT16:
+      case TensorProto::INT8:
       case TensorProto::UINT16:
+      case TensorProto::UINT8:
       case TensorProto::BOOL:
       case TensorProto::FLOAT16:
       case TensorProto::BFLOAT16:
@@ -172,7 +176,12 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
         check_field(string_data);
         break;
 
-      default:
+      case TensorProto::UNDEFINED:
+        // Fail afterwards
+        break;
+
+    }
+    if (!isChecked) {
         fail_check(
             "Unrecognized data_type (tensor name: ",
             tensor.name(),
@@ -235,10 +244,10 @@ void check_attribute(
   // In proto3, when the value to be set is type default value (say 0 for int),
   // used_fields may be 0.
   if (used_fields > 1) {
-    fail_check(
-        "Attribute (name: ",
-        attr.name(),
-        ") should not contain more than one value field.");
+	  fail_check(
+		  "Attribute (name: ",
+		  attr.name(),
+		  ") should not contain more than one value field.");
   }
 
   if (!ctx.is_main_graph()) {
