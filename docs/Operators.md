@@ -1564,14 +1564,20 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
   
-  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representation
+  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
   (e.g., "1e-5" and "1E8") to all numeric types is supported. Values will be implicitly truncated
   based on the target tensor type's precision. For example, converting string "100.5" to an integer may
   result 100. There are some string literals reserved for special floating-point values;
-  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity,  negative infinity, and not-a-number, respectively.
+  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
   Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
   this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
-  to string tensors, plain floating-point representation (such as "3.1415926") would be used.
+  to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior.
+  
+  Conversion from a numerical type to any numerical type is always allowed.
+  User must be aware of precision loss and value change caused by range difference between two types.
+  For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+  an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
 #### Version
 
