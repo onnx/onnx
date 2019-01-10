@@ -22,6 +22,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           ") is not equal to number of scan inputs (",
           num_scan_inputs,
           ").");
+  } else {
+    axes.resize(num_scan_inputs, 0); // default scan axes are 0
   }
 
   std::vector<TypeProto> temporary_type_protos;
@@ -49,40 +51,18 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       propagateElemTypeFromInputToOutput(ctx, i, i);
       if (has_shape)
         propagateShapeFromInputToOutput(ctx, i, i);
+    } else if (has_shape) {
+      // extract sequence dim from loop input
+      const auto& input_shape = input_type->tensor_type().shape();
+      int axis = (int)axes[i - num_loop_state_vars];
+      if (axis < 0) axis += input_shape.dim_size();
+      if (axis < 0 || axis >= input_shape.dim_size())
+        fail_type_inference("Scan axis for input ", i, "(", axis, ") exceeded shape dim_size ", input_shape.dim_size());
 
-      subgraph_input_types.push_back(input_type);
-    } else {
-      // For other inputs there is no fixed relationships to the Scan outputs,
-      // so we don't propagate type/shape information.
-      // We can pass through the type and shape to the subgraph inputs but
-      // need to remove the sequence length dimensions from the shape.
-      if (has_shape) {
-        // remove sequence length dimensions and add to subgraph_input_types
-        int axis = (axes_specified)
-            ? static_cast<int>(axes[i - num_loop_state_vars])
-            : 0;
-
-        // update sequence_len if a value is available
-        const auto& shape = input_type->tensor_type().shape();
-        if (axis >= shape.dim_size())
-          fail_shape_inference(
-              "Specified axis value (",
-              axis,
-              ") is >= rank (",
-              shape.dim_size(),
-              ").");
-
-        const auto& dims = shape.dim();
-        mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
-
-        temporary_type_protos.push_back(
-            RemoveIthDimensionFromShape(*input_type, axis));
-        subgraph_input_types.push_back(&temporary_type_protos.back());
-
-      } else {
-        subgraph_input_types.push_back(input_type);
-      }
+      mergeInDimensionInfo(input_shape.dim(axis), sequence_len_dim, axis);
     }
+
+    subgraph_input_types.push_back(input_type);
   }
 
   // Run inferencing on the subgraph
@@ -91,7 +71,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    for (size_t i = 1; i < num_inputs; ++i) {
+    for (size_t i = 0; i < num_inputs; ++i) {
       input_data.push_back(ctx.getInputData(i));
     }
 
@@ -131,31 +111,20 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
       // propagate shape
       if (subgraph_output_type->tensor_type().has_shape()) {
-        // we need to add in sequence length value if
-        // available before merging with any existing info. Create a copy of
-        // the inferred type info from the subgraph to do that.
-        TypeProto inferred_type(*subgraph_output_type);
-        auto* mutable_inferred_tensor_type =
-            inferred_type.mutable_tensor_type();
-        auto* mutable_inferred_shape =
-            mutable_inferred_tensor_type->mutable_shape();
-
-        mutable_inferred_shape->clear_dim();
-
-        if (!is_loop_state_var) {
-          *mutable_inferred_shape->add_dim() = sequence_len_dim;
-        }
-
-        for (const auto& dim :
-             subgraph_output_type->tensor_type().shape().dim()) {
-          (*mutable_inferred_shape->add_dim()) = dim;
-        }
-
+        TypeProto_Tensor subgraph_output_tensor_type = subgraph_output_type->tensor_type();
         auto* mutable_scan_output_tensor_type =
             scan_output_type->mutable_tensor_type();
 
+        if (!is_loop_state_var) {
+          // set sequence_dim for loop output, as it is 1 from sub graph shape inference
+          // currently assume output sequence dim is at axes[0]
+          int axis = (int)axes[0];
+          auto* mutable_shape = subgraph_output_tensor_type.mutable_shape();
+          *(mutable_shape->mutable_dim(axis)) = sequence_len_dim;
+        }
+
         mergeInShapeInfo(
-            *mutable_inferred_tensor_type, *mutable_scan_output_tensor_type);
+            subgraph_output_tensor_type, *mutable_scan_output_tensor_type);
       }
     }
   }
