@@ -50,6 +50,8 @@ def expect(node,  # type: onnx.NodeProto
         model=model,
         data_sets=[(inputs, outputs)],
         kind='node',
+        rtol=1e-3,
+        atol=1e-7,
     ))
 
 

@@ -6,9 +6,13 @@ from __future__ import unicode_literals
 from collections import namedtuple
 
 TestCase = namedtuple('TestCase', [
-    'name', 'model_name',
+    'name',
+    'model_name',
     'url',
     'model_dir',
-    'model', 'data_sets',
+    'model',
+    'data_sets',
     'kind',
+    'rtol',
+    'atol',
 ])
