@@ -5331,7 +5331,7 @@ node = onnx.helper.make_node(
     lambd=1.5,
     bias=1.5,
 )
-X = np.arange(-2.0, 2.1,  dtype=np.float32)
+X = np.arange(-2.0, 2.1, dtype=np.float32)
 Y = np.array([-0.5, 0, 0, 0, 0.5], dtype=np.float32)
 expect(node, inputs=[X], outputs=[Y],
        name='test_shrink_soft')
