@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 106/113 (93.81%, 5 generators excluded) common operators.
+Node tests have covered 107/114 (93.86%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -5296,6 +5296,45 @@ y = np.array(x.shape).astype(np.int64)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_shape')
+```
+
+</details>
+
+
+### Shrink
+There are 2 test cases, listed as following:
+<details>
+<summary>hard_shrink</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Shrink',
+    inputs=['x'],
+    outputs=['y'],
+    lambd=1.5,
+)
+X = np.arange(-2.0, 2.1, dtype=np.float32)
+Y = np.array([-2, 0, 0, 0, 2], dtype=np.float32)
+expect(node, inputs=[X], outputs=[Y],
+       name='test_shrink_hard')
+```
+
+</details>
+<details>
+<summary>soft_shrink</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Shrink',
+    inputs=['x'],
+    outputs=['y'],
+    lambd=1.5,
+    bias=1.5,
+)
+X = np.arange(-2.0, 2.1, dtype=np.float32)
+Y = np.array([-0.5, 0, 0, 0, 0.5], dtype=np.float32)
+expect(node, inputs=[X], outputs=[Y],
+       name='test_shrink_soft')
 ```
 
 </details>
