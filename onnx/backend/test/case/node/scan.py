@@ -58,7 +58,7 @@ class Scan(Base):
 
         expect(node, inputs=[initial, x], outputs=[y, z],
                name='test_scan_sum', opset_imports=[onnx.helper.make_opsetid("", 8)])
-    
+
     @staticmethod
     def export_scan_9():  # type: () -> None
         # Given an input sequence [x1, ..., xN], sum up its elements using a scan
