@@ -28,6 +28,7 @@ def expect(node,  # type: onnx.NodeProto
            inputs,  # type: Sequence[np.ndarray]
            outputs,  # type: Sequence[np.ndarray]
            name,  # type: Text
+           **kwargs  # type: **Any
            ):  # type: (...) -> None
     present_inputs = [x for x in node.input if (x != '')]
     present_outputs = [x for x in node.output if (x != '')]
@@ -40,7 +41,8 @@ def expect(node,  # type: onnx.NodeProto
         name=name,
         inputs=inputs_vi,
         outputs=outputs_vi)
-    model = onnx.helper.make_model(graph, producer_name='backend-test')
+    kwargs[str('producer_name')] = 'backend-test'
+    model = onnx.helper.make_model(graph, **kwargs)
 
     _NodeTestCases.append(TestCase(
         name=name,
