@@ -9006,9 +9006,9 @@ This version of the operator has been available since version 9 of the default O
   If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28] 
   indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
   
-  The output vector stores the count of each n-gram; 
-  Y[i] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping 
-  between index i and the corresponding n-gram. If pool_int64s is [94 , 17 ,17, 36], ngram_indexes is [1, 0],
+  The output vector (denoted by Y) stores the count of each n-gram; 
+  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping 
+  between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
   ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
   respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output. 
   Note that we may consider all skips up to S when generating the n-grams. 
@@ -9030,21 +9030,21 @@ This version of the operator has been available since version 9 of the default O
 <dt><tt>max_gram_length</tt> : int (required)</dt>
 <dd>Maximum n-gram length. If this value is 3, 3-grams will be used to generate the output.</dd>
 <dt><tt>max_skip_count</tt> : int (required)</dt>
-<dd>Maximum number of items (integers/strings) to be skipped when constructing an n-gram from X.If max_skip_count=1, min_gram_length=2, max_gram_length=3, this operator may generate 2-gramswith skip_count=0 and skip_count=1, and 3-grams with skip_count=0 and skip_count=1</dd>
+<dd>Maximum number of items (integers/strings) to be skipped when constructing an n-gram from X. If max_skip_count=1, min_gram_length=2, max_gram_length=3, this operator may generate 2-grams with skip_count=0 and skip_count=1, and 3-grams with skip_count=0 and skip_count=1</dd>
 <dt><tt>min_gram_length</tt> : int (required)</dt>
 <dd>Minimum n-gram length. If this value is 2 and max_gram_length is 3, output may contain counts of 2-grams and 3-grams.</dd>
 <dt><tt>mode</tt> : string (required)</dt>
-<dd>The weighting criteria. It can be one of "TF" (term frequency),"IDF" (inverse document frequency), and "TFIDF" (the combination of TF and IDF)</dd>
+<dd>The weighting criteria. It can be one of "TF" (term frequency), "IDF" (inverse document frequency), and "TFIDF" (the combination of TF and IDF)</dd>
 <dt><tt>ngram_counts</tt> : list of ints (required)</dt>
-<dd>The starting indexes of 1-grams, 2-grams, and so on in pool.It is useful when determining the boundary between two consecutive collections of n-grams.For example, if ngram_counts is [0, 17, 36], the first index (zero-based) of 1-gram/2-gram/3-gramin pool are 0/17/36. This format is essentially identical to CSR (or CSC) sparse matrix format, and we choose to keep this due to its popularity.</dd>
+<dd>The starting indexes of 1-grams, 2-grams, and so on in pool. It is useful when determining the boundary between two consecutive collections of n-grams. For example, if ngram_counts is [0, 17, 36], the first index (zero-based) of 1-gram/2-gram/3-gram in pool are 0/17/36. This format is essentially identical to CSR (or CSC) sparse matrix format, and we choose to use this due to its popularity.</dd>
 <dt><tt>ngram_indexes</tt> : list of ints (required)</dt>
-<dd>list of int64s (type: AttributeProto::INTS). This list is parallel to the specified 'pool_*' attribute.The i-th element in ngram_indexes indicate the coordinate of the i-th n-gram in the output tensor.</dd>
+<dd>list of int64s (type: AttributeProto::INTS). This list is parallel to the specified 'pool_*' attribute. The i-th element in ngram_indexes indicate the coordinate of the i-th n-gram in the output tensor.</dd>
 <dt><tt>pool_int64s</tt> : list of ints</dt>
-<dd>List of int64 n-grams learned from the training set. Either this or pool_strings attributes must be present but not both.It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams.The i-th element in pool stores the n-gram that should be mapped to index ngram_indexes[i] in the output vector.</dd>
+<dd>List of int64 n-grams learned from the training set. Either this or pool_strings attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
 <dt><tt>pool_strings</tt> : list of strings</dt>
-<dd>List of strings n-grams learned from the training set. Either this or pool_int64s attributes must be present but not both.It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams.The i-th element in pool stores the n-gram that should be mapped to index ngram_indexes[i] in the output vector.</dd>
+<dd>List of strings n-grams learned from the training set. Either this or pool_int64s attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
 <dt><tt>weights</tt> : list of floats</dt>
-<dd>list of floats. This attribute stores the weight of each n-gram in pool. The i-th element in weightsis the weight of the i-th n-gram in pool. Its length equals to the size of ngram_indexes.By default, weights is an all-one tensor.This attribute is used when mode is "IDF" or "TFIDF"to scale the associated word counts.</dd>
+<dd>list of floats. This attribute stores the weight of each n-gram in pool. The i-th element in weights is the weight of the i-th n-gram in pool. Its length equals to the size of ngram_indexes. By default, weights is an all-one tensor.This attribute is used when mode is "IDF" or "TFIDF" to scale the associated word counts.</dd>
 </dl>
 
 #### Inputs
