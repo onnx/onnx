@@ -4,7 +4,22 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from onnx import TensorProto
+from typing import Text, Any
 import numpy as np  # type: ignore
+
+
+class StringHolder:
+    def __init__(self, s):    # type: (Text) -> None
+        self.text = s
+
+    def __eq__(self, other): # type: (object) -> Any
+        if isinstance(other, self.__class__):
+            return self.text == getattr(other, 'text')
+        return False
+
+    def __ne__(self, other): # type: (object) -> Any
+        return not self.__eq__(other)
+
 
 TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.FLOAT): np.dtype('float32'),
@@ -21,7 +36,7 @@ TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.COMPLEX128): np.dtype('complex128'),
     int(TensorProto.UINT32): np.dtype('uint32'),
     int(TensorProto.UINT64): np.dtype('uint64'),
-    int(TensorProto.STRING): np.dtype('str'),
+    int(TensorProto.STRING): np.dtype(np.object)
 }
 
 NP_TYPE_TO_TENSOR_TYPE = {v: k for k, v in TENSOR_TYPE_TO_NP_TYPE.items()}
