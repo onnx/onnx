@@ -94,13 +94,13 @@ class Scan(Base):
             num_scan_inputs=1,
             body=scan_body
         )
-        # create inputs for batch-size 1, sequence-length 3, inner dimension 2
-        initial = np.array([0, 0]).astype(np.float32).reshape((1, 2))
-        x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((1, 3, 2))
+        # create inputs for sequence-length 3, inner dimension 2
+        initial = np.array([0, 0]).astype(np.float32).reshape((2,))
+        x = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32).reshape((3, 2))
         # final state computed = [1 + 3 + 5, 2 + 4 + 6]
-        y = np.array([9, 12]).astype(np.float32).reshape((1, 2))
+        y = np.array([9, 12]).astype(np.float32).reshape((2,))
         # scan-output computed
-        z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((1, 3, 2))
+        z = np.array([1, 2, 4, 6, 9, 12]).astype(np.float32).reshape((3, 2))
 
         expect(node, inputs=[initial, x], outputs=[y, z],
                name='test_scan9_sum', opset_imports=[onnx.helper.make_opsetid("", 9)])
