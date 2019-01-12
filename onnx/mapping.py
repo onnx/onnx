@@ -12,12 +12,12 @@ class StringHolder:
     def __init__(self, s):    # type: (Text) -> None
         self.text = s
 
-    def __eq__(self, other): # type: (object) -> Any
+    def __eq__(self, other):  # type: (object) -> Any
         if isinstance(other, self.__class__):
             return self.text == getattr(other, 'text')
         return False
 
-    def __ne__(self, other): # type: (object) -> Any
+    def __ne__(self, other):  # type: (object) -> Any
         return not self.__eq__(other)
 
 
