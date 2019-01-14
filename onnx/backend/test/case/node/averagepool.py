@@ -195,7 +195,7 @@ class AveragePool(Base):
     @staticmethod
     def export_averagepool_2d_same_upper():  # type: () -> None
         """
-        iutput_shape: [1, 3, 32, 32]
+        input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
         """
@@ -225,7 +225,7 @@ class AveragePool(Base):
     @staticmethod
     def export_averagepool_2d_same_lower():  # type: () -> None
         """
-        iutput_shape: [1, 3, 32, 32]
+        input_shape: [1, 3, 32, 32]
         output_shape: [1, 3, 32, 32]
         pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
         """

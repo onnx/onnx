@@ -737,7 +737,7 @@ This version of the operator has been available since version 1 of the default O
 ### <a name="ConvTranspose-1"></a>**ConvTranspose-1**</a>
 
   The convolution transpose operator consumes an input tensor and a filter,
-  and computes the output. 
+  and computes the output.
   
   If the pads parameter is provided the shape of the output is calculated via the following equation:
   
@@ -9389,6 +9389,47 @@ This version of the operator has been available since version 9 of the default O
 <dd>Input and output types can be of any tensor type.</dd>
 <dt><tt>Tind</tt> : tensor(int32), tensor(int64)</dt>
 <dd>Constrain indices to integer types</dd>
+</dl>
+
+### <a name="Shrink-9"></a>**Shrink-9**</a>
+
+  Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+  having same datatype and shape with input. It has two attributes, lambd and
+  bias. The formula of this operator is: If x < -lambd, y = x + bias;
+  If x > lambd, y = x - bias; Otherwise, y = 0.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>bias</tt> : float (default is 0.0)</dt>
+<dd>The bias value added to output. Default is 0.</dd>
+<dt><tt>lambd</tt> : float (default is 0.5)</dt>
+<dd>The lambd value for the Shrink formulation. Default is 0.5.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>input</tt> : T</dt>
+<dd>The input data as Tensor.</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>The output.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrains input to only numeric types.</dd>
 </dl>
 
 ### <a name="Sign-9"></a>**Sign-9**</a>
