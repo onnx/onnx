@@ -537,14 +537,45 @@ inline void mergeInDimensionInfo(
 }
 
 /*
+Merge shape information from a source shape into a target shape.
+* merges each TensorShapeProto_Dimension separately.
+* prefer values over params.
+* If both have values, values must match.
+* prefer target param over source param if mismatched.
+* Fail if there are mismatches in number of dimensions or dimension values.
+*/
+inline void mergeInShapeInfo(
+    const TensorShapeProto& source,
+    TensorShapeProto& target) {
+  auto num_source_dims = source.dim_size();
+  auto num_target_dims = target.dim_size();
+  if (num_source_dims != num_target_dims) {
+    fail_shape_inference(
+        "Mismatch between number of source and target dimensions. Source=",
+        num_source_dims,
+        " Target=",
+        num_target_dims);
+  }
+
+  auto& source_dims = source.dim();
+  auto* target_dims = target.mutable_dim();
+
+  for (int i = 0, end = source_dims.size(); i < end; ++i) {
+    auto& source_dim = source_dims.Get(i);
+    auto& target_dim = *target_dims->Mutable(i);
+    mergeInDimensionInfo(source_dim, target_dim, i);
+  }
+}
+
+/*
 Merge the shape information from two TypeProto_Tensor instances.
 Values are merged into target from source.
 If target has no shape information, copy from source.
 If source has no shape information, ignore source.
 If both have shape information:
- - merge each TensorShapeProto_Dimension separately.
- - Prefer values over params. If both have values, values must match.
- - Prefer target param over source param if mismatched.
+- merge each TensorShapeProto_Dimension separately.
+- Prefer values over params. If both have values, values must match.
+- Prefer target param over source param if mismatched.
 Fail if there are mismatches in number of dimensions or dimension values.
 */
 inline void mergeInShapeInfo(
@@ -556,27 +587,7 @@ inline void mergeInShapeInfo(
   if (target_has_shape) {
     if (source_has_shape) {
       // merge with existing info.
-      const auto& source_shape = source.shape();
-      auto* mutable_target_shape = target.mutable_shape();
-      auto num_source_dims = source_shape.dim_size();
-      auto num_target_dims = mutable_target_shape->dim_size();
-
-      if (num_source_dims != num_target_dims) {
-        fail_shape_inference(
-            "Mismatch between number of source and target dimensions. Source=",
-            num_source_dims,
-            " Target=",
-            num_target_dims);
-      }
-
-      auto& source_dims = source_shape.dim();
-      auto* target_dims = mutable_target_shape->mutable_dim();
-
-      for (int i = 0, end = source_dims.size(); i < end; ++i) {
-        auto& source_dim = source_dims.Get(i);
-        auto& target_dim = *target_dims->Mutable(i);
-        mergeInDimensionInfo(source_dim, target_dim, i);
-      }
+      mergeInShapeInfo(source.shape(), *target.mutable_shape());
     }
   } else if (source_has_shape) {
     // copy to target
