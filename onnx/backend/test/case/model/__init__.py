@@ -47,7 +47,7 @@ def collect_testcases():  # type: () -> List[TestCase]
 
     model_tests = [
         ('test_bvlc_alexnet', 'bvlc_alexnet', 1e-3, 1e-7),
-        ('test_densenet121', 'densenet121', 1e-3, 1e-7),
+        ('test_densenet121', 'densenet121', 2e-3, 1e-7),
         ('test_inception_v1', 'inception_v1', 1e-3, 1e-7),
         ('test_inception_v2', 'inception_v2', 1e-3, 1e-7),
         ('test_resnet50', 'resnet50', 1e-3, 1e-7),
