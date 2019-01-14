@@ -721,7 +721,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_precomputed_stri
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -755,7 +755,7 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_2d_same_lower')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -3079,7 +3079,7 @@ There are 12 test cases, listed as following:
 
 ```python
 """
-iutput_shape: [1, 3, 32]
+input_shape: [1, 3, 32]
 output_shape: [1, 3, 31]
 """
 node = onnx.helper.make_node(
@@ -3105,7 +3105,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_1d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 31, 31]
 """
 node = onnx.helper.make_node(
@@ -3131,7 +3131,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_default')
 
 ```python
 """
-iutput_shape: [1, 3, 28, 28]
+input_shape: [1, 3, 28, 28]
 output_shape: [1, 3, 30, 30]
 pad_shape: [4, 4] -> [2, 2, 2, 2] by axis
 """
@@ -3258,7 +3258,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_precomputed_strides'
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [1, 0, 1, 0] by axis
 """
@@ -3292,7 +3292,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_lower')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 32, 32]
 pad_shape: [1, 1] -> [0, 1, 0, 1] by axis
 """
@@ -3326,7 +3326,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_same_upper')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32]
+input_shape: [1, 3, 32, 32]
 output_shape: [1, 3, 10, 10]
 """
 node = onnx.helper.make_node(
@@ -3353,7 +3353,7 @@ expect(node, inputs=[x], outputs=[y], name='test_maxpool_2d_strides')
 
 ```python
 """
-iutput_shape: [1, 3, 32, 32, 32]
+input_shape: [1, 3, 32, 32, 32]
 output_shape: [1, 3, 31, 31, 31]
 """
 node = onnx.helper.make_node(
