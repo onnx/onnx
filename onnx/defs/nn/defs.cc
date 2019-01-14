@@ -1520,15 +1520,18 @@ ONNX_OPERATOR_SET_SCHEMA(
               output_shape.add_dim()->set_dim_value(max_last_axis);
             } else if (dim_size == 2) {
               auto& B_dim = input_shape.dim(0);
-              if (!B_dim.has_dim_value()) {
+              if (B_dim.has_dim_value()) {
+                output_shape.add_dim()->set_dim_value(B_dim.dim_value());
+              } else if (B_dim.has_dim_param()) {
+                output_shape.add_dim()->set_dim_param(B_dim.dim_param());
+              } else {
                 fail_shape_inference(
                     "Input shape does not have first dimension value");
               }
-              output_shape.add_dim()->set_dim_value(B_dim.dim_value());
               output_shape.add_dim()->set_dim_value(max_last_axis);
             } else {
               fail_shape_inference(
-                  "Input shape must have either [C] or [B,C] dimensions where C > 0 and B > 0");
+                  "Input shape must have either [C], [?], [B,C] or [?,C] dimensions where C > 0 and B > 0");
             }
             updateOutputShape(ctx, 0, output_shape);
           }
