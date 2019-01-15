@@ -14,9 +14,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   auto num_scan_outputs = num_outputs - num_loop_state_vars;
 
   std::vector<int64_t> axes, output_axes;
-  bool axes_specified = false, output_axes_specified = false;
   if (getRepeatedAttribute(ctx, "scan_input_axes", axes)) {
-    axes_specified = true;
     if (axes.size() != num_scan_inputs)
       fail_shape_inference(
           "Number of scan input axes specified (",
@@ -29,7 +27,6 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   }
 
   if (getRepeatedAttribute(ctx, "scan_output_axes", output_axes)) {
-    output_axes_specified = true;
     if (output_axes.size() != num_scan_outputs)
       fail_shape_inference(
           "Number of scan output axes specified (",
@@ -75,9 +72,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       // need to remove the sequence length dimensions from the shape.
       if (has_shape) {
         // remove sequence length dimensions and add to subgraph_input_types
-        int axis = (axes_specified)
-            ? static_cast<int>(axes[i - num_loop_state_vars])
-            : 0;
+        int axis = static_cast<int>(axes[i - num_loop_state_vars]);
 
         // update sequence_len if a value is available
         const auto& shape = input_type->tensor_type().shape();
@@ -158,9 +153,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
               subgraph_output_tensor_type.shape();
           TensorShapeProto inferred_shape;
 
-          int output_axis = (output_axes_specified)
-              ? static_cast<int>(output_axes[i - num_loop_state_vars])
-              : 0;
+          int output_axis =
+              static_cast<int>(output_axes[i - num_loop_state_vars]);
           auto subgraph_output_rank = subgraph_output_shape.dim_size();
           if (output_axis < 0 || output_axis > subgraph_output_rank)
             fail_shape_inference(
@@ -176,9 +170,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
             *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
 
           // Merge inferred shape with existing shape information
-          mergeInShapeInfo(
-              inferred_shape,
-              *mutable_scan_output_tensor_type->mutable_shape());
+          mergeInShapeInfo(inferred_shape, *mutable_scan_output_tensor_type);
         }
       }
     }

@@ -567,6 +567,18 @@ inline void mergeInShapeInfo(
   }
 }
 
+inline void mergeInShapeInfo(
+    const TensorShapeProto& source_shape,
+    TypeProto_Tensor& target_type) {
+  if (target_type.has_shape()) {
+    // merge with existing info.
+    mergeInShapeInfo(source_shape, *target_type.mutable_shape());
+  } else {
+    // copy to target
+    (*target_type.mutable_shape()) = source_shape;
+  }
+}
+
 /*
 Merge the shape information from two TypeProto_Tensor instances.
 Values are merged into target from source.
@@ -581,18 +593,8 @@ Fail if there are mismatches in number of dimensions or dimension values.
 inline void mergeInShapeInfo(
     const TypeProto_Tensor& source,
     TypeProto_Tensor& target) {
-  bool source_has_shape = source.has_shape();
-  bool target_has_shape = target.has_shape();
-
-  if (target_has_shape) {
-    if (source_has_shape) {
-      // merge with existing info.
-      mergeInShapeInfo(source.shape(), *target.mutable_shape());
-    }
-  } else if (source_has_shape) {
-    // copy to target
-    (*target.mutable_shape()) = source.shape();
-  }
+  if (source.has_shape())
+    mergeInShapeInfo(source.shape(), target);
 }
 
 // Return a copy of a type, with a specified dimension removed from its shape.
