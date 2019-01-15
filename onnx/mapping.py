@@ -7,20 +7,6 @@ from onnx import TensorProto
 from typing import Text, Any
 import numpy as np  # type: ignore
 
-
-class StringHolder:
-    def __init__(self, s):    # type: (Text) -> None
-        self.text = s
-
-    def __eq__(self, other):  # type: (object) -> Any
-        if isinstance(other, self.__class__):
-            return self.text == getattr(other, 'text')
-        return False
-
-    def __ne__(self, other):  # type: (object) -> Any
-        return not self.__eq__(other)
-
-
 TENSOR_TYPE_TO_NP_TYPE = {
     int(TensorProto.FLOAT): np.dtype('float32'),
     int(TensorProto.UINT8): np.dtype('uint8'),

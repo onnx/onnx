@@ -8,7 +8,7 @@ import sys
 import numpy as np  # type: ignore
 from onnx import TensorProto
 from onnx import mapping
-from onnx.mapping import StringHolder
+from six import text_type
 from typing import Sequence, Any, Optional, Text, List
 
 
@@ -45,7 +45,7 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
 
     if tensor.data_type == TensorProto.STRING:
         utf8_strings = getattr(tensor, storage_field)
-        ss = list(StringHolder(s.decode('utf-8')) for s in utf8_strings)
+        ss = list(s.decode('utf-8') for s in utf8_strings)
         return np.asarray(ss).astype(np_dtype).reshape(dims)
 
     if tensor.HasField("raw_data"):
@@ -85,10 +85,10 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         # Special care for strings.
         tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
         for e in arr:
-            if isinstance(e, StringHolder):
-                tensor.string_data.append(e.text.encode('utf-8'))
+            if isinstance(e, text_type):
+                tensor.string_data.append(e.encode('utf-8'))
             else:
-                raise NotImplementedError("Unrecognized object in the object array, expect StringHolder")
+                raise NotImplementedError("Unrecognized object in the object array, expect a string")
 
         return tensor
 

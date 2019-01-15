@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import numpy as np  # type: ignore
 
 from onnx import numpy_helper
-from onnx.mapping import StringHolder
 
 import unittest
 
@@ -53,8 +52,7 @@ class TestNumpyHelper(unittest.TestCase):
         self._test_numpy_helper_int_type(np.int64)
 
     def test_string(self):  # type: () -> None
-        strholder_list = list(StringHolder(s) for s in ['Amy', 'Billy', 'Cindy', 'David'])
-        a = np.array(strholder_list).astype(np.object)
+        a = np.array(['Amy', 'Billy', 'Cindy', 'David']).astype(np.object)
         tensor_def = numpy_helper.from_array(a, "test")
         self.assertEqual(tensor_def.name, "test")
         a_recover = numpy_helper.to_array(tensor_def)
