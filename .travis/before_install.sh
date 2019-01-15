@@ -2,6 +2,8 @@
 
 # Don't source setup.sh here, because the virtualenv might not be set up yet
 
+set -o xtrace
+
 export NUMCORES=`grep -c ^processor /proc/cpuinfo`
 if [ ! -n "$NUMCORES" ]; then
   export NUMCORES=`sysctl -n hw.ncpu`
@@ -27,6 +29,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
   install_protobuf
 
 elif [ "$TRAVIS_OS_NAME" == "osx" ]; then
+  brew update
   brew install ccache protobuf
   if [ "${PYTHON_VERSION}" == "python3" ]; then
     brew upgrade python
