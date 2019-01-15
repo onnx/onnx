@@ -9451,3 +9451,41 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input 'X' and output 'Y' to all tensor types.</dd>
 </dl>
 
+### <a name="Where-9"></a>**Where-9**</a>
+
+  Return elements, either from X or Y, depending on condition
+      (with Numpy-style broadcasting support).
+      Where behaves like numpy.where with three parameters:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.where.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>condition</tt> : B</dt>
+<dd>When True (nonzero), yield X, otherwise yield Y</dd>
+<dt><tt>X</tt> : T</dt>
+<dd>values selected at indices where condition is True</dd>
+<dt><tt>Y</tt> : T</dt>
+<dd>values selected at indices where condition is False</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>output</tt> : T</dt>
+<dd>Tensor of shape equal to the broadcasted shape of condition, X, and Y.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>B</tt> : tensor(bool)</dt>
+<dd>Constrain to boolean tensors.</dd>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
