@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 107/114 (93.86%, 5 generators excluded) common operators.
+Node tests have covered 108/115 (93.91%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -6233,6 +6233,29 @@ output = np.array([[[
 
 expect(node, inputs=[data, scales], outputs=[output],
        name='test_upsample_nearest')
+```
+
+</details>
+
+
+### Where
+There are 1 test cases, listed as following:
+<details>
+<summary>where</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Where',
+    inputs=['condition', 'x', 'y'],
+    outputs=['z'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+x = np.array([[1, 2], [3, 4]], dtype=np.float32)
+y = np.array([[9, 8], [7, 6]], dtype=np.float32)
+z = np.where(condition, x, y)  # expected output [[1, 8], [3, 4]]
+expect(node, inputs=[condition, x, y], outputs=[z],
+       name='test_where_example')
 ```
 
 </details>
