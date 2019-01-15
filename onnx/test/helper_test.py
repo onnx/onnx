@@ -291,7 +291,7 @@ class TestHelperTensorFunctions(unittest.TestCase):
         )
         np.testing.assert_equal(np_array, numpy_helper.to_array(tensor))
 
-        string_list = list(s.encode('ascii') for s in ['Amy', 'Billy', 'Cindy', 'David'])
+        string_list = list(s.encode('utf-8') for s in ['Amy', 'Billy', 'Cindy', 'David'])
         tensor = helper.make_tensor(
             name='test',
             data_type=TensorProto.STRING,

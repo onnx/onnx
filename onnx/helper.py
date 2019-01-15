@@ -182,14 +182,14 @@ def _to_bytes_or_false(val):  # type: (Union[Text, bytes]) -> Union[bytes, bool]
     The criteria for conversion is as follows and should be python 2 and 3
     compatible:
     - If val is py2 str or py3 bytes: return bytes
-    - If val is py2 unicode or py3 str: return val.decode('ascii')
+    - If val is py2 unicode or py3 str: return val.decode('utf-8')
     - Otherwise, return False
     """
     if isinstance(val, bytes):
         return val
     else:
         try:
-            return val.encode('ascii')
+            return val.encode('utf-8')
         except AttributeError:
             return False
 
@@ -344,7 +344,7 @@ def _sanitize_str(s):  # type: (Union[Text, bytes]) -> Text
     if isinstance(s, text_type):
         sanitized = s
     elif isinstance(s, binary_type):
-        sanitized = s.decode('ascii', errors='ignore')
+        sanitized = s.decode('utf-8', errors='ignore')
     else:
         sanitized = str(s)
     if len(sanitized) < 64:
