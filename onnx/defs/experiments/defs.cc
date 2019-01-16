@@ -4,8 +4,13 @@
 #include "onnx/defs/schema.h"
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
-
 using SupportType = ONNX_NAMESPACE::OpSchema::SupportType;
+
+// Experimental ops in ONNX do not have version maintained.
+// Experimental ops are used for verifying op definitions (experimentation)
+// before checked into ONNX or ONNX-ML domain as official ops, and partners
+// do not need to implement these ops. An experimental op should be either removed
+// or promoted after a while. In this file, a default since_version "1" is used for all exp ops.
 
 static const char* Affine_ver1_doc = R"DOC(
 Affine takes one input data (Tensor<T>) and produces one output data
@@ -432,7 +437,7 @@ Example 2:
 
 ONNX_OPERATOR_SET_SCHEMA(
     DynamicSlice,
-    9,
+    1,
     OpSchema()
         .SetDoc(DynamicSlice_ver1_doc)
         .SetSupportLevel(SupportType::EXPERIMENTAL)

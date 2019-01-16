@@ -340,7 +340,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 
   if (ctx.getNumInputs() == 3) {
-    // If the third input, output_size, is specified, then use that instead 
+    // If the third input, output_size, is specified, then use that instead
     // of inferring shape from inputs.
     if (hasInputShape(ctx, 2)) {
       auto& output_shape = getInputShape(ctx, 2);
@@ -348,7 +348,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
         fail_type_inference(
               "'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim((int)0).has_dim_value() && 
+      if (output_shape.dim((int)0).has_dim_value() &&
           static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
           fail_shape_inference(
                   "'output_shape' must have same number of elements as the shape of input tensor X.");
@@ -741,6 +741,8 @@ void convTransposeShapeInference(InferenceContext& ctx) {
     return;
   }
 
+  int64_t group = getAttribute(ctx, "group", 1);
+
   auto input_shape = ctx.getInputType(0)->tensor_type().shape();
   if (input_shape.dim_size() < 2) {
     return; // Input tensor should have at least two dimensions.
@@ -751,7 +753,11 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    return; // we don't handle the dialations.
+    for (auto i : dilations)
+    {
+      if (i != 1)
+        return; // we don't handle dialations not 1.
+    }
   }
 
   std::vector<int64_t> pads;
@@ -788,10 +794,13 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   }
 
   std::vector<int64_t> output_shape;
+  bool output_shape_presented = true;
   if (getRepeatedAttribute(ctx, "output_shape", output_shape)) {
     if (output_shape.size() != n_input_dims) {
       return;
     }
+  } else {
+    output_shape_presented = false;
   }
 
   std::vector<int64_t> output_padding;
@@ -809,37 +818,39 @@ void convTransposeShapeInference(InferenceContext& ctx) {
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
       ctx.getInputType(1)->tensor_type().shape().dim(
-          1); // channels should be the second dim of second input.
+          1) * group; // channels should be the second dim of second input multiply group.
 
-  int size_of_output = static_cast<int>(output_shape.size());
-  if (size_of_output > 0) {
+  int size_of_output;
+  if (output_shape_presented) {
+    size_of_output = static_cast<int>(output_shape.size());
     for (int i = 0; i < size_of_output; ++i) {
-      if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
-        // TODO: throw exception?
-        return; // output shape value cannot be smaller than the input shape
-                // value
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        if (output_shape[i] < input_shape.dim(i + 2).dim_value()) {
+          // TODO: throw exception?
+          return; // output shape value cannot be smaller than the input shape
+                  // value
+        }
       }
-
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
-    return; // assume no need to proceed further when the output shape is given.
+    return;
   }
-
-  int kernel_shape_size = static_cast<int>(kernel_shape.size());
-  for (int i = 0; i < kernel_shape_size; ++i) {
-    auto newdim = final_output_shape->add_dim();
-    if (!input_shape.dim(2 + i).has_dim_value()) {
-      continue;
+  else
+  {
+    size_of_output = input_shape.dim_size() - 2;
+    for (int i = 0; i < size_of_output; ++i)
+    {
+      if (input_shape.dim(i + 2).has_dim_value()) {
+        int64_t output_shape_dim =
+            strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
+            output_padding[i] + kernel_shape[i] - pads[i] -
+            pads[i + n_input_dims];
+        final_output_shape->add_dim()->set_dim_value(output_shape_dim);
+      } else{
+        final_output_shape->add_dim();
+      }
     }
-
-    int64_t newdim_value =
-        strides[i] * (input_shape.dim(2 + i).dim_value() - 1);
-    newdim_value += (output_padding[i] + kernel_shape[i]);
-    newdim_value -= pads[i];
-    newdim_value -= pads[i + kernel_shape_size];
-
-    // add in the initial position
-    newdim->set_dim_value(newdim_value);
+    return;
   }
 }
 
@@ -849,7 +860,7 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
-and computes the output. 
+and computes the output.
 
 If the pads parameter is provided the shape of the output is calculated via the following equation:
 
@@ -1280,6 +1291,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Shrink_ver9_doc = R"DOC(
+Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+having same datatype and shape with input. It has two attributes, lambd and
+bias. The formula of this operator is: If x < -lambd, y = x + bias;
+If x > lambd, y = x - bias; Otherwise, y = 0.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	Shrink,
+	9,
+	OpSchema()
+		.SetDoc(Shrink_ver9_doc)
+		.Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
+		.Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
+		.Input(0, "input", "The input data as Tensor.", "T")
+		.Output(0, "output", "The output.", "T")
+		.TypeConstraint(
+			"T",
+			OpSchema::all_numeric_types(),
+			"Constrains input to only numeric types.")
+		.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 
 static const char* Flatten_ver9_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape

@@ -223,6 +223,38 @@ inline void propagateElemTypeFromInputToOutput(
   }
 }
 
+inline void propagateElemTypeFromDtypeToOutput(
+    InferenceContext& ctx,
+    const int& data_type,
+    size_t outputIndex) {
+  auto attribute_tensor_datatype = data_type;
+  auto output_type = ctx.getOutputType(outputIndex);
+  if (output_type->value_case() == TypeProto::kTensorType ||
+      output_type->value_case() == TypeProto::VALUE_NOT_SET) {
+    output_type->mutable_tensor_type()->set_elem_type(
+        attribute_tensor_datatype);
+  } else {
+    // This is not expected to happen
+    fail_type_inference(
+        "Output ", outputIndex, " expected to have tensor type");
+  }
+}
+
+inline void propagateElemTypeFromDtypeToOutput(
+    InferenceContext& ctx,
+    const AttributeProto* attr,
+    size_t outputIndex) {
+  if (attr->type() != AttributeProto::TENSOR) {
+    fail_type_inference("Attribute expected to have tensor type");
+  }
+  if (attr->t().dims().size() != 1) {
+    fail_type_inference("Attribute expected to have a one-dim tensor");
+  }
+  auto attribute_tensor_datatype = attr->t().data_type();
+  propagateElemTypeFromDtypeToOutput(
+      ctx, attribute_tensor_datatype, outputIndex);
+}
+
 inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > static_cast<size_t>(n) && ctx.getInputType(n) &&
       ctx.getInputType(n)->has_tensor_type() &&
@@ -291,7 +323,7 @@ inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
 inline void updateOutputElemType(
     InferenceContext& ctx,
     size_t outputIndex,
-    TensorProto_DataType elemType) {
+    int32_t elemType) {
   auto output_type = ctx.getOutputType(outputIndex);
   if ((output_type != nullptr) &&
       (output_type->value_case() == TypeProto::kTensorType ||
@@ -550,6 +582,50 @@ inline void mergeInShapeInfo(
     // copy to target
     (*target.mutable_shape()) = source.shape();
   }
+}
+
+// Return a copy of a type, with a specified dimension removed from its shape.
+inline TypeProto RemoveIthDimensionFromShape(
+    const TypeProto& proto,
+    int removed_dim) {
+  TypeProto t(proto);
+  auto mutable_shape = t.mutable_tensor_type()->mutable_shape();
+  mutable_shape->clear_dim();
+
+  const auto& dims = proto.tensor_type().shape().dim();
+
+  for (int j = 0, end = dims.size(); j < end; ++j) {
+    if (j != removed_dim)
+      (*mutable_shape->add_dim()) = dims.Get(j);
+  }
+
+  return t;
+}
+
+// Return a copy of a type, with specified number of dimensions removed from the
+// beginning.
+inline TypeProto RemoveDimensionsFromShape(
+    const TypeProto& proto,
+    int num_dimensions) {
+  TypeProto t(proto);
+  auto mutable_shape = t.mutable_tensor_type()->mutable_shape();
+  mutable_shape->clear_dim();
+
+  const auto& dims = proto.tensor_type().shape().dim();
+
+  // skip first num_dimensions
+  for (int j = num_dimensions, end = dims.size(); j < end; ++j) {
+    (*mutable_shape->add_dim()) = dims.Get(j);
+  }
+
+  return t;
+}
+
+// copied from GSL:
+// https://github.com/Microsoft/GSL/blob/master/include/gsl/gsl_util
+template <class T, class U>
+static constexpr T narrow_cast(U&& u) noexcept {
+  return static_cast<T>(std::forward<U>(u));
 }
 
 } // namespace ONNX_NAMESPACE

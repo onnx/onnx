@@ -40,6 +40,7 @@ namespace ONNX_NAMESPACE {
   _(Squeeze)                      \
   _(Undefined)                    \
   _(FusionGroup)                  \
+  _(MatMul)                       \
   _(Gemm)                         \
   _(Tile)                         \
   _(SubConstant)                  \
@@ -136,6 +137,7 @@ namespace ONNX_NAMESPACE {
   _(zeros)                        \
   _(exponent)                     \
   _(device)                       \
+  _(mode)                         \
   _(Identity)                     \
   _(Loop)                         \
   _(If)                           \
