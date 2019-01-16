@@ -1116,16 +1116,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For image data, input dimensions become (N x C x H x W). "
             "The op also accepts single dimension input of size N in which case C is assumed to be 1",
             "T")
-        .Input(
-            1,
-            "scale",
-            "Scale tensor of shape (C).",
-            "T")
-        .Input(
-            2,
-            "B",
-            "Bias tensor of shape (C).",
-            "T")
+        .Input(1, "scale", "Scale tensor of shape (C).", "T")
+        .Input(2, "B", "Bias tensor of shape (C).", "T")
         .Input(
             3,
             "mean",
@@ -1451,8 +1443,6 @@ ONNX_OPERATOR_SET_SCHEMA(
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_elem_type->set_elem_type(TensorProto::STRING);
           if (hasInputShape(ctx, 0)) {
-            std::vector<int64_t> stopwords;
-            getRepeatedAttribute(ctx, "stopwords", stopwords);
             TensorShapeProto output_shape;
             auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             auto dim_size = input_shape.dim_size();
@@ -1462,20 +1452,11 @@ ONNX_OPERATOR_SET_SCHEMA(
               output_shape.add_dim();
             } else if (dim_size == 1) {
               // Copy C if no stopwords otherwise unknown
-              if (stopwords.empty()) {
-                *output_shape.add_dim() = input_shape.dim(0);
-              } else {
-                output_shape.add_dim();
-              }
+              output_shape.add_dim();
             } else if (dim_size == 2) {
               // Copy B-dim
               *output_shape.add_dim() = input_shape.dim(0);
-              // Copy C if no stopwords otherwise unknown
-              if (stopwords.empty()) {
-                *output_shape.add_dim() = input_shape.dim(0);
-              } else {
-                output_shape.add_dim();
-              }
+              output_shape.add_dim();
             } else {
               fail_shape_inference(
                   "Input shape must have either [C], [?], [1,C] or [?,C] dimensions where C > 0");

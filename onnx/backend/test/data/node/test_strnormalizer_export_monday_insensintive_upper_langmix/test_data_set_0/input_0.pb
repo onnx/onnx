@@ -1,1 +1,1 @@
-2monday2tuesday2	wednesdayBx
+2Monday2tuesday2	wednesdayBx
