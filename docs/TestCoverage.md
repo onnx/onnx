@@ -6672,11 +6672,10 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6749,11 +6748,10 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6826,11 +6824,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6903,11 +6900,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6980,11 +6976,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7062,11 +7057,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7144,11 +7138,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7226,11 +7219,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
