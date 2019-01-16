@@ -180,7 +180,7 @@ Graphs SHOULD be populated with documentation strings, which MAY be interpreted 
 
 All names MUST adhere to C identifier syntax rules.
 
-Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. 
+Names of nodes, inputs, outputs, initializers, and attributes are organized into several namespaces. Within a namespace, each name MUST be unique for each given graph. Please see below for further clarification in the case where a graph contains nested subgraphs (as attribute values).
 
 The namespaces are:
 
@@ -214,9 +214,9 @@ doc_string|string|A human-readable documentation for this value. Markdown is all
 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
-The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node.
+The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
 
-The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph.
+The graph MUST use single static assignment for all node outputs, which means that all node output names MUST be unique within a graph. In the case of a nested subgraph, a node output name MUST be distinct from the names from the outer scopes that are visible in the nested subgraph.
 
 Node dependencies MUST NOT create cycles in the computation graph.
 

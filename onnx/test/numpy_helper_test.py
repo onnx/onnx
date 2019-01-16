@@ -52,7 +52,11 @@ class TestNumpyHelper(unittest.TestCase):
         self._test_numpy_helper_int_type(np.int64)
 
     def test_string(self):  # type: () -> None
-        pass
+        a = np.array(['Amy', 'Billy', 'Cindy', 'David']).astype(np.object)
+        tensor_def = numpy_helper.from_array(a, "test")
+        self.assertEqual(tensor_def.name, "test")
+        a_recover = numpy_helper.to_array(tensor_def)
+        np.testing.assert_equal(a, a_recover)
 
     def test_bool(self):  # type: () -> None
         a = np.random.randint(2, size=(13, 37)).astype(np.bool)
