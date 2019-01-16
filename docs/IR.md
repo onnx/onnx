@@ -212,6 +212,12 @@ domain|string|The domain of the operator set that contains the operator named by
 attribute|Attribute[]|Named attributes, another form of operator parameterization, used for constant values rather than propagated values.
 doc_string|string|A human-readable documentation for this value. Markdown is allowed.
 
+A name belonging to the Value namespace may appear in multiple places, namely as a graph input, a graph initializer, a graph output, a node input, or a node output. The occurrence of a name as a graph input, or a graph initializer, or as a node output is said to be a definition (site) and the occurrence of a name as a node input or as a graph output is said to be a use (site).
+
+A value name used in a graph must have a unique definition site, with the exception that the same name MAY appear in both the graph input list and graph initializer list. (Further exceptions apply in the presence of nested subgraphs, as described later.)
+
+When a name appears in both the initializer list and the graph input list, a runtime MAY allow a caller to specify a value for this (input) name overriding the value specified in the initializer and a runtime MAY allow users to omit specifying a value for this (input) name, choosing the value specified in the initializer. Names of constants that are not meant to overridden by the caller should appear only in the initializer list and not in the graph input list. In nested subgraphs used as attribute values, users MUST NOT use the same name as both a subgraph initializer and subgraph input (unless the corresponding op's specification explicitly allows it).
+ 
 Edges in the computation graph are established by outputs of one node being referenced by name in the inputs of a subsequent node.
 
 The outputs of a given node introduce new names into the graph. The values of node outputs are computed by the node's operator. Node inputs MAY refer to node outputs, graph inputs, and graph initializers. When the name of a node output coincides with the name of a graph output, the graph output's value is the corresponding output value computed by that node. A node input in a nested subgraph MAY refer to names introduced in outer graphs (as node outputs, graph inputs, or graph initializers).
