@@ -240,6 +240,15 @@ inline void propagateElemTypeFromAttributeTensorToOutput(
   validateAndSetElemType(attribute_tensor_datatype, ctx.getOutputType(outputIndex));
 }
 
+inline bool hasInputType(InferenceContext& ctx, size_t idx) {
+  if (idx >= ctx.getNumInputs()) {
+    return false;
+  }
+  auto inputType = ctx.getInputType(idx);
+  return inputType->has_tensor_type() &&
+      inputType->tensor_type().elem_type() != TensorProto::UNDEFINED;
+}
+
 inline bool hasInputShape(InferenceContext& ctx, size_t n) {
   return ctx.getNumInputs() > n && ctx.getInputType(n) &&
       ctx.getInputType(n)->has_tensor_type() &&
@@ -298,7 +307,9 @@ inline void propagateShapeFromInputToOutput(
 }
 
 inline void propagateShapeAndTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
-  propagateElemTypeFromInputToOutput(ctx, inputIndex, outputIndex);
+  if (hasInputType(ctx, inputIndex)) {
+    propagateElemTypeFromInputToOutput(ctx, inputIndex, outputIndex);
+  }
   if (hasInputShape(ctx, inputIndex)) {
     propagateShapeFromInputToOutput(ctx, inputIndex, outputIndex);
   }
