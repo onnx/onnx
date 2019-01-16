@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import os
 
-from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors 
+from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
 from .version import version as __version__  # noqa
@@ -120,6 +120,7 @@ def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[byte
             load_external_data_for_model(model, base_dir)
 
     return model
+
 
 def load_tensor(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> TensorProto
     '''

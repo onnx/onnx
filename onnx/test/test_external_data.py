@@ -16,7 +16,7 @@ convert_model_to_external_data, \
 convert_model_from_external_data, \
 load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
-from typing import Any, AnyStr, Tuple, Text, List, IO, BinaryIO
+from typing import Any, Tuple, Text, List
 
 
 class TestLoadExternalData(unittest.TestCase):

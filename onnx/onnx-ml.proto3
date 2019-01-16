@@ -384,7 +384,7 @@ message TensorProto {
   // Data can be stored inside the protobuf file using type-specific fields or raw_data.
   // Alternatively, raw bytes data can be stored in an external file, using the external_data field.
   // external_data stores key-value pairs describing data location. Recognized keys are:
-  // - "location" (required) - file path relative to the filesystem directory where the ONNX
+  // - "location" (required) - POSIX filesystem path relative to the directory where the ONNX
   //                           protobuf model was stored
   // - "offset" (optional) - position of byte at which stored data begins. Integer stored as string.
   //                         Offset values SHOULD be multiples 4096 (page size) to enable mmap support.

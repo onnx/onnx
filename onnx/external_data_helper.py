@@ -9,6 +9,7 @@ from itertools import chain
 from typing import Iterable, Text, Optional
 from .onnx_pb import TensorProto, ModelProto
 
+
 class ExternalDataInfo(object):
 
     def __init__(self, tensor):  # type: (TensorProto) -> None
@@ -36,7 +37,7 @@ def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text
     tensor: a TensorProto object.
     base_dir: directory that contains the external data.
     """
-    if tensor.HasField("raw_data"): # already loaded
+    if tensor.HasField("raw_data"):  # already loaded
         return
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
@@ -54,13 +55,13 @@ def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text
 
 
 def load_external_data_for_model(model, base_dir):  # type: (ModelProto, Text) -> None
-    '''
+    """
     Loads external tensors into model
 
     @params
     model: ModelProto to load external data to
     base_dir: directory that contains external data
-    '''
+    """
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             load_external_data_for_tensor(tensor, base_dir)
@@ -88,14 +89,16 @@ def set_external_data(tensor,  # type: TensorProto
             entry.value = str(v)
 
 
-def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None):  # type: (ModelProto, bool, Optional[Text]) -> None
+def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None):
+    # type: (ModelProto, bool, Optional[Text]) -> None
     """
     call to set all tensors as external data. save_model saves all the tensors data as external data after calling this function.
     @params
     model: ModelProto to be converted.
-    all_tensors_to_one_file: If true, save all tensors to one external file that is specified by location if true.
-                              If false, save one tensor to one file whose name is same as tensor name.
-    location: specify the external file that all tensors to save to. If not specified, will use the model name.
+    all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
+                             If false, save each tensor to a file named with the tensor name.
+    location: specify the external file that all tensors to save to.
+              If not specified, will use the model name.
     """
     if all_tensors_to_one_file:
         file_name = Text(uuid.uuid1())
@@ -150,7 +153,7 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
             if info.offset > file_size:
                 data_file.write(b"\0" * (info.offset - file_size))
 
-            data_file.seek(info.offset)       
+            data_file.seek(info.offset)
         offset = data_file.tell()
         data_file.write(tensor.raw_data)
         set_external_data(tensor, info.location, offset, data_file.tell() - offset)
