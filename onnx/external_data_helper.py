@@ -9,6 +9,7 @@ from itertools import chain
 from typing import Iterable, Text, Optional
 from .onnx_pb import TensorProto, ModelProto
 
+
 class ExternalDataInfo(object):
 
     def __init__(self, tensor):  # type: (TensorProto) -> None
@@ -36,7 +37,7 @@ def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text
     tensor: a TensorProto object.
     base_dir: directory that contains the external data.
     """
-    if tensor.HasField("raw_data"): # already loaded
+    if tensor.HasField("raw_data"):  # already loaded
         return
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
@@ -137,7 +138,7 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
             if info.offset > file_size:
                 data_file.write(b"\0" * (info.offset - file_size))
 
-            data_file.seek(info.offset)       
+            data_file.seek(info.offset)
         offset = data_file.tell()
         data_file.write(tensor.raw_data)
         set_external_data(tensor, info.location, offset, data_file.tell() - offset)
