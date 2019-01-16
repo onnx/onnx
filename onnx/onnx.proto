@@ -74,7 +74,12 @@ enum Version {
   //    - Added new message OperatorSetIdProto
   //    - Added opset_import in ModelProto
   // - For vendor extensions, added domain in NodeProto
-  IR_VERSION = 0x0000000000000003;
+  IR_VERSION_2017_11_3 = 0x0000000000000003;
+
+  // IR VERSION 4 published on Jan 22, 2019
+  // - Relax constraint that initializers should be a subset of graph inputs
+  // - Add type BFLOAT16
+  IR_VERSION = 0x0000000000000004;
 }
 
 // Attributes
