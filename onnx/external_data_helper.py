@@ -88,11 +88,11 @@ def set_external_data(tensor,  # type: TensorProto
             entry.value = str(v)
 
 
-def save_all_tensors_as_external_data(model, all_tensors_to_one_file=True, location=None):  # type: (ModelProto, bool, Optional[Text]) -> None
+def convert_model_to_external_data(model, all_tensors_to_one_file=True, location=None):  # type: (ModelProto, bool, Optional[Text]) -> None
     """
-    call to save all tensors externally.
+    call to set all tensors as external data. save_model saves all the tensors data as external data after calling this function.
     @params
-    model: ModelProto to be saved.
+    model: ModelProto to be converted.
     all_tensors_to_one_file: If true, save all tensors to one external file that is specified by location if true.
                               If false, save one tensor to one file whose name is same as tensor name.
     location: specify the external file that all tensors to save to. If not specified, will use the model name.
@@ -106,6 +106,20 @@ def save_all_tensors_as_external_data(model, all_tensors_to_one_file=True, locat
     else:
         for tensor in _get_all_tensors(model):
             set_external_data(tensor, tensor.name)
+
+
+def convert_model_from_external_data(model):  # type: (ModelProto) -> None
+    """
+    call to set all tensors data as embedded data. save_model saves all the tensors data as embedded data after calling this function.
+    @params
+    model: ModelProto to be converted.
+    """
+    for tensor in _get_all_tensors(model):
+        if uses_external_data(tensor):
+            if not tensor.HasField("raw_data"):
+                raise ValueError("raw_data field doesn't exist.")
+            del tensor.external_data[:]
+            tensor.data_location = TensorProto.DEFAULT
 
 
 def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
@@ -129,10 +143,9 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
 
     # Open file for reading and writing at random locations ('r+b')
     with open(external_data_file_path, 'r+b') as data_file:
+        data_file.seek(0, 2)
         if info.offset is not None:
-
             # Pad file to required offset if needed
-            data_file.seek(0, 2)
             file_size = data_file.tell()
             if info.offset > file_size:
                 data_file.write(b"\0" * (info.offset - file_size))
@@ -209,5 +222,6 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             save_external_data(tensor, filepath)
+            tensor.ClearField(str('raw_data'))
 
     return model
