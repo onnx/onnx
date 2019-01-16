@@ -13,7 +13,7 @@ from onnx import checker, helper
 from onnx import ModelProto, TensorProto
 from onnx.external_data_helper import set_external_data, save_all_tensors_as_external_data, load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
-from typing import Any, AnyStr, Tuple, Text, List, IO, BinaryIO
+from typing import Any, Tuple, Text, List
 
 
 class TestLoadExternalData(unittest.TestCase):

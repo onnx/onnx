@@ -55,13 +55,13 @@ def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text
 
 
 def load_external_data_for_model(model, base_dir):  # type: (ModelProto, Text) -> None
-    '''
+    """
     Loads external tensors into model
 
     @params
     model: ModelProto to load external data to
     base_dir: directory that contains external data
-    '''
+    """
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             load_external_data_for_tensor(tensor, base_dir)
@@ -89,14 +89,16 @@ def set_external_data(tensor,  # type: TensorProto
             entry.value = str(v)
 
 
-def save_all_tensors_as_external_data(model, all_tensors_to_one_file=True, location=None):  # type: (ModelProto, bool, Optional[Text]) -> None
+def save_all_tensors_as_external_data(model, all_tensors_to_one_file=True, location=None):
+    # type: (ModelProto, bool, Optional[Text]) -> None
     """
     call to save all tensors externally.
     @params
     model: ModelProto to be saved.
-    all_tensors_to_one_file: If true, save all tensors to one external file that is specified by location if true.
-                              If false, save one tensor to one file whose name is same as tensor name.
-    location: specify the external file that all tensors to save to. If not specified, will use the model name.
+    all_tensors_to_one_file: If true, save all tensors to one external file specified by location.
+                             If false, save each tensor to a file named with the tensor name.
+    location: specify the external file that all tensors to save to.
+              If not specified, will use the model name.
     """
     if all_tensors_to_one_file:
         file_name = Text(uuid.uuid1())
