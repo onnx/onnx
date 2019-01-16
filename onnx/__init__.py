@@ -5,8 +5,7 @@ from __future__ import unicode_literals
 
 import os
 
-from onnx.external_data_helper import add_basepath_to_external_data_tensors, \
-    write_external_data_tensors
+from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors 
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
 from .version import version as __version__  # noqa
@@ -100,7 +99,7 @@ def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
     return proto
 
 
-def load_model(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> ModelProto
+def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[bytes], Text], Optional[Any], bool) -> ModelProto
     '''
     Loads a serialized ModelProto into memory
 
@@ -114,13 +113,13 @@ def load_model(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any])
     s = _load_bytes(f)
     model = load_model_from_string(s, format=format)
 
-    model_filepath = _get_file_path(f)
-    if model_filepath:
-        basepath = os.path.dirname(model_filepath)
-        model = add_basepath_to_external_data_tensors(model, basepath)
+    if load_external_data:
+        model_filepath = _get_file_path(f)
+        if model_filepath:
+            base_dir = os.path.dirname(model_filepath)
+            load_external_data_for_model(model, base_dir)
 
     return model
-
 
 def load_tensor(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> TensorProto
     '''

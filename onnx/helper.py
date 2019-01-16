@@ -136,27 +136,6 @@ def set_model_props(model, dict_value):  # type: (ModelProto, Dict[Text, Text]) 
         # model.metadata_properties.append(entry)
 
 
-def set_external_data(tensor,  # type: TensorProto
-                      location,  # type: Text
-                      offset=None,  # type: Optional[int]
-                      length=None,  # type: Optional[int]
-                      checksum=None,  # type: Optional[Text]
-                      basepath=None  # type: Optional[Text]
-                      ):  # type: (...) -> None
-    del tensor.external_data[:]
-    for (k, v) in {
-        'location': location,
-        'offset': int(offset) if offset is not None else None,
-        'length': int(length) if length is not None else None,
-        'checksum': checksum,
-        'basepath': basepath
-    }.items():
-        if v is not None:
-            entry = tensor.external_data.add()
-            entry.key = k
-            entry.value = str(v)
-
-
 def split_complex_to_pairs(ca):  # type: (Sequence[np.complex64]) -> Sequence[int]
     return [(ca[i // 2].real if (i % 2 == 0) else ca[i // 2].imag)
             for i in range(len(ca) * 2)]

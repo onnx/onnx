@@ -11,7 +11,7 @@ import os.path as Path
 import onnx
 from onnx import checker, helper
 from onnx import TensorProto
-from onnx.helper import set_external_data
+from onnx.external_data_helper import set_external_data
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, AnyStr, Tuple, Text, List, IO, BinaryIO
 

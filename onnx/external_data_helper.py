@@ -5,9 +5,7 @@ from __future__ import unicode_literals
 
 import os
 from itertools import chain
-
 from typing import Iterable, Text
-
 from .onnx_pb import TensorProto, ModelProto
 
 
@@ -30,19 +28,19 @@ class ExternalDataInfo(object):
             self.length = int(self.length)
 
 
-def load_external_data(tensor):  # type: (TensorProto) -> bytes
+def load_external_data_for_tensor(tensor, base_dir):  # type: (TensorProto, Text) -> None
     """
-    Load data from an external file based on a tensor's `external_data` field.
+    Load data from an external file for tensor.
 
     @params
     tensor: a TensorProto object.
-
-    @return
-    raw_data: bytes string containing data in raw_data format
+    base_dir: directory that contains the external data.
     """
+    if tensor.HasField("raw_data"): # already loaded
+        return
     info = ExternalDataInfo(tensor)
     file_location = _sanitize_path(info.location)
-    external_data_file_path = os.path.join(info.basepath, file_location)
+    external_data_file_path = os.path.join(base_dir, file_location)
 
     with open(external_data_file_path, 'rb') as data_file:
 
@@ -50,11 +48,63 @@ def load_external_data(tensor):  # type: (TensorProto) -> bytes
             data_file.seek(info.offset)
 
         if info.length:
-            raw_data = data_file.read(info.length)
+            tensor.raw_data = data_file.read(info.length)
         else:
-            raw_data = data_file.read()
+            tensor.raw_data = data_file.read()
 
-    return raw_data
+
+def load_external_data_for_model(model, base_dir):  # type: (ModelProto, Text) -> None
+    '''
+    Loads external tensors into model
+
+    @params
+    model: ModelProto to load external data to
+    base_dir: directory that contains external data
+    '''
+    for tensor in _get_all_tensors(model):
+        if uses_external_data(tensor):
+            load_external_data_for_tensor(tensor, base_dir)
+
+
+def set_external_data(tensor,  # type: TensorProto
+                      location,  # type: Text
+                      offset=None,  # type: Optional[int]
+                      length=None,  # type: Optional[int]
+                      checksum=None,  # type: Optional[Text]
+                      basepath=None  # type: Optional[Text]
+                      ):  # type: (...) -> None
+    del tensor.external_data[:]
+    tensor.data_location = TensorProto.EXTERNAL
+    for (k, v) in {
+        'location': location,
+        'offset': int(offset) if offset is not None else None,
+        'length': int(length) if length is not None else None,
+        'checksum': checksum,
+        'basepath': basepath
+    }.items():
+        if v is not None:
+            entry = tensor.external_data.add()
+            entry.key = k
+            entry.value = str(v)
+
+
+def save_all_tensors_externally(model, all_tensors_to_one_file=True, location=None):  # type: (ModelProto, ExternalDataFormat) -> None
+    """
+    call to save all tensors externally.
+    @params
+    model: ModelProto to be saved.
+    all_tensors_to_one_file: If true, save all tensors to one external file that is specified by location if true.
+                              If false, save one tensor to one file whose name is same as tensor name.
+    location: specify the external file that all tensors to save to. If not specified, will use the model name.
+    """
+    if all_tensors_to_one_file:
+        if location is None:
+            location = model.name
+        for tensor in _get_all_tensors(model):
+            set_external_data(tensor, location)
+    else:
+        for tensor in _get_all_tensors(model):
+            set_external_data(tensor, tensor.name)
 
 
 def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
@@ -69,10 +119,8 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
     external_data_file_path = os.path.join(base_path, info.location)
 
     # Retrieve the tensor's data from raw_data or load external file
-    if tensor.HasField("raw_data"):
-        raw_data = tensor.raw_data
-    else:
-        raw_data = load_external_data(tensor)
+    if not tensor.HasField("raw_data"):
+        raise ValueError("raw_data field doesn't exist.")
 
     # Create file if it doesn't exist
     if not os.path.isfile(external_data_file_path):
@@ -88,8 +136,10 @@ def save_external_data(tensor, base_path):  # type: (TensorProto, Text) -> None
             if info.offset > file_size:
                 data_file.write(b"\0" * (info.offset - file_size))
 
-            data_file.seek(info.offset)
-        data_file.write(raw_data)
+            data_file.seek(info.offset)       
+        offset = data_file.tell()
+        data_file.write(tensor.raw_data)
+        set_external_data(tensor, info.location, offset, data_file.tell() - offset)
 
 
 def _get_all_tensors(onnx_model_proto):  # type: (ModelProto) -> Iterable[TensorProto]
@@ -142,28 +192,6 @@ def remove_external_data_field(tensor, field_key):  # type: (TensorProto, Text) 
             del tensor.external_data[i]
 
 
-def add_basepath_to_external_data_tensors(model, filepath):  # type: (ModelProto, Text) -> ModelProto
-    """
-    Add basepath value to the external_data field of all tensors in model.
-
-    Base path information is useful for finding the external data files on disk.
-    Modifies model object in place.
-
-    @params
-    model: Model object to modify.
-    filepath: System path to the directory which should be treated as base path for external data.
-
-    @return
-    The modified model object.
-    """
-    for tensor in _get_all_tensors(model):
-        if len(tensor.external_data):
-            tensor.external_data.add()
-            tensor.external_data[-1].key = 'basepath'
-            tensor.external_data[-1].value = filepath
-    return model
-
-
 def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) -> ModelProto
     """
     Write external data of all tensors to files on disk.
@@ -180,6 +208,5 @@ def write_external_data_tensors(model, filepath):  # type: (ModelProto, Text) ->
     for tensor in _get_all_tensors(model):
         if uses_external_data(tensor):
             save_external_data(tensor, filepath)
-            remove_external_data_field(tensor, 'basepath')
 
     return model

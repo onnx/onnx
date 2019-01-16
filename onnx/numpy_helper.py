@@ -10,8 +10,6 @@ from onnx import TensorProto
 from onnx import mapping
 from typing import Sequence, Any, Optional, Text
 
-from onnx.external_data_helper import load_external_data, uses_external_data
-
 if sys.byteorder != 'little':
     raise RuntimeError(
         'Numpy helper for tensor/ndarray is not available on big endian '
@@ -50,10 +48,6 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
         return np.frombuffer(
             tensor.raw_data,
             dtype=np_dtype).reshape(dims)
-    elif uses_external_data(tensor):
-        # Read data from an external file.
-        raw_data = load_external_data(tensor)
-        return np.frombuffer(raw_data, dtype=np_dtype).reshape(dims)
     else:
         data = getattr(tensor, storage_field),  # type: Sequence[np.complex64]
         if (tensor_dtype == TensorProto.COMPLEX64
