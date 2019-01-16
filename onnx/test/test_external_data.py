@@ -10,8 +10,8 @@ import os.path as Path
 
 import onnx
 from onnx import checker, helper
-from onnx import TensorProto
-from onnx.external_data_helper import set_external_data
+from onnx import ModelProto, TensorProto
+from onnx.external_data_helper import set_external_data, save_all_tensors_as_external_data, load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, AnyStr, Tuple, Text, List, IO, BinaryIO
 
@@ -72,6 +72,15 @@ class TestLoadExternalData(unittest.TestCase):
 
     def test_load_external_data(self):  # type: () -> None
         model = onnx.load_model(self.model_filename)
+        initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
+
+        attribute_tensor = model.graph.node[0].attribute[0].t
+        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+
+    def test_load_external_data_for_model(self):  # type: () -> None
+        model = onnx.load_model(self.model_filename, load_external_data=False)
+        load_external_data_for_model(model, self.temp_dir)
         initializer_tensor = model.graph.initializer[0]
         self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
 
@@ -181,6 +190,83 @@ class TestLoadExternalDataSingleFile(unittest.TestCase):
         self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
 
         attribute_tensor = new_model.graph.node[0].attribute[0].t
+        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+
+
+class TestSaveAllTensorsAsExternalData(unittest.TestCase):
+
+    def setUp(self):  # type: () -> None
+        self.temp_dir = tempfile.mkdtemp()  # type: Text
+        self.initializer_value = np.arange(6).reshape(3, 2).astype(np.float32) + 512
+        self.attribute_value = np.arange(6).reshape(2, 3).astype(np.float32) + 256
+        self.model = self.create_test_model()
+
+    def tearDown(self):  # type: () -> None
+        shutil.rmtree(self.temp_dir)
+
+    def get_temp_model_filename(self):  # type: () -> Text
+        return os.path.join(self.temp_dir, str(uuid.uuid4()) + '.onnx')
+
+    def create_data_tensors(self, tensors_data):  # type: (List[Tuple[List[Any],Any]]) -> List[TensorProto]
+        tensors = []
+        for (value, tensor_name) in tensors_data:
+            tensor = from_array(np.array(value))
+            tensor.name = tensor_name
+            tensors.append(tensor)
+
+        return tensors
+
+    def create_test_model(self):  # type: () -> ModelProto
+        tensors = self.create_data_tensors([
+            (self.attribute_value, "attribute_value"),
+            (self.initializer_value, "input_value"),
+        ])
+
+        constant_node = onnx.helper.make_node(
+            'Constant',
+            inputs=[],
+            outputs=['values'],
+            value=tensors[0]
+        )
+
+        inputs = [helper.make_tensor_value_info("input_value",
+                                                onnx.TensorProto.FLOAT,
+                                                self.initializer_value.shape)]
+
+        graph = helper.make_graph([constant_node], "test_graph",
+                                  inputs=inputs, outputs=[],
+                                  initializer=[tensors[1]])
+        return helper.make_model(graph)
+
+    def test_check_model(self):  # type: () -> None
+        checker.check_model(self.model)
+
+    def test_save_all_tensors_to_one_file(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+        external_data_file = str(uuid.uuid4())
+        save_all_tensors_as_external_data(self.model, location=external_data_file)
+        onnx.save_model(self.model, model_file_path)
+        self.assertTrue(Path.isfile(model_file_path))
+        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, external_data_file)))
+        model = onnx.load_model(model_file_path)
+        initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
+
+        attribute_tensor = model.graph.node[0].attribute[0].t
+        self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
+
+    def test_save_all_tensors_one_tensor_one_file(self):  # type: () -> None
+        model_file_path = self.get_temp_model_filename()
+        save_all_tensors_as_external_data(self.model, all_tensors_to_one_file=False)
+        onnx.save_model(self.model, model_file_path)
+        self.assertTrue(Path.isfile(model_file_path))
+        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "input_value")))
+        self.assertTrue(Path.isfile(os.path.join(self.temp_dir, "attribute_value")))
+        model = onnx.load_model(model_file_path)
+        initializer_tensor = model.graph.initializer[0]
+        self.assertTrue(np.allclose(to_array(initializer_tensor), self.initializer_value))
+
+        attribute_tensor = model.graph.node[0].attribute[0].t
         self.assertTrue(np.allclose(to_array(attribute_tensor), self.attribute_value))
 
 

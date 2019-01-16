@@ -3,11 +3,11 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import uuid
 import os
 from itertools import chain
-from typing import Iterable, Text
+from typing import Iterable, Text, Optional
 from .onnx_pb import TensorProto, ModelProto
-
 
 class ExternalDataInfo(object):
 
@@ -88,7 +88,7 @@ def set_external_data(tensor,  # type: TensorProto
             entry.value = str(v)
 
 
-def save_all_tensors_externally(model, all_tensors_to_one_file=True, location=None):  # type: (ModelProto, ExternalDataFormat) -> None
+def save_all_tensors_as_external_data(model, all_tensors_to_one_file=True, location=None):  # type: (ModelProto, bool, Optional[Text]) -> None
     """
     call to save all tensors externally.
     @params
@@ -98,10 +98,11 @@ def save_all_tensors_externally(model, all_tensors_to_one_file=True, location=No
     location: specify the external file that all tensors to save to. If not specified, will use the model name.
     """
     if all_tensors_to_one_file:
-        if location is None:
-            location = model.name
+        file_name = Text(uuid.uuid1())
+        if location:
+            file_name = location
         for tensor in _get_all_tensors(model):
-            set_external_data(tensor, location)
+            set_external_data(tensor, file_name)
     else:
         for tensor in _get_all_tensors(model):
             set_external_data(tensor, tensor.name)
