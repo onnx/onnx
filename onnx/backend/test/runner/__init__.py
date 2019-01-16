@@ -164,15 +164,15 @@ class Runner(object):
         return tests
 
     @staticmethod
-    def _assert_similar_outputs(ref_outputs, outputs):  # type: (Sequence[Any], Sequence[Any]) -> None
+    def _assert_similar_outputs(ref_outputs, outputs, rtol, atol):  # type: (Sequence[Any], Sequence[Any], float, float) -> None
         np.testing.assert_equal(len(ref_outputs), len(outputs))
         for i in range(len(outputs)):
             np.testing.assert_equal(ref_outputs[i].dtype, outputs[i].dtype)
             np.testing.assert_allclose(
                 ref_outputs[i],
                 outputs[i],
-                rtol=1e-3,
-                atol=1e-7)
+                rtol=rtol,
+                atol=atol)
 
     @staticmethod
     @retry_excute(3)
@@ -282,7 +282,9 @@ class Runner(object):
                 inputs = list(test_data['inputs'])
                 outputs = list(prepared_model.run(inputs))
                 ref_outputs = test_data['outputs']
-                self._assert_similar_outputs(ref_outputs, outputs)
+                self._assert_similar_outputs(ref_outputs, outputs,
+                                             rtol=model_test.rtol,
+                                             atol=model_test.atol)
 
             for test_data_dir in glob.glob(
                     os.path.join(model_dir, "test_data_set*")):
@@ -303,6 +305,8 @@ class Runner(object):
                         tensor.ParseFromString(f.read())
                     ref_outputs.append(numpy_helper.to_array(tensor))
                 outputs = list(prepared_model.run(inputs))
-                self._assert_similar_outputs(ref_outputs, outputs)
+                self._assert_similar_outputs(ref_outputs, outputs,
+                                             rtol=model_test.rtol,
+                                             atol=model_test.atol)
 
         self._add_test(kind + 'Model', model_test.name, run, model_marker)
