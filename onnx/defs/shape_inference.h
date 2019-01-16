@@ -315,10 +315,9 @@ inline void propagateShapeFromInputToOutput(
 
 inline void propagateShapeAndTypeFromInputToOutput(InferenceContext& ctx, size_t inputIndex, size_t outputIndex) {
   propagateElemTypeFromInputToOutput(ctx, inputIndex, outputIndex);
-  if (!hasNInputShapes(ctx, inputIndex + 1)) {
-    return;
+  if (hasInputShape(ctx, inputIndex)) {
+    propagateShapeFromInputToOutput(ctx, inputIndex, outputIndex);
   }
-  propagateShapeFromInputToOutput(ctx, inputIndex, outputIndex);
 }
 
 inline void propagateShapeAndTypeFromFirstInput(InferenceContext& ctx) {
