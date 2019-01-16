@@ -196,6 +196,8 @@ expect(node, inputs=[x], outputs=[y],
 #### Sample Implementation
 
 <details>
+<summary>Abs</summary>
+
 ```python
 from __future__ import absolute_import
 from __future__ import division

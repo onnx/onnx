@@ -417,6 +417,7 @@ def main(args):  # type: (Type[Args]) -> None
                     if op_type.lower() in SAMPLE_IMPLEMENTATIONS:
                         s += '#### Sample Implementation\n\n'
                         s += '<details>\n'
+                        s += '<summary>{}</summary>\n\n'.format(op_type)
                         s += '```python\n{}\n```\n\n'.format(SAMPLE_IMPLEMENTATIONS[op_type.lower()])
                         s += '</details>\n'
                         s += '\n\n'
