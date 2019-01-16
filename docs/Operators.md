@@ -11471,7 +11471,7 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_insensintive_upper_langmix</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday']).astype(np.object)
+input = np.array([u'Monday', u'tuesday', u'wednesday']).astype(np.object)
 
 # It does upper case cecedille, accented E
 # and german umlaut but fails
@@ -11488,6 +11488,32 @@ node = onnx.helper.make_node(
     stopwords=stopwords
 )
 expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_langmix')
+```
+
+</details>
+
+
+<details>
+<summary>monday_insensintive_upper_twodim</summary>
+
+```python
+input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape([2, 3])
+
+# It does upper case cecedille, accented E
+# and german umlaut but fails
+# with german eszett
+output = np.array([u'TUESDAY', u'WEDNESDAY', u'TUESDAY', u'WEDNESDAY']).astype(np.object).reshape([2, 2])
+stopwords = [u'monday']
+
+node = onnx.helper.make_node(
+    'StringNormalizer',
+    inputs=['x'],
+    outputs=['y'],
+    casechangeaction='UPPER',
+    is_case_sensitive=0,
+    stopwords=stopwords
+)
+expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_twodim')
 ```
 
 </details>
