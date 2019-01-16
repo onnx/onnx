@@ -83,10 +83,10 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Constrain output types to be numerics.")
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           if (ctx.getAttribute("value") != nullptr) {
-            propagateElemTypeFromDtypeToOutput(
+            propagateElemTypeFromAttributeTensorToOutput(
                 ctx, ctx.getAttribute("value"), 0);
           } else {
-            propagateElemTypeFromDtypeToOutput(ctx, TensorProto::FLOAT, 0);
+            validateAndSetElemType(TensorProto::FLOAT, ctx.getOutputType(0));
           }
 
           // Shape inference based on input shape
@@ -95,7 +95,7 @@ ONNX_OPERATOR_SET_SCHEMA(
           const TensorProto* targetShapeInitializer = ctx.getInputData(0);
           if (!targetShapeInitializer) {
             // This is the case when exact shape input is not available.
-            // In this case, if the number of dimensions can be infered 
+            // In this case, if the number of dimensions can be infered
             // from the input 'shape' tensor, then we add the same number
             // of dimensions (without any dim_value information) to the output.
             if (ctx.getInputType(0)->tensor_type().has_shape()) {
