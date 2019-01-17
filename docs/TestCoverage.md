@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 107/114 (93.86%, 5 generators excluded) common operators.
+Node tests have covered 108/115 (93.91%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -27,7 +27,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.abs(x)
+y = abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
@@ -1195,12 +1195,12 @@ expect(node, inputs=[x], outputs=[y],
 
 </details>
 <details>
-<summary>int_zeros</summary>
+<summary>int32_zeros</summary>
 
 ```python
 x = np.array([10, 6])
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
-                                       [1], [1])
+                                       [1], [0])
 node = onnx.helper.make_node(
     'ConstantOfShape',
     inputs=['x'],
@@ -6238,6 +6238,29 @@ expect(node, inputs=[data, scales], outputs=[output],
 </details>
 
 
+### Where
+There are 1 test cases, listed as following:
+<details>
+<summary>where</summary>
+
+```python
+node = onnx.helper.make_node(
+    'Where',
+    inputs=['condition', 'x', 'y'],
+    outputs=['z'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+x = np.array([[1, 2], [3, 4]], dtype=np.float32)
+y = np.array([[9, 8], [7, 6]], dtype=np.float32)
+z = np.where(condition, x, y)  # expected output [[1, 8], [3, 4]]
+expect(node, inputs=[condition, x, y], outputs=[z],
+       name='test_where_example')
+```
+
+</details>
+
+
 ### Xor
 There are 2 test cases, listed as following:
 <details>
@@ -6628,11 +6651,10 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6705,11 +6727,10 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6782,11 +6803,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6859,11 +6879,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6936,11 +6955,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7018,11 +7036,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7100,11 +7117,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7182,11 +7198,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
