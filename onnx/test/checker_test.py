@@ -49,7 +49,7 @@ class TestChecker(unittest.TestCase):
         ctx.ir_version = 3
         ctx.opset_imports = {'': onnx.defs.onnx_opset_version()}
 
-        def check_ir_version_3(g): # type: (GraphProto) -> None
+        def check_ir_version_3(g):   # type: (GraphProto) -> None
             checker.check_graph(g, ctx)
 
         node = helper.make_node(
