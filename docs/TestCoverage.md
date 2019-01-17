@@ -1195,12 +1195,12 @@ expect(node, inputs=[x], outputs=[y],
 
 </details>
 <details>
-<summary>int_zeros</summary>
+<summary>int32_zeros</summary>
 
 ```python
 x = np.array([10, 6])
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
-                                       [1], [1])
+                                       [1], [0])
 node = onnx.helper.make_node(
     'ConstantOfShape',
     inputs=['x'],
