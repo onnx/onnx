@@ -71,6 +71,7 @@
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
+  * <a href="#NonZero">NonZero</a>
   * <a href="#Not">Not</a>
   * <a href="#OneHot">OneHot</a>
   * <a href="#Or">Or</a>
@@ -7016,6 +7017,60 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.negative(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_neg')
+```
+
+</details>
+
+
+### <a name="NonZero"></a><a name="nonzero">**NonZero**</a>
+
+  Returns the indices of the elements that are non-zero
+      (in row-major order - by dimension).
+      NonZero behaves similar to numpy.nonzero:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>output (always 2D tensor)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
 ```
 
 </details>

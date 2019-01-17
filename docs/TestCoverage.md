@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 108/115 (93.91%, 5 generators excluded) common operators.
+Node tests have covered 109/116 (93.97%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -3645,6 +3645,27 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.negative(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_neg')
+```
+
+</details>
+
+
+### NonZero
+There are 1 test cases, listed as following:
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
 ```
 
 </details>
