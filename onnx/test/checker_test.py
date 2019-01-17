@@ -8,6 +8,8 @@ import numpy as np  # type: ignore
 
 from onnx import checker, helper
 from onnx import TensorProto
+import onnx.onnx_cpp2py_export.checker as C
+import onnx.defs
 
 
 class TestChecker(unittest.TestCase):
@@ -41,6 +43,28 @@ class TestChecker(unittest.TestCase):
         node = helper.make_node(
             "Relu", [""], ["Y"], name="test")
         self.assertRaises(checker.ValidationError, checker.check_node, node)
+
+    def test_check_graph_ir_version_3(self):  # type: () -> None
+        ctx = C.CheckerContext()
+        ctx.ir_version = 3
+        ctx.opset_imports = {'': onnx.defs.onnx_opset_version()}
+        node = helper.make_node(
+            "Relu", ["X"], ["Y"], name="test")
+        graph = helper.make_graph(
+            [node],
+            "test",
+            [helper.make_tensor_value_info("X", TensorProto.FLOAT, [1, 2])],
+            [helper.make_tensor_value_info("Y", TensorProto.FLOAT, [1, 2])])
+        checker.check_graph(graph, ctx)
+
+        graph.initializer.extend([self._sample_float_tensor])
+
+        graph.initializer[0].name = 'no-exist'
+        check3 = lambda g: checker.check_graph(g, ctx)
+        self.assertRaises(checker.ValidationError, check3, graph)
+
+        graph.initializer[0].name = 'X'
+        checker.check_graph(graph, ctx)
 
     def test_check_graph(self):  # type: () -> None
         node = helper.make_node(
