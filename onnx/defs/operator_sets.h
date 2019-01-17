@@ -470,6 +470,7 @@ class OpSet_Onnx_ver8 {
 };
 
 // Forward declarations for ai.onnx version 9
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, BatchNormalization);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Compress);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, ConstantOfShape);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, EyeLike);
@@ -489,16 +490,20 @@ class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Cosh);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Asinh);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Acosh);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Atanh);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Shrink);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, IsNaN);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Sign);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Scan);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Erf);
 class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Scatter);
+class ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Where);
 
 // Iterate over schema from ai.onnx version 9
 class OpSet_Onnx_ver9 {
  public:
   static void ForEachSchema(std::function<void(OpSchema&&)> fn) {
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
+      Onnx, 9, BatchNormalization)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Compress)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(
            Onnx, 9, ConstantOfShape)>());
@@ -520,10 +525,12 @@ class OpSet_Onnx_ver9 {
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Asinh)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Acosh)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Atanh)>());
+	fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Shrink)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, IsNaN)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Sign)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Scan)>());
     fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Erf)>());
+    fn(GetOpSchema<ONNX_OPERATOR_SET_SCHEMA_CLASS_NAME(Onnx, 9, Where)>());
   }
   static void ForEachFunctionBuilder(
       std::function<void(FunctionBuilder&&)> fn) {
