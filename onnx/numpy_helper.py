@@ -4,12 +4,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import sys
-import re
 
 import numpy as np  # type: ignore
 from onnx import TensorProto
 from onnx import mapping
-from six import text_type
+from six import text_type, binary_type
 from typing import Sequence, Any, Optional, Text, List
 
 
@@ -88,26 +87,19 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
         for e in arr:
             if isinstance(e, text_type):
                 tensor.string_data.append(e.encode('utf-8'))
+            elif isinstance(e, np.ndarray):
+                tensor.string_data.append(e.tobytes())
             else:
-                raise NotImplementedError("Unrecognized object in the object array, expect a string")
-
+                raise NotImplementedError("Unrecognized object in the object array, expect a string, or array of bytes")
         return tensor
 
     # For numerical types, directly use numpy raw bytes.
     try:
         dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
-        tensor.data_type = dtype
-        tensor.raw_data = arr.tobytes()
-        # note: tobytes() is only after 1.9.
     except KeyError:
-        string_dtype_pattern = re.compile(r"^[<|>]?[US]\d+$")
-        if string_dtype_pattern.match(str(arr.dtype)):
-            dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
-            tensor.data_type = dtype
-            for elem in arr:
-                tensor.string_data.append(elem.tobytes())
-        else:
-            raise RuntimeError(
-                "Numpy data type not understood yet: {}".format(str(arr.dtype)))
+        raise RuntimeError(
+            "Numpy data type not understood yet: {}".format(str(arr.dtype)))
+    tensor.data_type = dtype
+    tensor.raw_data = arr.tobytes()  # note: tobytes() is only after 1.9.
 
     return tensor

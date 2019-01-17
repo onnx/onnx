@@ -19,19 +19,9 @@ _NodeTestCases = []
 
 
 def _extract_value_info(arr, name):  # type: (np.ndarray, Text) -> onnx.ValueInfoProto
-    try:
-        elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
-    except KeyError:
-        string_dtype_pattern = re.compile(r"^[<|>]?[US]\d+$")
-        if string_dtype_pattern.match(str(arr.dtype)):
-            elem_type = onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[np.dtype('str')]
-        else:
-            raise RuntimeError(
-                "Numpy data type not understood yet: {}".format(str(arr.dtype)))
-
     return onnx.helper.make_tensor_value_info(
         name=name,
-        elem_type=elem_type,
+        elem_type=onnx.mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype],
         shape=arr.shape)
 
 

@@ -1567,14 +1567,14 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
   in the 'DataType' enum field in the TensorProto message.
   
   Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
-  (e.g., "1e-5" and "1E8") to all numeric types is supported. Values will be implicitly truncated
-  based on the target tensor type's precision. For example, converting string "100.5" to an integer may
+  (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
   result 100. There are some string literals reserved for special floating-point values;
   "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
   Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
   this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
   to string tensors, plain floating-point representation (such as "314.15926") would be used. 
-  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior.
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+  of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
   
   Conversion from a numerical type to any numerical type is always allowed.
   User must be aware of precision loss and value change caused by range difference between two types.
@@ -1640,12 +1640,16 @@ for from_type, to_type in test_cases:
     if 'STRING' != from_type:
         input = np.random.random_sample(shape).astype(
             TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
-
-        output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+        if ('STRING' == to_type):
+            # Converting input to str, then give it np.object dtype for generating script
+            output = input.astype(np.dtype('str'))
+            output = output.astype(np.dtype(np.object))
+        else:
+            output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     else:
         input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
            ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
-           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype('str'))
+           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype(np.object))
         output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
