@@ -11,10 +11,10 @@ import os.path as Path
 import onnx
 from onnx import checker, helper
 from onnx import ModelProto, TensorProto
-from onnx.external_data_helper import set_external_data, \
-convert_model_to_external_data, \
-convert_model_from_external_data, \
-load_external_data_for_model
+from onnx.external_data_helper import set_external_data
+from onnx.external_data_helper import convert_model_to_external_data
+from onnx.external_data_helper import convert_model_from_external_data
+from onnx.external_data_helper import load_external_data_for_model
 from onnx.numpy_helper import to_array, from_array
 from typing import Any, Tuple, Text, List
 
