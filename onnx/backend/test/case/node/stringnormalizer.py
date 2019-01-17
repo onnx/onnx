@@ -1,3 +1,5 @@
+# coding: utf-8
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -91,18 +93,14 @@ class StringNormalizer(Base):
         )
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
 
-    # mypy 0,600 and 0.650 fails to handle unicode strings
-    # https://github.com/python/mypy/issues/6198
-    # The issue occurs even if we comment out the code!
-    # So we have to remove French, Russian, German and Chinese strings from the below two tests
     @staticmethod
     def export_monday_casesensintive_upper_langmix():    # type: () -> None
-        input = np.array([u'monday', u'tuesday', u'wednesday']).astype(np.object)
+        input = np.array([u'monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
 
         # It does upper case cecedille, accented E
         # and german umlaut but fails
         # with german eszett
-        output = np.array([u'TUESDAY', u'WEDNESDAY']).astype(np.object)
+        output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
         stopwords = [u'monday']
 
         node = onnx.helper.make_node(
@@ -117,12 +115,12 @@ class StringNormalizer(Base):
 
     @staticmethod
     def export_monday_insensintive_upper_langmix():    # type: () -> None
-        input = np.array([u'Monday', u'tuesday', u'wednesday']).astype(np.object)
+        input = np.array([u'Monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
 
         # It does upper case cecedille, accented E
         # and german umlaut but fails
         # with german eszett
-        output = np.array([u'TUESDAY', u'WEDNESDAY']).astype(np.object)
+        output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
         stopwords = [u'monday']
 
         node = onnx.helper.make_node(

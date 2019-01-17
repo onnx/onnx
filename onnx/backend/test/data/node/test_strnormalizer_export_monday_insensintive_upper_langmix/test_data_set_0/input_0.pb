@@ -1,1 +1,1 @@
-2Monday2tuesday2	wednesdayBx
+2Monday2tuesday2	Besançon2École élémentaire2Понедельник2mit freundlichen grüßen2中文Bx

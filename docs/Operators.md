@@ -11423,12 +11423,12 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_casesensintive_upper_langmix</summary>
 
 ```python
-input = np.array([u'monday', u'tuesday', u'wednesday']).astype(np.object)
+input = np.array([u'monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
 
 # It does upper case cecedille, accented E
 # and german umlaut but fails
 # with german eszett
-output = np.array([u'TUESDAY', u'WEDNESDAY']).astype(np.object)
+output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
 stopwords = [u'monday']
 
 node = onnx.helper.make_node(
@@ -11471,12 +11471,12 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 <summary>monday_insensintive_upper_langmix</summary>
 
 ```python
-input = np.array([u'Monday', u'tuesday', u'wednesday']).astype(np.object)
+input = np.array([u'Monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
 
 # It does upper case cecedille, accented E
 # and german umlaut but fails
 # with german eszett
-output = np.array([u'TUESDAY', u'WEDNESDAY']).astype(np.object)
+output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
 stopwords = [u'monday']
 
 node = onnx.helper.make_node(
