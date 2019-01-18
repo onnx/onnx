@@ -1427,7 +1427,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(LRN_ver1_doc)
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
-static const char* Ngram_ver9_doc = R"DOC(
+static const char* TfIdfVectorizer_ver9_doc = R"DOC(
 This transform extracts n-grams from the input sequence and save them as a vector. Input can 
 be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.  
 For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row. 
@@ -1458,7 +1458,7 @@ If pool_strings is set, the input must be a string tensor.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-    Ngram,
+    TfIdfVectorizer,
     9,
     OpSchema()
         .Input(0, "X", "Input for n-gram extraction", "T")
@@ -1556,6 +1556,6 @@ ONNX_OPERATOR_SET_SCHEMA(
             updateOutputShape(ctx, 0, output_shape);
           }
         })
-        .SetDoc(Ngram_ver9_doc));
+        .SetDoc(TfIdfVectorizer_ver9_doc));
 
 } // namespace ONNX_NAMESPACE

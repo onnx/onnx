@@ -12,7 +12,7 @@ from ..base import Base
 from . import expect
 
 
-class NgramHelper():
+class TfIdfVectorizerHelper():
     def __init__(self, **params):    # type: (*Any) -> None
         # Attr names
         mode = str('mode')
@@ -52,7 +52,7 @@ class NgramHelper():
         )
 
 
-class Ngram(Base):
+class TfIdfVectorizer(Base):
 
     @staticmethod
     def export_tf_only_bigrams_skip0():    # type: () -> None
@@ -64,7 +64,7 @@ class Ngram(Base):
         pool_int64s = np.array([2, 3, 5, 4,    # unigrams
                                 5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
 
-        helper = NgramHelper(
+        helper = TfIdfVectorizerHelper(
             mode='TF',
             min_gram_length=2,
             max_gram_length=2,
@@ -74,7 +74,7 @@ class Ngram(Base):
             pool_int64s=pool_int64s
         )
         node = helper.make_node_noweights()
-        expect(node, inputs=[input], outputs=[output], name='test_ngram_tf_only_bigrams_skip0')
+        expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_only_bigrams_skip0')
 
     @staticmethod
     def export_tf_batch_onlybigrams_skip0():    # type: () -> None
@@ -86,7 +86,7 @@ class Ngram(Base):
         pool_int64s = np.array([2, 3, 5, 4,    # unigrams
                                 5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
 
-        helper = NgramHelper(
+        helper = TfIdfVectorizerHelper(
             mode='TF',
             min_gram_length=2,
             max_gram_length=2,
@@ -96,7 +96,7 @@ class Ngram(Base):
             pool_int64s=pool_int64s
         )
         node = helper.make_node_noweights()
-        expect(node, inputs=[input], outputs=[output], name='test_ngram_tf_batch_onlybigrams_skip0')
+        expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip0')
 
     @staticmethod
     def export_tf_onlybigrams_levelempty():    # type: () -> None
@@ -108,7 +108,7 @@ class Ngram(Base):
         pool_int64s = np.array([    # unigrams none
                                5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
 
-        helper = NgramHelper(
+        helper = TfIdfVectorizerHelper(
             mode='TF',
             min_gram_length=2,
             max_gram_length=2,
@@ -118,7 +118,7 @@ class Ngram(Base):
             pool_int64s=pool_int64s
         )
         node = helper.make_node_noweights()
-        expect(node, inputs=[input], outputs=[output], name='test_ngram_tf_onlybigrams_levelempty')
+        expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_levelempty')
 
     @staticmethod
     def export_tf_onlybigrams_skip5():    # type: () -> None
@@ -130,7 +130,7 @@ class Ngram(Base):
         pool_int64s = np.array([2, 3, 5, 4,    # unigrams
                                 5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
 
-        helper = NgramHelper(
+        helper = TfIdfVectorizerHelper(
             mode='TF',
             min_gram_length=2,
             max_gram_length=2,
@@ -140,7 +140,7 @@ class Ngram(Base):
             pool_int64s=pool_int64s
         )
         node = helper.make_node_noweights()
-        expect(node, inputs=[input], outputs=[output], name='test_ngram_tf_onlybigrams_skip5')
+        expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_skip5')
 
     @staticmethod
     def export_tf_batch_onlybigrams_skip5():    # type: () -> None
@@ -152,7 +152,7 @@ class Ngram(Base):
         pool_int64s = np.array([2, 3, 5, 4,    # unigrams
                                 5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
 
-        helper = NgramHelper(
+        helper = TfIdfVectorizerHelper(
             mode='TF',
             min_gram_length=2,
             max_gram_length=2,
@@ -162,7 +162,7 @@ class Ngram(Base):
             pool_int64s=pool_int64s
         )
         node = helper.make_node_noweights()
-        expect(node, inputs=[input], outputs=[output], name='test_ngram_tf_batch_onlybigrams_skip5')
+        expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip5')
 
     @staticmethod
     def export_tf_uniandbigrams_skip5():    # type: () -> None
@@ -174,7 +174,7 @@ class Ngram(Base):
         pool_int64s = np.array([2, 3, 5, 4,    # unigrams
                                 5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
 
-        helper = NgramHelper(
+        helper = TfIdfVectorizerHelper(
             mode='TF',
             min_gram_length=1,
             max_gram_length=2,
@@ -184,7 +184,7 @@ class Ngram(Base):
             pool_int64s=pool_int64s
         )
         node = helper.make_node_noweights()
-        expect(node, inputs=[input], outputs=[output], name='test_ngram_tf_uniandbigrams_skip5')
+        expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uniandbigrams_skip5')
 
     @staticmethod
     def export_tf_batch_uniandbigrams_skip5():    # type: () -> None
@@ -196,7 +196,7 @@ class Ngram(Base):
         pool_int64s = np.array([2, 3, 5, 4,    # unigrams
                                 5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
 
-        helper = NgramHelper(
+        helper = TfIdfVectorizerHelper(
             mode='TF',
             min_gram_length=1,
             max_gram_length=2,
@@ -206,4 +206,4 @@ class Ngram(Base):
             pool_int64s=pool_int64s
         )
         node = helper.make_node_noweights()
-        expect(node, inputs=[input], outputs=[output], name='test_ngram_tf_batch_uniandbigrams_skip5')
+        expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_uniandbigrams_skip5')
