@@ -2,6 +2,16 @@
 
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
+namespace {
+
+std::string getElemTypeString(const TypeProto_Tensor& type) {
+    const std::string type_str = TensorProto_DataType_Name(
+        static_cast<TensorProto_DataType>(type.elem_type()));
+    return type_str.empty() ? to_string(type.elem_type()) : type_str;
+}
+
+}  // namespace
+
 void checkShapesAndTypes(
     const TypeProto_Tensor& inferredType,
     const TypeProto_Tensor& existingType) {
@@ -10,8 +20,8 @@ void checkShapesAndTypes(
       existingType.elem_type() != inferredType.elem_type()) {
     std::stringstream ss;
     ss << "Inferred elem type differs from existing elem type: ("
-       << inferredType.elem_type() << ") vs (" << existingType.elem_type()
-       << ")";
+       << getElemTypeString(inferredType) << ") vs ("
+       << getElemTypeString(existingType) << ")";
     throw std::runtime_error(ss.str());
   }
 
@@ -50,9 +60,9 @@ void mergeShapesAndTypes(
     } else if (existingType->elem_type() != inferredType.elem_type()) {
       fail_type_inference(
           "type mismatch. existing=",
-          existingType->elem_type(),
+          getElemTypeString(*existingType),
           " inferred=",
-          inferredType.elem_type());
+          getElemTypeString(inferredType));
     }
   }
 
