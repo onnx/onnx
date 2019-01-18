@@ -29,10 +29,10 @@ class ConstantOfShape(Base):
                name='test_constantofshape_float_ones')
 
     @staticmethod
-    def export_int_zeros():  # type: () -> None
+    def export_int32_zeros():  # type: () -> None
         x = np.array([10, 6])
         tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
-                                               [1], [1])
+                                               [1], [0])
         node = onnx.helper.make_node(
             'ConstantOfShape',
             inputs=['x'],

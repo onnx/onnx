@@ -1441,9 +1441,9 @@ static const char* Where_ver9_doc = R"DOC(
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-     Where,
-     9,
-     OpSchema()
+    Where,
+    9,
+    OpSchema()
         .SetDoc(Where_ver9_doc)
         .Input(0, "condition", "When True (nonzero), yield X, otherwise yield Y", "B")
         .Input(1, "X", "values selected at indices where condition is True", "T")
@@ -1472,4 +1472,27 @@ ONNX_OPERATOR_SET_SCHEMA(
                     *ctx.getOutputType(0)->mutable_tensor_type()->mutable_shape());
             }
             }));
+
+static const char* NonZero_ver9_doc = R"DOC(
+    Returns the indices of the elements that are non-zero
+    (in row-major order - by dimension).
+    NonZero behaves similar to numpy.nonzero:
+    https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    NonZero,
+    9,
+    OpSchema()
+    .SetDoc(NonZero_ver9_doc)
+    .Input(0, "X", "input", "T")
+    .Output(0, "Y", "output (always 2D tensor)", "tensor(int64)")
+    .TypeConstraint(
+        "T",
+        OpSchema::all_tensor_types(),
+        "Constrain to all tensor types.")
+    .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+        updateOutputElemType(ctx, 0, TensorProto::INT64);
+        }));
+
 } // namespace ONNX_NAMESPACE
