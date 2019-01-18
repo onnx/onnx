@@ -19,7 +19,8 @@ def process_snippet(op_name, name, export):  # type: (Text, Text, Any) -> Tuple[
     lines = source_code.splitlines()
     assert lines[0] == '@staticmethod'
     assert lines[1].startswith('def export')
-    return snippet_name, dedent("\n".join(lines[2:]))
+    joined = u"\n".join(lines[2:])
+    return snippet_name, dedent(joined)
 
 
 Snippets = defaultdict(list)  # type: Dict[Text, List[Tuple[Text, Text]]]
