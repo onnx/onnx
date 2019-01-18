@@ -39,7 +39,7 @@ class TfIdfVectorizerHelper():
 
     def make_node_noweights(self):    # type: () -> NodeProto
         return onnx.helper.make_node(
-            'Ngram',
+            'TfIdfVectorizer',
             inputs=['X'],
             outputs=['Y'],
             mode=self.mode,
