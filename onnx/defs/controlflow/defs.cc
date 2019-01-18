@@ -106,7 +106,9 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
     for (size_t i = 0; i < num_inputs; ++i) {
-      input_data.push_back(ctx.getInputData(i));
+      // ctx.getInputData(i), the input to scan, does not represent the input to
+      // scan body. So, we pass in null, to represent an unknown value.
+      input_data.push_back(nullptr);
     }
 
     output_types =
