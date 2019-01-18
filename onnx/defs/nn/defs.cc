@@ -298,8 +298,7 @@ ONNX_OPERATOR_SET_SCHEMA(
 void maxUnpoolShapeInference(InferenceContext& ctx) {
   // we need at least two inputs to have a shape for this inference.
   if (ctx.getNumInputs() != 2 && ctx.getNumInputs() != 3) {
-    fail_type_inference(
-            "MaxUnpool op must have either two or three inputs.");
+    fail_type_inference("MaxUnpool op must have either two or three inputs.");
   }
   propagateElemTypeFromInputToOutput(ctx, 0, 0);
   if (!hasInputShape(ctx, 0)) {
@@ -346,16 +345,17 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
     if (hasInputShape(ctx, 2)) {
       auto& output_shape = getInputShape(ctx, 2);
       if (output_shape.dim_size() != 1) {
-        fail_type_inference(
-              "'output_shape' must be rank 1 tensor.");
+        fail_type_inference("'output_shape' must be rank 1 tensor.");
       }
       if (output_shape.dim((int)0).has_dim_value() &&
-          static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
-          fail_shape_inference(
-                  "'output_shape' must have same number of elements as the shape of input tensor X.");
+          static_cast<int>(output_shape.dim((int)0).dim_value()) !=
+              input_shape.dim_size()) {
+        fail_shape_inference(
+            "'output_shape' must have same number of elements as the shape of input tensor X.");
       }
     }
-    return; // 'output_shape' is specified as input. Actual shape will be determined at runtime.
+    return; // 'output_shape' is specified as input. Actual shape will be
+            // determined at runtime.
   }
 
   auto final_output_shape =
@@ -419,11 +419,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Stride along each axis.",
             AttributeProto::INTS,
             OPTIONAL)
-        .Attr(
-            "pads",
-            pads_doc,
-            AttributeProto::INTS,
-            OPTIONAL)
+        .Attr("pads", pads_doc, AttributeProto::INTS, OPTIONAL)
         .Input(
             0,
             "X",
@@ -465,9 +461,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T1")
         .TypeConstraint(
             "T1",
-            {"tensor(float16)",
-             "tensor(float)",
-             "tensor(double)"},
+            {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeConstraint(
             "T2",
@@ -754,8 +748,7 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   std::vector<int64_t> dilations;
   if (getRepeatedAttribute(ctx, "dilations", dilations)) {
-    for (auto i : dilations)
-    {
+    for (auto i : dilations) {
       if (i != 1)
         return; // we don't handle dialations not 1.
     }
@@ -818,8 +811,9 @@ void convTransposeShapeInference(InferenceContext& ctx) {
 
   *final_output_shape->add_dim() = input_shape.dim(0);
   *final_output_shape->add_dim() =
-      ctx.getInputType(1)->tensor_type().shape().dim(
-          1) * group; // channels should be the second dim of second input multiply group.
+      ctx.getInputType(1)->tensor_type().shape().dim(1) *
+      group; // channels should be the second dim of second input multiply
+             // group.
 
   int size_of_output;
   if (output_shape_presented) {
@@ -835,19 +829,16 @@ void convTransposeShapeInference(InferenceContext& ctx) {
       final_output_shape->add_dim()->set_dim_value(output_shape[i]);
     }
     return;
-  }
-  else
-  {
+  } else {
     size_of_output = input_shape.dim_size() - 2;
-    for (int i = 0; i < size_of_output; ++i)
-    {
+    for (int i = 0; i < size_of_output; ++i) {
       if (input_shape.dim(i + 2).has_dim_value()) {
         int64_t output_shape_dim =
             strides[i] * (input_shape.dim(i + 2).dim_value() - 1) +
             output_padding[i] + kernel_shape[i] - pads[i] -
             pads[i + n_input_dims];
         final_output_shape->add_dim()->set_dim_value(output_shape_dim);
-      } else{
+      } else {
         final_output_shape->add_dim();
       }
     }
@@ -1162,11 +1153,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "If spatial is false, the dimensions of the running variance"
             "(training) or the estimated variance (testing) are (C x D1 x ... x Dn).",
             "T")
-        .Output(
-            0,
-            "Y",
-            "The output tensor of the same shape as X",
-            "T")
+        .Output(0, "Y", "The output tensor of the same shape as X", "T")
         .Output(
             1,
             "mean",
@@ -1317,20 +1304,27 @@ If x > lambd, y = x - bias; Otherwise, y = 0.
 )DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
-	Shrink,
-	9,
-	OpSchema()
-		.SetDoc(Shrink_ver9_doc)
-		.Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
-		.Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
-		.Input(0, "input", "The input data as Tensor.", "T")
-		.Output(0, "output", "The output.", "T")
-		.TypeConstraint(
-			"T",
-			OpSchema::all_numeric_types(),
-			"Constrains input to only numeric types.")
-		.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
-
+    Shrink,
+    9,
+    OpSchema()
+        .SetDoc(Shrink_ver9_doc)
+        .Attr(
+            "lambd",
+            "The lambd value for the Shrink formulation. Default is 0.5.",
+            AttributeProto::FLOAT,
+            0.5f)
+        .Attr(
+            "bias",
+            "The bias value added to output. Default is 0.",
+            AttributeProto::FLOAT,
+            0.0f)
+        .Input(0, "input", "The input data as Tensor.", "T")
+        .Output(0, "output", "The output.", "T")
+        .TypeConstraint(
+            "T",
+            OpSchema::all_numeric_types(),
+            "Constrains input to only numeric types.")
+        .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
 
 static const char* Flatten_ver9_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape
@@ -1551,22 +1545,13 @@ ONNX_OPERATOR_SET_SCHEMA(
             TensorShapeProto output_shape;
             auto& input_shape = ctx.getInputType(0)->tensor_type().shape();
             auto dim_size = input_shape.dim_size();
-            if (dim_size == 0 || dim_size == 1) {
+            if (dim_size == 1) {
               output_shape.add_dim()->set_dim_value(max_last_axis);
             } else if (dim_size == 2) {
-              auto& B_dim = input_shape.dim(0);
-              if (B_dim.has_dim_value()) {
-                output_shape.add_dim()->set_dim_value(B_dim.dim_value());
-              } else if (B_dim.has_dim_param()) {
-                output_shape.add_dim()->set_dim_param(B_dim.dim_param());
-              } else {
-                fail_shape_inference(
-                    "Input shape does not have first dimension value");
-              }
+              *output_shape.add_dim() = input_shape.dim(0);
               output_shape.add_dim()->set_dim_value(max_last_axis);
             } else {
-              fail_shape_inference(
-                  "Input shape must have either [C], [?], [B,C] or [?,C] dimensions where C > 0 and B > 0");
+              fail_shape_inference("Input tensor must have rank 1 or 2");
             }
             updateOutputShape(ctx, 0, output_shape);
           }
