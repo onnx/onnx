@@ -20,7 +20,8 @@ from onnx import (ValueInfoProto,
 import onnx.onnx_cpp2py_export.checker as C
 import onnx.defs
 from google.protobuf.message import Message
-from typing import TypeVar, Callable, Any, Type, cast
+from typing import TypeVar, Callable, Any, Type, cast, Union, Text
+from six import string_types
 
 
 # TODO: This thing where we reserialize the protobuf back into the
@@ -78,8 +79,11 @@ def check_graph(graph, ctx=DEFAULT_CONTEXT):  # type: (GraphProto, C.CheckerCont
     pass
 
 
-def check_model(model):  # type: (ModelProto) -> None
-    C.check_model(model.SerializeToString())
+def check_model(model):  # type: (Union[ModelProto, Text]) -> None
+    if isinstance(model, string_types):
+        C.check_model_path(model)
+    else:
+        C.check_model(model.SerializeToString())
 
 
 ValidationError = C.ValidationError

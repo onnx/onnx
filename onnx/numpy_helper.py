@@ -11,7 +11,6 @@ from onnx import mapping
 from six import text_type
 from typing import Sequence, Any, Optional, Text, List
 
-
 if sys.byteorder != 'little':
     raise RuntimeError(
         'Numpy helper for tensor/ndarray is not available on big endian '
