@@ -3,6 +3,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import os
+
+from onnx.external_data_helper import load_external_data_for_model, write_external_data_tensors
 from .onnx_pb import *  # noqa
 from .onnx_operators_pb import * # noqa
 from .version import version as __version__  # noqa
@@ -15,6 +18,7 @@ import onnx.defs  # noqa
 import google.protobuf.message
 
 from typing import Union, Text, IO, Optional, cast, TypeVar, Any
+from six import string_types
 
 
 # f should be either readable or a file path
@@ -35,6 +39,15 @@ def _save_bytes(str, f):  # type: (bytes, Union[IO[bytes], Text]) -> None
     else:
         with open(cast(Text, f), 'wb') as writable:
             writable.write(str)
+
+
+# f should be either a readable file or a file path
+def _get_file_path(f):  # type: (Union[IO[bytes], Text]) -> Optional[Text]
+    if isinstance(f, string_types):
+        return os.path.abspath(f)
+    if hasattr(f, 'name'):
+        return os.path.abspath(f.name)
+    return None
 
 
 def _serialize(proto):  # type: (Union[bytes, google.protobuf.message.Message]) -> bytes
@@ -86,7 +99,7 @@ def _deserialize(s, proto):  # type: (bytes, _Proto) -> _Proto
     return proto
 
 
-def load_model(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> ModelProto
+def load_model(f, format=None, load_external_data=True):  # type: (Union[IO[bytes], Text], Optional[Any], bool) -> ModelProto
     '''
     Loads a serialized ModelProto into memory
 
@@ -98,7 +111,15 @@ def load_model(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any])
     Loaded in-memory ModelProto
     '''
     s = _load_bytes(f)
-    return load_model_from_string(s, format=format)
+    model = load_model_from_string(s, format=format)
+
+    if load_external_data:
+        model_filepath = _get_file_path(f)
+        if model_filepath:
+            base_dir = os.path.dirname(model_filepath)
+            load_external_data_for_model(model, base_dir)
+
+    return model
 
 
 def load_tensor(f, format=None):  # type: (Union[IO[bytes], Text], Optional[Any]) -> TensorProto
@@ -153,6 +174,14 @@ def save_model(proto, f, format=None):  # type: (Union[ModelProto, bytes], Union
     f can be a file-like object (has "write" function) or a string containing a file name
     format is for future use
     '''
+    if isinstance(proto, bytes):
+        proto = _deserialize(proto, ModelProto())
+
+    model_filepath = _get_file_path(f)
+    if model_filepath:
+        basepath = os.path.dirname(model_filepath)
+        proto = write_external_data_tensors(proto, basepath)
+
     s = _serialize(proto)
     _save_bytes(s, f)
 
