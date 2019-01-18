@@ -6915,12 +6915,12 @@ This version of the operator has been available since version 7 of the default O
 ### <a name="BatchNormalization-7"></a>**BatchNormalization-7**</a>
 
   Carries out batch normalization as described in the paper
-  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
-  there are multiple cases for the number of outputs, which we list below:
-  
-  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
-  Output case #2: Y (test mode)
-      This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+      https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+      there are multiple cases for the number of outputs, which we list below:
+      
+      Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+      Output case #2: Y (test mode)
+          This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
@@ -8481,6 +8481,69 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
+### <a name="BatchNormalization-9"></a>**BatchNormalization-9**</a>
+
+  Carries out batch normalization as described in the paper
+  https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
+  there are multiple cases for the number of outputs, which we list below:
+  
+  Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
+  Output case #2: Y (test mode)
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>epsilon</tt> : float (default is 1e-05)</dt>
+<dd>The epsilon value to use to avoid division by zero.</dd>
+<dt><tt>momentum</tt> : float (default is 0.9)</dt>
+<dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
+<dt><tt>scale</tt> : T</dt>
+<dd>Scale tensor of shape (C).</dd>
+<dt><tt>B</tt> : T</dt>
+<dd>Bias tensor of shape (C).</dd>
+<dt><tt>mean</tt> : T</dt>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
+<dt><tt>var</tt> : T</dt>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
+</dl>
+
+#### Outputs (1 - 5)
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>The output tensor of the same shape as X</dd>
+<dt><tt>mean</tt> (optional) : T</dt>
+<dd>The running mean after the BatchNormalization operator.</dd>
+<dt><tt>var</tt> (optional) : T</dt>
+<dd>The running variance after the BatchNormalization operator.</dd>
+<dt><tt>saved_mean</tt> (optional) : T</dt>
+<dd>Saved mean used during training to speed up gradient computation.</dd>
+<dt><tt>saved_var</tt> (optional) : T</dt>
+<dd>Saved variance used during training to speed up gradient computation.</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
+<dd>Constrain input and output types to float tensors.</dd>
+</dl>
+
 ### <a name="Compress-9"></a>**Compress-9**</a>
 
   Selects slices from an input tensor along a given axis where condition evaluates to True for each axis index.
@@ -8990,6 +9053,38 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain index tensor to int64</dd>
 </dl>
 
+### <a name="NonZero-9"></a>**NonZero-9**</a>
+
+  Returns the indices of the elements that are non-zero
+      (in row-major order - by dimension).
+      NonZero behaves similar to numpy.nonzero:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>output (always 2D tensor)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to all tensor types.</dd>
+</dl>
+
 ### <a name="OneHot-9"></a>**OneHot-9**</a>
 
   Produces a one-hot tensor based on inputs.
@@ -9102,6 +9197,9 @@ This version of the operator has been available since version 9 of the default O
   well as scan_output_element tensors) are required to have the same shape in each iteration
   of the loop (a restriction imposed to enable efficient memory allocation).
   
+  Note that the iterated element passed to the body subgraph does not have a sequence
+  axis. It will have a rank one less than the rank of the corresponding scan_input.
+  
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
   
@@ -9116,10 +9214,15 @@ This version of the operator has been available since version 9 of the default O
   scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
   is omitted, the scan_output_element is appended to the scan_output in each iteration.
   
-  The optional attribute axes specifies the axis to be scanned for each scan_input.
+  The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
   Note that scanning a non-zero axis may be less efficient than scanning axis zero.
+  
+  The optional attribute scan_output_axes specifies the axis along which the scan_outputs
+  are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
+  scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
+  value of 1.
   
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -9131,7 +9234,7 @@ This version of the operator has been available since version 9 of the default O
       Scan <
           num_scan_inputs = m,
           body = loop-body,
-          axes = [axis_1, ..., axis_m]
+          scan_input_axes = [axis_1, ..., axis_m]
       > (init_1, ..., init_n, scan_1, ..., scan_m)
   
   is equivalent to the following pseudo-code:
@@ -9202,14 +9305,16 @@ This version of the operator has been available since version 9 of the default O
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>scan_input_directions</tt> : list of ints</dt>
 <dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_output_axes</tt> : list of ints</dt>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output.</dd>
 <dt><tt>scan_output_directions</tt> : list of ints</dt>
 <dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
 </dl>

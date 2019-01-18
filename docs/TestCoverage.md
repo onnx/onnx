@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 108/115 (93.91%, 5 generators excluded) common operators.
+Node tests have covered 109/116 (93.97%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -27,7 +27,7 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.abs(x)
+y = abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
@@ -1195,12 +1195,12 @@ expect(node, inputs=[x], outputs=[y],
 
 </details>
 <details>
-<summary>int_zeros</summary>
+<summary>int32_zeros</summary>
 
 ```python
 x = np.array([10, 6])
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
-                                       [1], [1])
+                                       [1], [0])
 node = onnx.helper.make_node(
     'ConstantOfShape',
     inputs=['x'],
@@ -3645,6 +3645,27 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.negative(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_neg')
+```
+
+</details>
+
+
+### NonZero
+There are 1 test cases, listed as following:
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
 ```
 
 </details>
@@ -6651,11 +6672,10 @@ pads: 1
 strides: 1
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6728,11 +6748,10 @@ pads: 2
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6805,11 +6824,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 1
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6882,11 +6900,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -6959,11 +6976,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7041,11 +7057,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7123,11 +7138,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
@@ -7205,11 +7219,10 @@ pads: 3
 strides: 2
 </details>
 <details>
-<summary>BatchNormalization: 1 out of 3 attributes covered</summary>
+<summary>BatchNormalization: 1 out of 2 attributes covered</summary>
 
 epsilon: 2
 momentum: 0
-spatial: 0
 </details>
 <details>
 <summary>Concat: 1 out of 1 attributes covered</summary>
