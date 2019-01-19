@@ -5,6 +5,13 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
+int handle_negative_axis_validate(int axis, int rank) {
+  if (!(-rank <= axis && axis < rank))
+    fail_shape_inference(
+        "Axis value ", axis, " is invalid for a tensor of rank ", rank);
+  return (axis >= 0 ? axis : axis + rank);
+}
+
 void ScanInferenceFunction(InferenceContext& ctx) {
   auto num_inputs = ctx.getNumInputs();
   auto num_scan_inputs =
@@ -71,18 +78,13 @@ void ScanInferenceFunction(InferenceContext& ctx) {
       // We can pass through the type and shape to the subgraph inputs but
       // need to remove the sequence length dimensions from the shape.
       if (has_shape) {
+        const auto& shape = input_type->tensor_type().shape();
+
         // remove sequence length dimensions and add to subgraph_input_types
         int axis = static_cast<int>(axes[i - num_loop_state_vars]);
+        axis = handle_negative_axis_validate(axis, shape.dim_size());
 
         // update sequence_len if a value is available
-        const auto& shape = input_type->tensor_type().shape();
-        if (axis >= shape.dim_size())
-          fail_shape_inference(
-              "Specified axis value (",
-              axis,
-              ") is >= rank (",
-              shape.dim_size(),
-              ").");
 
         const auto& dims = shape.dim();
         mergeInDimensionInfo(dims.Get(axis), sequence_len_dim, 1);
@@ -103,8 +105,10 @@ void ScanInferenceFunction(InferenceContext& ctx) {
   GraphInferencer* graphInferencer = ctx.getGraphAttributeInferencer("body");
   if (graphInferencer) {
     std::vector<const TensorProto*> input_data;
-    for (size_t i = 1; i < num_inputs; ++i) {
-      input_data.push_back(ctx.getInputData(i));
+    for (size_t i = 0; i < num_inputs; ++i) {
+      // ctx.getInputData(i), the input to scan, does not represent the input to
+      // scan body. So, we pass in null, to represent an unknown value.
+      input_data.push_back(nullptr);
     }
 
     output_types =
@@ -153,15 +157,11 @@ void ScanInferenceFunction(InferenceContext& ctx) {
               subgraph_output_tensor_type.shape();
           TensorShapeProto inferred_shape;
 
+          auto subgraph_output_rank = subgraph_output_shape.dim_size();
+          auto output_rank = subgraph_output_rank + 1;
           int output_axis =
               static_cast<int>(output_axes[i - num_loop_state_vars]);
-          auto subgraph_output_rank = subgraph_output_shape.dim_size();
-          if (output_axis < 0 || output_axis > subgraph_output_rank)
-            fail_shape_inference(
-                "The output axis value ",
-                output_axis,
-                "specified is not consistent with the rank of subgraph output ",
-                subgraph_output_rank);
+          output_axis = handle_negative_axis_validate(output_axis, output_rank);
 
           for (int j = 0; j < output_axis; ++j)
             *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
