@@ -5,9 +5,13 @@ namespace shape_inference {
 namespace {
 
 std::string getElemTypeString(const TypeProto_Tensor& type) {
+#ifdef ONNX_USE_LITE_PROTO
+    return to_string(type.elem_type());
+#else
     const std::string type_str = TensorProto::DataType_Name(
         static_cast<TensorProto_DataType>(type.elem_type()));
     return type_str.empty() ? to_string(type.elem_type()) : type_str;
+#endif
 }
 
 }  // namespace
