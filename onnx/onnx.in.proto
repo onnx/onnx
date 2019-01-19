@@ -383,6 +383,28 @@ message TensorProto {
   // When this field is present, the data_type field MUST NOT be STRING or UNDEFINED
   optional bytes raw_data = 9;
 
+  // Data can be stored inside the protobuf file using type-specific fields or raw_data.
+  // Alternatively, raw bytes data can be stored in an external file, using the external_data field.
+  // external_data stores key-value pairs describing data location. Recognized keys are:
+  // - "location" (required) - POSIX filesystem path relative to the directory where the ONNX
+  //                           protobuf model was stored
+  // - "offset" (optional) - position of byte at which stored data begins. Integer stored as string.
+  //                         Offset values SHOULD be multiples 4096 (page size) to enable mmap support.
+  // - "length" (optional) - number of bytes containing data. Integer stored as string.
+  // - "checksum" (optional) - SHA1 digest of file specified in under 'location' key.
+  repeated StringStringEntryProto external_data = 13;
+
+  // Location of the data for this tensor. MUST be one of:
+  // - DEFAULT - data stored inside the protobuf message. Data is stored in raw_data (if set) otherwise in type-specified field.
+  // - EXTERNAL - data stored in an external location as described by external_data field.
+  enum DataLocation {
+    DEFAULT = 0;
+    EXTERNAL = 1;
+  }
+
+  // If value not set, data is stored in raw_data (if set) otherwise in type-specified field.
+  optional DataLocation data_location = 14;
+
   // For double
   // Complex128 tensors are encoded as a single array of doubles,
   // with the real components appearing in odd numbered positions,
