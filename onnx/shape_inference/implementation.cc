@@ -5,7 +5,7 @@ namespace shape_inference {
 namespace {
 
 std::string getElemTypeString(const TypeProto_Tensor& type) {
-    const std::string type_str = TensorProto_DataType_Name(
+    const std::string type_str = TensorProto::DataType_Name(
         static_cast<TensorProto_DataType>(type.elem_type()));
     return type_str.empty() ? to_string(type.elem_type()) : type_str;
 }
