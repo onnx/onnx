@@ -1,17 +1,20 @@
 #include "onnx/shape_inference/implementation.h"
 
+#include "onnx/string_utils.h"
+
 namespace ONNX_NAMESPACE {
 namespace shape_inference {
 namespace {
 
 std::string getElemTypeString(const TypeProto_Tensor& type) {
-#ifdef ONNX_USE_LITE_PROTO
-    return to_string(type.elem_type());
-#else
+#ifndef ONNX_USE_LITE_PROTO
     const std::string type_str = TensorProto::DataType_Name(
         static_cast<TensorProto_DataType>(type.elem_type()));
-    return type_str.empty() ? to_string(type.elem_type()) : type_str;
+    if (!type_str.empty()) {
+        return type_str;
+    }
 #endif
+    return ONNX_NAMESPACE::to_string(type.elem_type());
 }
 
 }  // namespace
