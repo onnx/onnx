@@ -8707,8 +8707,8 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain input types. Shape must be unsigned integers.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
 <dd>Constrain output types to be numerics.</dd>
 </dl>
