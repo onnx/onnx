@@ -1,8 +1,8 @@
 // Copyright (c) Facebook Inc. and Microsoft Corporation.
 // Licensed under the MIT license.
 
-#include "onnx/defs/schema.h"
 #include <cmath>
+#include "onnx/defs/schema.h"
 
 namespace ONNX_NAMESPACE {
 static const char* Cast_ver1_doc = R"DOC(
@@ -20,7 +20,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         .SetDoc(Cast_ver1_doc)
         .Attr(
             "to",
-            "The data type to which the elements of the input tensor are cast."
+            "The data type to which the elements of the input tensor are cast. "
             "Strictly must be one of the types from DataType enum in TensorProto",
             AttributeProto::STRING)
         .Input(0, "input", "Input tensor to be cast.", "T1")
@@ -60,6 +60,68 @@ ONNX_OPERATOR_SET_SCHEMA(
              "tensor(uint64)",
              "tensor(bool)"},
             "Constrain output types. Casting to strings and complex are not supported."));
+
+static const char* Cast_ver6_doc = R"DOC(
+The operator casts the elements of a given input tensor to a data type
+specified by the 'to' argument and returns an output tensor of the same size in
+the converted type. The 'to' argument must be one of the data types specified
+in the 'DataType' enum field in the TensorProto message.
+NOTE: Casting to and from strings is not supported yet.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+    Cast,
+    6,
+    OpSchema()
+        .SetDoc(Cast_ver6_doc)
+        .Attr(
+            "to",
+            "The data type to which the elements of the input tensor are cast. "
+            "Strictly must be one of the types from DataType enum in TensorProto",
+            AttributeProto::INT)
+        .Input(0, "input", "Input tensor to be cast.", "T1")
+        .Output(
+            0,
+            "output",
+            "Output tensor with the same shape as input with type "
+            "specified by the 'to' argument",
+            "T2")
+        .TypeConstraint(
+            "T1",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+            "Constrain input types. Casting from strings and complex are not supported.")
+        .TypeConstraint(
+            "T2",
+            {"tensor(float16)",
+             "tensor(float)",
+             "tensor(double)",
+             "tensor(int8)",
+             "tensor(int16)",
+             "tensor(int32)",
+             "tensor(int64)",
+             "tensor(uint8)",
+             "tensor(uint16)",
+             "tensor(uint32)",
+             "tensor(uint64)",
+             "tensor(bool)"},
+            "Constrain output types. Casting to strings and complex are not supported.")
+        .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
+          propagateElemTypeFromAttributeToOutput(ctx, "to", 0);
+          if (hasNInputShapes(ctx, 1)) {
+            propagateShapeFromInputToOutput(ctx, 0, 0);
+          }
+        }));
 
 static const char* Concat_ver1_doc =
     R"DOC(Concatenate a list of tensors into a single tensor)DOC";

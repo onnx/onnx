@@ -340,7 +340,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
   }
 
   if (ctx.getNumInputs() == 3) {
-    // If the third input, output_size, is specified, then use that instead 
+    // If the third input, output_size, is specified, then use that instead
     // of inferring shape from inputs.
     if (hasInputShape(ctx, 2)) {
       auto& output_shape = getInputShape(ctx, 2);
@@ -348,7 +348,7 @@ void maxUnpoolShapeInference(InferenceContext& ctx) {
         fail_type_inference(
               "'output_shape' must be rank 1 tensor.");
       }
-      if (output_shape.dim((int)0).has_dim_value() && 
+      if (output_shape.dim((int)0).has_dim_value() &&
           static_cast<int>(output_shape.dim((int)0).dim_value()) != input_shape.dim_size()) {
           fail_shape_inference(
                   "'output_shape' must have same number of elements as the shape of input tensor X.");
@@ -860,7 +860,7 @@ std::function<void(OpSchema&)> ConvTransposeOpSchemaGenerator(
   return [=](OpSchema& schema) {
     std::string doc = R"DOC(
 The convolution transpose operator consumes an input tensor and {filter_desc},
-and computes the output. 
+and computes the output.
 
 If the pads parameter is provided the shape of the output is calculated via the following equation:
 
@@ -1086,28 +1086,24 @@ ONNX_OPERATOR_SET_SCHEMA(
     OpSchema().FillUsing(
         GlobalLpPoolingOpSchemaGenerator("LpPool", "lp pool")));
 
-static const char* BatchNormalization_ver7_doc = R"DOC(
+static const char* BatchNormalization_ver9_doc = R"DOC(
 Carries out batch normalization as described in the paper
 https://arxiv.org/abs/1502.03167. Depending on the mode it is being run,
 there are multiple cases for the number of outputs, which we list below:
 
 Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
 Output case #2: Y (test mode)
-    )DOC";
+
+For previous (depreciated) non-spatial cases, implementors are suggested
+to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+)DOC";
 
 ONNX_OPERATOR_SET_SCHEMA(
     BatchNormalization,
-    7,
+    9,
     OpSchema()
         .NumOutputs({1, 5})
-        .SetDoc(BatchNormalization_ver7_doc + GenerateOptionalArgumentsDoc())
-        .Attr(
-            "spatial",
-            "If true, compute the mean and variance across per activation. "
-            "If false, compute the mean and variance across per feature over "
-            "each mini-batch.",
-            AttributeProto::INT,
-            static_cast<int64_t>(1))
+        .SetDoc(BatchNormalization_ver9_doc + GenerateOptionalArgumentsDoc())
         .Attr(
             "epsilon",
             "The epsilon value to use to avoid division by zero.",
@@ -1123,43 +1119,31 @@ ONNX_OPERATOR_SET_SCHEMA(
             0,
             "X",
             "Input data tensor from the previous operator; "
-            "dimensions for image case are (N x C x H x W), "
-            "where N is the batch size, C is the number of "
-            "channels, and H and W are the height and the "
-            "width of the data. For non image case, the "
-            "dimensions are in the form of "
-            "(N x C x D1 x D2 ... Dn), where N is the batch "
-            "size.",
+            "dimensions are in the form of (N x C x D1 x D2 ... Dn), "
+            "where N is the batch size, C is the number of channels. "
+            "Statistics are computed for every channel of C over N and D1 to Dn dimensions. "
+            "For image data, input dimensions become (N x C x H x W). "
+            "The op also accepts single dimension input of size N in which case C is assumed to be 1",
             "T")
         .Input(
             1,
             "scale",
-            "If spatial is true, the dimension of scale is (C). "
-            "If spatial is false, the dimensions of scale are "
-            "(C x D1 x ... x Dn)",
+            "Scale tensor of shape (C).",
             "T")
         .Input(
             2,
             "B",
-            "If spatial is true, the dimension of bias is (C). "
-            "If spatial is false, the dimensions of bias are "
-            "(C x D1 x ... x Dn)",
+            "Bias tensor of shape (C).",
             "T")
         .Input(
             3,
             "mean",
-            "If spatial is true, the dimension of the running mean "
-            "(training) or the estimated mean (testing) is (C). "
-            "If spatial is false, the dimensions of the running mean "
-            "(training) or the estimated mean (testing) are (C x D1 x ... x Dn).",
+            "running (training) or estimated (testing) mean tensor of shape (C).",
             "T")
         .Input(
             4,
             "var",
-            "If spatial is true, the dimension of the running variance"
-            "(training) or the estimated variance (testing) is (C). "
-            "If spatial is false, the dimensions of the running variance"
-            "(training) or the estimated variance (testing) are (C x D1 x ... x Dn).",
+            "running (training) or estimated (testing) variance tensor of shape (C).",
             "T")
         .Output(
             0,
@@ -1307,6 +1291,29 @@ ONNX_OPERATOR_SET_SCHEMA(
             {"tensor(float16)", "tensor(float)", "tensor(double)"},
             "Constrain input and output types to float tensors.")
         .TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
+static const char* Shrink_ver9_doc = R"DOC(
+Shrink takes one input data (Tensor<numeric>) and produces one Tensor output,
+having same datatype and shape with input. It has two attributes, lambd and
+bias. The formula of this operator is: If x < -lambd, y = x + bias;
+If x > lambd, y = x - bias; Otherwise, y = 0.
+)DOC";
+
+ONNX_OPERATOR_SET_SCHEMA(
+	Shrink,
+	9,
+	OpSchema()
+		.SetDoc(Shrink_ver9_doc)
+		.Attr("lambd", "The lambd value for the Shrink formulation. Default is 0.5.", AttributeProto::FLOAT, 0.5f)
+		.Attr("bias", "The bias value added to output. Default is 0.", AttributeProto::FLOAT, 0.0f)
+		.Input(0, "input", "The input data as Tensor.", "T")
+		.Output(0, "output", "The output.", "T")
+		.TypeConstraint(
+			"T",
+			OpSchema::all_numeric_types(),
+			"Constrains input to only numeric types.")
+		.TypeAndShapeInferenceFunction(propagateShapeAndTypeFromFirstInput));
+
 
 static const char* Flatten_ver9_doc = R"DOC(
 Flattens the input tensor into a 2D matrix. If input tensor has shape

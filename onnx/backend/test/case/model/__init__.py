@@ -30,6 +30,8 @@ def expect(model,  # type: ModelProto
             model=model,
             data_sets=[(inputs, outputs)],
             kind='simple',
+            rtol=1e-3,
+            atol=1e-7,
         ))
 
 
@@ -44,18 +46,18 @@ def collect_testcases():  # type: () -> List[TestCase]
     real_model_testcases = []
 
     model_tests = [
-        ('test_bvlc_alexnet', 'bvlc_alexnet'),
-        ('test_densenet121', 'densenet121'),
-        ('test_inception_v1', 'inception_v1'),
-        ('test_inception_v2', 'inception_v2'),
-        ('test_resnet50', 'resnet50'),
-        ('test_shufflenet', 'shufflenet'),
-        ('test_squeezenet', 'squeezenet'),
-        ('test_vgg19', 'vgg19'),
-        ('test_zfnet512', 'zfnet512'),
+        ('test_bvlc_alexnet', 'bvlc_alexnet', 1e-3, 1e-7),
+        ('test_densenet121', 'densenet121', 2e-3, 1e-7),
+        ('test_inception_v1', 'inception_v1', 1e-3, 1e-7),
+        ('test_inception_v2', 'inception_v2', 1e-3, 1e-7),
+        ('test_resnet50', 'resnet50', 1e-3, 1e-7),
+        ('test_shufflenet', 'shufflenet', 1e-3, 1e-7),
+        ('test_squeezenet', 'squeezenet', 1e-3, 1e-7),
+        ('test_vgg19', 'vgg19', 1e-3, 1e-7),
+        ('test_zfnet512', 'zfnet512', 1e-3, 1e-7),
     ]
 
-    for test_name, model_name in model_tests:
+    for test_name, model_name, rtol, atol in model_tests:
         url = '{}/{}.tar.gz'.format(BASE_URL, model_name)
         real_model_testcases.append(TestCase(
             name=test_name,
@@ -65,6 +67,8 @@ def collect_testcases():  # type: () -> List[TestCase]
             model=None,
             data_sets=None,
             kind='real',
+            rtol=rtol,
+            atol=atol,
         ))
 
     import_recursive(sys.modules[__name__])

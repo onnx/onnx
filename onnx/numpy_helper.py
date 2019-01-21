@@ -8,8 +8,8 @@ import sys
 import numpy as np  # type: ignore
 from onnx import TensorProto
 from onnx import mapping
-from typing import Sequence, Any, Optional, Text
-
+from six import text_type, binary_type
+from typing import Sequence, Any, Optional, Text, List
 
 if sys.byteorder != 'little':
     raise RuntimeError(
@@ -34,8 +34,6 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
             "Currently not supporting loading segments.")
     if tensor.data_type == TensorProto.UNDEFINED:
         raise ValueError("The data type is not defined.")
-    if tensor.data_type == TensorProto.STRING:
-        raise ValueError("Tensor data type STRING is not supported.")
 
     tensor_dtype = tensor.data_type
     np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[tensor_dtype]
@@ -43,6 +41,11 @@ def to_array(tensor):  # type: (TensorProto) -> np.ndarray[Any]
     storage_np_dtype = mapping.TENSOR_TYPE_TO_NP_TYPE[storage_type]
     storage_field = mapping.STORAGE_TENSOR_TYPE_TO_FIELD[storage_type]
     dims = tensor.dims
+
+    if tensor.data_type == TensorProto.STRING:
+        utf8_strings = getattr(tensor, storage_field)
+        ss = list(s.decode('utf-8') for s in utf8_strings)
+        return np.asarray(ss).astype(np_dtype).reshape(dims)
 
     if tensor.HasField("raw_data"):
         # Raw_bytes support: using frombuffer.
@@ -79,7 +82,16 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
 
     if arr.dtype == np.object:
         # Special care for strings.
-        raise NotImplementedError("Need to properly implement string.")
+        tensor.data_type = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
+        for e in arr:
+            if isinstance(e, text_type):
+                tensor.string_data.append(e.encode('utf-8'))
+            elif isinstance(e, np.ndarray):
+                tensor.string_data.append(e.tobytes())
+            else:
+                raise NotImplementedError("Unrecognized object in the object array, expect a string, or array of bytes")
+        return tensor
+
     # For numerical types, directly use numpy raw bytes.
     try:
         dtype = mapping.NP_TYPE_TO_TENSOR_TYPE[arr.dtype]
