@@ -42,7 +42,7 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           num_scan_outputs,
           ").");
   } else {
-    output_axes.insert(output_axes.end(), num_scan_inputs, 0);
+    output_axes.insert(output_axes.end(), num_scan_outputs, 0);
   }
 
   std::vector<TypeProto> temporary_type_protos;
