@@ -245,6 +245,8 @@ PYBIND11_MODULE(onnx_cpp2py_export, onnx_cpp2py_export) {
     checker::check_model(proto);
   });
 
+  checker.def("check_model_path", (void (*) (const std::string&)) &checker::check_model);
+
   // Submodule `optimizer`
   auto optimizer = onnx_cpp2py_export.def_submodule("optimizer");
   optimizer.doc() = "Optimizer submodule";

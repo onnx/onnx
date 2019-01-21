@@ -71,6 +71,7 @@
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
+  * <a href="#NonZero">NonZero</a>
   * <a href="#Not">Not</a>
   * <a href="#OneHot">OneHot</a>
   * <a href="#Or">Or</a>
@@ -1588,19 +1589,33 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  NOTE: Casting to and from strings is not supported yet.
+  
+  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+  (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+  result 100. There are some string literals reserved for special floating-point values;
+  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+  Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+  this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+  to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+  of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+  
+  Conversion from a numerical type to any numerical type is always allowed.
+  User must be aware of precision loss and value change caused by range difference between two types.
+  For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+  an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>, <a href="Changelog.md#Cast-6">Cast-6</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>to</tt> : int (required)</dt>
-<dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
 #### Inputs
@@ -1620,10 +1635,10 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain input types. Casting from strings and complex are not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain output types. Casting to strings and complex are not supported.</dd>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
 
@@ -1641,21 +1656,33 @@ test_cases = [
     ('FLOAT16', 'DOUBLE'),
     ('DOUBLE', 'FLOAT'),
     ('DOUBLE', 'FLOAT16'),
+    ('FLOAT', 'STRING'),
+    ('STRING', 'FLOAT'),
 ]
 
 for from_type, to_type in test_cases:
-    input = np.random.random_sample(shape).astype(
-        TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+    if 'STRING' != from_type:
+        input = np.random.random_sample(shape).astype(
+            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+        if ('STRING' == to_type):
+            # Converting input to str, then give it np.object dtype for generating script
+            output = input.astype(np.dtype('str'))
+            output = output.astype(np.dtype(np.object))
+        else:
+            output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    else:
+        input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
+           ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
+           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype(np.object))
+        output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
-
     expect(node, inputs=[input], outputs=[output],
-           name='test_cast_' + from_type + '_to_' + to_type)
+               name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -2136,8 +2163,8 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain input types. Shape must be unsigned integers.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
 <dd>Constrain output types to be numerics.</dd>
 </dl>
@@ -7021,6 +7048,60 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="NonZero"></a><a name="nonzero">**NonZero**</a>
+
+  Returns the indices of the elements that are non-zero
+      (in row-major order - by dimension).
+      NonZero behaves similar to numpy.nonzero:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>output (always 2D tensor)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
+```
+
+</details>
+
+
 ### <a name="Not"></a><a name="not">**Not**</a>
 
   Returns the negation of the input tensor element-wise.
@@ -9684,6 +9765,9 @@ for test_name, shape in test_cases.items():
   well as scan_output_element tensors) are required to have the same shape in each iteration
   of the loop (a restriction imposed to enable efficient memory allocation).
   
+  Note that the iterated element passed to the body subgraph does not have a sequence
+  axis. It will have a rank one less than the rank of the corresponding scan_input.
+  
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
   
@@ -9698,10 +9782,15 @@ for test_name, shape in test_cases.items():
   scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
   is omitted, the scan_output_element is appended to the scan_output in each iteration.
   
-  The optional attribute axes specifies the axis to be scanned for each scan_input.
+  The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
   Note that scanning a non-zero axis may be less efficient than scanning axis zero.
+  
+  The optional attribute scan_output_axes specifies the axis along which the scan_outputs
+  are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
+  scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
+  value of 1.
   
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -9713,7 +9802,7 @@ for test_name, shape in test_cases.items():
       Scan <
           num_scan_inputs = m,
           body = loop-body,
-          axes = [axis_1, ..., axis_m]
+          scan_input_axes = [axis_1, ..., axis_m]
       > (init_1, ..., init_n, scan_1, ..., scan_m)
   
   is equivalent to the following pseudo-code:
@@ -9786,14 +9875,16 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">Scan-8</a>
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>scan_input_directions</tt> : list of ints</dt>
 <dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_output_axes</tt> : list of ints</dt>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output.</dd>
 <dt><tt>scan_output_directions</tt> : list of ints</dt>
 <dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
 </dl>

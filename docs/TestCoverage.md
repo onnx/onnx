@@ -5,7 +5,7 @@
 * [Overall Test Coverage](#overall-test-coverage)
 # Node Test Coverage
 ## Summary
-Node tests have covered 108/115 (93.91%, 5 generators excluded) common operators.
+Node tests have covered 109/116 (93.97%, 5 generators excluded) common operators.
 
 Node tests have covered 2/12 (16.67%, 0 generators excluded) experimental operators.
 
@@ -910,21 +910,33 @@ test_cases = [
     ('FLOAT16', 'DOUBLE'),
     ('DOUBLE', 'FLOAT'),
     ('DOUBLE', 'FLOAT16'),
+    ('FLOAT', 'STRING'),
+    ('STRING', 'FLOAT'),
 ]
 
 for from_type, to_type in test_cases:
-    input = np.random.random_sample(shape).astype(
-        TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+    if 'STRING' != from_type:
+        input = np.random.random_sample(shape).astype(
+            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+        if ('STRING' == to_type):
+            # Converting input to str, then give it np.object dtype for generating script
+            output = input.astype(np.dtype('str'))
+            output = output.astype(np.dtype(np.object))
+        else:
+            output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    else:
+        input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
+           ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
+           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype(np.object))
+        output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
-
     expect(node, inputs=[input], outputs=[output],
-           name='test_cast_' + from_type + '_to_' + to_type)
+               name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -3645,6 +3657,27 @@ x = np.random.randn(3, 4, 5).astype(np.float32)
 y = np.negative(x)
 expect(node, inputs=[x], outputs=[y],
        name='test_neg')
+```
+
+</details>
+
+
+### NonZero
+There are 1 test cases, listed as following:
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
 ```
 
 </details>
