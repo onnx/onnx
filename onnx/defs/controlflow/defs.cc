@@ -5,10 +5,17 @@
 namespace ONNX_NAMESPACE {
 using SupportType = OpSchema::SupportType;
 
-int handle_negative_axis_validate(int axis, int rank) {
+int handle_negative_axis_validate(
+    const std::string& attrib,
+    int axis,
+    int rank) {
   if (!(-rank <= axis && axis < rank))
     fail_shape_inference(
-        "Axis value ", axis, " is invalid for a tensor of rank ", rank);
+        attrib,
+        " axis value ",
+        axis,
+        " is invalid for a tensor of rank ",
+        rank);
   return (axis >= 0 ? axis : axis + rank);
 }
 
@@ -82,7 +89,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
 
         // remove sequence length dimensions and add to subgraph_input_types
         int axis = static_cast<int>(axes[i - num_loop_state_vars]);
-        axis = handle_negative_axis_validate(axis, shape.dim_size());
+        axis = handle_negative_axis_validate(
+            "scan_input_axes", axis, shape.dim_size());
 
         // update sequence_len if a value is available
 
@@ -161,7 +169,8 @@ void ScanInferenceFunction(InferenceContext& ctx) {
           auto output_rank = subgraph_output_rank + 1;
           int output_axis =
               static_cast<int>(output_axes[i - num_loop_state_vars]);
-          output_axis = handle_negative_axis_validate(output_axis, output_rank);
+          output_axis = handle_negative_axis_validate(
+              "scan_output_axes", output_axis, output_rank);
 
           for (int j = 0; j < output_axis; ++j)
             *(inferred_shape.add_dim()) = subgraph_output_shape.dim(j);
