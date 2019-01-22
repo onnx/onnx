@@ -63,9 +63,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "T2")
         .TypeConstraint(
             "T1",
-            {"tensor(int32)",
-             "tensor(int64)"},
-            "Constrain input types. Shape must be unsigned integers.")
+            {"tensor(int64)"},
+            "Constrain input types.")
         .TypeConstraint(
             "T2",
             {"tensor(float16)",
