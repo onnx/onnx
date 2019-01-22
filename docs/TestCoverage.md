@@ -5942,7 +5942,7 @@ expect(node, inputs=[x], outputs=[y],
 
 
 ### StringNormalizer
-There are 8 test cases, listed as following:
+There are 6 test cases, listed as following:
 <details>
 <summary>monday_casesensintive_lower</summary>
 
@@ -6004,30 +6004,6 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 
 </details>
 <details>
-<summary>monday_casesensintive_upper_langmix</summary>
-
-```python
-input = np.array([u'monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
-
-# It does upper case cecedille, accented E
-# and german umlaut but fails
-# with german eszett
-output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
-stopwords = [u'monday']
-
-node = onnx.helper.make_node(
-    'StringNormalizer',
-    inputs=['x'],
-    outputs=['y'],
-    casechangeaction='UPPER',
-    is_case_sensitive=1,
-    stopwords=stopwords
-)
-expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_upper_langmix')
-```
-
-</details>
-<details>
 <summary>monday_empty_output</summary>
 
 ```python
@@ -6044,30 +6020,6 @@ node = onnx.helper.make_node(
     stopwords=stopwords
 )
 expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
-```
-
-</details>
-<details>
-<summary>monday_insensintive_upper_langmix</summary>
-
-```python
-input = np.array([u'Monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
-
-# It does upper case cecedille, accented E
-# and german umlaut but fails
-# with german eszett
-output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
-stopwords = [u'monday']
-
-node = onnx.helper.make_node(
-    'StringNormalizer',
-    inputs=['x'],
-    outputs=['y'],
-    casechangeaction='UPPER',
-    is_case_sensitive=0,
-    stopwords=stopwords
-)
-expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_langmix')
 ```
 
 </details>

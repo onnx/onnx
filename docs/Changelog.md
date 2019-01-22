@@ -9516,6 +9516,7 @@ This version of the operator has been available since version 9 of the default O
    that the output tensor will not contain any stop words. This operator only accepts [C]-
    and [1, C]-tensors. If all elements in X are dropped, the output will be the default value
    of string tensor with shape [1] if input shape is [C] and shape [1, 1] if input shape is [1, C].
+  [optional] Step2: Lower all characters (if action is LOWER) in X or capitalize them (when action is UPPER).
 
 #### Version
 

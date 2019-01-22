@@ -94,46 +94,6 @@ class StringNormalizer(Base):
         expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_empty_output')
 
     @staticmethod
-    def export_monday_casesensintive_upper_langmix():    # type: () -> None
-        input = np.array([u'monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
-
-        # It does upper case cecedille, accented E
-        # and german umlaut but fails
-        # with german eszett
-        output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
-        stopwords = [u'monday']
-
-        node = onnx.helper.make_node(
-            'StringNormalizer',
-            inputs=['x'],
-            outputs=['y'],
-            casechangeaction='UPPER',
-            is_case_sensitive=1,
-            stopwords=stopwords
-        )
-        expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_casesensintive_upper_langmix')
-
-    @staticmethod
-    def export_monday_insensintive_upper_langmix():    # type: () -> None
-        input = np.array([u'Monday', u'tuesday', u'Besançon', u'École élémentaire', u'Понедельник', u'mit freundlichen grüßen', u'中文']).astype(np.object)
-
-        # It does upper case cecedille, accented E
-        # and german umlaut but fails
-        # with german eszett
-        output = np.array([u'TUESDAY', u'BESANÇON', u'ÉCOLE ÉLÉMENTAIRE', u'ПОНЕДЕЛЬНИК', u'MIT FREUNDLICHEN GRÜßEN', u'中文']).astype(np.object)
-        stopwords = [u'monday']
-
-        node = onnx.helper.make_node(
-            'StringNormalizer',
-            inputs=['x'],
-            outputs=['y'],
-            casechangeaction='UPPER',
-            is_case_sensitive=0,
-            stopwords=stopwords
-        )
-        expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_monday_insensintive_upper_langmix')
-
-    @staticmethod
     def export_monday_insensintive_upper_twodim():    # type: () -> None
         input = np.array([u'Monday', u'tuesday', u'wednesday', u'Monday', u'tuesday', u'wednesday']).astype(np.object).reshape([2, 3])
 
