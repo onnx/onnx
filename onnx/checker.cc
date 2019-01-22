@@ -3,6 +3,8 @@
 #include "onnx/proto_utils.h"
 #include "onnx/string_utils.h"
 
+#include <fstream>
+#include <iterator>
 #include <unordered_set>
 
 namespace ONNX_NAMESPACE {
@@ -72,7 +74,7 @@ void check_value_info(const ValueInfoProto& value_info, const CheckerContext&) {
   }
 }
 
-void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
+void check_tensor(const TensorProto& tensor, const CheckerContext& ctx) {
   enforce_has_field(tensor, data_type);
   if (tensor.data_type() == TensorProto::UNDEFINED) {
     fail_check(
@@ -102,6 +104,39 @@ void check_tensor(const TensorProto& tensor, const CheckerContext& /*ctx*/) {
 
 #undef check_data_field
 
+  bool stored_externally = tensor.has_data_location() &&
+	                   tensor.data_location() == TensorProto::EXTERNAL;
+  if (stored_externally){
+    if (num_value_fields != 0){
+      fail_check(
+          "Data of TensorProto ( tensor name: ",
+          tensor.name(),
+          ") is stored externally and should not have data field.",
+          value_field);
+    }
+
+    bool has_location = false;
+    for (const StringStringEntryProto& entry : tensor.external_data()){
+      if (entry.has_key() && entry.has_value() && entry.key() == "location"){
+        has_location = true;
+        if(!std::ifstream(ctx.get_model_dir() + entry.value())){
+          fail_check(
+              "Data of TensorProto ( tensor name: ",
+              tensor.name(),
+              ") should be stored in ",
+              ctx.get_model_dir() + entry.value(),
+              ", but it doesn't exist or is not accessible.");
+        }
+      }
+    }
+    if (!has_location){
+      fail_check(
+          "TensorProto ( tensor name: ",
+          tensor.name(),
+          ") is stored externally but doesn't have a location.");
+    }
+    return;
+  }
   int64_t nelem = 1;
   for (auto x : tensor.dims()) {
     nelem *= x;
@@ -351,8 +386,15 @@ void check_graph(
   output_names.insert(
       parent_lex.output_names.begin(), parent_lex.output_names.end());
   for (const auto& init : graph.initializer()) {
-    if (!output_names.count(init.name())) {
-      fail_check(init.name() + " in initializer but not in graph input");
+    if (ctx.get_ir_version() <= 0x00000003) {
+      // Initializers are a subset of graph inputs for IR_VERSION <= 3
+      if (!output_names.count(init.name())) {
+        fail_check(init.name() + " in initializer but not in graph input");
+      }
+    } else {
+      // An initializer is allowed to have the same name as an input,
+      // but is not required to (for IR_VERSION >= 4)
+      output_names.insert(init.name());
     }
     check_tensor(init, ctx);
   }
@@ -476,7 +518,7 @@ void check_function(
   }
 }
 
-void check_model(const ModelProto& model) {
+void check_model(const ModelProto& model, CheckerContext& ctx) {
   if (!model.ir_version()) {
     fail_check("The model does not have an ir_version set properly.");
   }
@@ -493,7 +535,6 @@ void check_model(const ModelProto& model) {
     }
   }
   std::unordered_map<std::string, int> versions;
-  CheckerContext ctx;
   ctx.set_ir_version(static_cast<int>(model.ir_version()));
   std::unordered_map<std::string, int> opset_imports;
   for (const auto& opset_import : model.opset_import()) {
@@ -514,6 +555,37 @@ void check_model(const ModelProto& model) {
   ctx.set_opset_imports(opset_imports);
   LexicalScopeContext lex_ctx;
   check_graph(model.graph(), ctx, lex_ctx);
+}
+
+void check_model(const std::string& model_path) {
+  ModelProto model;
+  std::fstream model_stream(model_path, std::ios::in | std::ios::binary);
+  if(!model_stream.good()){
+    fail_check("Unable to open model file:",
+               model_path,
+               ". Please check if it is a valid file.");
+  }
+  std::string data {std::istreambuf_iterator<char>{model_stream},
+                    std::istreambuf_iterator<char>{}};
+  if (!ParseProtoFromBytes(&model, data.c_str(), data.size())){
+    fail_check("Unable to parse model from file:",
+               model_path,
+               ". Please check if it is a valid protobuf file of model.");
+  }
+
+  CheckerContext ctx;
+  std::string model_dir;
+  size_t pos = model_path.find_last_of("\\/");
+  if (pos != std::string::npos){
+    model_dir = model_path.substr(0, pos+1);
+  }
+  ctx.set_model_dir(model_dir);
+  check_model(model, ctx);
+}
+
+void check_model(const ModelProto& model) {
+  CheckerContext ctx;
+  check_model(model, ctx);
 }
 
 void VerifyFunctionNode(

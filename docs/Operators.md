@@ -71,6 +71,7 @@
   * <a href="#Mul">Mul</a>
   * <a href="#Multinomial">Multinomial</a>
   * <a href="#Neg">Neg</a>
+  * <a href="#NonZero">NonZero</a>
   * <a href="#Not">Not</a>
   * <a href="#OneHot">OneHot</a>
   * <a href="#Or">Or</a>
@@ -117,6 +118,7 @@
   * <a href="#Sum">Sum</a>
   * <a href="#Tan">Tan</a>
   * <a href="#Tanh">Tanh</a>
+  * <a href="#TfIdfVectorizer">TfIdfVectorizer</a>
   * <a href="#Tile">Tile</a>
   * <a href="#TopK">TopK</a>
   * <a href="#Transpose">Transpose</a>
@@ -126,7 +128,6 @@
   * <a href="#Xor">Xor</a>
   * <sub>experimental</sub> <a href="#ATen">ATen</a>
   * <sub>experimental</sub> <a href="#Affine">Affine</a>
-  * <sub>experimental</sub> <a href="#ConstantFill">ConstantFill</a>
   * <sub>experimental</sub> <a href="#Crop">Crop</a>
   * <sub>experimental</sub> <a href="#DynamicSlice">DynamicSlice</a>
   * <sub>experimental</sub> <a href="#GRUUnit">GRUUnit</a>
@@ -184,10 +185,32 @@ node = onnx.helper.make_node(
     outputs=['y'],
 )
 x = np.random.randn(3, 4, 5).astype(np.float32)
-y = np.abs(x)
+y = abs(x)
 
 expect(node, inputs=[x], outputs=[y],
        name='test_abs')
+```
+
+</details>
+
+
+#### Sample Implementation
+
+<details>
+<summary>Abs</summary>
+
+```python
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import numpy as np  # type: ignore
+
+
+def abs(input):  # type: (np.ndarray) -> np.ndarray
+    return np.abs(input)
+
 ```
 
 </details>
@@ -1445,13 +1468,16 @@ expect(node, inputs=[x], outputs=[y], name='test_averagepool_3d_default')
   
   Output case #1: Y, mean, var, saved_mean, saved_var (training mode)
   Output case #2: Y (test mode)
-      This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
+  
+  For previous (depreciated) non-spatial cases, implementors are suggested
+  to flatten the input shape to (N x C*D1*D2 ..*Dn) before a BatchNormalization Op.
+  This operator has **optional** inputs/outputs. See [the doc](IR.md) for more details about the representation of optional arguments. An empty string may be used in the place of an actual argument's name to indicate a missing argument. Trailing optional arguments (those not followed by an argument that is present) may also be simply omitted.
 
 #### Version
 
-This version of the operator has been available since version 7 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>
+Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">BatchNormalization-1</a>, <a href="Changelog.md#BatchNormalization-6">BatchNormalization-6</a>, <a href="Changelog.md#BatchNormalization-7">BatchNormalization-7</a>
 
 #### Attributes
 
@@ -1460,23 +1486,21 @@ Other versions of this operator: <a href="Changelog.md#BatchNormalization-1">Bat
 <dd>The epsilon value to use to avoid division by zero.</dd>
 <dt><tt>momentum</tt> : float (default is 0.9)</dt>
 <dd>Factor used in computing the running mean and variance.e.g., running_mean = running_mean * momentum + mean * (1 - momentum).</dd>
-<dt><tt>spatial</tt> : int (default is 1)</dt>
-<dd>If true, compute the mean and variance across per activation. If false, compute the mean and variance across per feature over each mini-batch.</dd>
 </dl>
 
 #### Inputs
 
 <dl>
 <dt><tt>X</tt> : T</dt>
-<dd>Input data tensor from the previous operator; dimensions for image case are (N x C x H x W), where N is the batch size, C is the number of channels, and H and W are the height and the width of the data. For non image case, the dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size.</dd>
+<dd>Input data tensor from the previous operator; dimensions are in the form of (N x C x D1 x D2 ... Dn), where N is the batch size, C is the number of channels. Statistics are computed for every channel of C over N and D1 to Dn dimensions. For image data, input dimensions become (N x C x H x W). The op also accepts single dimension input of size N in which case C is assumed to be 1</dd>
 <dt><tt>scale</tt> : T</dt>
-<dd>If spatial is true, the dimension of scale is (C). If spatial is false, the dimensions of scale are (C x D1 x ... x Dn)</dd>
+<dd>Scale tensor of shape (C).</dd>
 <dt><tt>B</tt> : T</dt>
-<dd>If spatial is true, the dimension of bias is (C). If spatial is false, the dimensions of bias are (C x D1 x ... x Dn)</dd>
+<dd>Bias tensor of shape (C).</dd>
 <dt><tt>mean</tt> : T</dt>
-<dd>If spatial is true, the dimension of the running mean (training) or the estimated mean (testing) is (C). If spatial is false, the dimensions of the running mean (training) or the estimated mean (testing) are (C x D1 x ... x Dn).</dd>
+<dd>running (training) or estimated (testing) mean tensor of shape (C).</dd>
 <dt><tt>var</tt> : T</dt>
-<dd>If spatial is true, the dimension of the running variance(training) or the estimated variance (testing) is (C). If spatial is false, the dimensions of the running variance(training) or the estimated variance (testing) are (C x D1 x ... x Dn).</dd>
+<dd>running (training) or estimated (testing) variance tensor of shape (C).</dd>
 </dl>
 
 #### Outputs (1 - 5)
@@ -1565,19 +1589,33 @@ expect(node, inputs=[x, s, bias, mean, var], outputs=[y],
   specified by the 'to' argument and returns an output tensor of the same size in
   the converted type. The 'to' argument must be one of the data types specified
   in the 'DataType' enum field in the TensorProto message.
-  NOTE: Casting to and from strings is not supported yet.
+  
+  Casting from string tensor in plain (e.g., "3.14" and "1000") and scientific numeric representations
+  (e.g., "1e-5" and "1E8") to float types is supported. For example, converting string "100.5" to an integer may
+  result 100. There are some string literals reserved for special floating-point values;
+  "+INF" (and "INF"), "-INF", and "NaN" are positive infinity, negative infinity, and not-a-number, respectively.
+  Any string which can exactly match "+INF" in a case-insensitive way would be mapped to positive infinite. Similarly,
+  this case-insensitive rule is applied to "INF" and "NaN". When casting from numeric tensors
+  to string tensors, plain floating-point representation (such as "314.15926") would be used. 
+  Converting non-numerical-literal string such as "Hello World!" is an undefined behavior. Cases 
+  of converting string representing floating-point arithmetic value, such as "2.718", to INT is an undefined behavior.
+  
+  Conversion from a numerical type to any numerical type is always allowed.
+  User must be aware of precision loss and value change caused by range difference between two types.
+  For example, a 64-bit float 3.1415926459 may be round to a 32-bit float 3.141592. Similarly, converting
+  an integer 36 to Boolean may produce 1 because we truncate bits which can't be stored in the targeted type.
 
 #### Version
 
-This version of the operator has been available since version 6 of the default ONNX operator set.
+This version of the operator has been available since version 9 of the default ONNX operator set.
 
-Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
+Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>, <a href="Changelog.md#Cast-6">Cast-6</a>
 
 #### Attributes
 
 <dl>
 <dt><tt>to</tt> : int (required)</dt>
-<dd>The data type to which the elements of the input tensor are cast.Strictly must be one of the types from DataType enum in TensorProto</dd>
+<dd>The data type to which the elements of the input tensor are cast. Strictly must be one of the types from DataType enum in TensorProto</dd>
 </dl>
 
 #### Inputs
@@ -1597,10 +1635,10 @@ Other versions of this operator: <a href="Changelog.md#Cast-1">Cast-1</a>
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain input types. Casting from strings and complex are not supported.</dd>
-<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
-<dd>Constrain output types. Casting to strings and complex are not supported.</dd>
+<dt><tt>T1</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain input types. Casting from complex is not supported.</dd>
+<dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool), tensor(string)</dt>
+<dd>Constrain output types. Casting to complex is not supported.</dd>
 </dl>
 
 
@@ -1618,21 +1656,33 @@ test_cases = [
     ('FLOAT16', 'DOUBLE'),
     ('DOUBLE', 'FLOAT'),
     ('DOUBLE', 'FLOAT16'),
+    ('FLOAT', 'STRING'),
+    ('STRING', 'FLOAT'),
 ]
 
 for from_type, to_type in test_cases:
-    input = np.random.random_sample(shape).astype(
-        TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+    if 'STRING' != from_type:
+        input = np.random.random_sample(shape).astype(
+            TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, from_type)])
+        if ('STRING' == to_type):
+            # Converting input to str, then give it np.object dtype for generating script
+            output = input.astype(np.dtype('str'))
+            output = output.astype(np.dtype(np.object))
+        else:
+            output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
+    else:
+        input = np.array([['0.47892547', '0.48033667', '0.49968487', '0.81910545'],
+           ['0.47031248', '0.816468', '0.21087195', '0.7229038'],
+           ['NaN', 'INF', '+INF', '-INF']], dtype=np.dtype(np.object))
+        output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
     node = onnx.helper.make_node(
         'Cast',
         inputs=['input'],
         outputs=['output'],
         to=getattr(TensorProto, to_type),
     )
-    output = input.astype(TENSOR_TYPE_TO_NP_TYPE[getattr(TensorProto, to_type)])
-
     expect(node, inputs=[input], outputs=[output],
-           name='test_cast_' + from_type + '_to_' + to_type)
+               name='test_cast_' + from_type + '_to_' + to_type)
 ```
 
 </details>
@@ -2113,8 +2163,8 @@ This version of the operator has been available since version 9 of the default O
 #### Type Constraints
 
 <dl>
-<dt><tt>T1</tt> : tensor(int32), tensor(int64)</dt>
-<dd>Constrain input types. Shape must be unsigned integers.</dd>
+<dt><tt>T1</tt> : tensor(int64)</dt>
+<dd>Constrain input types.</dd>
 <dt><tt>T2</tt> : tensor(float16), tensor(float), tensor(double), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(bool)</dt>
 <dd>Constrain output types to be numerics.</dd>
 </dl>
@@ -2145,12 +2195,12 @@ expect(node, inputs=[x], outputs=[y],
 
 
 <details>
-<summary>int_zeros</summary>
+<summary>int32_zeros</summary>
 
 ```python
 x = np.array([10, 6])
 tensor_value = onnx.helper.make_tensor("value", onnx.TensorProto.INT32,
-                                       [1], [1])
+                                       [1], [0])
 node = onnx.helper.make_node(
     'ConstantOfShape',
     inputs=['x'],
@@ -6998,6 +7048,60 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="NonZero"></a><a name="nonzero">**NonZero**</a>
+
+  Returns the indices of the elements that are non-zero
+      (in row-major order - by dimension).
+      NonZero behaves similar to numpy.nonzero:
+      https://docs.scipy.org/doc/numpy/reference/generated/numpy.nonzero.html
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>input</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : tensor(int64)</dt>
+<dd>output (always 2D tensor)</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
+<dd>Constrain to all tensor types.</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>nonzero</summary>
+
+```python
+node = onnx.helper.make_node(
+    'NonZero',
+    inputs=['condition'],
+    outputs=['result'],
+)
+
+condition = np.array([[1, 0], [1, 1]], dtype=np.bool)
+result = np.array((np.nonzero(condition)))  # expected output [[0, 1, 1], [0, 0, 1]]
+expect(node, inputs=[condition], outputs=[result],
+       name='test_nonzero_example')
+```
+
+</details>
+
+
 ### <a name="Not"></a><a name="not">**Not**</a>
 
   Returns the negation of the input tensor element-wise.
@@ -9661,6 +9765,9 @@ for test_name, shape in test_cases.items():
   well as scan_output_element tensors) are required to have the same shape in each iteration
   of the loop (a restriction imposed to enable efficient memory allocation).
   
+  Note that the iterated element passed to the body subgraph does not have a sequence
+  axis. It will have a rank one less than the rank of the corresponding scan_input.
+  
   The scan operation returns the final values of the state_variables as well as the
   scan_outputs.
   
@@ -9675,10 +9782,15 @@ for test_name, shape in test_cases.items():
   scan_output_element to scan_output in each iteration) for each scan_output. If this attribute
   is omitted, the scan_output_element is appended to the scan_output in each iteration.
   
-  The optional attribute axes specifies the axis to be scanned for each scan_input.
+  The optional attribute scan_input_axes specifies the axis to be scanned for each scan_input.
   If omitted, every scan_input will be scanned in axis 0. For example, if axis 0 is the
   batch axis and axis 1 is the time axis (to be scanned), specify an axis value of 1.
   Note that scanning a non-zero axis may be less efficient than scanning axis zero.
+  
+  The optional attribute scan_output_axes specifies the axis along which the scan_outputs
+  are accumulated for each scan_output. For example, if axis 1 is the time axis (to be
+  scanned) for both inputs and outputs, specify a scan_input axis and scan_output axis
+  value of 1.
   
   Note that because of the ONNX restriction that only the last parameter of an operator can
   be variadic, the initial-states and scan-inputs are listed together as one input parameter.
@@ -9690,7 +9802,7 @@ for test_name, shape in test_cases.items():
       Scan <
           num_scan_inputs = m,
           body = loop-body,
-          axes = [axis_1, ..., axis_m]
+          scan_input_axes = [axis_1, ..., axis_m]
       > (init_1, ..., init_n, scan_1, ..., scan_m)
   
   is equivalent to the following pseudo-code:
@@ -9763,14 +9875,16 @@ Other versions of this operator: <a href="Changelog.md#Scan-8">Scan-8</a>
 #### Attributes
 
 <dl>
-<dt><tt>axes</tt> : list of ints</dt>
-<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>body</tt> : graph (required)</dt>
 <dd>The graph run each iteration. It has N+M inputs: (loop state variables..., scan_input_elts...). It has N+K outputs: (loop state variables..., scan_output_elts...). Each scan_output is created by concatenating the value of the specified scan_output_elt value at the end of each iteration of the loop. It is an error if the dimensions of these values change across loop iterations.</dd>
 <dt><tt>num_scan_inputs</tt> : int (required)</dt>
 <dd>An attribute specifying the number of scan_inputs M. </dd>
+<dt><tt>scan_input_axes</tt> : list of ints</dt>
+<dd>An optional list of M flags. The i-th element of the list specifies the axis to be scanned (the sequence axis) for the i-th scan_input. If omitted, 0 will be used as the scan axis for every scan_input.</dd>
 <dt><tt>scan_input_directions</tt> : list of ints</dt>
 <dd>An optional list of M flags. The i-th element of the list specifies the direction to be scanned for the i-th scan_input tensor: 0 indicates forward direction and 1 indicates reverse direction. If omitted, all scan_input tensors will be scanned in the forward direction.</dd>
+<dt><tt>scan_output_axes</tt> : list of ints</dt>
+<dd>An optional list of K flags. The i-th element of the list specifies the axis for the i-th scan_output. The scan outputs are accumulated along the specified axis. If omitted, 0 will be used as the scan axis for every scan_output.</dd>
 <dt><tt>scan_output_directions</tt> : list of ints</dt>
 <dd>An optional list of K flags, one for each scan_output. The i-th element of the list specifies whether the i-th scan_output should be constructed by appending or prepending a new value in each iteration: 0 indicates appending and 1 indicates prepending. If omitted, all scan_output tensors will be produced by appending a value in each iteration.</dd>
 </dl>
@@ -11574,6 +11688,285 @@ expect(node, inputs=[x], outputs=[y],
 </details>
 
 
+### <a name="TfIdfVectorizer"></a><a name="tfidfvectorizer">**TfIdfVectorizer**</a>
+
+  This transform extracts n-grams from the input sequence and save them as a vector. Input can 
+  be either a 1-D or 2-D tensor. For 1-D input, output is the n-gram representation of that input.  
+  For 2-D input, the output is also a  2-D tensor whose i-th row is the n-gram representation of the i-th input row. 
+  More specifically, if input shape is [C], the corresponding output shape would be [max(ngram_indexes) + 1]. 
+  If input shape is [N, C], this operator produces a [N, max(ngram_indexes) + 1]-tensor. 
+   
+  In contrast to standard n-gram extraction, here, the indexes of extracting an n-gram from the original 
+  sequence are not necessarily consecutive numbers. The discontinuity between indexes are controlled by the number of skips.  
+  If the number of skips is 2, we should skip two tokens when scanning through the original sequence. 
+  Let's consider an example. Assume that input sequence is [94, 17, 36, 12, 28] and the number of skips is 2. 
+  The associated 2-grams are [94, 12] and [17, 28] respectively indexed by [0, 3] and [1, 4]. 
+  If the number of skips becomes 0, the 2-grams generated are [94, 17], [17, 36], [36, 12], [12, 28] 
+  indexed by [0, 1], [1, 2], [2, 3], [3, 4], respectively.
+  
+  The output vector (denoted by Y) stores the count of each n-gram; 
+  Y[ngram_indexes[i]] indicates the times that the i-th n-gram is found. The attribute ngram_indexes is used to determine the mapping 
+  between index i and the corresponding n-gram's output coordinate. If pool_int64s is [94, 17, 17, 36], ngram_indexes is [1, 0],
+  ngram_counts=[0, 0], then the Y[0] (first element in Y) and Y[1] (second element in Y) are the counts of [17, 36] and [94, 17],
+  respectively. An n-gram which cannot be found in pool_strings/pool_int64s should be ignored and has no effect on the output. 
+  Note that we may consider all skips up to S when generating the n-grams. 
+   
+  The examples used above are true if mode is "TF". If mode is "IDF", all the counts larger than 1 would be truncated to 1 and 
+  the i-th element in weights would be used to scale (by multiplication) the count of the i-th n-gram in pool. If mode is "TFIDF", 
+  this operator first computes the counts of all n-grams and then scale them by the associated values in the weights attribute. 
+   
+  Only one of pool_strings and pool_int64s can be set. If pool_int64s is set, the input should be an integer tensor. 
+  If pool_strings is set, the input must be a string tensor. 
+
+#### Version
+
+This version of the operator has been available since version 9 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>max_gram_length</tt> : int (required)</dt>
+<dd>Maximum n-gram length. If this value is 3, 3-grams will be used to generate the output.</dd>
+<dt><tt>max_skip_count</tt> : int (required)</dt>
+<dd>Maximum number of items (integers/strings) to be skipped when constructing an n-gram from X. If max_skip_count=1, min_gram_length=2, max_gram_length=3, this operator may generate 2-grams with skip_count=0 and skip_count=1, and 3-grams with skip_count=0 and skip_count=1</dd>
+<dt><tt>min_gram_length</tt> : int (required)</dt>
+<dd>Minimum n-gram length. If this value is 2 and max_gram_length is 3, output may contain counts of 2-grams and 3-grams.</dd>
+<dt><tt>mode</tt> : string (required)</dt>
+<dd>The weighting criteria. It can be one of "TF" (term frequency), "IDF" (inverse document frequency), and "TFIDF" (the combination of TF and IDF)</dd>
+<dt><tt>ngram_counts</tt> : list of ints (required)</dt>
+<dd>The starting indexes of 1-grams, 2-grams, and so on in pool. It is useful when determining the boundary between two consecutive collections of n-grams. For example, if ngram_counts is [0, 17, 36], the first index (zero-based) of 1-gram/2-gram/3-gram in pool are 0/17/36. This format is essentially identical to CSR (or CSC) sparse matrix format, and we choose to use this due to its popularity.</dd>
+<dt><tt>ngram_indexes</tt> : list of ints (required)</dt>
+<dd>list of int64s (type: AttributeProto::INTS). This list is parallel to the specified 'pool_*' attribute. The i-th element in ngram_indexes indicate the coordinate of the i-th n-gram in the output tensor.</dd>
+<dt><tt>pool_int64s</tt> : list of ints</dt>
+<dd>List of int64 n-grams learned from the training set. Either this or pool_strings attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
+<dt><tt>pool_strings</tt> : list of strings</dt>
+<dd>List of strings n-grams learned from the training set. Either this or pool_int64s attributes must be present but not both. It's an 1-D tensor starting with the collections of all 1-grams and ending with the collections of n-grams. The i-th element in pool stores the n-gram that should be mapped to coordinate ngram_indexes[i] in the output vector.</dd>
+<dt><tt>weights</tt> : list of floats</dt>
+<dd>list of floats. This attribute stores the weight of each n-gram in pool. The i-th element in weights is the weight of the i-th n-gram in pool. Its length equals to the size of ngram_indexes. By default, weights is an all-one tensor.This attribute is used when mode is "IDF" or "TFIDF" to scale the associated word counts.</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Input for n-gram extraction</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T1</dt>
+<dd>Ngram results</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string), tensor(int32), tensor(int64)</dt>
+<dd>Input is ether string UTF-8 or int32/int64</dd>
+<dt><tt>T1</tt> : tensor(float)</dt>
+<dd>1-D tensor of floats</dd>
+</dl>
+
+
+#### Examples
+
+<details>
+<summary>tf_batch_onlybigrams_skip0</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 0., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip0')
+```
+
+</details>
+
+
+<details>
+<summary>tf_batch_onlybigrams_skip5</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 0., 0., 0., 0., 0., 0.], [0., 0., 0., 0., 1., 1., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_onlybigrams_skip5')
+```
+
+</details>
+
+
+<details>
+<summary>tf_batch_uniandbigrams_skip5</summary>
+
+```python
+input = np.array([[1, 1, 3, 3, 3, 7], [8, 6, 7, 5, 6, 8]]).astype(np.int32)
+output = np.array([[0., 3., 0., 0., 0., 0., 0.], [0., 0., 1., 0., 1., 1., 1.]]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)   # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=1,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_batch_uniandbigrams_skip5')
+```
+
+</details>
+
+
+<details>
+<summary>tf_only_bigrams_skip0</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 0., 0., 0., 1., 1., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_only_bigrams_skip0')
+```
+
+</details>
+
+
+<details>
+<summary>tf_onlybigrams_levelempty</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([1., 1., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 0]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2]).astype(np.int64)
+pool_int64s = np.array([    # unigrams none
+                       5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=0,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_levelempty')
+```
+
+</details>
+
+
+<details>
+<summary>tf_onlybigrams_skip5</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 0., 0., 0., 1., 3., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=2,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_onlybigrams_skip5')
+```
+
+</details>
+
+
+<details>
+<summary>tf_uniandbigrams_skip5</summary>
+
+```python
+input = np.array([1, 1, 3, 3, 3, 7, 8, 6, 7, 5, 6, 8]).astype(np.int32)
+output = np.array([0., 3., 1., 0., 1., 3., 1.]).astype(np.float32)
+
+ngram_counts = np.array([0, 4]).astype(np.int64)
+ngram_indexes = np.array([0, 1, 2, 3, 4, 5, 6]).astype(np.int64)
+pool_int64s = np.array([2, 3, 5, 4,    # unigrams
+                        5, 6, 7, 8, 6, 7]).astype(np.int64)    # bigrams
+
+helper = TfIdfVectorizerHelper(
+    mode='TF',
+    min_gram_length=1,
+    max_gram_length=2,
+    max_skip_count=5,
+    ngram_counts=ngram_counts,
+    ngram_indexes=ngram_indexes,
+    pool_int64s=pool_int64s
+)
+node = helper.make_node_noweights()
+expect(node, inputs=[input], outputs=[output], name='test_tfidfvectorizer_tf_uniandbigrams_skip5')
+```
+
+</details>
+
+
 ### <a name="Tile"></a><a name="tile">**Tile**</a>
 
   Constructs a tensor by tiling a given tensor.
@@ -12239,69 +12632,6 @@ No versioning maintained for experimental ops.
 <dl>
 <dt><tt>T</tt> : tensor(float16), tensor(float), tensor(double)</dt>
 <dd>Constrain input and output types to float tensors.</dd>
-</dl>
-
-
-### <sub>experimental</sub> <a name="ConstantFill"></a><a name="constantfill">**ConstantFill**</a>
-
-  The operator fills the elements of the output tensor with a constant value
-  specified by the 'value' attribute.
-  
-  The data type is specified by the 'dtype' attribute. The 'dtype' attribute must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message. If the 'dtype' attribute is not provided, the data type of
-  'value' is used.
-  
-  The output tensor shape is specified by the 'shape' attribute. If the number of
-  input is 1, the shape will be identical to that of the input at run time with
-  optional additional dimensions appended at the end as specified by 'extra_shape'
-  attribute. In that case the 'shape' attribute should not be set.
-  
-  If input_as_shape is set to true, then the input should be a 1D tensor
-  containing the desired output shape (the dimensions specified in extra_shape
-  will also be appended)
-  
-  NOTE: Currently, it supports data type of float, int32, int64, and bool.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>dtype</tt> : int (default is 1)</dt>
-<dd>The data type for the elements of the output tensor.Strictly must be one of the types from DataType enum in TensorProto.</dd>
-<dt><tt>extra_shape</tt> : list of ints</dt>
-<dd>The additional dimensions appended at the end of the shape indicatedby the input blob.Cannot set the extra_shape argument when there is no input blob.</dd>
-<dt><tt>input_as_shape</tt> : int</dt>
-<dd>1D tensor containing the desired output shape.  First input must be in CPU context.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>The value for the elements of the output tensor.</dd>
-</dl>
-
-#### Inputs (0 - 1)
-
-<dl>
-<dt><tt>input</tt> (optional) : T1</dt>
-<dd>Input tensor (optional) to provide shape information.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T2</dt>
-<dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain input types to float, int32, int64, bool tensors.</dd>
-<dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain output types to float, int32, int64, bool tensors.</dd>
 </dl>
 
 
