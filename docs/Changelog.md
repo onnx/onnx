@@ -621,68 +621,6 @@ This version of the operator has been available since version 1 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="ConstantFill-1"></a>**ConstantFill-1**</a>
-
-  The operator fills the elements of the output tensor with a constant value
-  specified by the 'value' attribute.
-  
-  The data type is specified by the 'dtype' attribute. The 'dtype' attribute must
-  be one of the data types specified in the 'DataType' enum field in the
-  TensorProto message. If the 'dtype' attribute is not provided, the data type of
-  'value' is used.
-  
-  The output tensor shape is specified by the 'shape' attribute. If the number of
-  input is 1, the shape will be identical to that of the input at run time with
-  optional additional dimensions appended at the end as specified by 'extra_shape'
-  attribute. In that case the 'shape' attribute should not be set.
-  
-  If input_as_shape is set to true, then the input should be a 1D tensor
-  containing the desired output shape (the dimensions specified in extra_shape
-  will also be appended)
-  
-  NOTE: Currently, it supports data type of float, int32, int64, and bool.
-
-#### Version
-
-No versioning maintained for experimental ops.
-#### Attributes
-
-<dl>
-<dt><tt>dtype</tt> : int (default is 1)</dt>
-<dd>The data type for the elements of the output tensor.Strictly must be one of the types from DataType enum in TensorProto.</dd>
-<dt><tt>extra_shape</tt> : list of ints</dt>
-<dd>The additional dimensions appended at the end of the shape indicatedby the input blob.Cannot set the extra_shape argument when there is no input blob.</dd>
-<dt><tt>input_as_shape</tt> : int</dt>
-<dd>1D tensor containing the desired output shape.  First input must be in CPU context.</dd>
-<dt><tt>shape</tt> : list of ints</dt>
-<dd>The shape of the output tensor. Cannot set the shape argument and pass in an input at the same time.</dd>
-<dt><tt>value</tt> : float (default is 0.0)</dt>
-<dd>The value for the elements of the output tensor.</dd>
-</dl>
-
-#### Inputs (0 - 1)
-
-<dl>
-<dt><tt>input</tt> (optional) : T1</dt>
-<dd>Input tensor (optional) to provide shape information.</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>output</tt> : T2</dt>
-<dd>Output tensor of constant values specified by 'value'argument and its type is specified by the 'dtype' argument</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T1</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain input types to float, int32, int64, bool tensors.</dd>
-<dt><tt>T2</tt> : tensor(float), tensor(int32), tensor(int64), tensor(bool)</dt>
-<dd>Constrain output types to float, int32, int64, bool tensors.</dd>
-</dl>
-
 ### <a name="Conv-1"></a>**Conv-1**</a>
 
   The convolution operator consumes an input tensor and a filter, and
