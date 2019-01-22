@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 import inspect
-import codecs
 from textwrap import dedent
 from typing import Dict, Text, List, Tuple, Type, Sequence, Any
 
@@ -15,13 +14,12 @@ from six import add_metaclass
 
 def process_snippet(op_name, name, export):  # type: (Text, Text, Any) -> Tuple[Text, Text]
     snippet_name = name[len('export_'):] or op_name.lower()
-    bs = inspect.getsource(export).encode()
-    source_code = dedent(bs.decode('utf-8'))
+    source_code = dedent(inspect.getsource(export))
     # remove the function signature line
     lines = source_code.splitlines()
     assert lines[0] == '@staticmethod'
     assert lines[1].startswith('def export')
-    return snippet_name, dedent(u"\n".join(lines[2:]))
+    return snippet_name, dedent("\n".join(lines[2:]))
 
 
 Snippets = defaultdict(list)  # type: Dict[Text, List[Tuple[Text, Text]]]
