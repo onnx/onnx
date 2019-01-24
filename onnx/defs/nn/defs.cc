@@ -1117,16 +1117,8 @@ ONNX_OPERATOR_SET_SCHEMA(
             "For image data, input dimensions become (N x C x H x W). "
             "The op also accepts single dimension input of size N in which case C is assumed to be 1",
             "T")
-        .Input(
-            1,
-            "scale",
-            "Scale tensor of shape (C).",
-            "T")
-        .Input(
-            2,
-            "B",
-            "Bias tensor of shape (C).",
-            "T")
+        .Input(1, "scale", "Scale tensor of shape (C).", "T")
+        .Input(2, "B", "Bias tensor of shape (C).", "T")
         .Input(
             3,
             "mean",
@@ -1552,7 +1544,7 @@ static const char* StringNormalizer_ver9_doc = R"DOC(
 
 ONNX_OPERATOR_SET_SCHEMA(
     StringNormalizer,
-    9,
+    10,
     OpSchema()
         .Input(0, "X", "Strings to normalize", "T")
         .Output(0, "Y", "Normalized strings", "T")
@@ -1589,14 +1581,17 @@ ONNX_OPERATOR_SET_SCHEMA(
             auto dim_size = input_shape.dim_size();
             // Last axis dimension is unknown if we have stop-words since we do
             // not know how many stop-words are dropped
-            if (dim_size == 0) {
-              output_shape.add_dim();
-            } else if (dim_size == 1) {
-              // Copy C if no stopwords otherwise unknown
+            if (dim_size == 1) {
+              // Unknown output dimension
               output_shape.add_dim();
             } else if (dim_size == 2) {
               // Copy B-dim
-              *output_shape.add_dim() = input_shape.dim(0);
+              auto& b_dim = input_shape.dim(0);
+              if (b_dim.has_dim_value() && b_dim.dim_value() != 1) {
+                fail_shape_inference(
+                    "Input shape must have either [C], [?], [1,C] or [?,C] dimensions where C > 0");
+              }
+              *output_shape.add_dim() = b_dim;
               output_shape.add_dim();
             } else {
               fail_shape_inference(
