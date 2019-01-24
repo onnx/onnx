@@ -9510,52 +9510,6 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain input and output types to float tensors.</dd>
 </dl>
 
-### <a name="StringNormalizer-9"></a>**StringNormalizer-9**</a>
-
-  [optional] Step1: Remove elements in X if they match any of the stop words so
-   that the output tensor will not contain any stop words. This operator only accepts [C]-
-   and [1, C]-tensors. If all elements in X are dropped, the output will be the default value
-   of string tensor with shape [1] if input shape is [C] and shape [1, 1] if input shape is [1, C].
-  [optional] Step2: Lower all characters (if action is LOWER) in X or capitalize them (when action is UPPER).
-
-#### Version
-
-This version of the operator has been available since version 9 of the default ONNX operator set.
-
-#### Attributes
-
-<dl>
-<dt><tt>casechangeaction</tt> : string (required)</dt>
-<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE"</dd>
-<dt><tt>is_case_sensitive</tt> : int (required)</dt>
-<dd>Boolean. Whether the identification of stop words in X is case-sensitive.</dd>
-<dt><tt>locale</tt> : string</dt>
-<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent</dd>
-<dt><tt>stopwords</tt> : list of strings</dt>
-<dd>List of stop words</dd>
-</dl>
-
-#### Inputs
-
-<dl>
-<dt><tt>X</tt> : T</dt>
-<dd>Strings to normalize</dd>
-</dl>
-
-#### Outputs
-
-<dl>
-<dt><tt>Y</tt> : T</dt>
-<dd>Normalized strings</dd>
-</dl>
-
-#### Type Constraints
-
-<dl>
-<dt><tt>T</tt> : tensor(string)</dt>
-<dd>Input/Output is a UTF-8 string tensor</dd>
-</dl>
-
 ### <a name="TfIdfVectorizer-9"></a>**TfIdfVectorizer-9**</a>
 
   This transform extracts n-grams from the input sequence and save them as a vector. Input can 
@@ -9712,5 +9666,52 @@ This version of the operator has been available since version 9 of the default O
 <dd>Constrain to boolean tensors.</dd>
 <dt><tt>T</tt> : tensor(uint8), tensor(uint16), tensor(uint32), tensor(uint64), tensor(int8), tensor(int16), tensor(int32), tensor(int64), tensor(float16), tensor(float), tensor(double), tensor(string), tensor(bool), tensor(complex64), tensor(complex128)</dt>
 <dd>Constrain input and output types to all tensor types.</dd>
+</dl>
+
+## Version 10 of the default ONNX operator set
+### <a name="StringNormalizer-10"></a>**StringNormalizer-10**</a>
+
+  [optional] Step1: Remove elements in X if they match any of the stop words so
+   that the output tensor will not contain any stop words. This operator only accepts [C]-
+   and [1, C]-tensors. If all elements in X are dropped, the output will be the default value
+   of string tensor with shape [1] if input shape is [C] and shape [1, 1] if input shape is [1, C].
+  [optional] Step2: Lower all characters (if action is LOWER) in X or capitalize them (when action is UPPER).
+
+#### Version
+
+This version of the operator has been available since version 10 of the default ONNX operator set.
+
+#### Attributes
+
+<dl>
+<dt><tt>casechangeaction</tt> : string (required)</dt>
+<dd>string enum that cases output to be lowercased/uppercases/unchanged. Valid values are "LOWER", "UPPER", "NONE"</dd>
+<dt><tt>is_case_sensitive</tt> : int (required)</dt>
+<dd>Boolean. Whether the identification of stop words in X is case-sensitive.</dd>
+<dt><tt>locale</tt> : string</dt>
+<dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent</dd>
+<dt><tt>stopwords</tt> : list of strings</dt>
+<dd>List of stop words</dd>
+</dl>
+
+#### Inputs
+
+<dl>
+<dt><tt>X</tt> : T</dt>
+<dd>Strings to normalize</dd>
+</dl>
+
+#### Outputs
+
+<dl>
+<dt><tt>Y</tt> : T</dt>
+<dd>Normalized strings</dd>
+</dl>
+
+#### Type Constraints
+
+<dl>
+<dt><tt>T</tt> : tensor(string)</dt>
+<dd>Input/Output is a UTF-8 string tensor</dd>
 </dl>
 

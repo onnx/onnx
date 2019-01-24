@@ -11428,7 +11428,7 @@ expect(node, inputs=[x], outputs=[y],
 
 #### Version
 
-This version of the operator has been available since version 9 of the default ONNX operator set.
+This version of the operator has been available since version 10 of the default ONNX operator set.
 
 #### Attributes
 

@@ -1534,7 +1534,7 @@ ONNX_OPERATOR_SET_SCHEMA(
         })
         .SetDoc(TfIdfVectorizer_ver9_doc));
 
-static const char* StringNormalizer_ver9_doc = R"DOC(
+static const char* StringNormalizer_ver10_doc = R"DOC(
 [optional] Step1: Remove elements in X if they match any of the stop words so
  that the output tensor will not contain any stop words. This operator only accepts [C]-
  and [1, C]-tensors. If all elements in X are dropped, the output will be the default value
@@ -1571,7 +1571,7 @@ ONNX_OPERATOR_SET_SCHEMA(
             "Default en_US or platform specific equivalent",
             AttributeProto::STRING,
             OPTIONAL)
-        .SetDoc(StringNormalizer_ver9_doc)
+        .SetDoc(StringNormalizer_ver10_doc)
         .TypeAndShapeInferenceFunction([](InferenceContext& ctx) {
           auto output_elem_type = ctx.getOutputType(0)->mutable_tensor_type();
           output_elem_type->set_elem_type(TensorProto::STRING);
