@@ -6008,7 +6008,7 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 
 ```python
 input = np.array([u'monday', u'monday']).astype(np.object)
-output = np.array([]).astype(np.object)
+output = np.array([u'']).astype(np.object)
 stopwords = [u'monday']
 
 node = onnx.helper.make_node(

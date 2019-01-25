@@ -11420,11 +11420,13 @@ expect(node, inputs=[x], outputs=[y],
 
 ### <a name="StringNormalizer"></a><a name="stringnormalizer">**StringNormalizer**</a>
 
-  [optional] Step1: Remove elements in X if they match any of the stop words so
-   that the output tensor will not contain any stop words. This operator only accepts [C]-
-   and [1, C]-tensors. If all elements in X are dropped, the output will be the default value
-   of string tensor with shape [1] if input shape is [C] and shape [1, 1] if input shape is [1, C].
-  [optional] Step2: Lower all characters (if action is LOWER) in X or capitalize them (when action is UPPER).
+  StringNormalization performs string operations for basic cleaning. 
+  This operator has only one input (denoted by X) and only one output 
+  (denoted by Y). This operator first examines the elements in the X, 
+  and remove elements specified in "stopwords" attribute. 
+  Note that an implementation should sequentially remove "stopwords[0]," then "stopwords[1]," 
+  and so on. After removing stop words, the intermediate result can be further lowercased, 
+  uppercased, or just returned depending the "casechangeaction" attribute.
 
 #### Version
 
@@ -11440,7 +11442,7 @@ This version of the operator has been available since version 10 of the default 
 <dt><tt>locale</tt> : string</dt>
 <dd>Environment dependent string that denotes the locale according to which output strings needs to be upper/lowercased.Default en_US or platform specific equivalent</dd>
 <dt><tt>stopwords</tt> : list of strings</dt>
-<dd>List of stop words</dd>
+<dd>List of stop words. If not set, no work would be removed from X.</dd>
 </dl>
 
 #### Inputs
@@ -11538,7 +11540,7 @@ expect(node, inputs=[input], outputs=[output], name='test_strnormalizer_export_m
 
 ```python
 input = np.array([u'monday', u'monday']).astype(np.object)
-output = np.array([]).astype(np.object)
+output = np.array([u'']).astype(np.object)
 stopwords = [u'monday']
 
 node = onnx.helper.make_node(
