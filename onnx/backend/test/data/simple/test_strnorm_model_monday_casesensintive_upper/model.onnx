@@ -1,14 +1,14 @@
-backend-test:»
+backend-test:ž
 h
 xy"StringNormalizer*
 casechangeaction"UPPER *
 is_case_sensitive *
-	stopwordsJmonday -test_strnormalizer_export_monday_empty_outputZ
+	stopwordsJmonday StringNormalizerZ
 x
 
 
-b
+b
 y
 
 
-B
+B

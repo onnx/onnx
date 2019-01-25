@@ -80,7 +80,7 @@ class StringNormalizer(Base):
     @staticmethod
     def export_monday_empty_output():    # type: () -> None
         input = np.array([u'monday', u'monday']).astype(np.object)
-        output = np.array([]).astype(np.object)
+        output = np.array([u'']).astype(np.object)
         stopwords = [u'monday']
 
         node = onnx.helper.make_node(

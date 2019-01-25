@@ -89,7 +89,7 @@ def from_array(arr, name=None):  # type: (np.ndarray[Any], Optional[Text]) -> Te
                 tensor.string_data.append(e.encode('utf-8'))
             else:
                 raise NotImplementedError(
-                    "Unrecognized object in the object array, expect a string, or array of bytes: " + type(e))
+                    "Unrecognized object in the object array, expect a string, or array of bytes: ", str(type(e)))
         return tensor
 
     # For numerical types, directly use numpy raw bytes.
